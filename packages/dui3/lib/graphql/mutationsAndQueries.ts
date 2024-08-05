@@ -268,3 +268,19 @@ export const projectUpdatedSubscription = graphql(`
     }
   }
 `)
+
+export const modelViewingSubscription = graphql(`
+  subscription Subscription($target: ViewerUpdateTrackingTarget!) {
+    viewerUserActivityBroadcasted(target: $target) {
+      userName
+      userId
+      sessionId
+      user {
+        name
+        id
+        avatar
+      }
+      status
+    }
+  }
+`)

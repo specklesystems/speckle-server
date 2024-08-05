@@ -84,9 +84,31 @@
         }}
       </div>
     </div>
-    <!-- Card States: Expiry, errors, new version created, etc. -->
     <div v-if="!noWriteAccess">
+      <!-- Card States: Expiry, errors, new version created, etc. -->
       <slot name="states"></slot>
+      <!-- Swanky web app integration: show users who is viewing the model -->
+      <div
+        v-if="currentlyViewingUsers.length !== 0"
+        class="text-xs text-foreground-2 py-1 px-2 bg-gray-500/5 flex space-x-1 items-center justify-between"
+      >
+        <div class="flex items-center space-x-1">
+          <UserAvatarGroup size="sm" :users="currentlyViewingUsers" />
+          <span>
+            {{ currentlyViewingUsers.length === 1 ? 'is' : 'are' }} now viewing this
+            model.
+          </span>
+        </div>
+        <div>
+          <button
+            v-tippy="'Start a review session!'"
+            class="hover:text-primary p-1"
+            @click="viewModel()"
+          >
+            <ArrowTopRightOnSquareIcon class="w-3" />
+          </button>
+        </div>
+      </div>
     </div>
     <div v-else>
       <CommonModelNotification
@@ -101,10 +123,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
+import { useQuery, useSubscription } from '@vue/apollo-composable'
+import {
+  modelDetailsQuery,
+  modelViewingSubscription
+} from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { XCircleIcon } from '@heroicons/vue/20/solid'
+import { ArrowTopRightOnSquareIcon, XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
@@ -113,6 +138,7 @@ import { useAccountStore } from '~/store/accounts'
 import type { ISenderModelCard } from 'lib/models/card/send'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useIntervalFn } from '@vueuse/core'
 
 const app = useNuxtApp()
 const store = useHostAppStore()
@@ -230,4 +256,47 @@ const cardBgColor = computed(() => {
 const noWriteAccess = computed(() => {
   return props.readonly && isSender.value
 })
+
+const { onResult: onModelViewingResult } = useSubscription(
+  modelViewingSubscription,
+  () => ({
+    target: {
+      projectId: props.modelCard.projectId,
+      resourceIdString: props.modelCard.modelId
+    }
+  }),
+  () => ({ clientId })
+)
+
+const currentlyViewingUsersMap = ref<
+  Record<string, { name: string; id: string; avatar?: string | null; lastSeen: number }>
+>({})
+
+const currentlyViewingUsers = computed(() =>
+  Object.values(currentlyViewingUsersMap.value)
+)
+
+onModelViewingResult((res) => {
+  if (!res.data) return
+  const user = res.data?.viewerUserActivityBroadcasted.user
+  if (res.data?.viewerUserActivityBroadcasted.status === 'VIEWING' && user) {
+    // add user to currently viewing people
+    currentlyViewingUsersMap.value[user.id] = { ...user, lastSeen: Date.now() }
+  } else if (
+    res.data?.viewerUserActivityBroadcasted.status === 'DISCONNECTED' &&
+    user
+  ) {
+    // remove user from currently viewing people
+    delete currentlyViewingUsersMap.value[user.id]
+  }
+})
+
+// NOTE: FE does not send a disconnect event on page unload, so we need to do our own cleanup
+useIntervalFn(() => {
+  const now = Date.now()
+  for (const key in currentlyViewingUsersMap.value) {
+    const { lastSeen } = currentlyViewingUsersMap.value[key]
+    if (now - lastSeen > 5_000) delete currentlyViewingUsersMap.value[key]
+  }
+}, 1000)
 </script>

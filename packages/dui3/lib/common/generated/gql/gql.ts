@@ -30,6 +30,7 @@ const documents = {
     "\n  subscription OnProjectVersionsUpdate($projectId: String!) {\n    projectVersionsUpdated(id: $projectId) {\n      id\n      type\n      version {\n        id\n        createdAt\n        message\n        sourceApplication\n        authorUser {\n          id\n          name\n          avatar\n        }\n        model {\n          id\n          name\n          displayName\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
     "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        visibility\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.OnUserProjectsUpdatedDocument,
     "\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n": types.ProjectUpdatedDocument,
+    "\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n": types.SubscriptionDocument,
 };
 
 /**
@@ -114,6 +115,10 @@ export function graphql(source: "\n  subscription OnUserProjectsUpdated {\n    u
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n"): (typeof documents)["\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
