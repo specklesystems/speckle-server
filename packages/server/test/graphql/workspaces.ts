@@ -40,6 +40,14 @@ export const createWorkspaceQuery = gql`
   ${workspaceFragment}
 `
 
+export const deleteWorkspaceQuery = gql`
+  mutation DeleteWorkspace($workspaceId: String!) {
+    workspaceMutations {
+      delete(workspaceId: $workspaceId)
+    }
+  }
+`
+
 export const getWorkspaceQuery = gql`
   query GetWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
