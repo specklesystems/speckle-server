@@ -37,11 +37,6 @@ export const createUserEmailFactory =
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
   async ({ query, update }) => {
-    const queryWithUserId = query as Pick<UserEmail, 'userId'>
-    if (queryWithUserId.userId && update.primary) {
-      await checkPrimaryEmail({ db })(queryWithUserId)
-    }
-
     const q = db<UserEmail>(UserEmails.name).where(query).update(update, '*')
 
     const [updated] = await q
