@@ -30,11 +30,13 @@ export const createUserEmailQuery = gql`
     activeUserMutations {
       emailMutations {
         create(input: $input) {
-          id
+          ...UserWithEmails
         }
       }
     }
   }
+
+  ${userWithEmailsFragment}
 `
 
 export const deleteUserEmailQuery = gql`
@@ -42,10 +44,12 @@ export const deleteUserEmailQuery = gql`
     activeUserMutations {
       emailMutations {
         delete(input: $input) {
-          id
+          ...UserWithEmails
         }
       }
     }
+
+  ${userWithEmailsFragment}
   }
 `
 
@@ -54,9 +58,11 @@ export const setPrimaryUserEmailQuery = gql`
     activeUserMutations {
       emailMutations {
         setPrimary(input: $input) {
-          id
+          ...UserWithEmails
         }
       }
     }
   }
+
+  ${userWithEmailsFragment}
 `
