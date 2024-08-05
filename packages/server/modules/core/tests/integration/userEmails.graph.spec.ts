@@ -45,7 +45,8 @@ describe('User emails graphql @core', () => {
         })
         .first()
 
-      expect(res.data?.createUserEmail).to.eq(userEmail!.id)
+      expect(userEmail).to.be.ok
+      expect(res.data?.activeUserMutations.emailMutations.create).to.eq(userEmail!.id)
       expect(userEmail!.email).to.eq(email)
       expect(userEmail!.userId).to.eq(userId)
     })
@@ -72,7 +73,7 @@ describe('User emails graphql @core', () => {
       const res = await apollo.execute(DeleteUserEmailDocument, { input: { id } })
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.deleteUserEmail).to.be.true
+      expect(res.data?.activeUserMutations.emailMutations.delete).to.be.true
     })
   })
 
@@ -97,7 +98,7 @@ describe('User emails graphql @core', () => {
       const res = await apollo.execute(SetPrimaryUserEmailDocument, { input: { id } })
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.setPrimaryUserEmail).to.be.true
+      expect(res.data?.activeUserMutations.emailMutations.setPrimary).to.be.true
     })
   })
 })
