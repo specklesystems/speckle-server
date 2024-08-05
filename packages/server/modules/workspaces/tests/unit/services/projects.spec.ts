@@ -21,9 +21,9 @@ describe('Project retrieval services', () => {
         }
       })
 
-      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
         workspaceId
-      )) {
+      })) {
         foundProjects.push(...projectsPage)
       }
 
@@ -46,9 +46,9 @@ describe('Project retrieval services', () => {
         }
       })
 
-      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
         workspaceId
-      )) {
+      })) {
         foundProjects.push(...projectsPage)
       }
 
@@ -65,9 +65,9 @@ describe('Project retrieval services', () => {
         }
       })
 
-      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
         workspaceId
-      )) {
+      })) {
         foundProjects.push(...projectsPage)
       }
 
