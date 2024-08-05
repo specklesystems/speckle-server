@@ -31,8 +31,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   name: string
-  oldRole: WorkspaceRoles | undefined
-  newRole: WorkspaceRoles | undefined
+  oldRole?: WorkspaceRoles
+  newRole?: WorkspaceRoles
 }>()
 
 const isOpen = computed({
@@ -50,6 +50,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Update',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
+      emit('update:open', false)
       emit('updateRole')
     }
   }

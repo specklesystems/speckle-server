@@ -48,6 +48,7 @@
     <template #role="{ item }">
       <FormSelectWorkspaceRoles
         :model-value="item.role as WorkspaceRoles"
+        fully-control-value
         :disabled="!isCurrentUser(item.id)"
         @update:model-value="
           (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
@@ -162,7 +163,6 @@ const onUpdateRole = async () => {
       }
     }
   ).catch(convertThrowIntoFetchResult)
-
   if (mutationResult?.data?.workspaceMutations?.updateRole) {
     triggerNotification({
       type: ToastNotificationType.Success,

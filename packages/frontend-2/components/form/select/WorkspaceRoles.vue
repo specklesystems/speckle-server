@@ -9,6 +9,7 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    :fully-control-value="fullyControlValue"
     size="sm"
   >
     <template #nothing-selected>
@@ -62,7 +63,8 @@ const props = defineProps({
   modelValue: {
     type: [String, Array] as PropType<ValueType>,
     default: undefined
-  }
+  },
+  fullyControlValue: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
