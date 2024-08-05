@@ -284,3 +284,23 @@ export const modelViewingSubscription = graphql(`
     }
   }
 `)
+
+export const modelCommentCreatedSubscription = graphql(`
+  subscription ProjectCommentsUpdated($target: ViewerUpdateTrackingTarget!) {
+    projectCommentsUpdated(target: $target) {
+      comment {
+        author {
+          avatar
+          id
+          name
+        }
+        id
+        hasParent
+        parent {
+          id
+        }
+      }
+      type
+    }
+  }
+`)

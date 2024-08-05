@@ -31,6 +31,7 @@ const documents = {
     "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        visibility\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.OnUserProjectsUpdatedDocument,
     "\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n": types.ProjectUpdatedDocument,
     "\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n": types.SubscriptionDocument,
+    "\n  subscription ProjectCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      comment {\n        author {\n          avatar\n          id\n          name\n        }\n        id\n        hasParent\n        parent {\n          id\n        }\n      }\n      type\n    }\n  }\n": types.ProjectCommentsUpdatedDocument,
 };
 
 /**
@@ -119,6 +120,10 @@ export function graphql(source: "\n  subscription ProjectUpdated($projectId: Str
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n"): (typeof documents)["\n  subscription Subscription($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      sessionId\n      user {\n        name\n        id\n        avatar\n      }\n      status\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription ProjectCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      comment {\n        author {\n          avatar\n          id\n          name\n        }\n        id\n        hasParent\n        parent {\n          id\n        }\n      }\n      type\n    }\n  }\n"): (typeof documents)["\n  subscription ProjectCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      comment {\n        author {\n          avatar\n          id\n          name\n        }\n        id\n        hasParent\n        parent {\n          id\n        }\n      }\n      type\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
