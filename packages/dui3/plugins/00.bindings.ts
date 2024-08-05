@@ -1,6 +1,7 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
+import { ServerBridge } from '~/lib/bridge/server'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
@@ -23,7 +24,6 @@ import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBin
 import { ISelectionBindingKey } from '~/lib/bindings/definitions/ISelectionBinding'
 import type { ITopLevelExpectionHandlerBinding } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
 import { ITopLevelExpectionHandlerBindingKey } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
-import { ServerBridge } from '~/lib/bridge/server'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {

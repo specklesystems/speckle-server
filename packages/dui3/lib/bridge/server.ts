@@ -11,7 +11,7 @@ import { storeToRefs } from 'pinia'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
-import { GenericBridge } from 'lib/bridge/generic-v2'
+import { GenericBridge } from '~/lib/bridge/generic-v2'
 
 export type SendViaBrowserArgs = {
   modelCardId: string
