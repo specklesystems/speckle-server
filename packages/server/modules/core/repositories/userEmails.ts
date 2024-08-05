@@ -12,7 +12,22 @@ import {
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserEmails } from '@/modules/core/dbSchema'
-import { UserEmailDeleteError } from '@/modules/core/errors/userEmails'
+import {
+  UserEmailDeleteError,
+  UserEmailPrimaryAlreadyExistsError
+} from '@/modules/core/errors/userEmails'
+
+const checkPrimaryEmail =
+  ({ db }: { db: Knex }) =>
+  async ({ userId }: { userId: string }) => {
+    const primaryEmail = await db<UserEmail>(UserEmails.name)
+      .where({ primary: true, userId })
+      .first()
+
+    if (primaryEmail) {
+      throw new UserEmailPrimaryAlreadyExistsError()
+    }
+  }
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>
@@ -37,9 +52,14 @@ export const createUserEmailFactory =
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
   async ({ query, update }) => {
-    const q = db<UserEmail>(UserEmails.name).where(query).update(update, '*')
+    const queryWithUserId = query as Pick<UserEmail, 'userId'>
+    if (queryWithUserId.userId && update.primary) {
+      await checkPrimaryEmail({ db })(queryWithUserId)
+    }
+    const [updated] = await db<UserEmail>(UserEmails.name)
+      .where(query)
+      .update(update, '*')
 
-    const [updated] = await q
     return updated
   }
 
