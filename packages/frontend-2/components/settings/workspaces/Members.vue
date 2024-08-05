@@ -6,7 +6,7 @@
         title="Members"
         text="Manage users in your workspace"
       />
-      <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
+      <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
           <SettingsWorkspacesMembersTable
             v-if="activeItem.id === 'members'"
@@ -15,14 +15,14 @@
           <div v-if="activeItem.id === 'guests'">Guests</div>
           <div v-if="activeItem.id === 'invites'">Pending invites</div>
         </template>
-      </LayoutTabsHoriztonal>
+      </LayoutTabsHorizontal>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
-import { LayoutTabsHoriztonal } from '@speckle/ui-components'
+import { LayoutTabsHorizontal } from '@speckle/ui-components'
 
 defineProps<{
   workspaceId: string
