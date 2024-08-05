@@ -22,7 +22,6 @@
 
 <script setup lang="ts">
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
-import { LayoutTabsHorizontal } from '@speckle/ui-components'
 
 defineProps<{
   workspaceId: string

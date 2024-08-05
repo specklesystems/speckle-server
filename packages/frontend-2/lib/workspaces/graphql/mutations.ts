@@ -1,11 +1,14 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const workspaceUpdateRoleMutation = graphql(`
-  mutation WorkspaceUpdateRole($input: WorkspaceRoleUpdateInput!) {
+  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {
     workspaceMutations {
       updateRole(input: $input) {
-        role
         id
+        team {
+          id
+          role
+        }
       }
     }
   }

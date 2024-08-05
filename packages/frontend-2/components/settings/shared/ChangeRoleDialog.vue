@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Change role</template>
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>Are you sure you want to change the role of the selected user?</p>
@@ -18,39 +18,33 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { ArrowRightIcon } from '@heroicons/vue/24/outline'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
 const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
   (e: 'updateRole'): void
 }>()
 
-const props = defineProps<{
-  open: boolean
+defineProps<{
   name: string
   oldRole?: WorkspaceRoles
   newRole?: WorkspaceRoles
 }>()
-
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const open = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'outline', fullWidth: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (open.value = false)
   },
   {
     text: 'Update',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
-      emit('update:open', false)
+      open.value = false
       emit('updateRole')
     }
   }

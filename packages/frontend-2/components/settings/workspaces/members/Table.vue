@@ -78,7 +78,6 @@ import { useMutation, useQuery } from '@vue/apollo-composable'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
-  getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import type { SettingsWorkspacesMembersQuery } from '~~/lib/common/generated/gql/graphql'
@@ -112,16 +111,12 @@ const showChangeUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
-const members = computed(() => {
-  if (result?.value?.workspace?.team) {
-    return result.value.workspace.team.map(({ user, ...rest }) => ({
-      ...user,
-      ...rest
-    }))
-  }
-
-  return []
-})
+const members = computed(() =>
+  (result.value?.workspace.team || []).map(({ user, ...rest }) => ({
+    ...user,
+    ...rest
+  }))
+)
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 const isCurrentUser = (id: string) => id === activeUser.value?.id
@@ -139,30 +134,14 @@ const openChangeUserRoleDialog = (
 const onUpdateRole = async () => {
   if (!userToModify.value || !newRole.value) return
 
-  const mutationResult = await updateChangeRole(
-    {
-      input: {
-        userId: userToModify.value.id,
-        role: newRole.value,
-        workspaceId: props.workspaceId
-      }
-    },
-    {
-      update: (cache, { data }) => {
-        const userId = userToModify.value?.id
-        const newRoleVal = newRole
-
-        if (data?.workspaceMutations?.updateRole) {
-          cache.modify({
-            id: getCacheId('WorkspaceCollaborator', userId as string),
-            fields: {
-              role: () => newRoleVal
-            }
-          })
-        }
-      }
+  const mutationResult = await updateChangeRole({
+    input: {
+      userId: userToModify.value.id,
+      role: newRole.value,
+      workspaceId: props.workspaceId
     }
-  ).catch(convertThrowIntoFetchResult)
+  }).catch(convertThrowIntoFetchResult)
+
   if (mutationResult?.data?.workspaceMutations?.updateRole) {
     triggerNotification({
       type: ToastNotificationType.Success,
