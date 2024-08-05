@@ -19,7 +19,6 @@
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
-import { LayoutTabsHorizontal } from '@speckle/ui-components'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'

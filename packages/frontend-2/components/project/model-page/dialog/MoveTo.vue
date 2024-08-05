@@ -38,7 +38,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
-import { LayoutTabsHorizontal } from '@speckle/ui-components'
 import type { LayoutPageTabItem } from '@speckle/ui-components'
 
 graphql(`
