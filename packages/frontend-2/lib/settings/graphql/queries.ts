@@ -20,6 +20,7 @@ export const settingsWorkspacesMembersQuery = graphql(`
         role
         id
         user {
+          id
           avatar
           name
           company
