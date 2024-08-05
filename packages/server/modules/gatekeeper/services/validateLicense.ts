@@ -19,10 +19,8 @@ export const validateLicenseModuleAccess = async ({
   publicKey: jose.KeyLike
   requiredModules: LicensedModuleNames
 }): Promise<boolean> => {
-  // if (isDevEnv()) return true
   try {
     const { payload } = await jose.jwtVerify(licenseToken, publicKey)
-    // if (protectedHeader.alg !== ) return false
 
     const claims = LicenseTokenClaims.safeParse(payload)
     if (!claims.success) return false
