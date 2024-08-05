@@ -6,8 +6,7 @@ import sanitizeHtml from 'sanitize-html'
 import {
   resolveTarget,
   buildUserTarget,
-  ResolvedTargetData,
-  getPrimaryResourceTarget
+  ResolvedTargetData
 } from '@/modules/serverinvites/helpers/core'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
@@ -25,7 +24,10 @@ import {
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { MaybeNullOrUndefined } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
@@ -129,7 +131,9 @@ export const createAndSendInviteFactory =
       targetUser,
       serverInfo
     })
-    const finalPrimaryResource = getPrimaryResourceTarget(resources)
+    const finalPrimaryResource = resources.find(
+      (r): r is PrimaryInviteResourceTarget => 'primary' in r && r.primary
+    )
     if (!finalPrimaryResource) {
       throw new InviteCreateValidationError('No primary resource could be resolved')
     }

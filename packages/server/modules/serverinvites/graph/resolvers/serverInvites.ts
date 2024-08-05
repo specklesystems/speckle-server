@@ -42,7 +42,10 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { getStream } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ServerInviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -135,17 +138,19 @@ export = {
     async serverInviteCreate(_parent, args, context) {
       const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
 
+      const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+        {
+          resourceId: '',
+          role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
+          resourceType: ServerInviteResourceType,
+          primary: true
+        }
       await createAndSendInvite(
         {
           target: args.input.email,
           inviterId: context.userId!,
           message: args.input.message,
-          primaryResourceTarget: <ServerInviteResourceTarget>{
-            resourceId: '',
-            role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
-            resourceType: ServerInviteResourceType,
-            primary: true
-          }
+          primaryResourceTarget
         },
         context.resourceAccessRules
       )
@@ -183,22 +188,25 @@ export = {
       const batches = chunk(paramsArray, 50)
       for (const paramsBatchArray of batches) {
         await Promise.all(
-          paramsBatchArray.map((params) =>
-            createAndSendInvite(
+          paramsBatchArray.map((params) => {
+            const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+              {
+                resourceId: '',
+                role: (params.serverRole as ServerRoles) || Roles.Server.User,
+                resourceType: ServerInviteResourceType,
+                primary: true
+              }
+
+            return createAndSendInvite(
               {
                 target: params.email,
                 inviterId: context.userId!,
                 message: params.message,
-                primaryResourceTarget: <ServerInviteResourceTarget>{
-                  resourceId: '',
-                  role: (params.serverRole as ServerRoles) || Roles.Server.User,
-                  resourceType: ServerInviteResourceType,
-                  primary: true
-                }
+                primaryResourceTarget
               },
               context.resourceAccessRules
             )
-          )
+          })
         )
       }
 

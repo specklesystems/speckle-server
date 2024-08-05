@@ -20,6 +20,8 @@ import {
   BatchCreateWorkspaceInvitesMutationVariables,
   CancelWorkspaceInviteDocument,
   CancelWorkspaceInviteMutationVariables,
+  CreateProjectInviteDocument,
+  CreateProjectInviteMutationVariables,
   CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
   GetMyWorkspaceInvitesDocument,
@@ -38,7 +40,7 @@ import {
   createStreamInviteDirectly,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
-import { MaybeAsync, Roles } from '@speckle/shared'
+import { MaybeAsync, Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
@@ -50,7 +52,6 @@ import {
   createTestStreams,
   leaveStream
 } from '@/test/speckle-helpers/streamHelper'
-import { authorizeResolver } from '@/modules/shared'
 import { ForbiddenError } from 'apollo-server-express'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 import {
@@ -60,6 +61,8 @@ import {
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { getStream } from '@/modules/core/repositories/streams'
 
 enum InviteByTarget {
   Email = 'email',
@@ -84,6 +87,11 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const getMyInvites = async (options?: ExecuteOperationOptions) =>
     apollo.execute(GetMyWorkspaceInvitesDocument, {}, options)
 
+  const createDefaultProjectInvite = async (
+    args: CreateProjectInviteMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateProjectInviteDocument, args, options)
+
   const useProjectInvite = async (
     args: UseWorkspaceProjectInviteMutationVariables,
     options?: ExecuteOperationOptions
@@ -94,6 +102,8 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     userId: string
     workspaceId: string
     streamId?: string
+    expectedWorkspaceRole?: WorkspaceRoles
+    expectedProjectRole?: StreamRoles
   }) => {
     const { shouldHaveAccess, userId, workspaceId, streamId } = params
 
@@ -106,14 +116,35 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
       }
     }
 
-    await wrapAccessCheck(() =>
-      authorizeResolver(userId, workspaceId, Roles.Workspace.Guest, null)
-    )
+    await wrapAccessCheck(async () => {
+      const workspace = await getWorkspaceFactory({ db })({ workspaceId, userId })
+      if (!workspace?.role) {
+        throw new ForbiddenError('Missing workspace role')
+      }
+
+      if (
+        params.expectedWorkspaceRole &&
+        workspace.role !== params.expectedWorkspaceRole
+      ) {
+        throw new ForbiddenError(
+          `Unexpected workspace role! Expected: ${params.expectedWorkspaceRole}, real: ${workspace.role}`
+        )
+      }
+    })
 
     if (streamId?.length) {
-      await wrapAccessCheck(() =>
-        authorizeResolver(userId, streamId, Roles.Stream.Reviewer, null)
-      )
+      await wrapAccessCheck(async () => {
+        const project = await getStream({ streamId, userId })
+        if (!project?.role) {
+          throw new ForbiddenError('Missing project role')
+        }
+
+        if (params.expectedProjectRole && project.role !== params.expectedProjectRole) {
+          throw new ForbiddenError(
+            `Unexpected project role! Expected: ${params.expectedProjectRole}, real: ${project.role}`
+          )
+        }
+      })
     }
   }
 
@@ -146,7 +177,8 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     createInvite,
     batchCreateInvites,
     cancelInvite,
-    getWorkspaceWithTeam
+    getWorkspaceWithTeam,
+    createDefaultProjectInvite
   }
 }
 
@@ -598,7 +630,11 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
-      const validateResourceAccess = async (params: { shouldHaveAccess: boolean }) => {
+      const validateResourceAccess = async (params: {
+        shouldHaveAccess: boolean
+        expectedWorkspaceRole?: WorkspaceRoles
+        expectedProjectRole?: StreamRoles
+      }) => {
         return gqlHelpers.validateResourceAccess({
           ...params,
           userId: otherGuy.id,
@@ -633,7 +669,8 @@ describe('Workspaces Invites GQL', () => {
         const projectInvite = await createStreamInviteDirectly(
           {
             user: otherGuy,
-            stream: myInviteTargetWorkspaceStream1
+            stream: myInviteTargetWorkspaceStream1,
+            role: Roles.Stream.Owner
           },
           me.id
         )
@@ -847,7 +884,7 @@ describe('Workspaces Invites GQL', () => {
         expect(invite).to.be.ok
       })
 
-      it('accepting workspace project invite also adds user to workspace', async () => {
+      it('accepting workspace project invite also adds user to workspace w/ guest role', async () => {
         const res = await gqlHelpers.useProjectInvite(
           {
             input: {
@@ -871,7 +908,11 @@ describe('Workspaces Invites GQL', () => {
         })
         expect(invite).to.be.not.ok
 
-        await validateResourceAccess({ shouldHaveAccess: true })
+        await validateResourceAccess({
+          shouldHaveAccess: true,
+          expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedProjectRole: Roles.Stream.Owner
+        })
       })
     })
   })

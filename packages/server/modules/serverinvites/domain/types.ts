@@ -20,10 +20,20 @@ export type InviteResourceTarget<
   resourceId: string
   resourceType: ResourceType
   role: RoleType
+}
+
+export type PrimaryInviteResourceTarget<
+  Resource extends InviteResourceTarget = InviteResourceTarget
+> = Resource & {
   /**
-   * Whether or not this is the primary target for the invite
+   * Marks the resource target as the primary, the one that will stored in the DB
    */
-  primary: boolean
+  primary: true
+
+  /**
+   * If invite also has secondary resource targets, you can specify the expected roles here
+   */
+  secondaryResourceRoles?: Record<InviteResourceTargetType, string>
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<
@@ -44,6 +54,6 @@ export type ServerInviteRecord<
   inviterId: string
   createdAt: Date
   message: Nullable<string>
-  resource: Resource
+  resource: PrimaryInviteResourceTarget<Resource>
   token: string
 }

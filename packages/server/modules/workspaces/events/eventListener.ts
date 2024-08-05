@@ -8,10 +8,7 @@ import {
   grantStreamPermissions as repoGrantStreamPermissions
 } from '@/modules/core/repositories/streams'
 import { GetWorkspaceRoles } from '@/modules/workspaces/domain/operations'
-import {
-  mapProjectRoleToWorkspaceRole,
-  mapWorkspaceRoleToProjectRole
-} from '@/modules/workspaces/helpers/roles'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/helpers/roles'
 import {
   ServerInvitesEvents,
   ServerInvitesEventsPayloads
@@ -23,6 +20,8 @@ import {
 import { logger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { Optional, Roles, WorkspaceRoles } from '@speckle/shared'
 
 export const onProjectCreatedFactory =
   ({
@@ -82,11 +81,17 @@ export const onInviteFinalizedFactory =
     }
     if (!project.workspaceId) return
 
+    const workspaceRole =
+      (resourceTarget.secondaryResourceRoles?.[
+        WorkspaceInviteResourceType
+      ] as Optional<WorkspaceRoles>) || Roles.Workspace.Guest
+
     // Add user to workspace
     await deps.updateWorkspaceRole({
-      role: mapProjectRoleToWorkspaceRole(project.role),
+      role: workspaceRole,
       userId: targetUserId,
-      workspaceId: project.workspaceId
+      workspaceId: project.workspaceId,
+      skipProjectRoleUpdatesFor: [project.id]
     })
   }
 

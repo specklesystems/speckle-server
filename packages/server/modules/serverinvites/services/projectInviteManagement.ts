@@ -17,6 +17,7 @@ import {
   QueryAllUserResourceInvites
 } from '@/modules/serverinvites/domain/operations'
 import {
+  PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
@@ -65,6 +66,14 @@ export const createProjectInviteFactory =
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!
+
+    const primaryResourceTarget: PrimaryInviteResourceTarget<ProjectInviteResourceTarget> =
+      {
+        resourceType: ProjectInviteResourceType,
+        resourceId,
+        role: (role as StreamRoles) || Roles.Stream.Contributor,
+        primary: true
+      }
     await deps.createAndSendInvite(
       {
         target,
@@ -72,12 +81,7 @@ export const createProjectInviteFactory =
         message: isStreamInviteCreateInput(input)
           ? input.message || undefined
           : undefined,
-        primaryResourceTarget: {
-          resourceType: ProjectInviteResourceType,
-          resourceId,
-          role: role || Roles.Stream.Contributor,
-          primary: true
-        }
+        primaryResourceTarget
       },
       inviterResourceAccessRules
     )
@@ -116,18 +120,20 @@ export const inviteUsersToProjectFactory =
     const users = await getUsers(userIds)
     if (!users.length) return false
 
-    const inviteParamsArray = users.map(
-      (u): CreateInviteParams => ({
-        target: buildUserTarget(u.id)!,
-        inviterId,
-        primaryResourceTarget: {
+    const inviteParamsArray = users.map((u): CreateInviteParams => {
+      const primaryResourceTarget: PrimaryInviteResourceTarget<ProjectInviteResourceTarget> =
+        {
           resourceType: ProjectInviteResourceType,
           resourceId: streamId,
           role: Roles.Stream.Contributor,
           primary: true
         }
-      })
-    )
+      return {
+        target: buildUserTarget(u.id)!,
+        inviterId,
+        primaryResourceTarget
+      }
+    })
 
     await Promise.all(
       inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))

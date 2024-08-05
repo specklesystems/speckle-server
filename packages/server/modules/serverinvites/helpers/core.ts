@@ -67,6 +67,3 @@ export const isProjectResourceTarget = (
   target: InviteResourceTarget
 ): target is ProjectInviteResourceTarget =>
   target.resourceType === ProjectInviteResourceType
-
-export const getPrimaryResourceTarget = (targets: InviteResourceTarget[]) =>
-  targets.find((t) => !!t.primary)
