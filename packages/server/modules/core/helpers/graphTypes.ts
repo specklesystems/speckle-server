@@ -10,9 +10,9 @@ import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainCons
 import {
   BranchRecord,
   CommitRecord,
-  LimitedUserRecord,
   ObjectRecord,
-  StreamRecord
+  StreamRecord,
+  UserRecord
 } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
@@ -71,7 +71,10 @@ export type LimitedUserGraphQLReturn = Omit<
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
 
-export type UserGraphQLReturn = LimitedUserRecord
+export type UserGraphQLReturn = Pick<
+  UserRecord,
+  'id' | 'createdAt' | 'name' | 'bio' | 'company' | 'email' | 'verified' | 'avatar'
+>
 
 export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
   /**

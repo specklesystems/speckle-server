@@ -448,15 +448,15 @@ export function buildRequestLoaders(
       /**
        * Get user from DB
        */
-      getUser: createLoader<string, Nullable<UserWithOptionalRole<LimitedUserRecord>>>(
-        async (userIds) => {
-          const results = keyBy(
-            await getUsers(userIds.slice(), { withRole: true }),
-            'id'
-          )
-          return userIds.map((i) => results[i] || null)
-        }
-      ),
+      getUser: createLoader<
+        string,
+        Nullable<
+          UserWithOptionalRole<LimitedUserRecord & { email: string; verified: boolean }>
+        >
+      >(async (userIds) => {
+        const results = keyBy(await getUsers(userIds.slice(), { withRole: true }), 'id')
+        return userIds.map((i) => results[i] || null)
+      }),
 
       /**
        * Get meta values associated with one or more users

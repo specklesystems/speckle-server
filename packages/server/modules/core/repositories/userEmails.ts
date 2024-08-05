@@ -12,7 +12,7 @@ import {
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserEmails } from '@/modules/core/dbSchema'
-import { UserEmailDeleteError } from '@/modules/core/errors/useremails'
+import { UserEmailDeleteError } from '@/modules/core/errors/userEmails'
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>
