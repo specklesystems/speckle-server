@@ -17,6 +17,8 @@ workflows:
                 - hotfix*
 
       - test-server:
+          context:
+            - speckle-server-licensing
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -464,7 +466,7 @@ jobs:
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      LICENSE_TOKEN: eyJhbGciOiJSUzI1NiJ9.eyJhbGxvd2VkRG9tYWlucyI6WyJodHRwOi8vMTI3LjAuMC4xOjMwMDAiLCJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJodHRwOi8vc3BlY2tsZS5pbnRlcm5hbCIsImh0dHA6Ly9zcGVja2xlLmludGVybmFsOjMwMDAiXSwiZW5hYmxlZE1vZHVsZXMiOnsid29ya3NwYWNlcyI6dHJ1ZX0sImlhdCI6MTcyMjg3OTkzMSwiaXNzIjoidXJuOlNwZWNrbGUifQ.SXlx2LP-tQY0HhUoiiOsWKDb5nq4YL4Gpg3lT8Alc8_A40K2_5uMwtzMgbNqPSYfD9jdOnFBrsXmxcwKKG1l8J-dKcwgEFa7Zyym0NF1f-tVFOTxhmw7V3GI0wndL6gV9bHLw58_DY1Z_lye20u_lDUu1H6sEf397NMB5omvS9VAvXytKpbHIXc2WjLHEkodaYzsQXZQtI2rXgZNaJix8nR8u9DfGtgC3n3BApPm6RIZeGXS1x1RXJQrB4E5zB7J29SOjj9jumgvMwR3n2q6-oe7gUfrrbZ6SDVl0zF3VMjwbGqyA04ybc2EfzS8a8hy-kAD0zUDSGfVlHrocG-bcLZrjL4blJ5-SKLJbL3a1_mEI63UT_KX7Dn6D-qPKue_A3a4Ixij3Tdz6mCpYMzcxu03dL-h8cSfIuYAkkGL-3wITnCye0FyZPjow74ejtZDf-J3B9T-X5BsxbBgDxbpYTj6oTotEH58bnTAKdp7WvnxOaLGo2srK3R30sPARzEN
+      LICENSE_TOKEN: ${SPECKLE_SERVER_LICENSE}
     steps:
       - checkout
       - restore_cache:
