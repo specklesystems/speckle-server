@@ -6,6 +6,7 @@ export const settingsUpdateWorkspaceMutation = graphql(`
       update(input: $input) {
         description
         name
+        id
       }
     }
   }

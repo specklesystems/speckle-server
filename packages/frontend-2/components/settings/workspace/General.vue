@@ -13,7 +13,9 @@
             placeholder="Example Ltd."
             show-label
             :disabled="!isAdmin"
-            @change="save"
+            :rules="[isRequired]"
+            validate-on-value-update
+            @change="save()"
           />
           <hr class="mt-4 mb-2" />
           <FormTextInput
@@ -24,7 +26,7 @@
             placeholder="This is your workspace"
             show-label
             :disabled="!isAdmin"
-            @change="save"
+            @change="save()"
           />
         </div>
       </div>
@@ -53,18 +55,23 @@
 </template>
 
 <script setup lang="ts">
+import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
+import { isRequired } from '~~/lib/common/helpers/validation'
+
+type FormValues = { name: string; description: string }
 
 const props = defineProps<{
   workspaceId: string
   isAdmin?: boolean
 }>()
 
+const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
 const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
@@ -75,7 +82,7 @@ const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
 
-const save = async () => {
+const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
 
   const input: WorkspaceUpdateInput = {
@@ -100,7 +107,7 @@ const save = async () => {
       description: errorMessage
     })
   }
-}
+})
 
 function toggleDeleteDialog() {
   showDeleteDialog.value = true
