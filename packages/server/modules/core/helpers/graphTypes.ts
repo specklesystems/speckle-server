@@ -10,6 +10,7 @@ import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainCons
 import {
   BranchRecord,
   CommitRecord,
+  LimitedUserRecord,
   ObjectRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
@@ -69,6 +70,8 @@ export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
+
+export type UserGraphQLReturn = LimitedUserRecord
 
 export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
   /**

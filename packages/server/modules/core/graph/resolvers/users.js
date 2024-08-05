@@ -28,7 +28,6 @@ const {
   findServerInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
-const { findEmailsByUserIdFactory } = require('@/modules/core/repositories/userEmails')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -135,9 +134,6 @@ module.exports = {
         key: UsersMeta.metaKey.isOnboardingFinished
       })
       return !!metaVal?.value
-    },
-    async emails(parent) {
-      return findEmailsByUserIdFactory({ db })({ userId: parent.id })
     }
   },
   LimitedUser: {

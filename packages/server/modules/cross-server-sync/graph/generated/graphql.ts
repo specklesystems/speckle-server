@@ -22,6 +22,7 @@ export type Scalars = {
 
 export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
+  emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
   /** Edit a user's profile */
@@ -1210,8 +1211,6 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
-  createUserEmail: Scalars['ID']['output'];
-  deleteUserEmail: Scalars['Boolean']['output'];
   /**
    * Delete a pending invite
    * Note: The required scope to invoke this is not given out to app or personal access tokens
@@ -1234,7 +1233,6 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean']['output'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean']['output'];
-  setPrimaryUserEmail: Scalars['Boolean']['output'];
   /**
    * Request access to a specific stream
    * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead.
@@ -1456,16 +1454,6 @@ export type MutationCommitsMoveArgs = {
 };
 
 
-export type MutationCreateUserEmailArgs = {
-  input: CreateUserEmailInput;
-};
-
-
-export type MutationDeleteUserEmailArgs = {
-  input: DeleteUserEmailInput;
-};
-
-
 export type MutationInviteDeleteArgs = {
   inviteId: Scalars['String']['input'];
 };
@@ -1498,11 +1486,6 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
-};
-
-
-export type MutationSetPrimaryUserEmailArgs = {
-  input: SetPrimaryUserEmailInput;
 };
 
 
@@ -3507,6 +3490,28 @@ export type UserEmail = {
   primary: Scalars['Boolean']['output'];
   userId: Scalars['ID']['output'];
   verified: Scalars['Boolean']['output'];
+};
+
+export type UserEmailMutations = {
+  __typename?: 'UserEmailMutations';
+  create: User;
+  delete: User;
+  setPrimary: User;
+};
+
+
+export type UserEmailMutationsCreateArgs = {
+  input: CreateUserEmailInput;
+};
+
+
+export type UserEmailMutationsDeleteArgs = {
+  input: DeleteUserEmailInput;
+};
+
+
+export type UserEmailMutationsSetPrimaryArgs = {
+  input: SetPrimaryUserEmailInput;
 };
 
 export type UserProjectsFilter = {
