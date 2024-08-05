@@ -27,18 +27,42 @@ export const getActiveUserEmails = gql`
 
 export const createUserEmailQuery = gql`
   mutation CreateUserEmail($input: CreateUserEmailInput!) {
-    createUserEmail(input: $input)
+    activeUserMutations {
+      emailMutations {
+        create(input: $input) {
+          ...UserWithEmails
+        }
+      }
+    }
   }
+
+  ${userWithEmailsFragment}
 `
 
 export const deleteUserEmailQuery = gql`
   mutation DeleteUserEmail($input: DeleteUserEmailInput!) {
-    deleteUserEmail(input: $input)
+    activeUserMutations {
+      emailMutations {
+        delete(input: $input) {
+          ...UserWithEmails
+        }
+      }
+    }
+
+  ${userWithEmailsFragment}
   }
 `
 
 export const setPrimaryUserEmailQuery = gql`
   mutation SetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {
-    setPrimaryUserEmail(input: $input)
+    activeUserMutations {
+      emailMutations {
+        setPrimary(input: $input) {
+          ...UserWithEmails
+        }
+      }
+    }
   }
+
+  ${userWithEmailsFragment}
 `

@@ -1,30 +1,23 @@
 import { Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
-import { beforeEachContext, initializeTestServer, truncateTables } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import {
   buildAuthenticatedApolloServer,
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
 import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
-import type { Server } from 'http'
-import type { Express } from 'express'
 import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import { Scopes } from '@speckle/shared'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { db } from '@/db/knex'
 import { before } from 'mocha'
 import { testApolloServer } from '@/test/graphqlHelper'
-import {
-  GetActiveUserDocument,
-  GetActiveUserEmailsDocument
-} from '@/test/graphql/generated/graphql'
+import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
 
 describe('Users (GraphQL)', () => {
   const me: BasicTestUser = {

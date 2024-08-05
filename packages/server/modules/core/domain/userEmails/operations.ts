@@ -13,9 +13,9 @@ export type UpdateUserEmail = (
     update
   }: {
     query:
-    | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
-    | (Pick<UserEmail, 'email'> & { primary?: boolean })
-    | (Pick<UserEmail, 'userId'> & { primary: true })
+      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
+      | (Pick<UserEmail, 'email'> & { primary?: boolean })
+      | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
   },
   options?: { trx: Knex.Transaction }
@@ -34,8 +34,8 @@ export type MarkUserEmailAsVerified = ({
 export type FindPrimaryEmailForUser = (
   query:
     | {
-      userId: string
-    }
+        userId: string
+      }
     | { email: string }
 ) => Promise<UserEmail>
 

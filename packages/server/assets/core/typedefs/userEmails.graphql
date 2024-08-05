@@ -6,6 +6,10 @@ type UserEmail {
   userId: ID!
 }
 
+extend type User {
+  emails: [UserEmail!]! @isOwner
+}
+
 input CreateUserEmailInput {
   email: String!
 }
@@ -16,16 +20,18 @@ input SetPrimaryUserEmailInput {
   id: ID!
 }
 
-extend type Mutation {
-  createUserEmail(input: CreateUserEmailInput!): ID!
+type UserEmailMutations {
+  create(input: CreateUserEmailInput!): User!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
+  delete(input: DeleteUserEmailInput!): User!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+  setPrimary(input: SetPrimaryUserEmailInput!): User!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+}
 
-  deleteUserEmail(input: DeleteUserEmailInput!): Boolean!
-    @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "profile:email")
-
-  setPrimaryUserEmail(input: SetPrimaryUserEmailInput!): Boolean!
-    @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "profile:email")
+extend type ActiveUserMutations {
+  emailMutations: UserEmailMutations!
 }
