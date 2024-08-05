@@ -68,9 +68,7 @@ export const getUsersBaseQuery = (
 export async function getUsers(
   userIds: string | string[],
   params?: GetUserParams
-): Promise<
-  UserWithOptionalRole<LimitedUserRecord & { email: string; verified: boolean }>[]
-> {
+): Promise<UserWithOptionalRole[]> {
   const { withRole, skipClean } = params || {}
   userIds = isArray(userIds) ? userIds : [userIds]
 
