@@ -16,7 +16,7 @@ import { storeToRefs } from 'pinia'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
-  getCommands: (viewId: string) => void
+  getBindingsMethodNames: (viewId: string) => void
 }
 
 type SendViaBrowserArgs = {
@@ -255,7 +255,7 @@ export class SketchupBridge extends BaseBridge {
   public async create(): Promise<boolean> {
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names for related bindings/views.
-    sketchup.getCommands(this.bindingName)
+    sketchup.getBindingsMethodNames(this.bindingName)
 
     //
     try {
