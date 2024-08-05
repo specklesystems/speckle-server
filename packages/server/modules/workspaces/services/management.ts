@@ -3,6 +3,7 @@ import {
   DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
+  QueryAllWorkspaceProjects,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -10,6 +11,7 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
+  deleteStream,
   grantStreamPermissions as repoGrantStreamPermissions,
   revokeStreamPermissions as repoRevokeStreamPermissions
 } from '@/modules/core/repositories/streams'
@@ -38,9 +40,10 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { chunk } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -160,36 +163,44 @@ type WorkspaceDeleteArgs = {
   workspaceId: string
 }
 
-type WorkspaceDeleteContext = Required<
-  Pick<GraphQLContext, 'userId' | 'resourceAccessRules'>
->
-
 export const deleteWorkspaceFactory =
   ({
     deleteWorkspace,
+    deleteProject,
+    queryAllWorkspaceProjects,
     deleteAllResourceInvites
   }: {
     deleteWorkspace: DeleteWorkspace
+    deleteProject: typeof deleteStream
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
   }) =>
-  async (
-    { workspaceId }: WorkspaceDeleteArgs,
-    context: WorkspaceDeleteContext
-  ): Promise<void> => {
-    await authorizeResolver(
-      context.userId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      context.resourceAccessRules
-    )
+  async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
+    // Cache project ids for post-workspace-delete cleanup
+    const projectIds: string[] = []
+    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+      projectIds.push(...projects.map((project) => project.id))
+    }
 
     await Promise.all([
       deleteWorkspace({ workspaceId }),
       deleteAllResourceInvites({
         resourceId: workspaceId,
         resourceType: WorkspaceInviteResourceType
-      })
+      }),
+      ...projectIds.map((projectId) =>
+        deleteAllResourceInvites({
+          resourceId: projectId,
+          resourceType: ProjectInviteResourceType
+        })
+      )
     ])
+
+    // Workspace delete cascades project delete, but some manual cleanup is required
+    // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
+    for (const projectIdsChunk of chunk(projectIds, 25)) {
+      await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
+    }
   }
 
 type WorkspaceRoleDeleteArgs = {
@@ -231,7 +242,9 @@ export const deleteWorkspaceRoleFactory =
     const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
       getStreams
     })
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
       await Promise.all(
         projectsPage.map(({ id: streamId }) =>
           revokeStreamPermissions({ streamId, userId })
@@ -296,7 +309,9 @@ export const updateWorkspaceRoleFactory =
       getStreams
     })
     const projectRole = mapWorkspaceRoleToProjectRole(role)
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
       await Promise.all(
         projectsPage.map(({ id: streamId }) =>
           grantStreamPermissions({ streamId, userId, role: projectRole })

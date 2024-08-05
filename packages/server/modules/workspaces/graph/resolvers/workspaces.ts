@@ -65,13 +65,12 @@ import {
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import {
-  deleteWorkspaceProjectFactory,
   getWorkspaceProjectsFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles } from '@speckle/shared'
-import _, { chunk } from 'lodash'
+import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
 
 const buildCreateAndSendWorkspaceInvite = () =>
@@ -157,41 +156,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
         delete: async (_parent, args, context) => {
           const { workspaceId } = args
 
-          // Cache workspace project ids for post-delete cleanup
-          const workspaceProjectIds: string[] = []
-
-          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-            getStreams
-          })
-          for await (const projects of queryAllWorkspaceProjects(workspaceId)) {
-            workspaceProjectIds.push(...projects.map((project) => project.id))
-          }
-
-          // Delete workspace and invites
-          const deleteWorkspace = deleteWorkspaceFactory({
-            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
-          })
-
-          await deleteWorkspace(
-            { workspaceId },
-            {
-              userId: context.userId!,
-              resourceAccessRules: context.resourceAccessRules!
-            }
+          await authorizeResolver(
+            context.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
           )
 
-          // Delete workspace project resources not handled by cascade delete
-          const deleteWorkspaceProject = deleteWorkspaceProjectFactory({
-            deleteStream,
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+          // Delete workspace and associated resources (i.e. invites)
+          const deleteWorkspace = deleteWorkspaceFactory({
+            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+            deleteProject: deleteStream,
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
           })
 
-          for (const projectIds of _.chunk(workspaceProjectIds)) {
-            await Promise.all(
-              projectIds.map((projectId) => deleteWorkspaceProject({ projectId }))
-            )
-          }
+          await deleteWorkspace({ workspaceId })
 
           return true
         },

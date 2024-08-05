@@ -90,14 +90,13 @@ export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Workspace Projects */
 
-type GetAllWorkspaceProjectsForUserArgs = {
-  userId: string
+type QueryAllWorkspaceProjectsArgs = {
   workspaceId: string
 }
 
-export type GetAllWorkspaceProjectsForUser = (
-  args: GetAllWorkspaceProjectsForUserArgs
-) => Promise<StreamRecord[]>
+export type QueryAllWorkspaceProjects = (
+  args: QueryAllWorkspaceProjectsArgs
+) => AsyncGenerator<StreamRecord[], void, unknown>
 
 /** Workspace Project Roles */
 
