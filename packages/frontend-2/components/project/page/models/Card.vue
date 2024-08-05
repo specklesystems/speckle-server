@@ -88,7 +88,11 @@
         </div>
       </div>
       <div
-        v-if="!isPendingModelFragment(model) && model.automationsStatus"
+        v-if="
+          isAutomateModuleEnabled &&
+          !isPendingModelFragment(model) &&
+          model.automationsStatus
+        "
         class="z-20 absolute top-0 left-0"
       >
         <AutomateRunsTriggerStatus
@@ -144,6 +148,7 @@ const props = withDefaults(
 provide('projectId', props.projectId)
 
 const router = useRouter()
+const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const importArea = ref(
   null as Nullable<{

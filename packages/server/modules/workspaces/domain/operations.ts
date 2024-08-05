@@ -104,10 +104,6 @@ export type GrantWorkspaceProjectRoles = (
   args: GrantWorkspaceProjectRolesArgs
 ) => Promise<void>
 
-/** Blob */
-
-export type StoreBlob = (args: string) => Promise<string>
-
 /** Events */
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {

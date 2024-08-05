@@ -41,6 +41,8 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
   noClosureWrites: false
+  ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
+  workspaceModuleEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
