@@ -2,7 +2,8 @@ import { db } from '@/db/knex'
 import {
   generateRegistrationParams,
   localAuthRestApi,
-  LocalAuthRestApiHelpers
+  LocalAuthRestApiHelpers,
+  LoginParams
 } from '@/modules/auth/tests/helpers/registration'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { updateServerInfo } from '@/modules/core/services/generic'
@@ -201,6 +202,56 @@ describe('Server registration', () => {
             await restApi.register(params)
           }
         )
+      })
+    })
+
+    describe('when logging in', () => {
+      const registeredUserParams = generateRegistrationParams()
+
+      before(async () => {
+        await restApi.register(registeredUserParams)
+      })
+
+      it('works with valid credentials', async () => {
+        const challenge = 'asd123asdasd'
+
+        const loginParams: LoginParams = {
+          email: registeredUserParams.user.email,
+          password: registeredUserParams.user.password,
+          challenge
+        }
+
+        await restApi.login(loginParams)
+      })
+
+      it("doesn't work with invalid challenge for 2nd call", async () => {
+        const challenge = 'asd123asdasd'
+
+        const loginParams: LoginParams = {
+          email: registeredUserParams.user.email,
+          password: registeredUserParams.user.password,
+          challenge
+        }
+
+        const e = await expectToThrow(async () => {
+          await restApi.login(loginParams, {
+            getTokenFromAccessCodeChallenge: 'mismatched'
+          })
+        })
+        expect(e.message).to.contain('Invalid request')
+      })
+
+      it("doesn't work with invalid credentials", async () => {
+        const challenge = 'asd123asdasd'
+
+        const loginParams: LoginParams = {
+          email: registeredUserParams.user.email,
+          password: 'wrongpassword',
+          challenge
+        }
+
+        const e = await expectToThrow(async () => await restApi.login(loginParams))
+        expect(e.message).to.contain('Invalid credentials')
       })
     })
   })

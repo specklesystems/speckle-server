@@ -1,11 +1,10 @@
 import { faker } from '@faker-js/faker'
-import { getRelativeUrl } from '@speckle/shared'
+import { RelativeURL } from '@speckle/shared'
 import { expect } from 'chai'
 import type { Express } from 'express'
 import { has, isString, random } from 'lodash'
 import request from 'supertest'
 
-const fakeOrigin = 'http://fake.com'
 export const appId = 'spklwebapp' // same values as on FE
 export const appSecret = 'spklwebapp'
 
@@ -26,6 +25,12 @@ export type RequestTokenParams = {
   challenge: string
   appId?: string
   appSecret?: string
+}
+
+export type LoginParams = {
+  email: string
+  password: string
+  challenge: string
 }
 
 export const localAuthRestApi = (params: { express: Express }) => {
@@ -66,7 +71,7 @@ export const localAuthRestApi = (params: { express: Express }) => {
   const registerAndGetAccessCode = async (params: RegisterParams) => {
     const { challenge, user, inviteToken, newsletter } = params
 
-    const registerUrl = new URL(`/auth/local/register`, fakeOrigin)
+    const registerUrl = new RelativeURL(`/auth/local/register`)
     registerUrl.searchParams.append('challenge', challenge)
     if (inviteToken) {
       registerUrl.searchParams.append('token', inviteToken)
@@ -76,10 +81,8 @@ export const localAuthRestApi = (params: { express: Express }) => {
       registerUrl.searchParams.append('newsletter', 'true')
     }
 
-    const relativeUrl = getRelativeUrl(registerUrl)
-
     const res = await request(express)
-      .post(relativeUrl)
+      .post(registerUrl.toString())
       .send(user)
       .set('Content-Type', 'application/json')
 
@@ -111,6 +114,25 @@ export const localAuthRestApi = (params: { express: Express }) => {
     }
 
     return data.token
+  }
+
+  const loginAndGetAccessCode = async (params: LoginParams) => {
+    const { email, password, challenge } = params
+
+    const loginUrl = new RelativeURL('/auth/local/login')
+    loginUrl.searchParams.set('challenge', challenge)
+
+    const res = await request(express)
+      .post(loginUrl.toString())
+      .send({ email, password })
+      .set('Content-Type', 'application/json')
+
+    if (!res.redirect) {
+      const errMsg = resolveErrorMessage(res)
+      throw new Error(errMsg || 'Failed to login and get access code')
+    }
+
+    return await resolveAccessCode(res)
   }
 
   const authCheck = async (params: { token: string }) => {
@@ -162,11 +184,38 @@ export const localAuthRestApi = (params: { express: Express }) => {
     return user
   }
 
+  const login = async (
+    params: LoginParams,
+    options?: Partial<{
+      /**
+       * In case you want the challenge in the 2nd call to be different
+       */
+      getTokenFromAccessCodeChallenge: string
+    }>
+  ) => {
+    const accessCode = await loginAndGetAccessCode(params)
+    expect(accessCode).to.be.ok
+
+    const token = await getTokenFromAccessCode({
+      accessCode,
+      challenge: options?.getTokenFromAccessCodeChallenge ?? params.challenge
+    })
+    expect(token).to.be.ok
+
+    const user = await authCheck({ token })
+    expect(user).to.be.ok
+    expect(user.email).to.equal(params.email)
+
+    return user
+  }
+
   return {
     registerAndGetAccessCode,
     getTokenFromAccessCode,
+    loginAndGetAccessCode,
     authCheck,
-    register
+    register,
+    login
   }
 }
 
