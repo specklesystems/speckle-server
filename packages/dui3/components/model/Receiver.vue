@@ -144,7 +144,11 @@ const handleVersionSelection = async (
 const handleMainButtonClick = async () => {
   if (props.modelCard.progress)
     return await store.receiveModelCancel(props.modelCard.modelCardId)
-  await receiveLatestVersion()
+  await receiveCurrentVersion()
+}
+
+const receiveCurrentVersion = async () => {
+  await store.receiveModel(props.modelCard.modelCardId)
 }
 
 // Cancels any in progress receive AND receives latest version

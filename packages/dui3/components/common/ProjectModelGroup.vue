@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="projectDetails && !projectError"
-    class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
+    class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow dark:border-gray-800 border-gray-100 border"
   >
     <!-- <div
       v-if="isProjectReadOnly"

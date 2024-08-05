@@ -1,7 +1,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events vuejs-accessibility/no-static-element-interactions -->
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer dark:border-gray-800 border-gray-300 border`"
     @click="highlightModel"
   >
     <div v-if="modelData" class="relative px-2 py-2">
@@ -139,7 +139,7 @@ const buttonTooltip = computed(() => {
     ? 'Cancel'
     : isSender.value
     ? 'Publish model'
-    : 'Load model'
+    : 'Receive selected version'
 })
 
 const projectAccount = computed(() =>
@@ -224,7 +224,7 @@ const cardBgColor = computed(() => {
     !(props.modelCard as IReceiverModelCard).hasDismissedUpdateWarning
   )
     return 'bg-orange-500/10'
-  return 'bg-foundation hover:bg-blue-500/10'
+  return 'bg-foundation dark:bg-neutral-800 hover:bg-blue-500/10 '
 })
 
 const noWriteAccess = computed(() => {
