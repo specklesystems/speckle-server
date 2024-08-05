@@ -15634,6 +15634,7 @@ __metadata:
     http-proxy-middleware: "npm:v3.0.0-beta.0"
     ioredis: "npm:^5.2.2"
     ioredis-mock: "npm:^8.9.0"
+    jose: "npm:^5.6.3"
     knex: "npm:^2.4.1"
     libsodium-wrappers: "npm:^0.7.13"
     lodash: "npm:^4.17.21"
@@ -35079,6 +35080,13 @@ __metadata:
   version: 5.4.0
   resolution: "jose@npm:5.4.0"
   checksum: 10/1e1664d2525f57c390d7031c8e505d5483e162fa42f5e65d3ab7c40e15ae8be5d0475d05d88c91660e115a0963e0c09e46cca78c212750143331eb68f7ee9ff4
+  languageName: node
+  linkType: hard
+
+"jose@npm:^5.6.3":
+  version: 5.6.3
+  resolution: "jose@npm:5.6.3"
+  checksum: 10/829f07b8857221ada1cd112a5ebd084e34748f6e3247f5cb03aca0a1f25dd6a07283c9a4f5b854935bda505e3243405640550f8e9eb46c45b172dc4cb336ac89
   languageName: node
   linkType: hard
 
