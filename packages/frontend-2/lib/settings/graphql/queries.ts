@@ -12,3 +12,20 @@ export const settingsSidebarWorkspacesQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesMembersQuery = graphql(`
+  query SettingsWorkspacesMembers($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      team {
+        role
+        id
+        user {
+          avatar
+          name
+          company
+          verified
+        }
+      }
+    }
+  }
+`)
