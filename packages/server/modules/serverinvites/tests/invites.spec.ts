@@ -10,7 +10,7 @@ import {
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
 import {
-  createStreamInviteDirectlyFactory,
+  createStreamInviteDirectly,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
@@ -47,7 +47,7 @@ async function cleanup() {
 }
 
 const findInvite = findInviteFactory({ db })
-const createInviteDirectly = createStreamInviteDirectlyFactory({ db })
+const createInviteDirectly = createStreamInviteDirectly
 
 const mailerMock = EmailSendingServiceMock
 

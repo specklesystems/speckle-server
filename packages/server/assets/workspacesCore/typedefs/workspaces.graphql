@@ -21,7 +21,10 @@ input WorkspaceUpdateInput {
   id: String!
   name: String
   description: String
-  logoUrl: String
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
 }
 
 input WorkspaceRoleUpdateInput {
@@ -93,9 +96,9 @@ type Workspace {
   createdAt: DateTime!
   updatedAt: DateTime!
   """
-  Optional url for workspace logo image
+  Logo image as base64-encoded string
   """
-  logoUrl: String
+  logo: String
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

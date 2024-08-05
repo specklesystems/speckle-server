@@ -27,9 +27,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-        deleteRole: async () => {
-          throw new WorkspacesModuleDisabledError()
-        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {

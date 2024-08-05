@@ -1,23 +1,30 @@
 import { Knex } from 'knex'
 import crs from 'crypto-random-string'
 import {
+  CountEmailsByUserId,
   CreateUserEmail,
   DeleteUserEmail,
+  FindEmail,
+  FindEmailsByUserId,
   FindPrimaryEmailForUser,
+  SetPrimaryUserEmail,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import { UserEmails } from '@/modules/core/dbSchema'
+import { UserEmailDeleteError } from '@/modules/core/errors/userEmails'
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>
   async ({ userEmail }) => {
     const id = crs({ length: 10 })
+    const { email, ...rest } = userEmail
 
-    await db(USER_EMAILS_TABLE_NAME).insert({
+    await db(UserEmails.name).insert({
       id,
       primary: true,
-      ...userEmail
+      email: email.toLowerCase().trim(),
+      ...rest
     })
 
     return id
@@ -26,33 +33,82 @@ export const createUserEmailFactory =
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
   async ({ query, update }) => {
-    const [updated] = await db<UserEmail>(USER_EMAILS_TABLE_NAME)
-      .where(query)
-      .update(update, '*')
+    const q = db<UserEmail>(UserEmails.name).where(query).update(update, '*')
 
+    const [updated] = await q
     return updated
+  }
+
+const countEmailsByUserIdFactory =
+  ({ db }: { db: Knex }): CountEmailsByUserId =>
+  async ({ userId }) => {
+    const [res] = await db(UserEmails.name)
+      .where({
+        [UserEmails.col.userId]: userId
+      })
+      .count()
+    return parseInt(res.count.toString() || '0')
   }
 
 export const deleteUserEmailFactory =
   ({ db }: { db: Knex }): DeleteUserEmail =>
-  async ({ userId, email }) => {
-    await db(USER_EMAILS_TABLE_NAME)
-      .where({
-        userId,
-        email
-      })
-      .delete()
+  async ({ id, userId }) => {
+    const emailsCount = await countEmailsByUserIdFactory({ db })({ userId })
+    if (emailsCount === 1) {
+      throw new UserEmailDeleteError('Cannot delete last user email')
+    }
 
+    const isPrimaryEmail = !!(await findEmailFactory({ db })({ id, primary: true }))
+    if (isPrimaryEmail) {
+      throw new UserEmailDeleteError('Cannot delete primary email')
+    }
+
+    await db(UserEmails.name).where({ id, userId }).delete()
     return true
   }
 
 export const findPrimaryEmailForUserFactory =
   ({ db }: { db: Knex }): FindPrimaryEmailForUser =>
-  async ({ userId }) => {
-    return db(USER_EMAILS_TABLE_NAME)
+  async (query) => {
+    return db(UserEmails.name)
       .where({
-        userId,
+        ...query,
         primary: true
       })
       .first()
+  }
+
+export const findEmailFactory =
+  ({ db }: { db: Knex }): FindEmail =>
+  async (query) => {
+    return db(UserEmails.name)
+      .where({
+        ...query
+      })
+      .first()
+  }
+
+export const findEmailsByUserIdFactory =
+  ({ db }: { db: Knex }): FindEmailsByUserId =>
+  async ({ userId }) => {
+    if (!userId) return []
+    return db(UserEmails.name).where({
+      [UserEmails.col.userId]: userId
+    })
+  }
+
+export const setPrimaryUserEmailFactory =
+  ({ db }: { db: Knex }): SetPrimaryUserEmail =>
+  async ({ id, userId }) => {
+    await db.transaction(async (trx) => {
+      await updateUserEmailFactory({ db: trx })({
+        query: { userId, primary: true },
+        update: { primary: false }
+      })
+      await updateUserEmailFactory({ db: trx })({
+        query: { id, userId },
+        update: { primary: true }
+      })
+    })
+    return true
   }
