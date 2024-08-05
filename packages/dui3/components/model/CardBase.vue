@@ -139,7 +139,7 @@ const buttonTooltip = computed(() => {
     ? 'Cancel'
     : isSender.value
     ? 'Publish model'
-    : 'Receive selected version'
+    : 'Load selected version'
 })
 
 const projectAccount = computed(() =>
