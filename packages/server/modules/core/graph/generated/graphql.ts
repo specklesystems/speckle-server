@@ -2094,6 +2094,11 @@ export type ProjectInviteMutations = {
   cancel: Project;
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
+  /**
+   * Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
+   * configuring the workspace role.
+   */
+  createForWorkspace: Project;
   /** Accept or decline a project invite */
   use: Scalars['Boolean']['output'];
 };
@@ -2113,6 +2118,12 @@ export type ProjectInviteMutationsCancelArgs = {
 
 export type ProjectInviteMutationsCreateArgs = {
   input: ProjectInviteCreateInput;
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type ProjectInviteMutationsCreateForWorkspaceArgs = {
+  inputs: Array<WorkspaceProjectInviteCreateInput>;
   projectId: Scalars['ID']['input'];
 };
 
@@ -3905,6 +3916,19 @@ export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+export type WorkspaceProjectInviteCreateInput = {
+  /** Either this or userId must be filled */
+  email?: InputMaybe<Scalars['String']['input']>;
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Can only be specified if guest mode is on or if the user is an admin */
+  serverRole?: InputMaybe<Scalars['String']['input']>;
+  /** Either this or email must be filled */
+  userId?: InputMaybe<Scalars['String']['input']>;
+  /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
+  workspaceRole?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type WorkspaceProjectsFilter = {
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
@@ -4240,6 +4264,7 @@ export type ResolversTypes = {
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
+  WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
@@ -4461,6 +4486,7 @@ export type ResolversParentTypes = {
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
+  WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -5252,6 +5278,7 @@ export type ProjectInviteMutationsResolvers<ContextType = GraphQLContext, Parent
   batchCreate?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsBatchCreateArgs, 'input' | 'projectId'>>;
   cancel?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCancelArgs, 'inviteId' | 'projectId'>>;
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCreateArgs, 'input' | 'projectId'>>;
+  createForWorkspace?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCreateForWorkspaceArgs, 'inputs' | 'projectId'>>;
   use?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectInviteMutationsUseArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

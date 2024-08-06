@@ -2083,6 +2083,11 @@ export type ProjectInviteMutations = {
   cancel: Project;
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
+  /**
+   * Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
+   * configuring the workspace role.
+   */
+  createForWorkspace: Project;
   /** Accept or decline a project invite */
   use: Scalars['Boolean']['output'];
 };
@@ -2102,6 +2107,12 @@ export type ProjectInviteMutationsCancelArgs = {
 
 export type ProjectInviteMutationsCreateArgs = {
   input: ProjectInviteCreateInput;
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type ProjectInviteMutationsCreateForWorkspaceArgs = {
+  inputs: Array<WorkspaceProjectInviteCreateInput>;
   projectId: Scalars['ID']['input'];
 };
 
@@ -3892,6 +3903,19 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
+};
+
+export type WorkspaceProjectInviteCreateInput = {
+  /** Either this or userId must be filled */
+  email?: InputMaybe<Scalars['String']['input']>;
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Can only be specified if guest mode is on or if the user is an admin */
+  serverRole?: InputMaybe<Scalars['String']['input']>;
+  /** Either this or email must be filled */
+  userId?: InputMaybe<Scalars['String']['input']>;
+  /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
+  workspaceRole?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceProjectsFilter = {
