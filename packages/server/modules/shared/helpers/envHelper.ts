@@ -119,6 +119,24 @@ export function getGoogleClientSecret() {
   return process.env.GOOGLE_CLIENT_SECRET
 }
 
+export function getGithubClientId() {
+  if (!process.env.GITHUB_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('GITHUB_CLIENT_ID env var not configured')
+  }
+
+  return process.env.GITHUB_CLIENT_ID
+}
+
+export function getGithubClientSecret() {
+  if (!process.env.GITHUB_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError(
+      'GITHUB_CLIENT_SECRET env var not configured'
+    )
+  }
+
+  return process.env.GITHUB_CLIENT_SECRET
+}
+
 export function getMailchimpStatus() {
   return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
 }

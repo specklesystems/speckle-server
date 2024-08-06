@@ -1,33 +1,45 @@
 /* istanbul ignore file */
-'use strict'
 
-const passport = require('passport')
-const GithubStrategy = require('passport-github2')
-const URL = require('url').URL
-const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
+import passport from 'passport'
+import type { VerifyCallback } from 'passport-oauth2'
+import { Strategy as GithubStrategy, type Profile } from 'passport-github2'
+import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { logger } = require('@/logging/logging')
-const {
+} from '@/modules/serverinvites/services/processing'
+import { passportAuthenticate } from '@/modules/auth/services/passportService'
+import { logger } from '@/logging/logging'
+import {
   UserInputError,
   UnverifiedEmailSSOLoginError
-} = require('@/modules/core/errors/userinput')
-const db = require('@/db/knex')
-const {
+} from '@/modules/core/errors/userinput'
+import db from '@/db/knex'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
   findServerInviteFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
-const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategyBuilder, AuthStrategyMetadata } from '@/modules/auth/helpers/types'
+import {
+  getGithubClientId,
+  getGithubClientSecret
+} from '@/modules/shared/helpers/envHelper'
+import type { Request } from 'express'
+import { get } from 'lodash'
+import { ensureError } from '@speckle/shared'
 
-module.exports = async (app, session, sessionStorage, finalizeAuth) => {
-  const strategy = {
+const githubStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
+  const strategy: AuthStrategyMetadata & { callbackUrl: string } = {
     id: 'github',
     name: 'Github',
     icon: 'mdi-github',
@@ -38,8 +50,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
   const myStrategy = new GithubStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientID: getGithubClientId(),
+      clientSecret: getGithubClientSecret(),
       callbackURL: new URL(strategy.callbackUrl, process.env.CANONICAL_URL).toString(),
       // WARNING, the 'user:email' scope belongs to the GITHUB scopes
       // DO NOT change it to our internal scope definitions !!!
@@ -47,13 +59,24 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       scope: ['profile', 'user:email'],
       passReqToCallback: true
     },
-    async (req, accessToken, refreshToken, profile, done) => {
+    // I've no idea why, but TS refuses to type these params
+    async (
+      req: Request,
+      _accessToken: string,
+      _refreshToken: string,
+      profile: Profile,
+      done: VerifyCallback
+    ) => {
       const serverInfo = await getServerInfo()
 
       try {
-        const email = profile.emails[0].value
+        const email = profile.emails?.[0].value
+        if (!email) {
+          throw new Error('No email provided by Github')
+        }
+
         const name = profile.displayName || profile.username
-        const bio = profile._json.bio
+        const bio = get(profile, '_json.bio') || undefined
 
         const user = { email, name, bio }
 
@@ -70,13 +93,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
           return done(null, myUser)
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
 
           // process invites
           if (myUser.isNewUser) {
@@ -108,8 +131,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             role: validInvite
               ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
               : undefined
-          },
-          rawProfile: profile._raw
+          }
         })
 
         // use the invite
@@ -127,22 +149,41 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           isInvite: !!validInvite
         })
       } catch (err) {
-        switch (err.constructor) {
+        const e = ensureError(
+          err,
+          'Unexpected issue occured while authenticating with GitHub'
+        )
+        switch (e.constructor) {
           case UserInputError:
             logger.info(err)
             break
           default:
             logger.error(err)
         }
-        return done(err, false, { message: err.message })
+        return done(err, false, { message: e.message })
       }
     }
   )
 
   passport.use(myStrategy)
 
-  app.get(strategy.url, session, sessionStorage, passportAuthenticate('github'))
-  app.get(strategy.callbackUrl, session, passportAuthenticate('github'), finalizeAuth)
+  // 1. Auth init
+  app.get(
+    strategy.url,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    passportAuthenticate('github')
+  )
+
+  // 2. Auth finish
+  app.get(
+    strategy.callbackUrl,
+    sessionMiddleware,
+    passportAuthenticate('github'),
+    finalizeAuthMiddleware
+  )
 
   return strategy
 }
+
+export = githubStrategyBuilder
