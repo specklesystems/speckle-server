@@ -1,37 +1,41 @@
-'use strict'
-const {
+import {
   createUser,
   validatePasssword,
   getUserByEmail
-} = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
+} from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
   sendRateLimitResponse,
   getRateLimitResult,
   isRateLimitBreached
-} = require('@/modules/core/services/ratelimiter')
-const {
+} from '@/modules/core/services/ratelimiter'
+import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { getIpFromRequest } = require('@/modules/shared/utils/ip')
-const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
-const {
-  UserInputError,
-  PasswordTooShortError
-} = require('@/modules/core/errors/userinput')
-const {
+} from '@/modules/serverinvites/services/processing'
+import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import { NoInviteFoundError } from '@/modules/serverinvites/errors'
+import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
+import {
   findServerInviteFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
-const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
-const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategy, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import { ensureError, Optional } from '@speckle/shared'
 
-module.exports = async (app, session, sessionAppId, finalizeAuth) => {
-  const strategy = {
+const localStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
+  const strategy: AuthStrategy = {
     id: 'local',
     name: 'Local',
     icon: 'TODO',
@@ -39,10 +43,11 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     url: '/auth/local'
   }
 
+  // POST Login
   app.post(
     '/auth/local/login',
-    session,
-    sessionAppId,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
     async (req, res, next) => {
       try {
         const valid = await validatePasssword({
@@ -54,7 +59,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         const user = await getUserByEmail({ email: req.body.email })
         if (!user) throw new UserInputError('Invalid credentials.')
-        req.user = { id: user.id }
+        req.user = { id: user.id, email: user.email }
 
         return next()
       } catch (err) {
@@ -62,13 +67,14 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         return res.status(401).send({ err: true, message: 'Invalid credentials.' })
       }
     },
-    finalizeAuth
+    finalizeAuthMiddleware
   )
 
+  // POST Register
   app.post(
     '/auth/local/register',
-    session,
-    sessionAppId,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
     async (req, res, next) => {
       const serverInfo = await getServerInfo()
       try {
@@ -90,8 +96,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           )
 
         // 2. if you have an invite it must be valid, both for invite only and public servers
-        /** @type {import('@/modules/serverinvites/domain/types').ServerInviteRecord} */
-        let invite
+        let invite: Optional<ServerInviteRecord> = undefined
         if (req.session.token) {
           invite = await validateServerInviteFactory({
             findServerInvite: findServerInviteFactory({ db })
@@ -128,20 +133,23 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        switch (err.constructor) {
+        const e = ensureError(err, 'Unexpected issue occured while registering')
+        switch (e.constructor) {
           case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
             req.log.info({ err }, 'Error while registering.')
-            return res.status(400).send({ err: err.message })
+            return res.status(400).send({ err: e.message })
           default:
             req.log.error(err, 'Error while registering.')
-            return res.status(500).send({ err: err.message })
+            return res.status(500).send({ err: e.message })
         }
       }
     },
-    finalizeAuth
+    finalizeAuthMiddleware
   )
 
   return strategy
 }
+
+export = localStrategyBuilder
