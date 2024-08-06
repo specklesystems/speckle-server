@@ -31,9 +31,6 @@ export type GetWorkspaces = (args: {
 
 type GetWorkspaceCollaboratorsArgs = {
   workspaceId: string
-}
-
-type GetWorkspaceCollaboratorsOptions = {
   filter?: {
     /**
      * Optionally filter by workspace role
@@ -47,8 +44,7 @@ type GetWorkspaceCollaboratorsOptions = {
 }
 
 export type GetWorkspaceCollaborators = (
-  args: GetWorkspaceCollaboratorsArgs,
-  opts: GetWorkspaceCollaboratorsOptions
+  args: GetWorkspaceCollaboratorsArgs
 ) => Promise<Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>>
 
 type DeleteWorkspaceRoleArgs = {

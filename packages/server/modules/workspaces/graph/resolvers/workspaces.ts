@@ -403,10 +403,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         team: async (parent, args) => {
           const getTeam = getWorkspaceCollaboratorsFactory({ db })
-          const collaborators = await getTeam(
-            { workspaceId: parent.id },
-            { filter: removeNullOrUndefinedKeys(args?.filter ?? {}) }
-          )
+          const collaborators = await getTeam({
+            workspaceId: parent.id,
+            filter: removeNullOrUndefinedKeys(args?.filter ?? {})
+          })
 
           return collaborators
         },

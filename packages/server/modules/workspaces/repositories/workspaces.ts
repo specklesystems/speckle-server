@@ -161,7 +161,7 @@ export const upsertWorkspaceRoleFactory =
 
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId }, opts) => {
+  async ({ workspaceId, filter = {} }) => {
     const query = DbWorkspaceAcl.knex(db)
       .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
         ...Users.cols,
@@ -173,7 +173,7 @@ export const getWorkspaceCollaboratorsFactory =
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
 
-    const { search, role } = opts?.filter || {}
+    const { search, role } = filter || {}
 
     if (search) {
       query
