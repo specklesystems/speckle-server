@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="tutorial.url" target="_blank" external>
+  <NuxtLink :to="tutorial.url" target="_blank">
     <div
       class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
