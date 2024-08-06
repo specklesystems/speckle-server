@@ -36,7 +36,7 @@ const errorDate = ref(new Date().toISOString())
 const errorReference = computed(() => `Reference #${reqId} | ${errorDate.value}`)
 
 const onReferenceClick = async () => {
-  if (!import.meta.url) return
+  if (!import.meta.client) return
 
   const val = errorReference.value + ` | URL: ${window.location.href}`
   await copy(val)
