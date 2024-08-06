@@ -31,7 +31,8 @@ import {
 import {
   buildUserTarget,
   resolveInviteTargetTitle,
-  resolveTarget
+  resolveTarget,
+  ResourceTargetTypeRoleTypeMap
 } from '@/modules/serverinvites/helpers/core'
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes'
 import {
@@ -57,11 +58,17 @@ const isStreamInviteCreateInput = (
 
 export const createProjectInviteFactory =
   (deps: { createAndSendInvite: CreateAndSendInvite }) =>
-  async (
-    input: StreamInviteCreateInput | FullProjectInviteCreateInput,
-    inviterId: string,
+  async (params: {
+    input: StreamInviteCreateInput | FullProjectInviteCreateInput
+    inviterId: string
     inviterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  ) => {
+    /**
+     * If invite also has secondary resource targets, you can specify the expected roles here
+     */
+    secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+  }) => {
+    const { input, inviterId, inviterResourceAccessRules, secondaryResourceRoles } =
+      params
     const { email, userId, role } = input
 
     if (!email && !userId) {
@@ -88,9 +95,10 @@ export const createProjectInviteFactory =
         resourceId,
         role: (role as StreamRoles) || Roles.Stream.Contributor,
         primary: true,
-        secondaryResourceRoles: serverRole
-          ? { [ServerInviteResourceType]: serverRole }
-          : undefined
+        secondaryResourceRoles: {
+          ...(secondaryResourceRoles || {}),
+          ...(serverRole ? { [ServerInviteResourceType]: serverRole } : undefined)
+        }
       }
     await deps.createAndSendInvite(
       {

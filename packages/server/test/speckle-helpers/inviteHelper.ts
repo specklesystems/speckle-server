@@ -1,4 +1,4 @@
-import { Roles, StreamRoles } from '@speckle/shared'
+import { MaybeAsync, Roles, StreamRoles } from '@speckle/shared'
 
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import { InviteResult } from '@/modules/serverinvites/services/operations'
@@ -25,6 +25,7 @@ import {
   PrimaryInviteResourceTarget,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
+import { EmailSendingServiceMock } from '@/test/mocks/global'
 
 const createAndSendInvite = createAndSendInviteFactory({
   findUserByTarget: findUserByTargetFactory(),
@@ -124,4 +125,23 @@ export async function validateInviteExistanceFromEmail(emailParams: SendEmailPar
   expect(invite).to.be.ok
 
   return invite!
+}
+
+/**
+ * Mock out the email service and capture the created invite record from that as its
+ * created through whatever logic is passed in the createInvite function
+ */
+export const captureCreatedInvite = async (createInvite: () => MaybeAsync<unknown>) => {
+  const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+    'sendEmail',
+    async () => true
+  )
+
+  await Promise.resolve(createInvite())
+
+  expect(sendEmailInvocations.args).to.have.lengthOf(1)
+  const emailParams = sendEmailInvocations.args[0][0]
+  expect(emailParams).to.be.ok
+
+  return await validateInviteExistanceFromEmail(emailParams)
 }

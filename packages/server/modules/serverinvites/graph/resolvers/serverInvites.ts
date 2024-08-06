@@ -163,11 +163,11 @@ export = {
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
       })
 
-      await createProjectInvite(
-        args.input,
-        context.userId!,
-        context.resourceAccessRules
-      )
+      await createProjectInvite({
+        input: args.input,
+        inviterId: context.userId!,
+        inviterResourceAccessRules: context.resourceAccessRules
+      })
 
       return true
     },
@@ -235,11 +235,11 @@ export = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) => {
-            return createProjectInvite(
-              params,
-              context.userId!,
-              context.resourceAccessRules
-            )
+            return createProjectInvite({
+              input: params,
+              inviterId: context.userId!,
+              inviterResourceAccessRules: context.resourceAccessRules
+            })
           })
         )
       }
@@ -326,14 +326,14 @@ export = {
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
       })
 
-      await createProjectInvite(
-        {
+      await createProjectInvite({
+        input: {
           projectId: args.projectId,
           ...args.input
         },
-        ctx.userId!,
-        ctx.resourceAccessRules
-      )
+        inviterId: ctx.userId!,
+        inviterResourceAccessRules: ctx.resourceAccessRules
+      })
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
@@ -359,11 +359,14 @@ export = {
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createProjectInvite(
-              { ...i, projectId: args.projectId },
-              ctx.userId!,
-              ctx.resourceAccessRules
-            )
+            createProjectInvite({
+              input: {
+                ...i,
+                projectId: args.projectId
+              },
+              inviterId: ctx.userId!,
+              inviterResourceAccessRules: ctx.resourceAccessRules
+            })
           )
         )
       }

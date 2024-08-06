@@ -24,7 +24,7 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
-import { validateInviteExistanceFromEmail } from '@/test/speckle-helpers/inviteHelper'
+import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   BasicTestStream,
   createTestStreams,
@@ -40,22 +40,17 @@ describe('Server registration', () => {
   const createInviteAsAdmin = async (
     args: CreateProjectInviteMutationVariables | CreateServerInviteMutationVariables
   ) => {
-    const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-      'sendEmail',
-      async () => true
-    )
-
-    if ('projectId' in args) {
-      await apollo.execute(CreateProjectInviteDocument, args, { assertNoErrors: true })
-    } else {
-      await apollo.execute(CreateServerInviteDocument, args, { assertNoErrors: true })
-    }
-
-    expect(sendEmailInvocations.args).to.have.lengthOf(1)
-    const emailParams = sendEmailInvocations.args[0][0]
-    expect(emailParams).to.be.ok
-
-    return await validateInviteExistanceFromEmail(emailParams)
+    return await captureCreatedInvite(async () => {
+      if ('projectId' in args) {
+        await apollo.execute(CreateProjectInviteDocument, args, {
+          assertNoErrors: true
+        })
+      } else {
+        await apollo.execute(CreateServerInviteDocument, args, {
+          assertNoErrors: true
+        })
+      }
+    })
   }
 
   const basicAdminUser: BasicTestUser = {
