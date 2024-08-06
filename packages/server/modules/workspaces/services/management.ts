@@ -32,7 +32,6 @@ import {
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
-import { authorizeResolver } from '@/modules/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
@@ -43,7 +42,7 @@ import { validateImageString } from '@/modules/workspaces/helpers/images'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { chunk } from 'lodash'
+import { chunk, isEmpty } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -103,15 +102,12 @@ export const createWorkspaceFactory =
   }
 
 type WorkspaceUpdateArgs = {
-  /** Id of user performing the operation */
-  workspaceUpdaterId: string
   workspaceId: string
   workspaceInput: {
     name?: string | null
     description?: string | null
     logo?: string | null
   }
-  updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const updateWorkspaceFactory =
@@ -124,27 +120,20 @@ export const updateWorkspaceFactory =
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }) =>
-  async ({
-    workspaceUpdaterId,
-    workspaceId,
-    workspaceInput,
-    updaterResourceAccessLimits
-  }: WorkspaceUpdateArgs): Promise<Workspace> => {
-    await authorizeResolver(
-      workspaceUpdaterId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      updaterResourceAccessLimits
-    )
+  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    // Get existing workspace to merge with incoming changes
+    const currentWorkspace = await getWorkspace({ workspaceId })
+    if (!currentWorkspace) {
+      throw new WorkspaceNotFoundError()
+    }
 
+    // Validate incoming changes
     if (!!workspaceInput.logo) {
       validateImageString(workspaceInput.logo)
     }
-
-    const currentWorkspace = await getWorkspace({ workspaceId })
-
-    if (!currentWorkspace) {
-      throw new WorkspaceNotFoundError()
+    if (isEmpty(workspaceInput.name)) {
+      // Do not allow setting an empty name (empty descriptions allowed)
+      delete workspaceInput.name
     }
 
     const workspace = {
@@ -290,7 +279,17 @@ export const updateWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
-  async ({ workspaceId, userId, role }: WorkspaceAcl): Promise<void> => {
+  async ({
+    workspaceId,
+    userId,
+    role,
+    skipProjectRoleUpdatesFor
+  }: WorkspaceAcl & {
+    /**
+     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
+     */
+    skipProjectRoleUpdatesFor?: string[]
+  }): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
@@ -313,9 +312,13 @@ export const updateWorkspaceRoleFactory =
       workspaceId
     })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          grantStreamPermissions({ streamId, userId, role: projectRole })
-        )
+        projectsPage.map(({ id: streamId }) => {
+          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+            return
+          }
+
+          return grantStreamPermissions({ streamId, userId, role: projectRole })
+        })
       )
     }
 

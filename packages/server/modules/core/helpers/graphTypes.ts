@@ -11,7 +11,8 @@ import {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
-  StreamRecord
+  StreamRecord,
+  UserRecord
 } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
@@ -68,6 +69,11 @@ export type VersionGraphQLReturn = CommitRecord
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
+>
+
+export type UserGraphQLReturn = Pick<
+  UserRecord,
+  'id' | 'createdAt' | 'name' | 'bio' | 'company' | 'email' | 'verified' | 'avatar'
 >
 
 export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {

@@ -41,6 +41,9 @@ module.exports = {
     return await Roles().select('*').where({ public: true })
   },
 
+  /**
+   * @param {Partial<import('@/modules/core/helpers/types').ServerConfigRecord>} param0
+   */
   async updateServerInfo({
     name,
     company,
