@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-1 border-outline-3 rounded-lg p-5 pt-4">
+  <div class="border border-outline-3 rounded-lg p-5 pt-4">
     <p class="text-heading-sm text-foreground">{{ title }}</p>
     <p class="text-body-xs text-foreground-2 pt-1">{{ description }}</p>
 

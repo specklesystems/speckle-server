@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-foundation border border-1 border-outline-3 rounded-xl p-5 pb-4 flex flex-col gap-y-3"
+    class="bg-foundation border border-outline-3 rounded-xl p-5 pb-4 flex flex-col gap-y-3"
   >
     <NuxtLink
       :to="projectRoute(project.id)"

@@ -1,7 +1,7 @@
 <template>
-  <NuxtLink :to="tutorial.url" external>
+  <NuxtLink class="w-full" to="tutorial.url" external>
     <div
-      class="bg-foundation border border-1 border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
+      class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
       <div
         :style="{ backgroundImage: `url(${tutorial.featureImage})` }"
