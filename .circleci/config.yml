@@ -466,7 +466,6 @@ jobs:
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      LICENSE_TOKEN: ${SPECKLE_SERVER_LICENSE}
     steps:
       - checkout
       - restore_cache:
