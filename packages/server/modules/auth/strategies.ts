@@ -1,42 +1,43 @@
-'use strict'
+import ExpressSession from 'express-session'
+import ConnectRedis from 'connect-redis'
+import passport from 'passport'
 
-const ExpressSession = require('express-session')
-const RedisStore = require('connect-redis')(ExpressSession)
-const passport = require('passport')
-
-const sentry = require('@/logging/sentryHelper')
-const { createAuthorizationCode } = require('./services/apps')
-const {
+import sentry from '@/logging/sentryHelper'
+import { createAuthorizationCode } from '@/modules/auth/services/apps'
+import {
   getFrontendOrigin,
   getMailchimpStatus,
   getMailchimpNewsletterIds,
-  getMailchimpOnboardingIds
-} = require('@/modules/shared/helpers/envHelper')
-const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
-const { authLogger, logger } = require('@/logging/logging')
-const { createRedisClient } = require('@/modules/shared/redis/redis')
-const { mixpanel } = require('@/modules/shared/utils/mixpanel')
-const {
+  getMailchimpOnboardingIds,
+  getSessionSecret
+} from '@/modules/shared/helpers/envHelper'
+import { isSSLServer, getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { authLogger, logger } from '@/logging/logging'
+import { createRedisClient } from '@/modules/shared/redis/redis'
+import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
-} = require('./services/mailchimp')
-const { getUserById } = require('@/modules/core/services/users')
-/**
- * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
- * NOTE: it does seem used!
- */
+} from '@/modules/auth/services/mailchimp'
+import { getUserById } from '@/modules/core/services/users'
+import type { Express, RequestHandler } from 'express'
+import { AuthStrategy, AuthStrategyPassportUser } from '@/modules/auth/helpers/types'
+import { isString, noop } from 'lodash'
+import { ensureError } from '@speckle/shared'
 
-module.exports = async (app) => {
-  const authStrategies = []
+const setupStrategies = async (app: Express) => {
+  const authStrategies: AuthStrategy[] = []
 
   passport.serializeUser((user, done) => done(null, user))
-  passport.deserializeUser((user, done) => done(null, user))
+  passport.deserializeUser((user, done) => done(null, user as AuthStrategyPassportUser))
+
   app.use(passport.initialize())
 
-  const redisClient = createRedisClient(getRedisUrl())
+  const RedisStore = ConnectRedis(ExpressSession)
+  const redisClient = createRedisClient(getRedisUrl(), {})
   const session = ExpressSession({
     store: new RedisStore({ client: redisClient }),
-    secret: process.env.SESSION_SECRET,
+    secret: getSessionSecret(),
     saveUninitialized: false,
     resave: false,
     cookie: {
@@ -46,16 +47,19 @@ module.exports = async (app) => {
   })
 
   /**
-   * Move incoming auth query params to session, for easier access (?)
+   * Move incoming auth query params to session, for easier access
    */
-  const sessionStorage = (req, res, next) => {
+  const sessionStorage: RequestHandler = (req, res, next) => {
     if (!req.query.challenge)
       return res.status(400).send('Invalid request: no challenge detected.')
 
-    req.session.challenge = req.query.challenge
+    req.session.challenge =
+      req.query.challenge && isString(req.query.challenge)
+        ? req.query.challenge
+        : undefined
 
     const token = req.query.token || req.query.inviteId
-    if (token) {
+    if (token && isString(token)) {
       req.session.token = token
     }
 
@@ -68,11 +72,14 @@ module.exports = async (app) => {
   }
 
   /**
-  Finalizes authentication for the main frontend application.
-  @param {import('express').Request} req
+   * Finalizes authentication for the main frontend application.
    */
-  const finalizeAuth = async (req, res) => {
+  const finalizeAuth: RequestHandler = async (req, res) => {
     try {
+      if (!req.user) {
+        throw new Error('Cannot finalize auth - No user attached to session')
+      }
+
       const ac = await createAuthorizationCode({
         appId: 'spklwebapp',
         userId: req.user.id,
@@ -82,7 +89,7 @@ module.exports = async (app) => {
       let newsletterConsent = false
       if (req.session.newsletterConsent) newsletterConsent = true // NOTE: it's only set if it's true
 
-      if (req.session) req.session.destroy()
+      if (req.session) req.session.destroy(noop)
 
       // Resolve redirect URL
       const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
@@ -126,19 +133,23 @@ module.exports = async (app) => {
     } catch (err) {
       sentry({ err })
       authLogger.error(err, 'Could not finalize auth')
-      if (req.session) req.session.destroy()
-      return res.status(401).send({ err: err.message })
+      if (req.session) req.session.destroy(noop)
+      return res.status(401).send({
+        err: ensureError(err, 'Unexpected issue arose while finalizing auth').message
+      })
     }
   }
 
   /*
-  Strategies initialisation & listing
-  */
+   * Strategies initialisation & listing
+   */
 
   let strategyCount = 0
 
   if (process.env.STRATEGY_GOOGLE === 'true') {
-    const googStrategy = await require('./strategies/google')(
+    const googleStrategyBuilder = (await import('@/modules/auth/strategies/google'))
+      .default
+    const googStrategy = await googleStrategyBuilder(
       app,
       session,
       sessionStorage,
@@ -149,7 +160,9 @@ module.exports = async (app) => {
   }
 
   if (process.env.STRATEGY_GITHUB === 'true') {
-    const githubStrategy = await require('./strategies/github')(
+    const githubStrategyBuilder = (await import('@/modules/auth/strategies/github'))
+      .default
+    const githubStrategy = await githubStrategyBuilder(
       app,
       session,
       sessionStorage,
@@ -160,7 +173,9 @@ module.exports = async (app) => {
   }
 
   if (process.env.STRATEGY_AZURE_AD === 'true') {
-    const azureAdStrategy = await require('./strategies/azure-ad')(
+    const azureAdStrategyBuilder = (await import('@/modules/auth/strategies/azure-ad'))
+      .default
+    const azureAdStrategy = await azureAdStrategyBuilder(
       app,
       session,
       sessionStorage,
@@ -171,7 +186,8 @@ module.exports = async (app) => {
   }
 
   if (process.env.STRATEGY_OIDC === 'true') {
-    const oidcStrategy = await require('./strategies/oidc')(
+    const oidcStrategyBuilder = (await import('@/modules/auth/strategies/oidc')).default
+    const oidcStrategy = await oidcStrategyBuilder(
       app,
       session,
       sessionStorage,
@@ -184,7 +200,9 @@ module.exports = async (app) => {
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if (process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0) {
-    const localStrategy = await require('./strategies/local')(
+    const localStrategyBuilder = (await import('@/modules/auth/strategies/local'))
+      .default
+    const localStrategy = await localStrategyBuilder(
       app,
       session,
       sessionStorage,
@@ -195,3 +213,5 @@ module.exports = async (app) => {
 
   return authStrategies
 }
+
+export = setupStrategies

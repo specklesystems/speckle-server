@@ -15570,6 +15570,7 @@ __metadata:
     "@types/bull": "npm:^3.15.9"
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/compression": "npm:^1.7.2"
+    "@types/connect-redis": "npm:^0.0.23"
     "@types/cookie-parser": "npm:^1.4.7"
     "@types/debug": "npm:^4.1.7"
     "@types/deep-equal-in-any-order": "npm:^1.0.1"
@@ -15586,6 +15587,7 @@ __metadata:
     "@types/netmask": "npm:^2.0.0"
     "@types/node-cron": "npm:^3.0.2"
     "@types/nodemailer": "npm:^6.4.5"
+    "@types/passport": "npm:^1.0.16"
     "@types/pg": "npm:^8.6.6"
     "@types/pino-http": "npm:^5.8.4"
     "@types/sanitize-html": "npm:^2.6.2"
@@ -18116,6 +18118,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/connect-redis@npm:^0.0.23":
+  version: 0.0.23
+  resolution: "@types/connect-redis@npm:0.0.23"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/express-session": "npm:*"
+    "@types/node": "npm:*"
+    "@types/redis": "npm:^2.8.0"
+    ioredis: "npm:^5.3.0"
+  checksum: 10/56ae04700217e579e47b14711f3d7ffd21c54ced77ab0ebf3feb8d8903a0c854c6a63bb2f7d27f0eaec3224a7b725b14e52ebfbecd529e38c05b6e6e5947c1dd
+  languageName: node
+  linkType: hard
+
 "@types/connect@npm:*":
   version: 3.4.35
   resolution: "@types/connect@npm:3.4.35"
@@ -18319,6 +18334,15 @@ __metadata:
     "@types/qs": "npm:*"
     "@types/range-parser": "npm:*"
   checksum: 10/1074c5769ae052fcb7ea0a2d4a807090a832ec6f8e1ca9105cd949f6dbc99a745a0d3e5b8c8fb64e7105b4a23d8283aa50fd3234d3b7f821899efbed3675b179
+  languageName: node
+  linkType: hard
+
+"@types/express-session@npm:*":
+  version: 1.18.0
+  resolution: "@types/express-session@npm:1.18.0"
+  dependencies:
+    "@types/express": "npm:*"
+  checksum: 10/66757c413983c9e6bb90d16ef7bc1e5d15f7f2e64dba63340b0ed5eccc1929fcb55a694e356b5676e5beb672d11db91a5cc71f6b5860077a02740de9ab8bb5c4
   languageName: node
   linkType: hard
 
@@ -18856,6 +18880,15 @@ __metadata:
   version: 4.0.0
   resolution: "@types/parse-json@npm:4.0.0"
   checksum: 10/4df9de98150d2978afc2161482a3a8e6617883effba3223324f079de97ba7eabd7d84b90ced11c3f82b0c08d4a8383f678c9f73e9c41258f769b3fa234a2bb4f
+  languageName: node
+  linkType: hard
+
+"@types/passport@npm:^1.0.16":
+  version: 1.0.16
+  resolution: "@types/passport@npm:1.0.16"
+  dependencies:
+    "@types/express": "npm:*"
+  checksum: 10/0ee7b9a46192cb60fb4e49038417b0c10b38e50204ed05b5204b3ea9a73e25da34ca8fe05205eaf42fe977610cdbd3a0d5f2228f8661fe0b303bc758fa2a158f
   languageName: node
   linkType: hard
 
@@ -27563,7 +27596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^2.0.1, denque@npm:^2.1.0":
+"denque@npm:^2.1.0":
   version: 2.1.0
   resolution: "denque@npm:2.1.0"
   checksum: 10/8ea05321576624b90acfc1ee9208b8d1d04b425cf7573b9b4fa40a2c3ed4d4b0af5190567858f532f677ed2003d4d2b73c8130b34e3c7b8d5e88cdcfbfaa1fe7
@@ -33248,7 +33281,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ioredis@npm:>=5":
+"ioredis@npm:>=5, ioredis@npm:^5.2.2, ioredis@npm:^5.3.0, ioredis@npm:^5.3.2":
   version: 5.4.1
   resolution: "ioredis@npm:5.4.1"
   dependencies:
@@ -33281,40 +33314,6 @@ __metadata:
     redis-parser: "npm:^3.0.0"
     standard-as-callback: "npm:^2.1.0"
   checksum: 10/781ff4961954ccc2bc66a763b1e1095af31186b5f4ba5320cd41e04bf887374b67aaf5badf1d2af7ac00790d92d5aa5bde5ffc4a6993e875aff0e2a3db21a230
-  languageName: node
-  linkType: hard
-
-"ioredis@npm:^5.2.2":
-  version: 5.2.2
-  resolution: "ioredis@npm:5.2.2"
-  dependencies:
-    "@ioredis/commands": "npm:^1.1.1"
-    cluster-key-slot: "npm:^1.1.0"
-    debug: "npm:^4.3.4"
-    denque: "npm:^2.0.1"
-    lodash.defaults: "npm:^4.2.0"
-    lodash.isarguments: "npm:^3.1.0"
-    redis-errors: "npm:^1.2.0"
-    redis-parser: "npm:^3.0.0"
-    standard-as-callback: "npm:^2.1.0"
-  checksum: 10/1f020d44a7ac73b26badf73e479f39ec740bcdd2ac2ba11f3f0ddb248f43824bc96af3d400ae7c9ba54a92d62151a285e5234ba0cdee86da6270dbf75525b387
-  languageName: node
-  linkType: hard
-
-"ioredis@npm:^5.3.2":
-  version: 5.3.2
-  resolution: "ioredis@npm:5.3.2"
-  dependencies:
-    "@ioredis/commands": "npm:^1.1.1"
-    cluster-key-slot: "npm:^1.1.0"
-    debug: "npm:^4.3.4"
-    denque: "npm:^2.1.0"
-    lodash.defaults: "npm:^4.2.0"
-    lodash.isarguments: "npm:^3.1.0"
-    redis-errors: "npm:^1.2.0"
-    redis-parser: "npm:^3.0.0"
-    standard-as-callback: "npm:^2.1.0"
-  checksum: 10/0140f055ef81d28e16ca8400b99dabb9ce82009f54afd83cba952c7d0c5d736841e43247765b8ee1af1f02843531c5b8df240af18bd3d7e2ca3d60b36e76213f
   languageName: node
   linkType: hard
 

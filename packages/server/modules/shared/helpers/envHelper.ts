@@ -2,6 +2,14 @@ import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
+export function getSessionSecret() {
+  if (!process.env.SESSION_SECRET) {
+    throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
+  }
+
+  return process.env.SESSION_SECRET
+}
+
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
 }
