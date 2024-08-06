@@ -27,6 +27,8 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
+const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
+const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -103,7 +105,9 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         // so we go ahead and register the user
         const userId = await createUser({
           ...user,
-          role: invite?.serverRole
+          role: invite
+            ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+            : undefined
         })
         req.user = {
           id: userId,

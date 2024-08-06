@@ -2,6 +2,7 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   InviteResourceTarget,
   InviteResourceTargetType,
+  PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
@@ -101,5 +102,5 @@ export type CreateInviteParams = {
   target: string
   inviterId: string
   message?: string | null
-  primaryResourceTarget: InviteResourceTarget
+  primaryResourceTarget: PrimaryInviteResourceTarget
 }

@@ -13,7 +13,8 @@ import {
   createUserEmailFactory,
   deleteUserEmailFactory,
   findEmailFactory,
-  setPrimaryUserEmailFactory
+  setPrimaryUserEmailFactory,
+  updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { expectToThrow } from '@/test/assertionHelper'
 
@@ -160,6 +161,65 @@ describe('Core @user-emails', () => {
 
       expect(previousPrimary.primary).to.be.false
       expect(newPrimary.primary).to.be.true
+    })
+  })
+
+  describe('createUserEmail', () => {
+    it('should throw an error when trying to create a a primary email for a user and there is already one for that user', async () => {
+      const email = createRandomEmail()
+      const userId = await createUser({
+        name: 'John Doe',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+
+      const err = await expectToThrow(() =>
+        createUserEmailFactory({ db })({
+          userEmail: {
+            email,
+            userId,
+            primary: true
+          }
+        })
+      )
+
+      expect(err.message).to.eq('A primary email already exists for this user')
+    })
+  })
+
+  describe('updateUserEmail', () => {
+    it('should throw an error when trying to mark an email as primary and there is already one for the user', async () => {
+      const email = createRandomEmail()
+      const userId = await createUser({
+        name: 'John Doe',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+
+      await createUserEmailFactory({ db })({
+        userEmail: {
+          email,
+          userId,
+          primary: false
+        }
+      })
+      const userEmail = await findEmailFactory({ db })({
+        userId,
+        email,
+        primary: false
+      })
+
+      const err = await expectToThrow(() =>
+        updateUserEmailFactory({ db })({
+          query: {
+            id: userEmail.id,
+            userId
+          },
+          update: { primary: true }
+        })
+      )
+
+      expect(err.message).to.eq('A primary email already exists for this user')
     })
   })
 })

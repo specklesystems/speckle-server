@@ -159,27 +159,65 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation workspaceMutations.update', () => {
-      it('should update a workspace', async () => {
-        const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: cryptoRandomString({ length: 6 }) }
-        })
+      const workspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: cryptoRandomString({ length: 6 }),
+        description: cryptoRandomString({ length: 12 })
+      }
 
+      beforeEach(async () => {
+        await createTestWorkspace(workspace, testUser)
+      })
+
+      it('should update a workspace', async () => {
         const workspaceName = cryptoRandomString({ length: 6 })
 
-        await apollo.execute(UpdateWorkspaceDocument, {
+        const updateRes = await apollo.execute(UpdateWorkspaceDocument, {
           input: {
-            id: createRes.data!.workspaceMutations.create.id,
+            id: workspace.id,
             name: workspaceName
           }
         })
 
-        const getRes = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: createRes.data!.workspaceMutations.create.id
+        const { data } = await apollo.execute(GetWorkspaceDocument, {
+          workspaceId: workspace.id
         })
 
-        expect(createRes).to.not.haveGraphQLErrors()
-        expect(getRes).to.not.haveGraphQLErrors()
-        expect(getRes.data?.workspace.name).to.equal(workspaceName)
+        expect(updateRes).to.not.haveGraphQLErrors()
+        expect(data?.workspace.name).to.equal(workspaceName)
+      })
+
+      it('should not allow workspace name to be empty', async () => {
+        const updateRes = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            name: ''
+          }
+        })
+
+        const { data } = await apollo.execute(GetWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(updateRes).to.not.haveGraphQLErrors()
+        expect(data?.workspace.name).to.equal(workspace.name)
+      })
+
+      it('should allow workspace description to be empty', async () => {
+        const updateRes = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            description: ''
+          }
+        })
+
+        const { data } = await apollo.execute(GetWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(updateRes).to.not.haveGraphQLErrors()
+        expect(data?.workspace.description).to.equal('')
       })
     })
   })
