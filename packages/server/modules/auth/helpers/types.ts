@@ -1,23 +1,54 @@
 import { MaybeAsync } from '@speckle/shared'
 import type { Express, RequestHandler } from 'express'
+import type { Session, SessionData } from 'express-session'
+import type { TokenSet, UserinfoResponse } from 'openid-client'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface User extends AuthStrategyPassportUser {}
 
-    interface Request {
-      authRedirectPath?: string
-    }
+    interface Request extends AuthRequestData {}
   }
 }
 
 declare module 'express-session' {
-  interface SessionData {
-    challenge?: string
-    token?: string
-    newsletterConsent?: boolean
+  interface SessionData extends AuthSessionData {}
+}
+
+declare module 'http' {
+  interface IncomingMessage extends AuthRequestData {
+    /**
+     * Not sure why I have to do this, the session type is picked up correctly in some places, but not others
+     */
+    session: Session & Partial<SessionData>
   }
+}
+
+export type AuthStrategyPassportUser = {
+  id: string
+  email: string
+  isNewUser?: boolean
+  isInvite?: boolean
+}
+
+export type AuthSessionData = {
+  // Common session auth params used across strategies
+  challenge?: string
+  token?: string
+  newsletterConsent?: boolean
+
+  // More specific params used in OpenID based strategies
+  tokenSet?: TokenSet
+  userinfo?: UserinfoResponse
+}
+
+export type AuthRequestData = {
+  /**
+   * Used in auth flows to specify where to redirect the user to, after successful auth
+   * @deprecated FE2 ignores this
+   */
+  authRedirectPath?: string
 }
 
 export type ServerAppsScopesRecord = {
@@ -31,13 +62,6 @@ export type AuthStrategy = {
   icon: string
   color: string
   url: string
-}
-
-export type AuthStrategyPassportUser = {
-  id: string
-  email: string
-  isNewUser?: boolean
-  isInvite?: boolean
 }
 
 export type AuthStrategyBuilder = (
