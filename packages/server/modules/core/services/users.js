@@ -86,6 +86,8 @@ module.exports = {
     user.id = newId
     user.email = user.email.toLowerCase()
 
+    if (!user.name) throw new UserInputError('User name is required')
+
     if (user.avatar) {
       user.avatar = sanitizeImageUrl(user.avatar)
     }
