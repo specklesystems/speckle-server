@@ -16,7 +16,11 @@
       </button>
     </div>
 
-    <div v-if="isDev && error.stack" class="max-w-xl" v-html="error.stack" />
+    <div
+      v-if="isDev && error.stack"
+      class="max-w-xl text-body-xs text-foreground-2"
+      v-html="error.stack"
+    />
     <FormButton :to="homeRoute" size="lg">Go Home</FormButton>
   </div>
 </template>
@@ -26,13 +30,21 @@ import type { SimpleError } from '~/lib/core/helpers/observability'
 import { homeRoute } from '~~/lib/common/helpers/route'
 import { ClipboardIcon } from '@heroicons/vue/24/outline'
 
+const SSR_DATE_STATE_KEY = 'ssr_error_page_generic_block_static_date'
+const getDate = () => new Date().toISOString()
+
 defineProps<{ error: SimpleError }>()
 
 const isDev = ref(import.meta.dev)
 const reqId = useRequestId({ forceFrontendValue: true })
 const { copy } = useClipboard()
 
-const errorDate = ref(new Date().toISOString())
+// storing in state to avoid hydration mismatch when date gets regenerated in CSR
+const ssrErrorDate = useState(SSR_DATE_STATE_KEY, () => getDate())
+const errorDate = ref(
+  import.meta.client && ssrErrorDate.value ? ssrErrorDate.value : getDate()
+)
+
 const errorReference = computed(() => `Reference #${reqId} | ${errorDate.value}`)
 
 const onReferenceClick = async () => {
@@ -41,4 +53,9 @@ const onReferenceClick = async () => {
   const val = errorReference.value + ` | URL: ${window.location.href}`
   await copy(val)
 }
+
+onMounted(() => {
+  // Immediately wipe the SSR date when page is loaded in CSR
+  clearNuxtState(SSR_DATE_STATE_KEY)
+})
 </script>
