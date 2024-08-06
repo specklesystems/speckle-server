@@ -27,7 +27,8 @@ import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder, AuthStrategyMetadata } from '@/modules/auth/helpers/types'
 import {
   getGithubClientId,
-  getGithubClientSecret
+  getGithubClientSecret,
+  getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import { get } from 'lodash'
@@ -52,7 +53,7 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
     {
       clientID: getGithubClientId(),
       clientSecret: getGithubClientSecret(),
-      callbackURL: new URL(strategy.callbackUrl, process.env.CANONICAL_URL).toString(),
+      callbackURL: new URL(strategy.callbackUrl, getServerOrigin()).toString(),
       // WARNING, the 'user:email' scope belongs to the GITHUB scopes
       // DO NOT change it to our internal scope definitions !!!
       // You have been warned.

@@ -219,7 +219,7 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
     icon: 'mdi-microsoft',
     color: 'blue darken-3',
     url: '/auth/azure',
-    callbackUrl: new URL('/auth/azure/callback', process.env.CANONICAL_URL).toString()
+    callbackUrl: new URL('/auth/azure/callback', getServerOrigin()).toString()
   }
 }
 

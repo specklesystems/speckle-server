@@ -1,6 +1,7 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import { ensureError } from '@speckle/shared'
 
 export function getSessionSecret() {
   if (!process.env.SESSION_SECRET) {
@@ -239,7 +240,24 @@ export function getServerOrigin() {
     )
   }
 
-  return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
+  try {
+    return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
+  } catch (e) {
+    const err = ensureError(e)
+    if (e instanceof TypeError && e.message === 'Invalid URL') {
+      throw new MisconfiguredEnvironmentError(
+        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${err.message}`,
+        {
+          cause: e,
+          info: {
+            value: process.env.CANONICAL_URL
+          }
+        }
+      )
+    }
+
+    throw err
+  }
 }
 
 /**
