@@ -17,7 +17,9 @@ import {
   DeleteWorkspaceDocument,
   GetActiveUserWorkspacesDocument,
   GetWorkspaceDocument,
-  UpdateWorkspaceDocument
+  UpdateWorkspaceDocument,
+  ActiveUserLeaveWorkspaceDocument,
+  UpdateWorkspaceRoleDocument
 } from '@/test/graphql/generated/graphql'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { beforeEachContext } from '@/test/hooks'
@@ -43,8 +45,8 @@ describe('Workspaces GQL CRUD', () => {
 
   const testMemberUser: BasicTestUser = {
     id: '',
-    name: 'John Spackle',
-    email: 'john-spackle@example.org',
+    name: 'Alice speckle',
+    email: 'alice-speckle@example.org',
     role: Roles.Server.User
   }
 
@@ -289,6 +291,73 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(updateRes).to.not.haveGraphQLErrors()
         expect(data?.workspace.description).to.equal('')
+      })
+    })
+    describe('mutation activeUserMutations.userWorkspaceMutations', () => {
+      describe('leave', () => {
+        it('allows the active user to leave a workspace', async () => {
+          const name = cryptoRandomString({ length: 6 })
+          const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
+            input: { name }
+          })
+
+          const id = workspaceCreateResult.data?.workspaceMutations.create.id
+          if (!id) throw new Error('This should have succeeded')
+
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId: testMemberUser.id,
+              workspaceId: id,
+              role: Roles.Workspace.Admin
+            }
+          })
+
+          let userWorkspaces = await apollo.execute(GetActiveUserWorkspacesDocument, {})
+
+          expect(
+            userWorkspaces.data?.activeUser?.workspaces.items
+              .map((i) => i.name)
+              .includes(name)
+          ).to.be.true
+
+          const leaveResult = await apollo.execute(ActiveUserLeaveWorkspaceDocument, {
+            id
+          })
+
+          expect(leaveResult.errors).to.be.undefined
+
+          userWorkspaces = await apollo.execute(GetActiveUserWorkspacesDocument, {})
+          expect(
+            userWorkspaces.data?.activeUser?.workspaces.items
+              .map((i) => i.name)
+              .includes(name)
+          ).to.be.false
+        })
+        it('stops the last workspace admin from leaving the workspace', async () => {
+          const name = cryptoRandomString({ length: 6 })
+          const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
+            input: { name }
+          })
+
+          const id = workspaceCreateResult.data?.workspaceMutations.create.id
+          if (!id) throw new Error('This should have succeeded')
+
+          const leaveResult = await apollo.execute(ActiveUserLeaveWorkspaceDocument, {
+            id
+          })
+
+          expect(leaveResult.errors?.length).to.be.greaterThanOrEqual(1)
+
+          const userWorkspaces = await apollo.execute(
+            GetActiveUserWorkspacesDocument,
+            {}
+          )
+          expect(
+            userWorkspaces.data?.activeUser?.workspaces.items
+              .map((i) => i.name)
+              .includes(name)
+          ).to.be.true
+        })
       })
     })
   })
