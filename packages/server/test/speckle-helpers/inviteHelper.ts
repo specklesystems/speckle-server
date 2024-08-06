@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { MaybeAsync, Roles, StreamRoles } from '@speckle/shared'
 
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import { InviteResult } from '@/modules/serverinvites/services/operations'
@@ -21,6 +21,11 @@ import {
 import { SendEmailParams } from '@/modules/emails/services/sending'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
+import { EmailSendingServiceMock } from '@/test/mocks/global'
 
 const createAndSendInvite = createAndSendInviteFactory({
   findUserByTarget: findUserByTargetFactory(),
@@ -43,17 +48,20 @@ export const createServerInviteDirectly = async (
   creatorId: string
 ) => {
   const { email, message } = invite
+  const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+    {
+      resourceType: ServerInviteResourceType,
+      role: Roles.Server.User,
+      primary: true,
+      resourceId: ''
+    }
+
   return await createAndSendInvite(
     {
       target: email,
       inviterId: creatorId,
       message,
-      primaryResourceTarget: {
-        resourceType: ServerInviteResourceType,
-        role: Roles.Server.User,
-        primary: true,
-        resourceId: ''
-      }
+      primaryResourceTarget
     },
     null
   )
@@ -71,6 +79,7 @@ export const createStreamInviteDirectly = async (
     message?: string
     stream?: BasicTestStream
     streamId?: string
+    role?: StreamRoles
   },
   creatorId: string
 ): Promise<InviteResult> => {
@@ -79,6 +88,7 @@ export const createStreamInviteDirectly = async (
   if (!userId && !email) throw new Error('Either user/userId or email must be set')
 
   const streamId = invite.streamId || invite.stream?.id
+  const streamRole = invite.role || Roles.Stream.Contributor
 
   const target = email || buildUserTarget(userId!)
   if (!target) throw new Error('Cannot create invite without a target')
@@ -91,7 +101,7 @@ export const createStreamInviteDirectly = async (
       primaryResourceTarget: {
         resourceType: streamId ? ProjectInviteResourceType : ServerInviteResourceType,
         resourceId: streamId || '',
-        role: streamId ? Roles.Stream.Contributor : Roles.Server.User,
+        role: streamId ? streamRole : Roles.Server.User,
         primary: true
       }
     },
@@ -114,5 +124,24 @@ export async function validateInviteExistanceFromEmail(emailParams: SendEmailPar
   const invite = await findInviteByToken({ token })
   expect(invite).to.be.ok
 
-  return invite
+  return invite!
+}
+
+/**
+ * Mock out the email service and capture the created invite record from that as its
+ * created through whatever logic is passed in the createInvite function
+ */
+export const captureCreatedInvite = async (createInvite: () => MaybeAsync<unknown>) => {
+  const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+    'sendEmail',
+    async () => true
+  )
+
+  await Promise.resolve(createInvite())
+
+  expect(sendEmailInvocations.args).to.have.lengthOf(1)
+  const emailParams = sendEmailInvocations.args[0][0]
+  expect(emailParams).to.be.ok
+
+  return await validateInviteExistanceFromEmail(emailParams)
 }
