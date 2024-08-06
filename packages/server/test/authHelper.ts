@@ -10,13 +10,13 @@ import { omit } from 'lodash'
 
 export type BasicTestUser = {
   name: string
-  email?: string
+  email: string
   password?: string
   /**
    * Will be set by createTestUser(), but you need to set a default value to ''
    * so that you don't have to check if its empty cause of TS
    */
-  id?: string
+  id: string
   role?: ServerRoles
 } & Partial<UserRecord>
 
@@ -24,7 +24,7 @@ export type BasicTestUser = {
  * Create basic user for tests and on success mutate the input object to have
  * the new ID
  */
-export async function createTestUser(userObj: BasicTestUser) {
+export async function createTestUser(userObj: Partial<BasicTestUser>) {
   if (!userObj.password) {
     userObj.password = createRandomPassword()
   }
