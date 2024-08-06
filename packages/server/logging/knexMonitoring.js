@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars */
 'use strict'
 
-const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
 const { numberOfFreeConnections } = require('@/modules/shared/helpers/dbHelper')
 
@@ -18,7 +17,7 @@ let metricQueryErrors = null
 const queryStartTime = {}
 
 module.exports = {
-  initKnexPrometheusMetrics() {
+  initKnexPrometheusMetrics(knex) {
     metricFree = new prometheusClient.Gauge({
       name: 'speckle_server_knex_free',
       help: 'Number of free DB connections',
