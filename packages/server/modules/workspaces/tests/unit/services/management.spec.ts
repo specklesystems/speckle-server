@@ -47,7 +47,6 @@ const buildCreateWorkspaceWithTestContext = (
       context.eventData.payload = payload
       return []
     },
-    storeBlob: async () => cryptoRandomString({ length: 10 }),
     ...dependecyOverrides
   }
 
@@ -61,7 +60,7 @@ const getCreateWorkspaceInput = () => {
     userId: cryptoRandomString({ length: 10 }),
     workspaceInput: {
       description: 'foobar',
-      logoUrl: null,
+      logo: null,
       name: cryptoRandomString({ length: 6 })
     }
   }

@@ -49,6 +49,11 @@
           "type": "boolean",
           "description": "Toggles whether to stop writing to the closure table",
           "default": false
+        },
+        "workspaceModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces module",
+          "default": false
         }
       }
     },

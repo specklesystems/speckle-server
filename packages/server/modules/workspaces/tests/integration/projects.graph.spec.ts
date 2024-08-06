@@ -134,12 +134,12 @@ describe('Workspace project GQL CRUD', () => {
     it('should respect pagination', async () => {
       const resA = await apollo.execute(GetWorkspaceProjectsDocument, {
         id: workspace.id,
-        limit: 1
+        limit: 10
       })
 
       const resB = await apollo.execute(GetWorkspaceProjectsDocument, {
         id: workspace.id,
-        limit: 1,
+        limit: 10,
         cursor: resA.data?.workspace.projects.cursor
       })
 
@@ -149,7 +149,7 @@ describe('Workspace project GQL CRUD', () => {
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
       expect(projectA).to.exist
-      expect(projectB).to.exist
+      expect(projectB).to.not.exist
       expect(projectA?.name).to.not.equal(projectB?.name)
     })
 

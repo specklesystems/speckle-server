@@ -2,7 +2,6 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
   EmitWorkspaceEvent,
   GetWorkspace,
-  StoreBlob,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -30,30 +29,21 @@ import {
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
-import { authorizeResolver } from '@/modules/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
-
-const tryStoreBlobFactory =
-  (storeBlob: StoreBlob) =>
-  async (blob?: string | null): Promise<string | null> => {
-    let logoUrl: string | null = null
-    if (blob) {
-      logoUrl = await storeBlob(blob)
-    }
-    return logoUrl
-  }
+import { validateImageString } from '@/modules/workspaces/helpers/images'
+import { isEmpty } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
     description: string | null
-    logoUrl: string | null
+    logo: string | null
   }
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
@@ -62,13 +52,11 @@ export const createWorkspaceFactory =
   ({
     upsertWorkspace,
     upsertWorkspaceRole,
-    emitWorkspaceEvent,
-    storeBlob
+    emitWorkspaceEvent
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
-    storeBlob: StoreBlob
   }) =>
   async ({
     userId,
@@ -84,14 +72,11 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
-    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
-
     const workspace = {
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date(),
-      logoUrl
+      updatedAt: new Date()
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
@@ -111,55 +96,44 @@ export const createWorkspaceFactory =
   }
 
 type WorkspaceUpdateArgs = {
-  /** Id of user performing the operation */
-  workspaceUpdaterId: string
   workspaceId: string
   workspaceInput: {
     name?: string | null
     description?: string | null
-    logoUrl?: string | null
+    logo?: string | null
   }
-  updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
     upsertWorkspace,
-    emitWorkspaceEvent,
-    storeBlob
+    emitWorkspaceEvent
   }: {
     getWorkspace: GetWorkspace
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
-    storeBlob: StoreBlob
   }) =>
-  async ({
-    workspaceUpdaterId,
-    workspaceId,
-    workspaceInput,
-    updaterResourceAccessLimits
-  }: WorkspaceUpdateArgs): Promise<Workspace> => {
-    await authorizeResolver(
-      workspaceUpdaterId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      updaterResourceAccessLimits
-    )
-
+  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    // Get existing workspace to merge with incoming changes
     const currentWorkspace = await getWorkspace({ workspaceId })
-
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
     }
 
-    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
+    // Validate incoming changes
+    if (!!workspaceInput.logo) {
+      validateImageString(workspaceInput.logo)
+    }
+    if (isEmpty(workspaceInput.name)) {
+      // Do not allow setting an empty name (empty descriptions allowed)
+      delete workspaceInput.name
+    }
 
     const workspace = {
       ...currentWorkspace,
       ...removeNullOrUndefinedKeys(workspaceInput),
-      updatedAt: new Date(),
-      logoUrl
+      updatedAt: new Date()
     }
 
     await upsertWorkspace({ workspace })

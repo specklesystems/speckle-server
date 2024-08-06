@@ -9,7 +9,7 @@ const createFakeWorkspace = (): Workspace => {
   return {
     id: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
-    logoUrl: null,
+    logo: null,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
     createdAt: new Date()

@@ -12,9 +12,9 @@
         <ProjectPageHeader :project="project" />
         <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
-      <LayoutTabsHoriztonal v-model:active-item="activePageTab" :items="pageTabItems">
+      <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage :project="project" />
-      </LayoutTabsHoriztonal>
+      </LayoutTabsHorizontal>
     </div>
   </div>
 </template>
@@ -24,7 +24,7 @@ import { Roles, type Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
+import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 
 graphql(`
