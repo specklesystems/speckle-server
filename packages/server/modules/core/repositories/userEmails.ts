@@ -5,6 +5,7 @@ import {
   CreateUserEmail,
   DeleteUserEmail,
   FindEmail,
+  FindVerifiedEmailByUserIdAndDomain,
   FindEmailsByUserId,
   FindPrimaryEmailForUser,
   SetPrimaryUserEmail,
@@ -132,4 +133,16 @@ export const setPrimaryUserEmailFactory =
       })
     })
     return true
+  }
+
+export const findVerifiedEmailByUserIdAndDomainFactory =
+  ({ db }: { db: Knex }): FindVerifiedEmailByUserIdAndDomain =>
+  async ({ userId, domain }) => {
+    return db(UserEmails.name)
+      .where({
+        [UserEmails.col.userId]: userId,
+        [UserEmails.col.verified]: true
+      })
+      .where(UserEmails.col.email, 'ILIKE', `%@${domain}`)
+      .first()
   }

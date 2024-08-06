@@ -45,6 +45,11 @@ export type FindEmailsByUserId = ({
   userId
 }: Pick<Partial<UserEmail>, 'userId'>) => Promise<UserEmail[]>
 
+export type FindVerifiedEmailByUserIdAndDomain = ({
+  userId,
+  domain
+}: Pick<UserEmail, 'userId'> & { domain: string }) => Promise<UserEmail | null>
+
 export type CountEmailsByUserId = ({
   userId
 }: Pick<UserEmail, 'userId'>) => Promise<number>

@@ -7,6 +7,7 @@ export type Workspace = {
   createdAt: Date
   updatedAt: Date
   logo: string | null
+  domains: string[] | null
 }
 
 export type WorkspaceWithOptionalRole = Workspace & { role?: WorkspaceRoles }

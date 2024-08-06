@@ -20,7 +20,8 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceAdminRequiredError,
-  WorkspaceNotFoundError
+  WorkspaceNotFoundError,
+  WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import {
   isUserLastWorkspaceAdmin,
@@ -37,6 +38,7 @@ import {
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
 import { isEmpty } from 'lodash'
+import { FindVerifiedEmailByUserIdAndDomain } from '@/modules/core/domain/userEmails/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -273,4 +275,20 @@ export const updateWorkspaceRoleFactory =
       eventName: WorkspaceEvents.RoleUpdated,
       payload: { userId, workspaceId, role }
     })
+  }
+
+export const addWorkspaceDomain =
+  ({
+    findVerifiedEmailByUserIdAndDomain
+  }: {
+    findVerifiedEmailByUserIdAndDomain: FindVerifiedEmailByUserIdAndDomain
+  }) =>
+  async ({ userId, domain }: { userId: string; domain: string }) => {
+    // domain
+
+    const email = await findVerifiedEmailByUserIdAndDomain({ userId, domain })
+
+    if (!email) {
+      throw new WorkspaceUnverifiedDomainError()
+    }
   }

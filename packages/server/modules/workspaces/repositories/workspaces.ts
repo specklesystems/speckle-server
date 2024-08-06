@@ -207,3 +207,24 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
       ).orWhereNotNull(Workspaces.col.id)
     })
 }
+
+export const addWorkspaceDomainFactory =
+  ({ db }: { db: Knex }) =>
+  async ({
+    workspaceId,
+    domain
+  }: {
+    workspaceId: string
+    domain: string
+  }): Promise<void> => {
+    await tables
+      .workspaces(db)
+      .where('id', workspaceId)
+      .whereRaw('? <> all (domains)', [domain])
+      .update(
+        {
+          domains: knex.raw('array_append(array_column_name, ?)', [domain])
+        },
+        'domains'
+      )
+  }

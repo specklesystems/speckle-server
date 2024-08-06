@@ -134,6 +134,10 @@ type Workspace {
   """
   logo: String
   """
+  Verified workspace domains
+  """
+  domains: [String!]
+  """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
