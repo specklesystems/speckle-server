@@ -15588,6 +15588,7 @@ __metadata:
     "@types/node-cron": "npm:^3.0.2"
     "@types/nodemailer": "npm:^6.4.5"
     "@types/passport": "npm:^1.0.16"
+    "@types/passport-azure-ad": "npm:^4.3.6"
     "@types/passport-github2": "npm:^1.2.9"
     "@types/passport-google-oauth20": "npm:^2.0.16"
     "@types/pg": "npm:^8.6.6"
@@ -18891,6 +18892,16 @@ __metadata:
   version: 4.0.0
   resolution: "@types/parse-json@npm:4.0.0"
   checksum: 10/4df9de98150d2978afc2161482a3a8e6617883effba3223324f079de97ba7eabd7d84b90ced11c3f82b0c08d4a8383f678c9f73e9c41258f769b3fa234a2bb4f
+  languageName: node
+  linkType: hard
+
+"@types/passport-azure-ad@npm:^4.3.6":
+  version: 4.3.6
+  resolution: "@types/passport-azure-ad@npm:4.3.6"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/passport": "npm:*"
+  checksum: 10/5e7cd019847add883c2bc1c4f4e1b20297f02670d826e19fc357df09c2694826abae7fa1976cc7f081f7f3011bde162c18a5d17e0eec47d14c9d23fac260de83
   languageName: node
   linkType: hard
 

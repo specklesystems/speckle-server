@@ -176,7 +176,7 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_AZURE_AD === 'true') {
-    const azureAdStrategyBuilder = (await import('@/modules/auth/strategies/azure-ad'))
+    const azureAdStrategyBuilder = (await import('@/modules/auth/strategies/azureAd'))
       .default
     const azureAdStrategy = await azureAdStrategyBuilder(
       app,

@@ -137,6 +137,32 @@ export function getGithubClientSecret() {
   return process.env.GITHUB_CLIENT_SECRET
 }
 
+export function getAzureAdIdentityMetadata() {
+  if (!process.env.AZURE_AD_IDENTITY_METADATA) {
+    throw new MisconfiguredEnvironmentError(
+      'AZURE_AD_IDENTITY_METADATA env var not configured'
+    )
+  }
+
+  return process.env.AZURE_AD_IDENTITY_METADATA
+}
+
+export function getAzureAdClientId() {
+  if (!process.env.AZURE_AD_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('AZURE_AD_CLIENT_ID env var not configured')
+  }
+
+  return process.env.AZURE_AD_CLIENT_ID
+}
+
+export function getAzureAdIssuer() {
+  return process.env.AZURE_AD_ISSUER || undefined
+}
+
+export function getAzureAdClientSecret() {
+  return process.env.AZURE_AD_CLIENT_SECRET || undefined
+}
+
 export function getMailchimpStatus() {
   return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
 }
