@@ -268,3 +268,39 @@ export const projectUpdatedSubscription = graphql(`
     }
   }
 `)
+
+export const modelViewingSubscription = graphql(`
+  subscription Subscription($target: ViewerUpdateTrackingTarget!) {
+    viewerUserActivityBroadcasted(target: $target) {
+      userName
+      userId
+      sessionId
+      user {
+        name
+        id
+        avatar
+      }
+      status
+    }
+  }
+`)
+
+export const modelCommentCreatedSubscription = graphql(`
+  subscription ProjectCommentsUpdated($target: ViewerUpdateTrackingTarget!) {
+    projectCommentsUpdated(target: $target) {
+      comment {
+        author {
+          avatar
+          id
+          name
+        }
+        id
+        hasParent
+        parent {
+          id
+        }
+      }
+      type
+    }
+  }
+`)

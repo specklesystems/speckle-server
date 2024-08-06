@@ -84,9 +84,64 @@
         }}
       </div>
     </div>
-    <!-- Card States: Expiry, errors, new version created, etc. -->
     <div v-if="!noWriteAccess">
+      <!-- Card States: Expiry, errors, new version created, etc. -->
       <slot name="states"></slot>
+      <div class="relative">
+        <!-- Swanky web app integration: show users who is viewing the model -->
+        <Transition name="bounce">
+          <div
+            v-if="currentlyViewingUsers.length !== 0 && !latestCommentNotification"
+            class="text-xs text-foreground-2 py-1 px-2 bg-gray-500/5 flex space-x-1 items-center justify-between"
+          >
+            <div class="flex items-center space-x-1">
+              <UserAvatarGroup size="sm" :users="currentlyViewingUsers" />
+              <span>
+                {{ currentlyViewingUsers.length === 1 ? 'is' : 'are' }} now viewing this
+                model.
+              </span>
+            </div>
+            <div>
+              <button
+                v-tippy="'Start a review session!'"
+                class="hover:text-primary p-1"
+                @click="viewModel()"
+              >
+                <ArrowTopRightOnSquareIcon class="w-3" />
+              </button>
+            </div>
+          </div>
+        </Transition>
+        <!-- Swanky web app integration: show comment created notification -->
+        <Transition name="bounce">
+          <div v-if="latestCommentNotification">
+            <div class="h-[2px] bg-blue-500/20 disappearing-bar"></div>
+            <div
+              class="text-xs text-foreground-2 py-1 px-2 bg-gray-500/5 flex space-x-1 items-center justify-between"
+            >
+              <div class="flex items-center space-x-1">
+                <UserAvatar
+                  size="sm"
+                  :user="latestCommentNotification.comment?.author"
+                />
+                <span>
+                  {{ latestCommentNotification.comment?.author.name }} just left a
+                  comment.
+                </span>
+              </div>
+              <div>
+                <button
+                  v-tippy="'View thread'"
+                  class="hover:text-primary p-1"
+                  @click="viewComment()"
+                >
+                  <ArrowTopRightOnSquareIcon class="w-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
     </div>
     <div v-else>
       <CommonModelNotification
@@ -101,10 +156,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
+import { useQuery, useSubscription } from '@vue/apollo-composable'
+import {
+  modelCommentCreatedSubscription,
+  modelDetailsQuery,
+  modelViewingSubscription
+} from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { XCircleIcon } from '@heroicons/vue/20/solid'
+import { ArrowTopRightOnSquareIcon, XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
@@ -113,6 +172,8 @@ import { useAccountStore } from '~/store/accounts'
 import type { ISenderModelCard } from 'lib/models/card/send'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
+import type { ProjectCommentsUpdatedMessage } from 'lib/common/generated/gql/graphql'
 
 const app = useNuxtApp()
 const store = useHostAppStore()
@@ -230,4 +291,123 @@ const cardBgColor = computed(() => {
 const noWriteAccess = computed(() => {
   return props.readonly && isSender.value
 })
+
+const { onResult: onModelViewingResult } = useSubscription(
+  modelViewingSubscription,
+  () => ({
+    target: {
+      projectId: props.modelCard.projectId,
+      resourceIdString: props.modelCard.modelId
+    }
+  }),
+  () => ({ clientId })
+)
+
+const currentlyViewingUsersMap = ref<
+  Record<string, { name: string; id: string; avatar?: string | null; lastSeen: number }>
+>({})
+
+const currentlyViewingUsers = computed(() =>
+  Object.values(currentlyViewingUsersMap.value)
+)
+
+onModelViewingResult((res) => {
+  const user = res.data?.viewerUserActivityBroadcasted.user
+  if (res.data?.viewerUserActivityBroadcasted.status === 'VIEWING' && user) {
+    // add user to currently viewing people
+    currentlyViewingUsersMap.value[user.id] = { ...user, lastSeen: Date.now() }
+  } else if (
+    res.data?.viewerUserActivityBroadcasted.status === 'DISCONNECTED' &&
+    user
+  ) {
+    // remove user from currently viewing people
+    delete currentlyViewingUsersMap.value[user.id]
+  }
+})
+
+// NOTE: FE does not send a disconnect event on page unload, so we need to do our own cleanup
+useIntervalFn(() => {
+  const now = Date.now()
+  for (const key in currentlyViewingUsersMap.value) {
+    const { lastSeen } = currentlyViewingUsersMap.value[key]
+    if (now - lastSeen > 5_000) delete currentlyViewingUsersMap.value[key]
+  }
+}, 1000)
+
+const { onResult: onCommentResult } = useSubscription(
+  modelCommentCreatedSubscription,
+  () => ({
+    target: {
+      projectId: props.modelCard.projectId,
+      resourceIdString: props.modelCard.modelId
+    }
+  }),
+  () => ({ clientId })
+)
+
+const latestCommentNotification = ref<ProjectCommentsUpdatedMessage>()
+
+const { start: startCommentClearTimeout, stop: stopCommentClearTimeout } = useTimeoutFn(
+  () => {
+    latestCommentNotification.value = undefined
+    stopCommentClearTimeout()
+  },
+  10_000
+)
+
+onCommentResult((res) => {
+  latestCommentNotification.value = res.data?.projectCommentsUpdated
+  startCommentClearTimeout()
+})
+
+const viewComment = () => {
+  trackEvent('DUI3 Action', { name: 'Comment View' }, props.modelCard.accountId)
+  if (!latestCommentNotification.value?.comment) return
+
+  const commentId =
+    latestCommentNotification.value?.comment?.parent?.id ||
+    latestCommentNotification.value?.comment.id
+
+  app.$baseBinding.openUrl(
+    `${projectAccount.value.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}#threadId=${commentId}`
+  )
+}
 </script>
+<style scoped lang="css">
+@keyframes disappear-width {
+  0% {
+    width: 100%;
+  }
+
+  100% {
+    display: none;
+    width: 0%;
+  }
+}
+
+.disappearing-bar {
+  animation: disappear-width 10s;
+}
+
+.bounce-enter-active {
+  animation: bounce-in 0.2s;
+}
+
+.bounce-leave-active {
+  animation: bounce-in 0.2s reverse;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+</style>
