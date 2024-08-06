@@ -29,7 +29,6 @@ import {
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
-import { authorizeResolver } from '@/modules/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
@@ -37,6 +36,7 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import { isEmpty } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -96,15 +96,12 @@ export const createWorkspaceFactory =
   }
 
 type WorkspaceUpdateArgs = {
-  /** Id of user performing the operation */
-  workspaceUpdaterId: string
   workspaceId: string
   workspaceInput: {
     name?: string | null
     description?: string | null
     logo?: string | null
   }
-  updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const updateWorkspaceFactory =
@@ -117,27 +114,20 @@ export const updateWorkspaceFactory =
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }) =>
-  async ({
-    workspaceUpdaterId,
-    workspaceId,
-    workspaceInput,
-    updaterResourceAccessLimits
-  }: WorkspaceUpdateArgs): Promise<Workspace> => {
-    await authorizeResolver(
-      workspaceUpdaterId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      updaterResourceAccessLimits
-    )
+  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    // Get existing workspace to merge with incoming changes
+    const currentWorkspace = await getWorkspace({ workspaceId })
+    if (!currentWorkspace) {
+      throw new WorkspaceNotFoundError()
+    }
 
+    // Validate incoming changes
     if (!!workspaceInput.logo) {
       validateImageString(workspaceInput.logo)
     }
-
-    const currentWorkspace = await getWorkspace({ workspaceId })
-
-    if (!currentWorkspace) {
-      throw new WorkspaceNotFoundError()
+    if (isEmpty(workspaceInput.name)) {
+      // Do not allow setting an empty name (empty descriptions allowed)
+      delete workspaceInput.name
     }
 
     const workspace = {
