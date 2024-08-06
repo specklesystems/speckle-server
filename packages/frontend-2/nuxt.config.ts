@@ -14,7 +14,8 @@ const {
   SPECKLE_SERVER_VERSION,
   NUXT_PUBLIC_LOG_LEVEL = 'info',
   NUXT_PUBLIC_LOG_PRETTY = false,
-  BUILD_SOURCEMAPS = 'false'
+  BUILD_SOURCEMAPS = 'false',
+  GHOST_API_KEY
 } = process.env
 
 const featureFlags = Environment.getFeatureFlags()
@@ -73,7 +74,8 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true
+      enableDirectPreviews: true,
+      ghostApiKey: GHOST_API_KEY
     }
   },
 
