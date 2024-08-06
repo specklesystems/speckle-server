@@ -23,7 +23,7 @@
       </div>
     </section>
     <section>
-      <h2 class="text-heading-sm text-foreground-2">Tutorials</h2>
+      <h2 class="text-heading-sm text-foreground-2">News &amp; tutorials</h2>
       <div
         class="flex flex-col gap-y-3 md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5"
       >
