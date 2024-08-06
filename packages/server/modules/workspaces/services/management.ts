@@ -37,6 +37,7 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import { isEmpty } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -138,6 +139,11 @@ export const updateWorkspaceFactory =
 
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
+    }
+
+    if (isEmpty(workspaceInput.name)) {
+      // Do not allow setting an empty name (empty descriptions allowed)
+      delete workspaceInput.name
     }
 
     const workspace = {
