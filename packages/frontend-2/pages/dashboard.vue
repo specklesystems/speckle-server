@@ -38,7 +38,8 @@
 </template>
 <script setup lang="ts">
 import { dashboardProjectsQuery } from '~~/lib/dashboard/graphql/queries'
-import type { TutorialItem, QuickStartItem } from '~~/lib/dashboard/helpers/types'
+import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
+import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import GhostContentAPI from '@tryghost/content-api'
@@ -57,6 +58,9 @@ const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const { result: projectsResult } = useQuery(dashboardProjectsQuery)
 const { triggerNotification } = useGlobalToast()
+const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
+  server: false
+})
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://speckle.systems',
@@ -64,7 +68,6 @@ const ghostContentApi = new GhostContentAPI({
   version: 'v5.0'
 })
 
-const tutorials = ref<TutorialItem[]>([])
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Speckle manager',
@@ -110,7 +113,7 @@ async function fetchTutorials() {
     filter: 'visibility:public'
   })
 
-  tutorials.value = posts
+  return posts
     .filter((post) => post.url)
     .map((post) => ({
       id: post.id,
@@ -118,7 +121,7 @@ async function fetchTutorials() {
       publishedAt: post.published_at,
       url: post.url,
       title: post.title,
-      featureImage: post.feature_image
+      featureImage: getResizedGhostImage({ url: post.feature_image, width: 600 })
     }))
 }
 
@@ -136,8 +139,4 @@ const onDownloadManager = (extension: ManagerExtension) => {
     })
   }
 }
-
-onMounted(() => {
-  fetchTutorials()
-})
 </script>
