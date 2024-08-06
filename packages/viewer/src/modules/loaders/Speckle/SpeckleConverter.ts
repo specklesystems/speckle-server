@@ -606,6 +606,14 @@ export default class SpeckleConverter {
     )
     for (const objectApplicationId of objectApplicationIds) {
       const speckleData = this.instancedObjectsLookupTable[objectApplicationId]
+      // NOTE: see https://linear.app/speckle/issue/CNX-115/viewer-handle-gracefully-instances-with-elements-that-failed-to
+      // This prevents the viewer not loading anything if a instance component is missing from its defintion. This is a likely scenario from connectors; even though we're guarding against it we'll never be able to fully enforce it.
+      if (!speckleData) {
+        Logger.warn(
+          `Object ${objectApplicationId} is is missing from definition ${definitionId}. Someone probably sent an instance containing unsopprted elements - this is ok, do not panic.`
+        )
+        continue
+      }
       const instancedNode = this.tree.parse({
         id: this.getCompoundId(speckleData.id, this.instanceCounter++),
         raw: speckleData,
