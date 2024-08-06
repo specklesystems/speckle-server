@@ -4,8 +4,8 @@
       <h2 class="text-heading-sm text-foreground-2">Quick start</h2>
       <div class="flex flex-col md:grid md:grid-cols-3 gap-3 pt-5">
         <QuickStartCard
-          v-for="(quickStartItem, index) in quickStartItems"
-          :key="`quick-start-${index}`"
+          v-for="quickStartItem in quickStartItems"
+          :key="quickStartItem.title"
           :title="quickStartItem.title"
           :description="quickStartItem.description"
           :buttons="quickStartItem.buttons"
@@ -38,19 +38,25 @@
 </template>
 <script setup lang="ts">
 import { dashboardProjectsQuery } from '~~/lib/dashboard/graphql/queries'
-import type { TutorialCard, QuickStartItem } from '~~/lib/dashboard/helpers/types'
+import type { TutorialItem, QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import GhostContentAPI from '@tryghost/content-api'
 import { docsPageUrl, forumPageUrl } from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 useHead({ title: 'Dashboard' })
+
+definePageMeta({
+  middleware: ['auth']
+})
 
 const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const { result: projectsResult } = useQuery(dashboardProjectsQuery)
+const { triggerNotification } = useGlobalToast()
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://speckle.systems',
@@ -58,7 +64,7 @@ const ghostContentApi = new GhostContentAPI({
   version: 'v5.0'
 })
 
-const tutorials = ref<TutorialCard[]>([])
+const tutorials = ref<TutorialItem[]>([])
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Speckle manager',
@@ -103,22 +109,30 @@ async function fetchTutorials() {
     limit: 8,
     filter: 'visibility:public'
   })
-  tutorials.value = posts.map((post) => ({
-    id: post.id,
-    readingTime: post.reading_time,
-    publishedAt: post.published_at,
-    url: post.url,
-    title: post.title,
-    featureImage: post.feature_image
-  }))
+
+  tutorials.value = posts
+    .filter((post) => post.url)
+    .map((post) => ({
+      id: post.id,
+      readingTime: post.reading_time,
+      publishedAt: post.published_at,
+      url: post.url,
+      title: post.title,
+      featureImage: post.feature_image
+    }))
 }
 
-const onDownloadManager = async (extension: ManagerExtension) => {
-  const downloadResult = await downloadManager(extension)
+const onDownloadManager = (extension: ManagerExtension) => {
+  try {
+    downloadManager(extension)
 
-  if (downloadResult) {
     mixpanel.track('Manager Download', {
       os: extension === 'exe' ? 'win' : 'mac'
+    })
+  } catch {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Download failed'
     })
   }
 }

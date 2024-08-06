@@ -1,7 +1,7 @@
 import type { Nullable } from '@speckle/shared'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 
-export type TutorialCard = {
+export type TutorialItem = {
   id: string
   readingTime?: number
   publishedAt?: Nullable<string>

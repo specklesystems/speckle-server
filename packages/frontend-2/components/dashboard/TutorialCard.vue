@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink v-if="tutorial.url" :to="tutorial.url" external>
+  <NuxtLink :to="tutorial.url" external>
     <div
       class="bg-foundation border border-1 border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
@@ -26,10 +26,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { TutorialCard } from '~~/lib/dashboard/helpers/types'
+import type { TutorialItem } from '~~/lib/dashboard/helpers/types'
 
 const props = defineProps<{
-  tutorial: TutorialCard
+  tutorial: TutorialItem
 }>()
 
 const updatedAt = computed(() => {

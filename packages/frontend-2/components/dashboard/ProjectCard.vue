@@ -40,6 +40,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { DashboardProjectCard_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 graphql(`
   fragment DashboardProjectCard_Project on Project {
@@ -52,9 +53,7 @@ graphql(`
     }
     team {
       user {
-        avatar
-        id
-        name
+        ...LimitedUserAvatar
       }
     }
   }
@@ -63,6 +62,13 @@ graphql(`
 const props = defineProps<{
   project: DashboardProjectCard_ProjectFragment
 }>()
+
+const projectId = computed(() => props.project.id)
+
+useGeneralProjectPageUpdateTracking(
+  { projectId },
+  { redirectHomeOnProjectDeletion: false }
+)
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const updatedAt = computed(() => {
