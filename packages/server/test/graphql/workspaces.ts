@@ -106,7 +106,7 @@ export const createWorkspaceProjectQuery = gql`
   ${workspaceProjectFragment}
 `
 
-export const getWorkspaceProjects = gql`
+export const getWorkspaceProjectsQuery = gql`
   query GetWorkspaceProjects(
     $id: String!
     $limit: Int
@@ -126,7 +126,7 @@ export const getWorkspaceProjects = gql`
   ${workspaceProjectFragment}
 `
 
-export const getWorkspaceTeam = gql`
+export const getWorkspaceTeamQuery = gql`
   query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
     workspace(id: $workspaceId) {
       team(filter: $filter) {
@@ -135,4 +135,14 @@ export const getWorkspaceTeam = gql`
     }
   }
   ${workspaceCollaboratorFragment}
+`
+
+export const leaveWorkspaceMutation = gql`
+  mutation ActiveUserLeaveWorkspace($id: ID!) {
+    activeUserMutations {
+      workspaceMutations {
+        leave(id: $id)
+      }
+    }
+  }
 `
