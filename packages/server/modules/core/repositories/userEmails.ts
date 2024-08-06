@@ -7,6 +7,7 @@ import {
   FindEmail,
   FindEmailsByUserId,
   FindPrimaryEmailForUser,
+  FindUserEmailById,
   SetPrimaryUserEmail,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
@@ -84,6 +85,16 @@ export const findEmailFactory =
     return db(UserEmails.name)
       .where({
         ...query
+      })
+      .first()
+  }
+
+export const findUserEmailById =
+  ({ db }: { db: Knex }): FindUserEmailById =>
+  async (id) => {
+    return db(UserEmails.name)
+      .where({
+        [UserEmails.col.id]: id
       })
       .first()
   }

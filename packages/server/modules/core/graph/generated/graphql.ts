@@ -1239,6 +1239,8 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  /** Re-send a pending invite to a specific user email */
+  resendInviteToEmail: Scalars['Boolean']['output'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -1482,6 +1484,11 @@ export type MutationObjectCreateArgs = {
 
 export type MutationRequestVerificationByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type MutationResendInviteToEmailArgs = {
+  userEmailId: Scalars['String']['input'];
 };
 
 
@@ -5047,6 +5054,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   requestVerificationByEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationRequestVerificationByEmailArgs, 'email'>>;
+  resendInviteToEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationResendInviteToEmailArgs, 'userEmailId'>>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;

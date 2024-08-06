@@ -40,6 +40,7 @@ export type FindPrimaryEmailForUser = (
 ) => Promise<UserEmail>
 
 export type FindEmail = (query: Partial<UserEmail>) => Promise<UserEmail>
+export type FindUserEmailById = (id: string) => Promise<UserEmail>
 
 export type FindEmailsByUserId = ({
   userId

@@ -1225,6 +1225,8 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  /** Re-send a pending invite to a specific user email */
+  resendInviteToEmail: Scalars['Boolean']['output'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -1468,6 +1470,11 @@ export type MutationObjectCreateArgs = {
 
 export type MutationRequestVerificationByEmailArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type MutationResendInviteToEmailArgs = {
+  userEmailId: Scalars['String']['input'];
 };
 
 
@@ -3774,8 +3781,8 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
-  /** Optional url for workspace logo image */
-  logoUrl?: Maybe<Scalars['String']['output']>;
+  /** Logo image as base64-encoded string */
+  logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
@@ -3910,7 +3917,8 @@ export type WorkspaceRoleUpdateInput = {
 export type WorkspaceUpdateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  logoUrl?: InputMaybe<Scalars['String']['input']>;
+  /** Logo image as base64-encoded string */
+  logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 

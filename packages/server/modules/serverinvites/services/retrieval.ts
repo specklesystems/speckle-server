@@ -5,6 +5,10 @@ import { Nullable } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
 import { FindServerInvite } from '@/modules/serverinvites/domain/operations'
 import { GetInvitationTargetUsers } from '@/modules/serverinvites/services/operations'
+import {
+  FindEmailsByUserId,
+  FindUserEmailById
+} from '@/modules/core/domain/userEmails/operations'
 
 /**
  * Get all registered invitation target users keyed by their ID
@@ -37,4 +41,17 @@ export const getServerInviteForTokenFactory =
       invitedById: invite.inviterId,
       email: target.userEmail
     }
+  }
+
+export const findServerInviteByEmailFactory =
+  ({
+    findServerInvite,
+    findUserEmailById
+  }: {
+    findServerInvite: FindServerInvite
+    findUserEmailById: FindUserEmailById
+  }) =>
+  async (userEmailId: string) => {
+    const userEmail = await findUserEmailById(userEmailId)
+    return findServerInvite(userEmail.email)
   }

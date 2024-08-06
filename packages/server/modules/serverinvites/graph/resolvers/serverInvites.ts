@@ -12,6 +12,7 @@ import {
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
 import {
+  findServerInviteByEmailFactory,
   getInvitationTargetUsersFactory,
   getServerInviteForTokenFactory
 } from '@/modules/serverinvites/services/retrieval'
@@ -53,6 +54,7 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { findUserEmailById } from '@/modules/core/repositories/userEmails'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -297,6 +299,29 @@ export = {
       })
 
       await resendInviteEmail({ inviteId })
+
+      return true
+    },
+
+    async resendInviteToEmail(_parent, args) {
+      const { userEmailId } = args
+
+      const serverInvite = await findServerInviteByEmailFactory({
+        findServerInvite: findServerInviteFactory({ db }),
+        findUserEmailById: findUserEmailById({ db })
+      })(userEmailId)
+
+      if (!serverInvite) return false
+
+      const resendInviteEmail = resendInviteEmailFactory({
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        findUserByTarget: findUserByTargetFactory(),
+        findInvite: findInviteFactory({ db })
+      })
+
+      await resendInviteEmail({ inviteId: serverInvite.id })
 
       return true
     },

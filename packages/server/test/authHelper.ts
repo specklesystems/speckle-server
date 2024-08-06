@@ -1,18 +1,22 @@
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import {
+  createRandomEmail,
+  createRandomPassword
+} from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createUser } from '@/modules/core/services/users'
-import { kebabCase, omit } from 'lodash'
+import { omit } from 'lodash'
 
 export type BasicTestUser = {
   name: string
-  email: string
+  email?: string
   password?: string
   /**
    * Will be set by createTestUser(), but you need to set a default value to ''
    * so that you don't have to check if its empty cause of TS
    */
-  id: string
+  id?: string
   role?: ServerRoles
 } & Partial<UserRecord>
 
@@ -22,15 +26,16 @@ export type BasicTestUser = {
  */
 export async function createTestUser(userObj: BasicTestUser) {
   if (!userObj.password) {
-    userObj.password = 'some-random-password-123456789#!@'
+    userObj.password = createRandomPassword()
   }
 
   if (!userObj.email) {
-    userObj.email = `${kebabCase(userObj.name)}@someemail.com`
+    userObj.email = createRandomEmail()
   }
 
   const id = await createUser(omit(userObj, ['id']), { skipPropertyValidation: true })
   userObj.id = id
+  return userObj
 }
 
 /**

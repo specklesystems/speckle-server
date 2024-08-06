@@ -63,6 +63,13 @@ extend type Mutation {
     @hasScope(scope: "users:invite")
 
   """
+  Re-send a pending invite to a specific user email
+  """
+  resendInviteToEmail(userEmailId: String!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+
+  """
   Delete a pending invite
   Note: The required scope to invoke this is not given out to app or personal access tokens
   """

@@ -18,6 +18,12 @@ export const resendInviteMutation = gql`
   }
 `
 
+export const resendInviteToEmailMutation = gql`
+  mutation ResendInviteToEmail($userEmailId: String!) {
+    resendInviteToEmail(userEmailId: $userEmailId)
+  }
+`
+
 export const batchCreateServerInviteMutation = gql`
   mutation BatchCreateServerInvite($input: [ServerInviteCreateInput!]!) {
     serverInviteBatchCreate(input: $input)
