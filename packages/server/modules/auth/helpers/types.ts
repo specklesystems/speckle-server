@@ -56,7 +56,7 @@ export type ServerAppsScopesRecord = {
   scopeName: string
 }
 
-export type AuthStrategy = {
+export type AuthStrategyMetadata = {
   id: string
   name: string
   icon: string
@@ -82,4 +82,4 @@ export type AuthStrategyBuilder = (
    * and finalizes the auth process by redirecting the user to the correct page
    */
   finalizeAuthMiddleware: RequestHandler
-) => MaybeAsync<AuthStrategy>
+) => MaybeAsync<AuthStrategyMetadata>

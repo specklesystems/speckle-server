@@ -21,12 +21,15 @@ import {
 } from '@/modules/auth/services/mailchimp'
 import { getUserById } from '@/modules/core/services/users'
 import type { Express, RequestHandler } from 'express'
-import { AuthStrategy, AuthStrategyPassportUser } from '@/modules/auth/helpers/types'
+import {
+  AuthStrategyMetadata,
+  AuthStrategyPassportUser
+} from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
 
 const setupStrategies = async (app: Express) => {
-  const authStrategies: AuthStrategy[] = []
+  const authStrategies: AuthStrategyMetadata[] = []
 
   passport.serializeUser((user, done) => done(null, user))
   passport.deserializeUser((user, done) => done(null, user as AuthStrategyPassportUser))
@@ -35,7 +38,7 @@ const setupStrategies = async (app: Express) => {
 
   const RedisStore = ConnectRedis(ExpressSession)
   const redisClient = createRedisClient(getRedisUrl(), {})
-  const session = ExpressSession({
+  const sessionMiddleware = ExpressSession({
     store: new RedisStore({ client: redisClient }),
     secret: getSessionSecret(),
     saveUninitialized: false,
@@ -49,7 +52,7 @@ const setupStrategies = async (app: Express) => {
   /**
    * Move incoming auth query params to session, for easier access
    */
-  const sessionStorage: RequestHandler = (req, res, next) => {
+  const moveAuthParamsToSessionMiddleware: RequestHandler = (req, res, next) => {
     if (!req.query.challenge)
       return res.status(400).send('Invalid request: no challenge detected.')
 
@@ -74,7 +77,7 @@ const setupStrategies = async (app: Express) => {
   /**
    * Finalizes authentication for the main frontend application.
    */
-  const finalizeAuth: RequestHandler = async (req, res) => {
+  const finalizeAuthMiddleware: RequestHandler = async (req, res) => {
     try {
       if (!req.user) {
         throw new Error('Cannot finalize auth - No user attached to session')
@@ -151,9 +154,9 @@ const setupStrategies = async (app: Express) => {
       .default
     const googStrategy = await googleStrategyBuilder(
       app,
-      session,
-      sessionStorage,
-      finalizeAuth
+      sessionMiddleware,
+      moveAuthParamsToSessionMiddleware,
+      finalizeAuthMiddleware
     )
     authStrategies.push(googStrategy)
     strategyCount++
@@ -164,9 +167,9 @@ const setupStrategies = async (app: Express) => {
       .default
     const githubStrategy = await githubStrategyBuilder(
       app,
-      session,
-      sessionStorage,
-      finalizeAuth
+      sessionMiddleware,
+      moveAuthParamsToSessionMiddleware,
+      finalizeAuthMiddleware
     )
     authStrategies.push(githubStrategy)
     strategyCount++
@@ -177,9 +180,9 @@ const setupStrategies = async (app: Express) => {
       .default
     const azureAdStrategy = await azureAdStrategyBuilder(
       app,
-      session,
-      sessionStorage,
-      finalizeAuth
+      sessionMiddleware,
+      moveAuthParamsToSessionMiddleware,
+      finalizeAuthMiddleware
     )
     authStrategies.push(azureAdStrategy)
     strategyCount++
@@ -189,9 +192,9 @@ const setupStrategies = async (app: Express) => {
     const oidcStrategyBuilder = (await import('@/modules/auth/strategies/oidc')).default
     const oidcStrategy = await oidcStrategyBuilder(
       app,
-      session,
-      sessionStorage,
-      finalizeAuth
+      sessionMiddleware,
+      moveAuthParamsToSessionMiddleware,
+      finalizeAuthMiddleware
     )
     authStrategies.push(oidcStrategy)
     strategyCount++
@@ -204,9 +207,9 @@ const setupStrategies = async (app: Express) => {
       .default
     const localStrategy = await localStrategyBuilder(
       app,
-      session,
-      sessionStorage,
-      finalizeAuth
+      sessionMiddleware,
+      moveAuthParamsToSessionMiddleware,
+      finalizeAuthMiddleware
     )
     authStrategies.push(localStrategy)
   }

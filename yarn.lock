@@ -15588,6 +15588,7 @@ __metadata:
     "@types/node-cron": "npm:^3.0.2"
     "@types/nodemailer": "npm:^6.4.5"
     "@types/passport": "npm:^1.0.16"
+    "@types/passport-google-oauth20": "npm:^2.0.16"
     "@types/pg": "npm:^8.6.6"
     "@types/pino-http": "npm:^5.8.4"
     "@types/sanitize-html": "npm:^2.6.2"
@@ -18855,6 +18856,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/oauth@npm:*":
+  version: 0.9.5
+  resolution: "@types/oauth@npm:0.9.5"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/5674ff25fe431d6a5a32f050964a944f27ff4e2977fc9723a6f06d982dc50635d8bc39a56646868940913818e13995163f65f0b234b8f88f2af9b32e3ff8601d
+  languageName: node
+  linkType: hard
+
 "@types/object.omit@npm:^3.0.0":
   version: 3.0.0
   resolution: "@types/object.omit@npm:3.0.0"
@@ -18883,7 +18893,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/passport@npm:^1.0.16":
+"@types/passport-google-oauth20@npm:^2.0.16":
+  version: 2.0.16
+  resolution: "@types/passport-google-oauth20@npm:2.0.16"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/passport": "npm:*"
+    "@types/passport-oauth2": "npm:*"
+  checksum: 10/fd4a2ec9e1360f540904c48e1c28c58fdddbb58cca3e8fd317db180050489a626f12c1fe092ef2faed7e8f2e45e10cece1725628453d2806b0d3e5a703cd77e6
+  languageName: node
+  linkType: hard
+
+"@types/passport-oauth2@npm:*":
+  version: 1.4.17
+  resolution: "@types/passport-oauth2@npm:1.4.17"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/oauth": "npm:*"
+    "@types/passport": "npm:*"
+  checksum: 10/4c5d2d6f717bb0b3d049669e47ca27cb166cbbef2073dccd302b10e62936c9e392074acabe6cb593f7eeb37a6a3cf81b9d3a4f35a46018a6645ac37d0f1706cb
+  languageName: node
+  linkType: hard
+
+"@types/passport@npm:*, @types/passport@npm:^1.0.16":
   version: 1.0.16
   resolution: "@types/passport@npm:1.0.16"
   dependencies:

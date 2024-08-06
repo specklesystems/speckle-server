@@ -29,6 +29,7 @@ import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constan
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
+import { Optional } from '@speckle/shared'
 
 const oidcStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -61,7 +62,8 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
         const serverInfo = await getServerInfo()
 
         // TODO: req.session.inviteId doesn't appear to exist, but i'm not removing it to not break things
-        const token = get(req.session, 'inviteId') || req.session.token
+        const token: Optional<string> =
+          get(req.session, 'inviteId') || req.session.token
 
         try {
           const email = userinfo['email']

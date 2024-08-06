@@ -101,6 +101,24 @@ export function getOidcName() {
   return process.env.OIDC_NAME
 }
 
+export function getGoogleClientId() {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('GOOGLE_CLIENT_ID env var not configured')
+  }
+
+  return process.env.GOOGLE_CLIENT_ID
+}
+
+export function getGoogleClientSecret() {
+  if (!process.env.GOOGLE_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError(
+      'GOOGLE_CLIENT_SECRET env var not configured'
+    )
+  }
+
+  return process.env.GOOGLE_CLIENT_SECRET
+}
+
 export function getMailchimpStatus() {
   return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
 }

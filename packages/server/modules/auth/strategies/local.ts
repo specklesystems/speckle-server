@@ -25,7 +25,7 @@ import {
 import db from '@/db/knex'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategy, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { ensureError, Optional } from '@speckle/shared'
 
@@ -35,7 +35,7 @@ const localStrategyBuilder: AuthStrategyBuilder = async (
   moveAuthParamsToSessionMiddleware,
   finalizeAuthMiddleware
 ) => {
-  const strategy: AuthStrategy = {
+  const strategy: AuthStrategyMetadata = {
     id: 'local',
     name: 'Local',
     icon: 'TODO',
