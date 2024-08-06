@@ -10,6 +10,9 @@ const {
   initHighFrequencyMonitoring
 } = require('@/logging/highFrequencyMetrics/highfrequencyMonitoring')
 const knex = require('@/db/knex')
+const {
+  highFrequencyMetricsCollectionPeriodMs
+} = require('@/modules/shared/helpers/envHelper')
 
 let prometheusInitialized = false
 
@@ -26,7 +29,7 @@ module.exports = function (app) {
     prometheusClient.collectDefaultMetrics()
     const highfrequencyMonitoring = initHighFrequencyMonitoring({
       register: prometheusClient.register,
-      collectionPeriodMilliseconds: 100,
+      collectionPeriodMilliseconds: highFrequencyMetricsCollectionPeriodMs(),
       config: {
         knex
       }

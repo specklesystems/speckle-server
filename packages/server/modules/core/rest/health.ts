@@ -1,94 +1,139 @@
 import * as express from 'express'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
+import {
+  getRedisUrl,
+  highFrequencyMetricsCollectionPeriodMs,
+  postgresMaxConnections
+} from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
+import type { Knex } from 'knex'
 
 export default (app: express.Application) => {
+  const knexFreeDbConnectionSampler = knexFreeDbConnectionSamplerFactory({
+    db,
+    collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
+    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready
+  })
+  knexFreeDbConnectionSampler.start()
+
   app.options('/liveness')
-  app.get('/liveness', handleLiveness)
+  app.get(
+    '/liveness',
+    handleLivenessFactory({
+      isRedisAlive,
+      isPostgresAlive
+    })
+  )
   app.options('/readiness')
-  app.get('/readiness', handleReadiness)
+  app.get(
+    '/readiness',
+    handleReadinessFactory({
+      isRedisAlive,
+      isPostgresAlive,
+      freeConnectionsCalculator: knexFreeDbConnectionSampler
+    })
+  )
 }
 
-const handleLiveness: express.RequestHandler = async (req, res) => {
-  const postgres = await isPostgresAlive()
-  if (!postgres.isAlive) {
-    req.log.error(
-      postgres.err,
-      'Liveness health check failed. Postgres is not available.'
-    )
-    res.status(500).json({
-      message: 'Postgres is not available',
-      error: postgres.err
-    })
+const handleLivenessFactory =
+  (deps: {
+    isRedisAlive: RedisCheck
+    isPostgresAlive: DBCheck
+  }): express.RequestHandler =>
+  async (req, res) => {
+    const postgres = await deps.isPostgresAlive()
+    if (!postgres.isAlive) {
+      req.log.error(
+        postgres.err,
+        'Liveness health check failed. Postgres is not available.'
+      )
+      res.status(500).json({
+        message: 'Postgres is not available',
+        error: postgres.err
+      })
+      res.send()
+      return
+    }
+
+    const redis = await deps.isRedisAlive()
+    if (!redis.isAlive) {
+      req.log.error(redis.err, 'Liveness health check failed. Redis is not available.')
+      res.status(500).json({
+        message: 'Redis is not available.',
+        error: redis.err
+      })
+      res.send()
+      return
+    }
+
+    res.status(200)
     res.send()
-    return
   }
 
-  const redis = await isRedisAlive()
-  if (!redis.isAlive) {
-    req.log.error(redis.err, 'Liveness health check failed. Redis is not available.')
-    res.status(500).json({
-      message: 'Redis is not available.',
-      error: redis.err
-    })
-    res.send()
-    return
-  }
-
-  res.status(200)
-  res.send()
+type FreeConnectionsCalculator = {
+  mean: () => number
 }
 
-const handleReadiness: express.RequestHandler = async (req, res) => {
-  const postgres = await isPostgresAlive()
-  if (!postgres.isAlive) {
-    req.log.error(
-      postgres.err,
-      'Readiness health check failed. Postgres is not available.'
+const handleReadinessFactory = (deps: {
+  isRedisAlive: RedisCheck
+  isPostgresAlive: DBCheck
+  freeConnectionsCalculator: FreeConnectionsCalculator
+}): express.RequestHandler => {
+  return async (req, res) => {
+    const postgres = await deps.isPostgresAlive()
+    if (!postgres.isAlive) {
+      req.log.error(
+        postgres.err,
+        'Readiness health check failed. Postgres is not available.'
+      )
+      res.status(500).json({
+        message: 'Postgres is not available',
+        error: postgres.err
+      })
+      res.send()
+      return
+    }
+
+    const redis = await deps.isRedisAlive()
+    if (!redis.isAlive) {
+      req.log.error(redis.err, 'Readiness health check failed. Redis is not available.')
+      res.status(500).json({
+        message: 'Redis is not available.',
+        error: redis.err
+      })
+      res.send()
+      return
+    }
+
+    const numFreeConnections = await deps.freeConnectionsCalculator.mean()
+    const percentageFreeConnections = Math.floor(
+      (numFreeConnections * 100) / postgresMaxConnections()
     )
-    res.status(500).json({
-      message: 'Postgres is not available',
-      error: postgres.err
-    })
-    res.send()
-    return
-  }
+    //unready if less than 10% for 20s
+    if (percentageFreeConnections < 10) {
+      const message =
+        'Readiness health check failed. Insufficient free database connections for a sustained duration.'
+      req.log.error(message)
+      res.status(500).json({
+        message
+      })
+      res.send()
+      return
+    }
 
-  const redis = await isRedisAlive()
-  if (!redis.isAlive) {
-    req.log.error(redis.err, 'Readiness health check failed. Redis is not available.')
-    res.status(500).json({
-      message: 'Redis is not available.',
-      error: redis.err
-    })
+    res.status(200)
     res.send()
-    return
   }
-
-  const numFreeConnections = await numberOfFreeConnections(db)
-  //unready if less than 5%
-  if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
-    const message =
-      'Readiness health check failed. Insufficient free database connections.'
-    req.log.error(message)
-    res.status(500).json({
-      message
-    })
-    res.send()
-    return
-  }
-
-  res.status(200)
-  res.send()
 }
 
 type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 
-const isPostgresAlive = async (): Promise<CheckResponse> => {
+type DBCheck = () => Promise<CheckResponse>
+
+const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
   try {
     await getServerInfo()
   } catch (err) {
@@ -97,7 +142,9 @@ const isPostgresAlive = async (): Promise<CheckResponse> => {
   return { isAlive: true }
 }
 
-const isRedisAlive = async (): Promise<CheckResponse> => {
+type RedisCheck = () => Promise<CheckResponse>
+
+const isRedisAlive: RedisCheck = async (): Promise<CheckResponse> => {
   let client: Redis | undefined = undefined
   let result: CheckResponse = { isAlive: true }
   try {
@@ -111,5 +158,29 @@ const isRedisAlive = async (): Promise<CheckResponse> => {
   } finally {
     await client?.quit()
     return result
+  }
+}
+
+export const knexFreeDbConnectionSamplerFactory = (opts: {
+  db: Knex
+  collectionPeriod: number
+  sampledDuration: number
+}): FreeConnectionsCalculator & { start: () => void } => {
+  const dataQueue = new Array<number>()
+  const maxQueueSize = opts.sampledDuration / opts.collectionPeriod
+  return {
+    start: () => {
+      setInterval(() => {
+        dataQueue.push(numberOfFreeConnections(opts.db))
+        if (dataQueue.length > maxQueueSize) {
+          dataQueue.shift()
+        }
+      }, opts.collectionPeriod)
+    },
+    mean: () => {
+      // return the current value if the queue is empty
+      if (!dataQueue.length) return numberOfFreeConnections(opts.db)
+      return dataQueue.reduce((a, b) => a + b) / dataQueue.length
+    }
   }
 }
