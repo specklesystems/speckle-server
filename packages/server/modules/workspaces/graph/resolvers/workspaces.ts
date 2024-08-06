@@ -63,7 +63,7 @@ import {
 } from '@/modules/workspaces/services/management'
 import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
-import { Roles } from '@speckle/shared'
+import { removeNullOrUndefinedKeys, Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
 
 const buildCreateAndSendWorkspaceInvite = () =>
@@ -323,11 +323,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
           return workspace?.role || null
         },
-        team: async (parent) => {
+        team: async (parent, args) => {
           const getTeam = getWorkspaceCollaboratorsFactory({ db })
-          const collaborators = await getTeam({
-            workspaceId: parent.id
-          })
+          const collaborators = await getTeam(
+            { workspaceId: parent.id },
+            { filter: removeNullOrUndefinedKeys(args?.filter ?? {}) }
+          )
 
           return collaborators
         },

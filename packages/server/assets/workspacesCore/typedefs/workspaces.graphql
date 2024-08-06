@@ -103,7 +103,7 @@ type Workspace {
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
-  team: [WorkspaceCollaborator!]!
+  team(filter: WorkspaceTeamFilter): [WorkspaceCollaborator!]!
   """
   Only available to workspace owners
   """
@@ -118,6 +118,17 @@ type Workspace {
 input WorkspaceProjectsFilter {
   """
   Filter out projects by name
+  """
+  search: String
+}
+
+input WorkspaceTeamFilter {
+  """
+  Limit team members to provided role
+  """
+  role: String
+  """
+  Search for team members by name or email
   """
   search: String
 }

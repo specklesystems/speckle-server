@@ -11,12 +11,10 @@ export const workspaceFragment = gql`
   }
 `
 
-export const workspaceTeamFragment = gql`
-  fragment TestWorkspaceTeam on Workspace {
-    team {
-      id
-      role
-    }
+export const workspaceCollaboratorFragment = gql`
+  fragment TestWorkspaceCollaborator on WorkspaceCollaborator {
+    id
+    role
   }
 `
 
@@ -26,6 +24,15 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+  }
+`
+
+export const workspaceTeamFragment = gql`
+  fragment TestWorkspaceTeam on Workspace {
+    team {
+      id
+      role
+    }
   }
 `
 
@@ -117,4 +124,15 @@ export const getWorkspaceProjects = gql`
     }
   }
   ${workspaceProjectFragment}
+`
+
+export const getWorkspaceTeam = gql`
+  query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
+    workspace(id: $workspaceId) {
+      team(filter: $filter) {
+        ...TestWorkspaceCollaborator
+      }
+    }
+  }
+  ${workspaceCollaboratorFragment}
 `
