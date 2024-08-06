@@ -15279,6 +15279,7 @@ __metadata:
     "@tiptap/pm": "npm:2.0.0-beta.220"
     "@tiptap/suggestion": "npm:2.0.0-beta.220"
     "@tiptap/vue-3": "npm:2.0.0-beta.220"
+    "@tryghost/content-api": "npm:^1.11.21"
     "@types/apollo-upload-client": "npm:^18.0.0"
     "@types/dompurify": "npm:^3.0.2"
     "@types/eslint": "npm:^8.56.10"
@@ -15289,6 +15290,7 @@ __metadata:
     "@types/mixpanel-browser": "npm:^2.38.0"
     "@types/node": "npm:^18.17.5"
     "@types/pino-http": "npm:^5.8.1"
+    "@types/tryghost__content-api": "npm:^1"
     "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
@@ -17834,6 +17836,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tryghost/content-api@npm:^1.11.21":
+  version: 1.11.21
+  resolution: "@tryghost/content-api@npm:1.11.21"
+  dependencies:
+    axios: "npm:^1.0.0"
+  checksum: 10/5644bd7859e4fbbc0f36c9eb59fdff50646cf13e16d8547ae60760aff4db1c33f082b7bd5abf5c957e6f6457c206e3c59ed140a03050e5f5a631494ea66f4abc
+  languageName: node
+  linkType: hard
+
 "@tryghost/content-api@npm:^1.5.12":
   version: 1.11.19
   resolution: "@tryghost/content-api@npm:1.11.19"
@@ -19214,6 +19225,13 @@ __metadata:
   version: 2.0.2
   resolution: "@types/trusted-types@npm:2.0.2"
   checksum: 10/3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
+  languageName: node
+  linkType: hard
+
+"@types/tryghost__content-api@npm:^1":
+  version: 1.3.16
+  resolution: "@types/tryghost__content-api@npm:1.3.16"
+  checksum: 10/6e63747e578ca97220560f10d293607599beb089720ed8967aa7e5aa0928a1e3f8d71ef711c49eef244afa828e63bf303854388ef47472285e777b209ee45265
   languageName: node
   linkType: hard
 
