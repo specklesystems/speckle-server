@@ -5,20 +5,7 @@ export const dashboardProjectsQuery = graphql(`
     activeUser {
       projects(limit: 3) {
         items {
-          id
-          name
-          role
-          updatedAt
-          models {
-            totalCount
-          }
-          team {
-            user {
-              avatar
-              id
-              name
-            }
-          }
+          ...DashboardProjectCard_Project
         }
       }
     }
