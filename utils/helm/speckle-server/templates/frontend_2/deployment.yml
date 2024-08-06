@@ -91,7 +91,7 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.frontend_2.ghostApiKey -}}
+          {{- if .Values.frontend_2.ghostApiKey }}
           - name: NUXT_PUBLIC_GHOST_API_KEY
             value: {{ .Values.frontend_2.ghostApiKey | quote }}
           {{- end }}
