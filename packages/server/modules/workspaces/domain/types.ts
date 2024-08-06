@@ -8,6 +8,12 @@ declare module '@/modules/serverinvites/domain/types' {
   }
 }
 
+declare module '@/modules/serverinvites/helpers/core' {
+  interface ResourceTargetTypeRoleTypeMap {
+    [WorkspaceInviteResourceType]: WorkspaceRoles
+  }
+}
+
 export type WorkspaceInviteResourceTarget = InviteResourceTarget<
   typeof WorkspaceInviteResourceType,
   WorkspaceRoles

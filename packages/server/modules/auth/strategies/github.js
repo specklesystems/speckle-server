@@ -23,6 +23,8 @@ const {
   updateAllInviteTargetsFactory,
   findServerInviteFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
+const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
+const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -103,7 +105,9 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const myUser = await findOrCreateUser({
           user: {
             ...user,
-            role: validInvite?.serverRole
+            role: validInvite
+              ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
+              : undefined
           },
           rawProfile: profile._raw
         })

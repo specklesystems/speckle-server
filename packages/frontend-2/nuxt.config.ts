@@ -73,7 +73,8 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true
+      enableDirectPreviews: true,
+      ghostApiKey: ''
     }
   },
 

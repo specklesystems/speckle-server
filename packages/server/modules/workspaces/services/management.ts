@@ -227,7 +227,17 @@ export const updateWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
-  async ({ workspaceId, userId, role }: WorkspaceAcl): Promise<void> => {
+  async ({
+    workspaceId,
+    userId,
+    role,
+    skipProjectRoleUpdatesFor
+  }: WorkspaceAcl & {
+    /**
+     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
+     */
+    skipProjectRoleUpdatesFor?: string[]
+  }): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
@@ -248,9 +258,13 @@ export const updateWorkspaceRoleFactory =
     const projectRole = mapWorkspaceRoleToProjectRole(role)
     for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          grantStreamPermissions({ streamId, userId, role: projectRole })
-        )
+        projectsPage.map(({ id: streamId }) => {
+          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+            return
+          }
+
+          return grantStreamPermissions({ streamId, userId, role: projectRole })
+        })
       )
     }
 

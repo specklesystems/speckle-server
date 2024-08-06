@@ -15,6 +15,7 @@ import {
 } from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,
+  PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import {
@@ -74,14 +75,15 @@ export const createWorkspaceInviteFactory =
     }
 
     const target = (input.userId ? buildUserTarget(input.userId) : input.email)!
-    const primaryResourceTarget: WorkspaceInviteResourceTarget = {
-      resourceType: WorkspaceInviteResourceType,
-      resourceId: workspaceId,
-      role:
-        (input.role ? mapGqlWorkspaceRoleToMainRole(input.role) : null) ||
-        Roles.Workspace.Member,
-      primary: true
-    }
+    const primaryResourceTarget: PrimaryInviteResourceTarget<WorkspaceInviteResourceTarget> =
+      {
+        resourceType: WorkspaceInviteResourceType,
+        resourceId: workspaceId,
+        role:
+          (input.role ? mapGqlWorkspaceRoleToMainRole(input.role) : null) ||
+          Roles.Workspace.Member,
+        primary: true
+      }
 
     return await deps.createAndSendInvite(
       {
@@ -161,7 +163,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
       )
     }
 
-    return [...baseTargets, primaryWorkspaceResourceTarget]
+    return [...baseTargets, { ...primaryWorkspaceResourceTarget, primary: true }]
   }
 
 type BuildWorkspaceInviteEmailContentsFactoryDeps = BuildInviteContentsFactoryDeps & {
