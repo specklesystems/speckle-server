@@ -9,7 +9,10 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
-import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
 import {
   CreateInviteParams,
   FindInvite,
@@ -36,7 +39,14 @@ import {
   FinalizeInvite,
   GetInvitationTargetUsers
 } from '@/modules/serverinvites/services/operations'
-import { MaybeNullOrUndefined, Nullable, Roles, StreamRoles } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  Roles,
+  ServerRoles,
+  StreamRoles
+} from '@speckle/shared'
 import { has } from 'lodash'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
@@ -58,6 +68,11 @@ export const createProjectInviteFactory =
       throw new InviteCreateValidationError('Either email or userId must be specified')
     }
 
+    const serverRole = input.serverRole as Optional<ServerRoles>
+    if (serverRole && !Object.values(Roles.Server).includes(serverRole)) {
+      throw new InviteCreateValidationError('Invalid server role specified')
+    }
+
     const resourceId = isStreamInviteCreateInput(input)
       ? input.streamId
       : input.projectId
@@ -72,7 +87,10 @@ export const createProjectInviteFactory =
         resourceType: ProjectInviteResourceType,
         resourceId,
         role: (role as StreamRoles) || Roles.Stream.Contributor,
-        primary: true
+        primary: true,
+        secondaryResourceRoles: serverRole
+          ? { [ServerInviteResourceType]: serverRole }
+          : undefined
       }
     await deps.createAndSendInvite(
       {

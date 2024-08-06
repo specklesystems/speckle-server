@@ -7,7 +7,7 @@ const URL = require('url').URL
 const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
-  validateServerInvite,
+  validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
 } = require('@/modules/serverinvites/services/processing')
@@ -23,10 +23,13 @@ const { passportAuthenticate } = require('@/modules/auth/services/passportServic
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
 const {
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  findServerInviteFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
 const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
+const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
+const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
@@ -51,6 +54,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         req.session.userinfo = userinfo
 
         const serverInfo = await getServerInfo()
+        const token = req.session.inviteId || req.session.token
 
         try {
           const email = userinfo['email']
@@ -97,21 +101,22 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           }
 
           // if the server is invite only and we have no invite id, throw.
-          if (serverInfo.inviteOnly && !req.session.inviteId) {
+          if (serverInfo.inviteOnly && !token) {
             throw new Error('This server is invite only. Please provide an invite id.')
           }
 
           // validate the invite
-          const validInvite = await validateServerInvite(
-            user.email,
-            req.session.inviteId
-          )
+          const validInvite = await validateServerInviteFactory({
+            findServerInvite: findServerInviteFactory({ db })
+          })(user.email, token)
 
           // create the user
           const myUser = await findOrCreateUser({
             user: {
               ...user,
-              role: validInvite?.serverRole
+              role: validInvite
+                ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
+                : undefined
             },
             rawProfile: userinfo
           })

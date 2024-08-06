@@ -2,6 +2,7 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
+import { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 
@@ -33,7 +34,7 @@ export type PrimaryInviteResourceTarget<
   /**
    * If invite also has secondary resource targets, you can specify the expected roles here
    */
-  secondaryResourceRoles?: Record<InviteResourceTargetType, string>
+  secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<

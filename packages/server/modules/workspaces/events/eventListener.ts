@@ -21,7 +21,7 @@ import { logger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
-import { Optional, Roles, WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 
 export const onProjectCreatedFactory =
   ({
@@ -82,9 +82,8 @@ export const onInviteFinalizedFactory =
     if (!project.workspaceId) return
 
     const workspaceRole =
-      (resourceTarget.secondaryResourceRoles?.[
-        WorkspaceInviteResourceType
-      ] as Optional<WorkspaceRoles>) || Roles.Workspace.Guest
+      resourceTarget.secondaryResourceRoles?.[WorkspaceInviteResourceType] ||
+      Roles.Workspace.Guest
 
     // Add user to workspace
     await deps.updateWorkspaceRole({

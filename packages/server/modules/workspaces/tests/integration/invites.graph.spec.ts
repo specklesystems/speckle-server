@@ -64,6 +64,12 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { getStream } from '@/modules/core/repositories/streams'
 
+/**
+ * TODO:
+ * - Fix + tests for serverRole specified in stream invite
+ * - New mutation where u can specify workspace role for project invite
+ */
+
 enum InviteByTarget {
   Email = 'email',
   Id = 'id'

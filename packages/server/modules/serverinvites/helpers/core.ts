@@ -5,11 +5,12 @@ import {
 } from '@/modules/serverinvites/domain/constants'
 import {
   InviteResourceTarget,
+  PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget,
   ServerInviteRecord,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional, ServerRoles, StreamRoles } from '@speckle/shared'
 
 export type ResolvedTargetData = {
   userId: string | null
@@ -67,3 +68,20 @@ export const isProjectResourceTarget = (
   target: InviteResourceTarget
 ): target is ProjectInviteResourceTarget =>
   target.resourceType === ProjectInviteResourceType
+
+export interface ResourceTargetTypeRoleTypeMap {
+  [ServerInviteResourceType]: ServerRoles
+  [ProjectInviteResourceType]: StreamRoles
+}
+
+export const getResourceTypeRole = <T extends keyof ResourceTargetTypeRoleTypeMap>(
+  resource: PrimaryInviteResourceTarget,
+  type: T
+): Optional<ResourceTargetTypeRoleTypeMap[T]> => {
+  if (resource.resourceType === type) {
+    return resource.role as ResourceTargetTypeRoleTypeMap[T]
+  }
+
+  const secondaryRoles = resource.secondaryResourceRoles
+  return secondaryRoles?.[type]
+}

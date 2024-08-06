@@ -123,5 +123,5 @@ export async function validateInviteExistanceFromEmail(emailParams: SendEmailPar
   const invite = await findInviteByToken({ token })
   expect(invite).to.be.ok
 
-  return invite
+  return invite!
 }

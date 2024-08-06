@@ -11,7 +11,7 @@ import {
   isServerResourceTarget
 } from '@/modules/serverinvites/helpers/core'
 import { authorizeResolver } from '@/modules/shared'
-import { Optional, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles, ServerRoles } from '@speckle/shared'
 import { flatten } from 'lodash'
 
 const collectAndValidateServerTargetFactory =
@@ -28,9 +28,8 @@ const collectAndValidateServerTargetFactory =
       return []
     }
 
-    const secondaryRole = primaryResourceTarget.secondaryResourceRoles?.[
-      ServerInviteResourceType
-    ] as Optional<ServerRoles>
+    const secondaryRole =
+      primaryResourceTarget.secondaryResourceRoles?.[ServerInviteResourceType]
 
     // Validate primary resource target
     if (primaryServerResourceTarget) {
@@ -97,9 +96,8 @@ const collectAndValidateProjectTargetFactory =
 
     if (!primaryProjectResourceTarget) {
       // Validate secondary resource role, in case its relevant down the line
-      const secondaryRole = primaryResourceTarget.secondaryResourceRoles?.[
-        ProjectInviteResourceType
-      ] as Optional<StreamRoles>
+      const secondaryRole =
+        primaryResourceTarget.secondaryResourceRoles?.[ProjectInviteResourceType]
       if (secondaryRole && !Object.values(Roles.Stream).includes(secondaryRole)) {
         throw new InviteCreateValidationError('Unexpected project invite role')
       }
