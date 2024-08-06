@@ -15,10 +15,7 @@ import {
 } from '@/test/speckle-helpers/inviteHelper'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import db from '@/db/knex'
-import {
-  findInviteFactory,
-  insertInviteAndDeleteOldFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   createTestContext,
