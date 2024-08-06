@@ -137,9 +137,20 @@ graphql(`
   }
 `)
 
-const title = computed(() =>
-  project.value?.name.length ? `Viewer - ${project.value.name}` : ''
-)
+const title = computed(() => {
+  if (project.value?.models?.items) {
+    const modelCount = project.value.models.items.length
+    const projectName = project.value.name || ''
+
+    if (modelCount > 1) {
+      return projectName ? `Multiple models - ${projectName}` : 'Multiple models'
+    } else if (modelCount === 1) {
+      const modelName = project.value.models.items[0].name || ''
+      return projectName ? `${modelName} - ${projectName}` : modelName
+    }
+  }
+  return ''
+})
 
 const modelName = computed(() => {
   if (project.value?.models?.items && project.value.models.items.length > 0) {

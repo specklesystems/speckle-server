@@ -13,6 +13,8 @@ export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
+export const docsPageUrl = 'https://speckle.guide/'
+export const forumPageUrl = 'https://speckle.community/'
 
 export const settingsQueries: {
   [key: string]: {
