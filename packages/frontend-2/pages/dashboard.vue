@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { dashboardProjectsQuery } from '~~/lib/dashboard/graphql/queries'
+import { dashboardProjectsPageQuery } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -54,7 +54,7 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
-const { result: projectsResult } = useQuery(dashboardProjectsQuery)
+const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
 const { triggerNotification } = useGlobalToast()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false

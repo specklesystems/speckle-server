@@ -1,7 +1,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
-export const dashboardProjectsQuery = graphql(`
-  query DashboardProjectsQuery {
+export const dashboardProjectsPageQuery = graphql(`
+  query DashboardProjectsPageQuery {
     activeUser {
       projects(limit: 3) {
         items {

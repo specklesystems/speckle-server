@@ -20,7 +20,7 @@
     <UserAvatarGroup :users="teamUsers" :max-count="4" />
     <div>
       <FormButton
-        :to="allProjectModelsRoute(project.id) + '/'"
+        :to="allProjectModelsRoute(project.id)"
         size="sm"
         color="outline"
         :icon-right="ChevronRightIcon"
