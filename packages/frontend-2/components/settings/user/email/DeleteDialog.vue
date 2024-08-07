@@ -42,7 +42,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
       onDeleteEmail()
-      isOpen.value = false
     }
   }
 ])
@@ -61,5 +60,7 @@ const onDeleteEmail = async () => {
       title: errorMessage
     })
   }
+
+  isOpen.value = false
 }
 </script>

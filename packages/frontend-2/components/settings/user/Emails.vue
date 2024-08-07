@@ -1,7 +1,10 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto">
-      <SettingsSectionHeader title="Emails" text="Manage email addresses" />
+      <SettingsSectionHeader
+        title="Emails addresses"
+        text="Manage your email addresses"
+      />
       <SettingsSectionHeader title="Your emails" subheading />
       <SettingsUserEmailList class="pt-6" :email-data="emailItems" />
       <hr class="my-6 md:my-10" />
@@ -49,7 +52,11 @@ const email = ref('')
 
 const emailItems = computed(() =>
   userEmailsResult.value?.activeUser.emails
-    ? orderBy(userEmailsResult.value?.activeUser.emails, ['primary'], ['desc'])
+    ? orderBy(
+        userEmailsResult.value?.activeUser.emails,
+        ['primary', 'verified'],
+        ['desc', 'desc']
+      )
     : []
 )
 

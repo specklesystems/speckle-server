@@ -1,8 +1,8 @@
 <template>
   <ul class="flex flex-col">
     <SettingsUserEmailListItem
-      v-for="(email, index) in emailData"
-      :key="`email-${index}`"
+      v-for="email in emailData"
+      :key="email.id"
       :email-data="email"
       @delete="onDelete(email.id, email.email)"
       @set-primary="onSetPrimary(email.id, email.email)"
