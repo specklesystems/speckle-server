@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <h2 class="h3 font-bold mb-4">Automation</h2>
+    <h2 class="text-heading-xl mb-4">Automation</h2>
     <div class="grid gap-4 grid-cols-12">
       <!-- <ProjectPageMoreActionsCard :class="cardWidthClasses">
         <template #title>Globals</template>
@@ -12,7 +12,7 @@
       <ProjectPageMoreActionsCard :class="cardWidthClasses">
         <template #title>Webhooks</template>
         <template #description>
-          If you need to use webhooks, ask the stream's owner to grant you ownership.
+          If you need to use webhooks, ask the project's owner to grant you ownership.
         </template>
       </ProjectPageMoreActionsCard>
     </div>

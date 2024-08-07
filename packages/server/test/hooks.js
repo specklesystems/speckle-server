@@ -11,6 +11,7 @@ const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
+const { once } = require('events')
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -50,18 +51,12 @@ exports.truncateTables = async (tableNames) => {
  * @param {import('express').Express} app
  */
 const initializeTestServer = async (server, app) => {
-  let serverAddress
-  let wsAddress
   await startHttp(server, app, 0)
 
-  app.on('appStarted', () => {
-    const port = server.address().port
-    serverAddress = `http://127.0.0.1:${port}`
-    wsAddress = `ws://127.0.0.1:${port}`
-  })
-  while (!serverAddress) {
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
+  await once(app, 'appStarted')
+  const port = server.address().port
+  const serverAddress = `http://127.0.0.1:${port}`
+  const wsAddress = `ws://127.0.0.1:${port}`
   return {
     server,
     serverAddress,

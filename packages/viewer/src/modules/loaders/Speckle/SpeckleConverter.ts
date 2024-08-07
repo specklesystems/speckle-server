@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { MathUtils } from 'three'
-import { type TreeNode, WorldTree } from '../../tree/WorldTree'
-import Logger from 'js-logger'
-import { NodeMap } from '../../tree/NodeMap'
-import type { SpeckleObject } from '../../..'
+import { MathUtils, Matrix4 } from 'three'
+import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
+import { NodeMap } from '../../tree/NodeMap.js'
+import { type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
+import Logger from '../../utils/Logger.js'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =
@@ -22,6 +22,10 @@ export default class SpeckleConverter {
   private spoofIDs = false
   private tree: WorldTree
   private typeLookupTable: { [type: string]: string } = {}
+  private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
+  private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
+  private instanceProxies: { [id: string]: TreeNode } = {}
+  private renderMaterialMap: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -44,6 +48,9 @@ export default class SpeckleConverter {
     RevitInstance: this.RevitInstanceToNode.bind(this),
     Text: this.TextToNode.bind(this),
     Dimension: this.DimensionToNode.bind(this),
+    InstanceDefinitionProxy: this.InstanceDefinitionProxyToNode.bind(this),
+    InstanceProxy: this.InstanceProxyToNode.bind(this),
+    RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
     Parameter: null
   }
 
@@ -519,6 +526,175 @@ export default class SpeckleConverter {
         void this.parseInstanceElement(obj, elementObj, node)
       }
     }
+  }
+
+  private async InstanceDefinitionProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance Definition Proxy ${obj.id} has no applicationId`)
+      return
+    }
+    this.instanceDefinitionLookupTable[obj.applicationId] = node
+  }
+
+  private async InstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance proxy ${obj.id} has no application id`)
+      return
+    }
+    this.instanceProxies[obj.applicationId] = node
+    return
+  }
+
+  private async RenderMaterialProxyToNode(obj: SpeckleObject, _node: TreeNode) {
+    if (!obj.value) {
+      Logger.error(`Render Material Proxy ${obj.id} has no render material value!`)
+      return
+    }
+    if (!obj.objects || !Array.isArray(obj.objects) || obj.objects.length === 0) {
+      Logger.warn(`Render Material Proxy ${obj.id} has no target objects!`)
+    }
+    const renderMaterialValue = obj.value as SpeckleObject
+    const targetObjects = obj.objects as []
+    for (let k = 0; k < targetObjects.length; k++) {
+      if (this.renderMaterialMap[targetObjects[k]]) {
+        Logger.error(`Overwritting renderMaterial ${targetObjects[k]}`)
+      }
+      this.renderMaterialMap[targetObjects[k]] = renderMaterialValue
+    }
+  }
+
+  private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
+    return (obj.DefinitionId || obj.definitionId) as string
+  }
+
+  private getInstanceProxyTransform(obj: SpeckleObject): Array<number> {
+    if (!(obj.transform || obj.Transform)) {
+      return new Matrix4().toArray()
+    }
+    return (obj.transform || obj.Transform) as Array<number>
+  }
+
+  private getInstanceProxyDefinitionObjects(obj: SpeckleObject): Array<string> {
+    return (obj.Objects || obj.objects) as Array<string>
+  }
+
+  private createTransformNode(obj: SpeckleObject) {
+    const transformNodeId = MathUtils.generateUUID()
+    const transformData = this.getEmptyTransformData(transformNodeId)
+    transformData.units = obj.units as string
+    transformData.matrix = this.getInstanceProxyTransform(obj)
+    return this.tree.parse({
+      id: transformNodeId,
+      raw: transformData,
+      atomic: false,
+      children: []
+    })
+  }
+
+  private async ConvertInstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    const definitionId = this.getInstanceProxyDefinitionId(obj)
+    if (!definitionId) {
+      Logger.warn(`Instance Proxy ${obj.id} has no definitionId`)
+      return
+    }
+    const definition = this.instanceDefinitionLookupTable[definitionId]
+    const transformNode = this.createTransformNode(obj)
+
+    this.tree.addNode(transformNode, node)
+    const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
+      definition.model.raw
+    )
+    for (const objectApplicationId of objectApplicationIds) {
+      const speckleData = this.instancedObjectsLookupTable[objectApplicationId]
+      // NOTE: see https://linear.app/speckle/issue/CNX-115/viewer-handle-gracefully-instances-with-elements-that-failed-to
+      // This prevents the viewer not loading anything if a instance component is missing from its defintion. This is a likely scenario from connectors; even though we're guarding against it we'll never be able to fully enforce it.
+      if (!speckleData) {
+        Logger.warn(
+          `Object ${objectApplicationId} is is missing from definition ${definitionId}. Someone probably sent an instance containing unsopprted elements - this is ok, do not panic.`
+        )
+        continue
+      }
+      const instancedNode = this.tree.parse({
+        id: this.getCompoundId(speckleData.id, this.instanceCounter++),
+        raw: speckleData,
+        atomic: false,
+        children: [],
+        instanced: true
+      })
+      this.tree.addNode(instancedNode, transformNode)
+      await this.convertToNode(speckleData, instancedNode)
+    }
+  }
+
+  public async convertInstances() {
+    /** uh, oh */
+    this.NodeConverterMapping.InstanceProxy = this.ConvertInstanceProxyToNode.bind(this)
+
+    /** Find the nodes that need to be 'consumed' */
+    const consumeApplicationIds: { [id: string]: TreeNode | null } = {}
+    let consumeApplicationIdsCount = 0
+    for (const k in this.instanceDefinitionLookupTable) {
+      const definition = this.instanceDefinitionLookupTable[k]
+      const objects = this.getInstanceProxyDefinitionObjects(definition.model.raw)
+      for (let i = 0; i < objects.length; i++) {
+        consumeApplicationIds[objects[i].toString()] = null
+        consumeApplicationIdsCount++
+      }
+    }
+
+    /** Do a short async walk */
+    await this.tree.walkAsync((node: TreeNode) => {
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (consumeApplicationIds[applicationId] !== undefined) {
+        consumeApplicationIds[applicationId] = node
+        consumeApplicationIdsCount--
+      }
+      /** Break out when all applicationIds are accounted for*/
+      if (consumeApplicationIdsCount === 0) return false
+      return true
+    })
+
+    /** Consume them */
+    for (const k in consumeApplicationIds) {
+      const objectNode = consumeApplicationIds[k]
+      if (!objectNode) {
+        Logger.error(`Consumable applicationId ${k} could not be found`)
+        continue
+      }
+
+      /** Store the speckle object data */
+      this.instancedObjectsLookupTable[k] = objectNode.model.raw
+      /** Remove the instance from the list (if needed) */
+      delete this.instanceProxies[k]
+      /** Remove the node from the world tree */
+      this.tree.removeNode(objectNode, true)
+    }
+
+    /** Remaining instance proxies should all be valid */
+    for (const k in this.instanceProxies) {
+      const node = this.instanceProxies[k]
+      /** Create the final instances */
+      await this.convertToNode(node.model.raw, node)
+    }
+  }
+
+  public async applyMaterials() {
+    let count = Object.keys(this.renderMaterialMap).length
+    if (count === 0) return
+
+    /** Do a short async walk */
+    await this.tree.walkAsync((node: TreeNode) => {
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (this.renderMaterialMap[applicationId] !== undefined) {
+        node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
+        count--
+      }
+      /** Break out when all applicationIds are accounted for*/
+      if (count === 0) return false
+      return true
+    })
   }
 
   private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {

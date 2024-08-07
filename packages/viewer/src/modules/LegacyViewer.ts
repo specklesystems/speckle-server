@@ -2,20 +2,20 @@ import { Box3, MathUtils, Vector2 } from 'three'
 import {
   FilteringExtension,
   type FilteringState
-} from './extensions/FilteringExtension'
+} from './extensions/FilteringExtension.js'
 import {
   type InlineView,
   type PolarView,
   type CanonicalView,
   CameraController
-} from './extensions/CameraController'
-import { SpeckleType } from './loaders/GeometryConverter'
-import { Queries } from './queries/Queries'
-import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+} from './extensions/CameraController.js'
+import { SpeckleType } from './loaders/GeometryConverter.js'
+import { Queries } from './queries/Queries.js'
+import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query.js'
 import {
   SelectionExtension,
   type SelectionExtensionOptions
-} from './extensions/SelectionExtension'
+} from './extensions/SelectionExtension.js'
 import {
   DefaultViewerParams,
   type IViewer,
@@ -24,25 +24,25 @@ import {
   type SunLightConfiguration,
   type ViewerParams,
   StencilOutlineType
-} from '../IViewer'
-import { Viewer } from './Viewer'
-import { SectionTool } from './extensions/SectionTool'
-import { SectionOutlines } from './extensions/SectionOutlines'
-import { type TreeNode, WorldTree } from './tree/WorldTree'
+} from '../IViewer.js'
+import { Viewer } from './Viewer.js'
+import { SectionTool } from './extensions/SectionTool.js'
+import { SectionOutlines } from './extensions/SectionOutlines.js'
+import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import {
   type MeasurementOptions,
   MeasurementsExtension
-} from './extensions/measurements/MeasurementsExtension'
-import { ExplodeExtension } from './extensions/ExplodeExtension'
+} from './extensions/measurements/MeasurementsExtension.js'
+import { ExplodeExtension } from './extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
   VisualDiffMode
-} from './extensions/DiffExtension'
-import { type PropertyInfo } from './filtering/PropertyManager'
-import { BatchObject } from './batching/BatchObject'
-import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
-import Logger from 'js-logger'
+} from './extensions/DiffExtension.js'
+import { type PropertyInfo } from './filtering/PropertyManager.js'
+import { BatchObject } from './batching/BatchObject.js'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
+import Logger from './utils/Logger.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -61,6 +61,7 @@ class HighlightExtension extends SelectionExtension {
       selectionMaterialData: {
         id: MathUtils.generateUUID(),
         color: 0x04cbfb,
+        emissive: 0x0,
         opacity: 1,
         roughness: 1,
         metalness: 0,

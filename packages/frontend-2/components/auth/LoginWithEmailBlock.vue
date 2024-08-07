@@ -6,7 +6,8 @@
         name="email"
         label="E-mail"
         placeholder="Enter your email"
-        size="xl"
+        size="lg"
+        color="foundation"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -17,18 +18,27 @@
         name="password"
         label="Password"
         placeholder="Enter your password"
-        size="xl"
+        color="foundation"
+        size="lg"
         :rules="passwordRules"
         show-label
         :disabled="loading"
       />
     </div>
     <div class="mt-1">
-      <CommonTextLink :to="forgottenPasswordRoute" size="sm">
+      <CommonTextLink :to="forgottenPasswordRoute">
         Forgot your password?
       </CommonTextLink>
     </div>
-    <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
+    <FormButton
+      size="lg"
+      submit
+      full-width
+      class="mt-8 mb-4"
+      :disabled="loading || !isMounted"
+    >
+      Log in
+    </FormButton>
   </form>
 </template>
 <script setup lang="ts">
@@ -38,6 +48,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { forgottenPasswordRoute } from '~~/lib/common/helpers/route'
+import { useMounted } from '@vueuse/core'
 
 type FormValues = { email: string; password: string }
 
@@ -51,6 +62,7 @@ const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
+const isMounted = useMounted()
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 

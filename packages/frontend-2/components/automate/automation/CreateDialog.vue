@@ -11,8 +11,8 @@
   >
     <template v-if="isTestAutomation" #header>
       Create
-      <span class="font-extrabold text-fancy-gradient">Test</span>
-      Automation
+      <span class="font-extrabold text-fancy-gradient">test</span>
+      automation
     </template>
     <div class="flex flex-col gap-6">
       <CommonStepsNumber
@@ -152,15 +152,15 @@ const stepsOrder = computed(() => [
 const stepsWidgetData = computed(() => [
   {
     step: AutomationCreateSteps.SelectFunction,
-    title: 'Select Function'
+    title: 'Select function'
   },
   {
     step: AutomationCreateSteps.FunctionParameters,
-    title: 'Set Parameters'
+    title: 'Set parameters'
   },
   {
     step: AutomationCreateSteps.AutomationDetails,
-    title: 'Add Details'
+    title: 'Add details'
   }
 ])
 
@@ -215,9 +215,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'createTestAutomation',
           text: 'Create test automation',
           props: {
-            color: 'secondary',
-            iconLeft: CodeBracketIcon,
-            textColor: 'primary'
+            color: 'outline',
+            iconLeft: CodeBracketIcon
           },
           onClick: () => {
             isTestAutomation.value = true
@@ -242,9 +241,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsPrev',
           text: 'Previous',
           props: {
-            color: 'secondary',
+            color: 'outline',
             iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            class: '!text-primary'
           },
           onClick: () => step.value--
         },
@@ -264,9 +263,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Previous',
           props: {
-            color: 'secondary',
-            iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            color: 'outline',
+            iconLeft: ChevronLeftIcon
           },
           onClick: () => step.value--
         },
@@ -283,9 +281,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Back',
           props: {
-            color: 'secondary',
-            iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            color: 'outline',
+            iconLeft: ChevronLeftIcon
           },
           onClick: reset
         },
@@ -448,7 +445,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    mixpanel.track('Automation Created', {
+    mixpanel.track('Automation created', {
       automationId: aId,
       name,
       projectId: project.id,

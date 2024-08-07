@@ -13,14 +13,14 @@ import {
   ZeroFactor
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
-import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
+import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag.js'
+import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert.js'
 import {
   type InputColorTextureUniform,
   type InputColorInterpolateTextureUniform,
   type SpeckleProgressivePass,
   RenderType
-} from './SpecklePass'
+} from './SpecklePass.js'
 
 export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   private fsQuad: FullScreenQuad
@@ -32,7 +32,8 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     super()
     this.materialCopy = new ShaderMaterial({
       defines: {
-        ACCUMULATE: 0
+        ACCUMULATE: 0,
+        PASSTHROUGH: 0
       },
       uniforms: {
         tDiffuse: { value: null },
@@ -74,8 +75,10 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     return null
   }
 
-  setParams(params: unknown) {
-    params
+  setParams(params: boolean | undefined) {
+    if (params !== undefined) {
+      this.materialCopy.defines['USE_DYNAMIC_AO'] = +params
+    }
   }
 
   setFrameIndex(index: number) {
@@ -87,8 +90,12 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   }
 
   setRenderType(type: RenderType) {
+    this.materialCopy.defines['PASSTHROUGH'] = 0
+
     if (type === RenderType.NORMAL) {
       this.materialCopy.defines['ACCUMULATE'] = 0
+      if (this.accumulatioFrames === this.frameIndex + 1)
+        this.materialCopy.defines['PASSTHROUGH'] = 1
     } else {
       this.materialCopy.defines['ACCUMULATE'] = 1
       this.frameIndex = 0

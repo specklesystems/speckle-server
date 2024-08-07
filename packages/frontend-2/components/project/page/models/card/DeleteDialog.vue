@@ -4,7 +4,7 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true },
+        props: { color: 'outline', fullWidth: true },
         onClick: () => {
           isOpen = false
         }
@@ -19,11 +19,11 @@
     ]"
     max-width="sm"
   >
-    <template #header>Delete Model</template>
+    <template #header>Delete model</template>
     <div class="flex flex-col text-foreground">
       <p class="mb-2">
         Are you sure you want to delete the model
-        <span class="inline font-bold">{{ model.name }}</span>
+        <span class="inline font-medium">{{ model.name }}</span>
         ?
       </p>
       <p>

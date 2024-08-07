@@ -12,7 +12,8 @@ import {
   getPendingAccessRequest,
   getPendingAccessRequests,
   getUsersPendingAccessRequest,
-  ServerAccessRequestRecord
+  ServerAccessRequestRecord,
+  StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -36,44 +37,52 @@ function buildStreamAccessRequestGraphQLReturn(
   }
 }
 
+export async function getUserProjectAccessRequest(
+  userId: string,
+  projectId: string
+): Promise<Nullable<StreamAccessRequestRecord>> {
+  const req = await getUsersPendingAccessRequest(
+    userId,
+    AccessRequestType.Stream,
+    projectId
+  )
+  return req || null
+}
+
 export async function getUserStreamAccessRequest(
   userId: string,
   streamId: string
 ): Promise<Nullable<StreamAccessRequestGraphQLReturn>> {
-  const req = await getUsersPendingAccessRequest(
-    userId,
-    AccessRequestType.Stream,
-    streamId
-  )
+  const req = await getUserProjectAccessRequest(userId, streamId)
   if (!req) return null
 
   return buildStreamAccessRequestGraphQLReturn(req)
 }
 
 /**
- * Create new stream access request
+ * Create new project access request
  */
-export async function requestStreamAccess(userId: string, streamId: string) {
+export async function requestProjectAccess(userId: string, projectId: string) {
   const [stream, existingRequest] = await Promise.all([
-    getStream({ userId, streamId }),
-    getUserStreamAccessRequest(userId, streamId)
+    getStream({ userId, streamId: projectId }),
+    getUserStreamAccessRequest(userId, projectId)
   ])
 
   if (existingRequest) {
     throw new AccessRequestCreationError(
-      'User already has a pending access request for this stream'
+      'User already has a pending access request for this resource'
     )
   }
 
   if (!stream) {
     throw new AccessRequestCreationError(
-      "Can't request access to a non-existant stream"
+      "Can't request access to a non-existant resource"
     )
   }
 
   if (stream.role) {
     throw new AccessRequestCreationError(
-      'User already has access to the specified stream'
+      'User already has access to the specified resource'
     )
   }
 
@@ -81,14 +90,31 @@ export async function requestStreamAccess(userId: string, streamId: string) {
     id: generateId(),
     requesterId: userId,
     resourceType: AccessRequestType.Stream,
-    resourceId: streamId
+    resourceId: projectId
   })
 
   await AccessRequestsEmitter.emit(AccessRequestsEmitter.events.Created, {
     request: req
   })
 
+  return req
+}
+
+/**
+ * Create new stream access request
+ */
+export async function requestStreamAccess(userId: string, streamId: string) {
+  const req = await requestProjectAccess(userId, streamId)
   return buildStreamAccessRequestGraphQLReturn(req)
+}
+
+/**
+ * Get pending project access requests
+ */
+export async function getPendingProjectRequests(
+  projectId: string
+): Promise<StreamAccessRequestRecord[]> {
+  return await getPendingAccessRequests(AccessRequestType.Stream, projectId)
 }
 
 /**
@@ -97,7 +123,7 @@ export async function requestStreamAccess(userId: string, streamId: string) {
 export async function getPendingStreamRequests(
   streamId: string
 ): Promise<StreamAccessRequestGraphQLReturn[]> {
-  const reqs = await getPendingAccessRequests(AccessRequestType.Stream, streamId)
+  const reqs = await getPendingProjectRequests(streamId)
   return reqs.map(buildStreamAccessRequestGraphQLReturn)
 }
 
@@ -152,4 +178,8 @@ export async function processPendingStreamRequest(
     approved: accept ? { role } : undefined,
     finalizedBy: userId
   })
+
+  return req
 }
+
+export const processPendingProjectRequest = processPendingStreamRequest

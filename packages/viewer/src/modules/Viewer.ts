@@ -1,10 +1,8 @@
-import Stats from 'three/examples/jsm/libs/stats.module.js'
-
-import EventEmitter from './EventEmitter'
+import EventEmitter from './EventEmitter.js'
 
 import { Clock, Texture } from 'three'
-import { Assets } from './Assets'
-import { type Optional } from '../helpers/typeHelper'
+import { Assets } from './Assets.js'
+import { type Optional } from '../helpers/typeHelper.js'
 import {
   DefaultViewerParams,
   type IViewer,
@@ -14,27 +12,28 @@ import {
   ViewerEvent,
   type ViewerParams,
   type ViewerEventPayload
-} from '../IViewer'
-import { World } from './World'
-import { type TreeNode, WorldTree } from './tree/WorldTree'
-import SpeckleRenderer from './SpeckleRenderer'
-import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import Logger from 'js-logger'
-import type { Query, QueryArgsResultMap } from './queries/Query'
-import { Queries } from './queries/Queries'
-import { type Utils } from './Utils'
-import { Extension } from './extensions/Extension'
-import Input from './input/Input'
-import { CameraController } from './extensions/CameraController'
-import { SpeckleType } from './loaders/GeometryConverter'
-import { Loader } from './loaders/Loader'
+} from '../IViewer.js'
+import { World } from './World.js'
+import { type TreeNode, WorldTree } from './tree/WorldTree.js'
+import SpeckleRenderer from './SpeckleRenderer.js'
+import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
+import type { Query, QueryArgsResultMap } from './queries/Query.js'
+import { Queries } from './queries/Queries.js'
+import { type Utils } from './Utils.js'
+import { Extension } from './extensions/Extension.js'
+import Input from './input/Input.js'
+import { CameraController } from './extensions/CameraController.js'
+import { SpeckleType } from './loaders/GeometryConverter.js'
+import { Loader } from './loaders/Loader.js'
 import { type Constructor } from 'type-fest'
-import { RenderTree } from './tree/RenderTree'
+import { RenderTree } from './tree/RenderTree.js'
+import Logger from './utils/Logger.js'
+import Stats from './three/stats.js'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
   protected container: HTMLElement
-  protected stats: Optional<Stats>
+  protected stats: Optional<ReturnType<typeof Stats>>
 
   /** Viewer params used at init time */
   protected startupParams: ViewerParams
@@ -186,13 +185,16 @@ export class Viewer extends EventEmitter implements IViewer {
   public requestRender(flags: UpdateFlags = UpdateFlags.RENDER) {
     if (flags & UpdateFlags.RENDER) {
       this.speckleRenderer.needsRender = true
-      this.speckleRenderer.resetPipeline()
     }
     if (flags & UpdateFlags.SHADOWS) {
       this.speckleRenderer.shadowMapNeedsUpdate = true
     }
     if (flags & UpdateFlags.CLIPPING_PLANES) {
       this.speckleRenderer.updateClippingPlanes()
+    }
+    if (flags & UpdateFlags.RENDER_RESET) {
+      this.speckleRenderer.needsRender = true
+      this.speckleRenderer.resetPipeline()
     }
   }
 
@@ -331,8 +333,7 @@ export class Viewer extends EventEmitter implements IViewer {
       }
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
-      this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-      this.speckleRenderer.resetPipeline()
+      this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 

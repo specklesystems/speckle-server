@@ -26,3 +26,4 @@ const knex = require('knex')
 const knexInstance = knex(config)
 
 module.exports = knexInstance
+module.exports.db = knexInstance

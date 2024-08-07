@@ -1,15 +1,17 @@
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createStream } from '@/modules/core/services/streams'
+import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { BasicTestUser } from '@/test/authHelper'
+import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash'
 
 export type BasicTestStream = {
   name: string
   isPublic: boolean
   /**
-   * The ID of the owner user
+   * The ID of the owner user. Will be filled in by createTestStream().
    */
   ownerId: string
   /**
@@ -40,6 +42,16 @@ export async function createTestStream(
   })
   streamObj.id = id
   streamObj.ownerId = owner.id
+}
+
+export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {
+  await removeStreamCollaborator(streamObj.id, user.id, user.id, null).catch((e) => {
+    if (ensureError(e).message === 'User is not a stream collaborator') {
+      return
+    }
+
+    throw e
+  })
 }
 
 /**

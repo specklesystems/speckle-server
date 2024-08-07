@@ -2,31 +2,30 @@
   <div class="flex flex-col gap-4">
     <ProjectPageSettingsBlock
       background
-      title="Project Info"
+      title="Project info"
       :disabled-message="disabled ? 'You must be a project owner' : undefined"
-      :icon="PencilIcon"
     >
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
-        label="Project Name"
-        placeholder="Project Name"
+        label="Project name"
+        placeholder="Project name"
         show-label
         color="foundation"
-        class="mb-4"
+        class="mb-2"
         :disabled="disabled"
       />
       <FormTextArea
         v-model="localProjectDescription"
         name="projectDescription"
-        label="Project Description"
+        label="Project description"
         placeholder="Description (optional)"
         show-label
         color="foundation"
         :disabled="disabled"
       />
       <template #bottom-buttons>
-        <FormButton text :disabled="!hasChanges" @click="resetLocalState">
+        <FormButton color="subtle" :disabled="!hasChanges" @click="resetLocalState">
           Cancel
         </FormButton>
         <FormButton :disabled="!hasChanges" @click="emitUpdate">Update</FormButton>
@@ -48,7 +47,6 @@
 
 <script setup lang="ts">
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { PencilIcon } from '@heroicons/vue/24/outline'
 import {
   FormTextInput,
   FormTextArea,
@@ -115,14 +113,13 @@ const resetLocalState = () => {
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Discard Changes',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: handleRedirection
   },
   {
     text: 'Save Changes',
     props: {
       fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: () => {

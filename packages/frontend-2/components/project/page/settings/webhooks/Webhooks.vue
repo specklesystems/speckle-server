@@ -1,12 +1,14 @@
 <template>
   <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
-      Subscribe to events and get notified in real time. Use to trigger CI apps,
-      automation workflows, and more.
+      <p class="text-body-xs text-foreground">
+        Subscribe to events and get notified in real time. Use to trigger CI apps,
+        automation workflows, and more.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton
-        color="secondary"
+        color="outline"
         :icon-left="BookOpenIcon"
         to="https://speckle.guide/dev/server-webhooks.html"
         external
@@ -26,7 +28,7 @@
           { id: 'data', header: 'Data', classes: 'col-span-5' },
           {
             id: 'triggers',
-            header: 'Trigger Events',
+            header: 'Trigger events',
             classes: 'col-span-6 whitespace-break-spaces text-xs'
           }
         ]"
@@ -59,7 +61,7 @@
         <template #data="{ item }">
           <div class="flex flex-col">
             <h3
-              class="font-bold text-sm truncate"
+              class="font-medium text-sm truncate"
               :class="{ 'opacity-60': !item.enabled }"
             >
               {{ item.description }}

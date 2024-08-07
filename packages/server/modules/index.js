@@ -1,14 +1,14 @@
-'use strict'
 const fs = require('fs')
 const path = require('path')
 const { appRoot, packageRoot } = require('@/bootstrap')
-const { values, merge, camelCase } = require('lodash')
+const { values, merge, camelCase, reduce, intersection } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
 const { addMocksToSchema } = require('@graphql-tools/mock')
 const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
+const { isNonNullable } = require('@speckle/shared')
 
 /**
  * Cached speckle module requires
@@ -63,7 +63,8 @@ const getEnabledModuleNames = () => {
     'pwdreset',
     'serverinvites',
     'stats',
-    'webhooks'
+    'webhooks',
+    'workspacesCore'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
@@ -112,6 +113,32 @@ exports.shutdown = async () => {
 }
 
 /**
+ * Autoloads dataloaders from all modules
+ * @returns {import('@/modules/shared/helpers/graphqlHelper').RequestDataLoadersBuilder<unknown>[]}
+ */
+exports.graphDataloadersBuilders = () => {
+  let dataLoaders = []
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((file) => {
+    const fullPath = path.join(`${appRoot}/modules`, file)
+
+    // load dataloaders
+    const directivesPath = path.join(fullPath, 'graph', 'dataloaders')
+    if (fs.existsSync(directivesPath)) {
+      const newLoaders = values(autoloadFromDirectory(directivesPath))
+        .map((l) => l.default)
+        .filter(isNonNullable)
+
+      dataLoaders = [...dataLoaders, ...newLoaders]
+    }
+  })
+
+  return dataLoaders
+}
+
+/**
  * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
  * that resolvers return valid values even if the module is disabled
  * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
@@ -149,9 +176,16 @@ const graphComponents = () => {
     // load directives
     const directivesPath = path.join(fullPath, 'graph', 'directives')
     if (fs.existsSync(directivesPath)) {
-      directiveBuilders = Object.assign(
-        ...values(autoloadFromDirectory(directivesPath))
-      )
+      directiveBuilders = {
+        ...directiveBuilders,
+        ...reduce(
+          values(autoloadFromDirectory(directivesPath)),
+          (acc, directivesObj) => {
+            return { ...acc, ...directivesObj }
+          },
+          {}
+        )
+      }
     }
   })
 
@@ -206,4 +240,39 @@ exports.graphSchema = (mocksConfig) => {
   }
 
   return schema
+}
+
+/**
+ * Load GQL mock configs from speckle modules
+ * @param {string[]} moduleWhitelist
+ * @returns {Record<string, import('@/modules/shared/helpers/mocks').SpeckleModuleMocksConfig>}
+ */
+exports.moduleMockConfigs = (moduleWhitelist) => {
+  const enabledModuleNames = intersection(getEnabledModuleNames(), moduleWhitelist)
+
+  // Config default exports keyed by module name
+  const mockConfigs = {}
+  if (!enabledModuleNames.length) return mockConfigs
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((moduleName) => {
+    const fullPath = path.join(`${appRoot}/modules`, moduleName)
+    if (!enabledModuleNames.includes(moduleName)) return
+
+    // load mock config
+    const mocksFolderPath = path.join(fullPath, 'graph', 'mocks')
+    if (fs.existsSync(mocksFolderPath)) {
+      // We only take the first mocks.ts file we find (for now)
+      const mainConfig = values(autoloadFromDirectory(mocksFolderPath))
+        .map((l) => l.default)
+        .filter(isNonNullable)[0]
+
+      if (mainConfig && Object.values(mainConfig).length) {
+        mockConfigs[moduleName] = mainConfig
+      }
+    }
+  })
+
+  return mockConfigs
 }

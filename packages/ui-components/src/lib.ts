@@ -58,12 +58,16 @@ import {
 } from '~~/src/composables/common/window'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
-import LayoutTabsHoriztonal from '~~/src/components/layout/tabs/Horizontal.vue'
+import LayoutTabsHorizontal from '~~/src/components/layout/tabs/Horizontal.vue'
 import LayoutTabsVertical from '~~/src/components/layout/tabs/Vertical.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
+import LayoutSidebar from '~~/src/components/layout/sidebar/Sidebar.vue'
+import LayoutSidebarMenu from '~~/src/components/layout/sidebar/menu/Menu.vue'
+import LayoutSidebarMenuGroup from '~~/src/components/layout/sidebar/menu/group/Group.vue'
+import LayoutSidebarMenuGroupItem from '~~/src/components/layout/sidebar/menu/group/Item.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
 import {
   writableAsyncComputed,
@@ -143,9 +147,13 @@ export {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
-  LayoutTabsHoriztonal,
+  LayoutTabsHorizontal,
   LayoutTabsVertical,
   LayoutTable,
+  LayoutSidebar,
+  LayoutSidebarMenu,
+  LayoutSidebarMenuGroup,
+  LayoutSidebarMenuGroupItem,
   InfiniteLoading,
   LayoutPanel,
   CommonAlert,

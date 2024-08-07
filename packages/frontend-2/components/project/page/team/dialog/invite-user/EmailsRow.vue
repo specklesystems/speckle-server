@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center space-x-2">
     <UserAvatar />
-    <span class="grow truncate">{{ selectedEmails.join(', ') }}</span>
+    <span class="grow truncate text-body-sm">{{ selectedEmails.join(', ') }}</span>
     <div class="flex items-center space-x-2">
       <FormSelectServerRoles
         v-if="showServerRoleSelect"

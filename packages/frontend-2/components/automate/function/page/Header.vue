@@ -3,7 +3,7 @@
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
-        :name="'Automate Functions'"
+        :name="'Automate functions'"
       ></HeaderNavLink>
       <HeaderNavLink
         :to="automationFunctionRoute(fn.id)"
@@ -12,7 +12,7 @@
     </Portal>
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
-      <h1 class="h3 font-bold">{{ fn.name }}</h1>
+      <h1 class="text-heading-lg">{{ fn.name }}</h1>
       <FormButton v-if="isOwner" size="sm" text class="mt-1" @click="$emit('edit')">
         Edit
       </FormButton>
@@ -30,7 +30,7 @@
         :disabled="!hasReleases"
         @click="$emit('createAutomation')"
       >
-        Use in an Automation
+        Use in an automation
       </FormButton>
     </div>
   </div>

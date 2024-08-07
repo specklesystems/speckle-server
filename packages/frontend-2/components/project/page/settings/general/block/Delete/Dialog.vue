@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Delete Project</template>
-    <div class="space-y-4">
+    <template #header>Delete project</template>
+    <div class="space-y-4 text-sm">
       <p>
         Are you sure you want to permanently
         <strong>delete “{{ project.name }}”</strong>
@@ -61,7 +61,7 @@ const discussionText = computed(() =>
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
       projectNameInput.value = ''
@@ -72,7 +72,6 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     props: {
       color: 'danger',
       fullWidth: true,
-      outline: true,
       disabled: projectNameInput.value !== props.project.name
     },
     onClick: async () => {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="fixed z-20 top-0 h-14 bg-foundation shadow">
+    <nav class="fixed z-20 top-0 h-14 bg-foundation border-b border-outline-2">
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 pl-3 pr-4"
       >
@@ -26,11 +26,10 @@
           <FormButton
             v-if="!activeUser"
             :to="loginUrl.fullPath"
-            color="invert"
+            color="outline"
             class="hidden md:flex"
-            size="sm"
           >
-            Sign In
+            Sign in
           </FormButton>
           <!-- Profile dropdown -->
           <HeaderNavUserMenu :login-url="loginUrl" />

@@ -1,4 +1,4 @@
-import { EmailVerifications, Users } from '@/modules/core/dbSchema'
+import { EmailVerifications, UserEmails, Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { buildApp, truncateTables } from '@/test/hooks'
 import {
@@ -23,7 +23,7 @@ import { EmailSendingServiceMock } from '@/test/mocks/global'
 const mailerMock = EmailSendingServiceMock
 
 const cleanup = async () => {
-  await truncateTables([Users.name, EmailVerifications.name])
+  await truncateTables([Users.name, EmailVerifications.name, UserEmails.name])
 }
 
 describe('Email verifications @emails', () => {

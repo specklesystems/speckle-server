@@ -6,8 +6,8 @@
       :item="vg"
     />
     <div v-if="itemCount < filter.valueGroups.length" class="mb-2">
-      <FormButton size="xs" text full-width @click="itemCount += 10">
-        View More ({{ filter.valueGroups.length - itemCount }})
+      <FormButton size="sm" text full-width @click="itemCount += 10">
+        View more ({{ filter.valueGroups.length - itemCount }})
       </FormButton>
     </div>
   </div>

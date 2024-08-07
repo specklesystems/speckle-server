@@ -1,6 +1,6 @@
 import { Vector3 } from 'three'
-import { Extension } from './Extension'
-import { UpdateFlags } from '../../IViewer'
+import { Extension } from './Extension.js'
+import { UpdateFlags } from '../../IViewer.js'
 
 export class ExplodeExtension extends Extension {
   protected _enabled: boolean = true
@@ -39,6 +39,6 @@ export class ExplodeExtension extends Extension {
 
       objects[i].transformTRS(dir, undefined, undefined, undefined)
     }
-    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
   }
 }

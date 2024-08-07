@@ -53,7 +53,6 @@
               <div class="flex-grow flex items-center">
                 <FormButton
                   v-tippy="'Previous'"
-                  size="sm"
                   :icon-left="ChevronLeftIcon"
                   text
                   hide-text
@@ -61,7 +60,6 @@
                 ></FormButton>
                 <FormButton
                   v-tippy="'Next'"
-                  size="sm"
                   :icon-left="ChevronRightIcon"
                   text
                   hide-text
@@ -70,8 +68,7 @@
                 <div class="flex-grow"></div>
                 <FormButton
                   v-show="isDragged"
-                  v-tippy="'Pop In'"
-                  size="sm"
+                  v-tippy="'Pop in'"
                   :icon-left="ArrowTopRightOnSquareIcon"
                   text
                   hide-text
@@ -82,26 +79,22 @@
               <div>
                 <FormButton
                   v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                  size="sm"
                   :icon-left="
                     modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
                   "
                   text
                   hide-text
-                  :color="modelValue.archived ? 'default' : 'default'"
                   :disabled="!canArchiveOrUnarchive"
                   @click="toggleCommentResolvedStatus()"
                 ></FormButton>
                 <FormButton
                   v-tippy="'Copy link'"
-                  size="sm"
                   :icon-left="LinkIcon"
                   text
                   hide-text
                   @click="onCopyLink"
                 ></FormButton>
                 <FormButton
-                  size="sm"
                   :icon-left="XMarkIcon"
                   text
                   hide-text
@@ -123,7 +116,7 @@
                   <span>Conversation started in a different version.</span>
                   <FormButton
                     v-tippy="'Load thread context'"
-                    size="xs"
+                    size="sm"
                     text
                     @click="onLoadThreadContext"
                   >

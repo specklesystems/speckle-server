@@ -4,18 +4,18 @@
 
 const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
+const { numberOfFreeConnections } = require('@/modules/shared/helpers/dbHelper')
 
 let metricFree = null
 let metricUsed = null
 let metricPendingCreates = null
+let metricPendingValidations = null
 let metricRemainingCapacity = null
 let metricPendingAquires = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
 const queryStartTime = {}
-const postgresMaxConnections =
-  parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
 
 module.exports = {
   calculateRemainingCapacity() {
@@ -62,11 +62,19 @@ module.exports = {
       }
     })
 
+    metricPendingValidations = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_pending_validations',
+      help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+      collect() {
+        this.set(knex.client.pool.numPendingValidations())
+      }
+    })
+
     metricRemainingCapacity = new prometheusClient.Gauge({
       name: 'speckle_server_knex_remaining_capacity',
       help: 'Remaining capacity of the DB connection pool',
       collect() {
-        this.set(exports.calculateRemainingCapacity())
+        this.set(numberOfFreeConnections(knex))
       }
     })
 

@@ -60,9 +60,13 @@ export function useRequestId(params?: {
    * or anything of the like there
    */
   event?: H3Event
+  /**
+   * If you want to already pre-resolve the frontend reqId from SSR (e.g. if you're rendering it on a page)
+   */
+  forceFrontendValue?: boolean
 }) {
   let id = nanoid()
-  if (import.meta.server) {
+  if (import.meta.server && !params?.forceFrontendValue) {
     id = (params?.event || useNuxtApp().ssrContext?.event)?.node.req.id as string
     if (!id) {
       throw new Error("Couldn't determine request ID")

@@ -2,73 +2,127 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
-  buildUserTarget,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
-import {
   createAndSendInviteFactory,
   resendInviteEmailFactory
-} from '@/modules/serverinvites/services/inviteCreationService'
+} from '@/modules/serverinvites/services/creation'
+
 import {
-  createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotify
-} from '@/modules/serverinvites/services/management'
+  cancelResourceInviteFactory,
+  deleteInviteFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import {
-  cancelStreamInvite,
-  resendInvite,
-  deleteInvite,
-  finalizeStreamInvite
-} from '@/modules/serverinvites/services/inviteProcessingService'
-import {
-  getServerInviteForToken,
-  getUserPendingStreamInvite,
-  getUserPendingStreamInvites
-} from '@/modules/serverinvites/services/inviteRetrievalService'
+  getInvitationTargetUsersFactory,
+  getServerInviteForTokenFactory
+} from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import db from '@/db/knex'
-import { ServerRoles, StreamRoles } from '@speckle/shared'
+import { ServerRoles } from '@speckle/shared'
 import {
   deleteInvitesByTargetFactory,
-  deleteStreamInviteFactory,
   findInviteFactory,
-  findResourceFactory,
   findServerInviteFactory,
-  findStreamInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
-  queryAllUserStreamInvitesFactory,
-  deleteInviteFactory
+  deleteInviteFactory as deleteInviteFromDbFactory,
+  queryAllUserResourceInvitesFactory,
+  queryAllResourceInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  createProjectInviteFactory,
+  getPendingProjectCollaboratorsFactory,
+  getUserPendingProjectInviteFactory,
+  getUserPendingProjectInvitesFactory,
+  useProjectInviteAndNotifyFactory
+} from '@/modules/serverinvites/services/projectInviteManagement'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { getStream } from '@/modules/core/repositories/streams'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+
+const buildCreateAndSendServerOrProjectInvite = () =>
+  createAndSendInviteFactory({
+    findUserByTarget: findUserByTargetFactory(),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+      getStream
+    }),
+    emitEvent: ({ eventName, payload }) =>
+      getEventBus().emit({
+        eventName,
+        payload
+      })
+  })
 
 export = {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args
-      return getUserPendingStreamInvite({
-        findStreamInvite: findStreamInviteFactory({ db })
+      return getUserPendingProjectInviteFactory({
+        getUser,
+        findInvite: findInviteFactory({ db })
       })(streamId, context.userId, token)
     },
     async projectInvite(_parent, args, context) {
       const { projectId, token } = args
-      return await getUserPendingStreamInvite({
-        findStreamInvite: findStreamInviteFactory({ db })
+      return getUserPendingProjectInviteFactory({
+        getUser,
+        findInvite: findInviteFactory({ db })
       })(projectId, context.userId, token)
     },
     async streamInvites(_parent, _args, context) {
       const { userId } = context
-      return getUserPendingStreamInvites({
-        queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
-          db
-        })
+      return getUserPendingProjectInvitesFactory({
+        getUser,
+        getUserResourceInvites: queryAllUserResourceInvitesFactory({ db })
       })(userId!)
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
-      return getServerInviteForToken({
+      return getServerInviteForTokenFactory({
         findServerInvite: findServerInviteFactory({ db })
       })(token)
+    }
+  },
+  User: {
+    async projectInvites(_parent, _args, context) {
+      const { userId } = context
+      const getUserPendingProjectInvites = getUserPendingProjectInvitesFactory({
+        getUser,
+        getUserResourceInvites: queryAllUserResourceInvitesFactory({ db })
+      })
+
+      return await getUserPendingProjectInvites(userId!)
+    }
+  },
+  Project: {
+    async invitedTeam(parent) {
+      const getPendingTeam = getPendingProjectCollaboratorsFactory({
+        queryAllResourceInvites: queryAllResourceInvitesFactory({ db }),
+        getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
+      })
+
+      return await getPendingTeam(parent.id)
     }
   },
   ServerInvite: {
@@ -82,16 +136,21 @@ export = {
   },
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
-      await createAndSendInviteFactory({
-        findResource: findResourceFactory(),
-        findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
-      })(
+      const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
+
+      const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+        {
+          resourceId: '',
+          role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
+          resourceType: ServerInviteResourceType,
+          primary: true
+        }
+      await createAndSendInvite(
         {
           target: args.input.email,
           inviterId: context.userId!,
           message: args.input.message,
-          serverRole: args.input.serverRole as null | undefined | ServerRoles
+          primaryResourceTarget
         },
         context.resourceAccessRules
       )
@@ -100,21 +159,15 @@ export = {
     },
 
     async streamInviteCreate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.input.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
-      await createStreamInviteAndNotifyFactory({
-        createAndSendInvite: createAndSendInviteFactory({
-          findResource: findResourceFactory(),
-          findUserByTarget: findUserByTargetFactory(),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-            db
-          })
-        })
-      })(args.input, context.userId!, context.resourceAccessRules)
+      const createProjectInvite = createProjectInviteFactory({
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+      })
+
+      await createProjectInvite({
+        input: args.input,
+        inviterId: context.userId!,
+        inviterResourceAccessRules: context.resourceAccessRules
+      })
 
       return true
     },
@@ -129,27 +182,31 @@ export = {
         )
       }
 
+      const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
+
       // Batch calls so that we don't kill the server
       const batches = chunk(paramsArray, 50)
       for (const paramsBatchArray of batches) {
         await Promise.all(
-          paramsBatchArray.map((params) =>
-            createAndSendInviteFactory({
-              findResource: findResourceFactory(),
-              findUserByTarget: findUserByTargetFactory(),
-              insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-                db
-              })
-            })(
+          paramsBatchArray.map((params) => {
+            const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+              {
+                resourceId: '',
+                role: (params.serverRole as ServerRoles) || Roles.Server.User,
+                resourceType: ServerInviteResourceType,
+                primary: true
+              }
+
+            return createAndSendInvite(
               {
                 target: params.email,
                 inviterId: context.userId!,
                 message: params.message,
-                serverRole: params.serverRole as ServerRoles | null | undefined
+                primaryResourceTarget
               },
               context.resourceAccessRules
             )
-          )
+          })
         )
       }
 
@@ -169,31 +226,20 @@ export = {
         }
       }
 
+      const createProjectInvite = createProjectInviteFactory({
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+      })
+
       // Batch calls so that we don't kill the server
       const batches = chunk(paramsArray, 50)
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) => {
-            const { email, userId, message, streamId, role, serverRole } = params
-            const target = (userId ? buildUserTarget(userId) : email)!
-            return createAndSendInviteFactory({
-              findResource: findResourceFactory(),
-              findUserByTarget: findUserByTargetFactory(),
-              insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-                db
-              })
-            })(
-              {
-                target,
-                inviterId: context.userId!,
-                message,
-                resourceTarget: ResourceTargets.Streams,
-                resourceId: streamId,
-                role: (role as unknown as StreamRoles) || Roles.Stream.Contributor,
-                serverRole: serverRole as ServerRoles | null | undefined
-              },
-              context.resourceAccessRules
-            )
+            return createProjectInvite({
+              input: params,
+              inviterId: context.userId!,
+              inviterResourceAccessRules: context.resourceAccessRules
+            })
           })
         )
       }
@@ -202,12 +248,24 @@ export = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      await useStreamInviteAndNotify({
-        finalizeStreamInvite: finalizeStreamInvite({
-          findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
+      const useProjectInvite = useProjectInviteAndNotifyFactory({
+        finalizeInvite: finalizeResourceInviteFactory({
+          findInvite: findInviteFactory({ db }),
+          validateInvite: validateProjectInviteBeforeFinalizationFactory({
+            getProject: getStream
+          }),
+          processInvite: processFinalizedProjectInviteFactory({
+            getProject: getStream,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addProjectRole: addOrUpdateStreamCollaborator
+          }),
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+          emitEvent: (...args) => getEventBus().emit(...args)
         })
-      })(args, ctx.userId!, ctx.resourceAccessRules)
+      })
+
+      await useProjectInvite(args, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
 
@@ -215,11 +273,22 @@ export = {
       const { streamId, inviteId } = args
       const { userId, resourceAccessRules } = ctx
 
+      const cancelInvite = cancelResourceInviteFactory({
+        findInvite: findInviteFactory({ db }),
+        deleteInvite: deleteInviteFromDbFactory({ db }),
+        validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
+          getProject: getStream
+        })
+      })
+
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
-      await cancelStreamInvite({
-        findStreamInvite: findStreamInviteFactory({ db }),
-        deleteStreamInvite: deleteStreamInviteFactory({ db })
-      })(streamId, inviteId)
+      await cancelInvite({
+        inviteId,
+        resourceId: streamId,
+        resourceType: ProjectInviteResourceType,
+        cancelerId: userId!,
+        cancelerResourceAccessLimits: resourceAccessRules
+      })
 
       return true
     },
@@ -227,13 +296,15 @@ export = {
     async inviteResend(_parent, args) {
       const { inviteId } = args
 
-      await resendInvite({
-        findInvite: findInviteFactory({ db }),
-        resendInviteEmail: resendInviteEmailFactory({
-          findResource: findResourceFactory(),
-          findUserByTarget: findUserByTargetFactory()
-        })
-      })(inviteId)
+      const resendInviteEmail = resendInviteEmailFactory({
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        findUserByTarget: findUserByTargetFactory(),
+        findInvite: findInviteFactory({ db })
+      })
+
+      await resendInviteEmail({ inviteId })
 
       return true
     },
@@ -241,12 +312,111 @@ export = {
     async inviteDelete(_parent, args) {
       const { inviteId } = args
 
-      await deleteInvite({
+      await deleteInviteFactory({
         findInvite: findInviteFactory({ db }),
-        deleteInvite: deleteInviteFactory({ db })
+        deleteInvite: deleteInviteFromDbFactory({ db })
       })(inviteId)
 
       return true
+    }
+  },
+  ProjectInviteMutations: {
+    async create(_parent, args, ctx) {
+      const createProjectInvite = createProjectInviteFactory({
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+      })
+
+      await createProjectInvite({
+        input: {
+          projectId: args.projectId,
+          ...args.input
+        },
+        inviterId: ctx.userId!,
+        inviterResourceAccessRules: ctx.resourceAccessRules
+      })
+      return ctx.loaders.streams.getStream.load(args.projectId)
+    },
+    async batchCreate(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+
+      const inviteCount = args.input.length
+      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+        throw new InviteCreateValidationError(
+          'Maximum 10 invites can be sent at once by non admins'
+        )
+      }
+
+      const createProjectInvite = createProjectInviteFactory({
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+      })
+
+      const inputBatches = chunk(args.input, 10)
+      for (const batch of inputBatches) {
+        await Promise.all(
+          batch.map((i) =>
+            createProjectInvite({
+              input: {
+                ...i,
+                projectId: args.projectId
+              },
+              inviterId: ctx.userId!,
+              inviterResourceAccessRules: ctx.resourceAccessRules
+            })
+          )
+        )
+      }
+      return ctx.loaders.streams.getStream.load(args.projectId)
+    },
+    async use(_parent, args, ctx) {
+      const useProjectInvite = useProjectInviteAndNotifyFactory({
+        finalizeInvite: finalizeResourceInviteFactory({
+          findInvite: findInviteFactory({ db }),
+          validateInvite: validateProjectInviteBeforeFinalizationFactory({
+            getProject: getStream
+          }),
+          processInvite: processFinalizedProjectInviteFactory({
+            getProject: getStream,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addProjectRole: addOrUpdateStreamCollaborator
+          }),
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+          emitEvent: (...args) => getEventBus().emit(...args)
+        })
+      })
+
+      await useProjectInvite(args.input, ctx.userId!, ctx.resourceAccessRules)
+      return true
+    },
+    async cancel(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+
+      const cancelInvite = cancelResourceInviteFactory({
+        findInvite: findInviteFactory({ db }),
+        deleteInvite: deleteInviteFromDbFactory({ db }),
+        validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
+          getProject: getStream
+        })
+      })
+
+      await cancelInvite({
+        resourceId: args.projectId,
+        inviteId: args.inviteId,
+        cancelerId: ctx.userId!,
+        resourceType: ProjectInviteResourceType,
+        cancelerResourceAccessLimits: ctx.resourceAccessRules
+      })
+      return ctx.loaders.streams.getStream.load(args.projectId)
     }
   }
 } as Resolvers

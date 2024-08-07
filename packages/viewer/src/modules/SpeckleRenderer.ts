@@ -24,48 +24,48 @@ import {
   PerspectiveCamera,
   OrthographicCamera
 } from 'three'
-import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch'
-import Batcher from './batching/Batcher'
-import { Geometry } from './converter/Geometry'
-import Input, { InputEvent } from './input/Input'
-import { Intersections } from './Intersections'
-import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { NodeRenderView } from './tree/NodeRenderView'
-import { Viewer } from './Viewer'
-import { WorldTree, type TreeNode } from './tree/WorldTree'
+import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
+import Batcher from './batching/Batcher.js'
+import { Geometry } from './converter/Geometry.js'
+import Input, { InputEvent } from './input/Input.js'
+import { Intersections } from './Intersections.js'
+import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial.js'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial.js'
+import { NodeRenderView } from './tree/NodeRenderView.js'
+import { Viewer } from './Viewer.js'
+import { WorldTree, type TreeNode } from './tree/WorldTree.js'
 import {
   DefaultLightConfiguration,
   ObjectLayers,
   type SelectionEvent,
   type SunLightConfiguration,
   ViewerEvent
-} from '../IViewer'
+} from '../IViewer.js'
 import {
   DefaultPipelineOptions,
   Pipeline,
   type PipelineOptions
-} from './pipeline/Pipeline'
-import { Shadowcatcher } from './Shadowcatcher'
-import SpeckleMesh from './objects/SpeckleMesh'
-import { type ExtendedIntersection } from './objects/SpeckleRaycaster'
-import { BatchObject } from './batching/BatchObject'
-import { CameraEvent, type SpeckleCamera } from './objects/SpeckleCamera'
+} from './pipeline/Pipeline.js'
+import { Shadowcatcher } from './Shadowcatcher.js'
+import SpeckleMesh from './objects/SpeckleMesh.js'
+import { type ExtendedIntersection } from './objects/SpeckleRaycaster.js'
+import { BatchObject } from './batching/BatchObject.js'
+import { CameraEvent, type SpeckleCamera } from './objects/SpeckleCamera.js'
 import Materials, {
   type RenderMaterial,
   type DisplayStyle,
   type FilterMaterial,
   type FilterMaterialOptions
-} from './materials/Materials'
-import { type MaterialOptions } from './materials/MaterialOptions'
-import { SpeckleMaterial } from './materials/SpeckleMaterial'
-import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
-import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
-import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
-import { BaseSpecklePass } from './pipeline/SpecklePass'
-import { MeshBatch } from './batching/MeshBatch'
+} from './materials/Materials.js'
+import { type MaterialOptions } from './materials/MaterialOptions.js'
+import { SpeckleMaterial } from './materials/SpeckleMaterial.js'
+import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer.js'
+import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
+import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
+import { BaseSpecklePass } from './pipeline/SpecklePass.js'
+import { MeshBatch } from './batching/MeshBatch.js'
 import type { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { RenderTree } from './tree/RenderTree'
+import { RenderTree } from './tree/RenderTree.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -186,6 +186,9 @@ export default class SpeckleRenderer {
   public set clippingPlanes(value: Plane[]) {
     this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
     this.updateClippingPlanes()
+    this.renderer.shadowMap.needsUpdate = true
+    this.needsRender = true
+    this.resetPipeline()
   }
 
   /****************
@@ -409,7 +412,6 @@ export default class SpeckleRenderer {
     this.updateRTEShadows()
 
     this.updateTransforms()
-    this.updateFrustum(this.renderingCamera)
 
     this.pipeline.update(this)
 
@@ -519,35 +521,9 @@ export default class SpeckleRenderer {
     }
   }
 
-  private updateFrustum(camera: PerspectiveCamera | OrthographicCamera) {
-    const v = new Vector3()
-    const box = this.sceneBox
-    const camPos = new Vector3().copy(camera.position)
-    let d = 0
-    v.set(box.min.x, box.min.y, box.min.z) // 000
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.min.y, box.max.z) // 001
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.min.z) // 010
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.max.z) // 011
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.min.z) // 100
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.max.z) // 101
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.min.z) // 110
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.max.z) // 111
-    d = Math.max(camPos.distanceTo(v), d)
-    camera.far = d * 2
-    camera.updateProjectionMatrix()
-  }
-
   public resetPipeline() {
     this._needsRender = true
     this.pipeline.reset()
-    // if (force) this.pipeline.reset()
   }
 
   public render(): void {
@@ -622,14 +598,19 @@ export default class SpeckleRenderer {
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
     this.updateClippingPlanes()
-    if (this._speckleCamera) this._speckleCamera.setCameraPlanes(this.sceneBox)
+    if (this._speckleCamera) this._speckleCamera.updateCameraPlanes(this.sceneBox)
     delete this.cancel[renderTree.id]
   }
 
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
-    parent.add(batch.renderObject)
-
+    parent.add(batchRenderable)
+    if (
+      batchRenderable instanceof SpeckleMesh ||
+      batchRenderable instanceof SpeckleInstancedMesh
+    ) {
+      if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
+    }
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
         if (obj instanceof Mesh) {
@@ -644,11 +625,6 @@ export default class SpeckleRenderer {
             ['USE_RTE', 'ALPHATEST_REJECTION']
           )
         }
-      })
-
-      const meshRenderable = batchRenderable as SpeckleMesh | SpeckleInstancedMesh
-      meshRenderable.TAS.boxHelpers.forEach((helper: Box3Helper) => {
-        this.scene.add(helper)
       })
     }
     this.viewer.World.expandWorld(batch.bounds)
@@ -855,8 +831,6 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this._shadowcatcher?.updateClippingPlanes(planes)
-    this.renderer.shadowMap.needsUpdate = true
-    this.resetPipeline()
   }
 
   public updateShadowCatcher() {
@@ -868,7 +842,7 @@ export default class SpeckleRenderer {
         this.clippingVolume,
         this._renderer.capabilities.maxTextureSize
       )
-      this.resetPipeline()
+      this.needsRender = true
     }
   }
 

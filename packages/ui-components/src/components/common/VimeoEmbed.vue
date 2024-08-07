@@ -1,6 +1,9 @@
 <template>
   <div class="relative bg-foundation">
-    <div class="absolute inset-0 flex items-center justify-center" role="status">
+    <div
+      class="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center"
+      role="status"
+    >
       <svg
         aria-hidden="true"
         class="w-6 h-6 text-outline-2 animate-spin fill-primary"

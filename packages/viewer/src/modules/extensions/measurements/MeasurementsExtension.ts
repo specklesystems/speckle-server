@@ -1,16 +1,16 @@
-import SpeckleRenderer from '../../SpeckleRenderer'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
-import { type IViewer, ObjectLayers } from '../../../IViewer'
-import { PerpendicularMeasurement } from './PerpendicularMeasurement'
+import { type IViewer, ObjectLayers } from '../../../IViewer.js'
+import { PerpendicularMeasurement } from './PerpendicularMeasurement.js'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
-import { PointToPointMeasurement } from './PointToPointMeasurement'
-import { Measurement, MeasurementState } from './Measurement'
-import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster'
-import Logger from 'js-logger'
-import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
-import { Extension } from '../Extension'
-import { InputEvent } from '../../input/Input'
-import { CameraController } from '../CameraController'
+import { PointToPointMeasurement } from './PointToPointMeasurement.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
+import { Extension } from '../Extension.js'
+import { InputEvent } from '../../input/Input.js'
+import { CameraController } from '../CameraController.js'
+import Logger from '../../utils/Logger.js'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -66,8 +66,7 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.update()
       if (!value) this.cancelMeasurement()
     }
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   public get options(): MeasurementOptions {
@@ -183,8 +182,7 @@ export class MeasurementsExtension extends Extension {
     }
     this._activeMeasurement.update()
 
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
     this._frameLock = true
     this._sceneHit = true
     // console.log('Time -> ', performance.now() - start)
@@ -309,8 +307,7 @@ export class MeasurementsExtension extends Extension {
   protected cancelMeasurement() {
     if (this._activeMeasurement) this.renderer.scene.remove(this._activeMeasurement)
     this._activeMeasurement = null
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   protected finishMeasurement() {
@@ -332,8 +329,7 @@ export class MeasurementsExtension extends Extension {
       this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
       this.renderer.scene.remove(this._selectedMeasurement)
       this._selectedMeasurement = null
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
+      this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
     }
@@ -357,8 +353,7 @@ export class MeasurementsExtension extends Extension {
         if (flashCount >= maxFlashCount) {
           clearInterval(handle)
         }
-        this.renderer.needsRender = true
-        this.renderer.resetPipeline()
+        this.viewer.requestRender()
       }
     }, 100)
   }
@@ -446,8 +441,7 @@ export class MeasurementsExtension extends Extension {
     if (this._options.visible) this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
     else this.raycaster.layers.disable(ObjectLayers.MEASUREMENTS)
 
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   public fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {

@@ -2,18 +2,15 @@
   <Component
     :is="concreteComponent"
     v-if="!isLoggedIn"
-    fancy-glow
     no-shadow
-    class="max-w-lg mx-auto w-full"
+    class="mx-auto w-full"
   >
     <div class="space-y-4">
-      <div class="flex flex-col items-center space-y-2">
-        <h1
-          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
-        >
+      <div class="flex flex-col items-center gap-y-2 pb-4">
+        <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
         </h1>
-        <h2 class="text-center text-foreground-2">
+        <h2 class="text-body-sm text-center text-foreground-2">
           {{ subtitle }}
         </h2>
       </div>
@@ -26,16 +23,12 @@
       <div>
         <div
           v-if="hasLocalStrategy"
-          class="text-center label text-foreground-2 mb-3 text-xs font-normal"
+          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal mt-2"
         >
-          {{
-            hasThirdPartyStrategies
-              ? 'Or login with your email'
-              : 'Login with your email'
-          }}
+          {{ hasThirdPartyStrategies ? 'Or login with your email' : '' }}
         </div>
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
-        <div class="text-center">
+        <div class="text-center text-body-sm">
           <span class="mr-2">Don't have an account?</span>
           <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
             Register
@@ -51,7 +44,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
-import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+import { LayoutDialog } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
 
@@ -63,7 +56,7 @@ const props = withDefaults(
   }>(),
   {
     dialogMode: false,
-    title: 'Speckle Login',
+    title: 'Speckle login',
     subtitle: 'Connectivity, Collaboration and Automation for 3D'
   }
 )
@@ -81,7 +74,7 @@ const finalRegisterRoute = computed(() => {
 })
 
 const concreteComponent = computed(() => {
-  return props.dialogMode ? LayoutDialog : LayoutPanel
+  return props.dialogMode ? LayoutDialog : 'div'
 })
 
 const { result } = useQuery(loginServerInfoQuery)

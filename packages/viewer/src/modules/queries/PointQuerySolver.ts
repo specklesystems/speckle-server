@@ -1,7 +1,7 @@
-import Logger from 'js-logger'
 import { Vector3 } from 'three'
-import SpeckleRenderer from '../SpeckleRenderer'
-import type { PointQuery, PointQueryResult } from './Query'
+import SpeckleRenderer from '../SpeckleRenderer.js'
+import type { PointQuery, PointQueryResult } from './Query.js'
+import Logger from '../utils/Logger.js'
 
 export class PointQuerySolver {
   private renderer!: SpeckleRenderer

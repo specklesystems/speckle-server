@@ -10,8 +10,8 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { Geometry } from '../converter/Geometry.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   AllBatchUpdateRange,
   type Batch,
@@ -20,19 +20,19 @@ import {
   GeometryType,
   INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
-} from './Batch'
-import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
-import { ObjectLayers } from '../../IViewer'
+} from './Batch.js'
+import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh.js'
+import { ObjectLayers } from '../../IViewer.js'
 import {
   AccelerationStructure,
   DefaultBVHOptions
-} from '../objects/AccelerationStructure'
-import { InstancedBatchObject } from './InstancedBatchObject'
-import Logger from 'js-logger'
-import Materials from '../materials/Materials'
-import { DrawRanges } from './DrawRanges'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
-import { BatchObject } from './BatchObject'
+} from '../objects/AccelerationStructure.js'
+import { InstancedBatchObject } from './InstancedBatchObject.js'
+import Materials from '../materials/Materials.js'
+import { DrawRanges } from './DrawRanges.js'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial.js'
+import { BatchObject } from './BatchObject.js'
+import Logger from '../utils/Logger.js'
 
 export class InstancedMeshBatch implements Batch {
   public id: string

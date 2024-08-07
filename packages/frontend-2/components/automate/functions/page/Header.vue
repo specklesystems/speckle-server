@@ -4,14 +4,14 @@
       class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
     >
       <Portal to="navigation">
-        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate Functions'" />
+        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate functions'" />
       </Portal>
 
-      <h1 class="h3 font-bold">Automate Functions</h1>
+      <h1 class="text-heading-xl">Automate functions</h1>
       <div class="flex flex-col sm:flex-row gap-2">
         <FormTextInput
           name="search"
-          placeholder="Search Functions..."
+          placeholder="Search functions..."
           show-clear
           :model-value="bind.modelValue.value"
           color="foundation"

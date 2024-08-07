@@ -1,4 +1,5 @@
 import type { LocationQueryRaw } from 'vue-router'
+import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import { deserializeHashState, serializeHashState } from '~~/lib/common/composables/url'
 import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
@@ -12,6 +13,26 @@ export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
+export const docsPageUrl = 'https://speckle.guide/'
+export const forumPageUrl = 'https://speckle.community/'
+
+export const settingsQueries: {
+  [key: string]: {
+    [key: string]: string
+  }
+} = {
+  user: {
+    profile: 'user/profile',
+    notifications: 'user/notifications',
+    developerSettings: 'user/developer-settings'
+  },
+  server: {
+    general: 'server/general',
+    projects: 'server/projects',
+    activeUsers: 'server/active-users',
+    pendingInvitations: 'server/pending-invitations'
+  }
+}
 
 export const projectRoute = (
   id: string,
@@ -33,7 +54,7 @@ export const modelRoute = (
   resourceIdString: string,
   hashState?: Partial<Record<ViewerHashStateKeys, string>>
 ) =>
-  `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}${
+  `/projects/${projectId}/models/${resourceIdString}${
     hashState ? serializeHashState(hashState) || '' : ''
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
@@ -83,6 +104,16 @@ export const useNavigateToProject = () => {
   return (params: { query?: LocationQueryRaw; id: string }) => {
     const { query, id } = params || {}
     return router.push({ path: projectRoute(id), query })
+  }
+}
+
+export const useRememberRouteAndGoToLogin = () => {
+  const goToLogin = useNavigateToLogin()
+  const postAuthRedirect = usePostAuthRedirect()
+
+  return async (...params: Parameters<typeof goToLogin>) => {
+    postAuthRedirect.setCurrentRoute()
+    return goToLogin(...params)
   }
 }
 

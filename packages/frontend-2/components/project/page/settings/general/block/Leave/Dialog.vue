@@ -1,9 +1,9 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Leave Project</template>
+    <template #header>Leave project</template>
     <div class="space-y-4">
       <p>Are you sure you want to leave this project?</p>
-      <p class="font-bold my-2">
+      <p class="font-medium my-2">
         Leaving this project removes your access to its data and functionalities.
       </p>
       <p>You can only rejoin if invited back by a project owner.</p>
@@ -29,7 +29,7 @@ const mp = useMixpanel()
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }
@@ -39,7 +39,6 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     props: {
       color: 'danger',
       fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: onLeave

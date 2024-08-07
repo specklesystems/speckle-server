@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Your First Model Upload ⬆️</template>
+    <template #header>Your first model upload ⬆️</template>
     <CommonVimeoEmbed
       vimeo-id="925894349"
       title="Onboarding: First Model Upload"
@@ -8,7 +8,7 @@
       controls
     />
     <div class="flex justify-center my-1">
-      <FormButton size="xl" class="shadow-md" @click="emit('done')">Got it!</FormButton>
+      <FormButton size="lg" class="shadow-md" @click="emit('done')">Got it!</FormButton>
     </div>
   </OnboardingDialogBase>
 </template>

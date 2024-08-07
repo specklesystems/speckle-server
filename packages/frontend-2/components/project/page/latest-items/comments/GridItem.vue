@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    class="group relative h-60 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2 overflow-hidden transition"
+    class="group relative h-60 rounded-md flex items-stretch overflow-hidden transition-all border border-outline-3 hover:border-outline-5 bg-foundation-page"
     :to="threadLink"
   >
     <!-- Image preview -->
@@ -29,17 +29,17 @@
           />
           <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
         </div>
-        <div
-          class="mt-2 p-2 transition-all bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-t-lg dark:group-hover:bg-neutral-800 group-hover:bg-foundation"
-        >
-          <div class="truncate text-sm">{{ thread.rawText }}</div>
-          <div class="space-x-1">
-            <span class="text-xs font-bold text-primary">
+        <div class="mt-2 p-2 bg-foundation-2 border-t">
+          <div class="truncate text-body-xs text-foreground-3">
+            {{ thread.rawText }}
+          </div>
+          <div class="space-x-2">
+            <span class="text-body-2xs font-medium text-primary">
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
             </span>
-            <span class="text-xs">
-              {{ updatedAt }}
+            <span v-tippy="updatedAt.full" class="text-foreground-2 text-body-2xs">
+              {{ updatedAt.relative }}
             </span>
           </div>
         </div>
@@ -48,7 +48,6 @@
   </NuxtLink>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
@@ -65,11 +64,16 @@ const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
 
-const updatedAt = computed(() => dayjs(props.thread.updatedAt).from(dayjs()))
-
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length
 )
+
+const updatedAt = computed(() => {
+  return {
+    full: formattedFullDate(props.thread.updatedAt),
+    relative: formattedRelativeDate(props.thread.updatedAt, { capitalize: true })
+  }
+})
 
 // Combined thread authors set of (original author + any respondents)
 const threadAuthors = computed(() => {

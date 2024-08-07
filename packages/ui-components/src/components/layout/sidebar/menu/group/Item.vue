@@ -1,0 +1,62 @@
+<template>
+  <component
+    :is="linkComponent"
+    v-if="!hasChildren"
+    :to="to"
+    class="group flex items-center justify-between space-x-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1 px-5 cursor-pointer"
+    exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
+    :external="external"
+    :target="external ? '_blank' : undefined"
+  >
+    <div class="flex items-center space-x-2">
+      <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
+        <slot name="icon" />
+      </div>
+      <span :class="$slots.icon ? '' : 'pl-2'">
+        {{ label }}
+      </span>
+    </div>
+    <div
+      v-if="tag"
+      class="text-xs uppercase bg-primary-muted py-0.5 px-2 rounded-full font-medium text-primary-focus group-hover:bg-white"
+    >
+      {{ tag }}
+    </div>
+  </component>
+  <div v-else class="flex flex-col">
+    <button
+      class="group flex space-x-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5 cursor-pointer"
+      @click="isOpen = !isOpen"
+    >
+      <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
+      <h6 class="text-heading-sm text-foreground-2 flex items-center space-x-1.5">
+        {{ label }}
+      </h6>
+    </button>
+    <div v-show="isOpen" class="pl-4">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ref, computed, resolveDynamicComponent, useSlots } from 'vue'
+
+const props = defineProps<{
+  label: string
+  to?: string
+  tag?: string
+  external?: boolean
+}>()
+
+const isOpen = ref(true)
+
+const NuxtLink = resolveDynamicComponent('NuxtLink')
+
+const linkComponent = computed(() => (props.to ? NuxtLink : 'a'))
+
+const slots = useSlots()
+
+const hasChildren = !!slots.default
+</script>

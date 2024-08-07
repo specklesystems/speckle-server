@@ -2,7 +2,7 @@ import { UserWorkspaceRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Roles } from '@speckle/shared'
 
 const aclTableName = 'workspace_acl'
-const resourceTarget = 'workspace'
+const resourceTarget = 'workspaces'
 
 export const workspaceRoles: UserWorkspaceRole[] = [
   {

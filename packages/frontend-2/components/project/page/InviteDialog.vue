@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Invite to Project</template>
-    <div class="flex flex-col mt-2">
+    <template #header>Invite to project</template>
+    <div class="flex flex-col my-2">
       <FormTextInput
         v-model="search"
         name="search"
@@ -25,7 +25,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
+        class="flex flex-col border bg-foundation border-primary-muted mt-2 rounded-md"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -43,6 +43,7 @@
           :stream-role="role"
           :disabled="loading"
           :is-guest-mode="isGuestMode"
+          class="p-2"
           @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
         />
       </div>
@@ -107,7 +108,7 @@ const { collaboratorListItems } = useTeamInternals(projectData)
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }

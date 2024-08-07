@@ -1,11 +1,11 @@
 import { Box3 } from 'three'
-import { GeometryType } from '../batching/Batch'
-import { GeometryAttributes, type GeometryData } from '../converter/Geometry'
+import { GeometryType } from '../batching/Batch.js'
+import { GeometryAttributes, type GeometryData } from '../converter/Geometry.js'
 import Materials, {
   type DisplayStyle,
   type RenderMaterial
-} from '../materials/Materials'
-import { SpeckleType } from '../loaders/GeometryConverter'
+} from '../materials/Materials.js'
+import { SpeckleType } from '../loaders/GeometryConverter.js'
 
 export interface NodeRenderData {
   id: string

@@ -17,7 +17,7 @@ const config: Config = {
   ],
   theme: {
     fontFamily: {
-      sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
+      sans: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
       mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
     },
     extend: {
@@ -54,7 +54,14 @@ const config: Config = {
         outline: {
           1: 'var(--outline-1)',
           2: 'var(--outline-2)',
-          3: 'var(--outline-3)'
+          3: 'var(--outline-3)',
+          4: 'var(--outline-4)',
+          5: 'var(--outline-5)'
+        },
+        highlight: {
+          1: 'var(--highlight-1)',
+          2: 'var(--highlight-2)',
+          3: 'var(--highlight-3)'
         },
         success: {
           DEFAULT: 'var(--success)',
