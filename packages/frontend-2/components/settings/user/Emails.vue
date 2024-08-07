@@ -50,8 +50,9 @@ const emailRules = [isEmail, isRequired]
 
 const email = ref('')
 
+// Mak sure primary email is always on top, followed by verified emails
 const emailItems = computed(() =>
-  userEmailsResult.value?.activeUser.emails
+  userEmailsResult.value?.activeUser?.emails
     ? orderBy(
         userEmailsResult.value?.activeUser.emails,
         ['primary', 'verified'],
