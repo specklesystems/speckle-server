@@ -1,11 +1,12 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type CreateUserEmail = ({
   userEmail
 }: {
   userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }
-}) => Promise<string>
+}) => Promise<UserEmail>
 
 export type UpdateUserEmail = (
   {
@@ -19,7 +20,7 @@ export type UpdateUserEmail = (
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
   },
   options?: { trx: Knex.Transaction }
-) => Promise<UserEmail>
+) => Promise<Optional<UserEmail>>
 
 export type DeleteUserEmail = (
   userEmail: Pick<UserEmail, 'id' | 'userId'>

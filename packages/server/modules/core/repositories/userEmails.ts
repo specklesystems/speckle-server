@@ -36,14 +36,17 @@ export const createUserEmailFactory =
       await checkPrimaryEmail({ db })(rest)
     }
 
-    await db(UserEmails.name).insert({
-      id,
-      primary: true,
-      email: email.toLowerCase().trim(),
-      ...rest
-    })
+    const [row] = await db<UserEmail>(UserEmails.name).insert(
+      {
+        id,
+        primary: true,
+        email: email.toLowerCase().trim(),
+        ...rest
+      },
+      '*'
+    )
 
-    return id
+    return row
   }
 
 export const updateUserEmailFactory =
@@ -54,8 +57,19 @@ export const updateUserEmailFactory =
       await checkPrimaryEmail({ db })(queryWithUserId)
     }
     const [updated] = await db<UserEmail>(UserEmails.name)
-      .where(query)
-      .update(update, '*')
+      .where({
+        ...query,
+        ...('email' in query && query.email?.length
+          ? { email: query.email.toLowerCase() }
+          : {})
+      })
+      .update(
+        {
+          ...update,
+          ...(update.email?.length ? { email: update.email.toLowerCase() } : {})
+        },
+        '*'
+      )
 
     return updated
   }
@@ -94,6 +108,9 @@ export const findPrimaryEmailForUserFactory =
     return db(UserEmails.name)
       .where({
         ...query,
+        ...('email' in query && query.email?.length
+          ? { email: query.email.toLowerCase() }
+          : {}),
         primary: true
       })
       .first()
@@ -104,7 +121,8 @@ export const findEmailFactory =
   async (query) => {
     return db(UserEmails.name)
       .where({
-        ...query
+        ...query,
+        ...(query.email?.length ? { email: query.email.toLowerCase() } : {})
       })
       .first()
   }

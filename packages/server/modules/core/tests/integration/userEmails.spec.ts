@@ -6,19 +6,20 @@ import { getUserByEmail, markUserAsVerified } from '@/modules/core/repositories/
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
-  createRandomPassword
+  createRandomPassword,
+  randomizeCase
 } from '@/modules/core/helpers/testHelpers'
-import { UserEmails } from '@/modules/core/dbSchema'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
   findEmailFactory,
+  findPrimaryEmailForUserFactory,
   setPrimaryUserEmailFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { expectToThrow } from '@/test/assertionHelper'
-
-const userEmailTable = db(UserEmails.name)
+import { MaybeNullOrUndefined } from '@speckle/shared'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -41,7 +42,7 @@ describe('Core @user-emails', () => {
 
       await markUserAsVerified(email)
 
-      const userEmail = await userEmailTable.where({ email }).first()
+      const userEmail = await findEmailFactory({ db })({ email })
       expect(userEmail.verified).to.be.true
     })
   })
@@ -220,6 +221,80 @@ describe('Core @user-emails', () => {
       )
 
       expect(err.message).to.eq('A primary email already exists for this user')
+    })
+  })
+
+  describe('email repository', () => {
+    describe('supports case insensitive email lookup/mutation', () => {
+      const randomCaseGuy: BasicTestUser = {
+        name: 'RAnDoM cAsE gUY',
+        email: createRandomEmail(),
+        password: createRandomPassword(),
+        id: ''
+      }
+
+      const assertLowercaseEquality = (
+        val1: MaybeNullOrUndefined<string>,
+        val2: string
+      ) => {
+        expect(val1?.toLowerCase()).to.eq(val2.toLowerCase())
+      }
+
+      const assertLowercase = (val1: MaybeNullOrUndefined<string>) => {
+        expect(val1).to.be.ok
+        expect(val1).to.eq(val1!.toLowerCase())
+      }
+
+      before(async () => {
+        await createTestUsers([randomCaseGuy])
+      })
+
+      it('with findEmailFactory()', async () => {
+        const { email, id: userId } = randomCaseGuy
+        const foundEmail = (
+          await findEmailFactory({ db })({ email: randomizeCase(email), userId })
+        )?.email
+        assertLowercaseEquality(foundEmail, email)
+      })
+
+      it('with updateUserEmailFactory()', async () => {
+        const { email, id: userId } = randomCaseGuy
+        const newEmail = createRandomEmail()
+        const updatedEmail = (
+          await updateUserEmailFactory({ db })({
+            query: { email: randomizeCase(email), userId },
+            update: { email: newEmail }
+          })
+        )?.email
+
+        assertLowercaseEquality(updatedEmail, newEmail)
+        assertLowercase(updatedEmail)
+
+        randomCaseGuy.email = newEmail
+      })
+
+      it('with createUserEmailFactory()', async () => {
+        const { id: userId } = randomCaseGuy
+        const newEmail = createRandomEmail()
+        const createdEmail = (
+          await createUserEmailFactory({ db })({
+            userEmail: { email: newEmail, userId }
+          })
+        )?.email
+
+        assertLowercaseEquality(createdEmail, newEmail)
+        assertLowercase(createdEmail)
+
+        randomCaseGuy.email = newEmail
+      })
+
+      it('with findPrimaryEmailForUserFactory()', async () => {
+        const { email } = randomCaseGuy
+        const primaryEmail = (
+          await findPrimaryEmailForUserFactory({ db })({ email: randomizeCase(email) })
+        )?.email
+        assertLowercaseEquality(primaryEmail, email)
+      })
     })
   })
 })
