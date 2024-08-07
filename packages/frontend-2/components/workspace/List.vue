@@ -1,11 +1,11 @@
 <template>
   <div>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
-      <div class="flex items-center gap-2 mb-2">
-        <Squares2X2Icon class="h-5 w-5" />
-        <h1 class="text-heading-lg">**WORKSPACE NAME**</h1>
-      </div>
-
+      <WorkspaceHeader
+        title="Workspace"
+        :icon="Squares2X2Icon"
+        :workspace-id="workspaceId"
+      />
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div class="flex flex-col sm:flex-row gap-2">
           <FormTextInput
@@ -20,12 +20,12 @@
             @change="updateSearchImmediately"
             @update:model-value="updateDebouncedSearch"
           ></FormTextInput>
-          <FormSelectProjectRoles
+          <!-- <FormSelectProjectRoles
             v-if="!showEmptyState"
             v-model="selectedRoles"
             class="md:w-56 grow md:grow-0"
             fixed-height
-          />
+          /> -->
         </div>
         <FormButton v-if="!isGuest" @click="openNewProject = true">
           New project
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { Squares2X2Icon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,
@@ -71,7 +71,7 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
-import { workspaceProjectsQuery } from '~~/lib/workspaces/graphql/queries'
+import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
 
 const logger = useLogger()
 
@@ -97,7 +97,7 @@ const {
   fetchMore: fetchMoreProjects,
   onResult: onProjectsResult,
   variables: projectsVariables
-} = useQuery(workspaceProjectsQuery, () => ({
+} = useQuery(workspacePageQuery, () => ({
   workspaceId: props.workspaceId,
   filter: {
     search: (debouncedSearch.value || '').trim() || null
