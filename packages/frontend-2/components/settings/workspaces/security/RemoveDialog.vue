@@ -6,7 +6,7 @@
     :buttons="dialogButtons"
   >
     Are you sure you want to remove
-    <b>@{{ domain }}</b>
+    <b>@{{ domain.domain }}</b>
     from your workspace's verified domains?
   </LayoutDialog>
 </template>
@@ -14,7 +14,6 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation } from '@vue/apollo-composable'
-import { emit } from 'process'
 import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'

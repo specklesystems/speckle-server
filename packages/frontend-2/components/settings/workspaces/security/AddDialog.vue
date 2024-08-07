@@ -38,12 +38,16 @@ const { mutate: addWorkspaceDomain } = useMutation(settingsAddWorkspaceDomainMut
 const { triggerNotification } = useGlobalToast()
 
 const verifiedUserDomains = computed(() => {
-  const emails = activeUserEmails?.value?.activeUser?.emails ?? []
-  return emails
-    .filter((email) => email.verified)
-    .map((email) => {
-      return email.email.split('@')[1]
-    })
+  const emails = new Set()
+
+  for (const email of activeUserEmails?.value?.activeUser?.emails ?? []) {
+    if (!email.verified) {
+      continue
+    }
+    emails.add(email.email.split('@')[1])
+  }
+
+  return [...emails]
 })
 
 const selectedDomain = ref<string>('')

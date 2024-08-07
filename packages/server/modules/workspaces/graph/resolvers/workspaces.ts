@@ -51,7 +51,8 @@ import {
   workspaceInviteValidityFilter,
   getWorkspaceRoleForUserFactory,
   storeWorkspaceDomainFactory,
-  deleteWorkspaceDomainFactory
+  deleteWorkspaceDomainFactory,
+  getWorkspaceDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -499,10 +500,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }
           )
         },
-        domains: async (parent, _args, context) => {
-          return await context.loaders.workspaceDomains!.getWorkspaceDomains.loadMany(
-            parent.id
-          )
+        domains: async (parent) => {
+          return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         }
       },
       WorkspaceCollaborator: {

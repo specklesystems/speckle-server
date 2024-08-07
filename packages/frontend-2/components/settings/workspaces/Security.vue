@@ -60,8 +60,10 @@
 </template>
 
 <script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
+import { settingsWorkspacesDomainsQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
   fragment WorkspaceDomainInfo_Settings on WorkspaceDomain {
@@ -70,15 +72,24 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   workspaceId: string
 }>()
 
+const { result, refetch } = useQuery(settingsWorkspacesDomainsQuery, {
+  workspaceId: props.workspaceId
+})
+
 const domains = ref<WorkspaceDomainInfo_SettingsFragment[]>([])
+
+watch(result, (value) => {
+  domains.value = value?.workspace.domains ?? []
+})
 
 const showAddDialog = ref(false)
 const handleDomainsChanged = (nextDomains: WorkspaceDomainInfo_SettingsFragment[]) => {
   domains.value = nextDomains
+  refetch()
 }
 
 const showRemoveDialog = ref(false)

@@ -217,6 +217,7 @@ const documents = {
     "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.SettingsSidebarWorkspacesDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspacesMembers($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      team {\n        role\n        id\n        user {\n          id\n          avatar\n          name\n          company\n          verified\n        }\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
+    "\n  query SettingsWorkspacesDomains($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n    }\n  }\n": types.SettingsWorkspacesDomainsDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
@@ -1086,6 +1087,10 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsWorkspacesMembers($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      team {\n        role\n        id\n        user {\n          id\n          avatar\n          name\n          company\n          verified\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesMembers($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      team {\n        role\n        id\n        user {\n          id\n          avatar\n          name\n          company\n          verified\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SettingsWorkspacesDomains($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesDomains($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
