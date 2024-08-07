@@ -323,6 +323,9 @@ module.exports = {
    * TODO: this should be moved to repositories
    * Get all users or filter them with the specified searchQuery. This is meant for
    * server admins, because it exposes the User object (& thus the email).
+   * @param {number} limit
+   * @param {number} offset
+   * @param {string | null} searchQuery
    * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
    */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
@@ -347,7 +350,11 @@ module.exports = {
       .offset(offset)
   },
 
-  // TODO: this should be moved to repositories
+  /**
+   * TODO: this should be moved to repositories
+   * @param {string|null} searchQuery
+   * @returns
+   */
   async countUsers(searchQuery = null) {
     const query = Users().leftJoin(
       UserEmails.name,

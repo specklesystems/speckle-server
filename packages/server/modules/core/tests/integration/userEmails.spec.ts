@@ -8,6 +8,7 @@ import {
   listUsers,
   markUserAsVerified
 } from '@/modules/core/repositories/users'
+import * as UsersService from '@/modules/core/services/users'
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
@@ -354,6 +355,30 @@ describe('Core @user-emails', () => {
 
       const user = await getUserByEmail(randomCaseGuy.email)
       expect(user?.verified).to.be
+    })
+
+    it('with UsersService.getUserByEmail()', async () => {
+      const user = await UsersService.getUserByEmail({
+        email: randomizeCase(randomCaseGuy.email)
+      })
+      expect(user).to.be.ok
+      assertLowercaseEquality(user?.email, randomCaseGuy.email)
+    })
+
+    it('with UsersService.getUsers()', async () => {
+      const users = await UsersService.getUsers(
+        10,
+        0,
+        randomizeCase(randomCaseGuy.email)
+      )
+      expect(users).to.be.ok
+      expect(users).to.have.length(1)
+      assertLowercaseEquality(users[0].email, randomCaseGuy.email)
+    })
+
+    it('with UsersService.countUsers()', async () => {
+      const count = await UsersService.countUsers(randomizeCase(randomCaseGuy.email))
+      expect(count).to.eq(1)
     })
   })
 })
