@@ -9,7 +9,6 @@ import {
   resolveAuthRedirectPathFactory
 } from '@/modules/serverinvites/services/processing'
 import { passportAuthenticate } from '@/modules/auth/services/passportService'
-import { logger } from '@/logging/logging'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -54,6 +53,11 @@ const googleStrategyBuilder: AuthStrategyBuilder = async (
     },
     async (req, _accessToken, _refreshToken, profile, done) => {
       const serverInfo = await getServerInfo()
+      const logger = req.log.child({
+        authStrategy: 'google',
+        profileId: profile.id,
+        serverVersion: serverInfo.version
+      })
 
       try {
         const email = profile.emails?.[0].value
