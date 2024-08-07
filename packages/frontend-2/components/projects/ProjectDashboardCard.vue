@@ -51,17 +51,21 @@
           height="h-48"
           show-actions
         />
-        <ProjectPageModelsCard
+        <NuxtLink
           v-for="model in models"
           :key="model.id"
-          :model="model"
-          :project="project"
-          show-versions
-          show-actions
-          :project-id="project.id"
-          height="h-48"
-          @click="router.push(modelRoute(project.id, model.id))"
-        />
+          :to="modelRoute(projectId, model.id)"
+        >
+          <ProjectPageModelsCard
+            :model="model"
+            :project="project"
+            show-versions
+            show-actions
+            :project-id="project.id"
+            height="h-48"
+          />
+        </NuxtLink>
+
         <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
@@ -85,8 +89,6 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
-
-const router = useRouter()
 
 const projectId = computed(() => props.project.id)
 
