@@ -149,36 +149,38 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = objectInsertionService(req.params.streamId, objs).catch(
-            (e) => {
-              req.log.error(
-                {
-                  elapsedTimeMs: Date.now() - start,
-                  objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                  totalProcessed,
-                  error: e
-                },
-                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
-              )
-              if (!requestDropped) {
-                switch (e.constructor) {
-                  case ObjectHandlingError:
-                    res
-                      .status(400)
-                      .send(`Error inserting object in the database: ${e.message}`)
-                    break
-                  default:
-                    res
-                      .status(400)
-                      .send(
-                        'Error inserting object in the database. Check server logs for details'
-                      )
-                }
+          const promise = objectInsertionService({
+            streamId: req.params.streamId,
+            objects: objs,
+            logger: req.log
+          }).catch((e) => {
+            req.log.error(
+              {
+                elapsedTimeMs: Date.now() - start,
+                objectCount: objs.length,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
+                totalProcessed,
+                error: e
+              },
+              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+            )
+            if (!requestDropped) {
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database: ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
               }
-              requestDropped = true
             }
-          )
+            requestDropped = true
+          })
           promises.push(promise)
 
           await promise
@@ -279,35 +281,37 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = objectInsertionService(req.params.streamId, objs).catch(
-            (e) => {
-              req.log.error(
-                {
-                  elapsedTimeMs: Date.now() - start,
-                  objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                  totalProcessed,
-                  error: e
-                },
-                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
-              )
-              if (!requestDropped)
-                switch (e.constructor) {
-                  case ObjectHandlingError:
-                    res
-                      .status(400)
-                      .send(`Error inserting object in the database. ${e.message}`)
-                    break
-                  default:
-                    res
-                      .status(400)
-                      .send(
-                        'Error inserting object in the database. Check server logs for details'
-                      )
-                }
-              requestDropped = true
-            }
-          )
+          const promise = objectInsertionService({
+            streamid: req.params.streamId,
+            objects: objs,
+            logger: req.log
+          }).catch((e) => {
+            req.log.error(
+              {
+                elapsedTimeMs: Date.now() - start,
+                objectCount: objs.length,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
+                totalProcessed,
+                error: e
+              },
+              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+            )
+            if (!requestDropped)
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database. ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+              }
+            requestDropped = true
+          })
           promises.push(promise)
 
           await promise
