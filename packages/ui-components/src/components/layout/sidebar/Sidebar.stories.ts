@@ -37,11 +37,7 @@ export const Dashboard: StoryObj = {
             <template #title-icon>
               <HomeIcon class="h-5 w-5" />
             </template>
-            <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
-              <template #icon>
-                <HomeIcon class="h-5 w-5" />
-              </template>
-            </LayoutSidebarMenuGroupItem>
+            <LayoutSidebarMenuGroupItem label="Group Item with Icon" tag="Coming soon" disabled />
             <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
               <template #icon>
                 <HomeIcon class="h-5 w-5" />

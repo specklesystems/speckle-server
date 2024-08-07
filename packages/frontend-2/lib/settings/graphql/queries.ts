@@ -23,3 +23,21 @@ export const settingsWorkspaceGeneralQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesMembersQuery = graphql(`
+  query SettingsWorkspacesMembers($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      team {
+        role
+        id
+        user {
+          id
+          avatar
+          name
+          company
+          verified
+        }
+      }
+    }
+  }
+`)

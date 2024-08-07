@@ -1,7 +1,9 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
+  DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
+  QueryAllWorkspaceProjects,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -9,6 +11,7 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
+  deleteStream,
   grantStreamPermissions as repoGrantStreamPermissions,
   revokeStreamPermissions as repoRevokeStreamPermissions
 } from '@/modules/core/repositories/streams'
@@ -29,7 +32,6 @@ import {
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
-import { authorizeResolver } from '@/modules/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
@@ -37,6 +39,10 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { chunk, isEmpty } from 'lodash'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -96,15 +102,12 @@ export const createWorkspaceFactory =
   }
 
 type WorkspaceUpdateArgs = {
-  /** Id of user performing the operation */
-  workspaceUpdaterId: string
   workspaceId: string
   workspaceInput: {
     name?: string | null
     description?: string | null
     logo?: string | null
   }
-  updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const updateWorkspaceFactory =
@@ -117,27 +120,20 @@ export const updateWorkspaceFactory =
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }) =>
-  async ({
-    workspaceUpdaterId,
-    workspaceId,
-    workspaceInput,
-    updaterResourceAccessLimits
-  }: WorkspaceUpdateArgs): Promise<Workspace> => {
-    await authorizeResolver(
-      workspaceUpdaterId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      updaterResourceAccessLimits
-    )
+  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    // Get existing workspace to merge with incoming changes
+    const currentWorkspace = await getWorkspace({ workspaceId })
+    if (!currentWorkspace) {
+      throw new WorkspaceNotFoundError()
+    }
 
+    // Validate incoming changes
     if (!!workspaceInput.logo) {
       validateImageString(workspaceInput.logo)
     }
-
-    const currentWorkspace = await getWorkspace({ workspaceId })
-
-    if (!currentWorkspace) {
-      throw new WorkspaceNotFoundError()
+    if (isEmpty(workspaceInput.name)) {
+      // Do not allow setting an empty name (empty descriptions allowed)
+      delete workspaceInput.name
     }
 
     const workspace = {
@@ -150,6 +146,50 @@ export const updateWorkspaceFactory =
     await emitWorkspaceEvent({ eventName: WorkspaceEvents.Updated, payload: workspace })
 
     return workspace
+  }
+
+type WorkspaceDeleteArgs = {
+  workspaceId: string
+}
+
+export const deleteWorkspaceFactory =
+  ({
+    deleteWorkspace,
+    deleteProject,
+    queryAllWorkspaceProjects,
+    deleteAllResourceInvites
+  }: {
+    deleteWorkspace: DeleteWorkspace
+    deleteProject: typeof deleteStream
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteAllResourceInvites: DeleteAllResourceInvites
+  }) =>
+  async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
+    // Cache project ids for post-workspace-delete cleanup
+    const projectIds: string[] = []
+    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+      projectIds.push(...projects.map((project) => project.id))
+    }
+
+    await Promise.all([
+      deleteWorkspace({ workspaceId }),
+      deleteAllResourceInvites({
+        resourceId: workspaceId,
+        resourceType: WorkspaceInviteResourceType
+      }),
+      ...projectIds.map((projectId) =>
+        deleteAllResourceInvites({
+          resourceId: projectId,
+          resourceType: ProjectInviteResourceType
+        })
+      )
+    ])
+
+    // Workspace delete cascades project delete, but some manual cleanup is required
+    // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
+    for (const projectIdsChunk of chunk(projectIds, 25)) {
+      await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
+    }
   }
 
 type WorkspaceRoleDeleteArgs = {
@@ -191,7 +231,9 @@ export const deleteWorkspaceRoleFactory =
     const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
       getStreams
     })
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
       await Promise.all(
         projectsPage.map(({ id: streamId }) =>
           revokeStreamPermissions({ streamId, userId })
@@ -237,7 +279,17 @@ export const updateWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
-  async ({ workspaceId, userId, role }: WorkspaceAcl): Promise<void> => {
+  async ({
+    workspaceId,
+    userId,
+    role,
+    skipProjectRoleUpdatesFor
+  }: WorkspaceAcl & {
+    /**
+     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
+     */
+    skipProjectRoleUpdatesFor?: string[]
+  }): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
@@ -256,11 +308,17 @@ export const updateWorkspaceRoleFactory =
       getStreams
     })
     const projectRole = mapWorkspaceRoleToProjectRole(role)
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          grantStreamPermissions({ streamId, userId, role: projectRole })
-        )
+        projectsPage.map(({ id: streamId }) => {
+          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+            return
+          }
+
+          return grantStreamPermissions({ streamId, userId, role: projectRole })
+        })
       )
     }
 

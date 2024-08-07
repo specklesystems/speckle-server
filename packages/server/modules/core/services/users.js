@@ -86,6 +86,8 @@ module.exports = {
     user.id = newId
     user.email = user.email.toLowerCase()
 
+    if (!user.name) throw new UserInputError('User name is required')
+
     if (user.avatar) {
       user.avatar = sanitizeImageUrl(user.avatar)
     }
@@ -126,6 +128,7 @@ module.exports = {
   },
 
   /**
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles}, bio?: string}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,

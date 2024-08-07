@@ -41,6 +41,40 @@ input WorkspaceRoleDeleteInput {
   workspaceId: String!
 }
 
+input WorkspaceProjectInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
+  """
+  Can only be specified if guest mode is on or if the user is an admin
+  """
+  serverRole: String
+  """
+  Only taken into account, if project belongs to a workspace. Defaults to guest access.
+  """
+  workspaceRole: String
+}
+
+extend type ProjectInviteMutations {
+  """
+  Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
+  configuring the workspace role.
+  """
+  createForWorkspace(
+    projectId: ID!
+    inputs: [WorkspaceProjectInviteCreateInput!]!
+  ): Project! @hasScope(scope: "users:invite") @hasServerRole(role: SERVER_USER)
+}
+
 extend type Mutation {
   workspaceMutations: WorkspaceMutations! @hasServerRole(role: SERVER_USER)
 }
@@ -203,4 +237,12 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+}
+
+type UserWorkspaceMutations {
+  leave(id: ID!): Boolean!
+}
+
+extend type ActiveUserMutations {
+  workspaceMutations: UserWorkspaceMutations
 }

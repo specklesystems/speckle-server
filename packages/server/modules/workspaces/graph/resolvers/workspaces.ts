@@ -10,6 +10,7 @@ import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
+  deleteAllResourceInvitesFactory,
   deleteInviteFactory,
   deleteInvitesByTargetFactory,
   findInviteFactory,
@@ -18,11 +19,14 @@ import {
   queryAllResourceInvitesFactory,
   queryAllUserResourceInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   cancelResourceInviteFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
+import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -36,6 +40,7 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
+  deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
   deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
@@ -57,14 +62,36 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
+  deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
-import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import {
+  getWorkspaceProjectsFactory,
+  queryAllWorkspaceProjectsFactory
+} from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
+import { deleteStream } from '@/modules/core/repositories/streams'
+
+const buildCreateAndSendServerOrProjectInvite = () =>
+  createAndSendInviteFactory({
+    findUserByTarget: findUserByTargetFactory(),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+      getStream
+    }),
+    emitEvent: ({ eventName, payload }) =>
+      getEventBus().emit({
+        eventName,
+        payload
+      })
+  })
 
 const buildCreateAndSendWorkspaceInvite = () =>
   createAndSendInviteFactory({
@@ -124,6 +151,59 @@ export = FF_WORKSPACES_MODULE_ENABLED
       Mutation: {
         workspaceMutations: () => ({})
       },
+      ProjectInviteMutations: {
+        async createForWorkspace(_parent, args, ctx) {
+          await authorizeResolver(
+            ctx.userId,
+            args.projectId,
+            Roles.Stream.Owner,
+            ctx.resourceAccessRules
+          )
+
+          const inviteCount = args.inputs.length
+          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+            throw new InviteCreateValidationError(
+              'Maximum 10 invites can be sent at once by non admins'
+            )
+          }
+
+          const createProjectInvite = createProjectInviteFactory({
+            createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+          })
+
+          const inputBatches = chunk(args.inputs, 10)
+          for (const batch of inputBatches) {
+            await Promise.all(
+              batch.map((i) => {
+                const workspaceRole = i.workspaceRole
+                if (
+                  workspaceRole &&
+                  !(Object.values(Roles.Workspace) as string[]).includes(workspaceRole)
+                ) {
+                  throw new InviteCreateValidationError(
+                    'Invalid workspace role specified: ' + workspaceRole
+                  )
+                }
+
+                return createProjectInvite({
+                  input: {
+                    ...i,
+                    projectId: args.projectId
+                  },
+                  inviterId: ctx.userId!,
+                  inviterResourceAccessRules: ctx.resourceAccessRules,
+                  secondaryResourceRoles: workspaceRole
+                    ? {
+                        [WorkspaceInviteResourceType]: workspaceRole as WorkspaceRoles
+                      }
+                    : undefined
+                })
+              })
+            )
+          }
+          return ctx.loaders.streams.getStream.load(args.projectId)
+        }
+      },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
           const { name, description } = args.input
@@ -146,12 +226,37 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
-        delete: async () => {
-          // TODO: Remember to also delete pending workspace invites
-          throw new WorkspacesNotYetImplementedError()
+        delete: async (_parent, args, context) => {
+          const { workspaceId } = args
+
+          await authorizeResolver(
+            context.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          // Delete workspace and associated resources (i.e. invites)
+          const deleteWorkspace = deleteWorkspaceFactory({
+            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+            deleteProject: deleteStream,
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
+          })
+
+          await deleteWorkspace({ workspaceId })
+
+          return true
         },
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
+
+          await authorizeResolver(
+            context.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
 
           const updateWorkspace = updateWorkspaceFactory({
             getWorkspace: getWorkspaceFactory({ db }),
@@ -161,9 +266,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput,
-            workspaceUpdaterId: context.userId!,
-            updaterResourceAccessLimits: context.resourceAccessRules
+            workspaceInput
           })
 
           return workspace
@@ -435,6 +538,29 @@ export = FF_WORKSPACES_MODULE_ENABLED
       AdminQueries: {
         workspaceList: async () => {
           throw new WorkspacesNotYetImplementedError()
+        }
+      },
+      ActiveUserMutations: {
+        workspaceMutations: () => ({})
+      },
+      UserWorkspaceMutations: {
+        leave: async (parent, args, ctx) => {
+          const userId = ctx.userId!
+
+          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
+          const emitWorkspaceEvent = getEventBus().emit
+
+          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+            getWorkspaceRoles,
+            emitWorkspaceEvent,
+            getStreams,
+            revokeStreamPermissions
+          })
+
+          await deleteWorkspaceRole({ workspaceId: args.id, userId })
+
+          return true
         }
       }
     } as Resolvers)
