@@ -1,6 +1,7 @@
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -11,6 +12,7 @@ import {
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
   GetWorkspaces,
+  StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -34,6 +36,7 @@ import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constan
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
+  workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
 
@@ -208,23 +211,8 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
     })
 }
 
-export const addWorkspaceDomainFactory =
-  ({ db }: { db: Knex }) =>
-  async ({
-    workspaceId,
-    domain
-  }: {
-    workspaceId: string
-    domain: string
-  }): Promise<void> => {
-    await tables
-      .workspaces(db)
-      .where('id', workspaceId)
-      .whereRaw('? <> all (domains)', [domain])
-      .update(
-        {
-          domains: knex.raw('array_append(array_column_name, ?)', [domain])
-        },
-        'domains'
-      )
+export const storeWorkspaceDomainFactory =
+  ({ db }: { db: Knex }): StoreWorkspaceDomain =>
+  async ({ workspaceDomain }): Promise<void> => {
+    await tables.workspaceDomains(db).insert(workspaceDomain)
   }

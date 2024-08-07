@@ -43,3 +43,9 @@ export class WorkspaceUnverifiedDomainError extends BaseError {
   static code = 'WORKSPACE_UNVERIFIED_DOMAIN_ERROR'
   static statusCode = 403
 }
+
+export class WorkspaceDomainBlockedError extends BaseError {
+  static defaultMessage = 'Cannot add blocked domain to workspace'
+  static code = 'WORKSPACE_DOMAIN_BLOCKED_ERROR'
+  static statusCode = 400
+}

@@ -2,10 +2,15 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
   EmitWorkspaceEvent,
   GetWorkspace,
+  StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceDomain
+} from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -20,6 +25,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceAdminRequiredError,
+  WorkspaceDomainBlockedError,
   WorkspaceNotFoundError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
@@ -38,7 +44,7 @@ import {
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
 import { isEmpty } from 'lodash'
-import { FindVerifiedEmailByUserIdAndDomain } from '@/modules/core/domain/userEmails/operations'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -78,7 +84,8 @@ export const createWorkspaceFactory =
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      domains: []
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
@@ -277,18 +284,60 @@ export const updateWorkspaceRoleFactory =
     })
   }
 
-export const addWorkspaceDomain =
-  ({
-    findVerifiedEmailByUserIdAndDomain
-  }: {
-    findVerifiedEmailByUserIdAndDomain: FindVerifiedEmailByUserIdAndDomain
-  }) =>
-  async ({ userId, domain }: { userId: string; domain: string }) => {
-    // domain
+const blockedDomains = ['google.com']
 
-    const email = await findVerifiedEmailByUserIdAndDomain({ userId, domain })
+export const addDomainToWorkspaceFactory =
+  ({
+    findEmailsByUserId,
+    getWorkspaceRoleForUser,
+    storeWorkspaceDomain
+  }: {
+    findEmailsByUserId: FindEmailsByUserId
+    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    storeWorkspaceDomain: StoreWorkspaceDomain
+  }) =>
+  async ({
+    userId,
+    domain,
+    workspaceId
+  }: {
+    userId: string
+    domain: string
+    workspaceId: string
+  }) => {
+    // this function makes the assumption, that the user has a workspace admin role
+    const sanitizedDomain = domain.toLowerCase().trim()
+    if (blockedDomains.includes(sanitizedDomain))
+      throw new WorkspaceDomainBlockedError()
+    const userEmails = await findEmailsByUserId({
+      userId
+    })
+
+    const email = userEmails.find(
+      (userEmail) => userEmail.verified && userEmail.email.endsWith(sanitizedDomain)
+    )
 
     if (!email) {
       throw new WorkspaceUnverifiedDomainError()
     }
+    // we're treating all user owned domains as verified, cause they have it in their verified emails list
+    const verified = true
+
+    const workspaceRole = await getWorkspaceRoleForUser({ workspaceId, userId })
+
+    if (workspaceRole?.role !== Roles.Workspace.Admin) {
+      throw new WorkspaceAdminRequiredError()
+    }
+
+    const workspaceDomain: WorkspaceDomain = {
+      workspaceId,
+      id: cryptoRandomString({ length: 10 }),
+      domain: sanitizedDomain,
+      createdByUserId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      verified
+    }
+
+    await storeWorkspaceDomain({ workspaceDomain })
   }
