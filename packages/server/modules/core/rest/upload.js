@@ -4,7 +4,10 @@ const { corsMiddleware } = require('@/modules/core/configs/cors')
 const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
-const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
+const {
+  getFeatureFlags,
+  maximumObjectUploadFileSizeMb
+} = require('@/modules/shared/helpers/envHelper')
 const {
   createObjectsBatched,
   createObjectsBatchedAndNoClosures
@@ -12,7 +15,7 @@ const {
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 
 let objectInsertionService = createObjectsBatched
@@ -54,7 +57,6 @@ module.exports = (app) => {
         )
     }
     let totalProcessed = 0
-    // let last = {}
 
     const promises = []
     let requestDropped = false
@@ -76,7 +78,7 @@ module.exports = (app) => {
             `File upload of the multipart form has reached an end of file (EOF) boundary. The mimetype of the file is '${mimeType}'.`
           )
           if (requestDropped) return
-          const t0 = Date.now()
+          const objectBatchFileEndTime = Date.now()
           let objs = []
 
           const gzippedBuffer = Buffer.concat(buffer)
@@ -86,7 +88,7 @@ module.exports = (app) => {
                 bufferLengthMb: gzippedBuffer.length,
                 maxFileSizeMb: MAX_FILE_SIZE,
                 elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 totalProcessed
               },
               'Upload error: Batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
@@ -109,7 +111,7 @@ module.exports = (app) => {
                 bufferLengthMb: gunzippedBufferMegabyteSize,
                 maxFileSizeMb: MAX_FILE_SIZE,
                 elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 totalProcessed
               },
               'Upload error: batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.'
@@ -129,7 +131,7 @@ module.exports = (app) => {
             req.log.error(
               {
                 elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 totalProcessed
               },
               'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
@@ -153,7 +155,7 @@ module.exports = (app) => {
                 {
                   elapsedTimeMs: Date.now() - start,
                   objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - t0,
+                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                   totalProcessed,
                   error: e
                 },
@@ -185,7 +187,7 @@ module.exports = (app) => {
             {
               objectCount: objs.length,
               elapsedTimeMs: Date.now() - start,
-              objectBatchElapsedTimeMs: Date.now() - t0,
+              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: gunzippedBuffer.length / 1000000,
               requestDropped,
@@ -206,7 +208,7 @@ module.exports = (app) => {
 
         file.on('end', async () => {
           if (requestDropped) return
-          const t0 = Date.now()
+          const objectBatchFileEndTime = Date.now()
           let objs = []
 
           if (buffer.length > MAX_FILE_SIZE) {
@@ -214,7 +216,7 @@ module.exports = (app) => {
               {
                 bufferLengthMb: buffer.length,
                 maxFileSizeMb: MAX_FILE_SIZE,
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 elapsedTimeMs: Date.now() - start,
                 totalProcessed
               },
@@ -232,7 +234,7 @@ module.exports = (app) => {
           } catch {
             req.log.error(
               {
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 elapsedTimeMs: Date.now() - start,
                 totalProcessed
               },
@@ -245,7 +247,7 @@ module.exports = (app) => {
           if (!Array.isArray(objs)) {
             req.log.error(
               {
-                objectBatchElapsedTimeMs: Date.now() - t0,
+                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 elapsedTimeMs: Date.now() - start,
                 totalProcessed
               },
@@ -265,7 +267,7 @@ module.exports = (app) => {
           req.log.debug(
             {
               objectCount: objs.length,
-              objectBatchElapsedTimeMs: Date.now() - t0,
+              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
               elapsedTimeMs: Date.now() - start,
               totalProcessed
             },
@@ -283,7 +285,7 @@ module.exports = (app) => {
                 {
                   elapsedTimeMs: Date.now() - start,
                   objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - t0,
+                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                   totalProcessed,
                   error: e
                 },
@@ -312,7 +314,7 @@ module.exports = (app) => {
           req.log.info(
             {
               objectCount: objs.length,
-              objectBatchElapsedTimeMs: Date.now() - t0,
+              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               totalProcessed
