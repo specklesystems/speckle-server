@@ -101,7 +101,7 @@ describe('Server registration', () => {
 
     itEach(
       <const>[
-        { key: 'email', msg: 'E-mail address is empty' },
+        { key: 'email', msg: 'E-mail address is required' },
         { key: 'name', msg: 'User name is required' },
         { key: 'password', msg: 'Password missing' }
       ],
