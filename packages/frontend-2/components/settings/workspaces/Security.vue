@@ -7,13 +7,14 @@
         <div
           class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4 mt-4"
         >
-          <FormButton>Add Domain</FormButton>
+          <FormButton @click="showAddDialog = true">Add Domain</FormButton>
         </div>
         <LayoutTable
           class="mt-2 md:mt-4"
           :columns="[
             { id: 'domain', header: 'Domain', classes: 'col-span-3' },
-            { id: 'verified', header: 'Status', classes: 'col-span-3' }
+            { id: 'verified', header: 'Status', classes: 'col-span-3' },
+            { id: 'delete', header: 'Delete', classes: 'col-span-2' }
           ]"
           :items="domains"
         >
@@ -27,9 +28,14 @@
               {{ item.verified ? 'Verified' : 'Unverified' }}
             </span>
           </template>
+          <template #delete="{ item }">
+            <FormButton color="danger" @click="() => openRemoveDialog(item.domain)">
+              Delete
+            </FormButton>
+          </template>
         </LayoutTable>
       </div>
-      <div>
+      <!-- <div>
         <SettingsSectionHeader title="Domain Features" subheading class="mt-8" />
         <FormCheckbox
           v-model="isDomainProtectionEnabled"
@@ -41,12 +47,34 @@
           label="Enable Workspace Discovery"
           name="workspace-discovery"
         />
-      </div>
+        <FormButton class="mt-4">Save</FormButton>
+      </div> -->
     </div>
+    <SettingsWorkspacesSecurityAddDialog
+      v-model:open="showAddDialog"
+      :verified-user-domains="['a', 'b']"
+      :workspace="workspace"
+    />
+    <SettingsWorkspacesSecurityRemoveDialog
+      v-model:open="showRemoveDialog"
+      :domain="removeDialogDomain"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspaceSecurity_Workspace on Workspace {
+    id
+  }
+`)
+
+defineProps<{
+  workspace: SettingsWorkspaceSecurity_WorkspaceFragment
+}>()
+
 const domains = [
   {
     id: 'a',
@@ -60,6 +88,15 @@ const domains = [
   }
 ]
 
-const isDomainProtectionEnabled = ref(false)
-const isWorkspaceDiscoveryEnabled = ref(false)
+const showAddDialog = ref(false)
+const showRemoveDialog = ref(false)
+const removeDialogDomain = ref<string>('')
+
+const openRemoveDialog = (domain: string) => {
+  removeDialogDomain.value = domain
+  showRemoveDialog.value = true
+}
+
+// const isDomainProtectionEnabled = ref(false)
+// const isWorkspaceDiscoveryEnabled = ref(false)
 </script>
