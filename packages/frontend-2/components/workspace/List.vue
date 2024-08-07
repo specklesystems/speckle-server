@@ -3,7 +3,7 @@
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
-        <h1 class="text-heading-lg">Projects</h1>
+        <h1 class="text-heading-lg">**WORKSPACE NAME**</h1>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
@@ -50,14 +50,13 @@
 </template>
 
 <script setup lang="ts">
-import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { Squares2X2Icon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,
   useQueryLoading,
   useSubscription
 } from '@vue/apollo-composable'
-import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
@@ -72,6 +71,7 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import { workspaceProjectsQuery } from '~~/lib/workspaces/graphql/queries'
 
 const logger = useLogger()
 
@@ -88,21 +88,29 @@ const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
 
+const props = defineProps<{
+  workspaceId: string
+}>()
+
 const {
   result: projectsPanelResult,
   fetchMore: fetchMoreProjects,
   onResult: onProjectsResult,
   variables: projectsVariables
-} = useQuery(projectsDashboardQuery, () => ({
+} = useQuery(workspaceProjectsQuery, () => ({
+  workspaceId: props.workspaceId,
   filter: {
-    search: (debouncedSearch.value || '').trim() || null,
-    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
+    search: (debouncedSearch.value || '').trim() || null
+    // onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
 }))
 
 onProjectsResult((res) => {
-  cursor.value = res.data?.activeUser?.projects.cursor || null
-  infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
+  const projectsData = res.data?.workspace?.projects
+  if (projectsData) {
+    cursor.value = projectsData.cursor || null
+    infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
+  }
 })
 
 const { onResult: onUserProjectsUpdate } = useSubscription(
@@ -119,14 +127,9 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
   `)
 )
 
-const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
+const projects = computed(() => projectsPanelResult.value?.workspace?.projects)
 const showEmptyState = computed(() => {
-  const isFiltering =
-    projectsVariables.value?.filter?.onlyWithRoles?.length ||
-    projectsVariables.value?.filter?.search?.length
-  if (isFiltering) return false
-
-  return projects.value && !projects.value.items.length
+  return false
 })
 
 const moreToLoad = computed(

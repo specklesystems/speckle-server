@@ -1,5 +1,5 @@
 <template>
-  <ProjectList :workspace-id="workspaceId" />
+  <WorkspaceList :workspace-id="workspaceId" />
 </template>
 
 <script setup>

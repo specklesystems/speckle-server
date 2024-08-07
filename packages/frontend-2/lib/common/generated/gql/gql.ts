@@ -234,6 +234,7 @@ const documents = {
     "\n  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n": types.OnViewerCommentsUpdatedDocument,
     "\n  fragment LinkableComment on Comment {\n    id\n    viewerResources {\n      modelId\n      versionId\n      objectId\n    }\n  }\n": types.LinkableCommentFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
+    "\n  query WorkspaceProjectsQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      projects(filter: $filter, cursor: $cursor) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n        cursor\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query LegacyViewerStreamRedirectMetadata($streamId: String!) {\n    project(id: $streamId) {\n      id\n      versions(limit: 1) {\n        totalCount\n        items {\n          id\n          model {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.LegacyViewerStreamRedirectMetadataDocument,
@@ -1145,6 +1146,10 @@ export function graphql(source: "\n  fragment LinkableComment on Comment {\n    
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceProjectsQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      projects(filter: $filter, cursor: $cursor) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n        cursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceProjectsQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      projects(filter: $filter, cursor: $cursor) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n        cursor\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
