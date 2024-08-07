@@ -282,7 +282,7 @@ module.exports = (app) => {
           }
 
           const promise = objectInsertionService({
-            streamid: req.params.streamId,
+            streamId: req.params.streamId,
             objects: objs,
             logger: req.log
           }).catch((e) => {
