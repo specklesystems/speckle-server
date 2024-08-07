@@ -25,7 +25,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useRequestId } from '~/lib/core/composables/server'
+import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
 import type { SimpleError } from '~/lib/core/helpers/observability'
 import { homeRoute } from '~~/lib/common/helpers/route'
 import { ClipboardIcon } from '@heroicons/vue/24/outline'
@@ -37,6 +37,7 @@ defineProps<{ error: SimpleError }>()
 
 const isDev = ref(import.meta.dev)
 const reqId = useRequestId({ forceFrontendValue: true })
+const serverReqId = useServerRequestId()
 const { copy } = useClipboard()
 
 // storing in state to avoid hydration mismatch when date gets regenerated in CSR
@@ -45,7 +46,12 @@ const errorDate = ref(
   import.meta.client && ssrErrorDate.value ? ssrErrorDate.value : getDate()
 )
 
-const errorReference = computed(() => `Reference #${reqId} | ${errorDate.value}`)
+const errorReference = computed(() => {
+  let base = `Reference: #${reqId}`
+  if (serverReqId.value) base += ` | #${serverReqId.value}`
+  base += ` | ${errorDate.value}`
+  return base
+})
 
 const onReferenceClick = async () => {
   if (!import.meta.client) return
