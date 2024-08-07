@@ -25,6 +25,20 @@ export const settingsAddWorkspaceDomainMutation = graphql(`
     workspaceMutations {
       addDomain(input: $input) {
         domains {
+          id
+          domain
+        }
+      }
+    }
+  }
+`)
+
+export const settingsDeleteWorkspaceDomainMutation = graphql(`
+  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
+    workspaceMutations {
+      deleteDomain(input: $input) {
+        domains {
+          id
           domain
         }
       }

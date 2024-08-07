@@ -13,7 +13,6 @@
           class="mt-2 md:mt-4"
           :columns="[
             { id: 'domain', header: 'Domain', classes: 'col-span-3' },
-            { id: 'verified', header: 'Status', classes: 'col-span-3' },
             { id: 'delete', header: 'Delete', classes: 'col-span-2' }
           ]"
           :items="domains"
@@ -23,13 +22,8 @@
               {{ `@${item.domain}` }}
             </span>
           </template>
-          <template #verified="{ item }">
-            <span class="text-body-xs text-foreground-2">
-              {{ item.verified ? 'Verified' : 'Unverified' }}
-            </span>
-          </template>
           <template #delete="{ item }">
-            <FormButton color="danger" @click="() => openRemoveDialog(item.domain)">
+            <FormButton color="danger" @click="() => openRemoveDialog(item)">
               Delete
             </FormButton>
           </template>
@@ -53,40 +47,43 @@
     <SettingsWorkspacesSecurityAddDialog
       v-model:open="showAddDialog"
       :workspace-id="workspaceId"
-      @added="onDomainAdded"
+      @added="handleDomainsChanged"
     />
     <SettingsWorkspacesSecurityRemoveDialog
+      v-if="removeDialogDomain"
       v-model:open="showRemoveDialog"
+      :workspace-id="workspaceId"
       :domain="removeDialogDomain"
+      @removed="handleDomainsChanged"
     />
   </section>
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~/lib/common/generated/gql'
+import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment WorkspaceDomainInfo_Settings on WorkspaceDomain {
+    id
+    domain
+  }
+`)
+
 defineProps<{
   workspaceId: string
 }>()
 
-type WorkspaceDomain = {
-  id: string
-  domain: string
-  verified: boolean
-}
-
-const domains = ref<WorkspaceDomain[]>([])
+const domains = ref<WorkspaceDomainInfo_SettingsFragment[]>([])
 
 const showAddDialog = ref(false)
-const onDomainAdded = (domain: string) => {
-  domains.value.push({
-    id: domain,
-    domain,
-    verified: true
-  })
+const handleDomainsChanged = (nextDomains: WorkspaceDomainInfo_SettingsFragment[]) => {
+  domains.value = nextDomains
 }
 
 const showRemoveDialog = ref(false)
-const removeDialogDomain = ref<string>('')
-const openRemoveDialog = (domain: string) => {
+const removeDialogDomain = ref<WorkspaceDomainInfo_SettingsFragment>()
+const openRemoveDialog = (domain: WorkspaceDomainInfo_SettingsFragment) => {
   removeDialogDomain.value = domain
   showRemoveDialog.value = true
 }

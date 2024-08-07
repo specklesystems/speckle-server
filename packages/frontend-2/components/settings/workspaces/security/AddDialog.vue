@@ -21,13 +21,14 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { activeUserEmailsQuery } from '~/lib/user/graphql/queries'
+import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   workspaceId: string
 }>()
 
 const emit = defineEmits<{
-  added: [string]
+  added: [WorkspaceDomainInfo_SettingsFragment[]]
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -70,7 +71,7 @@ const onAdd = async () => {
       title: 'Domain added',
       description: `The verified domain ${domain} has been added to your workspace`
     })
-    emit('added', domain)
+    emit('added', result.data.workspaceMutations.addDomain.domains)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
