@@ -72,12 +72,6 @@
                 disabled
               />
               <LayoutSidebarMenuGroupItem
-                label="Security"
-                tag="Coming soon"
-                tooltip-text="SSO, manage permissions, restrict domain access"
-                disabled
-              />
-              <LayoutSidebarMenuGroupItem
                 label="Regions"
                 tag="Coming soon"
                 tooltip-text="Set up regions for custom data residency"
@@ -113,6 +107,7 @@ import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspace/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -184,6 +179,10 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
     members: {
       title: 'Members',
       component: SettingsWorkspacesMembers
+    },
+    security: {
+      title: 'Security',
+      component: SettingsWorkspacesSecurity
     }
   }
 })

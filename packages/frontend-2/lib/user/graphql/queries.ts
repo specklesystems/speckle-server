@@ -9,3 +9,14 @@ export const profileEditDialogQuery = graphql(`
     }
   }
 `)
+
+export const activeUserEmailsQuery = graphql(`
+  query ActiveUserEmails {
+    activeUser {
+      emails {
+        email
+        verified
+      }
+    }
+  }
+`)

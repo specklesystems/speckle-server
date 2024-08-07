@@ -41,3 +41,14 @@ export const settingsWorkspacesMembersQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesDomainsQuery = graphql(`
+  query SettingsWorkspacesDomains($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      domains {
+        id
+        domain
+      }
+    }
+  }
+`)
