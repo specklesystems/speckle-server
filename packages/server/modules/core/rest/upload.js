@@ -369,7 +369,7 @@ module.exports = (app) => {
           elapsedTimeMs: Date.now() - start,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
-        'Error during upload. Error occurred after {elpasedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
+        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
       )
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')
