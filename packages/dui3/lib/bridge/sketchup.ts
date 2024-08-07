@@ -170,7 +170,9 @@ export class SketchupBridge extends BaseBridge {
 
     hostAppStore.handleModelProgressEvents({
       modelCardId: eventPayload.modelCardId,
-      progress: { status: 'Starting to conversion..' }
+      progress: {
+        status: 'Starting to conversion, Sketchup UI might be unresponsive..'
+      }
     })
 
     // CONVERSION WILL START AFTER THAT
