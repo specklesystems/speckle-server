@@ -29,6 +29,8 @@ module.exports = (app) => {
       streamId: req.params.streamId
     })
 
+    const start = Date.now()
+
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
@@ -80,7 +82,14 @@ module.exports = (app) => {
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              `Upload error: Batch size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})`
+              {
+                bufferLengthMb: gzippedBuffer.length,
+                maxFileSizeMb: MAX_FILE_SIZE,
+                elapsedTimeMs: Date.now() - start,
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                totalProcessed
+              },
+              'Upload error: Batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
             )
             if (!requestDropped)
               res
@@ -96,7 +105,14 @@ module.exports = (app) => {
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
-              `upload error: batch size too large (${gunzippedBufferMegabyteSize} > ${MAX_FILE_SIZE})`
+              {
+                bufferLengthMb: gunzippedBufferMegabyteSize,
+                maxFileSizeMb: MAX_FILE_SIZE,
+                elapsedTimeMs: Date.now() - start,
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                totalProcessed
+              },
+              'Upload error: batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.'
             )
             if (!requestDropped)
               res
@@ -110,7 +126,14 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(gunzippedBuffer)
           } catch {
-            req.log.error(`Upload error: Batch not in JSON format`)
+            req.log.error(
+              {
+                elapsedTimeMs: Date.now() - start,
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                totalProcessed
+              },
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+            )
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
           }
@@ -126,7 +149,16 @@ module.exports = (app) => {
 
           const promise = objectInsertionService(req.params.streamId, objs).catch(
             (e) => {
-              req.log.error(e, `Upload error.`)
+              req.log.error(
+                {
+                  elapsedTimeMs: Date.now() - start,
+                  objectCount: objs.length,
+                  objectBatchElapsedTimeMs: Date.now() - t0,
+                  totalProcessed,
+                  error: e
+                },
+                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+              )
               if (!requestDropped) {
                 switch (e.constructor) {
                   case ObjectHandlingError:
@@ -152,12 +184,14 @@ module.exports = (app) => {
           req.log.info(
             {
               objectCount: objs.length,
-              durationSeconds: (Date.now() - t0) / 1000,
+              elapsedTimeMs: Date.now() - start,
+              objectBatchElapsedTimeMs: Date.now() - t0,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: gunzippedBuffer.length / 1000000,
-              requestDropped
+              requestDropped,
+              totalProcessed
             },
-            'Uploaded batch of {objectCount} objects'
+            'Uploaded batch of {objectCount} objects in {objectBatchElapsedTimeMs}ms. Total objects processed so far: {totalProcessed} in a total of {elapsedTimeMs}ms.'
           )
         })
       } else if (
@@ -177,7 +211,14 @@ module.exports = (app) => {
 
           if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              `Upload error: Batch size too large (${buffer.length} > ${MAX_FILE_SIZE})`
+              {
+                bufferLengthMb: buffer.length,
+                maxFileSizeMb: MAX_FILE_SIZE,
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                elapsedTimeMs: Date.now() - start,
+                totalProcessed
+              },
+              'Upload error: Batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
             )
             if (!requestDropped)
               res
@@ -189,13 +230,27 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(buffer)
           } catch {
-            req.log.error(`Upload error: Batch not in JSON format`)
+            req.log.error(
+              {
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                elapsedTimeMs: Date.now() - start,
+                totalProcessed
+              },
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+            )
             if (!requestDropped)
               res.status(400).send('Failed to parse data. Batch is not in JSON format.')
             requestDropped = true
           }
           if (!Array.isArray(objs)) {
-            req.log.error(`Upload error: Batch not an array`)
+            req.log.error(
+              {
+                objectBatchElapsedTimeMs: Date.now() - t0,
+                elapsedTimeMs: Date.now() - start,
+                totalProcessed
+              },
+              'Upload error: Batch not an array. Error occurred after {elapsedTimeMs}ms. This batch failed after {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+            )
             if (!requestDropped)
               res
                 .status(400)
@@ -208,7 +263,13 @@ module.exports = (app) => {
 
           totalProcessed += objs.length
           req.log.debug(
-            `total objects, including current pending batch, processed so far is ${totalProcessed}`
+            {
+              objectCount: objs.length,
+              objectBatchElapsedTimeMs: Date.now() - t0,
+              elapsedTimeMs: Date.now() - start,
+              totalProcessed
+            },
+            'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalProcessed}. This batch has taken {objectBatchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
           )
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
@@ -218,7 +279,16 @@ module.exports = (app) => {
 
           const promise = objectInsertionService(req.params.streamId, objs).catch(
             (e) => {
-              req.log.error(e, `Upload error.`)
+              req.log.error(
+                {
+                  elapsedTimeMs: Date.now() - start,
+                  objectCount: objs.length,
+                  objectBatchElapsedTimeMs: Date.now() - t0,
+                  totalProcessed,
+                  error: e
+                },
+                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+              )
               if (!requestDropped)
                 switch (e.constructor) {
                   case ObjectHandlingError:
@@ -242,16 +312,22 @@ module.exports = (app) => {
           req.log.info(
             {
               objectCount: objs.length,
+              objectBatchElapsedTimeMs: Date.now() - t0,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
-              durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
-              requestDropped
+              totalProcessed
             },
-            'Uploaded batch of {objectCount} objects.'
+            'Uploaded batch of {objectCount} objects. Total processed is {totalProcessed} objects. This batch took {objectBatchElapsedTimeMs}ms.'
           )
         })
       } else {
-        req.log.info(`Invalid ContentType header: ${mimeType}`)
+        req.log.info(
+          {
+            mimeType,
+            totalProcessed
+          },
+          'Invalid ContentType header: {mimeType}. Total objects processed so far: {totalProcessed}.'
+        )
         if (!requestDropped)
           res
             .status(400)
@@ -268,9 +344,10 @@ module.exports = (app) => {
       req.log.info(
         {
           totalProcessed,
-          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
+          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
+          elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalProcessed} objects'
+        'Upload finished: {totalProcessed} objects in {elapsed}ms'
       )
 
       let previouslyAwaitedPromises = 0
@@ -283,7 +360,15 @@ module.exports = (app) => {
     })
 
     busboy.on('error', async (err) => {
-      req.log.info(`Upload error: ${err}`)
+      req.log.info(
+        {
+          error: err,
+          totalProcessed,
+          elapsedTimeMs: Date.now() - start,
+          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
+        },
+        'Error during upload. Error occurred after {elpasedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
+      )
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')
       requestDropped = true
