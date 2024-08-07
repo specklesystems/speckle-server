@@ -10,6 +10,7 @@ import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
+  deleteAllResourceInvitesFactory,
   deleteInviteFactory,
   deleteInvitesByTargetFactory,
   findInviteFactory,
@@ -39,6 +40,7 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
+  deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
   deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
@@ -60,14 +62,19 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
+  deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
-import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import {
+  getWorkspaceProjectsFactory,
+  queryAllWorkspaceProjectsFactory
+} from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
+import { deleteStream } from '@/modules/core/repositories/streams'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -219,9 +226,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
-        delete: async () => {
-          // TODO: Remember to also delete pending workspace invites
-          throw new WorkspacesNotYetImplementedError()
+        delete: async (_parent, args, context) => {
+          const { workspaceId } = args
+
+          await authorizeResolver(
+            context.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          // Delete workspace and associated resources (i.e. invites)
+          const deleteWorkspace = deleteWorkspaceFactory({
+            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+            deleteProject: deleteStream,
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
+          })
+
+          await deleteWorkspace({ workspaceId })
+
+          return true
         },
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input

@@ -8,11 +8,13 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
-  createTestUser
+  createTestUsers
 } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import {
+  CreateProjectInviteDocument,
   CreateWorkspaceDocument,
+  DeleteWorkspaceDocument,
   GetActiveUserWorkspacesDocument,
   GetWorkspaceDocument,
   UpdateWorkspaceDocument,
@@ -24,20 +26,24 @@ import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   BasicTestWorkspace,
-  createTestWorkspace
+  createTestWorkspace,
+  createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
+import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import knex from '@/db/knex'
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
 
-  const testUser: BasicTestUser = {
+  const testAdminUser: BasicTestUser = {
     id: '',
     name: 'John Speckle',
     email: 'john-speckle@example.org',
     role: Roles.Server.Admin
   }
 
-  const userB: BasicTestUser = {
+  const testMemberUser: BasicTestUser = {
     id: '',
     name: 'Alice speckle',
     email: 'alice-speckle@example.org',
@@ -46,15 +52,14 @@ describe('Workspaces GQL CRUD', () => {
 
   before(async () => {
     await beforeEachContext()
-    await Promise.all([createTestUser(testUser), createTestUser(userB)])
-
-    const token = await createAuthTokenForUser(testUser.id, AllScopes)
+    await createTestUsers([testAdminUser, testMemberUser])
+    const token = await createAuthTokenForUser(testAdminUser.id, AllScopes)
     apollo = await testApolloServer({
       context: createTestContext({
         auth: true,
-        userId: testUser.id,
+        userId: testAdminUser.id,
         token,
-        role: testUser.role,
+        role: testAdminUser.role,
         scopes: AllScopes
       })
     })
@@ -127,6 +132,105 @@ describe('Workspaces GQL CRUD', () => {
       })
     })
 
+    describe('mutation workspaceMutations.delete', () => {
+      const workspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'My Test Workspace'
+      }
+
+      const workspaceProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'My Test Project',
+        isPublic: false
+      }
+
+      before(async () => {
+        await createTestWorkspace(workspace, testAdminUser)
+
+        workspaceProject.workspaceId = workspace.id
+
+        await createWorkspaceInviteDirectly(
+          {
+            workspaceId: workspace.id,
+            input: {
+              userId: testMemberUser.id
+            }
+          },
+          testAdminUser.id
+        )
+
+        await createTestStream(workspaceProject, testAdminUser)
+
+        await apollo.execute(CreateProjectInviteDocument, {
+          projectId: workspaceProject.id,
+          input: { userId: testMemberUser.id }
+        })
+
+        const testVersion: BasicTestCommit = {
+          id: cryptoRandomString({ length: 10 }),
+          streamId: workspaceProject.id,
+          objectId: '',
+          authorId: ''
+        }
+
+        createTestCommit(testVersion, {
+          owner: testAdminUser,
+          stream: workspaceProject
+        })
+      })
+
+      it('should delete the workspace', async () => {
+        const deleteRes = await apollo.execute(DeleteWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+        const getRes = await apollo.execute(GetWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(deleteRes).to.not.haveGraphQLErrors()
+        expect(getRes).to.haveGraphQLErrors('Workspace not found')
+      })
+
+      it('should throw if non-workspace-admin triggers delete', async () => {
+        const memberApollo: TestApolloServer = (apollo = await testApolloServer({
+          context: createTestContext({
+            auth: true,
+            userId: testAdminUser.id,
+            token: '',
+            role: testAdminUser.role,
+            scopes: AllScopes
+          })
+        }))
+
+        const res = await memberApollo.execute(DeleteWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.haveGraphQLErrors('not authorized')
+      })
+
+      it('should delete all workspace projects', async () => {
+        const projects = await knex('streams').where({ workspaceId: workspace.id })
+        expect(projects.length).to.equal(0)
+      })
+
+      it('should delete pending workspace and project invites', async () => {
+        const invites = await knex('server_invites').where({
+          inviterId: testAdminUser.id
+        })
+        expect(invites.length).to.equal(0)
+      })
+
+      it('should delete all workspace project commits', async () => {
+        const versions = await knex('stream_commits').where({
+          streamId: workspaceProject.id
+        })
+        expect(versions.length).to.equal(0)
+      })
+    })
+
     describe('mutation workspaceMutations.update', () => {
       const workspace: BasicTestWorkspace = {
         id: '',
@@ -136,7 +240,7 @@ describe('Workspaces GQL CRUD', () => {
       }
 
       beforeEach(async () => {
-        await createTestWorkspace(workspace, testUser)
+        await createTestWorkspace(workspace, testAdminUser)
       })
 
       it('should update a workspace', async () => {
@@ -202,7 +306,7 @@ describe('Workspaces GQL CRUD', () => {
 
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
-              userId: userB.id,
+              userId: testMemberUser.id,
               workspaceId: id,
               role: Roles.Workspace.Admin
             }

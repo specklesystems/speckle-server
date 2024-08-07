@@ -5,7 +5,8 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   getWorkspaceRolesFactory,
-  getWorkspaceRolesForUserFactory
+  getWorkspaceRolesForUserFactory,
+  deleteWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -13,9 +14,14 @@ import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import {
+  BasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
 const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
@@ -101,6 +107,31 @@ describe('Workspace repositories', () => {
       })
 
       expect(modifiedStoredWorkspace).to.deep.equal(testWorkspace)
+    })
+  })
+
+  describe('deleteWorkspaceFactory creates a function, that', () => {
+    const user: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: 'function-deleter@example.org'
+    }
+
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Incredibly Forgettable'
+    }
+
+    before(async () => {
+      await createTestUser(user)
+      await createTestWorkspace(workspace, user)
+    })
+
+    it('deletes specified workspace', async () => {
+      await deleteWorkspace({ workspaceId: workspace.id })
+      const workspaceData = await getWorkspace({ workspaceId: workspace.id })
+      expect(workspaceData).to.not.exist
     })
   })
 
