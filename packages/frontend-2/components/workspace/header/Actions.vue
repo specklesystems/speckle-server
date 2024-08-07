@@ -3,10 +3,9 @@
   <div>
     <LayoutMenu
       v-model:open="showActionsMenu"
-      :menu-id="menuId"
+      menu-id="workspaceOptions"
       :items="actionsItems"
       @click.stop.prevent
-      @chosen="onActionChosen"
     >
       <FormButton
         color="subtle"

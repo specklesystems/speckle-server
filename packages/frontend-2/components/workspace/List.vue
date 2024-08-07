@@ -45,7 +45,7 @@
       />
     </template>
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
-    <ProjectsAddDialog v-model:open="openNewProject" />
+    <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
   </div>
 </template>
 
