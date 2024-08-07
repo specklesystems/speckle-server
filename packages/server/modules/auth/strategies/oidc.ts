@@ -8,7 +8,6 @@ import {
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
 } from '@/modules/serverinvites/services/processing'
-import { logger } from '@/logging/logging'
 import {
   getOidcDiscoveryUrl,
   getOidcClientId,
@@ -60,6 +59,10 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
         req.session.userinfo = userinfo
 
         const serverInfo = await getServerInfo()
+        const logger = req.log.child({
+          authStrategy: 'oidc',
+          serverVersion: serverInfo.version
+        })
 
         // TODO: req.session.inviteId doesn't appear to exist, but i'm not removing it to not break things
         const token: Optional<string> =
