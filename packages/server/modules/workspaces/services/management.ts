@@ -92,7 +92,8 @@ export const createWorkspaceFactory =
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
-      domains: []
+      domains: [],
+      domainBasedMembershipProtectionEnabled: false
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
