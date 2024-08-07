@@ -50,7 +50,8 @@ import {
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
   getWorkspaceRoleForUserFactory,
-  storeWorkspaceDomainFactory
+  storeWorkspaceDomainFactory,
+  deleteWorkspaceDomainFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -335,6 +336,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
             domain: args.input.domain
           })
 
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        async deleteDomain(_parent, args, context) {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+          await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
