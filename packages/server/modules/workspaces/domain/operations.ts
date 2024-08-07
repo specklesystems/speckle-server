@@ -13,7 +13,7 @@ import { UserWithRole } from '@/modules/core/repositories/users'
 /** Workspace */
 
 type UpsertWorkspaceArgs = {
-  workspace: Workspace
+  workspace: Omit<Workspace, 'domains'>
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
@@ -31,6 +31,11 @@ export type GetWorkspaces = (args: {
 export type StoreWorkspaceDomain = (args: {
   workspaceDomain: WorkspaceDomain
 }) => Promise<void>
+
+export type GetWorkspaceDomains = (args: {
+  workspaceIds: string[]
+}) => Promise<WorkspaceDomain[]>
+
 type DeleteWorkspaceArgs = {
   workspaceId: string
 }

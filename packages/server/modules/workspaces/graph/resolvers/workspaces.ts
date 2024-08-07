@@ -318,7 +318,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceFactory({ db })({ workspaceId })
         },
         invites: () => ({}),
-        async addDomain(_parent, args, context) {
+        addDomain: async (_parent, args, context) => {
           await authorizeResolver(
             context.userId!,
             args.input.workspaceId,
@@ -497,6 +497,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
               cursor: args.cursor || null,
               filter: { ...(args.filter || {}) }
             }
+          )
+        },
+        domains: async (parent, _args, context) => {
+          return await context.loaders.workspaceDomains!.getWorkspaceDomains.loadMany(
+            parent.id
           )
         }
       },
