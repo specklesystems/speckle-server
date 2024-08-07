@@ -14,6 +14,7 @@ const {
 } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
+const { toMegabytesTo1DecimalPlace } = require('@/modules/core/utils/formatting')
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
@@ -85,8 +86,8 @@ module.exports = (app) => {
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
             req.log.error(
               {
-                bufferLengthMb: gzippedBuffer.length,
-                maxFileSizeMb: MAX_FILE_SIZE,
+                bufferLengthMb: toMegabytesTo1DecimalPlace(gzippedBuffer.length),
+                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
                 elapsedTimeMs: Date.now() - start,
                 objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 totalProcessed
@@ -108,8 +109,8 @@ module.exports = (app) => {
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
               {
-                bufferLengthMb: gunzippedBufferMegabyteSize,
-                maxFileSizeMb: MAX_FILE_SIZE,
+                bufferLengthMb: toMegabytesTo1DecimalPlace(gunzippedBufferMegabyteSize),
+                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
                 elapsedTimeMs: Date.now() - start,
                 objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 totalProcessed
@@ -190,8 +191,8 @@ module.exports = (app) => {
               objectCount: objs.length,
               elapsedTimeMs: Date.now() - start,
               objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
-              uploadedSizeMB: gunzippedBuffer.length / 1000000,
+              crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
+              uploadedSizeMB: toMegabytesTo1DecimalPlace(gunzippedBuffer.length),
               requestDropped,
               totalProcessed
             },
@@ -216,8 +217,8 @@ module.exports = (app) => {
           if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
               {
-                bufferLengthMb: buffer.length,
-                maxFileSizeMb: MAX_FILE_SIZE,
+                bufferLengthMb: toMegabytesTo1DecimalPlace(buffer.length),
+                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
                 objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
                 elapsedTimeMs: Date.now() - start,
                 totalProcessed
@@ -320,7 +321,7 @@ module.exports = (app) => {
               objectCount: objs.length,
               objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
-              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
+              crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
               totalProcessed
             },
             'Uploaded batch of {objectCount} objects. Total processed is {totalProcessed} objects. This batch took {objectBatchElapsedTimeMs}ms.'
@@ -350,10 +351,10 @@ module.exports = (app) => {
       req.log.info(
         {
           totalProcessed,
-          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
+          crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
           elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalProcessed} objects in {elapsed}ms'
+        'Upload finished: {totalProcessed} objects in {elapsedTimeMs}ms'
       )
 
       let previouslyAwaitedPromises = 0
@@ -371,9 +372,9 @@ module.exports = (app) => {
           error: err,
           totalProcessed,
           elapsedTimeMs: Date.now() - start,
-          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
+          crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed)
         },
-        'Error during upload. Error occurred after {elpasedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
+        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
       )
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')
