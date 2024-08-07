@@ -3849,6 +3849,11 @@ export type WorkspaceDomain = {
   id: Scalars['ID']['output'];
 };
 
+export type WorkspaceDomainDeleteInput = {
+  id: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -3899,6 +3904,7 @@ export type WorkspaceMutations = {
   addDomain: Workspace;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
+  deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
   updateRole: Workspace;
@@ -3917,6 +3923,11 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceMutationsDeleteDomainArgs = {
+  input: WorkspaceDomainDeleteInput;
 };
 
 

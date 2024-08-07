@@ -35,6 +35,8 @@ type DeleteWorkspaceArgs = {
   workspaceId: string
 }
 
+export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
+
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
 /** Workspace Roles */
