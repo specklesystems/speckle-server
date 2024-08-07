@@ -292,6 +292,17 @@ describe('Workspaces GQL CRUD', () => {
         expect(updateRes).to.not.haveGraphQLErrors()
         expect(data?.workspace.description).to.equal('')
       })
+
+      it('should limit workspace descriptions to 512 characters', async () => {
+        const updateRes = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            description: 'especkle'.repeat(512)
+          }
+        })
+
+        expect(updateRes).to.haveGraphQLErrors('too long')
+      })
     })
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
       describe('leave', () => {
