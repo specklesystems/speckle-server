@@ -46,7 +46,7 @@
         </div>
       </div>
     </div>
-    <SettingsWorkspaceGeneralDeleteDialog
+    <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult"
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
@@ -56,6 +56,8 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { Roles } from '@speckle/shared'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
@@ -68,9 +70,9 @@ type FormValues = { name: string; description: string }
 
 const props = defineProps<{
   workspaceId: string
-  isAdmin?: boolean
 }>()
 
+const { activeUser: user } = useActiveUser()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -81,6 +83,8 @@ const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () =
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
+
+const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
