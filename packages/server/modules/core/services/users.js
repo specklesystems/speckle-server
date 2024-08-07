@@ -69,6 +69,8 @@ module.exports = {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    if (!user.email?.length) throw new UserInputError('E-mail address is required')
+
     let expectedRole = null
     if (user.role) {
       const isValidRole = Object.values(Roles.Server).includes(user.role)

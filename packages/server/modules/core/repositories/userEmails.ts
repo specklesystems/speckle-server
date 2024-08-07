@@ -16,7 +16,7 @@ import {
   UserEmailDeleteError,
   UserEmailPrimaryAlreadyExistsError
 } from '@/modules/core/errors/userEmails'
-import { omit } from 'lodash'
+import { get, omit } from 'lodash'
 
 const whereEmailIs = (query: Knex.QueryBuilder, email: string) => {
   query.whereRaw('lower("email") = lower(?)', [email])
@@ -110,6 +110,8 @@ export const deleteUserEmailFactory =
 export const findPrimaryEmailForUserFactory =
   ({ db }: { db: Knex }): FindPrimaryEmailForUser =>
   async (query) => {
+    if (!get(query, 'userId') && !get(query, 'email')) return undefined
+
     const q = db<UserEmail>(UserEmails.name)
       .where({
         ...omit(query, ['email']),
@@ -127,6 +129,8 @@ export const findPrimaryEmailForUserFactory =
 export const findEmailFactory =
   ({ db }: { db: Knex }): FindEmail =>
   async (query) => {
+    if (!Object.values(query).length) return undefined
+
     const q = db<UserEmail>(UserEmails.name)
       .where(omit(query, ['email']))
       .first()
