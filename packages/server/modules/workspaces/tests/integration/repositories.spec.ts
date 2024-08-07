@@ -51,7 +51,8 @@ const createAndStoreTestWorkspace = async (): Promise<Omit<Workspace, 'domains'>
     createdAt: new Date(),
     updatedAt: new Date(),
     description: null,
-    logo: null
+    logo: null,
+    domainBasedMembershipProtectionEnabled: false
   }
 
   await upsertWorkspace({ workspace })

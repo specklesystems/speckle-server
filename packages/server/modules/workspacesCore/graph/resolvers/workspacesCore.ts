@@ -27,7 +27,13 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-        invites: () => ({})
+        invites: () => ({}),
+        addDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        deleteDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        }
       },
       WorkspaceInviteMutations: {
         create: async () => {
@@ -54,6 +60,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         projects: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        domains: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },

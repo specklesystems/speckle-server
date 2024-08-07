@@ -12,7 +12,8 @@ const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
     logo: null,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
-    createdAt: new Date()
+    createdAt: new Date(),
+    domainBasedMembershipProtectionEnabled: false
   }
 }
 
