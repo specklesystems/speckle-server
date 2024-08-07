@@ -15279,6 +15279,7 @@ __metadata:
     "@tiptap/pm": "npm:2.0.0-beta.220"
     "@tiptap/suggestion": "npm:2.0.0-beta.220"
     "@tiptap/vue-3": "npm:2.0.0-beta.220"
+    "@tryghost/content-api": "npm:^1.11.21"
     "@types/apollo-upload-client": "npm:^18.0.0"
     "@types/dompurify": "npm:^3.0.2"
     "@types/eslint": "npm:^8.56.10"
@@ -15289,6 +15290,7 @@ __metadata:
     "@types/mixpanel-browser": "npm:^2.38.0"
     "@types/node": "npm:^18.17.5"
     "@types/pino-http": "npm:^5.8.1"
+    "@types/tryghost__content-api": "npm:^1"
     "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
@@ -15570,6 +15572,7 @@ __metadata:
     "@types/bull": "npm:^3.15.9"
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/compression": "npm:^1.7.2"
+    "@types/connect-redis": "npm:^0.0.23"
     "@types/cookie-parser": "npm:^1.4.7"
     "@types/debug": "npm:^4.1.7"
     "@types/deep-equal-in-any-order": "npm:^1.0.1"
@@ -15586,6 +15589,10 @@ __metadata:
     "@types/netmask": "npm:^2.0.0"
     "@types/node-cron": "npm:^3.0.2"
     "@types/nodemailer": "npm:^6.4.5"
+    "@types/passport": "npm:^1.0.16"
+    "@types/passport-azure-ad": "npm:^4.3.6"
+    "@types/passport-github2": "npm:^1.2.9"
+    "@types/passport-google-oauth20": "npm:^2.0.16"
     "@types/pg": "npm:^8.6.6"
     "@types/pino-http": "npm:^5.8.4"
     "@types/sanitize-html": "npm:^2.6.2"
@@ -17834,6 +17841,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tryghost/content-api@npm:^1.11.21":
+  version: 1.11.21
+  resolution: "@tryghost/content-api@npm:1.11.21"
+  dependencies:
+    axios: "npm:^1.0.0"
+  checksum: 10/5644bd7859e4fbbc0f36c9eb59fdff50646cf13e16d8547ae60760aff4db1c33f082b7bd5abf5c957e6f6457c206e3c59ed140a03050e5f5a631494ea66f4abc
+  languageName: node
+  linkType: hard
+
 "@tryghost/content-api@npm:^1.5.12":
   version: 1.11.19
   resolution: "@tryghost/content-api@npm:1.11.19"
@@ -18116,6 +18132,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/connect-redis@npm:^0.0.23":
+  version: 0.0.23
+  resolution: "@types/connect-redis@npm:0.0.23"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/express-session": "npm:*"
+    "@types/node": "npm:*"
+    "@types/redis": "npm:^2.8.0"
+    ioredis: "npm:^5.3.0"
+  checksum: 10/56ae04700217e579e47b14711f3d7ffd21c54ced77ab0ebf3feb8d8903a0c854c6a63bb2f7d27f0eaec3224a7b725b14e52ebfbecd529e38c05b6e6e5947c1dd
+  languageName: node
+  linkType: hard
+
 "@types/connect@npm:*":
   version: 3.4.35
   resolution: "@types/connect@npm:3.4.35"
@@ -18319,6 +18348,15 @@ __metadata:
     "@types/qs": "npm:*"
     "@types/range-parser": "npm:*"
   checksum: 10/1074c5769ae052fcb7ea0a2d4a807090a832ec6f8e1ca9105cd949f6dbc99a745a0d3e5b8c8fb64e7105b4a23d8283aa50fd3234d3b7f821899efbed3675b179
+  languageName: node
+  linkType: hard
+
+"@types/express-session@npm:*":
+  version: 1.18.0
+  resolution: "@types/express-session@npm:1.18.0"
+  dependencies:
+    "@types/express": "npm:*"
+  checksum: 10/66757c413983c9e6bb90d16ef7bc1e5d15f7f2e64dba63340b0ed5eccc1929fcb55a694e356b5676e5beb672d11db91a5cc71f6b5860077a02740de9ab8bb5c4
   languageName: node
   linkType: hard
 
@@ -18831,6 +18869,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/oauth@npm:*":
+  version: 0.9.5
+  resolution: "@types/oauth@npm:0.9.5"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/5674ff25fe431d6a5a32f050964a944f27ff4e2977fc9723a6f06d982dc50635d8bc39a56646868940913818e13995163f65f0b234b8f88f2af9b32e3ff8601d
+  languageName: node
+  linkType: hard
+
 "@types/object.omit@npm:^3.0.0":
   version: 3.0.0
   resolution: "@types/object.omit@npm:3.0.0"
@@ -18856,6 +18903,58 @@ __metadata:
   version: 4.0.0
   resolution: "@types/parse-json@npm:4.0.0"
   checksum: 10/4df9de98150d2978afc2161482a3a8e6617883effba3223324f079de97ba7eabd7d84b90ced11c3f82b0c08d4a8383f678c9f73e9c41258f769b3fa234a2bb4f
+  languageName: node
+  linkType: hard
+
+"@types/passport-azure-ad@npm:^4.3.6":
+  version: 4.3.6
+  resolution: "@types/passport-azure-ad@npm:4.3.6"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/passport": "npm:*"
+  checksum: 10/5e7cd019847add883c2bc1c4f4e1b20297f02670d826e19fc357df09c2694826abae7fa1976cc7f081f7f3011bde162c18a5d17e0eec47d14c9d23fac260de83
+  languageName: node
+  linkType: hard
+
+"@types/passport-github2@npm:^1.2.9":
+  version: 1.2.9
+  resolution: "@types/passport-github2@npm:1.2.9"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/passport": "npm:*"
+    "@types/passport-oauth2": "npm:*"
+  checksum: 10/375b16d5ab80ff0601a56abc1a2ec1eadda0a8f38bef9c5d7406b6141751a10f6bb565890459a27ecbcb9a622771250fd5539e0842ce1b205f68dc4c3d83c235
+  languageName: node
+  linkType: hard
+
+"@types/passport-google-oauth20@npm:^2.0.16":
+  version: 2.0.16
+  resolution: "@types/passport-google-oauth20@npm:2.0.16"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/passport": "npm:*"
+    "@types/passport-oauth2": "npm:*"
+  checksum: 10/fd4a2ec9e1360f540904c48e1c28c58fdddbb58cca3e8fd317db180050489a626f12c1fe092ef2faed7e8f2e45e10cece1725628453d2806b0d3e5a703cd77e6
+  languageName: node
+  linkType: hard
+
+"@types/passport-oauth2@npm:*":
+  version: 1.4.17
+  resolution: "@types/passport-oauth2@npm:1.4.17"
+  dependencies:
+    "@types/express": "npm:*"
+    "@types/oauth": "npm:*"
+    "@types/passport": "npm:*"
+  checksum: 10/4c5d2d6f717bb0b3d049669e47ca27cb166cbbef2073dccd302b10e62936c9e392074acabe6cb593f7eeb37a6a3cf81b9d3a4f35a46018a6645ac37d0f1706cb
+  languageName: node
+  linkType: hard
+
+"@types/passport@npm:*, @types/passport@npm:^1.0.16":
+  version: 1.0.16
+  resolution: "@types/passport@npm:1.0.16"
+  dependencies:
+    "@types/express": "npm:*"
+  checksum: 10/0ee7b9a46192cb60fb4e49038417b0c10b38e50204ed05b5204b3ea9a73e25da34ca8fe05205eaf42fe977610cdbd3a0d5f2228f8661fe0b303bc758fa2a158f
   languageName: node
   linkType: hard
 
@@ -19214,6 +19313,13 @@ __metadata:
   version: 2.0.2
   resolution: "@types/trusted-types@npm:2.0.2"
   checksum: 10/3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
+  languageName: node
+  linkType: hard
+
+"@types/tryghost__content-api@npm:^1":
+  version: 1.3.16
+  resolution: "@types/tryghost__content-api@npm:1.3.16"
+  checksum: 10/6e63747e578ca97220560f10d293607599beb089720ed8967aa7e5aa0928a1e3f8d71ef711c49eef244afa828e63bf303854388ef47472285e777b209ee45265
   languageName: node
   linkType: hard
 
@@ -27563,7 +27669,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^2.0.1, denque@npm:^2.1.0":
+"denque@npm:^2.1.0":
   version: 2.1.0
   resolution: "denque@npm:2.1.0"
   checksum: 10/8ea05321576624b90acfc1ee9208b8d1d04b425cf7573b9b4fa40a2c3ed4d4b0af5190567858f532f677ed2003d4d2b73c8130b34e3c7b8d5e88cdcfbfaa1fe7
@@ -33248,7 +33354,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ioredis@npm:>=5":
+"ioredis@npm:>=5, ioredis@npm:^5.2.2, ioredis@npm:^5.3.0, ioredis@npm:^5.3.2":
   version: 5.4.1
   resolution: "ioredis@npm:5.4.1"
   dependencies:
@@ -33281,40 +33387,6 @@ __metadata:
     redis-parser: "npm:^3.0.0"
     standard-as-callback: "npm:^2.1.0"
   checksum: 10/781ff4961954ccc2bc66a763b1e1095af31186b5f4ba5320cd41e04bf887374b67aaf5badf1d2af7ac00790d92d5aa5bde5ffc4a6993e875aff0e2a3db21a230
-  languageName: node
-  linkType: hard
-
-"ioredis@npm:^5.2.2":
-  version: 5.2.2
-  resolution: "ioredis@npm:5.2.2"
-  dependencies:
-    "@ioredis/commands": "npm:^1.1.1"
-    cluster-key-slot: "npm:^1.1.0"
-    debug: "npm:^4.3.4"
-    denque: "npm:^2.0.1"
-    lodash.defaults: "npm:^4.2.0"
-    lodash.isarguments: "npm:^3.1.0"
-    redis-errors: "npm:^1.2.0"
-    redis-parser: "npm:^3.0.0"
-    standard-as-callback: "npm:^2.1.0"
-  checksum: 10/1f020d44a7ac73b26badf73e479f39ec740bcdd2ac2ba11f3f0ddb248f43824bc96af3d400ae7c9ba54a92d62151a285e5234ba0cdee86da6270dbf75525b387
-  languageName: node
-  linkType: hard
-
-"ioredis@npm:^5.3.2":
-  version: 5.3.2
-  resolution: "ioredis@npm:5.3.2"
-  dependencies:
-    "@ioredis/commands": "npm:^1.1.1"
-    cluster-key-slot: "npm:^1.1.0"
-    debug: "npm:^4.3.4"
-    denque: "npm:^2.1.0"
-    lodash.defaults: "npm:^4.2.0"
-    lodash.isarguments: "npm:^3.1.0"
-    redis-errors: "npm:^1.2.0"
-    redis-parser: "npm:^3.0.0"
-    standard-as-callback: "npm:^2.1.0"
-  checksum: 10/0140f055ef81d28e16ca8400b99dabb9ce82009f54afd83cba952c7d0c5d736841e43247765b8ee1af1f02843531c5b8df240af18bd3d7e2ca3d60b36e76213f
   languageName: node
   linkType: hard
 

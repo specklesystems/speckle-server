@@ -65,6 +65,24 @@
                 }"
                 @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
               />
+              <LayoutSidebarMenuGroupItem
+                label="Billing"
+                tag="Coming soon"
+                tooltip-text="Manage billing for your workspace"
+                disabled
+              />
+              <LayoutSidebarMenuGroupItem
+                label="Security"
+                tag="Coming soon"
+                tooltip-text="SSO, manage permissions, restrict domain access"
+                disabled
+              />
+              <LayoutSidebarMenuGroupItem
+                label="Regions"
+                tag="Coming soon"
+                tooltip-text="Set up regions for custom data residency"
+                disabled
+              />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
@@ -106,6 +124,7 @@ import {
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
+import { useIsWorkspacesEnabled } from '~/composables/globals'
 
 type MenuItem = {
   title: string

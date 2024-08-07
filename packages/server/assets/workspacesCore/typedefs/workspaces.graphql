@@ -238,3 +238,11 @@ extend type AdminQueries {
 input UserWorkspacesFilter {
   search: String
 }
+
+type UserWorkspaceMutations {
+  leave(id: ID!): Boolean!
+}
+
+extend type ActiveUserMutations {
+  workspaceMutations: UserWorkspaceMutations
+}
