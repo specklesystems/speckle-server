@@ -7,6 +7,7 @@ from prometheus_client import start_http_server, Gauge
 import time
 import structlog
 from logging import INFO, basicConfig
+from structlog_to_seq import CelfProcessor
 
 basicConfig(format="%(message)s", stream=sys.stdout, level=INFO)
 
@@ -15,6 +16,7 @@ structlog.configure(
         structlog.stdlib.filter_by_level,
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
+        CelfProcessor(),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.TimeStamper(fmt="iso"),
