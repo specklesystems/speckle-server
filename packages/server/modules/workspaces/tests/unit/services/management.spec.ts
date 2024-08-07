@@ -22,6 +22,7 @@ import {
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { omit } from 'lodash'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Workspace[]
@@ -91,7 +92,7 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal({ ...workspace, domains: [] })
+      expect(context.storedWorkspaces[0]).to.deep.equal(omit(workspace, 'domains'))
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
