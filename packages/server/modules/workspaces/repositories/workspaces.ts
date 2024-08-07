@@ -6,6 +6,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import {
   DeleteWorkspace,
+  DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceCollaborators,
@@ -229,4 +230,8 @@ export const getWorkspaceDomainsFactory =
   ({ db }: { db: Knex }): GetWorkspaceDomains =>
   ({ workspaceIds }) => {
     return tables.workspaceDomains(db).whereIn('workspaceId', workspaceIds)
+export const deleteWorkspaceDomainFactory =
+  ({ db }: { db: Knex }): DeleteWorkspaceDomain =>
+  async ({ id }) => {
+    await tables.workspaceDomains(db).where({ id }).delete()
   }
