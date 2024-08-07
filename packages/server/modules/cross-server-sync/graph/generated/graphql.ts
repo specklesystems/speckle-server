@@ -27,6 +27,7 @@ export type ActiveUserMutations = {
   finishOnboarding: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
+  workspaceMutations?: Maybe<UserWorkspaceMutations>;
 };
 
 
@@ -3570,6 +3571,16 @@ export type UserUpdateInput = {
   bio?: InputMaybe<Scalars['String']['input']>;
   company?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UserWorkspaceMutations = {
+  __typename?: 'UserWorkspaceMutations';
+  leave: Scalars['Boolean']['output'];
+};
+
+
+export type UserWorkspaceMutationsLeaveArgs = {
+  id: Scalars['ID']['input'];
 };
 
 export type UserWorkspacesFilter = {

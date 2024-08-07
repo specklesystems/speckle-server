@@ -118,3 +118,13 @@ export const getWorkspaceProjects = gql`
   }
   ${workspaceProjectFragment}
 `
+
+export const leaveWorkspaceMutation = gql`
+  mutation ActiveUserLeaveWorkspace($id: ID!) {
+    activeUserMutations {
+      workspaceMutations {
+        leave(id: $id)
+      }
+    }
+  }
+`
