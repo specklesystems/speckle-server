@@ -1,61 +1,68 @@
 /* istanbul ignore file */
-'use strict'
-
-const passport = require('passport')
-const GithubStrategy = require('passport-github2')
-const URL = require('url').URL
-const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
+import passport from 'passport'
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { logger } = require('@/logging/logging')
-const {
+} from '@/modules/serverinvites/services/processing'
+import { passportAuthenticate } from '@/modules/auth/services/passportService'
+import { logger } from '@/logging/logging'
+import {
   UserInputError,
   UnverifiedEmailSSOLoginError
-} = require('@/modules/core/errors/userinput')
-const db = require('@/db/knex')
-const {
+} from '@/modules/core/errors/userinput'
+import db from '@/db/knex'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
   findServerInviteFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
-const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import {
+  getGoogleClientId,
+  getGoogleClientSecret
+} from '@/modules/shared/helpers/envHelper'
+import { ensureError } from '@speckle/shared'
 
-module.exports = async (app, session, sessionStorage, finalizeAuth) => {
-  const strategy = {
-    id: 'github',
-    name: 'Github',
-    icon: 'mdi-github',
-    color: 'grey darken-3',
-    url: '/auth/gh',
-    callbackUrl: '/auth/gh/callback'
+const googleStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
+  const strategy: AuthStrategyMetadata & { callbackUrl: string } = {
+    id: 'google',
+    name: 'Google',
+    icon: 'mdi-google',
+    color: 'red darken-3',
+    url: '/auth/goog',
+    callbackUrl: '/auth/goog/callback'
   }
 
-  const myStrategy = new GithubStrategy(
+  const myStrategy = new GoogleStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: new URL(strategy.callbackUrl, process.env.CANONICAL_URL).toString(),
-      // WARNING, the 'user:email' scope belongs to the GITHUB scopes
-      // DO NOT change it to our internal scope definitions !!!
-      // You have been warned.
-      scope: ['profile', 'user:email'],
+      clientID: getGoogleClientId(),
+      clientSecret: getGoogleClientSecret(),
+      callbackURL: strategy.callbackUrl,
+      scope: ['profile', 'email'],
       passReqToCallback: true
     },
-    async (req, accessToken, refreshToken, profile, done) => {
+    async (req, _accessToken, _refreshToken, profile, done) => {
       const serverInfo = await getServerInfo()
 
       try {
-        const email = profile.emails[0].value
-        const name = profile.displayName || profile.username
-        const bio = profile._json.bio
+        const email = profile.emails?.[0].value
+        if (!email) {
+          throw new Error('No email provided by Google')
+        }
 
-        const user = { email, name, bio }
+        const name = profile.displayName
+        const user = { email, name, avatar: profile._json.picture }
 
         const existingUser = await getUserByEmail({ email: user.email })
 
@@ -70,13 +77,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
           return done(null, myUser)
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
 
           // process invites
           if (myUser.isNewUser) {
@@ -108,8 +115,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             role: validInvite
               ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
               : undefined
-          },
-          rawProfile: profile._raw
+          }
         })
 
         // use the invite
@@ -127,22 +133,41 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           isInvite: !!validInvite
         })
       } catch (err) {
-        switch (err.constructor) {
+        const e = ensureError(
+          err,
+          'Unexpected issue occured while authenticating with Google'
+        )
+        switch (e.constructor) {
           case UserInputError:
             logger.info(err)
             break
           default:
             logger.error(err)
         }
-        return done(err, false, { message: err.message })
+        return done(err, false, { message: e.message })
       }
     }
   )
 
   passport.use(myStrategy)
 
-  app.get(strategy.url, session, sessionStorage, passportAuthenticate('github'))
-  app.get(strategy.callbackUrl, session, passportAuthenticate('github'), finalizeAuth)
+  // 1. Init Auth
+  app.get(
+    strategy.url,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    passportAuthenticate('google')
+  )
+
+  // 2. Auth callback
+  app.get(
+    strategy.callbackUrl,
+    sessionMiddleware,
+    passportAuthenticate('google'),
+    finalizeAuthMiddleware
+  )
 
   return strategy
 }
+
+export = googleStrategyBuilder
