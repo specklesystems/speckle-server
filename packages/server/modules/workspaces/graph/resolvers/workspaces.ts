@@ -348,7 +348,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             Roles.Workspace.Admin,
             context.resourceAccessRules
           )
-          await deleteWorkspaceDomainFactory({ db })({id: args.input.id})
+          await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
