@@ -3859,6 +3859,11 @@ export type WorkspaceDomain = {
   id: Scalars['ID']['output'];
 };
 
+export type WorkspaceDomainDeleteInput = {
+  id: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -3909,6 +3914,7 @@ export type WorkspaceMutations = {
   addDomain: Workspace;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
+  deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
   updateRole: Workspace;
@@ -3927,6 +3933,11 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceMutationsDeleteDomainArgs = {
+  input: WorkspaceDomainDeleteInput;
 };
 
 
@@ -4286,6 +4297,7 @@ export type ResolversTypes = {
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
+  WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
@@ -4511,6 +4523,7 @@ export type ResolversParentTypes = {
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceDomain: WorkspaceDomain;
+  WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
@@ -5887,6 +5900,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   addDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsAddDomainArgs, 'input'>>;
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
+  deleteDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteDomainArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;

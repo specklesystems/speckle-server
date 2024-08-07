@@ -97,6 +97,15 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+}
+
+input WorkspaceDomainDeleteInput {
+  workspaceId: ID!
+  id: ID!
 }
 
 input WorkspaceInviteCreateInput {
