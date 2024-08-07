@@ -45,6 +45,7 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
 import { isEmpty } from 'lodash'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { blockedDomains } from '../helpers/blockedDomains'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -283,8 +284,6 @@ export const updateWorkspaceRoleFactory =
       payload: { userId, workspaceId, role }
     })
   }
-
-const blockedDomains = ['google.com']
 
 export const addDomainToWorkspaceFactory =
   ({
