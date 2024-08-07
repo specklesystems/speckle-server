@@ -91,8 +91,7 @@ export const createWorkspaceFactory =
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date(),
-      domains: []
+      updatedAt: new Date()
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
@@ -105,10 +104,10 @@ export const createWorkspaceFactory =
     // emit a workspace created event
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Created,
-      payload: { ...workspace, createdByUserId: userId }
+      payload: { ...workspace, createdByUserId: userId, domains: [] }
     })
 
-    return workspace
+    return { ...workspace, domains: [] }
   }
 
 type WorkspaceUpdateArgs = {

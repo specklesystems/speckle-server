@@ -44,8 +44,8 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   return userRecord
 }
 
-const createAndStoreTestWorkspace = async (): Promise<Workspace> => {
-  const workspace: Workspace = {
+const createAndStoreTestWorkspace = async (): Promise<Omit<Workspace, 'domains'>> => {
+  const workspace: Omit<Workspace, 'domains'> = {
     id: cryptoRandomString({ length: 10 }),
     name: cryptoRandomString({ length: 10 }),
     createdAt: new Date(),
@@ -76,7 +76,7 @@ describe('Workspace repositories', () => {
       const storedWorkspace = await getWorkspace({ workspaceId: testWorkspace.id })
       expect(storedWorkspace).to.deep.equal(testWorkspace)
 
-      const modifiedTestWorkspace: Workspace = {
+      const modifiedTestWorkspace: Omit<Workspace, 'domains'> = {
         ...testWorkspace,
         description: 'now im adding a description to the workspace'
       }

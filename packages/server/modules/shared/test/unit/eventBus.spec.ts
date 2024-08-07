@@ -5,7 +5,7 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-const createFakeWorkspace = (): Workspace => {
+const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
   return {
     id: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
@@ -133,7 +133,10 @@ describe('Event Bus', () => {
         eventName: WorkspaceEvents.Created
       }
 
-      await bus1.emit({ eventName: WorkspaceEvents.Created, payload: workspacePayload })
+      await bus1.emit({
+        eventName: WorkspaceEvents.Created,
+        payload: { ...workspacePayload, domains: [] }
+      })
 
       expect(workspaces.length).to.equal(2)
       expect(workspaces).to.deep.equal([workspacePayload, workspacePayload])
@@ -162,7 +165,8 @@ describe('Event Bus', () => {
         eventName: WorkspaceEvents.Created,
         payload: {
           ...workspace,
-          createdByUserId: cryptoRandomString({ length: 10 })
+          createdByUserId: cryptoRandomString({ length: 10 }),
+          domains: []
         }
       })
 
