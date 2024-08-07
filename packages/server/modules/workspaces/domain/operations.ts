@@ -3,6 +3,7 @@ import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
@@ -27,6 +28,9 @@ export type GetWorkspaces = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type StoreWorkspaceDomain = (args: {
+  workspaceDomain: WorkspaceDomain
+}) => Promise<void>
 type DeleteWorkspaceArgs = {
   workspaceId: string
 }

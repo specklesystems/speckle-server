@@ -64,6 +64,11 @@ input WorkspaceProjectInviteCreateInput {
   workspaceRole: String
 }
 
+input AddDomainToWorkspaceInput {
+  domain: String!
+  workspaceId: ID!
+}
+
 extend type ProjectInviteMutations {
   """
   Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
@@ -81,13 +86,17 @@ extend type Mutation {
 
 type WorkspaceMutations {
   create(input: WorkspaceCreateInput!): Workspace!
-    @hasServerRole(role: SERVER_ADMIN)
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  addDomain(input: AddDomainToWorkspaceInput!): Workspace!
+    @hasScope(scope: "workspace:update")
 }
 
 input WorkspaceInviteCreateInput {
@@ -134,6 +143,10 @@ type Workspace {
   """
   logo: String
   """
+  Verified workspace domains
+  """
+  domains: [WorkspaceDomain!]!
+  """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
@@ -147,6 +160,11 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+}
+
+type WorkspaceDomain {
+  id: ID!
+  domain: String!
 }
 
 input WorkspaceProjectsFilter {

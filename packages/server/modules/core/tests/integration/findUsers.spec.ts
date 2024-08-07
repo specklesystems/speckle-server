@@ -31,7 +31,7 @@ describe('Find users @core', () => {
 
       const user = (await getUsers([userId]))[0]
       expect(user.id).to.eq(userId)
-      expect(user.email).to.eq(newEmail)
+      expect(user.email.toLowerCase()).to.eq(newEmail.toLowerCase())
       expect(user.verified).to.eq(true)
     })
 
@@ -55,7 +55,7 @@ describe('Find users @core', () => {
 
       const user = (await getUsers([userId], { withRole: true }))[0]
       expect(user.id).to.eq(userId)
-      expect(user.email).to.eq(newEmail)
+      expect(user.email.toLowerCase()).to.eq(newEmail.toLowerCase())
       expect(user.verified).to.eq(true)
     })
   })
@@ -83,7 +83,7 @@ describe('Find users @core', () => {
         await listUsers({ query: '', limit: 10, cursor: null, role: null })
       )[0]
       expect(user.id).to.eq(userId)
-      expect(user.email).to.eq(newEmail)
+      expect(user.email.toLowerCase()).to.eq(newEmail.toLowerCase())
       expect(user.verified).to.eq(true)
     })
   })
@@ -97,7 +97,7 @@ describe('Find users @core', () => {
         email
       })
       const user = await getUserByEmail(email)
-      expect(user!.email).to.equal('test@example.org')
+      expect(user!.email).to.equal(email.toLowerCase())
     })
   })
 })

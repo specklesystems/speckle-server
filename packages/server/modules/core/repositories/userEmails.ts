@@ -5,6 +5,7 @@ import {
   CreateUserEmail,
   DeleteUserEmail,
   FindEmail,
+  FindVerifiedEmailByUserIdAndDomain,
   FindEmailsByUserId,
   FindPrimaryEmailForUser,
   SetPrimaryUserEmail,
@@ -16,6 +17,11 @@ import {
   UserEmailDeleteError,
   UserEmailPrimaryAlreadyExistsError
 } from '@/modules/core/errors/userEmails'
+import { get, omit } from 'lodash'
+
+const whereEmailIs = (query: Knex.QueryBuilder, email: string) => {
+  query.whereRaw('lower("email") = lower(?)', [email])
+}
 
 const checkPrimaryEmail =
   ({ db }: { db: Knex }) =>
@@ -36,14 +42,17 @@ export const createUserEmailFactory =
       await checkPrimaryEmail({ db })(rest)
     }
 
-    await db(UserEmails.name).insert({
-      id,
-      primary: true,
-      email: email.toLowerCase().trim(),
-      ...rest
-    })
+    const [row] = await db<UserEmail>(UserEmails.name).insert(
+      {
+        id,
+        primary: true,
+        email: email.toLowerCase().trim(),
+        ...rest
+      },
+      '*'
+    )
 
-    return id
+    return row
   }
 
 export const updateUserEmailFactory =
@@ -53,10 +62,21 @@ export const updateUserEmailFactory =
     if (queryWithUserId.userId && update.primary) {
       await checkPrimaryEmail({ db })(queryWithUserId)
     }
-    const [updated] = await db<UserEmail>(UserEmails.name)
-      .where(query)
-      .update(update, '*')
+    const q = db<UserEmail>(UserEmails.name)
+      .where(omit(query, ['email']))
+      .update(
+        {
+          ...update,
+          ...(update.email?.length ? { email: update.email.toLowerCase() } : {})
+        },
+        '*'
+      )
 
+    if ('email' in query && query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    const [updated] = await q
     return updated
   }
 
@@ -91,22 +111,36 @@ export const deleteUserEmailFactory =
 export const findPrimaryEmailForUserFactory =
   ({ db }: { db: Knex }): FindPrimaryEmailForUser =>
   async (query) => {
-    return db(UserEmails.name)
+    if (!get(query, 'userId') && !get(query, 'email')) return undefined
+
+    const q = db<UserEmail>(UserEmails.name)
       .where({
-        ...query,
+        ...omit(query, ['email']),
         primary: true
       })
       .first()
+
+    if ('email' in query && query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    return await q
   }
 
 export const findEmailFactory =
   ({ db }: { db: Knex }): FindEmail =>
   async (query) => {
-    return db(UserEmails.name)
-      .where({
-        ...query
-      })
+    if (!Object.values(query).length) return undefined
+
+    const q = db<UserEmail>(UserEmails.name)
+      .where(omit(query, ['email']))
       .first()
+
+    if (query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    return await q
   }
 
 export const findEmailsByUserIdFactory =
@@ -132,4 +166,16 @@ export const setPrimaryUserEmailFactory =
       })
     })
     return true
+  }
+
+export const findVerifiedEmailByUserIdAndDomainFactory =
+  ({ db }: { db: Knex }): FindVerifiedEmailByUserIdAndDomain =>
+  async ({ userId, domain }) => {
+    return db(UserEmails.name)
+      .where({
+        [UserEmails.col.userId]: userId,
+        [UserEmails.col.verified]: true
+      })
+      .where(UserEmails.col.email, 'ILIKE', `%@${domain}`)
+      .first()
   }

@@ -48,7 +48,9 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  getWorkspaceRoleForUserFactory,
+  storeWorkspaceDomainFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -61,6 +63,7 @@ import {
   validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
 import {
+  addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
@@ -75,6 +78,7 @@ import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retri
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
+import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -312,7 +316,30 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getWorkspaceFactory({ db })({ workspaceId })
         },
-        invites: () => ({})
+        invites: () => ({}),
+        async addDomain(_parent, args, context) {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          await addDomainToWorkspaceFactory({
+            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            storeWorkspaceDomain: storeWorkspaceDomainFactory({ db })
+          })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId!,
+            domain: args.input.domain
+          })
+
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        }
       },
       WorkspaceInviteMutations: {
         create: async (_parent, args, ctx) => {

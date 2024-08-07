@@ -1,6 +1,7 @@
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -12,6 +13,7 @@ import {
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
   GetWorkspaces,
+  StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -35,6 +37,7 @@ import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constan
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
+  workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
 
@@ -214,3 +217,9 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
       ).orWhereNotNull(Workspaces.col.id)
     })
 }
+
+export const storeWorkspaceDomainFactory =
+  ({ db }: { db: Knex }): StoreWorkspaceDomain =>
+  async ({ workspaceDomain }): Promise<void> => {
+    await tables.workspaceDomains(db).insert(workspaceDomain)
+  }
