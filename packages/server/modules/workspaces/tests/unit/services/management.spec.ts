@@ -25,7 +25,7 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { omit } from 'lodash'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Workspace[]
+  storedWorkspaces: Omit<Workspace, 'domains'>[]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -48,7 +48,11 @@ const buildCreateWorkspaceWithTestContext = (
   }
 
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
-    upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
+    upsertWorkspace: async ({
+      workspace
+    }: {
+      workspace: Omit<Workspace, 'domains'>
+    }) => {
       context.storedWorkspaces.push(workspace)
     },
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
