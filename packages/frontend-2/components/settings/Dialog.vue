@@ -67,6 +67,7 @@
                 ]"
                 :tooltip-text="workspaceMenuItem.tooltipText"
                 :disabled="workspaceMenuItem.disabled"
+                :tag="workspaceMenuItem.disabled ? 'Coming soon' : null"
                 @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
               />
             </LayoutSidebarMenuGroup>
