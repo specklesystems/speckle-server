@@ -16,6 +16,11 @@ import {
   UserEmailDeleteError,
   UserEmailPrimaryAlreadyExistsError
 } from '@/modules/core/errors/userEmails'
+import { omit } from 'lodash'
+
+const whereEmailIs = (query: Knex.QueryBuilder, email: string) => {
+  query.whereRaw('lower("email") = lower(?)', [email])
+}
 
 const checkPrimaryEmail =
   ({ db }: { db: Knex }) =>
@@ -56,13 +61,8 @@ export const updateUserEmailFactory =
     if (queryWithUserId.userId && update.primary) {
       await checkPrimaryEmail({ db })(queryWithUserId)
     }
-    const [updated] = await db<UserEmail>(UserEmails.name)
-      .where({
-        ...query,
-        ...('email' in query && query.email?.length
-          ? { email: query.email.toLowerCase() }
-          : {})
-      })
+    const q = db<UserEmail>(UserEmails.name)
+      .where(omit(query, ['email']))
       .update(
         {
           ...update,
@@ -71,6 +71,11 @@ export const updateUserEmailFactory =
         '*'
       )
 
+    if ('email' in query && query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    const [updated] = await q
     return updated
   }
 
@@ -105,26 +110,32 @@ export const deleteUserEmailFactory =
 export const findPrimaryEmailForUserFactory =
   ({ db }: { db: Knex }): FindPrimaryEmailForUser =>
   async (query) => {
-    return db(UserEmails.name)
+    const q = db<UserEmail>(UserEmails.name)
       .where({
-        ...query,
-        ...('email' in query && query.email?.length
-          ? { email: query.email.toLowerCase() }
-          : {}),
+        ...omit(query, ['email']),
         primary: true
       })
       .first()
+
+    if ('email' in query && query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    return await q
   }
 
 export const findEmailFactory =
   ({ db }: { db: Knex }): FindEmail =>
   async (query) => {
-    return db(UserEmails.name)
-      .where({
-        ...query,
-        ...(query.email?.length ? { email: query.email.toLowerCase() } : {})
-      })
+    const q = db<UserEmail>(UserEmails.name)
+      .where(omit(query, ['email']))
       .first()
+
+    if (query.email?.length) {
+      whereEmailIs(q, query.email)
+    }
+
+    return await q
   }
 
 export const findEmailsByUserIdFactory =
