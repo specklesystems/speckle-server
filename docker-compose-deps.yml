@@ -67,8 +67,17 @@ services:
     depends_on:
       - redis
 
-# Storage persistency
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    restart: always
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - '8090:8090'
+    command: start-dev --http-port=8090
 
+# Storage persistency
 volumes:
   postgres-data:
   redis-data:
