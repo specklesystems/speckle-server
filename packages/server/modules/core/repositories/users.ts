@@ -44,7 +44,7 @@ function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
 // Once we will refactor services this one should not be exported
 export const getUsersBaseQuery = (
   query: Knex.QueryBuilder,
-  { searchQuery, role }: { searchQuery: string | null; role: string | null }
+  { searchQuery, role }: { searchQuery: string | null; role?: string | null }
 ) => {
   if (searchQuery) {
     query.where((queryBuilder) => {
@@ -96,7 +96,7 @@ export async function getUsers(
 
 type UserQuery = {
   query: string | null
-  role: ServerRoles | null
+  role?: ServerRoles | null
 }
 
 /**
@@ -109,7 +109,7 @@ export async function listUsers({
   role
 }: {
   limit: number
-  cursor: Date | null
+  cursor?: Date | null
 } & UserQuery): Promise<UserWithRole[]> {
   const sanitizedLimit = clamp(limit, 1, 200)
 
@@ -136,7 +136,9 @@ export async function listUsers({
 export async function countUsers(args: UserQuery): Promise<number> {
   const q = Users.knex()
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
     .countDistinct(Users.col.id)
+
   const result = await getUsersBaseQuery(q, {
     searchQuery: args.query,
     role: args.role
@@ -187,17 +189,18 @@ export async function getUserByEmail(
  */
 export async function markUserAsVerified(email: string) {
   const UserCols = Users.with({ withoutTablePrefix: true }).col
-  const q = Users.knex()
+
+  const usersUpdate = await Users.knex()
     .whereRaw('lower(email) = lower(?)', [email])
     .update({
       [UserCols.verified]: true
     })
 
-  await markUserEmailAsVerifiedFactory({
+  const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
     updateUserEmail: updateUserEmailFactory({ db })
   })({ email: email.toLowerCase().trim() })
 
-  return !!(await q)
+  return !!(usersUpdate || userEmailsUpdate)
 }
 
 export async function markOnboardingComplete(userId: string) {
