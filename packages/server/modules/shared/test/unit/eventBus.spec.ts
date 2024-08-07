@@ -130,7 +130,8 @@ describe('Event Bus', () => {
       const workspacePayload = {
         ...createFakeWorkspace(),
         createdByUserId: cryptoRandomString({ length: 10 }),
-        eventName: WorkspaceEvents.Created
+        eventName: WorkspaceEvents.Created,
+        domains: []
       }
 
       await bus1.emit({
