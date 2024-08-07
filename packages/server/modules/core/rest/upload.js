@@ -109,7 +109,7 @@ module.exports = (app) => {
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
               {
-                bufferLengthMb: toMegabytesTo1DecimalPlace(gunzippedBufferMegabyteSize),
+                bufferLengthMb: gunzippedBufferMegabyteSize,
                 maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
                 elapsedTimeMs: Date.now() - start,
                 objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
@@ -191,7 +191,7 @@ module.exports = (app) => {
               objectCount: objs.length,
               elapsedTimeMs: Date.now() - start,
               objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-              crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
+              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: toMegabytesTo1DecimalPlace(gunzippedBuffer.length),
               requestDropped,
               totalProcessed
@@ -321,10 +321,10 @@ module.exports = (app) => {
               objectCount: objs.length,
               objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
-              crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
+              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               totalProcessed
             },
-            'Uploaded batch of {objectCount} objects. Total processed is {totalProcessed} objects. This batch took {objectBatchElapsedTimeMs}ms.'
+            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalProcessed}. This batch took {objectBatchElapsedTimeMs}ms.'
           )
         })
       } else {
@@ -333,7 +333,7 @@ module.exports = (app) => {
             mimeType,
             totalProcessed
           },
-          'Invalid ContentType header: {mimeType}. Total objects processed so far: {totalProcessed}.'
+          'Invalid ContentType header: {mimeType}. Total number of objects processed so far: {totalProcessed}.'
         )
         if (!requestDropped)
           res
@@ -351,10 +351,10 @@ module.exports = (app) => {
       req.log.info(
         {
           totalProcessed,
-          crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed),
+          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
           elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalProcessed} objects in {elapsedTimeMs}ms'
+        'Upload finished: {totalProcessed} objects processed in {elapsedTimeMs}ms'
       )
 
       let previouslyAwaitedPromises = 0
@@ -372,7 +372,7 @@ module.exports = (app) => {
           error: err,
           totalProcessed,
           elapsedTimeMs: Date.now() - start,
-          crtMemUsageMB: toMegabytesTo1DecimalPlace(process.memoryUsage().heapUsed)
+          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
         'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
       )

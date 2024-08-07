@@ -126,7 +126,7 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
-        logger.info({ batchLength: batch.length }, 'Inserted ${batchLength} closures')
+        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} closures')
       }
     }
     return true
