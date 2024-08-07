@@ -5,14 +5,17 @@ export { Base }
 
 export { Detach, Chunkable } from './utils/Decorators'
 
+export type Logger = {
+  log: (message: unknown) => void
+  error: (message: unknown) => void
+  debug: (message: unknown) => void
+}
+
 export type SendParams = {
   serverUrl?: string
   projectId: string
   token: string
-  logger?: {
-    log: (message: unknown) => void
-    error: (message: unknown) => void
-  }
+  logger?: Logger
 }
 
 export type SendResult = {
@@ -37,8 +40,13 @@ export const send = async (
 ) => {
   const t0 = performance.now()
   logger?.log('Starting to send')
-  const transport = new ServerTransport(serverUrl, projectId, token)
-  const serializer = new Serializer(transport)
+  const transport = new ServerTransport({
+    serverUrl,
+    projectId,
+    authToken: token,
+    logger
+  })
+  const serializer = new Serializer({ transport, logger })
 
   let result: SendResult
   try {

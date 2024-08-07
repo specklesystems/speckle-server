@@ -44,20 +44,6 @@
       <p>All the magic is in the console.</p>
       <p>This will send a random speckle object to the server to flex things around.</p>
       <div>
-        <p>How does this work?</p>
-        <pre>
-import { send, Base } from '@speckle/objectsender'
-
-const testObject = new Base({
-  prop: value, 
-  '@detachedValue': new Base({...}),
-  '@detachedArray': [...Array(100).fill(0).map( _ => new Base({...}))],
-  '@(10)chunkedArr': [...Array(100).fill(0)]
-})
-
-const { hash } = await send(testObject, { serverUrl, projectId, token }) 
-      </pre
-        >
         <p>For more info check src/examples/browser/main.ts</p>
       </div>
       <div>
@@ -83,14 +69,16 @@ const { hash } = await send(testObject, { serverUrl, projectId, token })
         />
       </div>
       <div>
-        <label for="projectId" class="text-xs text-neutral-500">Project id:</label>
+        <label for="numberElements" class="text-xs text-neutral-500">
+          Number of elements to send:
+        </label>
         <input
           type="text"
-          id="projectId"
-          name="projectId"
-          minlength="6"
+          id="numberElements"
+          name="numberElements"
+          minlength="1"
           required
-          placeholder="67ab820e8b"
+          placeholder="10"
         />
       </div>
       <br />

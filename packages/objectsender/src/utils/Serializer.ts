@@ -1,10 +1,11 @@
 /* eslint-disable camelcase */
 import { SHA1 } from './Sha1'
-import { ITransport } from '../transports/ITransport'
+import type { ITransport } from '../transports/ITransport'
 import { Base } from './Base'
-import { IDisposable } from './IDisposable'
+import type { IDisposable } from './IDisposable'
 import { isObjectLike, get } from '#lodash'
 import { getChunkSize, isChunkable, isDetached } from './Decorators'
+import type { Logger } from '../index'
 
 type BasicSpeckleObject = Record<string, unknown> & {
   speckle_type: string
@@ -22,13 +23,16 @@ export class Serializer implements IDisposable {
   transport: ITransport | null
   uniqueId: number
   hashingFunction: (s: string) => string
+  logger: Logger | undefined
 
-  constructor(
-    transport: ITransport,
-    chunkSize: number = 1000,
-    hashingFunction: (s: string) => string = SHA1
-  ) {
-    this.chunkSize = chunkSize
+  constructor(params: {
+    transport: ITransport
+    chunkSize?: number
+    hashingFunction?: (s: string) => string
+    logger?: Logger
+  }) {
+    const { transport, chunkSize, hashingFunction, logger } = params
+    this.chunkSize = chunkSize ?? 1000
     this.detachLineage = [true] // first ever call is always detached
     this.lineage = []
     this.familyTree = {}
@@ -36,6 +40,7 @@ export class Serializer implements IDisposable {
     this.transport = transport
     this.uniqueId = 0
     this.hashingFunction = hashingFunction || SHA1
+    this.logger = logger
   }
 
   async write(obj: Base) {
@@ -51,7 +56,20 @@ export class Serializer implements IDisposable {
       unknown
     >
 
+    const numberOfPropKeys = Object.keys(obj).length
+    if (root) this.logger?.log(`Traversing object with ${numberOfPropKeys} properties`)
+
+    let propKeyCounter = 0
+
     for (const propKey in obj) {
+      propKeyCounter++
+      if (root)
+        this.logger?.log(
+          `Serializer is continuing to traverse to ${(
+            (propKeyCounter * 100) /
+            numberOfPropKeys
+          ).toFixed(1)}% of objects.`
+        )
       const value = obj[propKey]
       // 0. skip some props
       if (value === undefined || propKey === 'id' || propKey.startsWith('_')) continue
@@ -141,6 +159,8 @@ export class Serializer implements IDisposable {
 
     const { hash, serializedObject, size } = this.#generateId(traversed)
     traversed.id = hash
+    if (root)
+      this.logger?.log(`Serialized object with id: ${hash}; now sending to server.`)
 
     // Pop it in
     if ((detached || root) && this.transport) {
@@ -251,6 +271,7 @@ export class Serializer implements IDisposable {
     this.familyTree = {}
     this.closureTable = {}
     this.transport = null
+    this.logger = undefined
   }
 }
 
