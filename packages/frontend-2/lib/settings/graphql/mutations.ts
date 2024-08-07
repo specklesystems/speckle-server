@@ -1,7 +1,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const settingsUpdateWorkspaceMutation = graphql(`
-  mutation UpdateWorkspace($input: WorkspaceUpdateInput!) {
+  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {
     workspaceMutations {
       update(input: $input) {
         description
@@ -13,7 +13,7 @@ export const settingsUpdateWorkspaceMutation = graphql(`
 `)
 
 export const deleteWorkspaceMutation = graphql(`
-  mutation DeleteWorkspace($workspaceId: String!) {
+  mutation SettingsDeleteWorkspace($workspaceId: String!) {
     workspaceMutations {
       delete(workspaceId: $workspaceId)
     }
