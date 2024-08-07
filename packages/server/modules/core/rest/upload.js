@@ -349,7 +349,7 @@ module.exports = (app) => {
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
           elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalProcessed} objects in {elapsed}ms'
+        'Upload finished: {totalProcessed} objects in {elapsedTimeMs}ms'
       )
 
       let previouslyAwaitedPromises = 0
