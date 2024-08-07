@@ -24,7 +24,7 @@ import {
   findServerInviteFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
-import { getNameFromUserInfo } from '@/modules/auth/domain/logic'
+import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
