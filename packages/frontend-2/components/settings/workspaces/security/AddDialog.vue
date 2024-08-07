@@ -14,23 +14,22 @@
 </template>
 
 <script setup lang="ts">
+import { useMutation } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { graphql } from '~~/lib/common/generated/gql'
+import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 
-graphql(`
-  fragment SettingsWorkspaceSecurityAdd_Workspace on Workspace {
-    id
-  }
-`)
-
-defineProps<{
+const props = defineProps<{
   verifiedUserDomains: string[]
-  workspace: SettingsWorkspaceSecurityAdd_WorkspaceFragment
+  workspaceId: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const selectedDomain = ref<string>()
+const { mutate: addWorkspaceDomain } = useMutation(settingsAddWorkspaceDomainMutation)
+const { triggerNotification } = useGlobalToast()
+
+const selectedDomain = ref<string>('')
 const onSelectedDomainUpdate = (e?: string | string[]) => {
   if (typeof e !== 'string') {
     return
@@ -39,7 +38,30 @@ const onSelectedDomainUpdate = (e?: string | string[]) => {
 }
 
 const onAdd = async () => {
-  console.log(selectedDomain.value)
+  const domain = selectedDomain.value
+
+  const result = await addWorkspaceDomain({
+    input: {
+      domain,
+      workspaceId: props.workspaceId
+    }
+  }).catch(convertThrowIntoFetchResult)
+
+  if (result?.data) {
+    isOpen.value = false
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Domain added',
+      description: `The verified domain ${domain} has been added to your workspace`
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to add verified domain',
+      description: errorMessage
+    })
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [

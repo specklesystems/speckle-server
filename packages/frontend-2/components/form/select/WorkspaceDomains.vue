@@ -1,13 +1,16 @@
 <template>
   <FormSelectBase
     v-model="selectedValue"
-    :items="domains"
+    :items="props.domains"
     name="workspaceDomains"
     label="Verified Domains"
     class="min-w-[110px]"
     size="sm"
   >
     <template #nothing-selected>Select domain</template>
+    <template #something-selected="{ value }">
+      {{ value }}
+    </template>
     <template #option="{ item }">
       <div class="flex items-center">
         {{ item }}

@@ -53,7 +53,7 @@
     <SettingsWorkspacesSecurityAddDialog
       v-model:open="showAddDialog"
       :verified-user-domains="['a', 'b']"
-      :workspace="workspace"
+      :workspace-id="workspaceId"
     />
     <SettingsWorkspacesSecurityRemoveDialog
       v-model:open="showRemoveDialog"
@@ -63,16 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-
-graphql(`
-  fragment SettingsWorkspaceSecurity_Workspace on Workspace {
-    id
-  }
-`)
-
 defineProps<{
-  workspace: SettingsWorkspaceSecurity_WorkspaceFragment
+  workspaceId: string
 }>()
 
 const domains = [
@@ -89,9 +81,9 @@ const domains = [
 ]
 
 const showAddDialog = ref(false)
+
 const showRemoveDialog = ref(false)
 const removeDialogDomain = ref<string>('')
-
 const openRemoveDialog = (domain: string) => {
   removeDialogDomain.value = domain
   showRemoveDialog.value = true
