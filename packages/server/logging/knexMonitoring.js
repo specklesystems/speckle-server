@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars */
 'use strict'
 
-const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
 const { numberOfFreeConnections } = require('@/modules/shared/helpers/dbHelper')
 
@@ -18,18 +17,7 @@ let metricQueryErrors = null
 const queryStartTime = {}
 
 module.exports = {
-  calculateRemainingCapacity() {
-    const postgresMaxConnections =
-      parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
-    const demand =
-      knex.client.pool.numUsed() +
-      knex.client.pool.numPendingCreates() +
-      knex.client.pool.numPendingValidations() +
-      knex.client.pool.numPendingAcquires()
-
-    return Math.max(0, postgresMaxConnections - demand)
-  },
-  initKnexPrometheusMetrics() {
+  initKnexPrometheusMetrics(knex) {
     metricFree = new prometheusClient.Gauge({
       name: 'speckle_server_knex_free',
       help: 'Number of free DB connections',
