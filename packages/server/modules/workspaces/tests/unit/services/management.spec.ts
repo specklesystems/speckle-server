@@ -22,9 +22,10 @@ import {
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { omit } from 'lodash'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Workspace[]
+  storedWorkspaces: Omit<Workspace, 'domains'>[]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -47,7 +48,11 @@ const buildCreateWorkspaceWithTestContext = (
   }
 
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
-    upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
+    upsertWorkspace: async ({
+      workspace
+    }: {
+      workspace: Omit<Workspace, 'domains'>
+    }) => {
       context.storedWorkspaces.push(workspace)
     },
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
@@ -91,7 +96,7 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal(workspace)
+      expect(context.storedWorkspaces[0]).to.deep.equal(omit(workspace, 'domains'))
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -410,7 +415,7 @@ describe('Workspace role services', () => {
       it('throws a ForbiddenDomainError if the domain is not allowed to be registered', async () => {
         const userId = createRandomPassword()
         const workspaceId = createRandomPassword()
-        const domain = 'google.com'
+        const domain = 'gmail.com'
 
         const err = await expectToThrow(
           async () =>

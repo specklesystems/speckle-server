@@ -57,6 +57,11 @@ export type ActivityCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type AddDomainToWorkspaceInput = {
+  domain: Scalars['String']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type AdminInviteList = {
   __typename?: 'AdminInviteList';
   cursor?: Maybe<Scalars['String']['output']>;
@@ -3793,6 +3798,8 @@ export type Workspace = {
   __typename?: 'Workspace';
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Verified workspace domains */
+  domains: Array<WorkspaceDomain>;
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
@@ -3830,6 +3837,17 @@ export type WorkspaceCollection = {
 export type WorkspaceCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+};
+
+export type WorkspaceDomain = {
+  __typename?: 'WorkspaceDomain';
+  domain: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type WorkspaceDomainDeleteInput = {
+  id: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type WorkspaceInviteCreateInput = {
@@ -3879,11 +3897,18 @@ export type WorkspaceInviteUseInput = {
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
+  addDomain: Workspace;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
+  deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
   updateRole: Workspace;
+};
+
+
+export type WorkspaceMutationsAddDomainArgs = {
+  input: AddDomainToWorkspaceInput;
 };
 
 
@@ -3894,6 +3919,11 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceMutationsDeleteDomainArgs = {
+  input: WorkspaceDomainDeleteInput;
 };
 
 
