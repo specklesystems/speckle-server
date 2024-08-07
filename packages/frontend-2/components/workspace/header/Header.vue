@@ -26,9 +26,7 @@
         class="max-w-[104px]"
       />
       <FormButton color="outline">Invite</FormButton>
-      <FormButton color="subtle" :icon-left="EllipsisHorizontalIcon" hide-text>
-        Invite
-      </FormButton>
+      <WorkspaceHeaderActions />
     </div>
   </div>
   <div v-else-if="loading">Loading...</div>
@@ -37,7 +35,6 @@
 
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
 
 const props = defineProps<{
