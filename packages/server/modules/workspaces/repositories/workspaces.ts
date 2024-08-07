@@ -5,6 +5,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
+  DeleteWorkspace,
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceCollaborators,
@@ -95,6 +96,12 @@ export const upsertWorkspaceFactory =
       .insert(workspace)
       .onConflict('id')
       .merge(['description', 'logo', 'name', 'updatedAt'])
+  }
+
+export const deleteWorkspaceFactory =
+  ({ db }: { db: Knex }): DeleteWorkspace =>
+  async ({ workspaceId }) => {
+    await tables.workspaces(db).where({ id: workspaceId }).delete()
   }
 
 export const getWorkspaceRolesFactory =

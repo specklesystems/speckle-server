@@ -1,72 +1,106 @@
 /* istanbul ignore file */
-'use strict'
-
-const passport = require('passport')
-const OIDCStrategy = require('passport-azure-ad').OIDCStrategy
-const URL = require('url').URL
-const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
+import passport from 'passport'
+import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
+import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const {
+} from '@/modules/serverinvites/services/processing'
+import { passportAuthenticate } from '@/modules/auth/services/passportService'
+import {
   UserInputError,
   UnverifiedEmailSSOLoginError
-} = require('@/modules/core/errors/userinput')
-const db = require('@/db/knex')
-const {
+} from '@/modules/core/errors/userinput'
+import db from '@/db/knex'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
   findServerInviteFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { ServerInviteResourceType } = require('@/modules/serverinvites/domain/constants')
-const { getResourceTypeRole } = require('@/modules/serverinvites/helpers/core')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import {
+  getAzureAdClientId,
+  getAzureAdClientSecret,
+  getAzureAdIdentityMetadata,
+  getAzureAdIssuer,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import type { Request } from 'express'
+import { ensureError, Optional } from '@speckle/shared'
 
-module.exports = async (app, session, sessionStorage, finalizeAuth) => {
+const azureAdStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
   const strategy = new OIDCStrategy(
     {
-      identityMetadata: process.env.AZURE_AD_IDENTITY_METADATA,
-      clientID: process.env.AZURE_AD_CLIENT_ID,
+      identityMetadata: getAzureAdIdentityMetadata(),
+      clientID: getAzureAdClientId(),
       responseType: 'code id_token',
       responseMode: 'form_post',
-      issuer: process.env.AZURE_AD_ISSUER,
-      redirectUrl: new URL(
-        '/auth/azure/callback',
-        process.env.CANONICAL_URL
-      ).toString(),
+      issuer: getAzureAdIssuer(),
+      redirectUrl: new URL('/auth/azure/callback', getServerOrigin()).toString(),
       allowHttpForRedirectUrl: true,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+      clientSecret: getAzureAdClientSecret(),
       scope: ['profile', 'email', 'openid'],
       loggingLevel: process.env.NODE_ENV === 'development' ? 'info' : 'error',
       passReqToCallback: true
     },
-    async (req, iss, sub, profile, accessToken, refreshToken, done) => {
+    // Dunno why TS isn't picking up on the types automatically
+    async (
+      _req: Request,
+      _iss: string,
+      _sub: string,
+      profile: IProfile,
+      _accessToken: string,
+      _refreshToken: string,
+      done: VerifyCallback
+    ) => {
       done(null, profile)
     }
   )
 
   passport.use(strategy)
 
+  // 1. Auth init
   app.get(
     '/auth/azure',
-    session,
-    sessionStorage,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
     passportAuthenticate('azuread-openidconnect')
   )
+
+  // 2. Auth finish callback
   app.post(
     '/auth/azure/callback',
-    session,
+    sessionMiddleware,
     passportAuthenticate('azuread-openidconnect'),
-    async (req, res, next) => {
+    async (req, _res, next) => {
       const serverInfo = await getServerInfo()
+      let logger = req.log.child({
+        authStrategy: 'entraId',
+        serverVersion: serverInfo.version
+      })
 
       try {
+        // This is the only strategy that does its own type for req.user - easier to force type cast for now
+        // than to refactor everything
+        const profile = req.user as Optional<IProfile>
+        if (!profile) {
+          throw new Error('No profile provided by Entra ID')
+        }
+
+        logger = logger.child({ profileId: profile.oid })
+
         const user = {
-          email: req.user._json.email,
-          name: req.user._json.name || req.user.displayName
+          email: profile._json.email,
+          name: profile._json.name || profile.displayName
         }
 
         const existingUser = await getUserByEmail({ email: user.email })
@@ -83,23 +117,30 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // whether the server is invite only or not).
         if (existingUser) {
           const myUser = await findOrCreateUser({
-            user,
-            rawProfile: req.user._json
+            user
           })
           // ID is used later for verifying access token
-          req.user.id = myUser.id
+          req.user = {
+            ...profile,
+            id: myUser.id,
+            email: myUser.email
+          }
           return next()
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
           const myUser = await findOrCreateUser({
-            user,
-            rawProfile: req.user._json
+            user
           })
+
           // ID is used later for verifying access token
-          req.user.id = myUser.id
-          req.user.isNewUser = myUser.isNewUser
+          req.user = {
+            ...profile,
+            id: myUser.id,
+            email: myUser.email,
+            isNewUser: myUser.isNewUser
+          }
 
           // process invites
           if (myUser.isNewUser) {
@@ -131,13 +172,18 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             role: validInvite
               ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
               : undefined
-          },
-          rawProfile: req.user._json
+          }
         })
 
         // ID is used later for verifying access token
-        req.user.id = myUser.id
-        req.user.isInvite = !!validInvite
+        req.user = {
+          ...profile,
+          id: myUser.id,
+          email: myUser.email,
+          isNewUser: myUser.isNewUser,
+          isInvite: !!validInvite
+        }
+
         req.log = req.log.child({ userId: myUser.id })
 
         // use the invite
@@ -152,20 +198,25 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return next()
       } catch (err) {
-        switch (err.constructor) {
+        const e = ensureError(
+          err,
+          'Unexpected issue occured while authenticating with Entra ID'
+        )
+
+        switch (e.constructor) {
           case UserInputError:
-            req.log.info(
-              { err },
-              'User input error during Azure AD authentication callback.'
+            logger.info(
+              { e },
+              'User input error during Entra ID authentication callback.'
             )
             break
           default:
-            req.log.error(err, 'Error during Azure AD authentication callback.')
+            logger.error(e, 'Error during Entra ID authentication callback.')
         }
         return next()
       }
     },
-    finalizeAuth
+    finalizeAuthMiddleware
   )
 
   return {
@@ -174,6 +225,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     icon: 'mdi-microsoft',
     color: 'blue darken-3',
     url: '/auth/azure',
-    callbackUrl: new URL('/auth/azure/callback', process.env.CANONICAL_URL).toString()
+    callbackUrl: new URL('/auth/azure/callback', getServerOrigin()).toString()
   }
 }
+
+export = azureAdStrategyBuilder
