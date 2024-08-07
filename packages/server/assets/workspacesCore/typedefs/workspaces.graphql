@@ -145,7 +145,7 @@ type Workspace {
   """
   Verified workspace domains
   """
-  domains: [WorkspaceDomain!]!
+  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: ADMIN)
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

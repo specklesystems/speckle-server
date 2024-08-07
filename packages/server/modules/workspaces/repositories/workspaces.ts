@@ -9,6 +9,7 @@ import {
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceCollaborators,
+  GetWorkspaceDomains,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
@@ -222,4 +223,10 @@ export const storeWorkspaceDomainFactory =
   ({ db }: { db: Knex }): StoreWorkspaceDomain =>
   async ({ workspaceDomain }): Promise<void> => {
     await tables.workspaceDomains(db).insert(workspaceDomain)
+  }
+
+export const getWorkspaceDomainsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceDomains =>
+  ({ workspaceIds }) => {
+    return tables.workspaceDomains(db).whereIn('workspaceId', workspaceIds)
   }

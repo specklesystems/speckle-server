@@ -91,7 +91,7 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal(workspace)
+      expect(context.storedWorkspaces[0]).to.deep.equal({ ...workspace, domains: [] })
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -410,7 +410,7 @@ describe('Workspace role services', () => {
       it('throws a ForbiddenDomainError if the domain is not allowed to be registered', async () => {
         const userId = createRandomPassword()
         const workspaceId = createRandomPassword()
-        const domain = 'google.com'
+        const domain = 'gmail.com'
 
         const err = await expectToThrow(
           async () =>
