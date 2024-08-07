@@ -72,7 +72,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const id = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmailFactory({ db })({
         userEmail: {
           email,
           userId,
@@ -100,7 +100,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const id = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmailFactory({ db })({
         userEmail: {
           email,
           userId,
