@@ -118,6 +118,7 @@ type WorkspaceUpdateArgs = {
     name?: string | null
     description?: string | null
     logo?: string | null
+    domainBasedMembershipProtectionEnabled?: boolean | null
   }
 }
 

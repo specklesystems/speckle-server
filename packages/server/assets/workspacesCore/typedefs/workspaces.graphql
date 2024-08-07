@@ -25,6 +25,7 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
+  domainBasedMembershipProtectionEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -169,6 +170,10 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  """
+  Enable/Disable restriction to invite users to workspace as Guests only
+  """
+  domainBasedMembershipProtectionEnabled: Boolean!
 }
 
 type WorkspaceDomain {
