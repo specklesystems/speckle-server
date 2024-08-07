@@ -20,7 +20,7 @@
         >
           <template #domain="{ item }">
             <span class="text-body-xs text-foreground">
-              {{ item.domain }}
+              {{ `@${item.domain}` }}
             </span>
           </template>
           <template #verified="{ item }">
@@ -52,8 +52,8 @@
     </div>
     <SettingsWorkspacesSecurityAddDialog
       v-model:open="showAddDialog"
-      :verified-user-domains="['a', 'b']"
       :workspace-id="workspaceId"
+      @added="onDomainAdded"
     />
     <SettingsWorkspacesSecurityRemoveDialog
       v-model:open="showRemoveDialog"
@@ -67,20 +67,22 @@ defineProps<{
   workspaceId: string
 }>()
 
-const domains = [
-  {
-    id: 'a',
-    domain: '@speckle.systems',
-    verified: true
-  },
-  {
-    id: 'b',
-    domain: '@example.org',
-    verified: false
-  }
-]
+type WorkspaceDomain = {
+  id: string
+  domain: string
+  verified: boolean
+}
+
+const domains = ref<WorkspaceDomain[]>([])
 
 const showAddDialog = ref(false)
+const onDomainAdded = (domain: string) => {
+  domains.value.push({
+    id: domain,
+    domain,
+    verified: true
+  })
+}
 
 const showRemoveDialog = ref(false)
 const removeDialogDomain = ref<string>('')

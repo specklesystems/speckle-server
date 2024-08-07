@@ -5,29 +5,45 @@
     max-width="sm"
     :buttons="dialogButtons"
   >
-    <FormSelectWorkspaceDomains
-      :domains="verifiedUserDomains"
-      :model-value="selectedDomain"
-      @update:model-value="onSelectedDomainUpdate"
-    />
+    <div class="h-24">
+      <FormSelectWorkspaceDomains
+        :domains="verifiedUserDomains"
+        :model-value="selectedDomain"
+        @update:model-value="onSelectedDomainUpdate"
+      />
+    </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { activeUserEmailsQuery } from '~/lib/user/graphql/queries'
 
 const props = defineProps<{
-  verifiedUserDomains: string[]
   workspaceId: string
+}>()
+
+const emit = defineEmits<{
+  added: [string]
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { result: activeUserEmails } = useQuery(activeUserEmailsQuery)
 const { mutate: addWorkspaceDomain } = useMutation(settingsAddWorkspaceDomainMutation)
 const { triggerNotification } = useGlobalToast()
+
+const verifiedUserDomains = computed(() => {
+  const emails = activeUserEmails?.value?.activeUser?.emails ?? []
+  return emails
+    .filter((email) => email.verified)
+    .map((email) => {
+      return email.email.split('@')[1]
+    })
+})
 
 const selectedDomain = ref<string>('')
 const onSelectedDomainUpdate = (e?: string | string[]) => {
@@ -54,6 +70,7 @@ const onAdd = async () => {
       title: 'Domain added',
       description: `The verified domain ${domain} has been added to your workspace`
     })
+    emit('added', domain)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
