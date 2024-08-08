@@ -78,7 +78,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
-import { WorkspaceProtectedError } from '../../errors/workspace'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 enum InviteByTarget {
