@@ -167,9 +167,6 @@ module.exports = {
     return ids
   },
 
-  /**
-   * @returns {Promise<string[]>}
-   */
   async createObjects({ streamId, objects, logger = servicesLogger }) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
