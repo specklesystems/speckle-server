@@ -1,6 +1,6 @@
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
-  GetDiscoverableWorkspaces,
+  GetUserDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceRolesForUser
 } from '@/modules/workspaces/domain/operations'
@@ -17,7 +17,7 @@ export const getDiscoverableWorkspacesForUserFactory =
     getDiscoverableWorkspaces
   }: {
     findEmailsByUserId: FindEmailsByUserId
-    getDiscoverableWorkspaces: GetDiscoverableWorkspaces
+    getDiscoverableWorkspaces: GetUserDiscoverableWorkspaces
   }) =>
   async ({
     userId

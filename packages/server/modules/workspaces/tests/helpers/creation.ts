@@ -32,7 +32,6 @@ import {
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
-import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestWorkspace = {
   /**
@@ -46,7 +45,6 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
-  domains?: string[]
   discoverabilityEnabled?: boolean
 }
 
@@ -82,18 +80,6 @@ export const createTestWorkspace = async (
       workspaceInput: {
         discoverabilityEnabled: true
       }
-    })
-  }
-
-  for (const domain of workspace.domains ?? []) {
-    await db.table('workspace_domains').insert({
-      id: cryptoRandomString({ length: 10 }),
-      domain,
-      verified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdByUserId: owner.id,
-      workspaceId: newWorkspace.id
     })
   }
 

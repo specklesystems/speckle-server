@@ -299,6 +299,12 @@ describe('Workspace repositories', () => {
   })
 
   describe('getDiscoverableWorkspacesForUserFactory creates a function, that', () => {
+    afterEach(async () => {
+      const workspaces = await db.table('workspaces').select('*')
+      await Promise.all(
+        workspaces.map(({ id: workspaceId }) => deleteWorkspace({ workspaceId }))
+      )
+    })
 
     it('should return only one workspace where multiple emails match', async () => {
       const user = await createAndStoreTestUser()
@@ -325,7 +331,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspace = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -349,14 +357,18 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspaces = await getUserDiscoverableWorkspaces({ userId: user.id, domains: ['example.org', 'speckle.systems'] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org', 'speckle.systems']
+      })
 
       expect(workspaces.length).to.equal(1)
     })
 
     it('should not return matches if the user email is not verified', async () => {
       const user = await createAndStoreTestUser()
-      const workspace = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -369,7 +381,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspaces = await getUserDiscoverableWorkspaces({ userId: user.id, domains: [] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: []
+      })
 
       expect(workspaces.length).to.equal(0)
     })
@@ -385,7 +399,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspace = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -398,7 +414,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspaces = await getUserDiscoverableWorkspaces({ userId: user.id, domains: ['example.org'] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org']
+      })
 
       expect(workspaces.length).to.equal(0)
     })
@@ -428,7 +446,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspaceA = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspaceA = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -440,7 +460,9 @@ describe('Workspace repositories', () => {
           createdByUserId: user.id
         }
       })
-      const workspaceB = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspaceB = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -453,12 +475,14 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspaces = await getUserDiscoverableWorkspaces({ userId: user.id, domains: ['example.org'] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org']
+      })
 
       expect(workspaces.length).to.equal(2)
     })
 
-    it.only('should not return workspaces the user is already a member of', async () => {
+    it('should not return workspaces the user is already a member of', async () => {
       const user = await createAndStoreTestUser()
       await updateUserEmail({
         query: {
@@ -469,7 +493,9 @@ describe('Workspace repositories', () => {
         }
       })
 
-      const workspace = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
       await storeWorkspaceDomain({
         workspaceDomain: {
           id: cryptoRandomString({ length: 6 }),
@@ -487,7 +513,40 @@ describe('Workspace repositories', () => {
         role: Roles.Workspace.Member
       })
 
-      const workspaces = await getUserDiscoverableWorkspaces({ userId: user.id, domains: ['example.org'] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org']
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('should not return workspaces that are not discoverable', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace()
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org']
+      })
 
       expect(workspaces.length).to.equal(0)
     })
