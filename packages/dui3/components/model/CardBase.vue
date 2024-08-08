@@ -43,10 +43,7 @@
           <div class="caption text-foreground-2">
             {{ folderPath }}
           </div>
-          <div
-            class="truncate font-bold text-foreground grow select-none -mt-[2px]"
-            :title="modelData.name"
-          >
+          <div class="truncate font-bold text-foreground select-none -mt-[2px]">
             {{ modelData.displayName }}
           </div>
         </div>
