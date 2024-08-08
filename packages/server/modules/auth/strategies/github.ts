@@ -11,7 +11,6 @@ import {
   resolveAuthRedirectPathFactory
 } from '@/modules/serverinvites/services/processing'
 import { passportAuthenticate } from '@/modules/auth/services/passportService'
-import { logger } from '@/logging/logging'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -69,6 +68,11 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
       done: VerifyCallback
     ) => {
       const serverInfo = await getServerInfo()
+      const logger = req.log.child({
+        authStrategy: 'github',
+        profileId: profile.id,
+        serverVersion: serverInfo.version
+      })
 
       try {
         const email = profile.emails?.[0].value
