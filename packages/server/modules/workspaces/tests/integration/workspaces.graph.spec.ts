@@ -8,6 +8,7 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
+  createTestUser,
   createTestUsers
 } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
@@ -79,7 +80,7 @@ describe('Workspaces GQL CRUD', () => {
     }
 
     before(async () => {
-      await createTestWorkspace(workspace, testUser)
+      await createTestWorkspace(workspace, testAdminUser)
       await createTestUser(testMemberUser)
 
       await apollo.execute(UpdateWorkspaceRoleDocument, {
