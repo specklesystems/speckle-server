@@ -6,6 +6,7 @@ import {
   setPrimaryUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 
 export = {
   ActiveUserMutations: {
@@ -18,13 +19,14 @@ export = {
   },
   UserEmailMutations: {
     create: async (_parent, args, ctx) => {
-      await createUserEmailFactory({ db })({
+      const email = await createUserEmailFactory({ db })({
         userEmail: {
           userId: ctx.userId!,
           email: args.input.email,
           primary: false
         }
       })
+      await requestNewEmailVerification(email.id)
       return ctx.loaders.users.getUser.load(ctx.userId!)
     },
     delete: async (_parent, args, ctx) => {
@@ -40,6 +42,10 @@ export = {
         id: args.input.id
       })
       return ctx.loaders.users.getUser.load(ctx.userId!)
+    },
+    requestNewEmailVerification: async (_parent, args) => {
+      await requestNewEmailVerification(args.input.id)
+      return null
     }
   }
 } as Resolvers
