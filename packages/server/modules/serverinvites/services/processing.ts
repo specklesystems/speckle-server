@@ -65,7 +65,7 @@ export const resolveAuthRedirectPathFactory = () => (invite?: ServerInviteRecord
  */
 export const validateServerInviteFactory =
   ({ findServerInvite }: { findServerInvite: FindServerInvite }) =>
-  async (email: string, token: string): Promise<ServerInviteRecord> => {
+  async (email?: string, token?: string): Promise<ServerInviteRecord> => {
     const invite = await findServerInvite(email, token)
     if (!invite) {
       throw new NoInviteFoundError(

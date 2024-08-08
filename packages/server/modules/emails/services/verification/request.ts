@@ -1,5 +1,12 @@
+import { FindEmail } from '@/modules/core/domain/userEmails/operations'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
+import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import {
+  findEmailFactory,
+  findPrimaryEmailForUserFactory
+} from '@/modules/core/repositories/userEmails'
 import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
@@ -10,16 +17,25 @@ import {
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { db } from '@/db/knex'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
-async function createNewVerification(userId: string) {
+const findPrimaryEmailForUser = findPrimaryEmailForUserFactory({ db })
+
+async function createNewVerification(
+  userId: string
+): Promise<VerificationRequestContext> {
   if (!userId)
     throw new EmailVerificationRequestError('User for verification not specified')
 
-  const [user, serverInfo] = await Promise.all([getUser(userId), getServerInfo()])
+  const [user, email, serverInfo] = await Promise.all([
+    getUser(userId),
+    findPrimaryEmailForUser({ userId }),
+    getServerInfo()
+  ])
 
-  if (!user)
+  if (!user || !email)
     throw new EmailVerificationRequestError(
       'Unable to resolve verification target user'
     )
@@ -31,12 +47,47 @@ async function createNewVerification(userId: string) {
 
   return {
     user,
+    email,
     verificationId,
     serverInfo
   }
 }
 
-type NewEmailVerificationState = Awaited<ReturnType<typeof createNewVerification>>
+type VerificationRequestContext = {
+  user: UserRecord
+  verificationId: string
+  serverInfo: ServerInfo
+  email: UserEmail
+}
+
+const createNewEmailVerificationFactory =
+  ({ findEmail }: { findEmail: FindEmail }) =>
+  async (emailId: string): Promise<VerificationRequestContext> => {
+    const emailRecord = await findEmail({ id: emailId })
+
+    if (!emailRecord) throw new EmailVerificationRequestError('Email not found')
+
+    if (emailRecord.verified)
+      throw new EmailVerificationRequestError('Email is already verified')
+
+    const [user, serverInfo] = await Promise.all([
+      getUser(emailRecord.userId),
+      getServerInfo()
+    ])
+
+    if (!user)
+      throw new EmailVerificationRequestError(
+        'Unable to resolve verification target user'
+      )
+
+    const verificationId = await deleteOldAndInsertNewVerification(emailRecord.email)
+    return {
+      user,
+      email: emailRecord,
+      verificationId,
+      serverInfo
+    }
+  }
 
 function buildMjmlBody() {
   const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
@@ -65,35 +116,34 @@ function buildTextBody() {
   return { bodyStart, bodyEnd }
 }
 
-function buildEmailLink(state: NewEmailVerificationState): string {
+function buildEmailLink(verificationId: string): string {
   return new URL(
-    getEmailVerificationFinalizationRoute(state.verificationId),
+    getEmailVerificationFinalizationRoute(verificationId),
     getServerOrigin()
   ).toString()
 }
 
-function buildEmailTemplateParams(
-  state: NewEmailVerificationState
-): EmailTemplateParams {
+function buildEmailTemplateParams(verificationId: string): EmailTemplateParams {
   return {
     mjml: buildMjmlBody(),
     text: buildTextBody(),
     cta: {
       title: 'Verify your E-mail',
-      url: buildEmailLink(state)
+      url: buildEmailLink(verificationId)
     }
   }
 }
 
-async function sendVerificationEmail(state: NewEmailVerificationState) {
-  const emailTemplateParams = buildEmailTemplateParams(state)
+async function sendVerificationEmail(state: VerificationRequestContext) {
+  const emailTemplateParams = buildEmailTemplateParams(state.verificationId)
   const { html, text } = await renderEmail(
     emailTemplateParams,
     state.serverInfo,
-    state.user
+    // im deliberately setting this to null, so that the email will not show the unsubscribe bit
+    null
   )
   await sendEmail({
-    to: state.user.email,
+    to: state.email.email,
     subject: EMAIL_SUBJECT,
     text,
     html
@@ -118,4 +168,14 @@ export function initializeVerificationOnRegistration() {
 
     await requestEmailVerification(user.id)
   })
+}
+
+const findEmail = findEmailFactory({ db })
+
+export const requestNewEmailVerification = async (emailId: string) => {
+  const newVerificationState = await createNewEmailVerificationFactory({
+    findEmail
+  })(emailId)
+
+  await sendVerificationEmail(newVerificationState)
 }

@@ -27,6 +27,7 @@ export type ActiveUserMutations = {
   finishOnboarding: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
+  workspaceMutations?: Maybe<UserWorkspaceMutations>;
 };
 
 
@@ -849,6 +850,10 @@ export type DiscoverableStreamsSortingInput = {
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
+};
+
+export type EmailVerificationRequestInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type FileUpload = {
@@ -3507,6 +3512,7 @@ export type UserEmailMutations = {
   __typename?: 'UserEmailMutations';
   create: User;
   delete: User;
+  requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
 };
 
@@ -3518,6 +3524,11 @@ export type UserEmailMutationsCreateArgs = {
 
 export type UserEmailMutationsDeleteArgs = {
   input: DeleteUserEmailInput;
+};
+
+
+export type UserEmailMutationsRequestNewEmailVerificationArgs = {
+  input: EmailVerificationRequestInput;
 };
 
 
@@ -3563,6 +3574,16 @@ export type UserUpdateInput = {
   bio?: InputMaybe<Scalars['String']['input']>;
   company?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UserWorkspaceMutations = {
+  __typename?: 'UserWorkspaceMutations';
+  leave: Scalars['Boolean']['output'];
+};
+
+
+export type UserWorkspaceMutationsLeaveArgs = {
+  id: Scalars['ID']['input'];
 };
 
 export type UserWorkspacesFilter = {
@@ -3805,6 +3826,11 @@ export type WorkspaceProjectsArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+
+export type WorkspaceTeamArgs = {
+  filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
@@ -3932,6 +3958,13 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceTeamFilter = {
+  /** Limit team members to provided role */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Search for team members by name or email */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceUpdateInput = {

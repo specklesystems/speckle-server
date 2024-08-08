@@ -1,6 +1,7 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { convertDateToCursor, parseCursorToDate } from '@/modules/core/services/admin'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
+import { QueryAllWorkspaceProjects } from '@/modules/workspaces/domain/operations'
 import { WorkspaceQueryError } from '@/modules/workspaces/errors/workspace'
 
 export const queryAllWorkspaceProjectsFactory = ({
@@ -8,10 +9,10 @@ export const queryAllWorkspaceProjectsFactory = ({
 }: {
   // TODO: Core service factory functions
   getStreams: typeof serviceGetStreams
-}) =>
-  async function* queryAllWorkspaceProjects(
-    workspaceId: string
-  ): AsyncGenerator<StreamRecord[], void, unknown> {
+}): QueryAllWorkspaceProjects =>
+  async function* queryAllWorkspaceProjects({
+    workspaceId
+  }): AsyncGenerator<StreamRecord[], void, unknown> {
     let cursor: Date | null = null
     let iterationCount = 0
 

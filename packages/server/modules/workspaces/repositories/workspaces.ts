@@ -4,6 +4,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
+  DeleteWorkspace,
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceCollaborators,
@@ -94,6 +95,12 @@ export const upsertWorkspaceFactory =
       .merge(['description', 'logo', 'name', 'updatedAt'])
   }
 
+export const deleteWorkspaceFactory =
+  ({ db }: { db: Knex }): DeleteWorkspace =>
+  async ({ workspaceId }) => {
+    await tables.workspaces(db).where({ id: workspaceId }).delete()
+  }
+
 export const getWorkspaceRolesFactory =
   ({ db }: { db: Knex }): GetWorkspaceRoles =>
   async ({ workspaceId }) => {
@@ -161,9 +168,7 @@ export const upsertWorkspaceRoleFactory =
 
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async (params: { workspaceId: string; role?: WorkspaceRoles }) => {
-    const { workspaceId, role } = params
-
+  async ({ workspaceId, filter = {} }) => {
     const query = DbWorkspaceAcl.knex(db)
       .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
         ...Users.cols,
@@ -174,6 +179,14 @@ export const getWorkspaceCollaboratorsFactory =
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
+
+    const { search, role } = filter || {}
+
+    if (search) {
+      query
+        .where(Users.col.name, 'ILIKE', `%${search}%`)
+        .orWhere(Users.col.email, 'ILIKE', `%${search}%`)
+    }
 
     if (role) {
       query.andWhere(DbWorkspaceAcl.col.role, role)
