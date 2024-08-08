@@ -379,7 +379,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
             insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
-          })
+          })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,

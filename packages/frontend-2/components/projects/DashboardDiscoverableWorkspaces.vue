@@ -38,8 +38,11 @@ here behind a flag for testing reasons.
 
 <script setup lang="ts">
 import { useMutation, useQuery } from '@vue/apollo-composable'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { dashboardJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
 import { dashboardDiscoverableWorkspacesQuery } from '~/lib/dashboard/graphql/queries'
+
+const { triggerNotification } = useGlobalToast()
 
 const { result, refetch } = useQuery(dashboardDiscoverableWorkspacesQuery)
 const discoverableWorkspaces = computed(() => {
@@ -49,8 +52,23 @@ const discoverableWorkspaces = computed(() => {
 const { mutate: joinWorkspace } = useMutation(dashboardJoinWorkspaceMutation)
 
 const handleJoin = async (workspaceId: string) => {
-  await joinWorkspace({ input: { workspaceId } })
-  // TODO: Redirect to workspace dashboard on success
-  refetch()
+  const result = await joinWorkspace({ input: { workspaceId } })
+
+  if (result?.data) {
+    // TODO: Redirect to workspace dashboard on success
+    refetch()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Joined workspace',
+      description: 'Successfully joined workspace'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to join workspace',
+      description: errorMessage
+    })
+  }
 }
 </script>
