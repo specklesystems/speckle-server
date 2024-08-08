@@ -42,13 +42,14 @@ export const settingsWorkspacesMembersQuery = graphql(`
   }
 `)
 
-export const settingsWorkspacesDomainsQuery = graphql(`
-  query SettingsWorkspacesDomains($workspaceId: String!) {
+export const settingsWorkspaceDataQuery = graphql(`
+  query SettingsWorkspaceData($workspaceId: String!) {
     workspace(id: $workspaceId) {
       domains {
         id
         domain
       }
+      domainBasedMembershipProtectionEnabled
     }
   }
 `)
