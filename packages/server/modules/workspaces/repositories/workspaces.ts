@@ -8,6 +8,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceCollaborators,
   GetWorkspaceDomains,
@@ -42,6 +43,16 @@ const tables = {
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
+
+export const getDiscoverableWorkspacesFactory =
+  ({ db }: { db: Knex }): GetDiscoverableWorkspaces =>
+  async ({ workspaceDomains }) => {
+    return await tables
+      .workspaceDomains(db)
+      .select<Pick<Workspace, 'id' | 'name' | 'description'>[]>('workspaceId')
+      .whereIn('domain', workspaceDomains)
+      .innerJoin('workspaces', 'workspace.id', 'id')
+  }
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>

@@ -181,6 +181,11 @@ type Workspace {
   discoverabilityEnabled: Boolean!
 }
 
+type DiscoverableWorkspace {
+  id: ID!
+  name: String!
+}
+
 type WorkspaceDomain {
   id: ID!
   domain: String!
@@ -230,6 +235,11 @@ type WorkspaceCollection {
 }
 
 extend type User {
+  """
+  Get discoverable workspaces with verified domains that match the active user's
+  """
+  discoverableWorkspaces: [DiscoverableWorkspace!]!
+
   """
   Get the workspaces for the user
   """

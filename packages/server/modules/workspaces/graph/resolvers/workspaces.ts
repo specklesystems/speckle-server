@@ -52,7 +52,8 @@ import {
   getWorkspaceRoleForUserFactory,
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
-  getWorkspaceDomainsFactory
+  getWorkspaceDomainsFactory,
+  getDiscoverableWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -76,7 +77,10 @@ import {
   getWorkspaceProjectsFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
-import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import {
+  getDiscoverableWorkspacesForUserFactory,
+  getWorkspacesForUserFactory
+} from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
@@ -541,6 +545,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       User: {
+        discoverableWorkspaces: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const getDiscoverableWorkspaces = getDiscoverableWorkspacesForUserFactory({
+            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+            getDiscoverableWorkspaces: getDiscoverableWorkspacesFactory({ db })
+          })
+
+          return await getDiscoverableWorkspaces({ userId: context.userId })
+        },
         workspaces: async (_parent, _args, context) => {
           if (!context.userId) {
             throw new WorkspacesNotAuthorizedError()

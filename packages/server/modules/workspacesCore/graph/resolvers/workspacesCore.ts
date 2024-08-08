@@ -67,7 +67,13 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         }
       },
       User: {
+        discoverableWorkspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         workspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvites: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },
