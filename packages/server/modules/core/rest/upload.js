@@ -14,7 +14,7 @@ const {
 } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
-const { toMegabytesTo1DecimalPlace } = require('@/modules/core/utils/formatting')
+const { toMegabytesWith1DecimalPlace } = require('@/modules/core/utils/formatting')
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
@@ -28,6 +28,16 @@ module.exports = (app) => {
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
+    const calculateLogMetadata = (params) => {
+      return {
+        batchSizeMb: params.batchSizeMb,
+        maxFileSizeMb: toMegabytesWith1DecimalPlace(MAX_FILE_SIZE),
+        elapsedTimeMs: Date.now() - params.start,
+        batchElapsedTimeMs: Date.now() - params.batchStartTime,
+        totalObjectsProcessed: params.totalObjectsProcessed
+      }
+    }
+
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
@@ -86,12 +96,12 @@ module.exports = (app) => {
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesTo1DecimalPlace(gzippedBuffer.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(gzippedBuffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
               }),
-              'Upload error: Batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -113,7 +123,7 @@ module.exports = (app) => {
                 batchStartTime,
                 totalObjectsProcessed
               }),
-              'Upload error: batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -163,7 +173,7 @@ module.exports = (app) => {
                   totalObjectsProcessed
                 }),
                 objectCount: objs.length,
-                error: e
+                err: e
               },
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
@@ -194,7 +204,7 @@ module.exports = (app) => {
               elapsedTimeMs: Date.now() - start,
               batchElapsedTimeMs: Date.now() - batchStartTime,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
-              uploadedSizeMB: toMegabytesTo1DecimalPlace(gunzippedBuffer.length),
+              uploadedSizeMB: toMegabytesWith1DecimalPlace(gunzippedBuffer.length),
               requestDropped,
               totalObjectsProcessed
             },
@@ -219,12 +229,12 @@ module.exports = (app) => {
           if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
               }),
-              'Upload error: Batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -238,7 +248,7 @@ module.exports = (app) => {
           } catch {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -252,7 +262,7 @@ module.exports = (app) => {
           if (!Array.isArray(objs)) {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -273,7 +283,7 @@ module.exports = (app) => {
           req.log.debug(
             {
               ...calculateLogMetadata({
-                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -296,12 +306,12 @@ module.exports = (app) => {
             req.log.error(
               {
                 ...calculateLogMetadata({
-                  batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                  batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                   start,
                   batchStartTime,
                   totalObjectsProcessed
                 }),
-                error: e
+                err: e
               },
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
@@ -380,7 +390,7 @@ module.exports = (app) => {
     busboy.on('error', async (err) => {
       req.log.info(
         {
-          error: err,
+          err,
           totalObjectsProcessed,
           elapsedTimeMs: Date.now() - start,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
@@ -394,19 +404,4 @@ module.exports = (app) => {
 
     req.pipe(busboy)
   })
-}
-
-function calculateLogMetadata({
-  batchSizeMb,
-  start,
-  batchStartTime,
-  totalObjectsProcessed
-}) {
-  return {
-    bufferSizeMb: batchSizeMb,
-    maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
-    elapsedTimeMs: Date.now() - start,
-    batchElapsedTimeMs: Date.now() - batchStartTime,
-    totalObjectsProcessed
-  }
 }
