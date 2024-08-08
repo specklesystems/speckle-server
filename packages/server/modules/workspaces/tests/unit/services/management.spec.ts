@@ -166,7 +166,6 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
     },
     workspace: {
       id: workspaceId,
-      domains: []
     }
   }
 }
