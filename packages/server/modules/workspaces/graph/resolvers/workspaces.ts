@@ -112,7 +112,9 @@ const buildCreateAndSendWorkspaceInvite = () =>
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
-      getWorkspace: getWorkspaceFactory({ db })
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,

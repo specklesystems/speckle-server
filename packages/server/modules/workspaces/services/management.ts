@@ -454,4 +454,3 @@ export const addDomainToWorkspaceFactory =
       payload: workspace
     })
   }
-

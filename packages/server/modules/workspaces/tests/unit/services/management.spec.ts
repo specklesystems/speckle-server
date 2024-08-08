@@ -149,7 +149,7 @@ type WorkspaceRoleTestContext = {
     eventName: string
     payload: unknown
   }
-  workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain> }>
+  workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain[]> }>
 }
 
 const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
@@ -166,6 +166,7 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
     },
     workspace: {
       id: workspaceId,
+      domains: []
     }
   }
 }
