@@ -39,8 +39,8 @@
           />
         </div>
 
-        <div class="grow">
-          <div class="caption text-foreground-2">
+        <div class="grow min-w-0" :title="modelData.name">
+          <div class="caption text-foreground-2 truncate">
             {{ folderPath }}
           </div>
           <div class="truncate font-bold text-foreground select-none -mt-[2px]">
