@@ -55,19 +55,19 @@
         </FormButton>
       </div>
     </div>
+
+    <SettingsUserEmailSetPrimaryDialog
+      v-model:open="showSetPrimaryDialog"
+      :email-id="emailData.id"
+      :email="emailData.email"
+    />
+
+    <SettingsUserEmailDeleteDialog
+      v-model:open="showDeleteDialog"
+      :email-id="emailData.id"
+      :email="emailData.email"
+    />
   </li>
-
-  <SettingsUserEmailSetPrimaryDialog
-    v-model:open="showSetPrimaryDialog"
-    :email-id="emailData.id"
-    :email="emailData.email"
-  />
-
-  <SettingsUserEmailDeleteDialog
-    v-model:open="showDeleteDialog"
-    :email-id="emailData.id"
-    :email="emailData.email"
-  />
 </template>
 
 <script setup lang="ts">
