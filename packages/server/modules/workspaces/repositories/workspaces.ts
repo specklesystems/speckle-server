@@ -97,7 +97,7 @@ export const upsertWorkspaceFactory =
       .workspaces(db)
       .insert(workspace)
       .onConflict('id')
-      .merge(['description', 'logo', 'name', 'updatedAt'])
+      .merge(['description', 'logo', 'name', 'updatedAt', 'domains'])
   }
 
 export const deleteWorkspaceFactory =
