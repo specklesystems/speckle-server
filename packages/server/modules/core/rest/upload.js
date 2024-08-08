@@ -85,7 +85,7 @@ module.exports = (app) => {
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              calculateMetadata({
+              calculateLogMetadata({
                 batchSizeMb: toMegabytesTo1DecimalPlace(gzippedBuffer.length),
                 start,
                 batchStartTime,
@@ -107,7 +107,12 @@ module.exports = (app) => {
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
-              calculateMetadata({ batchSizeMb: gunzippedBufferMegabyteSize }),
+              calculateLogMetadata({
+                batchSizeMb: gunzippedBufferMegabyteSize,
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
               'Upload error: batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
@@ -123,7 +128,7 @@ module.exports = (app) => {
             objs = JSON.parse(gunzippedBuffer)
           } catch {
             req.log.error(
-              calculateMetadata({
+              calculateLogMetadata({
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,
                 batchStartTime,
@@ -148,7 +153,7 @@ module.exports = (app) => {
             (e) => {
               req.log.error(
                 {
-                  ...calculateMetadata({
+                  ...calculateLogMetadata({
                     batchSizeMb: gunzippedBufferMegabyteSize,
                     start,
                     batchStartTime,
@@ -211,7 +216,7 @@ module.exports = (app) => {
 
           if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              calculateMetadata({
+              calculateLogMetadata({
                 batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
@@ -230,7 +235,7 @@ module.exports = (app) => {
             objs = JSON.parse(buffer)
           } catch {
             req.log.error(
-              calculateMetadata({
+              calculateLogMetadata({
                 batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
@@ -244,7 +249,7 @@ module.exports = (app) => {
           }
           if (!Array.isArray(objs)) {
             req.log.error(
-              calculateMetadata({
+              calculateLogMetadata({
                 batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
@@ -265,7 +270,7 @@ module.exports = (app) => {
           totalObjectsProcessed += objs.length
           req.log.debug(
             {
-              ...calculateMetadata({
+              ...calculateLogMetadata({
                 batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
@@ -285,7 +290,7 @@ module.exports = (app) => {
             (e) => {
               req.log.error(
                 {
-                  ...calculateMetadata({
+                  ...calculateLogMetadata({
                     batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
                     start,
                     batchStartTime,
@@ -317,7 +322,7 @@ module.exports = (app) => {
           await promise
           req.log.info(
             {
-              ...calculateMetadata({
+              ...calculateLogMetadata({
                 batchSizeMb: estimateStringMegabyteSize(buffer),
                 start,
                 batchStartTime,
@@ -387,7 +392,7 @@ module.exports = (app) => {
   })
 }
 
-function calculateMetadata({
+function calculateLogMetadata({
   batchSizeMb,
   start,
   batchStartTime,
