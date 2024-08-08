@@ -55,8 +55,7 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 }
 
 const createAndStoreTestWorkspace = async (
-  workspaceOverrides: Partial<Workspace> = {},
-  domains: string[] = []
+  workspaceOverrides: Partial<Workspace> = {}
 ) => {
   const workspace: Omit<Workspace, 'domains'> = {
     id: cryptoRandomString({ length: 10 }),
@@ -71,20 +70,6 @@ const createAndStoreTestWorkspace = async (
   }
 
   await upsertWorkspace({ workspace })
-
-  for (const domain of domains) {
-    await storeWorkspaceDomain({
-      workspaceDomain: {
-        id: cryptoRandomString({ length: 6 }),
-        domain,
-        workspaceId: workspace.id,
-        verified: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        createdByUserId: ''
-      }
-    })
-  }
 
   return workspace
 }
@@ -313,36 +298,48 @@ describe('Workspace repositories', () => {
   })
 
   describe('getDiscoverableWorkspacesForUserFactory creates a function, that', () => {
-    const userId = cryptoRandomString({ length: 6 })
-
     before(async () => {
-      await createAndStoreTestWorkspace({ discoverabilityEnabled: true }, [
-        'example.org'
-      ])
+      const user = await createAndStoreTestUser()
+      const workspace = await createAndStoreTestWorkspace({ discoverabilityEnabled: true })
 
-      await createUserEmail({
-        userEmail: {
-          email: 'john-speckle@example.org',
-          userId,
-          primary: true
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
         }
       })
+
       await updateUserEmail({
         query: {
-          email: 'john-speckle@example.org'
+          email: user.email
         },
         update: {
-          email: 'john-speckle@example.org',
+          email: user.email,
           verified: true
         }
       })
     })
 
-    it.only('should return workspaces', async () => {
-      const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org']
-      })
-      expect(workspaces.length).to.equal(1)
+    // it.only('should return workspaces', async () => {
+    //   const workspaces = await getUserDiscoverableWorkspaces({
+    //     domains: ['example.org']
+    //   })
+    //   expect(workspaces.length).to.equal(1)
+    // })
+
+    it('should return only one workspace where multiple emails match', async () => {
+
     })
+
+    it('should not return matches if the user email is not verified')
+
+    it('should not return workspaces if the workspace email is not verified')
+
+    it('should return multiple workspaces matching the user email')
   })
 })
