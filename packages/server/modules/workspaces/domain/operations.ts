@@ -4,6 +4,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
@@ -48,7 +49,7 @@ export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
 
 export type GetWorkspaceWithDomains = (args: {
   id: string
-}) => Promise<(Workspace & { domains: WorkspaceDomain[] }) | null>
+}) => Promise<WorkspaceWithDomains | null>
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 

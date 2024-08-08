@@ -10,6 +10,7 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }
+export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
 
 export type WorkspaceDomain = {
   id: string
