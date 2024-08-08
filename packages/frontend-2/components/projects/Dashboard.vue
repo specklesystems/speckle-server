@@ -18,6 +18,9 @@
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+
+    <ProjectsDashboardDiscoverableWorkspaces v-if="isWorkspacesEnabled" />
+
     <div
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
@@ -118,7 +121,6 @@ const search = ref('')
 const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
-
 const promoBanners = ref<PromoBanner[]>([
   {
     id: 'speckleverse',
@@ -130,6 +132,7 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
