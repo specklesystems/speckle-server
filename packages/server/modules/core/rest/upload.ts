@@ -28,7 +28,7 @@ if (FF_NO_CLOSURE_WRITES) {
   objectInsertionService = createObjectsBatchedAndNoClosures
 }
 
-module.exports = (app: Router) => {
+export default (app: Router) => {
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
