@@ -17,7 +17,7 @@
             label-position="left"
             label="Email address"
             name="email"
-            :rules="isEmail"
+            :rules="[isEmail, isRequired]"
             placeholder="Email address"
             show-label
             wrapper-classes="flex-1 py-3 md:py-0 w-full"
@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { orderBy } from 'lodash-es'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { isEmail } from '~~/lib/common/helpers/validation'
+import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUserEmailsQuery } from '~/lib/settings/graphql/queries'
@@ -71,8 +71,6 @@ const onAddEmailSubmit = handleSubmit(async () => {
       type: ToastNotificationType.Success,
       title: `${email.value} added`
     })
-
-    email.value = ''
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

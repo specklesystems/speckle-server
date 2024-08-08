@@ -30,52 +30,54 @@
           aria-hidden="true"
         />
       </div>
-      <input
-        :id="name"
-        ref="inputElement"
-        v-model="value"
-        :type="type"
-        :name="name"
-        :class="[coreClasses, iconClasses, sizeClasses, inputClasses || '']"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :aria-invalid="errorMessage ? 'true' : 'false'"
-        :aria-describedby="helpTipId"
-        role="textbox"
-        v-bind="$attrs"
-        @change="$emit('change', { event: $event, value })"
-        @input="$emit('input', { event: $event, value })"
-        @focus="$emit('focus')"
-        @blur="$emit('blur')"
-      />
-      <slot name="input-right">
-        <a
-          v-if="shouldShowClear"
-          title="Clear input"
-          class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer"
-          @click="clear"
-          @keydown="clear"
-        >
-          <span class="text-body-xs sr-only">Clear input</span>
-          <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
-        </a>
-        <div
-          v-if="errorMessage"
-          :class="[
-            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
-            shouldShowClear ? 'pr-8' : 'pr-2'
-          ]"
-        >
-          <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-        </div>
-        <div
-          v-if="!showLabel && showRequired && !errorMessage"
-          class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
-          :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
-        >
-          *
-        </div>
-      </slot>
+      <div class="relative">
+        <input
+          :id="name"
+          ref="inputElement"
+          v-model="value"
+          :type="type"
+          :name="name"
+          :class="[coreClasses, iconClasses, sizeClasses, inputClasses || '']"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :aria-invalid="errorMessage ? 'true' : 'false'"
+          :aria-describedby="helpTipId"
+          role="textbox"
+          v-bind="$attrs"
+          @change="$emit('change', { event: $event, value })"
+          @input="$emit('input', { event: $event, value })"
+          @focus="$emit('focus')"
+          @blur="$emit('blur')"
+        />
+        <slot name="input-right">
+          <a
+            v-if="shouldShowClear"
+            title="Clear input"
+            class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer"
+            @click="clear"
+            @keydown="clear"
+          >
+            <span class="text-body-xs sr-only">Clear input</span>
+            <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
+          </a>
+          <div
+            v-if="errorMessage"
+            :class="[
+              'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
+              shouldShowClear ? 'pr-8' : 'pr-2'
+            ]"
+          >
+            <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
+          </div>
+          <div
+            v-if="!showLabel && showRequired && !errorMessage"
+            class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
+            :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
+          >
+            *
+          </div>
+        </slot>
+      </div>
     </div>
     <p
       v-if="labelPosition === 'top' && helpTipId && !hideHelpTip"
