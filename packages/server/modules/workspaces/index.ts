@@ -9,12 +9,14 @@ import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 import {
   getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
+import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -40,6 +42,8 @@ const workspacesModule: SpeckleModule = {
         getStream,
         logger: moduleLogger,
         updateWorkspaceRole: updateWorkspaceRoleFactory({
+          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+          findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
           upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
           emitWorkspaceEvent: (...args) => getEventBus().emit(...args),

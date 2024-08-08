@@ -6,7 +6,9 @@ import {
   upsertWorkspaceRoleFactory,
   getWorkspaceRolesFactory,
   getWorkspaceRolesForUserFactory,
-  deleteWorkspaceFactory
+  deleteWorkspaceFactory,
+  storeWorkspaceDomainFactory,
+  getWorkspaceWithDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -18,6 +20,7 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -281,6 +284,40 @@ describe('Workspace repositories', () => {
       }
 
       await expectToThrow(() => upsertWorkspaceRole(role))
+    })
+  })
+
+  describe('getWorkspaceDomainsFactory creates a function, that', () => {
+    it('returns a workspace with domains', async () => {
+      const user = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(user)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user)
+
+      await storeWorkspaceDomainFactory({ db })({
+        workspaceDomain: {
+          id: createRandomPassword(),
+          domain: 'example.org',
+          verified: true,
+          workspaceId: workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
+        id: workspace.id
+      })
+      expect(workspaceWithDomains.domains.length).to.eq(1)
     })
   })
 })
