@@ -3837,6 +3837,11 @@ export type WorkspaceProjectsArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+
+export type WorkspaceTeamArgs = {
+  filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
@@ -3964,6 +3969,13 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceTeamFilter = {
+  /** Limit team members to provided role */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Search for team members by name or email */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceUpdateInput = {
@@ -4285,6 +4297,7 @@ export type ResolversTypes = {
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
 };
 
@@ -4508,6 +4521,7 @@ export type ResolversParentTypes = {
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
 };
 
@@ -5839,7 +5853,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType>;
+  team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType, Partial<WorkspaceTeamArgs>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -17,11 +17,11 @@ import {
   DeleteWorkspaceDocument,
   GetActiveUserWorkspacesDocument,
   GetWorkspaceDocument,
+  GetWorkspaceTeamDocument,
   UpdateWorkspaceDocument,
-  ActiveUserLeaveWorkspaceDocument,
-  UpdateWorkspaceRoleDocument
+  UpdateWorkspaceRoleDocument,
+  ActiveUserLeaveWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
@@ -66,29 +66,35 @@ describe('Workspaces GQL CRUD', () => {
   })
 
   describe('retrieval operations', () => {
-    const workspaceIds: string[] = []
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace A'
+    }
+
+    const testMemberUser: BasicTestUser = {
+      id: '',
+      name: 'Jimmy Speckle',
+      email: 'jimmy-speckle@example.org'
+    }
 
     before(async () => {
-      const workspaces: Pick<Workspace, 'name'>[] = [
-        { name: 'Workspace A' },
-        { name: 'Workspace B' }
-      ]
+      await createTestWorkspace(workspace, testUser)
+      await createTestUser(testMemberUser)
 
-      const results = await Promise.all(
-        workspaces.map((workspace) =>
-          apollo.execute(CreateWorkspaceDocument, { input: workspace })
-        )
-      )
-
-      for (const result of results) {
-        workspaceIds.push(result.data!.workspaceMutations.create.id)
-      }
+      await apollo.execute(UpdateWorkspaceRoleDocument, {
+        input: {
+          userId: testMemberUser.id,
+          workspaceId: workspace.id,
+          role: Roles.Workspace.Member
+        }
+      })
     })
 
     describe('query workspace', () => {
       it('should return a workspace that exists', async () => {
         const res = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: workspaceIds[0]
+          workspaceId: workspace.id
         })
 
         expect(res).to.not.haveGraphQLErrors()
@@ -103,12 +109,46 @@ describe('Workspaces GQL CRUD', () => {
       })
     })
 
+    describe('query workspace.team', () => {
+      it('should return workspace members', async () => {
+        const res = await apollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.length).to.equal(2)
+      })
+
+      it('should respect search filters', async () => {
+        const res = await apollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: workspace.id,
+          filter: {
+            search: 'jimmy'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.length).to.equal(1)
+      })
+
+      it('should respect role filters', async () => {
+        const res = await apollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: workspace.id,
+          filter: {
+            role: 'workspace:member'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.length).to.equal(1)
+      })
+    })
+
     describe('query activeUser.workspaces', () => {
       it('should return all workspaces for a user', async () => {
         const res = await apollo.execute(GetActiveUserWorkspacesDocument, {})
-
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.activeUser?.workspaces?.items?.length).to.above(1)
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(1)
       })
     })
   })
