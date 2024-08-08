@@ -464,6 +464,10 @@
       "redirectUris": [
         "http://localhost:8080/*",
         "http://localhost:3000/*",
+        "http://127.0.0.1:8080/*",
+        "http://127.0.0.1:3000/*",
+        "http://speckle.internal/*",
+        "http://speckle.internal:3000/*",
         "/realms/speckle/account/*"
       ],
       "webOrigins": [],
