@@ -25,6 +25,7 @@ import {
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
+  assignToWorkspace,
   BasicTestWorkspace,
   createTestWorkspace,
   createWorkspaceInviteDirectly
@@ -66,6 +67,8 @@ describe('Workspaces GQL CRUD', () => {
   })
 
   describe('retrieval operations', () => {
+    let apollo: TestApolloServer
+
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
@@ -78,16 +81,19 @@ describe('Workspaces GQL CRUD', () => {
       email: 'jimmy-speckle@example.org'
     }
 
-    before(async () => {
-      await createTestWorkspace(workspace, testUser)
-      await createTestUser(testMemberUser)
+    const testMemberUser2: BasicTestUser = {
+      id: '',
+      name: 'Some Dude',
+      email: 'some-dude@example.org'
+    }
 
-      await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: Roles.Workspace.Member
-        }
+    before(async () => {
+      await createTestUsers([testMemberUser, testMemberUser2])
+      await createTestWorkspace(workspace, testMemberUser)
+      await assignToWorkspace(workspace, testMemberUser2, Roles.Workspace.Member)
+
+      apollo = await testApolloServer({
+        authUserId: testMemberUser.id
       })
     })
 
