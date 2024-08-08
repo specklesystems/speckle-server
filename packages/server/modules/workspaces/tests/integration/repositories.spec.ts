@@ -20,7 +20,10 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { createUserEmailFactory, updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  createUserEmailFactory,
+  updateUserEmailFactory
+} from '@/modules/core/repositories/userEmails'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -51,7 +54,10 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   return userRecord
 }
 
-const createAndStoreTestWorkspace = async (workspaceOverrides: Partial<Workspace> = {}, domains: string[] = []) => {
+const createAndStoreTestWorkspace = async (
+  workspaceOverrides: Partial<Workspace> = {},
+  domains: string[] = []
+) => {
   const workspace: Omit<Workspace, 'domains'> = {
     id: cryptoRandomString({ length: 10 }),
     name: cryptoRandomString({ length: 10 }),
@@ -61,7 +67,7 @@ const createAndStoreTestWorkspace = async (workspaceOverrides: Partial<Workspace
     logo: null,
     domainBasedMembershipProtectionEnabled: false,
     discoverabilityEnabled: false,
-    ...workspaceOverrides,
+    ...workspaceOverrides
   }
 
   await upsertWorkspace({ workspace })
@@ -310,7 +316,9 @@ describe('Workspace repositories', () => {
     const userId = cryptoRandomString({ length: 6 })
 
     before(async () => {
-      await createAndStoreTestWorkspace({ discoverabilityEnabled: true }, ['example.org'])
+      await createAndStoreTestWorkspace({ discoverabilityEnabled: true }, [
+        'example.org'
+      ])
 
       await createUserEmail({
         userEmail: {
@@ -321,7 +329,7 @@ describe('Workspace repositories', () => {
       })
       await updateUserEmail({
         query: {
-          email: 'john-speckle@example.org',
+          email: 'john-speckle@example.org'
         },
         update: {
           email: 'john-speckle@example.org',
@@ -331,9 +339,10 @@ describe('Workspace repositories', () => {
     })
 
     it.only('should return workspaces', async () => {
-      const workspaces = await getUserDiscoverableWorkspaces({ domains: ['example.org'] })
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org']
+      })
       expect(workspaces.length).to.equal(1)
     })
   })
-
 })

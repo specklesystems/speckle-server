@@ -391,13 +391,14 @@ describe('Workspaces GQL CRUD', () => {
 
     it('should show workspaces discoverable to active user', async () => {
       // const getRes = await apollo.execute(GetActiveUserWorkspacesDocument, {})
-      const res = await memberApollo.execute(GetActiveUserDiscoverableWorkspacesDocument, {})
+      const res = await memberApollo.execute(
+        GetActiveUserDiscoverableWorkspacesDocument,
+        {}
+      )
       console.log(res.data?.activeUser?.discoverableWorkspaces)
 
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.activeUser?.discoverableWorkspaces?.length).to.equal(1)
     })
-
   })
-
 })
