@@ -15,6 +15,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceWithDomains,
   GetWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
@@ -26,6 +27,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
@@ -262,4 +264,27 @@ export const deleteWorkspaceDomainFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceDomain =>
   async ({ id }) => {
     await tables.workspaceDomains(db).where({ id }).delete()
+  }
+
+export const getWorkspaceWithDomainsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceWithDomains =>
+  async ({ id }) => {
+    const workspace = await tables
+      .workspaces(db)
+      .select([...Workspaces.cols, WorkspaceDomains.groupArray('domains')])
+      .where({ [Workspaces.col.id]: id })
+      .leftJoin(
+        WorkspaceDomains.name,
+        WorkspaceDomains.col.workspaceId,
+        Workspaces.col.id
+      )
+      .groupBy(Workspaces.col.id)
+      .first()
+    if (!workspace) return null
+    return {
+      ...workspace,
+      domains: workspace.domains.filter(
+        (domain: WorkspaceDomain | null) => domain !== null
+      )
+    } as Workspace & { domains: WorkspaceDomain[] }
   }

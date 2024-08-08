@@ -4,6 +4,7 @@ import {
   grantStreamPermissions,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
+import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
@@ -16,7 +17,8 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceWithDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -93,6 +95,8 @@ export const assignToWorkspace = async (
   role?: WorkspaceRoles
 ) => {
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
+    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),

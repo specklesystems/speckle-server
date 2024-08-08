@@ -52,7 +52,8 @@ import {
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
-  getUserDiscoverableWorkspacesFactory
+  getUserDiscoverableWorkspacesFactory,
+  getWorkspaceWithDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -83,7 +84,10 @@ import {
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
-import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -310,6 +314,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             const updateWorkspaceRole = updateWorkspaceRoleFactory({
               upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
               getWorkspaceRoles,
               emitWorkspaceEvent,
               getStreams,
@@ -420,6 +426,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             processInvite: processFinalizedWorkspaceInviteFactory({
               getWorkspace: getWorkspaceFactory({ db }),
               updateWorkspaceRole: updateWorkspaceRoleFactory({
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: ({ eventName, payload }) =>
