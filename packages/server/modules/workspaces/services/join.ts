@@ -35,7 +35,7 @@ export const joinWorkspaceFactory =
 
     const matchingEmail = userEmails.find((userEmail) => {
       if (!userEmail.verified) return false
-      workspaceDomains
+      return workspaceDomains
         .map((domain) => domain.domain)
         .includes(userEmail.email.split('@')[1])
     })

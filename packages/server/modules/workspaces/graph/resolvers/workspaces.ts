@@ -34,6 +34,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceInvalidRoleError,
+  WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
@@ -88,6 +89,7 @@ import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
+import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -362,6 +364,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
           await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        async join(_parent, args, context) {
+          if (!context.userId) throw new WorkspaceJoinNotAllowedError()
+
+          await joinWorkspaceFactory({
+            getUserEmails: findEmailsByUserIdFactory({ db }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
+          })
+
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
