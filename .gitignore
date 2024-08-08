@@ -72,3 +72,7 @@ postgres-data/
 redis-data/
 
 .tshy-build
+
+# .Net
+**/bin/**
+**/obj/**
