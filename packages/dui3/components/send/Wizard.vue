@@ -120,6 +120,27 @@ watch(step, (newVal, oldVal) => {
 const hostAppStore = useHostAppStore()
 
 const addModel = async () => {
+  void trackEvent('DUI3 Action', {
+    name: 'Publish Wizard',
+    step: 'objects selected',
+    filter: filter.value?.typeDiscriminator
+  })
+
+  const existingModel = hostAppStore.models.find(
+    (m) =>
+      m.modelId === selectedModel.value?.id && m.typeDiscriminator === 'SenderModelCard'
+  ) as SenderModelCard
+  if (existingModel) {
+    emit('close')
+    // Patch the existing model card with new send filter and non-expired state!
+    await hostAppStore.patchModel(existingModel.modelCardId, {
+      sendFilter: filter.value as ISendFilter,
+      expired: false
+    })
+    void hostAppStore.sendModel(existingModel.modelCardId)
+    return
+  }
+
   const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
   model.projectId = selectedProject.value?.id as string
@@ -127,12 +148,6 @@ const addModel = async () => {
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
   model.expired = false
-
-  void trackEvent('DUI3 Action', {
-    name: 'Publish Wizard',
-    step: 'objects selected',
-    filter: filter.value?.typeDiscriminator
-  })
 
   emit('close')
   await hostAppStore.addModel(model)

@@ -124,6 +124,28 @@ const selectVersionAndAddModel = async (
   version: VersionListItemFragment,
   latestVersion: VersionListItemFragment
 ) => {
+  void trackEvent('DUI3 Action', {
+    name: 'Load Wizard',
+    step: 'version selected',
+    hasSelectedLatestVersion: version.id === latestVersion.id
+  })
+
+  const existingModel = hostAppStore.models.find(
+    (m) =>
+      m.modelId === selectedModel.value?.id &&
+      m.typeDiscriminator === 'ReceiverModelCard'
+  ) as ReceiverModelCard
+  if (existingModel) {
+    emit('close')
+    // Patch the existing model card with new versions!
+    await hostAppStore.patchModel(existingModel.modelCardId, {
+      selectedVersionId: version.id,
+      latestVersionId: latestVersion.id
+    })
+    await hostAppStore.receiveModel(existingModel.modelCardId)
+    return
+  }
+
   const modelCard = new ReceiverModelCard()
   modelCard.accountId = selectedAccountId.value
   modelCard.projectId = selectedProject.value?.id as string
@@ -138,12 +160,6 @@ const selectVersionAndAddModel = async (
 
   modelCard.hasDismissedUpdateWarning = true
   modelCard.hasSelectedOldVersion = version.id !== latestVersion.id
-
-  void trackEvent('DUI3 Action', {
-    name: 'Load Wizard',
-    step: 'version selected',
-    hasSelectedLatestVersion: version.id === latestVersion.id
-  })
 
   emit('close')
   await hostAppStore.addModel(modelCard)

@@ -49,6 +49,7 @@
               <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
               The model you selected
               <b>already exists in the file.</b>
+              Your existing model will be used for operation.
             </p>
             <p class="mb-2 text-sm">Are you sure you want to proceed?</p>
           </div>
