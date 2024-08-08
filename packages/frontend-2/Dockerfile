@@ -2,9 +2,6 @@ FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-# have to build w/ sourcemaps and then delete them, cause otherwise the file hashes are different (absurd, i know...)
-ENV BUILD_SOURCEMAPS=true
-
 WORKDIR /speckle-server
 
 COPY .yarnrc.yml .
