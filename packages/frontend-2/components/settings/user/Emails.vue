@@ -17,7 +17,7 @@
             label-position="left"
             label="Email address"
             name="email"
-            :rules="emailRules"
+            :rules="isEmail"
             placeholder="Email address"
             show-label
             wrapper-classes="flex-1 py-3 md:py-0 w-full"
@@ -32,12 +32,15 @@
 <script setup lang="ts">
 import { orderBy } from 'lodash-es'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
+import { isEmail } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUserEmailsQuery } from '~/lib/settings/graphql/queries'
 import { settingsCreateUserEmailMutation } from '~/lib/settings/graphql/mutations'
-import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~~/lib/common/helpers/graphql'
 
 type FormValues = { email: string }
 
@@ -45,8 +48,6 @@ const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { result: userEmailsResult } = useQuery(settingsUserEmailsQuery)
 const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
-
-const emailRules = [isEmail, isRequired]
 
 const email = ref('')
 
@@ -62,12 +63,16 @@ const emailItems = computed(() =>
 )
 
 const onAddEmailSubmit = handleSubmit(async () => {
-  const result = await createMutation({ input: { email: email.value } })
+  const result = await createMutation({ input: { email: email.value } }).catch(
+    convertThrowIntoFetchResult
+  )
   if (result?.data) {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: `${email.value} added`
     })
+
+    email.value = ''
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

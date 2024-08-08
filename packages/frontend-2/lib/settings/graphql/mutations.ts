@@ -28,16 +28,6 @@ export const settingsDeleteUserEmailMutation = graphql(`
       }
     }
   }
-
-  mutation Delete($input: DeleteUserEmailInput!) {
-    activeUserMutations {
-      emailMutations {
-        delete(input: $input) {
-          id
-        }
-      }
-    }
-  }
 `)
 
 export const settingsSetPrimaryUserEmailMutation = graphql(`
@@ -50,6 +40,16 @@ export const settingsSetPrimaryUserEmailMutation = graphql(`
             ...SettingsUserEmailCards_UserEmail
           }
         }
+      }
+    }
+  }
+`)
+
+export const settingsNewEmailVerificationMutation = graphql(`
+  mutation SettingsNewEmailVerification($input: EmailVerificationRequestInput!) {
+    activeUserMutations {
+      emailMutations {
+        requestNewEmailVerification(input: $input)
       }
     }
   }

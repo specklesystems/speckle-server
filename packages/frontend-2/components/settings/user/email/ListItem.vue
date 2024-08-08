@@ -74,6 +74,9 @@
 import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useMutation } from '@vue/apollo-composable'
+import { settingsNewEmailVerificationMutation } from '~~/lib/settings/graphql/mutations'
+import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 graphql(`
   fragment SettingsUserEmailCards_UserEmail on UserEmail {
@@ -89,6 +92,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
+const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutation)
 
 const showDeleteDialog = ref(false)
 const showSetPrimaryDialog = ref(false)
@@ -111,10 +115,19 @@ const toggleDeleteDialog = () => {
   showDeleteDialog.value = true
 }
 
-const resendVerificationEmail = () => {
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title: `Verification mail sent to ${props.emailData.email}`
-  })
+const resendVerificationEmail = async () => {
+  const result = await resendMutation({ input: { id: props.emailData.id } })
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `Verification mail sent to ${props.emailData.email}`
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: errorMessage
+    })
+  }
 }
 </script>

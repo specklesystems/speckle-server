@@ -18,7 +18,10 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsDeleteUserEmailMutation } from '~/lib/settings/graphql/mutations'
 import { useMutation } from '@vue/apollo-composable'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~~/lib/common/helpers/graphql'
 
 const props = defineProps<{
   emailId: string
@@ -47,7 +50,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onDeleteEmail = async () => {
-  const result = await deleteMutation({ input: { id: props.emailId } })
+  const result = await deleteMutation({ input: { id: props.emailId } }).catch(
+    convertThrowIntoFetchResult
+  )
   if (result?.data) {
     triggerNotification({
       type: ToastNotificationType.Success,
