@@ -19,7 +19,8 @@ import {
   GetWorkspaceDocument,
   UpdateWorkspaceDocument,
   ActiveUserLeaveWorkspaceDocument,
-  UpdateWorkspaceRoleDocument
+  UpdateWorkspaceRoleDocument,
+  GetActiveUserDiscoverableWorkspacesDocument
 } from '@/test/graphql/generated/graphql'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { beforeEachContext } from '@/test/hooks'
@@ -361,4 +362,42 @@ describe('Workspaces GQL CRUD', () => {
       })
     })
   })
+
+  describe('discoverability', () => {
+    let memberApollo: TestApolloServer
+
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Discoverable Workspace',
+      discoverabilityEnabled: true,
+      domains: ['example.org']
+    }
+
+    before(async () => {
+      const token = await createAuthTokenForUser(testMemberUser.id, AllScopes)
+      memberApollo = await testApolloServer({
+        context: createTestContext({
+          auth: true,
+          userId: testMemberUser.id,
+          token,
+          role: testMemberUser.role,
+          scopes: AllScopes
+        })
+      })
+
+      await createTestWorkspace(workspace, testAdminUser)
+    })
+
+    it('should show workspaces discoverable to active user', async () => {
+      // const getRes = await apollo.execute(GetActiveUserWorkspacesDocument, {})
+      const res = await memberApollo.execute(GetActiveUserDiscoverableWorkspacesDocument, {})
+      console.log(res.data?.activeUser?.discoverableWorkspaces)
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res.data?.activeUser?.discoverableWorkspaces?.length).to.equal(1)
+    })
+
+  })
+
 })

@@ -854,6 +854,7 @@ export type DiscoverableStreamsSortingInput = {
 
 export type DiscoverableWorkspace = {
   __typename?: 'DiscoverableWorkspace';
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };

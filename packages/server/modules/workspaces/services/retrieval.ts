@@ -19,21 +19,21 @@ export const getDiscoverableWorkspacesForUserFactory =
     findEmailsByUserId: FindEmailsByUserId
     getDiscoverableWorkspaces: GetDiscoverableWorkspaces
   }) =>
-  async ({
-    userId
-  }: GetDiscoverableWorkspaceForUserArgs): Promise<
-    Pick<Workspace, 'id' | 'name' | 'description'>[]
-  > => {
-    const userEmails = await findEmailsByUserId({ userId })
-    const userVerifiedDomains = userEmails
-      .filter((email) => email.verified)
-      .map((email) => email.email.split('@')[1])
-    const workspaces = await getDiscoverableWorkspaces({
-      workspaceDomains: userVerifiedDomains
-    })
+    async ({
+      userId
+    }: GetDiscoverableWorkspaceForUserArgs): Promise<
+      Pick<Workspace, 'id' | 'name' | 'description'>[]
+    > => {
+      const userEmails = await findEmailsByUserId({ userId })
+      const userVerifiedDomains = userEmails
+        .filter((email) => email.verified)
+        .map((email) => email.email.split('@')[1])
+      const workspaces = await getDiscoverableWorkspaces({
+        domains: userVerifiedDomains
+      })
 
-    return workspaces
-  }
+      return workspaces
+    }
 
 type GetWorkspacesForUserArgs = {
   userId: string
@@ -47,22 +47,22 @@ export const getWorkspacesForUserFactory =
     getWorkspace: GetWorkspace
     getWorkspaceRolesForUser: GetWorkspaceRolesForUser
   }) =>
-  async ({ userId }: GetWorkspacesForUserArgs): Promise<Workspace[]> => {
-    const workspaceRoles = await getWorkspaceRolesForUser({ userId })
+    async ({ userId }: GetWorkspacesForUserArgs): Promise<Workspace[]> => {
+      const workspaceRoles = await getWorkspaceRolesForUser({ userId })
 
-    const workspaces: Workspace[] = []
+      const workspaces: Workspace[] = []
 
-    for (const workspaceRoleBatch of chunk(workspaceRoles, 20)) {
-      // TODO: Use `getWorkspaces`, which I saw Fabians already wrote in another PR
-      const workspacesBatch = await Promise.all(
-        workspaceRoleBatch.map(({ workspaceId }) => getWorkspace({ workspaceId }))
-      )
-      workspaces.push(
-        ...workspacesBatch.filter(
-          (workspace): workspace is Workspace => !isNull(workspace)
+      for (const workspaceRoleBatch of chunk(workspaceRoles, 20)) {
+        // TODO: Use `getWorkspaces`, which I saw Fabians already wrote in another PR
+        const workspacesBatch = await Promise.all(
+          workspaceRoleBatch.map(({ workspaceId }) => getWorkspace({ workspaceId }))
         )
-      )
-    }
+        workspaces.push(
+          ...workspacesBatch.filter(
+            (workspace): workspace is Workspace => !isNull(workspace)
+          )
+        )
+      }
 
-    return workspaces
-  }
+      return workspaces
+    }

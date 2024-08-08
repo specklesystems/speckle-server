@@ -26,11 +26,13 @@ import {
 import {
   createWorkspaceFactory,
   updateWorkspaceRoleFactory,
-  deleteWorkspaceRoleFactory
+  deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestWorkspace = {
   /**
@@ -44,6 +46,8 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
+  domains?: string[]
+  discoverabilityEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
@@ -56,17 +60,44 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
-  const finalWorkspace = await createWorkspace({
+  const newWorkspace = await createWorkspace({
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
       description: workspace.description || null,
-      logo: workspace.logo || null
+      logo: workspace.logo || null,
     },
     userResourceAccessLimits: null
   })
 
-  workspace.id = finalWorkspace.id
+  if (workspace.discoverabilityEnabled) {
+    const updateWorkspace = updateWorkspaceFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+    })
+
+    await updateWorkspace({
+      workspaceId: newWorkspace.id,
+      workspaceInput: {
+        discoverabilityEnabled: true
+      }
+    })
+  }
+
+  for (const domain of workspace.domains ?? []) {
+    await db.table('workspace_domains').insert({
+      id: cryptoRandomString({ length: 10 }),
+      domain,
+      verified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdByUserId: owner.id,
+      workspaceId: newWorkspace.id
+    })
+  }
+
+  workspace.id = newWorkspace.id
   workspace.ownerId = owner.id
 }
 

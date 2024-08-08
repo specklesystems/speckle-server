@@ -184,6 +184,7 @@ type Workspace {
 type DiscoverableWorkspace {
   id: ID!
   name: String!
+  description: String
 }
 
 type WorkspaceDomain {
