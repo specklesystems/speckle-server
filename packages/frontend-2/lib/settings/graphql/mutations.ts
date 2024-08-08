@@ -12,11 +12,12 @@ export const settingsUpdateWorkspaceMutation = graphql(`
   }
 `)
 
-export const settingsUpdateWorkspaceDomainProtection = graphql(`
-  mutation UpdateWorkspaceDomainProtection($input: WorkspaceUpdateInput!) {
+export const settingsUpdateWorkspaceSecurity = graphql(`
+  mutation UpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {
     workspaceMutations {
       update(input: $input) {
         domainBasedMembershipProtectionEnabled
+        discoverabilityEnabled
       }
     }
   }

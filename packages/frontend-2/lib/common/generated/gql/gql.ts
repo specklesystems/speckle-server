@@ -211,14 +211,14 @@ const documents = {
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
     "\n  mutation UpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        description\n        name\n        id\n      }\n    }\n  }\n": types.UpdateWorkspaceDocument,
-    "\n  mutation UpdateWorkspaceDomainProtection($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n": types.UpdateWorkspaceDomainProtectionDocument,
+    "\n  mutation UpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n        discoverabilityEnabled\n      }\n    }\n  }\n": types.UpdateWorkspaceSecurityDocument,
     "\n  mutation DeleteWorkspace($workspaceId: String!) {\n    workspaceMutations {\n      delete(workspaceId: $workspaceId)\n    }\n  }\n": types.DeleteWorkspaceDocument,
     "\n  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {\n    workspaceMutations {\n      addDomain(input: $input) {\n        domains {\n          id\n          domain\n        }\n      }\n    }\n  }\n": types.AddWorkspaceDomainDocument,
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        domains {\n          id\n          domain\n        }\n      }\n    }\n  }\n": types.DeleteWorkspaceDomainDocument,
     "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.SettingsSidebarWorkspacesDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspacesMembers($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      team {\n        role\n        id\n        user {\n          id\n          avatar\n          name\n          company\n          verified\n        }\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
-    "\n  query SettingsWorkspaceData($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n    }\n  }\n": types.SettingsWorkspaceDataDocument,
+    "\n  query SettingsWorkspaceSecutiry($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n      discoverabilityEnabled\n    }\n  }\n": types.SettingsWorkspaceSecutiryDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
@@ -1067,7 +1067,7 @@ export function graphql(source: "\n  mutation UpdateWorkspace($input: WorkspaceU
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateWorkspaceDomainProtection($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspaceDomainProtection($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation UpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n        discoverabilityEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        domainBasedMembershipProtectionEnabled\n        discoverabilityEnabled\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1095,7 +1095,7 @@ export function graphql(source: "\n  query SettingsWorkspacesMembers($workspaceI
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspaceData($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceData($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspaceSecutiry($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n      discoverabilityEnabled\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceSecutiry($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      domains {\n        id\n        domain\n      }\n      domainBasedMembershipProtectionEnabled\n      discoverabilityEnabled\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

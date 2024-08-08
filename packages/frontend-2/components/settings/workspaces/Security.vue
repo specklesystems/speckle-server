@@ -36,6 +36,11 @@
           name="domain-protection"
           label="Enable Domain Protection"
         />
+        <FormSwitch
+          v-model="isDomainDiscoverabilityEnabled"
+          name="domain-discoverability"
+          label="Enable Domain Discoverability"
+        />
       </div>
     </div>
     <SettingsWorkspacesSecurityAddDialog
@@ -58,8 +63,8 @@ import { useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { settingsUpdateWorkspaceDomainProtection } from '~/lib/settings/graphql/mutations'
-import { settingsWorkspaceDataQuery } from '~/lib/settings/graphql/queries'
+import { settingsUpdateWorkspaceSecurity } from '~/lib/settings/graphql/mutations'
+import { settingsWorkspaceSecurityQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
   fragment WorkspaceDomainInfo_Settings on WorkspaceDomain {
@@ -74,12 +79,10 @@ const props = defineProps<{
 
 const { triggerNotification } = useGlobalToast()
 
-const { result, refetch } = useQuery(settingsWorkspaceDataQuery, {
+const { result, refetch } = useQuery(settingsWorkspaceSecurityQuery, {
   workspaceId: props.workspaceId
 })
-const { mutate: updateDomainProtection } = useMutation(
-  settingsUpdateWorkspaceDomainProtection
-)
+const { mutate: updateWorkspaceSecurity } = useMutation(settingsUpdateWorkspaceSecurity)
 
 const domains = ref<WorkspaceDomainInfo_SettingsFragment[]>([])
 
@@ -102,7 +105,7 @@ const isDomainProtectionEnabled = computed({
   set: async (newVal) => {
     isDomainProtectionEnabledInternal.value = newVal
 
-    const result = await updateDomainProtection({
+    const result = await updateWorkspaceSecurity({
       input: {
         id: props.workspaceId,
         domainBasedMembershipProtectionEnabled: newVal
@@ -124,11 +127,39 @@ const isDomainProtectionEnabled = computed({
   }
 })
 
+const isDomainDiscoverabilityEnabledInternal = ref(false)
+const isDomainDiscoverabilityEnabled = computed({
+  get: () => isDomainDiscoverabilityEnabledInternal.value,
+  set: async (newVal) => {
+    isDomainDiscoverabilityEnabledInternal.value = newVal
+
+    const result = await updateWorkspaceSecurity({
+      input: {
+        id: props.workspaceId,
+        discoverabilityEnabled: newVal
+      }
+    })
+
+    if (!result?.data) {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update',
+        description: errorMessage
+      })
+      return
+    }
+
+    isDomainDiscoverabilityEnabledInternal.value =
+      result.data.workspaceMutations.update.discoverabilityEnabled
+  }
+})
+
 watch(result, (value) => {
   domains.value = value?.workspace.domains ?? []
   isDomainProtectionEnabledInternal.value =
     value?.workspace.domainBasedMembershipProtectionEnabled ?? false
+  isDomainDiscoverabilityEnabledInternal.value =
+    value?.workspace.domainBasedMembershipProtectionEnabled ?? false
 })
-
-// const isWorkspaceDiscoveryEnabled = ref(false)
 </script>

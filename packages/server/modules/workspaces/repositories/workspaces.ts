@@ -102,7 +102,8 @@ export const upsertWorkspaceFactory =
         'logo',
         'name',
         'updatedAt',
-        'domainBasedMembershipProtectionEnabled'
+        'domainBasedMembershipProtectionEnabled',
+        'discoverabilityEnabled'
       ])
   }
 

@@ -42,14 +42,15 @@ export const settingsWorkspacesMembersQuery = graphql(`
   }
 `)
 
-export const settingsWorkspaceDataQuery = graphql(`
-  query SettingsWorkspaceData($workspaceId: String!) {
+export const settingsWorkspaceSecurityQuery = graphql(`
+  query SettingsWorkspaceSecutiry($workspaceId: String!) {
     workspace(id: $workspaceId) {
       domains {
         id
         domain
       }
       domainBasedMembershipProtectionEnabled
+      discoverabilityEnabled
     }
   }
 `)
