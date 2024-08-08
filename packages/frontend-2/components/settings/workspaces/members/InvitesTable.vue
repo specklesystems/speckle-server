@@ -42,7 +42,7 @@
       </template>
       <template #lastRemindedOn="{ item }">
         <span class="text-body-xs text-foreground-2">
-          {{ formattedFullDate(item.lastRemindedAt) }}
+          {{ formattedFullDate(item.updatedAt) }}
         </span>
       </template>
     </LayoutTable>
@@ -63,7 +63,7 @@ graphql(`
       id
       role
       title
-      lastRemindedAt
+      updatedAt
       user {
         id
         ...LimitedUserAvatar
