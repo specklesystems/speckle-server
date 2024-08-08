@@ -8,7 +8,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
-  GetDiscoverableWorkspaces,
+  GetUserDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceCollaborators,
   GetWorkspaceDomains,
@@ -45,12 +45,13 @@ const tables = {
 }
 
 export const getUserDiscoverableWorkspacesFactory =
-  ({ db }: { db: Knex }): GetDiscoverableWorkspaces =>
-    async ({ domains }) => {
+  ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
+    async ({ userId, domains }) => {
       return await tables
         .workspaceDomains(db)
         .select('workspaces.id as id', 'name', 'description')
         .whereIn('domain', domains)
+        .andWhere('verified', true)
         .innerJoin('workspaces', 'workspaces.id', 'workspace_domains.workspaceId')
         .distinct('workspaces.id')
     }
