@@ -1,11 +1,7 @@
 <template>
   <div>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
-      <WorkspaceHeader
-        title="Workspace"
-        :icon="Squares2X2Icon"
-        :workspace-id="workspaceId"
-      />
+      <WorkspaceHeader :icon="Squares2X2Icon" :workspace-id="workspaceId" />
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div class="flex flex-col sm:flex-row gap-2">
           <FormTextInput
@@ -128,6 +124,7 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
 )
 
 const projects = computed(() => projectsPanelResult.value?.workspace?.projects)
+
 const showEmptyState = computed(() => {
   return false
 })
