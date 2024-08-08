@@ -16,7 +16,7 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
   role: WorkspaceRoles
   invitedById: string
   user: LimitedUserRecord | null
-  lastRemindedAt: Date
+  updatedAt: Date
 }
 
 export type WorkspaceCollaboratorGraphQLReturn = UserWithRole<LimitedUserRecord> & {

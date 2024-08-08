@@ -24,6 +24,7 @@ import {
   FindServerInvite,
   FindServerInvites,
   InsertInviteAndDeleteOld,
+  MarkInviteUpdated,
   QueryAllResourceInvites,
   QueryAllUserResourceInvites,
   QueryInvites,
@@ -91,7 +92,7 @@ const buildInvitesBaseQuery =
 
     const q = db(ServerInvites.name)
       .select<Result>(ServerInvites.cols)
-      .orderBy(ServerInvites.col.createdAt, sort)
+      .orderBy(ServerInvites.col.updatedAt, sort)
 
     // single built in filter
     projectInviteValidityFilter(q)
@@ -498,4 +499,14 @@ export const findInviteByTokenFactory =
       .first()
 
     return (await q) || null
+  }
+
+export const markInviteUpdatedfactory =
+  ({ db }: { db: Knex }): MarkInviteUpdated =>
+  async ({ inviteId }) => {
+    const cols = ServerInvites.with({ withoutTablePrefix: true }).col
+    const ret = await db(ServerInvites.name)
+      .where(ServerInvites.col.id, inviteId)
+      .update(cols.updatedAt, new Date())
+    return !!ret
   }

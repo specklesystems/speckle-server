@@ -181,7 +181,7 @@ type WorkspaceCollaborator {
 
 type PendingWorkspaceCollaborator {
   id: ID!
-  lastRemindedAt: DateTime!
+  updatedAt: DateTime!
   inviteId: String!
   workspaceId: String!
   workspaceName: String!

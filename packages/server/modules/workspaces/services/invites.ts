@@ -243,7 +243,7 @@ function buildPendingWorkspaceCollaboratorModel(
     role: invite.resource.role || Roles.Workspace.Member,
     invitedById: invite.inviterId,
     user: targetUser,
-    lastRemindedAt: invite.createdAt
+    updatedAt: invite.updatedAt
   }
 }
 
