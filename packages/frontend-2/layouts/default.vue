@@ -2,21 +2,30 @@
   <div>
     <HeaderNavBar />
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
+      <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-14 w-full shrink-0"></div>
+
+      <!-- Sidebar -->
       <div class="relative flex h-[calc(100dvh-3.5rem)]">
-        <div class="h-full w-64 shrink-0">
+        <div class="h-full w-64 shrink-0 border-r border-outline-3 px-2 py-3">
           <LayoutSidebar>
             <LayoutSidebarMenu>
-              <LayoutSidebarMenuGroup title="Dashboard">
-                <template #title-icon>
-                  <HomeIcon class="size-5" />
-                </template>
+              <LayoutSidebarMenuGroup>
+                <LayoutSidebarMenuGroupItem label="Dashboard" :to="homeRoute" external>
+                  <template #icon>
+                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+
                 <LayoutSidebarMenuGroupItem
-                  v-for="(item, key) in dashboardItems"
-                  :key="key"
-                  :label="item.label"
-                  :to="item.to"
-                />
+                  label="Projects"
+                  :to="projectsRoute"
+                  external
+                >
+                  <template #icon>
+                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup collapsible title="Workspaces">
@@ -28,33 +37,47 @@
                   :key="key"
                   :label="item.label"
                   :to="item.to"
-                  :tag="item.tag"
                 />
               </LayoutSidebarMenuGroup>
 
-              <LayoutSidebarMenuGroup title="Favourites" collapsible>
-                <template #title-icon>
-                  <HeartIcon class="size-5" />
-                </template>
+              <LayoutSidebarMenuGroup collapsible title="Resources">
                 <LayoutSidebarMenuGroupItem
-                  v-for="(item, key) in favouritesItems"
-                  :key="key"
-                  :label="item.label"
-                  :to="item.to"
-                />
-              </LayoutSidebarMenuGroup>
-
-              <LayoutSidebarMenuGroup title="Resources">
-                <template #title-icon>
-                  <BookOpenIcon class="size-5" />
-                </template>
+                  label="Connectors"
+                  to="https://speckle.systems/features/connectors/"
+                  external
+                >
+                  <template #icon>
+                    <IconConnectors class="h-4 w-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
                 <LayoutSidebarMenuGroupItem
-                  v-for="(item, key) in resourcesItems"
-                  :key="key"
-                  :label="item.label"
-                  :to="item.to"
-                  :external="item.external"
-                />
+                  label="Community forum"
+                  to="https://speckle.community/"
+                  external
+                >
+                  <template #icon>
+                    <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+                <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
+                  <template #icon>
+                    <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+                <LayoutSidebarMenuGroupItem
+                  label="Documentation"
+                  to="https://speckle.guide/"
+                  external
+                >
+                  <template #icon>
+                    <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+                <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
+                  <template #icon>
+                    <ClockIcon class="h-5 w-5 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
               </LayoutSidebarMenuGroup>
             </LayoutSidebarMenu>
           </LayoutSidebar>
@@ -71,7 +94,13 @@
 </template>
 
 <script setup lang="ts">
-import { HomeIcon, BookOpenIcon, HeartIcon } from '@heroicons/vue/24/outline'
+import {
+  BriefcaseIcon,
+  ChatBubbleLeftIcon,
+  GlobeAltIcon,
+  ClockIcon,
+  Squares2X2Icon
+} from '@heroicons/vue/24/outline'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -79,54 +108,23 @@ import {
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { homeRoute } from '~/lib/common/helpers/route'
+import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
 
 const { activeUser } = useActiveUser()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
+  enabled: isWorkspacesEnabled.value
+})
 
-const dashboardItems = computed(() => [
-  {
-    label: 'Dashboard',
-    id: 'dashboard',
-    to: homeRoute
-  },
-  { label: 'Projects', id: 'projects', to: '/projects' },
-  { label: 'Activity', id: 'activity', to: '/activity' },
-  { label: 'Settings', id: 'settings', to: '/settings' }
-])
-
-const workspacesItems = computed(() => [
-  { label: "Benjamin's space", id: 'default-space', tag: 'Free', to: '/workspace' },
-  { label: 'Acme Inc', id: 'profile', to: '/workspace' }
-])
-
-const favouritesItems = computed(() => [
-  { label: 'Different Houses', id: 'different-houses', to: '' },
-  { label: 'Another Project', id: 'another-project', to: '' },
-  { label: 'The Palace', id: 'the-palace', to: '' },
-  { label: 'A discussion title', id: 'a-discussion-title', to: '' },
-  { label: 'An automation name', id: 'an-automation-name', to: '' }
-])
-
-const resourcesItems = computed(() => [
-  {
-    label: 'Connectors',
-    id: 'connectors',
-    to: 'https://speckle.systems/features/connectors/',
-    external: true
-  },
-  {
-    label: 'Community forum',
-    id: 'community-forum',
-    to: 'https://speckle.community/',
-    external: true
-  },
-  {
-    label: 'Documentation',
-    id: 'documentation',
-    to: 'https://speckle.guide/',
-    external: true
-  },
-  { label: 'Changelog', id: 'changelog', to: '', external: true },
-  { label: 'Give us feedback', id: 'give-us-feedback', to: '' }
-])
+const workspacesItems = computed(() =>
+  workspaceResult.value?.activeUser
+    ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
+        label: workspace.name,
+        id: workspace.id,
+        to: workspaceRoute(workspace.id)
+      }))
+    : []
+)
 </script>

@@ -2,7 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div
-      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
+      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-8 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
     >
       <div v-if="showChecklist">
         <OnboardingChecklistV1 show-intro />
@@ -20,7 +20,7 @@
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
     <div
       v-if="!showEmptyState"
-      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
+      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8"
     >
       <h1 class="text-heading-xl">Projects</h1>
 

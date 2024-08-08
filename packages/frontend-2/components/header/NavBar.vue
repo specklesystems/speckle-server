@@ -1,44 +1,36 @@
 <template>
-  <div>
-    <nav class="fixed z-20 top-0 h-14 bg-foundation border-b border-outline-2">
-      <div
-        class="flex gap-4 items-center justify-between h-full w-screen py-4 pl-3 pr-4"
-      >
-        <div class="flex items-center truncate">
-          <HeaderLogoBlock :active="false" to="/" />
-          <HeaderNavLink
-            to="/"
-            name="Dashboard"
-            :separator="true"
-            class="hidden md:inline-block"
-          />
-          <ClientOnly>
-            <PortalTarget name="navigation"></PortalTarget>
-          </ClientOnly>
-        </div>
-        <div class="flex items-center gap-2.5 sm:gap-2">
-          <ClientOnly>
-            <PortalTarget name="secondary-actions"></PortalTarget>
-            <PortalTarget name="primary-actions"></PortalTarget>
-          </ClientOnly>
-          <!-- Notifications dropdown -->
-          <HeaderNavNotifications />
-          <FormButton
-            v-if="!activeUser"
-            :to="loginUrl.fullPath"
-            color="outline"
-            class="hidden md:flex"
-          >
-            Sign in
-          </FormButton>
-          <!-- Profile dropdown -->
-          <HeaderNavUserMenu :login-url="loginUrl" />
-        </div>
+  <nav
+    class="fixed top-0 left-0 z-50 w-full h-14 bg-foundation shadow shrink-0 border-b border-outline-3"
+  >
+    <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-4">
+      <div class="flex items-center truncate gap-2">
+        <HeaderLogoBlock :active="false" to="/" />
+        <HeaderNavLink to="/" name="Dashboard" :separator="true" />
+        <ClientOnly>
+          <PortalTarget name="navigation"></PortalTarget>
+        </ClientOnly>
       </div>
-      <PopupsSignIn v-if="!activeUser" />
-    </nav>
-    <div class="h-16"></div>
-  </div>
+      <div class="flex items-center gap-2.5 sm:gap-2">
+        <ClientOnly>
+          <PortalTarget name="secondary-actions"></PortalTarget>
+          <PortalTarget name="primary-actions"></PortalTarget>
+        </ClientOnly>
+        <!-- Notifications dropdown -->
+        <HeaderNavNotifications />
+        <FormButton
+          v-if="!activeUser"
+          :to="loginUrl.fullPath"
+          class="hidden md:flex"
+          size="sm"
+        >
+          Sign In
+        </FormButton>
+        <!-- Profile dropdown -->
+        <HeaderNavUserMenu :login-url="loginUrl" />
+      </div>
+    </div>
+    <PopupsSignIn v-if="!activeUser" />
+  </nav>
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
