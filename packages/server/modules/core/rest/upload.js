@@ -57,7 +57,7 @@ module.exports = (app) => {
           'Failed to parse request headers and body content as valid multipart/form-data.'
         )
     }
-    let totalProcessed = 0
+    let totalObjectsProcessed = 0
 
     const promises = []
     let requestDropped = false
@@ -79,20 +79,19 @@ module.exports = (app) => {
             `File upload of the multipart form has reached an end of file (EOF) boundary. The mimetype of the file is '${mimeType}'.`
           )
           if (requestDropped) return
-          const objectBatchFileEndTime = Date.now()
+          const batchStartTime = Date.now()
           let objs = []
 
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              {
-                bufferLengthMb: toMegabytesTo1DecimalPlace(gzippedBuffer.length),
-                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
-                elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                totalProcessed
-              },
-              'Upload error: Batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+              calculateMetadata({
+                batchSizeMb: toMegabytesTo1DecimalPlace(gzippedBuffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              'Upload error: Batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -108,14 +107,8 @@ module.exports = (app) => {
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
-              {
-                bufferLengthMb: gunzippedBufferMegabyteSize,
-                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
-                elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                totalProcessed
-              },
-              'Upload error: batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.'
+              calculateMetadata({ batchSizeMb: gunzippedBufferMegabyteSize }),
+              'Upload error: batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -130,19 +123,20 @@ module.exports = (app) => {
             objs = JSON.parse(gunzippedBuffer)
           } catch {
             req.log.error(
-              {
-                elapsedTimeMs: Date.now() - start,
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                totalProcessed
-              },
-              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+              calculateMetadata({
+                batchSizeMb: gunzippedBufferMegabyteSize,
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
           }
 
           // last = objs[objs.length - 1]
-          totalProcessed += objs.length
+          totalObjectsProcessed += objs.length
 
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
@@ -154,13 +148,16 @@ module.exports = (app) => {
             (e) => {
               req.log.error(
                 {
-                  elapsedTimeMs: Date.now() - start,
+                  ...calculateMetadata({
+                    batchSizeMb: gunzippedBufferMegabyteSize,
+                    start,
+                    batchStartTime,
+                    totalObjectsProcessed
+                  }),
                   objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                  totalProcessed,
                   error: e
                 },
-                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
               )
               if (!requestDropped) {
                 switch (e.constructor) {
@@ -188,13 +185,13 @@ module.exports = (app) => {
             {
               objectCount: objs.length,
               elapsedTimeMs: Date.now() - start,
-              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
+              batchElapsedTimeMs: Date.now() - batchStartTime,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: toMegabytesTo1DecimalPlace(gunzippedBuffer.length),
               requestDropped,
-              totalProcessed
+              totalObjectsProcessed
             },
-            'Uploaded batch of {objectCount} objects in {objectBatchElapsedTimeMs}ms. Total objects processed so far: {totalProcessed} in a total of {elapsedTimeMs}ms.'
+            'Uploaded batch of {objectCount} objects in {batchElapsedTimeMs}ms. Total objects processed so far: {totalObjectsProcessed} in a total of {elapsedTimeMs}ms.'
           )
         })
       } else if (
@@ -209,19 +206,18 @@ module.exports = (app) => {
 
         file.on('end', async () => {
           if (requestDropped) return
-          const objectBatchFileEndTime = Date.now()
+          const batchStartTime = Date.now()
           let objs = []
 
           if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
-              {
-                bufferLengthMb: toMegabytesTo1DecimalPlace(buffer.length),
-                maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                elapsedTimeMs: Date.now() - start,
-                totalProcessed
-              },
-              'Upload error: Batch size too large ({bufferLengthMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+              calculateMetadata({
+                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              'Upload error: Batch size too large ({bufferSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -234,12 +230,13 @@ module.exports = (app) => {
             objs = JSON.parse(buffer)
           } catch {
             req.log.error(
-              {
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                elapsedTimeMs: Date.now() - start,
-                totalProcessed
-              },
-              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+              calculateMetadata({
+                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res.status(400).send('Failed to parse data. Batch is not in JSON format.')
@@ -247,12 +244,13 @@ module.exports = (app) => {
           }
           if (!Array.isArray(objs)) {
             req.log.error(
-              {
-                objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                elapsedTimeMs: Date.now() - start,
-                totalProcessed
-              },
-              'Upload error: Batch not an array. Error occurred after {elapsedTimeMs}ms. This batch failed after {objectBatchElapsedTimeMs}ms. Objects processed before error: {totalProcessed}.'
+              calculateMetadata({
+                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              'Upload error: Batch not an array. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
             )
             if (!requestDropped)
               res
@@ -264,15 +262,18 @@ module.exports = (app) => {
           }
           //FIXME should we exit here if requestDropped is true
 
-          totalProcessed += objs.length
+          totalObjectsProcessed += objs.length
           req.log.debug(
             {
-              objectCount: objs.length,
-              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-              elapsedTimeMs: Date.now() - start,
-              totalProcessed
+              ...calculateMetadata({
+                batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
+              objectCount: objs.length
             },
-            'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalProcessed}. This batch has taken {objectBatchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
+            'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalObjectsProcessed}. This batch has taken {batchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
           )
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
@@ -284,13 +285,15 @@ module.exports = (app) => {
             (e) => {
               req.log.error(
                 {
-                  elapsedTimeMs: Date.now() - start,
-                  objectCount: objs.length,
-                  objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-                  totalProcessed,
+                  ...calculateMetadata({
+                    batchSizeMb: toMegabytesTo1DecimalPlace(buffer.length),
+                    start,
+                    batchStartTime,
+                    totalObjectsProcessed
+                  }),
                   error: e
                 },
-                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {objectBatchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalProcessed}.`
+                `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
               )
               if (!requestDropped)
                 switch (e.constructor) {
@@ -314,22 +317,25 @@ module.exports = (app) => {
           await promise
           req.log.info(
             {
+              ...calculateMetadata({
+                batchSizeMb: estimateStringMegabyteSize(buffer),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
               objectCount: objs.length,
-              objectBatchElapsedTimeMs: Date.now() - objectBatchFileEndTime,
-              uploadedSizeMB: estimateStringMegabyteSize(buffer),
-              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
-              totalProcessed
+              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
             },
-            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalProcessed}. This batch took {objectBatchElapsedTimeMs}ms.'
+            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalObjectsProcessed}. This batch took {batchElapsedTimeMs}ms.'
           )
         })
       } else {
         req.log.info(
           {
             mimeType,
-            totalProcessed
+            totalObjectsProcessed
           },
-          'Invalid ContentType header: {mimeType}. Total number of objects processed so far: {totalProcessed}.'
+          'Invalid ContentType header: {mimeType}. Total number of objects processed so far: {totalObjectsProcessed}.'
         )
         if (!requestDropped)
           res
@@ -346,11 +352,11 @@ module.exports = (app) => {
 
       req.log.info(
         {
-          totalProcessed,
+          totalObjectsProcessed,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
           elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalProcessed} objects processed in {elapsedTimeMs}ms'
+        'Upload finished: {totalObjectsProcessed} objects processed in {elapsedTimeMs}ms'
       )
 
       let previouslyAwaitedPromises = 0
@@ -366,11 +372,11 @@ module.exports = (app) => {
       req.log.info(
         {
           error: err,
-          totalProcessed,
+          totalObjectsProcessed,
           elapsedTimeMs: Date.now() - start,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
-        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalProcessed}. Error: {error}'
+        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}. Error: {error}'
       )
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')
@@ -379,4 +385,19 @@ module.exports = (app) => {
 
     req.pipe(busboy)
   })
+}
+
+function calculateMetadata({
+  batchSizeMb,
+  start,
+  batchStartTime,
+  totalObjectsProcessed
+}) {
+  return {
+    bufferSizeMb: batchSizeMb,
+    maxFileSizeMb: toMegabytesTo1DecimalPlace(MAX_FILE_SIZE),
+    elapsedTimeMs: Date.now() - start,
+    batchElapsedTimeMs: Date.now() - batchStartTime,
+    totalObjectsProcessed
+  }
 }
