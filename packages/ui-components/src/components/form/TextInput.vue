@@ -30,7 +30,6 @@
           aria-hidden="true"
         />
       </div>
-
       <input
         :id="name"
         ref="inputElement"
