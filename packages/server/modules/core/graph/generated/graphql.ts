@@ -1728,6 +1728,7 @@ export type PendingWorkspaceCollaborator = {
   id: Scalars['ID']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
+  lastRemindedAt: Scalars['DateTime']['output'];
   /** Target workspace role */
   role: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
@@ -5193,6 +5194,7 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  lastRemindedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
