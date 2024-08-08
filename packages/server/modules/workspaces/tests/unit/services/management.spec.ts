@@ -165,7 +165,7 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
       payload: {}
     },
     workspace: {
-      id: workspaceId,
+      id: workspaceId
     }
   }
 }
