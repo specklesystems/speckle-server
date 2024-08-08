@@ -26,7 +26,7 @@ input WorkspaceUpdateInput {
   """
   logo: String
   domainBasedMembershipProtectionEnabled: Boolean
-  discoveryEnabled: Boolean
+  discoverabilityEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -178,7 +178,7 @@ type Workspace {
   """
   Enable/Disable discovery of the workspace
   """
-  discoveryEnabled: Boolean!
+  discoverabilityEnabled: Boolean!
 }
 
 type WorkspaceDomain {

@@ -93,7 +93,7 @@ export const createWorkspaceFactory =
       createdAt: new Date(),
       updatedAt: new Date(),
       domainBasedMembershipProtectionEnabled: false,
-      discoveryEnabled: false
+      discoverabilityEnabled: false
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator

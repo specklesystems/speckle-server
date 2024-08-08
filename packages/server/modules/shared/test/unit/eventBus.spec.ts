@@ -14,7 +14,7 @@ const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
     updatedAt: new Date(),
     createdAt: new Date(),
     domainBasedMembershipProtectionEnabled: false,
-    discoveryEnabled: false
+    discoverabilityEnabled: false
   }
 }
 
