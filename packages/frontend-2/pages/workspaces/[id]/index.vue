@@ -7,6 +7,10 @@
 <script setup lang="ts">
 const { isLoggedIn } = useActiveUser()
 
+definePageMeta({
+  middleware: ['auth', 'requires-workspaces-enabled']
+})
+
 useHead({
   title: 'Dashboard'
 })
