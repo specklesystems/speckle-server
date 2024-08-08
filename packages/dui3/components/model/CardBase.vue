@@ -38,12 +38,19 @@
             class="z-0 max-[275px]:hidden"
           />
         </div>
-        <div
-          class="truncate font-bold text-foreground grow select-none -mt-[2px]"
-          :title="modelData.name"
-        >
-          {{ modelData.displayName }}
+
+        <div class="grow">
+          <div class="caption text-foreground-2">
+            {{ folderPath }}
+          </div>
+          <div
+            class="truncate font-bold text-foreground grow select-none -mt-[2px]"
+            :title="modelData.name"
+          >
+            {{ modelData.displayName }}
+          </div>
         </div>
+
         <ModelActionsDialog
           :model-card="modelCard"
           :model-name="modelData.displayName"
@@ -220,6 +227,13 @@ const { result: modelResult, loading } = useQuery(
 
 const modelData = computed(() => modelResult.value?.project.model)
 const queryData = computed(() => modelResult.value?.project)
+
+const folderPath = computed(() => {
+  const splitName = modelData.value?.name.split('/')
+  if (!splitName || splitName.length === 1) return ' '
+  const withoutLast = splitName.slice(0, -1)
+  return withoutLast.join('/')
+})
 
 provide<IModelCard>('cardBase', props.modelCard)
 
