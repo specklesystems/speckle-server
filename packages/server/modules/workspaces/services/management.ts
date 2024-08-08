@@ -6,7 +6,8 @@ import {
   StoreWorkspaceDomain,
   QueryAllWorkspaceProjects,
   UpsertWorkspace,
-  UpsertWorkspaceRole
+  UpsertWorkspaceRole,
+  GetWorkspaceWithDomains
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -30,6 +31,7 @@ import {
   WorkspaceAdminRequiredError,
   WorkspaceDomainBlockedError,
   WorkspaceNotFoundError,
+  WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import {
@@ -46,7 +48,10 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import {
+  FindEmailsByUserId,
+  FindVerifiedEmailsByUserId
+} from '@/modules/core/domain/userEmails/operations'
 import { blockedDomains } from '@/modules/workspaces/helpers/blockedDomains'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
@@ -279,12 +284,16 @@ export const getWorkspaceRoleFactory =
 export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
+    getWorkspaceWithDomains,
+    findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
     emitWorkspaceEvent,
     getStreams,
     grantStreamPermissions
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
+    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     // TODO: Create `core` domain and import type from there
@@ -309,6 +318,26 @@ export const updateWorkspaceRoleFactory =
       role !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
+    }
+
+    if (role !== Roles.Workspace.Guest) {
+      const workspace = await getWorkspaceWithDomains({ id: workspaceId })
+      const verifiedDomains = workspace?.domains.filter((domain) => domain?.verified)
+      if (
+        workspace &&
+        verifiedDomains &&
+        workspace?.domainBasedMembershipProtectionEnabled &&
+        verifiedDomains.length > 0
+      ) {
+        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
+        const verifiedUserEmails = await findVerifiedEmailsByUserId({ userId })
+        const domainMatching = verifiedUserEmails.find((userEmail) =>
+          domains.has(userEmail.email.split('@')[1])
+        )
+        if (!domainMatching) {
+          throw new WorkspaceProtectedError()
+        }
+      }
     }
 
     // Perform upsert
@@ -370,7 +399,7 @@ export const addDomainToWorkspaceFactory =
 
     const email = userEmails.find(
       (userEmail) =>
-        userEmail.verified && userEmail.email.split('@')[1].endsWith(sanitizedDomain)
+        userEmail.verified && userEmail.email.split('@')[1] === sanitizedDomain
     )
 
     if (!email) {

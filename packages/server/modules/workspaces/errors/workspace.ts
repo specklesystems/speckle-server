@@ -49,3 +49,9 @@ export class WorkspaceDomainBlockedError extends BaseError {
   static code = 'WORKSPACE_DOMAIN_BLOCKED_ERROR'
   static statusCode = 400
 }
+
+export class WorkspaceProtectedError extends BaseError {
+  static defaultMessage = 'Workspace protected'
+  static code = 'WORKSPACE_PROTECTED'
+  static statusCode = 400
+}

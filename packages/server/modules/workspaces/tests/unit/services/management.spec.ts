@@ -19,10 +19,13 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import {
   WorkspaceAdminRequiredError,
   WorkspaceDomainBlockedError,
+  WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { omit } from 'lodash'
+import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
+import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Omit<Workspace, 'domains'>[]
@@ -145,11 +148,13 @@ type WorkspaceRoleTestContext = {
     eventName: string
     payload: unknown
   }
+  workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain> }>
 }
 
 const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
+  const workspaceId = cryptoRandomString({ length: 10 })
   return {
-    workspaceId: cryptoRandomString({ length: 10 }),
+    workspaceId,
     workspaceRoles: [],
     workspaceProjects: [],
     workspaceProjectRoles: [],
@@ -157,6 +162,10 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
       isCalled: false,
       eventName: '',
       payload: {}
+    },
+    workspace: {
+      id: workspaceId,
+      domains: []
     }
   }
 }
@@ -226,6 +235,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
   const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
+    getWorkspaceWithDomains: async () =>
+      context.workspace as unknown as Workspace & { domains: WorkspaceDomain[] },
+    findVerifiedEmailsByUserId: async () => [],
     upsertWorkspaceRole: async (role) => {
       const currentRoleIndex = context.workspaceRoles.findIndex(
         (acl) => acl.userId === role.userId && acl.workspaceId === role.workspaceId
@@ -384,6 +396,57 @@ describe('Workspace role services', () => {
       await expectToThrow(() =>
         updateWorkspaceRole({ ...role, role: Roles.Workspace.Member })
       )
+    })
+    it('throws if attempting to set user role to more than GUEST and workspace domain protection is enabled and user has not an email matching a workspace domain', async () => {
+      const adminId = cryptoRandomString({ length: 10 })
+      const guestId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const roleAdmin: WorkspaceAcl = {
+        userId: adminId,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      }
+      const roleGuest: WorkspaceAcl = {
+        userId: guestId,
+        workspaceId,
+        role: Roles.Workspace.Guest
+      }
+
+      const workspace = {
+        id: workspaceId,
+        domainBasedMembershipProtectionEnabled: true,
+        domains: [
+          {
+            verified: true,
+            domain: 'example.org'
+          }
+        ]
+      }
+
+      const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext(
+        {
+          workspaceId,
+          workspaceRoles: [roleAdmin, roleGuest]
+        },
+        {
+          getWorkspaceWithDomains: (() =>
+            workspace) as unknown as GetWorkspaceWithDomains,
+          findVerifiedEmailsByUserId: (() => [
+            {
+              email: 'notcorrect@nonexample.org'
+            }
+          ]) as unknown as FindVerifiedEmailsByUserId
+        }
+      )
+
+      const err = await expectToThrow(() =>
+        updateWorkspaceRole({
+          workspaceId,
+          userId: guestId,
+          role: Roles.Workspace.Member
+        })
+      )
+      expect(err.message).to.eq(new WorkspaceProtectedError().message)
     })
     it('sets roles on workspace projects', async () => {
       const userId = cryptoRandomString({ length: 10 })
