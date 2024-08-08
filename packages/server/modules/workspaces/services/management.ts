@@ -6,7 +6,8 @@ import {
   StoreWorkspaceDomain,
   QueryAllWorkspaceProjects,
   UpsertWorkspace,
-  UpsertWorkspaceRole
+  UpsertWorkspaceRole,
+  GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -106,10 +107,10 @@ export const createWorkspaceFactory =
     // emit a workspace created event
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Created,
-      payload: { ...workspace, createdByUserId: userId, domains: [] }
+      payload: { ...workspace, createdByUserId: userId }
     })
 
-    return { ...workspace, domains: [] }
+    return { ...workspace }
   }
 
 type WorkspaceUpdateArgs = {
@@ -347,12 +348,14 @@ export const addDomainToWorkspaceFactory =
     storeWorkspaceDomain,
     getWorkspace,
     upsertWorkspace,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    getDomains
   }: {
     findEmailsByUserId: FindEmailsByUserId
     storeWorkspaceDomain: StoreWorkspaceDomain
     getWorkspace: GetWorkspace
     upsertWorkspace: UpsertWorkspace
+    getDomains: GetWorkspaceDomains
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({
@@ -383,11 +386,20 @@ export const addDomainToWorkspaceFactory =
     // we're treating all user owned domains as verified, cause they have it in their verified emails list
     const verified = true
 
-    const workspace = await getWorkspace({ workspaceId, userId })
+    const workspaceWithRole = await getWorkspace({ workspaceId, userId })
 
-    if (workspace?.role !== Roles.Workspace.Admin) {
+    if (!workspaceWithRole) throw new WorkspaceAdminRequiredError()
+
+    const { role, ...workspace } = workspaceWithRole
+
+    if (role !== Roles.Workspace.Admin) {
       throw new WorkspaceAdminRequiredError()
     }
+
+    const domains = await getDomains({ workspaceIds: [workspaceId] })
+
+    // idempotent operation
+    if (domains.find((domain) => domain.domain === sanitizedDomain)) return
 
     const workspaceDomain: WorkspaceDomain = {
       workspaceId,
@@ -401,7 +413,7 @@ export const addDomainToWorkspaceFactory =
 
     await storeWorkspaceDomain({ workspaceDomain })
 
-    if (workspace.domains.length === 0) {
+    if (domains.length === 0) {
       await upsertWorkspace({
         workspace: { ...workspace, discoverabilityEnabled: true }
       })
@@ -409,6 +421,6 @@ export const addDomainToWorkspaceFactory =
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Updated,
-      payload: { ...workspace, domains: [workspaceDomain] }
+      payload: workspace
     })
   }

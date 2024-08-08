@@ -7,7 +7,6 @@ export type Workspace = {
   createdAt: Date
   updatedAt: Date
   logo: string | null
-  domains: WorkspaceDomain[]
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }
