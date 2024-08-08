@@ -7,7 +7,8 @@ import {
   QueryAllWorkspaceProjects,
   UpsertWorkspace,
   UpsertWorkspaceRole,
-  GetWorkspaceWithDomains
+  GetWorkspaceWithDomains,
+  GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,

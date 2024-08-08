@@ -267,5 +267,5 @@ export const getWorkspaceWithDomainsFactory =
       domains: workspace.domains.filter(
         (domain: WorkspaceDomain | null) => domain !== null
       )
-    } as Workspace
+    } as Workspace & { domains: WorkspaceDomain[] }
   }
