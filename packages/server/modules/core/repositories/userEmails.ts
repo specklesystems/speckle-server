@@ -170,7 +170,6 @@ export const setPrimaryUserEmailFactory =
 export const findVerifiedEmailsByUserIdFactory =
   ({ db }: { db: Knex }): FindEmailsByUserId =>
   async ({ userId }) => {
-    if (!userId) return []
     return db(UserEmails.name).where({
       [UserEmails.col.userId]: userId,
       [UserEmails.col.verified]: true

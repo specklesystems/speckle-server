@@ -48,7 +48,7 @@ export type FindEmailsByUserId = ({
 
 export type FindVerifiedEmailsByUserId = ({
   userId
-}: Pick<Partial<UserEmail>, 'userId'>) => Promise<UserEmail[]>
+}: Pick<UserEmail, 'userId'>) => Promise<UserEmail[]>
 
 export type FindVerifiedEmailByUserIdAndDomain = ({
   userId,
