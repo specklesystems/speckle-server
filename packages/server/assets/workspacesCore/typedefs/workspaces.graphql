@@ -26,6 +26,7 @@ input WorkspaceUpdateInput {
   """
   logo: String
   domainBasedMembershipProtectionEnabled: Boolean
+  discoverabilityEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -174,6 +175,10 @@ type Workspace {
   Enable/Disable restriction to invite users to workspace as Guests only
   """
   domainBasedMembershipProtectionEnabled: Boolean!
+  """
+  Enable/Disable discovery of the workspace
+  """
+  discoverabilityEnabled: Boolean!
 }
 
 type WorkspaceDomain {
