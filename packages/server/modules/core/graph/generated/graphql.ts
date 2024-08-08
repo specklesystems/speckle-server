@@ -3812,6 +3812,8 @@ export type Workspace = {
   __typename?: 'Workspace';
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Enable/Disable discovery of the workspace */
+  discoveryEnabled: Scalars['Boolean']['output'];
   /** Enable/Disable restriction to invite users to workspace as Guests only */
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
@@ -3990,6 +3992,7 @@ export type WorkspaceRoleUpdateInput = {
 
 export type WorkspaceUpdateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  discoveryEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   /** Logo image as base64-encoded string */
@@ -5859,6 +5862,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  discoveryEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domainBasedMembershipProtectionEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domains?: Resolver<Array<ResolversTypes['WorkspaceDomain']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

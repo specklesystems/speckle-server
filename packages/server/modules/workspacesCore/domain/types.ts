@@ -9,6 +9,7 @@ export type Workspace = {
   logo: string | null
   domains: WorkspaceDomain[]
   domainBasedMembershipProtectionEnabled: boolean
+  discoveryEnabled: boolean
 }
 
 export type WorkspaceDomain = {
