@@ -1730,6 +1730,10 @@ export type PendingWorkspaceCollaborator = {
   workspaceName: Scalars['String']['output'];
 };
 
+export type PendingWorkspaceCollaboratorsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean']['output'];
@@ -3818,6 +3822,11 @@ export type Workspace = {
   role?: Maybe<Scalars['String']['output']>;
   team: Array<WorkspaceCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceInvitedTeamArgs = {
+  filter?: InputMaybe<PendingWorkspaceCollaboratorsFilter>;
 };
 
 

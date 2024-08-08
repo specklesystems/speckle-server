@@ -20,7 +20,17 @@
         class="divide-y divide-outline-3 h-full overflow-visible"
         :class="{ 'pb-32': overflowCells }"
       >
-        <template v-if="items?.length">
+        <div
+          v-if="loading || !items"
+          tabindex="0"
+          :style="{ paddingRight: paddingRightStyle }"
+          :class="rowsWrapperClasses"
+        >
+          <div :class="getClasses(undefined, 0, { noPadding: true })" tabindex="0">
+            <CommonLoadingBar loading />
+          </div>
+        </div>
+        <template v-else-if="items?.length">
           <div
             v-for="item in items"
             :key="item.id"
@@ -55,7 +65,7 @@
           </div>
         </template>
         <div
-          v-else-if="items"
+          v-else
           tabindex="0"
           :style="{ paddingRight: paddingRightStyle }"
           :class="rowsWrapperClasses"
@@ -66,16 +76,6 @@
                 {{ emptyMessage }}
               </div>
             </slot>
-          </div>
-        </div>
-        <div
-          v-else
-          tabindex="0"
-          :style="{ paddingRight: paddingRightStyle }"
-          :class="rowsWrapperClasses"
-        >
-          <div :class="getClasses(undefined, 0, { noPadding: true })" tabindex="0">
-            <CommonLoadingBar loading />
           </div>
         </div>
       </div>
@@ -110,6 +110,7 @@ const props = withDefaults(
     onRowClick?: (item: T) => void
     rowItemsAlign?: 'center' | 'stretch'
     emptyMessage?: string
+    loading?: boolean
   }>(),
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )

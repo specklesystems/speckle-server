@@ -1,5 +1,6 @@
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
+  PendingWorkspaceCollaboratorsFilter,
   TokenResourceIdentifierType,
   WorkspaceInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
@@ -307,8 +308,9 @@ export const getPendingWorkspaceCollaboratorsFactory =
   }) =>
   async (params: {
     workspaceId: string
+    filter?: MaybeNullOrUndefined<PendingWorkspaceCollaboratorsFilter>
   }): Promise<PendingWorkspaceCollaboratorGraphQLReturn[]> => {
-    const { workspaceId } = params
+    const { workspaceId, filter } = params
 
     // Get all pending invites
     const invites = await deps.queryAllResourceInvites<
@@ -316,7 +318,8 @@ export const getPendingWorkspaceCollaboratorsFactory =
       WorkspaceRoles
     >({
       resourceId: workspaceId,
-      resourceType: WorkspaceInviteResourceType
+      resourceType: WorkspaceInviteResourceType,
+      search: filter?.search || undefined
     })
 
     // Get all target users, if any

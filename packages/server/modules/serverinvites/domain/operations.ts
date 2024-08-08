@@ -57,7 +57,7 @@ export type QueryAllResourceInvites = <
   filter: Pick<
     InviteResourceTarget<TargetType, RoleType>,
     'resourceId' | 'resourceType'
-  >
+  > & { search?: string }
 ) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
 
 export type DeleteAllResourceInvites = <
