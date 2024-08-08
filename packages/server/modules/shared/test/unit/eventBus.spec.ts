@@ -138,7 +138,7 @@ describe('Event Bus', () => {
 
       await bus1.emit({
         eventName: WorkspaceEvents.Created,
-        payload: { ...workspacePayload, domains: [] }
+        payload: { ...workspacePayload }
       })
 
       expect(workspaces.length).to.equal(2)
@@ -168,8 +168,7 @@ describe('Event Bus', () => {
         eventName: WorkspaceEvents.Created,
         payload: {
           ...workspace,
-          createdByUserId: cryptoRandomString({ length: 10 }),
-          domains: []
+          createdByUserId: cryptoRandomString({ length: 10 })
         }
       })
 

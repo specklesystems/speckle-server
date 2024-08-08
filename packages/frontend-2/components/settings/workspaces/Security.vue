@@ -160,6 +160,6 @@ watch(result, (value) => {
   isDomainProtectionEnabledInternal.value =
     value?.workspace.domainBasedMembershipProtectionEnabled ?? false
   isDomainDiscoverabilityEnabledInternal.value =
-    value?.workspace.domainBasedMembershipProtectionEnabled ?? false
+    value?.workspace.discoverabilityEnabled ?? false
 })
 </script>
