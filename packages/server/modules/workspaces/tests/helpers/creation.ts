@@ -26,7 +26,8 @@ import {
 import {
   createWorkspaceFactory,
   updateWorkspaceRoleFactory,
-  deleteWorkspaceRoleFactory
+  deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
@@ -44,6 +45,7 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
+  discoverabilityEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
@@ -56,7 +58,7 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
-  const finalWorkspace = await createWorkspace({
+  const newWorkspace = await createWorkspace({
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
@@ -66,7 +68,22 @@ export const createTestWorkspace = async (
     userResourceAccessLimits: null
   })
 
-  workspace.id = finalWorkspace.id
+  if (workspace.discoverabilityEnabled) {
+    const updateWorkspace = updateWorkspaceFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+    })
+
+    await updateWorkspace({
+      workspaceId: newWorkspace.id,
+      workspaceInput: {
+        discoverabilityEnabled: true
+      }
+    })
+  }
+
+  workspace.id = newWorkspace.id
   workspace.ownerId = owner.id
 }
 

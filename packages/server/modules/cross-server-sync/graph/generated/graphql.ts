@@ -852,6 +852,13 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
+export type DiscoverableWorkspace = {
+  __typename?: 'DiscoverableWorkspace';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -3340,6 +3347,8 @@ export type User = {
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Get discoverable workspaces with verified domains that match the active user's */
+  discoverableWorkspaces: Array<DiscoverableWorkspace>;
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   emails: Array<UserEmail>;
