@@ -49,7 +49,6 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
-  getWorkspaceRoleForUserFactory,
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
@@ -334,9 +333,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           await addDomainToWorkspaceFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-            storeWorkspaceDomain: storeWorkspaceDomainFactory({ db })
+            storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            getDomains: getWorkspaceDomainsFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
           })({
             workspaceId: args.input.workspaceId,
             userId: context.userId!,
