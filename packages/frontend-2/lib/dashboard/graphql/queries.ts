@@ -12,3 +12,15 @@ export const dashboardProjectsPageQuery = graphql(`
     }
   }
 `)
+
+export const dashboardDiscoverableWorkspacesQuery = graphql(`
+  query DashboardDiscoverableWorkspaces {
+    activeUser {
+      discoverableWorkspaces {
+        id
+        name
+        description
+      }
+    }
+  }
+`)
