@@ -12,6 +12,16 @@ export const settingsUpdateWorkspaceMutation = graphql(`
   }
 `)
 
+export const settingsUpdateWorkspaceDomainProtection = graphql(`
+  mutation UpdateWorkspaceDomainProtection($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        domainBasedMembershipProtectionEnabled
+      }
+    }
+  }
+`)
+
 export const deleteWorkspaceMutation = graphql(`
   mutation DeleteWorkspace($workspaceId: String!) {
     workspaceMutations {

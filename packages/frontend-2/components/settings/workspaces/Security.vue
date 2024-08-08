@@ -29,20 +29,14 @@
           </template>
         </LayoutTable>
       </div>
-      <!-- <div>
+      <div>
         <SettingsSectionHeader title="Domain Features" subheading class="mt-8" />
-        <FormCheckbox
+        <FormSwitch
           v-model="isDomainProtectionEnabled"
-          label="Enable Domain Protection"
           name="domain-protection"
+          label="Enable Domain Protection"
         />
-        <FormCheckbox
-          v-model="isWorkspaceDiscoveryEnabled"
-          label="Enable Workspace Discovery"
-          name="workspace-discovery"
-        />
-        <FormButton class="mt-4">Save</FormButton>
-      </div> -->
+      </div>
     </div>
     <SettingsWorkspacesSecurityAddDialog
       v-model:open="showAddDialog"
@@ -60,10 +54,12 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
-import { settingsWorkspacesDomainsQuery } from '~/lib/settings/graphql/queries'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { settingsUpdateWorkspaceDomainProtection } from '~/lib/settings/graphql/mutations'
+import { settingsWorkspaceDataQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
   fragment WorkspaceDomainInfo_Settings on WorkspaceDomain {
@@ -76,15 +72,16 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { result, refetch } = useQuery(settingsWorkspacesDomainsQuery, {
+const { triggerNotification } = useGlobalToast()
+
+const { result, refetch } = useQuery(settingsWorkspaceDataQuery, {
   workspaceId: props.workspaceId
 })
+const { mutate: updateDomainProtection } = useMutation(
+  settingsUpdateWorkspaceDomainProtection
+)
 
 const domains = ref<WorkspaceDomainInfo_SettingsFragment[]>([])
-
-watch(result, (value) => {
-  domains.value = value?.workspace.domains ?? []
-})
 
 const showAddDialog = ref(false)
 const handleDomainsChanged = (nextDomains: WorkspaceDomainInfo_SettingsFragment[]) => {
@@ -99,6 +96,39 @@ const openRemoveDialog = (domain: WorkspaceDomainInfo_SettingsFragment) => {
   showRemoveDialog.value = true
 }
 
-// const isDomainProtectionEnabled = ref(false)
+const isDomainProtectionEnabledInternal = ref(false)
+const isDomainProtectionEnabled = computed({
+  get: () => isDomainProtectionEnabledInternal.value,
+  set: async (newVal) => {
+    isDomainProtectionEnabledInternal.value = newVal
+
+    const result = await updateDomainProtection({
+      input: {
+        id: props.workspaceId,
+        domainBasedMembershipProtectionEnabled: newVal
+      }
+    })
+
+    if (!result?.data) {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update',
+        description: errorMessage
+      })
+      return
+    }
+
+    isDomainProtectionEnabledInternal.value =
+      result.data.workspaceMutations.update.domainBasedMembershipProtectionEnabled
+  }
+})
+
+watch(result, (value) => {
+  domains.value = value?.workspace.domains ?? []
+  isDomainProtectionEnabledInternal.value =
+    value?.workspace.domainBasedMembershipProtectionEnabled ?? false
+})
+
 // const isWorkspaceDiscoveryEnabled = ref(false)
 </script>
