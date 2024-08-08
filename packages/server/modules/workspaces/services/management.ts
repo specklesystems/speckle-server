@@ -344,12 +344,16 @@ export const updateWorkspaceRoleFactory =
 export const addDomainToWorkspaceFactory =
   ({
     findEmailsByUserId,
-    getWorkspaceRoleForUser,
-    storeWorkspaceDomain
+    storeWorkspaceDomain,
+    getWorkspace,
+    upsertWorkspace,
+    emitWorkspaceEvent
   }: {
     findEmailsByUserId: FindEmailsByUserId
-    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
     storeWorkspaceDomain: StoreWorkspaceDomain
+    getWorkspace: GetWorkspace
+    upsertWorkspace: UpsertWorkspace
+    emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({
     userId,
@@ -379,9 +383,9 @@ export const addDomainToWorkspaceFactory =
     // we're treating all user owned domains as verified, cause they have it in their verified emails list
     const verified = true
 
-    const workspaceRole = await getWorkspaceRoleForUser({ workspaceId, userId })
+    const workspace = await getWorkspace({ workspaceId, userId })
 
-    if (workspaceRole?.role !== Roles.Workspace.Admin) {
+    if (workspace?.role !== Roles.Workspace.Admin) {
       throw new WorkspaceAdminRequiredError()
     }
 
@@ -396,4 +400,15 @@ export const addDomainToWorkspaceFactory =
     }
 
     await storeWorkspaceDomain({ workspaceDomain })
+
+    if (workspace.domains.length === 0) {
+      await upsertWorkspace({
+        workspace: { ...workspace, discoverabilityEnabled: true }
+      })
+    }
+
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Updated,
+      payload: { ...workspace, domains: [workspaceDomain] }
+    })
   }
