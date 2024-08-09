@@ -67,7 +67,7 @@
                 ]"
                 :tooltip-text="workspaceMenuItem.tooltipText"
                 :disabled="workspaceMenuItem.disabled"
-                :tag="workspaceMenuItem.disabled ? 'Coming soon' : null"
+                :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
                 @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
               />
             </LayoutSidebarMenuGroup>
@@ -103,6 +103,7 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
+import type { MenuItem } from '~/lib/settings/helpers/types'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
@@ -120,7 +121,7 @@ const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser.workspaces.items ?? []
+  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)

@@ -55,6 +55,7 @@
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { Roles } from '@speckle/shared'
@@ -63,8 +64,20 @@ import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutation
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~~/lib/common/helpers/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
+
+graphql(`
+  fragment SettingsWorkspacesGeneral_Workspace on Workspace {
+    id
+    name
+    description
+    logo
+  }
+`)
 
 type FormValues = { name: string; description: string }
 
@@ -96,7 +109,7 @@ const save = handleSubmit(async () => {
   if (description.value !== workspaceResult.value.workspace.description)
     input.description = description.value
 
-  const result = await updateMutation({ input })
+  const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
     triggerNotification({

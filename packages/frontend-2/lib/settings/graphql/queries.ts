@@ -16,10 +16,7 @@ export const settingsSidebarWorkspacesQuery = graphql(`
 export const settingsWorkspaceGeneralQuery = graphql(`
   query SettingsWorkspaceGeneral($id: String!) {
     workspace(id: $id) {
-      id
-      name
-      description
-      logo
+      ...SettingsWorkspacesGeneral_Workspace
     }
   }
 `)

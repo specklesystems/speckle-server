@@ -90,6 +90,7 @@ const documents = {
     "\n  fragment UserProfileEditDialogDeleteAccount_User on User {\n    id\n    email\n  }\n": types.UserProfileEditDialogDeleteAccount_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.UserProfileEditDialogBio_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
+    "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    id\n    name\n    description\n    logo\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDelete_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDelete_WorkspaceFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n  }\n": types.ModelPageProjectFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
@@ -212,7 +213,7 @@ const documents = {
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        description\n        name\n        id\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsDeleteWorkspace($workspaceId: String!) {\n    workspaceMutations {\n      delete(workspaceId: $workspaceId)\n    }\n  }\n": types.SettingsDeleteWorkspaceDocument,
     "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.SettingsSidebarWorkspacesDocument,
-    "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
+    "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspacesMembers($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      team {\n        role\n        id\n        user {\n          id\n          avatar\n          name\n          company\n          verified\n        }\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
@@ -574,6 +575,10 @@ export function graphql(source: "\n  fragment UserProfileEditDialogBio_User on U
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    id\n    name\n    description\n    logo\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    id\n    name\n    description\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1065,7 +1070,7 @@ export function graphql(source: "\n  query SettingsSidebarWorkspaces {\n    acti
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
