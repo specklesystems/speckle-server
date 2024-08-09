@@ -77,14 +77,14 @@ export const initKnexPrometheusMetrics = (params: {
 
   const metricQueryDuration = new prometheusClient.Summary({
     registers: [params.register],
-    labelNames: ['sqlMethod'],
+    labelNames: ['sqlMethod', 'sqlNumberBindings'],
     name: 'speckle_server_knex_query_duration',
     help: 'Summary of the DB query durations in seconds'
   })
 
   const metricQueryErrors = new prometheusClient.Counter({
     registers: [params.register],
-    labelNames: ['sqlMethod'],
+    labelNames: ['sqlMethod', 'sqlNumberBindings'],
     name: 'speckle_server_knex_query_errors',
     help: 'Number of DB queries with errors'
   })
@@ -96,19 +96,23 @@ export const initKnexPrometheusMetrics = (params: {
 
   params.db.on('query-response', (_data, querySpec) => {
     const queryId = querySpec.__knexQueryUid + ''
-    const durationμs = performance.now() - queryStartTime[queryId]
-    const durationSec = toNDecimalPlaces(durationμs / 1000 / 1000, 2)
+    const durationMs = performance.now() - queryStartTime[queryId]
+    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
     delete queryStartTime[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
-        .labels({ sqlMethod: normalizeSqlMethod(querySpec.method) })
+        .labels({
+          sqlMethod: normalizeSqlMethod(querySpec.method),
+          sqlNumberBindings: querySpec.bindings?.length || -1
+        })
         .observe(durationSec)
     params.logger.debug(
       {
         sql: querySpec.sql,
         sqlMethod: normalizeSqlMethod(querySpec.method),
-        queryId,
-        sqlQueryDurationMs: Math.ceil(durationμs / 1000)
+        sqlQueryId: queryId,
+        sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
+        sqlNumberBindings: querySpec.bindings?.length || -1
       },
       "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
     )
@@ -116,13 +120,16 @@ export const initKnexPrometheusMetrics = (params: {
 
   params.db.on('query-error', (err, querySpec) => {
     const queryId = querySpec.__knexQueryUid + ''
-    const durationμs = performance.now() - queryStartTime[queryId]
-    const durationSec = toNDecimalPlaces(durationμs / 1000 / 1000, 2)
+    const durationMs = performance.now() - queryStartTime[queryId]
+    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
     delete queryStartTime[queryId]
 
     if (!isNaN(durationSec))
       metricQueryDuration
-        .labels({ sqlMethod: normalizeSqlMethod(querySpec.method) })
+        .labels({
+          sqlMethod: normalizeSqlMethod(querySpec.method),
+          sqlNumberBindings: querySpec.bindings?.length || -1
+        })
         .observe(durationSec)
     metricQueryErrors.inc()
     params.logger.warn(
@@ -130,8 +137,9 @@ export const initKnexPrometheusMetrics = (params: {
         err,
         sql: querySpec.sql,
         sqlMethod: normalizeSqlMethod(querySpec.method),
-        queryId,
-        sqlQueryDurationMs: Math.ceil(durationμs / 1000)
+        sqlQueryId: queryId,
+        sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
+        sqlNumberBindings: querySpec.bindings?.length || -1
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )
