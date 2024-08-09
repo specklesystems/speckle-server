@@ -13,6 +13,7 @@ const knex = require('@/db/knex')
 const {
   highFrequencyMetricsCollectionPeriodMs
 } = require('@/modules/shared/helpers/envHelper')
+const { startupLogger: logger } = require('@/logging/logging')
 
 let prometheusInitialized = false
 
@@ -36,7 +37,11 @@ module.exports = function (app) {
     })
     highfrequencyMonitoring.start()
 
-    initKnexPrometheusMetrics(knex)
+    initKnexPrometheusMetrics({
+      register: prometheusClient.register,
+      db: knex,
+      logger
+    })
     const expressMetricsMiddleware = promBundle({
       includeMethod: true,
       includePath: true,
