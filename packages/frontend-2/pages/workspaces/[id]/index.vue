@@ -1,17 +1,13 @@
 <template>
-  <WorkspaceDashboard v-if="isLoggedIn" />
-  <div v-else class="mx-auto">
-    <CommonLoadingIcon />
-  </div>
+  <WorkspaceProjectList :workspace-id="workspaceId" />
 </template>
 <script setup lang="ts">
-const { isLoggedIn } = useActiveUser()
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const workspaceId = computed(() => route.params.id)
 
 definePageMeta({
   middleware: ['auth', 'requires-workspaces-enabled']
-})
-
-useHead({
-  title: 'Dashboard'
 })
 </script>
