@@ -5,10 +5,7 @@ export const settingsCreateUserEmailMutation = graphql(`
     activeUserMutations {
       emailMutations {
         create(input: $input) {
-          id
-          emails {
-            ...SettingsUserEmailCards_UserEmail
-          }
+          ...SettingsUserEmail_User
         }
       }
     }
@@ -20,10 +17,7 @@ export const settingsDeleteUserEmailMutation = graphql(`
     activeUserMutations {
       emailMutations {
         delete(input: $input) {
-          id
-          emails {
-            ...SettingsUserEmailCards_UserEmail
-          }
+          ...SettingsUserEmail_User
         }
       }
     }
@@ -35,10 +29,7 @@ export const settingsSetPrimaryUserEmailMutation = graphql(`
     activeUserMutations {
       emailMutations {
         setPrimary(input: $input) {
-          id
-          emails {
-            ...SettingsUserEmailCards_UserEmail
-          }
+          ...SettingsUserEmail_User
         }
       }
     }

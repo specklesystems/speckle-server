@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { orderBy } from 'lodash-es'
+import { graphql } from '~~/lib/common/generated/gql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
@@ -41,6 +42,15 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
+
+graphql(`
+  fragment SettingsUserEmail_User on User {
+    id
+    emails {
+      ...SettingsUserEmailCards_UserEmail
+    }
+  }
+`)
 
 type FormValues = { email: string }
 
