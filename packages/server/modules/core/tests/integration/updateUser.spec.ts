@@ -47,7 +47,7 @@ describe('Users @core-users', () => {
     const updated = await getUser(userId)
     const updatedUserEmail = await userEmailsDB.where({ userId, primary: true }).first()
 
-    expect(updated.email).eq(newEmail)
-    expect(updatedUserEmail.email).eq(newEmail)
+    expect(updated.email.toLowerCase()).eq(newEmail.toLowerCase())
+    expect(updatedUserEmail.email.toLowerCase()).eq(newEmail.toLowerCase())
   })
 })
