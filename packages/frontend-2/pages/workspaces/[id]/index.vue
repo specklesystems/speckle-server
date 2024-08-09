@@ -1,0 +1,13 @@
+<template>
+  <WorkspaceProjectList :workspace-id="workspaceId" />
+</template>
+<script setup lang="ts">
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const workspaceId = computed(() => route.params.id)
+
+definePageMeta({
+  middleware: ['auth', 'requires-workspaces-enabled']
+})
+</script>

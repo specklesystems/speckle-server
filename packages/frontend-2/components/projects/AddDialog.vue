@@ -44,6 +44,10 @@ type FormValues = {
   description?: string
 }
 
+const props = defineProps<{
+  workspaceId?: string
+}>()
+
 const emit = defineEmits<{
   (e: 'created'): void
 }>()
@@ -60,7 +64,8 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
     ...values,
-    visibility: visibility.value
+    visibility: visibility.value,
+    workspaceId: props.workspaceId
   })
   emit('created')
   mp.track('Stream Action', { type: 'action', name: 'create' })
