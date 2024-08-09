@@ -48,7 +48,7 @@ const tables = {
 
 export const getUserDiscoverableWorkspacesFactory =
   ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
-  async ({ domains }) => {
+  async ({ domains, userId }) => {
     if (domains.length === 0) {
       return []
     }
@@ -57,7 +57,11 @@ export const getUserDiscoverableWorkspacesFactory =
       .select('workspaces.id as id', 'name', 'description')
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
-      .leftJoin('workspace_acl', 'workspace_acl.workspaceId', 'workspaces.id')
+      .leftJoin(
+        tables.workspacesAcl(db).select('*').where({ userId }).as('acl'),
+        'acl.workspaceId',
+        'workspaces.id'
+      )
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
