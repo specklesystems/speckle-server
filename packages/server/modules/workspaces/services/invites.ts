@@ -4,11 +4,13 @@ import {
   TokenResourceIdentifierType,
   WorkspaceInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
+import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getUser } from '@/modules/core/repositories/users'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
   FindInvite,
   QueryAllResourceInvites,
@@ -83,7 +85,12 @@ export const createWorkspaceInviteFactory =
         role:
           (input.role ? mapGqlWorkspaceRoleToMainRole(input.role) : null) ||
           Roles.Workspace.Member,
-        primary: true
+        primary: true,
+        secondaryResourceRoles: {
+          ...(input.serverRole
+            ? { [ServerInviteResourceType]: mapServerRoleToValue(input.serverRole) }
+            : {})
+        }
       }
 
     return await deps.createAndSendInvite(
