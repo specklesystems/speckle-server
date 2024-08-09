@@ -2,21 +2,31 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
-    <div class="relative">
-      <div class="flex justify-between items-center h-10">
-        <div class="px-2 select-none w-full max-w-[80%]">
-          <div
-            v-if="nameParts[0]"
-            class="text-body-2xs text-foreground-2 relative truncate"
-          >
-            {{ nameParts[0] }}
+    <div class="relative p-2">
+      <NuxtLink
+        v-if="!defaultLinkDisabled"
+        :to="modelRoute(projectId, model.id)"
+        class="absolute z-10 inset-0"
+      />
+      <div class="relative z-30 flex justify-between items-center h-10">
+        <NuxtLink
+          :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
+          class="w-full"
+        >
+          <div class="px-2 select-none w-full max-w-[80%]">
+            <div
+              v-if="nameParts[0]"
+              class="text-body-2xs text-foreground-2 relative truncate"
+            >
+              {{ nameParts[0] }}
+            </div>
+            <div
+              class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0"
+            >
+              {{ nameParts[1] }}
+            </div>
           </div>
-          <div
-            class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0"
-          >
-            {{ nameParts[1] }}
-          </div>
-        </div>
+        </NuxtLink>
         <ProjectPageModelsActions
           v-if="project && showActions && !isPendingModelFragment(model)"
           v-model:open="showActionsMenu"
@@ -40,16 +50,17 @@
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
         <template v-else-if="previewUrl">
-          <div
-            class="bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
+          <NuxtLink
+            :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
+            class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
           >
             <PreviewImage :preview-url="previewUrl" />
-          </div>
+          </NuxtLink>
         </template>
         <div
           v-if="!isPendingModelFragment(model)"
           v-show="!previewUrl && !pendingVersion"
-          class="h-48 w-full"
+          class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
@@ -59,7 +70,7 @@
           />
         </div>
       </div>
-      <div class="flex justify-between items-center w-full h-8 pl-2">
+      <div class="relative z-20 flex justify-between items-center w-full h-8 pl-2">
         <ProjectPageModelsCardUpdatedTime
           class="text-body-3xs text-foreground-2"
           :updated-at="updatedAtFullDate"
@@ -110,7 +121,7 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelVersionsRoute } from '~~/lib/common/helpers/route'
+import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
@@ -159,10 +170,10 @@ const showActionsMenu = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 p-2 w-full'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full'
   ]
 
-  if (!defaultLinkDisabled.value) {
+  if (versionCount.value > 0) {
     classParts.push('cursor-pointer')
   }
 
