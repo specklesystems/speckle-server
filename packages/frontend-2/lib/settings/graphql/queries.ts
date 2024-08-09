@@ -34,7 +34,7 @@ export const settingsWorkspacesMembersQuery = graphql(`
 export const settingsUserEmailsQuery = graphql(`
   query SettingsUserEmailsQuery {
     activeUser {
-      ...SettingsUserEmail_User
+      ...SettingsUserEmails_User
     }
   }
 `)

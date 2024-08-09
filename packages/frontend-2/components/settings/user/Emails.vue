@@ -44,7 +44,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 
 graphql(`
-  fragment SettingsUserEmail_User on User {
+  fragment SettingsUserEmails_User on User {
     id
     emails {
       ...SettingsUserEmailCards_UserEmail
