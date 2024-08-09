@@ -1,34 +1,43 @@
-'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
-const Busboy = require('busboy')
-
-const { validatePermissionsWriteStream } = require('./authUtils')
-const {
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+import Busboy from 'busboy'
+import { validatePermissionsWriteStream } from '@/modules/core/rest/authUtils'
+import {
   getFeatureFlags,
   maximumObjectUploadFileSizeMb
-} = require('@/modules/shared/helpers/envHelper')
-const {
+} from '@/modules/shared/helpers/envHelper'
+import {
   createObjectsBatched,
   createObjectsBatchedAndNoClosures
-} = require('@/modules/core/services/objects')
-const { ObjectHandlingError } = require('@/modules/core/errors/object')
-const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
-const { toMegabytesWith1DecimalPlace } = require('@/modules/core/utils/formatting')
+} from '@/modules/core/services/objects'
+import { ObjectHandlingError } from '@/modules/core/errors/object'
+import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
+import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
+import { Logger } from 'pino'
+import { Router } from 'express'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 
-let objectInsertionService = createObjectsBatched
+let objectInsertionService: (params: {
+  streamId: string
+  objects: unknown[]
+  logger?: Logger
+}) => Promise<boolean | string[]> = createObjectsBatched
 if (FF_NO_CLOSURE_WRITES) {
   objectInsertionService = createObjectsBatchedAndNoClosures
 }
 
-module.exports = (app) => {
+export default (app: Router) => {
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
-    const calculateLogMetadata = (params) => {
+    const calculateLogMetadata = (params: {
+      batchSizeMb: number
+      start: number
+      batchStartTime: number
+      totalObjectsProcessed: number
+    }) => {
       return {
         batchSizeMb: params.batchSizeMb,
         maxFileSizeMb: toMegabytesWith1DecimalPlace(MAX_FILE_SIZE),
@@ -69,7 +78,7 @@ module.exports = (app) => {
     }
     let totalObjectsProcessed = 0
 
-    const promises = []
+    const promises: Promise<boolean | void | string[]>[] = []
     let requestDropped = false
 
     busboy.on('file', (name, file, info) => {
@@ -78,7 +87,7 @@ module.exports = (app) => {
       if (requestDropped) return
 
       if (mimeType === 'application/gzip') {
-        const buffer = []
+        const buffer: Uint8Array[] = []
 
         file.on('data', (data) => {
           if (data) buffer.push(data)
