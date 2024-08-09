@@ -7,7 +7,7 @@ import { expect } from 'chai'
 
 describe('Event handlers', () => {
   describe('onProjectCreatedFactory creates a function, that', () => {
-    it('grants project roles for all workspace members', async () => {
+    it('grants project roles for all workspace admins and members', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
 
@@ -48,7 +48,7 @@ describe('Event handlers', () => {
         project: { workspaceId, id: projectId } as StreamRecord
       })
 
-      expect(projectRoles.length).to.equal(3)
+      expect(projectRoles.length).to.equal(2)
     })
   })
 })
