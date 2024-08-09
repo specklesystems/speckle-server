@@ -394,6 +394,10 @@ export function getGendoAIAPIEndpoint() {
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
 
+export function getLicenseToken(): string | undefined {
+  return process.env.LICENSE_TOKEN
+}
+
 export function isEmailEnabled() {
   return process.env.EMAIL === 'true'
 }

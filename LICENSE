@@ -3,6 +3,7 @@ Copyright (c) 2020-present AEC Systems.
 Portions of this software are licensed as follows:
 
 - All content residing under the "packages/server/modules/workspaces/" directory of this repository is licensed under "The Speckle Enterprise Edition (EE) license".
+- All content residing under the "packages/server/modules/gatekeeper/" directory of this repository is licensed under "The Speckle Enterprise Edition (EE) license".
 - Content outside of the above mentioned directories or restrictions above is available under the "Apache License" license as defined below.
 
                                  Apache License
