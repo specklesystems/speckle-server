@@ -12,6 +12,10 @@ import {
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import { inviteServerUserMutation } from '../graphql/mutations'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useUserSearch } from '~/lib/common/composables/users'
+import { isValidEmail } from '~/lib/workspaces/helpers/invites'
+import { uniq } from 'lodash-es'
 
 export function useInviteUserToServer() {
   const { triggerNotification } = useGlobalToast()
@@ -66,4 +70,44 @@ export function useInviteUserToServer() {
     },
     loading
   }
+}
+
+export const useResolveInviteTargets = (params: {
+  search: Ref<MaybeNullOrUndefined<string>>
+  /**
+   * For excluding already invited/added users from search results
+   */
+  excludeUserIds?: Ref<string[]>
+}) => {
+  const { search, excludeUserIds } = params
+
+  const { userSearch, searchVariables } = useUserSearch({
+    variables: computed(() => ({
+      query: search.value || '',
+      limit: 5
+    }))
+  })
+
+  const emails = computed(() => {
+    const query = searchVariables.value?.query || ''
+    if (isValidEmail(query)) return [query]
+
+    const multipleEmails = query.split(',').map((i) => i.trim())
+    const validEmails = multipleEmails.filter((e) => isValidEmail(e))
+    const uniqueEmails = uniq(validEmails)
+
+    return uniqueEmails.length ? uniqueEmails : []
+  })
+
+  const users = computed(() => {
+    const searchResults = userSearch.value?.userSearch.items || []
+    const collaboratorIds = new Set(excludeUserIds?.value || [])
+    if (!collaboratorIds.size) return searchResults
+
+    return searchResults.filter((r) => !collaboratorIds.has(r.id))
+  })
+
+  const hasTargets = computed(() => users.value?.length || emails.value?.length)
+
+  return { users, emails, hasTargets }
 }

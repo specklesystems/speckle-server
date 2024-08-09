@@ -4,6 +4,7 @@
     max-width="sm"
     title="Invite people to workspace"
     :buttons="buttons"
+    buttons-wrapper-classes="flex-row-reverse"
   >
     <div>
       <FormTextInput
@@ -27,15 +28,66 @@
           </div>
         </template>
       </FormTextInput>
+      <div
+        v-if="hasTargets"
+        class="flex flex-col mt-2 border rounded-md border-outline-3"
+      >
+        <template v-if="users.length">
+          <WorkspaceInviteDialogUserRow
+            v-for="user in users"
+            :key="user.id"
+            :user="user"
+            :disabled="disabled"
+            :is-owner-role="isOwnerRole"
+            @invite-user="() => onInviteUser(user)"
+          />
+        </template>
+        <WorkspaceInviteDialogEmailsRow
+          v-else-if="emails.length"
+          :selected-emails="emails"
+          :disabled="disabled"
+          :is-owner-role="isOwnerRole"
+          :is-guest-mode="isGuestMode"
+          class="p-2"
+          @invite-emails="({ serverRole }) => onInviteUser(emails, serverRole)"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type ServerRoles, type WorkspaceRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type LayoutDialogButton } from '@speckle/ui-components'
+import { isString } from 'lodash-es'
+import type { WorkspaceInviteCreateInput } from '~/lib/common/generated/gql/graphql'
+import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useServerInfo } from '~/lib/core/composables/server'
+import { useResolveInviteTargets } from '~/lib/server/composables/invites'
+import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
+import {
+  filterInvalidInviteTargets,
+  type UserSearchItemOrEmail
+} from '~/lib/workspaces/helpers/invites'
+import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
+
+const props = defineProps<{
+  workspaceId: string
+}>()
 
 const open = defineModel<boolean>('open', { required: true })
-const { on, bind, value: search } = useDebouncedTextInput()
+
+const mp = useMixpanel()
+const inviteToWorkspace = useInviteUserToWorkspace()
+const { on, bind, value: search } = useDebouncedTextInput({ debouncedBy: 500 })
+const { users, emails, hasTargets } = useResolveInviteTargets({
+  search,
+  excludeUserIds: computed(
+    () => [] // TOOD: Filter out users
+  )
+})
+const { isGuestMode } = useServerInfo()
+
 const disabled = ref(false)
 const role = ref<WorkspaceRoles>(Roles.Workspace.Member)
 
@@ -44,10 +96,49 @@ const buttons = computed((): LayoutDialogButton[] => [
     text: 'Done',
     props: { color: 'primary' },
     onClick: () => {
-      devLog('Save')
+      open.value = false
     }
   }
 ])
 
-watch(search, devLog)
+const isOwnerRole = computed(() => role.value === Roles.Workspace.Admin)
+
+const onInviteUser = async (
+  user: UserSearchItemOrEmail | UserSearchItemOrEmail[],
+  serverRole: ServerRoles = Roles.Server.User
+) => {
+  const users = filterInvalidInviteTargets(user, {
+    isTargetResourceOwner: isOwnerRole.value,
+    emailTargetServerRole: serverRole
+  })
+
+  const inputs: WorkspaceInviteCreateInput[] = users.map((u) => ({
+    role: mapMainRoleToGqlWorkspaceRole(role.value),
+    ...(isString(u)
+      ? {
+          email: u,
+          serverRole: mapServerRoleToGqlServerRole(serverRole)
+        }
+      : {
+          userId: u.id
+        })
+  }))
+  if (!inputs.length) return
+
+  disabled.value = true
+
+  await inviteToWorkspace(props.workspaceId, inputs)
+
+  const isEmail = !!inputs.find((u) => !!u.email)
+  mp.track('Invite Action', {
+    type: 'project invite',
+    name: 'send',
+    multiple: inputs.length !== 1,
+    count: inputs.length,
+    hasProject: true,
+    to: isEmail ? 'email' : 'existing user'
+  })
+
+  disabled.value = false
+}
 </script>

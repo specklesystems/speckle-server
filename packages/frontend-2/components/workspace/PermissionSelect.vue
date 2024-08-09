@@ -39,7 +39,7 @@
 import { Roles } from '@speckle/shared'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { reduce, isArray } from 'lodash-es'
-import { roleSelectItems } from '~/lib/workspaces/helpers/components'
+import { roleSelectItems } from '~/lib/workspaces/helpers/roles'
 
 const emit = defineEmits<{
   (e: 'delete'): void
@@ -88,3 +88,4 @@ const modelWrapper = computed({
   }
 })
 </script>
+~/lib/workspaces/helpers/roles

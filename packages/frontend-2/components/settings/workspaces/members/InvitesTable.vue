@@ -58,21 +58,27 @@ import type { SettingsWorkspacesMembersInvitesTable_WorkspaceFragment } from '~/
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
+  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
+    id
+    role
+    title
+    updatedAt
+    user {
+      id
+      ...LimitedUserAvatar
+    }
+    invitedBy {
+      id
+      ...LimitedUserAvatar
+    }
+  }
+`)
+
+graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {
     id
     invitedTeam(filter: { search: $invitesSearch }) {
-      id
-      role
-      title
-      updatedAt
-      user {
-        id
-        ...LimitedUserAvatar
-      }
-      invitedBy {
-        id
-        ...LimitedUserAvatar
-      }
+      ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
     }
   }
 `)

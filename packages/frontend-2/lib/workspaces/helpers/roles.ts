@@ -1,4 +1,5 @@
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceRole } from '~/lib/common/generated/gql/graphql'
 
 export type SelectableWorkspaceRole = WorkspaceRoles | 'delete'
 
@@ -21,5 +22,16 @@ export const roleSelectItems: Record<
   ['delete']: {
     id: 'delete',
     title: 'Remove'
+  }
+}
+
+export const mapMainRoleToGqlWorkspaceRole = (role: WorkspaceRoles): WorkspaceRole => {
+  switch (role) {
+    case Roles.Workspace.Admin:
+      return WorkspaceRole.Admin
+    case Roles.Workspace.Member:
+      return WorkspaceRole.Member
+    case Roles.Workspace.Guest:
+      return WorkspaceRole.Guest
   }
 }

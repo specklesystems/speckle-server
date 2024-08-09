@@ -3866,6 +3866,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** Defaults to User, if not specified */
+  serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']['input']>;
 };

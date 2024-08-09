@@ -103,6 +103,10 @@ input WorkspaceInviteCreateInput {
   Defaults to the member role, if not specified
   """
   role: WorkspaceRole
+  """
+  Defaults to User, if not specified
+  """
+  serverRole: ServerRole
 }
 
 input WorkspaceInviteUseInput {
