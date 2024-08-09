@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="min-w-0 w-full">
-        <div class="caption text-foreground-2">
+        <div class="caption text-foreground-2 truncate" :title="model.name">
           {{ folderPath }}
         </div>
 
