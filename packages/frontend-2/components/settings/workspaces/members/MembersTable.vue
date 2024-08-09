@@ -3,6 +3,7 @@
     <SettingsWorkspacesMembersTableHeader
       search-placeholder="Search members..."
       :workspace-id="workspaceId"
+      :workspace="workspace"
     />
     <LayoutTable
       class="mt-6 md:mt-8"
@@ -69,18 +70,26 @@ import { graphql } from '~/lib/common/generated/gql'
 type UserItem = (typeof members)['value'][0]
 
 graphql(`
+  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
+    id
+    role
+    user {
+      id
+      avatar
+      name
+      company
+      verified
+    }
+  }
+`)
+
+graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
+    ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
-      role
       id
-      user {
-        id
-        avatar
-        name
-        company
-        verified
-      }
+      ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
     }
   }
 `)

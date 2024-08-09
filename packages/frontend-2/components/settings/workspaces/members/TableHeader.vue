@@ -20,16 +20,27 @@
     <WorkspaceInviteDialog
       v-model:open="isInviteDialogOpen"
       :workspace-id="workspaceId"
+      :workspace="workspace"
     />
   </div>
 </template>
 <script setup lang="ts">
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
+    id
+    ...WorkspaceInviteDialog_Workspace
+  }
+`)
 
 defineProps<{
   searchPlaceholder: string
   workspaceId: string
+  workspace?: SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 }>()
 
 const search = defineModel<string>('search')

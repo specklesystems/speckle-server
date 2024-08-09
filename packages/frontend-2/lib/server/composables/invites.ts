@@ -75,11 +75,12 @@ export function useInviteUserToServer() {
 export const useResolveInviteTargets = (params: {
   search: Ref<MaybeNullOrUndefined<string>>
   /**
-   * For excluding already invited/added users from search results
+   * For excluding already invited/added users from search results.
    */
-  excludeUserIds?: Ref<string[]>
+  excludeUserIds?: Ref<MaybeNullOrUndefined<string[]>>
+  excludeEmails?: Ref<MaybeNullOrUndefined<string[]>>
 }) => {
-  const { search, excludeUserIds } = params
+  const { search, excludeUserIds, excludeEmails } = params
 
   const { userSearch, searchVariables } = useUserSearch({
     variables: computed(() => ({
@@ -96,7 +97,11 @@ export const useResolveInviteTargets = (params: {
     const validEmails = multipleEmails.filter((e) => isValidEmail(e))
     const uniqueEmails = uniq(validEmails)
 
-    return uniqueEmails.length ? uniqueEmails : []
+    const finalEmails = uniqueEmails.length ? uniqueEmails : []
+    const invitedEmails = new Set(excludeEmails?.value || [])
+    if (!invitedEmails.size) return finalEmails
+
+    return finalEmails.filter((e) => !invitedEmails.has(e))
   })
 
   const users = computed(() => {

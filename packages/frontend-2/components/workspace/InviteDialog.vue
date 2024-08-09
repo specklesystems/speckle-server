@@ -59,7 +59,11 @@
 import { Roles, type ServerRoles, type WorkspaceRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type LayoutDialogButton } from '@speckle/ui-components'
 import { isString } from 'lodash-es'
-import type { WorkspaceInviteCreateInput } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  WorkspaceInviteCreateInput,
+  WorkspaceInviteDialog_WorkspaceFragment
+} from '~/lib/common/generated/gql/graphql'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useServerInfo } from '~/lib/core/composables/server'
@@ -71,8 +75,27 @@ import {
 } from '~/lib/workspaces/helpers/invites'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 
+graphql(`
+  fragment WorkspaceInviteDialog_Workspace on Workspace {
+    id
+    team {
+      id
+      user {
+        id
+      }
+    }
+    fullInvitedTeam: invitedTeam {
+      title
+      user {
+        id
+      }
+    }
+  }
+`)
+
 const props = defineProps<{
   workspaceId: string
+  workspace?: WorkspaceInviteDialog_WorkspaceFragment
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -82,9 +105,8 @@ const inviteToWorkspace = useInviteUserToWorkspace()
 const { on, bind, value: search } = useDebouncedTextInput({ debouncedBy: 500 })
 const { users, emails, hasTargets } = useResolveInviteTargets({
   search,
-  excludeUserIds: computed(
-    () => [] // TOOD: Filter out users
-  )
+  excludeUserIds: computed(() => props.workspace?.team.map((c) => c.user.id)),
+  excludeEmails: computed(() => props.workspace?.fullInvitedTeam?.map((c) => c.title))
 })
 const { isGuestMode } = useServerInfo()
 
