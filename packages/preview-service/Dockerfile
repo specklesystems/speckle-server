@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 ARG NODE_ENV=production
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as build-stage
+FROM node:18-bookworm-slim@sha256:03777927a98e306d478fdbdeed07351ad910179b714a2934f0f4d64810ac58aa as build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -36,7 +36,7 @@ COPY packages/preview-service ./packages/preview-service/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach -W run build
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as node
+FROM node:18-bookworm-slim@sha256:03777927a98e306d478fdbdeed07351ad910179b714a2934f0f4d64810ac58aa as node
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3008,DL3015
