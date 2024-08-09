@@ -9,7 +9,6 @@
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div class="flex flex-col sm:flex-row gap-2">
           <FormTextInput
-            v-model="search"
             name="modelsearch"
             :show-label="false"
             placeholder="Search..."
@@ -17,8 +16,8 @@
             color="foundation"
             wrapper-classes="grow md:grow-0 md:w-60"
             :show-clear="!!search"
-            @change="updateSearchImmediately"
-            @update:model-value="updateDebouncedSearch"
+            :model-value="bind.modelValue.value"
+            v-on="on"
           ></FormTextInput>
           <FormSelectProjectRoles
             v-if="!showEmptyState"
@@ -48,7 +47,6 @@
     <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
-
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import {
@@ -58,7 +56,6 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   getCacheId,
@@ -72,14 +69,13 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const logger = useLogger()
 
 const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
-const search = ref('')
-const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 
@@ -89,13 +85,22 @@ const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
 
 const {
+  on,
+  bind,
+  value: search
+} = useDebouncedTextInput({
+  debouncedBy: 800,
+  model: ref('')
+})
+
+const {
   result: projectsPanelResult,
   fetchMore: fetchMoreProjects,
   onResult: onProjectsResult,
   variables: projectsVariables
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
-    search: (debouncedSearch.value || '').trim() || null,
+    search: (search.value || '').trim() || null,
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
 }))
@@ -134,15 +139,6 @@ const moreToLoad = computed(
     (!projects.value || projects.value.items.length < projects.value.totalCount) &&
     cursor.value
 )
-
-const updateDebouncedSearch = debounce(() => {
-  debouncedSearch.value = search.value.trim()
-}, 1000)
-
-const updateSearchImmediately = () => {
-  updateDebouncedSearch.cancel()
-  debouncedSearch.value = search.value.trim()
-}
 
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id
@@ -241,6 +237,5 @@ watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
-  updateSearchImmediately()
 }
 </script>
