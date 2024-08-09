@@ -111,6 +111,7 @@ import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -154,6 +155,10 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
     [settingsQueries.user.developerSettings]: {
       title: 'Developer settings',
       component: SettingsUserDeveloper
+    },
+    [settingsQueries.user.emails]: {
+      title: 'Email addresses',
+      component: SettingsUserEmails
     }
   },
   server: {

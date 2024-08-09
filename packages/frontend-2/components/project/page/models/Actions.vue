@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div>
+  <div class="relative z-30">
     <LayoutMenu
       v-model:open="showActionsMenu"
       :menu-id="menuId"
