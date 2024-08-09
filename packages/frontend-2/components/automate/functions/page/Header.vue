@@ -13,8 +13,8 @@
           name="search"
           placeholder="Search functions..."
           show-clear
-          :model-value="bind.modelValue.value"
           color="foundation"
+          v-bind="bind"
           v-on="on"
         />
         <FormButton

@@ -30,10 +30,6 @@ export default defineNuxtConfig({
     shim: false,
     strict: true
   },
-  features: {
-    // while nuxt's implementation is broken, we disable this: https://github.com/nuxt/nuxt/issues/26369
-    devLogs: false
-  },
   modules: [
     '@nuxt/eslint',
     '@nuxt/devtools',

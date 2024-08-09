@@ -54,6 +54,7 @@ export type ServerInviteRecord<
   target: string
   inviterId: string
   createdAt: Date
+  updatedAt: Date
   message: Nullable<string>
   resource: PrimaryInviteResourceTarget<Resource>
   token: string

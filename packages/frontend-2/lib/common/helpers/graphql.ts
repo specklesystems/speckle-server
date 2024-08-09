@@ -313,23 +313,23 @@ const revolveFieldNameAndVariables = <
  * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
  */
 export function modifyObjectFields<
-  V extends Optional<Record<string, unknown>> = undefined,
-  D = unknown
+  Variables extends Optional<Record<string, unknown>> = undefined,
+  FieldData = unknown
 >(
   cache: ApolloCache<unknown>,
   id: string,
   updater: (
     fieldName: string,
-    variables: V,
-    value: ModifyFnCacheData<D>,
-    details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
+    variables: Variables,
+    value: ModifyFnCacheData<FieldData>,
+    details: Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1] & {
       ref: typeof getObjectReference
       revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
   ) =>
-    | Optional<ModifyFnCacheData<D>>
-    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['DELETE']
-    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['INVALIDATE'],
+    | Optional<ModifyFnCacheData<FieldData>>
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
   options?: Partial<{
     fieldNameWhitelist: string[]
     debug: boolean
@@ -364,13 +364,16 @@ export function modifyObjectFields<
         return fieldValue as unknown
       }
 
-      const { variables } = revolveFieldNameAndVariables<V>(storeFieldName, fieldName)
+      const { variables } = revolveFieldNameAndVariables<Variables>(
+        storeFieldName,
+        fieldName
+      )
 
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
         fieldName,
-        (variables || {}) as V,
-        fieldValue as ModifyFnCacheData<D>,
+        (variables || {}) as Variables,
+        fieldValue as ModifyFnCacheData<FieldData>,
         {
           ...details,
           ref: getObjectReference,

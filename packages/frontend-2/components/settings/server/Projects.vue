@@ -16,7 +16,7 @@
             :show-clear="!!search"
             placeholder="Search projects"
             class="rounded-md border border-outline-3"
-            :model-value="bind.modelValue.value"
+            v-bind="bind"
             v-on="on"
           />
         </div>

@@ -28,7 +28,8 @@ import {
   insertInviteAndDeleteOldFactory,
   deleteInviteFactory as deleteInviteFromDbFactory,
   queryAllUserResourceInvitesFactory,
-  queryAllResourceInvitesFactory
+  queryAllResourceInvitesFactory,
+  markInviteUpdatedfactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
   createProjectInviteFactory,
@@ -301,7 +302,8 @@ export = {
           getStream
         }),
         findUserByTarget: findUserByTargetFactory(),
-        findInvite: findInviteFactory({ db })
+        findInvite: findInviteFactory({ db }),
+        markInviteUpdated: markInviteUpdatedfactory({ db })
       })
 
       await resendInviteEmail({ inviteId })

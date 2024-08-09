@@ -55,3 +55,9 @@ export const useDevLogger = () => {
   const info = logger.info.bind(logger)
   return info as (...args: unknown[]) => void
 }
+
+/**
+ * console.log replacement for development mode. Calls to this are skipped outside of dev mode
+ * and it ensures that the real structured logger is used.
+ */
+export const devLog = (...args: unknown[]) => useDevLogger()(...args)

@@ -288,6 +288,13 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('AutomateRunCollection')
           }
         }
+      },
+      Workspace: {
+        fields: {
+          invitedTeam: {
+            merge: (_existing, incoming) => incoming
+          }
+        }
       }
     }
   })

@@ -74,7 +74,11 @@
               <div class="flex gap-3">
                 <PortalTarget name="pocket-actions"></PortalTarget>
                 <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+                <ViewerGlobalFilterReset
+                  v-if="hasAnyFiltersApplied"
+                  class="z-20"
+                  :embed="!!isEmbedEnabled"
+                />
               </div>
             </div>
             <div class="flex items-end justify-center sm:justify-end">
@@ -103,6 +107,7 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
+import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -110,6 +115,9 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const { showTour, showControls } = useViewerTour()
+const {
+  filters: { hasAnyFiltersApplied }
+} = useFilterUtilities()
 
 const modelId = computed(() => route.params.modelId as string)
 

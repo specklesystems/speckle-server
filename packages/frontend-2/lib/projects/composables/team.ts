@@ -25,6 +25,7 @@ graphql(`
     team {
       role
       user {
+        id
         role
         ...LimitedUserAvatar
       }

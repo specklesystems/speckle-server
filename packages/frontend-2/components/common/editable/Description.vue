@@ -54,7 +54,7 @@ const { on, bind } = useDebouncedTextInput({
   debouncedBy: 2000,
   isBasicHtmlInput: true
 })
-const visibleDescription = computed(() => bind.modelValue.value)
+const visibleDescription = computed(() => bind.value.modelValue)
 
 const descriptionInputClasses = computed(() => [
   'normal placeholder:text-foreground-2 text-foreground-2 focus:text-foreground',

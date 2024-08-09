@@ -1,11 +1,11 @@
 <template>
-  <div v-if="hasNotifications">
+  <div>
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: menuOpen }" as="div">
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>
           <div class="relative">
-            <div v-if="hasNotifications && !menuOpen" class="scale-75">
+            <div v-if="!menuOpen" class="scale-75">
               <div
                 class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
               ></div>
@@ -45,14 +45,6 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-const { activeUser } = useActiveUser()
 const menuButtonId = useId()
-
-const hasNotifications = computed(() => {
-  if (!activeUser.value) return false
-  if (!activeUser.value?.verified) return true
-  return false
-})
 </script>

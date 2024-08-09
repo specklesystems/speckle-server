@@ -10,10 +10,15 @@
         <template #default="{ activeItem }">
           <SettingsWorkspacesMembersTable
             v-if="activeItem.id === 'members'"
+            :workspace="workspace"
             :workspace-id="workspaceId"
           />
           <div v-if="activeItem.id === 'guests'">Guests</div>
-          <div v-if="activeItem.id === 'invites'">Pending invites</div>
+          <SettingsWorkspacesMembersInvitesTable
+            v-if="activeItem.id === 'invites'"
+            :workspace-id="workspaceId"
+            :workspace="workspace"
+          />
         </template>
       </LayoutTabsHorizontal>
     </div>
@@ -21,17 +26,53 @@
 </template>
 
 <script setup lang="ts">
-import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import { Roles } from '@speckle/shared'
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
+import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
+import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 
-defineProps<{
+graphql(`
+  fragment SettingsWorkspacesMembers_Workspace on Workspace {
+    id
+    role
+  }
+`)
+
+const props = defineProps<{
   workspaceId: string
 }>()
 
-const tabItems = ref<LayoutTabItem[]>([
+const { result } = useQuery(
+  settingsWorkspacesMembersQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
+    // doesn't kill the entire query
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: (err) =>
+        err.graphQLErrors?.length === 1 &&
+        err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
+    }
+  })
+)
+
+const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
+const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members' },
   { title: 'Guests', id: 'guests' },
-  { title: 'Pending invites', id: 'invites' }
+  {
+    title: 'Pending invites',
+    id: 'invites',
+    disabled: !isAdmin.value,
+    disabledMessage: 'Only workspace admins can manage invites'
+  }
 ])
 
 const activeTab = ref(tabItems.value[0])
+
+const workspace = computed(() => result.value?.workspace)
 </script>

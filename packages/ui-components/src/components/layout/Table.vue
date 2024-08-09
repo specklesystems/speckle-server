@@ -5,7 +5,6 @@
       class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar border border-outline-3 rounded-lg"
     >
       <div
-        v-if="items.length > 0"
         class="grid z-10 grid-cols-12 items-center space-x-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
@@ -21,7 +20,17 @@
         class="divide-y divide-outline-3 h-full overflow-visible"
         :class="{ 'pb-32': overflowCells }"
       >
-        <template v-if="items.length">
+        <div
+          v-if="loading || !items"
+          tabindex="0"
+          :style="{ paddingRight: paddingRightStyle }"
+          :class="rowsWrapperClasses"
+        >
+          <div :class="getClasses(undefined, 0, { noPadding: true })" tabindex="0">
+            <CommonLoadingBar loading />
+          </div>
+        </div>
+        <template v-else-if="items?.length">
           <div
             v-for="item in items"
             :key="item.id"
@@ -39,17 +48,19 @@
               </div>
             </template>
             <div class="absolute right-1.5 space-x-1 flex items-center p-0 h-full">
-              <div v-for="button in buttons" :key="button.label">
-                <FormButton
-                  :icon-left="button.icon"
-                  size="sm"
-                  color="outline"
-                  hide-text
-                  :class="button.class"
-                  :to="isString(button.action) ? button.action : undefined"
-                  @click.stop="!isString(button.action) ? button.action(item) : noop"
-                />
-              </div>
+              <template v-if="buttons">
+                <div v-for="button in buttons" :key="button.label">
+                  <FormButton
+                    :icon-left="button.icon"
+                    size="sm"
+                    color="outline"
+                    hide-text
+                    :class="button.class"
+                    :to="isString(button.action) ? button.action : undefined"
+                    @click.stop="!isString(button.action) ? button.action(item) : noop"
+                  />
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -71,12 +82,11 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import { FormButton } from '~~/src/lib'
+import { CommonLoadingBar, FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
   id: I
@@ -84,31 +94,34 @@ export type TableColumn<I> = {
   classes: string
 }
 
-export interface RowButton<T = unknown> {
+export type RowButton<T = unknown> = {
   icon: PropAnyComponent
   label: string
-  action: (item: T) => void | string
+  action: (item: T) => unknown
   class?: string
 }
 
 const props = withDefaults(
   defineProps<{
-    items: T[]
+    items: T[] | undefined | null
     buttons?: RowButton<T>[]
     columns: TableColumn<C>[]
     overflowCells?: boolean
     onRowClick?: (item: T) => void
     rowItemsAlign?: 'center' | 'stretch'
     emptyMessage?: string
+    loading?: boolean
   }>(),
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
 
+const buttonCount = computed(() => {
+  return (props.buttons || []).length
+})
 const paddingRightStyle = computed(() => {
-  const buttonCount = (props.buttons || []).length
   let padding = 16
-  if (buttonCount > 0) {
-    padding = 48 + (buttonCount - 1) * 42
+  if (buttonCount.value > 0) {
+    padding = 48 + (buttonCount.value - 1) * 42
   }
   return `${padding}px`
 })
@@ -118,7 +131,7 @@ const rowsWrapperClasses = computed(() => {
     'relative grid grid-cols-12 items-center space-x-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
   ]
 
-  if (props.onRowClick && props.items.length) {
+  if (props.onRowClick && props.items?.length) {
     classParts.push('cursor-pointer hover:bg-primary-muted')
   }
 
@@ -134,22 +147,36 @@ const rowsWrapperClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const getHeaderClasses = (column: C | undefined, colIndex: number): string => {
+const getHeaderClasses = (
+  column: C | undefined,
+  colIndex: number,
+  options?: Partial<{
+    noPadding: boolean
+  }>
+): string => {
   const classParts = [
     column ? props.columns.find((c) => c.id === column)?.classes : '' || ''
   ]
 
-  if (colIndex === 0) {
-    classParts.push('px-1')
-  } else {
-    classParts.push('lg:p-0 px-1')
+  if (!options?.noPadding) {
+    if (colIndex === 0) {
+      classParts.push('px-1')
+    } else {
+      classParts.push('lg:p-0 px-1')
+    }
   }
 
   return classParts.join(' ')
 }
 
-const getClasses = (column: C | undefined, colIndex: number): string => {
-  const classParts = [getHeaderClasses(column, colIndex)]
+const getClasses = (
+  column: C | undefined,
+  colIndex: number,
+  options?: Partial<{
+    noPadding: boolean
+  }>
+): string => {
+  const classParts = [getHeaderClasses(column, colIndex, options)]
 
   if (colIndex === 0) {
     classParts.push(`bg-transparent py-2 ${column ? 'pr-5' : 'col-span-full'}`)

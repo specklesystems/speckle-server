@@ -435,7 +435,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return collaborators
         },
-        invitedTeam: async (parent) => {
+        invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
             queryAllResourceInvites: queryAllResourceInvitesFactory({
               db,
@@ -444,7 +444,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
           })
 
-          return await getPendingTeam({ workspaceId: parent.id })
+          return await getPendingTeam({ workspaceId: parent.id, filter: args.filter })
         },
         projects: async (parent, args) => {
           const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })

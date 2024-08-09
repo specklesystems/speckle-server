@@ -8,8 +8,8 @@
       color="foundation"
       placeholder="Search Functions..."
       show-clear
-      :model-value="bind.modelValue.value"
       full-width
+      v-bind="bind"
       v-on="on"
     />
     <div class="mt-4">

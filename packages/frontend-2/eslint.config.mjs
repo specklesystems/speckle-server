@@ -97,7 +97,9 @@ const configs = withNuxt([
           }
         }
       ],
-      'vue/html-self-closing': 'off' // messes with prettier
+      'vue/html-self-closing': 'off', // messes with prettier
+      'vue/no-multiple-template-root': 'error',
+      'vue/no-root-v-if': 'error'
     }
   },
   {

@@ -13,6 +13,7 @@ import {
   FindInvite,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
+  MarkInviteUpdated,
   ServerInviteRecordInsertModel
 } from '@/modules/serverinvites/domain/operations'
 import {
@@ -188,11 +189,13 @@ export const resendInviteEmailFactory =
   ({
     buildInviteEmailContents,
     findUserByTarget,
-    findInvite
+    findInvite,
+    markInviteUpdated
   }: {
     buildInviteEmailContents: BuildInviteEmailContents
     findUserByTarget: FindUserByTarget
     findInvite: FindInvite
+    markInviteUpdated: MarkInviteUpdated
   }): ResendInviteEmail =>
   async (params: { inviteId: string }) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -221,4 +224,6 @@ export const resendInviteEmailFactory =
       targetUser,
       targetData
     })
+
+    await markInviteUpdated({ inviteId })
   }

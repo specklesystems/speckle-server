@@ -46,7 +46,7 @@ const { on, bind } = useDebouncedTextInput({
   isBasicHtmlInput: true,
   submitOnEnter: true
 })
-const visibleTitle = computed(() => bind.modelValue.value)
+const visibleTitle = computed(() => bind.value.modelValue)
 
 const titleInputClasses = computed(() => {
   const classParts = [
