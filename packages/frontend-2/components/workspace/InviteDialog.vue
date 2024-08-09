@@ -89,7 +89,7 @@ graphql(`
         id
       }
     }
-    fullInvitedTeam: invitedTeam {
+    invitedTeam(filter: $invitesFilter) {
       title
       user {
         id
@@ -112,11 +112,10 @@ const { users, emails, hasTargets } = useResolveInviteTargets({
   search,
   excludeUserIds: computed(() => [
     ...(props.workspace?.team.map((c) => c.user.id) || []),
-    ...(props.workspace?.fullInvitedTeam
-      ?.map((c) => c.user?.id)
-      .filter(isNonNullable) || [])
+    ...(props.workspace?.invitedTeam?.map((c) => c.user?.id).filter(isNonNullable) ||
+      [])
   ]),
-  excludeEmails: computed(() => props.workspace?.fullInvitedTeam?.map((c) => c.title))
+  excludeEmails: computed(() => props.workspace?.invitedTeam?.map((c) => c.title))
 })
 const { isGuestMode } = useServerInfo()
 

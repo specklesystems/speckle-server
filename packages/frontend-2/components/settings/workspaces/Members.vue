@@ -55,9 +55,7 @@ const { result } = useQuery(
     context: {
       skipLoggingErrors: (err) =>
         err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some(
-          (e) => e.path?.includes('invitedTeam') || e.path?.includes('fullInvitedTeam')
-        )
+        err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
     }
   })
 )

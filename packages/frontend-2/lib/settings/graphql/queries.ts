@@ -14,7 +14,10 @@ export const settingsSidebarWorkspacesQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers($workspaceId: String!, $invitesSearch: String) {
+  query SettingsWorkspacesMembers(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
     workspace(id: $workspaceId) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
@@ -24,7 +27,10 @@ export const settingsWorkspacesMembersQuery = graphql(`
 `)
 
 export const settingsWorkspacesInvitesSearchQuery = graphql(`
-  query SettingsWorkspacesInvitesSearch($workspaceId: String!, $invitesSearch: String) {
+  query SettingsWorkspacesInvitesSearch(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
     workspace(id: $workspaceId) {
       ...SettingsWorkspacesMembersInvitesTable_Workspace
     }
