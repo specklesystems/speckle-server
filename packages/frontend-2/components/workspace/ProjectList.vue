@@ -46,22 +46,7 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import {
-  useApolloClient,
-  useQuery,
-  useQueryLoading,
-  useSubscription
-} from '@vue/apollo-composable'
-import { graphql } from '~~/lib/common/generated/gql'
-import {
-  getCacheId,
-  evictObjectFields,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import type { User, UserProjectsArgs } from '~~/lib/common/generated/gql/graphql'
-import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
@@ -76,10 +61,8 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 
-const { activeUser, isGuest } = useActiveUser()
-const { triggerNotification } = useGlobalToast()
+const { isGuest } = useActiveUser()
 const areQueriesLoading = useQueryLoading()
-const apollo = useApolloClient().client
 
 const props = defineProps<{
   workspaceId: string
@@ -115,20 +98,6 @@ onProjectsResult((res) => {
   }
 })
 
-const { onResult: onUserProjectsUpdate } = useSubscription(
-  graphql(`
-    subscription OnUserProjectsUpdate {
-      userProjectsUpdated {
-        type
-        id
-        project {
-          ...ProjectDashboardItem
-        }
-      }
-    }
-  `)
-)
-
 const projects = computed(() => projectsPanelResult.value?.workspace?.projects)
 
 const showEmptyState = computed(() => {
@@ -140,72 +109,6 @@ const moreToLoad = computed(
     (!projects.value || projects.value.items.length < projects.value.totalCount) &&
     cursor.value
 )
-
-onUserProjectsUpdate((res) => {
-  const activeUserId = activeUser.value?.id
-  const event = res.data?.userProjectsUpdated
-
-  if (!event) return
-  if (!activeUserId) return
-
-  const isNewProject = event.type === UserProjectsUpdatedMessageType.Added
-  const incomingProject = event.project
-  const cache = apollo.cache
-
-  if (isNewProject && incomingProject) {
-    // Add to User.projects where possible
-    modifyObjectFields<UserProjectsArgs, User['projects']>(
-      cache,
-      getCacheId('User', activeUserId),
-      (fieldName, variables, value, { ref }) => {
-        if (fieldName !== 'projects') return
-        if (variables.filter?.search?.length) return
-        if (variables.filter?.onlyWithRoles?.length) {
-          const roles = variables.filter.onlyWithRoles
-          if (!roles.includes(incomingProject.role || '')) return
-        }
-
-        return {
-          ...value,
-          items: [ref('Project', incomingProject.id), ...(value.items || [])],
-          totalCount: (value.totalCount || 0) + 1
-        }
-      }
-    )
-
-    // Elsewhere - just evict fields directly
-    evictObjectFields<UserProjectsArgs, User['projects']>(
-      cache,
-      getCacheId('User', activeUserId),
-      (fieldName, variables) => {
-        if (fieldName !== 'projects') return false
-        if (variables.filter?.search?.length) return true
-
-        return false
-      }
-    )
-  }
-
-  if (!isNewProject) {
-    // Evict old project from cache entirely to remove it from all searches
-    cache.evict({
-      id: getCacheId('Project', event.id)
-    })
-  }
-
-  // Emit toast notification
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: isNewProject ? 'New project added' : 'A project has been removed',
-    cta:
-      isNewProject && incomingProject
-        ? {
-            url: projectRoute(incomingProject.id),
-            title: 'View project'
-          }
-        : undefined
-  })
-})
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) return state.complete()
