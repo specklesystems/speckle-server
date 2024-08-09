@@ -58,7 +58,7 @@
     </div>
     <div
       v-if="!hasNoModelCards"
-      class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
+      class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
     >
       <div v-if="app.$sendBinding" class="grow">
         <FormButton :icon-left="CloudArrowUpIcon" full-width @click="handleSendClick">
