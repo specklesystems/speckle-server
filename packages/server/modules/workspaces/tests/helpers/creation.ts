@@ -4,6 +4,7 @@ import {
   grantStreamPermissions,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
+import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
@@ -16,7 +17,9 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceWithDomainsFactory,
+  getWorkspaceDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -46,6 +49,7 @@ export type BasicTestWorkspace = {
   description?: string
   logo?: string
   discoverabilityEnabled?: boolean
+  domainBasedMembershipProtectionEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
@@ -68,6 +72,7 @@ export const createTestWorkspace = async (
     userResourceAccessLimits: null
   })
 
+  workspace.id = newWorkspace.id
   if (workspace.discoverabilityEnabled) {
     const updateWorkspace = updateWorkspaceFactory({
       getWorkspace: getWorkspaceFactory({ db }),
@@ -83,7 +88,15 @@ export const createTestWorkspace = async (
     })
   }
 
-  workspace.id = newWorkspace.id
+  await updateWorkspaceFactory({
+    getWorkspace: getWorkspaceFactory({ db }),
+    upsertWorkspace: upsertWorkspaceFactory({ db }),
+    emitWorkspaceEvent: getEventBus().emit
+  })({
+    workspaceId: newWorkspace.id,
+    workspaceInput: { domainBasedMembershipProtectionEnabled: true }
+  })
+
   workspace.ownerId = owner.id
 }
 
@@ -93,6 +106,8 @@ export const assignToWorkspace = async (
   role?: WorkspaceRoles
 ) => {
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
+    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
@@ -152,7 +167,9 @@ export const createWorkspaceInviteDirectly = async (
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
-      getWorkspace: getWorkspaceFactory({ db })
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,

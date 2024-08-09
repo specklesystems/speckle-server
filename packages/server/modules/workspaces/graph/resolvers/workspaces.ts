@@ -34,6 +34,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceInvalidRoleError,
+  WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
@@ -52,7 +53,8 @@ import {
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
-  getUserDiscoverableWorkspacesFactory
+  getUserDiscoverableWorkspacesFactory,
+  getWorkspaceWithDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -83,7 +85,11 @@ import {
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
-import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
+import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -108,7 +114,9 @@ const buildCreateAndSendWorkspaceInvite = () =>
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
-      getWorkspace: getWorkspaceFactory({ db })
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,
@@ -310,6 +318,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             const updateWorkspaceRole = updateWorkspaceRoleFactory({
               upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
               getWorkspaceRoles,
               emitWorkspaceEvent,
               getStreams,
@@ -356,6 +366,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
           await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        async join(_parent, args, context) {
+          if (!context.userId) throw new WorkspaceJoinNotAllowedError()
+
+          await joinWorkspaceFactory({
+            getUserEmails: findEmailsByUserIdFactory({ db }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
+          })({ userId: context.userId, workspaceId: args.input.workspaceId })
+
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
@@ -420,6 +445,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             processInvite: processFinalizedWorkspaceInviteFactory({
               getWorkspace: getWorkspaceFactory({ db }),
               updateWorkspaceRole: updateWorkspaceRoleFactory({
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: ({ eventName, payload }) =>

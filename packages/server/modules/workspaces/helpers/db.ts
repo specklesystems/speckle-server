@@ -16,3 +16,13 @@ export const WorkspaceAcl = buildTableHelper('workspace_acl', [
   'role',
   'workspaceId'
 ])
+
+export const WorkspaceDomains = buildTableHelper('workspace_domains', [
+  'id',
+  'workspaceId',
+  'domain',
+  'createdAt',
+  'updatedAt',
+  'createdByUserId',
+  'verified'
+])

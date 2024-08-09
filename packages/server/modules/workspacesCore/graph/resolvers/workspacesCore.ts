@@ -33,6 +33,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         deleteDomain: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        join: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       WorkspaceInviteMutations: {

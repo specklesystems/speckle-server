@@ -929,6 +929,10 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type JoinWorkspaceInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -3919,6 +3923,7 @@ export type WorkspaceMutations = {
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
+  join: Workspace;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -3941,6 +3946,11 @@ export type WorkspaceMutationsDeleteArgs = {
 
 export type WorkspaceMutationsDeleteDomainArgs = {
   input: WorkspaceDomainDeleteInput;
+};
+
+
+export type WorkspaceMutationsJoinArgs = {
+  input: JoinWorkspaceInput;
 };
 
 

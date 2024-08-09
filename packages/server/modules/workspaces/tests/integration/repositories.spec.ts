@@ -8,7 +8,8 @@ import {
   getWorkspaceRolesForUserFactory,
   deleteWorkspaceFactory,
   storeWorkspaceDomainFactory,
-  getUserDiscoverableWorkspacesFactory
+  getUserDiscoverableWorkspacesFactory,
+  getWorkspaceWithDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -25,6 +26,7 @@ import {
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { Roles } from '@speckle/shared'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -549,6 +551,88 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(0)
+    })
+  })
+
+  describe('getWorkspaceDomainsFactory creates a function, that', () => {
+    it('returns a workspace with domains', async () => {
+      const user = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(user)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user)
+
+      await storeWorkspaceDomainFactory({ db })({
+        workspaceDomain: {
+          id: createRandomPassword(),
+          domain: 'example.org',
+          verified: true,
+          workspaceId: workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
+        id: workspace.id
+      })
+      expect(workspaceWithDomains?.domains.length).to.eq(1)
+    })
+
+    it('fuck', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const problemChild = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: problemChild.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await upsertWorkspaceRole({
+        userId: user.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Member
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: problemChild.id
+      })
+
+      expect(workspaces.length).to.equal(1)
     })
   })
 })

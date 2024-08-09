@@ -1,3 +1,17 @@
+<!--
+  ___       __   ________  ___  _________
+|\  \     |\  \|\   __  \|\  \|\___   ___\
+\ \  \    \ \  \ \  \|\  \ \  \|___ \  \_|
+ \ \  \  __\ \  \ \   __  \ \  \   \ \  \
+  \ \  \|\__\_\  \ \  \ \  \ \  \   \ \  \
+   \ \____________\ \__\ \__\ \__\   \ \__\
+    \|____________|\|__|\|__|\|__|    \|__|
+
+This file is only meant to be used in its new shiny
+home on the workspaces dashboard page! It is living
+here behind a flag for testing reasons.
+-->
+
 <template>
   <div class="w-full flex flex-col gap-4">
     <div
@@ -17,17 +31,44 @@
           </div>
         </div>
       </div>
-      <FormButton size="lg">Join</FormButton>
+      <FormButton size="lg" @click="() => handleJoin(workspace.id)">Join</FormButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { dashboardJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
 import { dashboardDiscoverableWorkspacesQuery } from '~/lib/dashboard/graphql/queries'
 
-const { result } = useQuery(dashboardDiscoverableWorkspacesQuery)
+const { triggerNotification } = useGlobalToast()
+
+const { result, refetch } = useQuery(dashboardDiscoverableWorkspacesQuery)
 const discoverableWorkspaces = computed(() => {
   return result.value?.activeUser?.discoverableWorkspaces ?? []
 })
+
+const { mutate: joinWorkspace } = useMutation(dashboardJoinWorkspaceMutation)
+
+const handleJoin = async (workspaceId: string) => {
+  const result = await joinWorkspace({ input: { workspaceId } })
+
+  if (result?.data) {
+    // TODO: Redirect to workspace dashboard on success
+    refetch()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Joined workspace',
+      description: 'Successfully joined workspace'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to join workspace',
+      description: errorMessage
+    })
+  }
+}
 </script>
