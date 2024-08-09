@@ -9,7 +9,8 @@ export const initKnexPrometheusMetrics = (params: {
   register: Registry
   logger: Logger
 }) => {
-  const normalizeSqlMethods = (sqlMethod: string) => {
+  const normalizeSqlMethod = (sqlMethod: string) => {
+    if (!sqlMethod) return 'unknown'
     switch (sqlMethod.toLocaleLowerCase()) {
       case 'first':
         return 'select'
@@ -100,12 +101,12 @@ export const initKnexPrometheusMetrics = (params: {
     delete queryStartTime[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
-        .labels({ sqlMethod: normalizeSqlMethods(querySpec.method) })
+        .labels({ sqlMethod: normalizeSqlMethod(querySpec.method) })
         .observe(durationSec)
     params.logger.debug(
       {
         sql: querySpec.sql,
-        sqlMethod: normalizeSqlMethods(querySpec.method),
+        sqlMethod: normalizeSqlMethod(querySpec.method),
         queryId,
         sqlQueryDurationMs: Math.ceil(durationμs / 1000)
       },
@@ -121,14 +122,14 @@ export const initKnexPrometheusMetrics = (params: {
 
     if (!isNaN(durationSec))
       metricQueryDuration
-        .labels({ sqlMethod: normalizeSqlMethods(querySpec.method) })
+        .labels({ sqlMethod: normalizeSqlMethod(querySpec.method) })
         .observe(durationSec)
     metricQueryErrors.inc()
     params.logger.warn(
       {
         err,
         sql: querySpec.sql,
-        sqlMethod: normalizeSqlMethods(querySpec.method),
+        sqlMethod: normalizeSqlMethod(querySpec.method),
         queryId,
         sqlQueryDurationMs: Math.ceil(durationμs / 1000)
       },
