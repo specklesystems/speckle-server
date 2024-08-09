@@ -91,9 +91,9 @@ export const useResolveInviteTargets = (params: {
 
   const emails = computed(() => {
     const query = searchVariables.value?.query || ''
-    if (isValidEmail(query)) return [query]
-
-    const multipleEmails = query.split(',').map((i) => i.trim())
+    const multipleEmails = isValidEmail(query)
+      ? [query]
+      : query.split(',').map((i) => i.trim())
     const validEmails = multipleEmails.filter((e) => isValidEmail(e))
     const uniqueEmails = uniq(validEmails)
 

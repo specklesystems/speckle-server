@@ -56,7 +56,12 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Roles, type ServerRoles, type WorkspaceRoles } from '@speckle/shared'
+import {
+  isNonNullable,
+  Roles,
+  type ServerRoles,
+  type WorkspaceRoles
+} from '@speckle/shared'
 import { useDebouncedTextInput, type LayoutDialogButton } from '@speckle/ui-components'
 import { isString } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
@@ -105,7 +110,12 @@ const inviteToWorkspace = useInviteUserToWorkspace()
 const { on, bind, value: search } = useDebouncedTextInput({ debouncedBy: 500 })
 const { users, emails, hasTargets } = useResolveInviteTargets({
   search,
-  excludeUserIds: computed(() => props.workspace?.team.map((c) => c.user.id)),
+  excludeUserIds: computed(() => [
+    ...(props.workspace?.team.map((c) => c.user.id) || []),
+    ...(props.workspace?.fullInvitedTeam
+      ?.map((c) => c.user?.id)
+      .filter(isNonNullable) || [])
+  ]),
   excludeEmails: computed(() => props.workspace?.fullInvitedTeam?.map((c) => c.title))
 })
 const { isGuestMode } = useServerInfo()
