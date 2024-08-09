@@ -1,6 +1,9 @@
 <template>
   <div>
-    <SettingsWorkspacesMembersTableHeader search-placeholder="Search members..." />
+    <SettingsWorkspacesMembersTableHeader
+      search-placeholder="Search members..."
+      :workspace-id="workspaceId"
+    />
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[

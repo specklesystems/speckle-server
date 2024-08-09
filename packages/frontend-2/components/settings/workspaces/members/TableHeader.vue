@@ -10,11 +10,17 @@
         show-clear
         :placeholder="searchPlaceholder"
         class="rounded-md border border-outline-3"
-        :model-value="bind.modelValue.value"
+        v-bind="bind"
         v-on="on"
       />
     </div>
-    <FormButton>Invite</FormButton>
+    <FormButton @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
+      Invite
+    </FormButton>
+    <WorkspaceInviteDialog
+      v-model:open="isInviteDialogOpen"
+      :workspace-id="workspaceId"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -23,8 +29,10 @@ import { useDebouncedTextInput } from '@speckle/ui-components'
 
 defineProps<{
   searchPlaceholder: string
+  workspaceId: string
 }>()
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
+const isInviteDialogOpen = ref(false)
 </script>

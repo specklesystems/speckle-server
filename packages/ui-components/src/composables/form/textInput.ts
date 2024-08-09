@@ -268,9 +268,9 @@ export function useDebouncedTextInput(params?: {
       }
     }
   }
-  const bind = {
-    modelValue: computed(() => model.value || '')
-  }
+  const bind = computed(() => ({
+    modelValue: model.value || ''
+  }))
 
   watch(value, (newVal, oldVal) => {
     if (oldVal === newVal && !oldVal && !newVal) return

@@ -3,6 +3,7 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       search-placeholder="Search pending invites..."
+      :workspace-id="workspaceId"
     />
     <LayoutTable
       class="mt-6 md:mt-8"
