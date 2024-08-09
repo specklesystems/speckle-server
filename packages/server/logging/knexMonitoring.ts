@@ -20,6 +20,8 @@ export const initKnexPrometheusMetrics = (params: {
   }
 
   const queryStartTime: Record<string, number> = {}
+  const connectionAcquisitionStartTime: Record<string, number> = {}
+  const connectionInUseStartTime: Record<string, number> = {}
 
   new prometheusClient.Gauge({
     registers: [params.register],
@@ -89,6 +91,32 @@ export const initKnexPrometheusMetrics = (params: {
     help: 'Number of DB queries with errors'
   })
 
+  const metricConnectionAcquisitionDuration = new prometheusClient.Histogram({
+    registers: [params.register],
+    name: 'speckle_server_knex_connection_acquisition_duration',
+    help: 'Summary of the DB connection acquisition duration, from request to acquire connection from pool until successfully acquired, in seconds'
+  })
+
+  const metricConnectionPoolErrors = new prometheusClient.Counter({
+    registers: [params.register],
+    name: 'speckle_server_knex_connection_acquisition_errors',
+    help: 'Number of DB connection pool acquisition errors'
+  })
+
+  const metricConnectionInUseDuration = new prometheusClient.Histogram({
+    registers: [params.register],
+    name: 'speckle_server_knex_connection_usage_duration',
+    help: 'Summary of the DB connection duration, from successful acquisition of connection from pool until release back to pool, in seconds'
+  })
+
+  const metricConnectionPoolReapingDuration = new prometheusClient.Histogram({
+    registers: [params.register],
+    name: 'speckle_server_knex_connection_pool_reaping_duration',
+    help: 'Summary of the DB connection pool reaping duration, in seconds. Reaping is the process of removing idle connections from the pool.'
+  })
+
+  // configure hooks on knex
+
   params.db.on('query', (data) => {
     const queryId = data.__knexQueryUid + ''
     queryStartTime[queryId] = performance.now()
@@ -144,4 +172,101 @@ export const initKnexPrometheusMetrics = (params: {
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )
   })
+
+  const pool = params.db.client.pool
+
+  // configure hooks on knex connection pool
+  pool.on('acquireRequest', (eventId: number) => {
+    connectionAcquisitionStartTime[eventId] = performance.now()
+    // params.logger.debug(
+    //   {
+    //     eventId
+    //   },
+    //   'DB connection acquisition request occurred.'
+    // )
+  })
+  pool.on('acquireSuccess', (eventId: number, resource: unknown) => {
+    const now = performance.now()
+    const durationMs = now - connectionAcquisitionStartTime[eventId]
+    delete connectionAcquisitionStartTime[eventId]
+    if (!isNaN(durationMs)) metricConnectionAcquisitionDuration.observe(durationMs)
+
+    // successful acquisition is the start of usage, so record that start time
+    let knexUid: string | undefined = undefined
+    if (resource && typeof resource === 'object' && '__knexUid' in resource) {
+      const _knexUid = resource['__knexUid']
+      if (_knexUid && typeof _knexUid === 'string') {
+        knexUid = _knexUid
+        connectionInUseStartTime[knexUid] = now
+      }
+    }
+
+    // params.logger.debug(
+    //   {
+    //     eventId,
+    //     knexUid,
+    //     connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
+    //   },
+    //   'DB connection (knexUid: {knexUid}) acquired after {connectionAcquisitionDurationMs}ms'
+    // )
+  })
+  pool.on('acquireFail', (eventId: number, err: unknown) => {
+    const now = performance.now()
+    const durationMs = now - connectionAcquisitionStartTime[eventId]
+    delete connectionAcquisitionStartTime[eventId]
+    metricConnectionPoolErrors.inc()
+    params.logger.warn(
+      {
+        err,
+        eventId,
+        connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
+      },
+      'DB connection acquisition failed after {connectionAcquisitionDurationMs}ms'
+    )
+  })
+
+  // resource returned to pool
+  pool.on('release', (resource: unknown) => {
+    if (!(resource && typeof resource === 'object' && '__knexUid' in resource)) return
+    const knexUid = resource['__knexUid']
+    if (!knexUid || typeof knexUid !== 'string') return
+
+    const now = performance.now()
+    const durationMs = now - connectionInUseStartTime[knexUid]
+    if (!isNaN(durationMs)) metricConnectionInUseDuration.observe(durationMs)
+    // params.logger.debug(
+    //   {
+    //     knexUid,
+    //     connectionInUseDurationMs: toNDecimalPlaces(durationMs, 0)
+    //   },
+    //   'DB connection (knexUid: {knexUid}) released after {connectionInUseDurationMs}ms'
+    // )
+  })
+
+  // resource was created and added to the pool
+  // pool.on('createRequest', (eventId) => {})
+  // pool.on('createSuccess', (eventId, resource) => {})
+  // pool.on('createFail', (eventId, err) => {})
+
+  // resource is destroyed and evicted from pool
+  // resource may or may not be invalid when destroySuccess / destroyFail is called
+  // pool.on('destroyRequest', (eventId, resource) => {})
+  // pool.on('destroySuccess', (eventId, resource) => {})
+  // pool.on('destroyFail', (eventId, resource, err) => {})
+
+  // when internal reaping event clock is activated / deactivated
+  let reapingStartTime: number | undefined = undefined
+  pool.on('startReaping', () => {
+    reapingStartTime = performance.now()
+  })
+  pool.on('stopReaping', () => {
+    if (!reapingStartTime) return
+    const durationMs = performance.now() - reapingStartTime
+    if (!isNaN(durationMs)) metricConnectionPoolReapingDuration.observe(durationMs)
+    reapingStartTime = undefined
+  })
+
+  // pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
+  // pool.on('poolDestroyRequest', (eventId) => {})
+  // pool.on('poolDestroySuccess', (eventId) => {})
 }
