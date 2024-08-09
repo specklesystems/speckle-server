@@ -6,5 +6,5 @@
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const workspaceId = route.params.id
+const workspaceId = computed(() => route.params.id)
 </script>
