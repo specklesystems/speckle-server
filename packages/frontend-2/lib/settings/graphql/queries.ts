@@ -14,19 +14,33 @@ export const settingsSidebarWorkspacesQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers($workspaceId: String!) {
+  query SettingsWorkspacesMembers(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
     workspace(id: $workspaceId) {
-      team {
-        role
-        id
-        user {
-          id
-          avatar
-          name
-          company
-          verified
-        }
-      }
+      ...SettingsWorkspacesMembers_Workspace
+      ...SettingsWorkspacesMembersMembersTable_Workspace
+      ...SettingsWorkspacesMembersInvitesTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesInvitesSearchQuery = graphql(`
+  query SettingsWorkspacesInvitesSearch(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
+    workspace(id: $workspaceId) {
+      ...SettingsWorkspacesMembersInvitesTable_Workspace
+    }
+  }
+`)
+
+export const settingsUserEmailsQuery = graphql(`
+  query SettingsUserEmailsQuery {
+    activeUser {
+      ...SettingsUserEmails_User
     }
   }
 `)

@@ -7,7 +7,7 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-import { chunk } from '#lodash'
+import { chunk, isString } from '#lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -561,9 +561,13 @@ class ObjectLoader {
       // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for (const cachedObj of cachedData) {
-        if (!cachedObj.data)
-          // non-existent objects are retrieved with `undefined` data
+        if (
+          !cachedObj.data ||
+          (isString(cachedObj.data) && cachedObj.data.startsWith('<html'))
+        ) {
+          // non-existent/invalid objects are retrieved with `undefined` data
           continue
+        }
         ret[cachedObj.id] = cachedObj.data
       }
     }
@@ -581,8 +585,12 @@ class ObjectLoader {
         .transaction('objects', 'readwrite')
         .objectStore('objects')
       for (const obj of objects) {
-        const idAndData = obj.split('\t')
-        store.put(idAndData[1], idAndData[0])
+        const [key, value] = obj.split('\t')
+        if (!value || !isString(value) || value.startsWith('<html')) {
+          continue
+        }
+
+        store.put(value, key)
       }
       return this.promisifyIdbRequest(store.transaction)
     } catch (e) {

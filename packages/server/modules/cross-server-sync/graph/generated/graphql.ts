@@ -1723,10 +1723,15 @@ export type PendingWorkspaceCollaborator = {
   title: Scalars['String']['output'];
   /** Only available if the active user is the pending workspace collaborator */
   token?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+};
+
+export type PendingWorkspaceCollaboratorsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Project = {
@@ -3820,6 +3825,11 @@ export type Workspace = {
 };
 
 
+export type WorkspaceInvitedTeamArgs = {
+  filter?: InputMaybe<PendingWorkspaceCollaboratorsFilter>;
+};
+
+
 export type WorkspaceProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceProjectsFilter>;
@@ -3855,6 +3865,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** Defaults to User, if not specified */
+  serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']['input']>;
 };
