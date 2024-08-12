@@ -11,73 +11,79 @@
           <LayoutSidebar>
             <LayoutSidebarMenu>
               <LayoutSidebarMenuGroup>
-                <LayoutSidebarMenuGroupItem label="Dashboard" :to="homeRoute" external>
-                  <template #icon>
-                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
+                <NuxtLink :to="homeRoute">
+                  <LayoutSidebarMenuGroupItem label="Dashboard">
+                    <template #icon>
+                      <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
-                <LayoutSidebarMenuGroupItem
-                  label="Projects"
-                  :to="projectsRoute"
-                  external
-                >
-                  <template #icon>
-                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
+                <NuxtLink :to="projectsRoute">
+                  <LayoutSidebarMenuGroupItem label="Projects">
+                    <template #icon>
+                      <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup collapsible title="Workspaces">
                 <template #title-icon>
                   <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
                 </template>
-                <LayoutSidebarMenuGroupItem
+                <NuxtLink
                   v-for="(item, key) in workspacesItems"
                   :key="key"
-                  :label="item.label"
                   :to="item.to"
-                />
+                >
+                  <LayoutSidebarMenuGroupItem :label="item.label" />
+                </NuxtLink>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup collapsible title="Resources">
-                <LayoutSidebarMenuGroupItem
-                  label="Connectors"
+                <NuxtLink
                   to="https://speckle.systems/features/connectors/"
-                  external
+                  target="_blank"
                 >
-                  <template #icon>
-                    <IconConnectors class="h-4 w-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-                <LayoutSidebarMenuGroupItem
-                  label="Community forum"
-                  to="https://speckle.community/"
-                  external
-                >
-                  <template #icon>
-                    <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-                <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
-                  <template #icon>
-                    <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-                <LayoutSidebarMenuGroupItem
-                  label="Documentation"
-                  to="https://speckle.guide/"
-                  external
-                >
-                  <template #icon>
-                    <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-                <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
-                  <template #icon>
-                    <ClockIcon class="h-5 w-5 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
+                  <LayoutSidebarMenuGroupItem label="Connectors">
+                    <template #icon>
+                      <IconConnectors class="h-4 w-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink to="https://speckle.community/" target="_blank">
+                  <LayoutSidebarMenuGroupItem label="Community forum">
+                    <template #icon>
+                      <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink to="#0" target="_blank">
+                  <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
+                    <template #icon>
+                      <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink to="https://speckle.guide/" target="_blank">
+                  <LayoutSidebarMenuGroupItem label="Documentation">
+                    <template #icon>
+                      <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink to="#0" target="_blank">
+                  <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
+                    <template #icon>
+                      <ClockIcon class="h-5 w-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
               </LayoutSidebarMenuGroup>
             </LayoutSidebarMenu>
           </LayoutSidebar>
