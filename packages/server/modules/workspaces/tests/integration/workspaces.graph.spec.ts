@@ -8,9 +8,10 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
+  createTestUser,
   createTestUsers
 } from '@/test/authHelper'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
   CreateProjectInviteDocument,
   CreateWorkspaceDocument,
@@ -116,37 +117,174 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('query workspace.team', () => {
+      let largeWorkspaceApollo: TestApolloServer
+
+      const largeWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'My Large Workspace',
+        description: 'A workspace with many users and roles to test pagination.'
+      }
+
+      const largeWorkspaceAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'large-workspace-user-a@example.org'
+      }
+
+      before(async () => {
+        await createTestUser(largeWorkspaceAdmin)
+        await createTestWorkspace(largeWorkspace, largeWorkspaceAdmin)
+
+        largeWorkspaceApollo = await testApolloServer({
+          authUserId: largeWorkspaceAdmin.id
+        })
+
+        const workspaceMembers: [BasicTestUser, WorkspaceRoles][] = [
+          [
+            {
+              id: '',
+              name: 'John B Speckle',
+              email: 'large-workspace-user-b@example.org'
+            },
+            'workspace:admin'
+          ],
+          [
+            {
+              id: '',
+              name: 'John C Speckle',
+              email: 'large-workspace-user-c@example.org'
+            },
+            'workspace:member'
+          ],
+          [
+            {
+              id: '',
+              name: 'John D Speckle',
+              email: 'large-workspace-user-d@example.org'
+            },
+            'workspace:member'
+          ],
+          [
+            {
+              id: '',
+              name: 'John E Speckle',
+              email: 'large-workspace-user-e@example.org'
+            },
+            'workspace:guest'
+          ],
+          [
+            {
+              id: '',
+              name: 'John F Speckle',
+              email: 'large-workspace-user-f@example.org'
+            },
+            'workspace:guest'
+          ]
+        ]
+
+        for (const [user, role] of workspaceMembers) {
+          await createTestUser(user)
+          await assignToWorkspace(largeWorkspace, user, role)
+        }
+      })
+
       it('should return workspace members', async () => {
-        const res = await apollo.execute(GetWorkspaceTeamDocument, {
-          workspaceId: workspace.id
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 25
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.team.length).to.equal(2)
+        expect(res.data?.workspace.team.items.length).to.equal(6)
+      })
+
+      it('should return workspace members in the correct order', async () => {
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id
+        })
+
+        const memberNames = res.data?.workspace.team.items.map((user) => user.user.name)
+        const expectedMemberNames = [
+          'John A Speckle',
+          'John B Speckle',
+          'John C Speckle',
+          'John D Speckle',
+          'John E Speckle',
+          'John F Speckle'
+        ]
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(memberNames).to.deep.equal(expectedMemberNames)
       })
 
       it('should respect search filters', async () => {
-        const res = await apollo.execute(GetWorkspaceTeamDocument, {
-          workspaceId: workspace.id,
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
           filter: {
-            search: 'jimmy'
+            search: 'John C'
           }
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.team.length).to.equal(1)
+        expect(res.data?.workspace.team.items.length).to.equal(1)
+        expect(res.data?.workspace.team.items[0].user.name).to.equal('John C Speckle')
       })
 
       it('should respect role filters', async () => {
-        const res = await apollo.execute(GetWorkspaceTeamDocument, {
-          workspaceId: workspace.id,
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
           filter: {
             role: 'workspace:member'
           }
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.team.length).to.equal(1)
+        expect(res.data?.workspace.team.items.length).to.equal(2)
+      })
+
+      it('should respect search limits', async () => {
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 1
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.items.length).to.equal(1)
+        expect(res.data?.workspace.team.cursor).to.exist
+      })
+
+      it('should respect pagination', async () => {
+        const resA = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 2
+        })
+        const resB = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 10,
+          cursor: resA.data?.workspace.team.cursor
+        })
+        const resC = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          cursor: resB.data?.workspace.team.cursor
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+        expect(resA.data?.workspace.team.items.length).to.equal(2)
+        expect(
+          resA.data?.workspace.team.items.every(
+            (user) => user.role === 'workspace:admin'
+          )
+        )
+        expect(resA.data?.workspace.team.cursor).to.exist
+
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resB.data?.workspace.team.items.length).to.equal(4)
+        expect(resB.data?.workspace.team.cursor).to.exist
+
+        expect(resC).to.not.haveGraphQLErrors()
+        expect(resC.data?.workspace.team.items.length).to.equal(0)
+        expect(resC.data?.workspace.team.cursor).to.not.exist
       })
     })
 

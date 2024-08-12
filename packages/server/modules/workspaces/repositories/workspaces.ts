@@ -178,7 +178,6 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .orderBy(DbWorkspaceAcl.col.role, 'desc')
       .orderBy(Users.col.name)
       .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
 
@@ -195,7 +194,7 @@ export const getWorkspaceCollaboratorsFactory =
     }
 
     if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.userId, '<', cursor)
+      query.andWhere(Users.col.name, '>', cursor)
     }
 
     if (limit) {
@@ -208,7 +207,7 @@ export const getWorkspaceCollaboratorsFactory =
       role: i.role
     }))
 
-    const nextCursor = items.length ? items.slice(-1)[0].id : null
+    const nextCursor = items.length ? items.slice(-1)[0].name : null
 
     return {
       items,

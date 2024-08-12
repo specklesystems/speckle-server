@@ -85,7 +85,7 @@ describe('Workspaces Roles GQL', () => {
       const { data } = await apollo.execute(GetWorkspaceDocument, {
         workspaceId: workspace.id
       })
-      const userRole = data?.workspace.team.find(
+      const userRole = data?.workspace.team.items.find(
         (user) => user.id === testMemberUser.id
       )
 
@@ -106,7 +106,7 @@ describe('Workspaces Roles GQL', () => {
       const roles = res.data?.workspaceMutations.updateRole.team
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.true
+      expect(roles?.items.some((role) => role.id === testMemberUser.id)).to.be.true
     })
 
     it('should throw if setting an invalid role', async () => {
@@ -157,7 +157,7 @@ describe('Workspaces Roles GQL', () => {
       const roles = res.data?.workspaceMutations.updateRole.team
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.false
+      expect(roles?.items.some((role) => role.id === testMemberUser.id)).to.be.false
     })
 
     it('should throw if attempting to remove last admin', async () => {

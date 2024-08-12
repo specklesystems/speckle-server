@@ -430,7 +430,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const getTeam = getWorkspaceCollaboratorsFactory({ db })
           const collaborators = await getTeam({
             workspaceId: parent.id,
-            filter: removeNullOrUndefinedKeys(args?.filter ?? {})
+            filter: removeNullOrUndefinedKeys(args?.filter || {}),
+            limit: args.limit,
+            cursor: args.cursor || undefined
           })
 
           return collaborators

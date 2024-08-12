@@ -135,9 +135,14 @@ export const getWorkspaceProjectsQuery = gql`
 `
 
 export const getWorkspaceTeamQuery = gql`
-  query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
+  query GetWorkspaceTeam(
+    $workspaceId: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
     workspace(id: $workspaceId) {
-      team(filter: $filter) {
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
         items {
           ...TestWorkspaceCollaborator
         }
