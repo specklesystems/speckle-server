@@ -286,7 +286,7 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
     bar: crs({ length: 5 })
   }
 
-  const objectId = await createObject({ streamId: resources.streamId, object })
+  const objectId = await createObject(resources.streamId, object)
 
   const numberOfComments = 3
   const commentIds = await Promise.all(
@@ -361,12 +361,9 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
 }
 
 const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => {
-  const objectId = await createObject({
-    streamId: resources.streamId,
-    object: {
-      foo: 'bar',
-      noise: crs({ length: 5 })
-    }
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    noise: crs({ length: 5 })
   })
   await createComment({
     userId: resources.testActorId,
@@ -397,12 +394,9 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
 }
 
 const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => {
-  const objectId = await createObject({
-    streamId: resources.streamId,
-    object: {
-      foo: 'bar',
-      notSignal: crs({ length: 10 })
-    }
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    notSignal: crs({ length: 10 })
   })
   const commitId = await createCommitByBranchName({
     streamId: resources.streamId,
@@ -444,12 +438,9 @@ const queryCommitCollectionCommentCount = async ({
   resources,
   shouldSucceed
 }) => {
-  const objectId = await createObject({
-    streamId: resources.streamId,
-    object: {
-      foo: 'bar',
-      almostMakesSense: crs({ length: 10 })
-    }
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    almostMakesSense: crs({ length: 10 })
   })
   const commitId = await createCommitByBranchName({
     streamId: resources.streamId,
@@ -852,10 +843,7 @@ describe('Graphql @comments', () => {
             })
           }
 
-          const objectId = await createObject({
-            streamId: stream.id,
-            object: { test: 'object' }
-          })
+          const objectId = await createObject(stream.id, { test: 'object' })
 
           const { id: commentId } = await createComment({
             userId: myTestActor.id,
