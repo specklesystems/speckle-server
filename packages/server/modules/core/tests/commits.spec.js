@@ -50,7 +50,7 @@ describe('Commits @core-commits', () => {
   }
 
   const generateObject = async (streamId = stream.id, object = testObject) =>
-    await createObject({ streamId, object })
+    await createObject(streamId, object)
   const generateStream = async (streamBase = stream, ownerId = user.id) =>
     await createStream({ ...streamBase, ownerId })
 
@@ -62,15 +62,9 @@ describe('Commits @core-commits', () => {
     user.id = await createUser(user)
     stream.id = await createStream({ ...stream, ownerId: user.id })
 
-    const testObjectId = await createObject({ streamId: stream.id, object: testObject })
-    const testObject2Id = await createObject({
-      streamId: stream.id,
-      object: testObject2
-    })
-    const testObject3Id = await createObject({
-      streamId: stream.id,
-      object: testObject3
-    })
+    const testObjectId = await createObject(stream.id, testObject)
+    const testObject2Id = await createObject(stream.id, testObject2)
+    const testObject3Id = await createObject(stream.id, testObject3)
 
     commitId1 = await createCommitByBranchName({
       streamId: stream.id,
@@ -218,7 +212,7 @@ describe('Commits @core-commits', () => {
 
     for (let i = 0; i < 10; i++) {
       const t = { qux: i }
-      t.id = await createObject({ streamId, object: t })
+      t.id = await createObject(streamId, t)
       await createCommitByBranchName({
         streamId,
         branchName: 'main',
@@ -258,7 +252,7 @@ describe('Commits @core-commits', () => {
 
     for (let i = 0; i < 15; i++) {
       const t = { thud: i }
-      t.id = await createObject({ streamId, object: t })
+      t.id = await createObject(streamId, t)
       await createCommitByBranchName({
         streamId,
         branchName: 'dim/dev',

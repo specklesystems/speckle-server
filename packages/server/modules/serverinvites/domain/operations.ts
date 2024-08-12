@@ -9,7 +9,10 @@ import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories
 
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
-export type ServerInviteRecordInsertModel = Omit<ServerInviteRecord, 'createdAt'>
+export type ServerInviteRecordInsertModel = Omit<
+  ServerInviteRecord,
+  'createdAt' | 'updatedAt'
+>
 
 export type InsertInviteAndDeleteOld = (
   invite: ServerInviteRecordInsertModel,
@@ -57,7 +60,7 @@ export type QueryAllResourceInvites = <
   filter: Pick<
     InviteResourceTarget<TargetType, RoleType>,
     'resourceId' | 'resourceType'
-  >
+  > & { search?: string }
 ) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
 
 export type DeleteAllResourceInvites = <
@@ -104,3 +107,5 @@ export type CreateInviteParams = {
   message?: string | null
   primaryResourceTarget: PrimaryInviteResourceTarget
 }
+
+export type MarkInviteUpdated = (params: { inviteId: string }) => Promise<boolean>

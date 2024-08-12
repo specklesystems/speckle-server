@@ -31,3 +31,16 @@ export function mapServerRoleToValue(graphqlServerRole: ServerRole): ServerRoles
       return Roles.Server.Guest
   }
 }
+
+export const mapServerRoleToGqlServerRole = (role: ServerRoles): ServerRole => {
+  switch (role) {
+    case Roles.Server.User:
+      return ServerRole.ServerUser
+    case Roles.Server.Admin:
+      return ServerRole.ServerAdmin
+    case Roles.Server.ArchivedUser:
+      return ServerRole.ServerArchivedUser
+    case Roles.Server.Guest:
+      return ServerRole.ServerGuest
+  }
+}

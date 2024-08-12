@@ -338,6 +338,7 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
+  'updatedAt',
   'message',
   'resource',
   'token'
