@@ -10,6 +10,11 @@ export class UserEmailPrimaryAlreadyExistsError extends BaseError {
   static code = 'USER_EMAIL_PRIMARY_EXISTS'
 }
 
+export class UserEmailAlreadyExistsError extends BaseError {
+  static defaultMessage = 'Email already exists'
+  static code = 'USER_EMAIL_EXISTS'
+}
+
 export class UserEmailPrimaryUnverifiedError extends BaseError {
   static defaultMessage = 'Cannot set unverified email as primary'
   static code = 'USER_EMAIL_PRIMARY_UNVERIFIED'

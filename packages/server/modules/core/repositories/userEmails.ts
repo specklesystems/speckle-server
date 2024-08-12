@@ -13,6 +13,7 @@ import {
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserEmails } from '@/modules/core/dbSchema'
 import {
+  UserEmailAlreadyExistsError,
   UserEmailDeleteError,
   UserEmailPrimaryAlreadyExistsError,
   UserEmailPrimaryUnverifiedError
@@ -40,6 +41,13 @@ export const createUserEmailFactory =
 
     if (rest.primary) {
       await checkPrimaryEmail({ db })(rest)
+    }
+
+    const existingEmail = await findEmailFactory({ db })({
+      email
+    })
+    if (existingEmail) {
+      throw new UserEmailAlreadyExistsError()
     }
 
     const [row] = await db<UserEmail>(UserEmails.name).insert(
