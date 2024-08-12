@@ -405,7 +405,3 @@ export function postgresMaxConnections() {
 export function highFrequencyMetricsCollectionPeriodMs() {
   return getIntFromEnv('HIGH_FREQUENCY_METRICS_COLLECTION_PERIOD_MS', '100')
 }
-
-export function maximumObjectUploadFileSizeMb() {
-  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '50')
-}
