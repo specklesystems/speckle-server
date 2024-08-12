@@ -1,7 +1,7 @@
+<!-- eslint-disable vue/no-multiple-template-root -->
+<!-- eslint-disable vue/no-root-v-if -->
 <template>
-  <div>
-    <slot v-if="!wrapper" />
-  </div>
+  <slot v-if="!wrapper" />
 </template>
 <script setup lang="ts">
 import {
