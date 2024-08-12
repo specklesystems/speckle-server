@@ -4,10 +4,7 @@ export const settingsSidebarWorkspacesQuery = graphql(`
   query SettingsSidebarWorkspaces {
     activeUser {
       workspaces {
-        items {
-          id
-          name
-        }
+        ...SettingsSidebarWorkspaces_WorkspaceCollection
       }
     }
   }
@@ -22,19 +19,25 @@ export const settingsWorkspaceGeneralQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers($workspaceId: String!) {
+  query SettingsWorkspacesMembers(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
     workspace(id: $workspaceId) {
-      team {
-        role
-        id
-        user {
-          id
-          avatar
-          name
-          company
-          verified
-        }
-      }
+      ...SettingsWorkspacesMembers_Workspace
+      ...SettingsWorkspacesMembersMembersTable_Workspace
+      ...SettingsWorkspacesMembersInvitesTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesInvitesSearchQuery = graphql(`
+  query SettingsWorkspacesInvitesSearch(
+    $workspaceId: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
+    workspace(id: $workspaceId) {
+      ...SettingsWorkspacesMembersInvitesTable_Workspace
     }
   }
 `)

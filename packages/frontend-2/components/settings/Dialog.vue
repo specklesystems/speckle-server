@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
@@ -103,7 +104,16 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
-import type { MenuItem } from '~/lib/settings/helpers/types'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsSidebarWorkspaces_WorkspaceCollection on WorkspaceCollection {
+    items {
+      id
+      name
+    }
+  }
+`)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
@@ -125,7 +135,7 @@ const workspaceItems = computed(
 )
 const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
-const selectedMenuItem = computed((): MenuItem | null => {
+const selectedMenuItem = computed((): SettingsMenuItem | null => {
   const categories = [
     userMenuItems.value,
     serverMenuItems.value,

@@ -9,6 +9,7 @@ export const settingsUpdateWorkspaceMutation = graphql(`
     }
   }
 `)
+
 export const settingsCreateUserEmailMutation = graphql(`
   mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {
     activeUserMutations {
@@ -58,7 +59,9 @@ export const settingsNewEmailVerificationMutation = graphql(`
 export const deleteWorkspaceMutation = graphql(`
   mutation SettingsDeleteWorkspace($workspaceId: String!) {
     workspaceMutations {
-      delete(workspaceId: $workspaceId)
+      delete(workspaceId: $workspaceId) {
+        id
+      }
     }
   }
 `)
