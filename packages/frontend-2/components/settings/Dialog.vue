@@ -46,7 +46,7 @@
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
-            <WorkspaceCreateWorkspaceButton />
+            <WorkspaceCreateWorkspaceButton @create="onWorkspaceCreated" />
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
               :key="key"
@@ -132,9 +132,13 @@ type MenuItem = {
 const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
-  enabled: isWorkspacesEnabled.value
-})
+const { result: workspaceResult, refetch } = useQuery(
+  settingsSidebarWorkspacesQuery,
+  null,
+  {
+    enabled: isWorkspacesEnabled.value
+  }
+)
 
 const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
@@ -215,6 +219,10 @@ const selectedMenuItem = computed((): MenuItem | null => {
 const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+}
+
+const onWorkspaceCreated = async () => {
+  await refetch()
 }
 
 watch(
