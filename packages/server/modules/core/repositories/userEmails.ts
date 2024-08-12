@@ -43,11 +43,10 @@ export const createUserEmailFactory =
       await checkPrimaryEmail({ db })(rest)
     }
 
-    const existingVerifiedEmail = await findEmailFactory({ db })({
-      email,
-      verified: true
+    const existingEmail = await findEmailFactory({ db })({
+      email
     })
-    if (existingVerifiedEmail) {
+    if (existingEmail) {
       throw new UserEmailAlreadyExistsError()
     }
 
