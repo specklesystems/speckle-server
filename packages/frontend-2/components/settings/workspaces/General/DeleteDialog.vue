@@ -58,20 +58,16 @@ const onDelete = async () => {
 
   if (result?.data) {
     if (activeUser.value) {
-      const cacheId = getCacheId('Workspace', props.workspaceId)
       cache.evict({
-        id: cacheId
+        id: getCacheId('Workspace', props.workspaceId)
       })
 
       modifyObjectFields<{ workspaces: WorkspaceCollection }, WorkspaceCollection>(
         cache,
         activeUser.value.id,
         (fieldName, _variables, value) => {
-          const oldItems = value?.items || []
-          const newItems = oldItems.filter((i) => i?.__ref !== cacheId)
           return {
             ...value,
-            items: newItems,
             totalCount: Math.max(0, (value?.totalCount || 0) - 1)
           }
         },
