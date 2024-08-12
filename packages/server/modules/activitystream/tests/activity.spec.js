@@ -129,7 +129,7 @@ describe('Activity @activity', () => {
     streamSecret.id = resStream1.body.data.streamCreate
 
     // create commit (cr2)
-    testObj2.id = await createObject({ streamId: streamSecret.id, object: testObj2 })
+    testObj2.id = await createObject(streamSecret.id, testObj2)
     const resCommit1 = await sendRequest(userCr.token, {
       query: `mutation { commitCreate(commit: {streamId: "${streamSecret.id}", branchName: "main", objectId: "${testObj2.id}", message: "first commit"})}`
     })
@@ -152,7 +152,7 @@ describe('Activity @activity', () => {
     branchPublic.id = resBranch.body.data.branchCreate
 
     // create commit #2 (iz3)
-    testObj.id = await createObject({ streamId: streamPublic.id, object: testObj })
+    testObj.id = await createObject(streamPublic.id, testObj)
     const resCommit2 = await sendRequest(userIz.token, {
       query: `mutation { commitCreate(commit: { streamId: "${streamPublic.id}", branchName: "${branchPublic.name}", objectId: "${testObj.id}", message: "first commit" })}`
     })
