@@ -42,13 +42,11 @@
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup
-            v-if="isWorkspacesEnabled && hasWorkspaceItems"
-            title="Workspace settings"
-          >
+          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
+            <WorkspaceCreateWorkspaceButton />
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
               :key="key"
@@ -190,7 +188,6 @@ const workspaceItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items
     : []
 )
-const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): MenuItem | null => {
   const categories = [
