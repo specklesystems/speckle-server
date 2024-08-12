@@ -4,9 +4,7 @@ export const settingsUpdateWorkspaceMutation = graphql(`
   mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {
     workspaceMutations {
       update(input: $input) {
-        description
-        name
-        id
+        ...SettingsWorkspacesGeneral_Workspace
       }
     }
   }
