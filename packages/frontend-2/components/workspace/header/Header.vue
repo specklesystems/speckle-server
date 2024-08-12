@@ -1,5 +1,5 @@
 <template>
-  <div v-if="workspaceInfo" class="flex justify-between items-center">
+  <div class="flex justify-between items-center">
     <div class="flex gap-2 mb-3 mt-2">
       <img
         v-if="workspaceInfo.logo"
