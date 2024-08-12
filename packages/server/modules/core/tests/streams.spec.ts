@@ -341,10 +341,7 @@ describe('Streams @core-streams', () => {
 
     it('Should update stream updatedAt on commit operations ', async () => {
       const testObject = { foo: 'bar', baz: 'qux', id: '' }
-      testObject.id = await createObject({
-        streamId: updatableStream.id,
-        object: testObject
-      })
+      testObject.id = await createObject(updatableStream.id, testObject)
 
       await createCommitByBranchName({
         streamId: updatableStream.id,
