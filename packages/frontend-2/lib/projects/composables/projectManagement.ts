@@ -1,4 +1,4 @@
-import type { ApolloCache } from '@apollo/client/core'
+import type { ApolloCache, Reference } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
@@ -20,6 +20,7 @@ import type {
 import {
   ROOT_QUERY,
   convertThrowIntoFetchResult,
+  evictObjectFields,
   getCacheId,
   getFirstErrorMessage,
   modifyObjectFields
@@ -113,7 +114,10 @@ export function useCreateProject() {
         mutation: createProjectMutation,
         variables: { input },
         update: (cache, { data }) => {
-          if (data?.projectMutations.create.id) {
+          const newProject = data?.projectMutations.create
+
+          if (newProject?.id) {
+            // Existing cache update for projects
             modifyObjectFields<
               undefined,
               { [key: string]: AdminPanelProjectsListQuery }
@@ -133,6 +137,37 @@ export function useCreateProject() {
               },
               { fieldNameWhitelist: ['admin'] }
             )
+
+            // New cache update for Workspace.projects
+            if (input.workspaceId) {
+              const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
+
+              modifyObjectFields<
+                { filter?: { search?: string } },
+                { items: Reference[]; totalCount: number }
+              >(cache, workspaceCacheId, (fieldName, variables, value, details) => {
+                if (fieldName !== 'projects') return
+                if (variables?.filter?.search?.length) return
+
+                const newVal = { ...value }
+                if (Array.isArray(value.items)) {
+                  newVal.items = [details.ref('Project', newProject.id), ...value.items]
+                } else {
+                  newVal.items = [details.ref('Project', newProject.id)]
+                }
+                newVal.totalCount = (value.totalCount || 0) + 1
+
+                return newVal
+              })
+
+              evictObjectFields<
+                { filter?: { search?: string } },
+                { items: Reference[]; totalCount: number }
+              >(cache, workspaceCacheId, (fieldName, variables) => {
+                if (fieldName !== 'projects') return false
+                return !!variables?.filter?.search?.length
+              })
+            }
           }
         }
       })
