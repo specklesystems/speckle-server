@@ -5,7 +5,10 @@ import { Knex } from 'knex'
 export type CreateUserEmail = ({
   userEmail
 }: {
-  userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }
+  userEmail: Pick<UserEmail, 'email' | 'userId'> & {
+    primary?: boolean
+    verified?: boolean
+  }
 }) => Promise<UserEmail>
 
 export type UpdateUserEmail = (

@@ -180,7 +180,7 @@ describe('Core @user-emails', () => {
   })
 
   describe('createUserEmail', () => {
-    it('should throw an error when trying to create a a primary email for a user and there is already one for that user', async () => {
+    it('should throw an error when trying to create a primary email for a user and there is already one for that user', async () => {
       const email = createRandomEmail()
       const userId = await createUser({
         name: 'John Doe',
@@ -199,6 +199,41 @@ describe('Core @user-emails', () => {
       )
 
       expect(err.message).to.eq('A primary email already exists for this user')
+    })
+    it('should throw an error when trying to create an email for a user and the same email is already verified on the server', async () => {
+      const email = createRandomEmail()
+      const userId1 = await createUser({
+        name: 'John Doe 2',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const userId2 = await createUser({
+        name: 'John Doe',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+
+      // pre existing email
+      await createUserEmailFactory({ db })({
+        userEmail: {
+          email,
+          userId: userId1,
+          primary: false,
+          verified: true
+        }
+      })
+
+      const err = await expectToThrow(() =>
+        createUserEmailFactory({ db })({
+          userEmail: {
+            email,
+            userId: userId2,
+            primary: false
+          }
+        })
+      )
+
+      expect(err.message).to.eq('A verified email already exists')
     })
   })
 
