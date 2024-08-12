@@ -125,10 +125,7 @@ import {
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
-import {
-  useIsWorkspacesEnabled,
-  useIsMultipleEmailsEnabled
-} from '~/composables/globals'
+import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 
 type MenuItem = {
   title: string
