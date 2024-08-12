@@ -168,7 +168,7 @@ export const upsertWorkspaceRoleFactory =
 
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {} }) => {
+  async ({ workspaceId, filter = {}, cursor, limit }) => {
     const query = DbWorkspaceAcl.knex(db)
       .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
         ...Users.cols,
@@ -178,6 +178,8 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .orderBy(DbWorkspaceAcl.col.role, 'desc')
+      .orderBy(Users.col.name)
       .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
 
     const { search, role } = filter || {}
@@ -192,13 +194,27 @@ export const getWorkspaceCollaboratorsFactory =
       query.andWhere(DbWorkspaceAcl.col.role, role)
     }
 
+    if (cursor) {
+      query.andWhere(DbWorkspaceAcl.col.userId, '<', cursor)
+    }
+
+    if (limit) {
+      query.limit(limit)
+    }
+
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
       role: i.role
     }))
 
-    return items
+    const nextCursor = items.length ? items.slice(-1)[0].id : null
+
+    return {
+      items,
+      totalCount: items.length,
+      cursor: nextCursor
+    }
   }
 
 export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {

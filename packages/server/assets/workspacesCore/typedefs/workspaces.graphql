@@ -145,7 +145,11 @@ type Workspace {
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
-  team(filter: WorkspaceTeamFilter): [WorkspaceCollaborator!]!
+  team(
+    limit: Int! = 25
+    cursor: String
+    filter: WorkspaceTeamFilter
+  ): WorkspaceCollaboratorCollection!
   """
   Only available to workspace owners
   """
@@ -177,6 +181,15 @@ input WorkspaceTeamFilter {
   search: String
 }
 
+type WorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceCollaborator!]!
+}
+
+"""
+Overridden by `WorkspaceCollaboratorGraphQLReturn`
+"""
 type WorkspaceCollaborator {
   id: ID!
   role: String!

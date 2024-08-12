@@ -37,6 +37,8 @@ export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
 type GetWorkspaceCollaboratorsArgs = {
   workspaceId: string
+  limit?: number
+  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role
@@ -49,9 +51,15 @@ type GetWorkspaceCollaboratorsArgs = {
   }
 }
 
+type GetWorkspaceCollaboratorsReturnValue = {
+  items: Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>
+  cursor: string | null
+  totalCount: number
+}
+
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
-) => Promise<Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>>
+) => Promise<GetWorkspaceCollaboratorsReturnValue>
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
