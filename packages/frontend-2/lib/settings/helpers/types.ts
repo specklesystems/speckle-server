@@ -1,4 +1,4 @@
-export type MenuItem = {
+export type SettingsMenuItem = {
   title: string
   component?: ReturnType<typeof defineComponent>
   disabled?: boolean
@@ -6,5 +6,5 @@ export type MenuItem = {
 }
 
 export type SettingsMenuItems = {
-  [key: string]: MenuItem
+  [key: string]: SettingsMenuItem
 }
