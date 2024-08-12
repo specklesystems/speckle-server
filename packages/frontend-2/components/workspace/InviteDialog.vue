@@ -162,7 +162,7 @@ const onInviteUser = async (
 
   const isEmail = !!inputs.find((u) => !!u.email)
   mp.track('Invite Action', {
-    type: 'project invite',
+    type: 'workspace invite',
     name: 'send',
     multiple: inputs.length !== 1,
     count: inputs.length,

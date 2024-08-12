@@ -42,7 +42,7 @@ export const onProjectCreatedFactory =
 
     await Promise.all(
       workspaceMembers.map(({ userId, role: workspaceRole }) => {
-        if (workspaceRole === Roles.Workspace.Guest) return false
+        if (workspaceRole === Roles.Workspace.Guest) return
 
         return grantStreamPermissions({
           streamId: projectId,
