@@ -852,6 +852,10 @@ export type EditCommentInput = {
   content: CommentContentInput;
 };
 
+export type EmailVerificationRequestInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -3508,6 +3512,7 @@ export type UserEmailMutations = {
   __typename?: 'UserEmailMutations';
   create: User;
   delete: User;
+  requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
 };
 
@@ -3519,6 +3524,11 @@ export type UserEmailMutationsCreateArgs = {
 
 export type UserEmailMutationsDeleteArgs = {
   input: DeleteUserEmailInput;
+};
+
+
+export type UserEmailMutationsRequestNewEmailVerificationArgs = {
+  input: EmailVerificationRequestInput;
 };
 
 
@@ -3816,6 +3826,11 @@ export type WorkspaceProjectsArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+
+export type WorkspaceTeamArgs = {
+  filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
@@ -3943,6 +3958,13 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceTeamFilter = {
+  /** Limit team members to provided role */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Search for team members by name or email */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceUpdateInput = {

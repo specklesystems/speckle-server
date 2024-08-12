@@ -83,14 +83,20 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
     passportAuthenticate('azuread-openidconnect'),
     async (req, _res, next) => {
       const serverInfo = await getServerInfo()
+      let logger = req.log.child({
+        authStrategy: 'entraId',
+        serverVersion: serverInfo.version
+      })
 
       try {
         // This is the only strategy that does its own type for req.user - easier to force type cast for now
         // than to refactor everything
         const profile = req.user as Optional<IProfile>
         if (!profile) {
-          throw new Error('No profile provided by Azure AD')
+          throw new Error('No profile provided by Entra ID')
         }
+
+        logger = logger.child({ profileId: profile.oid })
 
         const user = {
           email: profile._json.email,
@@ -194,18 +200,18 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
       } catch (err) {
         const e = ensureError(
           err,
-          'Unexpected issue occured while authenticating with Azure AD'
+          'Unexpected issue occured while authenticating with Entra ID'
         )
 
         switch (e.constructor) {
           case UserInputError:
-            req.log.info(
+            logger.info(
               { e },
-              'User input error during Azure AD authentication callback.'
+              'User input error during Entra ID authentication callback.'
             )
             break
           default:
-            req.log.error(e, 'Error during Azure AD authentication callback.')
+            logger.error(e, 'Error during Entra ID authentication callback.')
         }
         return next()
       }
