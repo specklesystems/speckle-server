@@ -30,3 +30,11 @@ export const settingsWorkspacesMembersQuery = graphql(`
     }
   }
 `)
+
+export const settingsUserEmailsQuery = graphql(`
+  query SettingsUserEmailsQuery {
+    activeUser {
+      ...SettingsUserEmails_User
+    }
+  }
+`)
