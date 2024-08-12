@@ -263,7 +263,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   if (!import.meta.server) {
     nuxtApp.hook('app:mounted', () => {
       const serverFatalError = nuxtApp.payload.error
-      if (serverFatalError) {
+      if (serverFatalError && serverFatalError.statusCode >= 500) {
         const msg = serverFatalError.message || 'Fatal server error'
         const stack = serverFatalError.stack
           ? simpleStripHtml(serverFatalError.stack)
