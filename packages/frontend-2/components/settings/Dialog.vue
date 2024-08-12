@@ -106,6 +106,7 @@ import type { defineComponent } from 'vue'
 import SettingsUserProfile from '~/components/settings/user/Profile.vue'
 import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
 import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
+import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
@@ -124,7 +125,10 @@ import {
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
-import { useIsWorkspacesEnabled } from '~/composables/globals'
+import {
+  useIsWorkspacesEnabled,
+  useIsMultipleEmailsEnabled
+} from '~/composables/globals'
 
 type MenuItem = {
   title: string
@@ -134,6 +138,7 @@ type MenuItem = {
 const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
@@ -229,4 +234,13 @@ watch(
   },
   { immediate: true }
 )
+
+watchEffect(() => {
+  if (isMultipleEmailsEnabled.value) {
+    menuItemConfig.value.user[settingsQueries.user.emails] = {
+      title: 'Email addresses',
+      component: SettingsUserEmails
+    }
+  }
+})
 </script>
