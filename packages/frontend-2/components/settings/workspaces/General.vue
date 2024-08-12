@@ -13,7 +13,7 @@
             placeholder="Example Ltd."
             show-label
             :disabled="!isAdmin"
-            :rules="[isRequired]"
+            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
             validate-on-value-update
             @change="save()"
           />
@@ -26,6 +26,7 @@
             placeholder="This is your workspace"
             show-label
             :disabled="!isAdmin"
+            :rules="[isStringOfLength({ maxLength: 512 })]"
             @change="save()"
           />
         </div>
@@ -40,13 +41,13 @@
           ask you to type in your workspace name and press the delete button.
         </div>
         <div>
-          <FormButton :disabled="!isAdmin" color="danger" @click="toggleDeleteDialog">
+          <FormButton :disabled="!isAdmin" color="danger" @click="openDeleteDialog">
             Delete workspace
           </FormButton>
         </div>
       </div>
     </div>
-    <SettingsWorkspaceGeneralDeleteDialog
+    <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult"
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
@@ -55,22 +56,36 @@
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { Roles } from '@speckle/shared'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
-import { isRequired } from '~~/lib/common/helpers/validation'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~~/lib/common/helpers/graphql'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+
+graphql(`
+  fragment SettingsWorkspacesGeneral_Workspace on Workspace {
+    ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    logo
+    description
+  }
+`)
 
 type FormValues = { name: string; description: string }
 
 const props = defineProps<{
   workspaceId: string
-  isAdmin?: boolean
 }>()
 
+const { activeUser: user } = useActiveUser()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -82,6 +97,8 @@ const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
 
+const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
 
@@ -92,7 +109,7 @@ const save = handleSubmit(async () => {
   if (description.value !== workspaceResult.value.workspace.description)
     input.description = description.value
 
-  const result = await updateMutation({ input })
+  const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
     triggerNotification({
@@ -109,7 +126,7 @@ const save = handleSubmit(async () => {
   }
 })
 
-function toggleDeleteDialog() {
+function openDeleteDialog() {
   showDeleteDialog.value = true
 }
 

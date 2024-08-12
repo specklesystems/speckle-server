@@ -23,47 +23,73 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
-import { deleteWorkspaceMutation } from '~/lib/settings/graphql/mutations'
-import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
+import type {
+  SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment,
+  WorkspaceCollection
+} from '~/lib/common/generated/gql/graphql'
+import type { LayoutDialogButton } from '@speckle/ui-components'
+import { useMutation, useApolloClient } from '@vue/apollo-composable'
+import { deleteWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  getCacheId,
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { homeRoute } from '~/lib/common/helpers/route'
-import type { SettingsWorkspaceGeneralDelete_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
-  fragment SettingsWorkspaceGeneralDelete_Workspace on Workspace {
+  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
     id
     name
   }
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspaceGeneralDelete_WorkspaceFragment
+  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { mutate: deleteWorkspace } = useMutation(deleteWorkspaceMutation)
 const { triggerNotification } = useGlobalToast()
+const { activeUser } = useActiveUser()
+const apollo = useApolloClient().client
 
 const onDelete = async () => {
+  isOpen.value = false
+
+  const cache = apollo.cache
   const result = await deleteWorkspace({
     workspaceId: props.workspace.id
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
-    isOpen.value = false
+    if (activeUser.value) {
+      cache.evict({
+        id: getCacheId('Workspace', props.workspace.id)
+      })
+
+      modifyObjectFields<{ workspaces: WorkspaceCollection }, WorkspaceCollection>(
+        cache,
+        activeUser.value.id,
+        (fieldName, _variables, value) => {
+          return {
+            ...value,
+            totalCount: Math.max(0, (value?.totalCount || 0) - 1)
+          }
+        },
+        { fieldNameWhitelist: ['workspaces'] }
+      )
+    }
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace deleted',
       description: `The ${props.workspace.name} workspace has been deleted`
     })
-    navigateTo(homeRoute)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

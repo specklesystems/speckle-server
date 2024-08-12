@@ -13,3 +13,21 @@ export const workspaceUpdateRoleMutation = graphql(`
     }
   }
 `)
+
+export const inviteToWorkspaceMutation = graphql(`
+  mutation InviteToWorkspace(
+    $workspaceId: String!
+    $input: [WorkspaceInviteCreateInput!]!
+  ) {
+    workspaceMutations {
+      invites {
+        batchCreate(workspaceId: $workspaceId, input: $input) {
+          id
+          invitedTeam {
+            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
+          }
+        }
+      }
+    }
+  }
+`)

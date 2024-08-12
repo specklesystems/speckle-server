@@ -559,7 +559,7 @@ describe('Workspace repositories', () => {
       expect(workspaces.length).to.equal(0)
     })
 
-    it('returns a work', async () => {
+    it('should return discoverable workspaces that already have members', async () => {
       const user = await createAndStoreTestUser()
       await updateUserEmail({
         query: {

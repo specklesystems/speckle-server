@@ -1,7 +1,6 @@
 <template>
-  <slot v-if="!wrapper" />
-  <div v-else>
-    <slot />
+  <div>
+    <slot v-if="!wrapper" />
   </div>
 </template>
 <script setup lang="ts">

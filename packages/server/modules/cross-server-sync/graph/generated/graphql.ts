@@ -864,6 +864,10 @@ export type EditCommentInput = {
   content: CommentContentInput;
 };
 
+export type EmailVerificationRequestInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -1735,10 +1739,15 @@ export type PendingWorkspaceCollaborator = {
   title: Scalars['String']['output'];
   /** Only available if the active user is the pending workspace collaborator */
   token?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+};
+
+export type PendingWorkspaceCollaboratorsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Project = {
@@ -3526,6 +3535,7 @@ export type UserEmailMutations = {
   __typename?: 'UserEmailMutations';
   create: User;
   delete: User;
+  requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
 };
 
@@ -3537,6 +3547,11 @@ export type UserEmailMutationsCreateArgs = {
 
 export type UserEmailMutationsDeleteArgs = {
   input: DeleteUserEmailInput;
+};
+
+
+export type UserEmailMutationsRequestNewEmailVerificationArgs = {
+  input: EmailVerificationRequestInput;
 };
 
 
@@ -3834,10 +3849,20 @@ export type Workspace = {
 };
 
 
+export type WorkspaceInvitedTeamArgs = {
+  filter?: InputMaybe<PendingWorkspaceCollaboratorsFilter>;
+};
+
+
 export type WorkspaceProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceProjectsFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceTeamArgs = {
+  filter?: InputMaybe<WorkspaceTeamFilter>;
 };
 
 export type WorkspaceCollaborator = {
@@ -3875,6 +3900,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** Defaults to User, if not specified */
+  serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3996,6 +4023,13 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceTeamFilter = {
+  /** Limit team members to provided role */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Search for team members by name or email */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceUpdateInput = {

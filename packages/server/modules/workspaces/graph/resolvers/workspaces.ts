@@ -82,7 +82,7 @@ import {
   getDiscoverableWorkspacesForUserFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
@@ -501,15 +501,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
           return workspace?.role || null
         },
-        team: async (parent) => {
+        team: async (parent, args) => {
           const getTeam = getWorkspaceCollaboratorsFactory({ db })
           const collaborators = await getTeam({
-            workspaceId: parent.id
+            workspaceId: parent.id,
+            filter: removeNullOrUndefinedKeys(args?.filter ?? {})
           })
 
           return collaborators
         },
-        invitedTeam: async (parent) => {
+        invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
             queryAllResourceInvites: queryAllResourceInvitesFactory({
               db,
@@ -518,7 +519,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
           })
 
-          return await getPendingTeam({ workspaceId: parent.id })
+          return await getPendingTeam({ workspaceId: parent.id, filter: args.filter })
         },
         projects: async (parent, args) => {
           const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })

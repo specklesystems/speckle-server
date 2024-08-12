@@ -1,13 +1,16 @@
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
+  PendingWorkspaceCollaboratorsFilter,
   TokenResourceIdentifierType,
   WorkspaceInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
+import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getUser } from '@/modules/core/repositories/users'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
   FindInvite,
   QueryAllResourceInvites,
@@ -87,7 +90,12 @@ export const createWorkspaceInviteFactory =
         role:
           (input.role ? mapGqlWorkspaceRoleToMainRole(input.role) : null) ||
           Roles.Workspace.Member,
-        primary: true
+        primary: true,
+        secondaryResourceRoles: {
+          ...(input.serverRole
+            ? { [ServerInviteResourceType]: mapServerRoleToValue(input.serverRole) }
+            : {})
+        }
       }
 
     return await deps.createAndSendInvite(
@@ -269,7 +277,8 @@ function buildPendingWorkspaceCollaboratorModel(
     title: resolveInviteTargetTitle(invite, targetUser),
     role: invite.resource.role || Roles.Workspace.Member,
     invitedById: invite.inviterId,
-    user: targetUser
+    user: targetUser,
+    updatedAt: invite.updatedAt
   }
 }
 
@@ -334,8 +343,9 @@ export const getPendingWorkspaceCollaboratorsFactory =
   }) =>
   async (params: {
     workspaceId: string
+    filter?: MaybeNullOrUndefined<PendingWorkspaceCollaboratorsFilter>
   }): Promise<PendingWorkspaceCollaboratorGraphQLReturn[]> => {
-    const { workspaceId } = params
+    const { workspaceId, filter } = params
 
     // Get all pending invites
     const invites = await deps.queryAllResourceInvites<
@@ -343,7 +353,8 @@ export const getPendingWorkspaceCollaboratorsFactory =
       WorkspaceRoles
     >({
       resourceId: workspaceId,
-      resourceType: WorkspaceInviteResourceType
+      resourceType: WorkspaceInviteResourceType,
+      search: filter?.search || undefined
     })
 
     // Get all target users, if any

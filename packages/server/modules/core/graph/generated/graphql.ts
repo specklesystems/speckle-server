@@ -875,6 +875,10 @@ export type EditCommentInput = {
   content: CommentContentInput;
 };
 
+export type EmailVerificationRequestInput = {
+  id: Scalars['ID']['input'];
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName: Scalars['String']['output'];
@@ -1746,10 +1750,15 @@ export type PendingWorkspaceCollaborator = {
   title: Scalars['String']['output'];
   /** Only available if the active user is the pending workspace collaborator */
   token?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+};
+
+export type PendingWorkspaceCollaboratorsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Project = {
@@ -3537,6 +3546,7 @@ export type UserEmailMutations = {
   __typename?: 'UserEmailMutations';
   create: User;
   delete: User;
+  requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
 };
 
@@ -3548,6 +3558,11 @@ export type UserEmailMutationsCreateArgs = {
 
 export type UserEmailMutationsDeleteArgs = {
   input: DeleteUserEmailInput;
+};
+
+
+export type UserEmailMutationsRequestNewEmailVerificationArgs = {
+  input: EmailVerificationRequestInput;
 };
 
 
@@ -3845,10 +3860,20 @@ export type Workspace = {
 };
 
 
+export type WorkspaceInvitedTeamArgs = {
+  filter?: InputMaybe<PendingWorkspaceCollaboratorsFilter>;
+};
+
+
 export type WorkspaceProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceProjectsFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceTeamArgs = {
+  filter?: InputMaybe<WorkspaceTeamFilter>;
 };
 
 export type WorkspaceCollaborator = {
@@ -3886,6 +3911,8 @@ export type WorkspaceInviteCreateInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   /** Defaults to the member role, if not specified */
   role?: InputMaybe<WorkspaceRole>;
+  /** Defaults to User, if not specified */
+  serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4007,6 +4034,13 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceTeamFilter = {
+  /** Limit team members to provided role */
+  role?: InputMaybe<Scalars['String']['input']>;
+  /** Search for team members by name or email */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceUpdateInput = {
@@ -4175,6 +4209,7 @@ export type ResolversTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   DiscoverableWorkspace: ResolverTypeWrapper<DiscoverableWorkspace>;
   EditCommentInput: EditCommentInput;
+  EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GendoAIRender: ResolverTypeWrapper<GendoAiRender>;
@@ -4202,6 +4237,7 @@ export type ResolversTypes = {
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
   PendingWorkspaceCollaborator: ResolverTypeWrapper<PendingWorkspaceCollaboratorGraphQLReturn>;
+  PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
   ProjectAccessRequestMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -4334,6 +4370,7 @@ export type ResolversTypes = {
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
 };
 
@@ -4420,6 +4457,7 @@ export type ResolversParentTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   DiscoverableWorkspace: DiscoverableWorkspace;
   EditCommentInput: EditCommentInput;
+  EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: FileUploadGraphQLReturn;
   Float: Scalars['Float']['output'];
   GendoAIRender: GendoAiRender;
@@ -4447,6 +4485,7 @@ export type ResolversParentTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
   PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorGraphQLReturn;
+  PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
   Project: ProjectGraphQLReturn;
   ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
   ProjectAccessRequestMutations: MutationsObjectGraphQLReturn;
@@ -4561,6 +4600,7 @@ export type ResolversParentTypes = {
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
 };
 
@@ -5242,6 +5282,7 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   workspaceName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5761,6 +5802,7 @@ export type UserEmailResolvers<ContextType = GraphQLContext, ParentType extends 
 export type UserEmailMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserEmailMutations'] = ResolversParentTypes['UserEmailMutations']> = {
   create?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<UserEmailMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<UserEmailMutationsDeleteArgs, 'input'>>;
+  requestNewEmailVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<UserEmailMutationsRequestNewEmailVerificationArgs, 'input'>>;
   setPrimary?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<UserEmailMutationsSetPrimaryArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -5897,12 +5939,12 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   domainBasedMembershipProtectionEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domains?: Resolver<Array<ResolversTypes['WorkspaceDomain']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType>;
+  invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType>;
+  team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType, Partial<WorkspaceTeamArgs>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
