@@ -41,6 +41,8 @@ import {
   UseStreamInviteDocument
 } from '@/test/graphql/generated/graphql'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import { reduce } from 'lodash'
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -503,6 +505,17 @@ describe('[Stream & Server Invites]', () => {
         )
 
         const inviteIds = invites.map((i) => i.inviteId)
+        const inviteLastRemindedDates = reduce(
+          await ServerInvites.knex<ServerInviteRecord[]>().whereIn(
+            ServerInvites.col.id,
+            inviteIds
+          ),
+          (res, item) => {
+            res[item.id] = item.updatedAt
+            return res
+          },
+          {} as Record<string, Date>
+        )
 
         const results = await Promise.all(
           inviteIds.map((inviteId) =>
@@ -516,6 +529,22 @@ describe('[Stream & Server Invites]', () => {
         }
 
         expect(sendEmailInvocations.length()).to.eq(inviteIds.length)
+
+        const newInviteLastRemindedDates = reduce(
+          await ServerInvites.knex<ServerInviteRecord[]>().whereIn(
+            ServerInvites.col.id,
+            inviteIds
+          ),
+          (res, item) => {
+            res[item.id] = item.updatedAt
+            return res
+          },
+          {} as Record<string, Date>
+        )
+
+        for (const [id, newDate] of Object.entries(newInviteLastRemindedDates)) {
+          expect(newDate).to.be.greaterThan(inviteLastRemindedDates[id])
+        }
       })
 
       it('they can delete pre-existing invites irregardless of type', async () => {
