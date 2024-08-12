@@ -22,9 +22,9 @@
               v-for="(sidebarMenuItem, key) in userMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="[
-                targetMenuItem === key && 'bg-highlight-2 hover:!bg-highlight-2'
-              ]"
+              :class="{
+                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
+              }"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -36,9 +36,9 @@
               v-for="(sidebarMenuItem, key) in serverMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="[
-                targetMenuItem === key && 'bg-highlight-2 hover:!bg-highlight-2'
-              ]"
+              :class="{
+                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
+              }"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -107,10 +107,12 @@ import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
-  fragment SettingsSidebarWorkspaces_WorkspaceCollection on WorkspaceCollection {
-    items {
-      id
-      name
+  fragment SettingsDialog_User on User {
+    workspaces {
+      items {
+        id
+        name
+      }
     }
   }
 `)

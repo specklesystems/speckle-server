@@ -41,7 +41,7 @@
           ask you to type in your workspace name and press the delete button.
         </div>
         <div>
-          <FormButton :disabled="!isAdmin" color="danger" @click="toggleDeleteDialog">
+          <FormButton :disabled="!isAdmin" color="danger" @click="openDeleteDialog">
             Delete workspace
           </FormButton>
         </div>
@@ -50,7 +50,8 @@
     <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult"
       v-model:open="showDeleteDialog"
-      :workspace="workspaceResult.workspace"
+      :workspace-id="workspaceResult.workspace.id"
+      :workspace-name="workspaceResult.workspace.name"
     />
   </section>
 </template>
@@ -75,8 +76,8 @@ graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     id
     name
-    description
     logo
+    description
   }
 `)
 
@@ -127,7 +128,7 @@ const save = handleSubmit(async () => {
   }
 })
 
-function toggleDeleteDialog() {
+function openDeleteDialog() {
   showDeleteDialog.value = true
 }
 
