@@ -13,7 +13,7 @@
             placeholder="Example Ltd."
             show-label
             :disabled="!isAdmin"
-            :rules="[isRequired]"
+            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
             validate-on-value-update
             @change="save()"
           />
@@ -26,6 +26,7 @@
             placeholder="This is your workspace"
             show-label
             :disabled="!isAdmin"
+            :rules="[isStringOfLength({ maxLength: 512 })]"
             @change="save()"
           />
         </div>
@@ -68,7 +69,7 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
-import { isRequired } from '~~/lib/common/helpers/validation'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
