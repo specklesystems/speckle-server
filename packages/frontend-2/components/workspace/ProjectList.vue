@@ -1,7 +1,12 @@
 <template>
   <div>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
-      <WorkspaceHeader :icon="Squares2X2Icon" :workspace-id="workspaceId" />
+      <WorkspaceHeader
+        v-if="workspace"
+        :icon="Squares2X2Icon"
+        :workspace-info="workspace"
+        :project-count="projects?.totalCount"
+      />
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div class="flex flex-col sm:flex-row gap-2">
           <FormTextInput
@@ -27,11 +32,14 @@
         </FormButton>
       </div>
     </div>
+
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
+
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
       @create-project="openNewProject = true"
     />
+
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading
@@ -39,7 +47,9 @@
         @infinite="infiniteLoad"
       />
     </template>
+
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
+
     <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
   </div>
 </template>
@@ -51,7 +61,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
-import { useDebouncedTextInput } from '@speckle/ui-components' // Import added
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const logger = useLogger()
 
@@ -86,7 +96,6 @@ const {
   workspaceId: props.workspaceId,
   filter: {
     search: (search.value || '').trim() || null
-    // onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
 }))
 
@@ -98,10 +107,11 @@ onProjectsResult((res) => {
   }
 })
 
+const workspace = computed(() => projectsPanelResult.value?.workspace)
 const projects = computed(() => projectsPanelResult.value?.workspace?.projects)
 
 const showEmptyState = computed(() => {
-  return false
+  return !projects.value?.items?.length
 })
 
 const moreToLoad = computed(
@@ -132,8 +142,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 }
 
 watch(search, (newVal) => {
-  if (newVal) showLoadingBar.value = true
-  else showLoadingBar.value = false
+  showLoadingBar.value = !!newVal
 })
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))

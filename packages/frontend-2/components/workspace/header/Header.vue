@@ -1,9 +1,10 @@
 <template>
   <div v-if="workspaceInfo" class="flex justify-between items-center">
     <div class="flex gap-2 mb-3 mt-2">
-      <Component
-        :is="workspaceInfo.logo"
+      <img
         v-if="workspaceInfo.logo"
+        :src="workspaceInfo.logo || ''"
+        alt="Workspace logo"
         class="w-5 h-5 mt-0.5"
       />
       <div class="flex flex-col">
@@ -17,42 +18,42 @@
       <div
         class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none"
       >
-        {{ workspaceInfo.projects.totalCount || 0 }} Project{{
-          workspaceInfo.projects.totalCount === 1 ? '' : 's'
-        }}
+        {{ projectCount || 0 }} Project{{ projectCount === 1 ? '' : 's' }}
       </div>
       <UserAvatarGroup
-        :users="workspaceInfo.team.map((teamMember) => teamMember.user)"
+        :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
       <FormButton color="outline">Invite</FormButton>
       <WorkspaceHeaderActions />
     </div>
   </div>
-  <div v-else-if="loading">Loading...</div>
-  <div v-else-if="error">Error loading workspace data.</div>
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { WorkspaceInfo_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment WorkspaceInfo_Workspace on Workspace {
+    name
+    logo
+    description
+    team {
+      id
+      user {
+        id
+        name
+        ...LimitedUserAvatar
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceInfo: WorkspaceInfo_WorkspaceFragment
+  projectCount?: number
 }>()
 
-const {
-  result: workspaceInfoResult,
-  loading,
-  error
-} = useQuery(workspacePageQuery, () => ({
-  workspaceId: props.workspaceId
-}))
-
-const workspaceInfo = computed(() => {
-  if (workspaceInfoResult.value) {
-    return workspaceInfoResult.value.workspace
-  }
-  return null
-})
+const team = computed(() => props.workspaceInfo.team || [])
 </script>

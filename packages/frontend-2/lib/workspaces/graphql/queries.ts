@@ -7,18 +7,9 @@ export const workspacePageQuery = graphql(`
     $cursor: String
   ) {
     workspace(id: $workspaceId) {
-      name
-      logo
       id
-      description
-      team {
-        id
-        user {
-          id
-          name
-          avatar
-        }
-      }
+      role
+      ...WorkspaceInfo_Workspace
       projects(filter: $filter, cursor: $cursor) {
         totalCount
         items {
