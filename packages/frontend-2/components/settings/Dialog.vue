@@ -59,12 +59,13 @@
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
                 :label="workspaceMenuItem.title"
-                :class="[
-                  targetMenuItem === itemKey &&
-                    targetWorkspaceId === workspaceItem.id &&
-                    !workspaceMenuItem.disabled &&
-                    'bg-highlight-2 hover:!bg-highlight-2'
-                ]"
+                :class="
+                  workspaceMenuItemClasses(
+                    itemKey,
+                    workspaceItem.id,
+                    workspaceMenuItem.disabled
+                  )
+                "
                 :tooltip-text="workspaceMenuItem.tooltipText"
                 :disabled="workspaceMenuItem.disabled"
                 :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
@@ -155,6 +156,21 @@ const selectedMenuItem = computed((): SettingsMenuItem | null => {
 const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+}
+
+const workspaceMenuItemClasses = (
+  itemKey: string | number,
+  workspaceId: string,
+  disabled?: boolean
+) => {
+  if (
+    targetMenuItem.value === itemKey &&
+    targetWorkspaceId.value === workspaceId &&
+    !disabled
+  ) {
+    return 'bg-highlight-2 hover:!bg-highlight-2'
+  }
+  return ''
 }
 
 watch(

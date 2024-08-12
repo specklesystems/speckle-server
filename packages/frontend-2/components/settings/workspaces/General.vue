@@ -50,8 +50,7 @@
     <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult"
       v-model:open="showDeleteDialog"
-      :workspace-id="workspaceResult.workspace.id"
-      :workspace-name="workspaceResult.workspace.name"
+      :workspace="workspaceResult.workspace"
     />
   </section>
 </template>
@@ -74,8 +73,7 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
-    id
-    name
+    ...SettingsWorkspaceGeneralDeleteDialog_Workspace
     logo
     description
   }

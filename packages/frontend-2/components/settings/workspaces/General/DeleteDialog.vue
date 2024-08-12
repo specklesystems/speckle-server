@@ -13,7 +13,7 @@
     <div
       class="rounded border bg-foundation-2 border-outline-3 text-body-2xs text-foreground font-medium py-3 px-4 my-4"
     >
-      {{ workspaceName }}
+      {{ workspace.name }}
     </div>
     <p>
       This action
@@ -23,7 +23,11 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { WorkspaceCollection } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+import type {
+  SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment,
+  WorkspaceCollection
+} from '~/lib/common/generated/gql/graphql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import { deleteWorkspaceMutation } from '~/lib/settings/graphql/mutations'
@@ -36,9 +40,15 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
+graphql(`
+  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
+    id
+    name
+  }
+`)
+
 const props = defineProps<{
-  workspaceId: string
-  workspaceName: string
+  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -53,13 +63,13 @@ const onDelete = async () => {
 
   const cache = apollo.cache
   const result = await deleteWorkspace({
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
     if (activeUser.value) {
       cache.evict({
-        id: getCacheId('Workspace', props.workspaceId)
+        id: getCacheId('Workspace', props.workspace.id)
       })
 
       modifyObjectFields<{ workspaces: WorkspaceCollection }, WorkspaceCollection>(
@@ -78,7 +88,7 @@ const onDelete = async () => {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace deleted',
-      description: `The ${props.workspaceName} workspace has been deleted`
+      description: `The ${props.workspace.name} workspace has been deleted`
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
