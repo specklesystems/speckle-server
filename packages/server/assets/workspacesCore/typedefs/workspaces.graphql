@@ -71,6 +71,10 @@ input AddDomainToWorkspaceInput {
   workspaceId: ID!
 }
 
+input JoinWorkspaceInput {
+  workspaceId: ID!
+}
+
 extend type ProjectInviteMutations {
   """
   Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
@@ -103,6 +107,7 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
 }
 
 input WorkspaceDomainDeleteInput {

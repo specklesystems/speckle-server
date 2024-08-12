@@ -29,7 +29,8 @@ export const getDiscoverableWorkspacesForUserFactory =
       .filter((email) => email.verified)
       .map((email) => email.email.split('@')[1])
     const workspaces = await getDiscoverableWorkspaces({
-      domains: userVerifiedDomains
+      domains: userVerifiedDomains,
+      userId
     })
 
     return workspaces

@@ -63,8 +63,23 @@ import {
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  getWorkspaceDomainsFactory,
+  getWorkspaceFactory,
+  storeWorkspaceDomainFactory,
+  upsertWorkspaceFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { getStream } from '@/modules/core/repositories/streams'
+import { addDomainToWorkspaceFactory } from '@/modules/workspaces/services/management'
+import {
+  createUserEmailFactory,
+  findEmailsByUserIdFactory,
+  updateUserEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 enum InviteByTarget {
   Email = 'email',
@@ -214,7 +229,8 @@ describe('Workspaces Invites GQL', () => {
   const myFirstWorkspace: BasicTestWorkspace = {
     name: 'My First Workspace',
     id: '',
-    ownerId: ''
+    ownerId: '',
+    domainBasedMembershipProtectionEnabled: true
   }
 
   const otherGuysWorkspace: BasicTestWorkspace = {
@@ -228,6 +244,18 @@ describe('Workspaces Invites GQL', () => {
     app = ctx.app
 
     await createTestUsers([me, otherGuy, myWorkspaceFriend])
+
+    const email = 'something@example.org'
+    await createUserEmailFactory({ db })({
+      userEmail: {
+        email,
+        primary: false,
+        userId: me.id
+      }
+    })
+    await markUserEmailAsVerifiedFactory({
+      updateUserEmail: updateUserEmailFactory({ db })
+    })({ email })
     await createTestWorkspaces([
       [myFirstWorkspace, me],
       [otherGuysWorkspace, otherGuy]
@@ -308,6 +336,28 @@ describe('Workspaces Invites GQL', () => {
         })
 
         expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
+      it('should throw an error when trying to invite a user as a memeber without email matching domain and domain protection is enabled', async () => {
+        await addDomainToWorkspaceFactory({
+          findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+          storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+          getWorkspace: getWorkspaceFactory({ db }),
+          upsertWorkspace: upsertWorkspaceFactory({ db }),
+          emitWorkspaceEvent: getEventBus().emit,
+          getDomains: getWorkspaceDomainsFactory({ db })
+        })({ userId: me.id, workspaceId: myFirstWorkspace.id, domain: 'example.org' })
+
+        const res = await gqlHelpers.createInvite({
+          workspaceId: myFirstWorkspace.id,
+          input: {
+            userId: otherGuy.id,
+            role: WorkspaceRole.Member
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors(new WorkspaceProtectedError().message)
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -392,55 +442,88 @@ describe('Workspaces Invites GQL', () => {
         expect(sendEmailInvocations.args).to.have.lengthOf(count)
       })
 
-      itEach(
-        [InviteByTarget.Email, InviteByTarget.Id],
-        (type) => `works when inviting user by ${type}`,
-        async (type) => {
-          const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-            'sendEmail',
-            async () => true
-          )
+      it('works when inviting user by id', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
 
-          const randomUnregisteredEmail = 'randomunregisteredguy@email.com'
-
-          const res = await gqlHelpers.createInvite({
-            workspaceId: myFirstWorkspace.id,
-            input: {
-              ...(type === InviteByTarget.Email
-                ? { email: randomUnregisteredEmail }
-                : {}),
-              ...(type === InviteByTarget.Id ? { userId: otherGuy.id } : {}),
-              role: WorkspaceRole.Member
-            }
-          })
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(res.data?.workspaceMutations?.invites?.create).to.be.ok
-
-          const workspace = res.data!.workspaceMutations!.invites!.create
-          expect(workspace.invitedTeam).to.have.length(1)
-          expect(workspace.invitedTeam![0].invitedBy.id).to.equal(me.id)
-          expect(workspace.invitedTeam![0].token).to.be.not.ok
-
-          if (type === InviteByTarget.Email) {
-            expect(workspace.invitedTeam![0].user).to.be.not.ok
-            expect(workspace.invitedTeam![0].title).to.equal(randomUnregisteredEmail)
-          } else {
-            expect(workspace.invitedTeam![0].user?.id).to.equal(otherGuy.id)
+        const randomUnregisteredEmail = `${createRandomPassword()}@example.org`
+        await createUserEmailFactory({ db })({
+          userEmail: {
+            userId: otherGuy.id,
+            email: randomUnregisteredEmail
           }
+        })
+        await markUserEmailAsVerifiedFactory({
+          updateUserEmail: updateUserEmailFactory({ db })
+        })({
+          email: randomUnregisteredEmail
+        })
 
-          expect(sendEmailInvocations.args).to.have.lengthOf(1)
-          const emailParams = sendEmailInvocations.args[0][0]
-          expect(emailParams).to.be.ok
-          expect(emailParams.to).to.eq(
-            type === InviteByTarget.Id ? otherGuy.email : randomUnregisteredEmail
-          )
-          expect(emailParams.subject).to.be.ok
+        const res = await gqlHelpers.createInvite({
+          workspaceId: myFirstWorkspace.id,
+          input: {
+            userId: otherGuy.id,
+            role: WorkspaceRole.Member
+          }
+        })
 
-          // Validate that invite exists
-          await validateInviteExistanceFromEmail(emailParams)
-        }
-      )
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.create).to.be.ok
+
+        const workspace = res.data!.workspaceMutations!.invites!.create
+        expect(workspace.invitedTeam).to.have.length(1)
+        expect(workspace.invitedTeam![0].invitedBy.id).to.equal(me.id)
+        expect(workspace.invitedTeam![0].token).to.be.not.ok
+
+        expect(workspace.invitedTeam![0].user?.id).to.equal(otherGuy.id)
+
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
+        const emailParams = sendEmailInvocations.args[0][0]
+        expect(emailParams).to.be.ok
+        expect(emailParams.to).to.eq(randomUnregisteredEmail)
+        expect(emailParams.subject).to.be.ok
+
+        // Validate that invite exists
+        await validateInviteExistanceFromEmail(emailParams)
+      })
+      it('works when inviting user by email', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const randomUnregisteredEmail = `${createRandomPassword()}@example.org`
+
+        const res = await gqlHelpers.createInvite({
+          workspaceId: myFirstWorkspace.id,
+          input: {
+            email: randomUnregisteredEmail,
+            role: WorkspaceRole.Member
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.create).to.be.ok
+
+        const workspace = res.data!.workspaceMutations!.invites!.create
+        expect(workspace.invitedTeam).to.have.length(1)
+        expect(workspace.invitedTeam![0].invitedBy.id).to.equal(me.id)
+        expect(workspace.invitedTeam![0].token).to.be.not.ok
+
+        expect(workspace.invitedTeam![0].user).to.be.not.ok
+        expect(workspace.invitedTeam![0].title).to.equal(randomUnregisteredEmail)
+
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
+        const emailParams = sendEmailInvocations.args[0][0]
+        expect(emailParams).to.be.ok
+        expect(emailParams.to).to.eq(randomUnregisteredEmail)
+        expect(emailParams.subject).to.be.ok
+
+        // Validate that invite exists
+        await validateInviteExistanceFromEmail(emailParams)
+      })
 
       it("doesn't work if inviting to a workspace that the token doesn't have access to", async () => {
         const res = await gqlHelpers.createInvite(

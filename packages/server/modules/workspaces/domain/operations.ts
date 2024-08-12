@@ -4,6 +4,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
@@ -20,6 +21,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
+  userId: string
 }) => Promise<Pick<Workspace, 'id' | 'name' | 'description'>[]>
 
 export type GetWorkspace = (args: {
@@ -45,6 +47,10 @@ type DeleteWorkspaceArgs = {
 }
 
 export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
+
+export type GetWorkspaceWithDomains = (args: {
+  id: string
+}) => Promise<WorkspaceWithDomains | null>
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
