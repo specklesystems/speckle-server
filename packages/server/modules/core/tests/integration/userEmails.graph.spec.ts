@@ -103,6 +103,7 @@ describe('User emails graphql @core', () => {
         userEmail: {
           email,
           userId,
+          verified: true,
           primary: false
         }
       })

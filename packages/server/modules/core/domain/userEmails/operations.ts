@@ -17,7 +17,7 @@ export type UpdateUserEmail = (
     update
   }: {
     query:
-      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
+      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean; verified?: boolean })
       | (Pick<UserEmail, 'email'> & { primary?: boolean })
       | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>

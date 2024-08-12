@@ -15,7 +15,8 @@ import { UserEmails } from '@/modules/core/dbSchema'
 import {
   UserEmailAlreadyExistsError,
   UserEmailDeleteError,
-  UserEmailPrimaryAlreadyExistsError
+  UserEmailPrimaryAlreadyExistsError,
+  UserEmailPrimaryUnverifiedError
 } from '@/modules/core/errors/userEmails'
 import { get, omit } from 'lodash'
 
@@ -168,10 +169,13 @@ export const setPrimaryUserEmailFactory =
         query: { userId, primary: true },
         update: { primary: false }
       })
-      await updateUserEmailFactory({ db: trx })({
-        query: { id, userId },
+      const updated = await updateUserEmailFactory({ db: trx })({
+        query: { id, userId, verified: true },
         update: { primary: true }
       })
+      if (!updated) {
+        throw new UserEmailPrimaryUnverifiedError()
+      }
     })
     return true
   }

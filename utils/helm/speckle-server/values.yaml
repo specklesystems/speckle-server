@@ -43,6 +43,8 @@ featureFlags:
   noClosureWrites: false
   ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
   workspaceModuleEnabled: false
+  ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
+  multipleEmailsModuleEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
