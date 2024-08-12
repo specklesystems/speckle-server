@@ -15398,7 +15398,6 @@ __metadata:
     "@tiptap/core": "npm:^2.0.0-beta.176"
     "@types/bcrypt": "npm:^5.0.0"
     "@types/bull": "npm:^3.15.9"
-    "@types/busboy": "npm:^1.5.4"
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/compression": "npm:^1.7.2"
     "@types/connect-redis": "npm:^0.0.23"
@@ -17888,15 +17887,6 @@ __metadata:
     "@types/ioredis": "npm:*"
     "@types/redis": "npm:^2.8.0"
   checksum: 10/e37783ee038f2d65f0479fa28e3ce50038ea0bfe0420f762b46ed6ef338be713025115c3c078acde47372640587718300f1f66aa03d172129f3685c34a248241
-  languageName: node
-  linkType: hard
-
-"@types/busboy@npm:^1.5.4":
-  version: 1.5.4
-  resolution: "@types/busboy@npm:1.5.4"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10/43cdd26754603fbee81f538ac52769f2cc8445d5f238666845d99a9fee22e0b608a075d0c346f78c43ade4ce4ec04433a51a1ffa21524ca29ead9d2375f4ec9c
   languageName: node
   linkType: hard
 
