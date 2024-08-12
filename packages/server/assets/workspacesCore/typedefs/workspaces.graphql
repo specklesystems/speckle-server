@@ -103,6 +103,10 @@ input WorkspaceInviteCreateInput {
   Defaults to the member role, if not specified
   """
   role: WorkspaceRole
+  """
+  Defaults to User, if not specified
+  """
+  serverRole: ServerRole
 }
 
 input WorkspaceInviteUseInput {
@@ -123,6 +127,10 @@ type WorkspaceInviteMutations {
     @hasServerRole(role: SERVER_USER)
 }
 
+input PendingWorkspaceCollaboratorsFilter {
+  search: String
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -141,7 +149,9 @@ type Workspace {
   """
   Only available to workspace owners
   """
-  invitedTeam: [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: ADMIN)
+  invitedTeam(
+    filter: PendingWorkspaceCollaboratorsFilter
+  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: ADMIN)
   projects(
     limit: Int! = 25
     cursor: String
@@ -175,6 +185,7 @@ type WorkspaceCollaborator {
 
 type PendingWorkspaceCollaborator {
   id: ID!
+  updatedAt: DateTime!
   inviteId: String!
   workspaceId: String!
   workspaceName: String!

@@ -22,7 +22,7 @@
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <!-- Notifications dropdown -->
-          <HeaderNavNotifications />
+          <HeaderNavNotifications v-if="hasNotifications" />
           <FormButton
             v-if="!activeUser"
             :to="loginUrl.fullPath"
@@ -58,4 +58,10 @@ const loginUrl = computed(() =>
     }
   })
 )
+
+const hasNotifications = computed(() => {
+  if (!activeUser.value) return false
+  if (!activeUser.value?.verified) return true
+  return false
+})
 </script>

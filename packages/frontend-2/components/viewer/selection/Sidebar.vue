@@ -65,6 +65,7 @@
       </template>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import {

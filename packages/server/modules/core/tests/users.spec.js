@@ -141,10 +141,7 @@ describe('Actors & Tokens @user-services', () => {
       })
 
       // create an object and a commit around it on the multiowner stream
-      const objId = await createObject({
-        streamId: multiOwnerStream.id,
-        object: { pie: 'in the sky' }
-      })
+      const objId = await createObject(multiOwnerStream.id, { pie: 'in the sky' })
       const commitId = await createCommitByBranchName({
         streamId: multiOwnerStream.id,
         branchName: 'ballmer/dev',

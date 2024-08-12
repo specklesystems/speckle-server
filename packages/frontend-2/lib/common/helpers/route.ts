@@ -25,7 +25,8 @@ export const settingsQueries: {
   user: {
     profile: 'user/profile',
     notifications: 'user/notifications',
-    developerSettings: 'user/developer-settings'
+    developerSettings: 'user/developer-settings',
+    emails: 'user/emails'
   },
   server: {
     general: 'server/general',

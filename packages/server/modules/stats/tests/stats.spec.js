@@ -230,10 +230,7 @@ async function seedDb({
   const streamIds = await Promise.all(streamPromises)
 
   // create a objects
-  const objs = await createObjects({
-    streamId: streamIds[0],
-    objects: createManyObjects(numObjects - 1)
-  })
+  const objs = await createObjects(streamIds[0], createManyObjects(numObjects - 1))
 
   // create commits referencing those objects
   const commitPromises = []
