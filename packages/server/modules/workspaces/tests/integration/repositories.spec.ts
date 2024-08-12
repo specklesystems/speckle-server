@@ -360,7 +360,8 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org', 'speckle.systems']
+        domains: ['example.org', 'speckle.systems'],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(1)
@@ -384,7 +385,8 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: []
+        domains: [],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(0)
@@ -417,7 +419,8 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org']
+        domains: ['example.org'],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(0)
@@ -478,7 +481,8 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org']
+        domains: ['example.org'],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(2)
@@ -516,7 +520,8 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org']
+        domains: ['example.org'],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(0)
@@ -547,46 +552,14 @@ describe('Workspace repositories', () => {
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
-        domains: ['example.org']
+        domains: ['example.org'],
+        userId: user.id
       })
 
       expect(workspaces.length).to.equal(0)
     })
-  })
 
-  describe('getWorkspaceDomainsFactory creates a function, that', () => {
-    it('returns a workspace with domains', async () => {
-      const user = {
-        id: createRandomPassword(),
-        name: createRandomPassword(),
-        email: createRandomPassword()
-      }
-      await createTestUser(user)
-      const workspace = {
-        id: createRandomPassword(),
-        name: 'my workspace',
-        ownerId: user.id
-      }
-      await createTestWorkspace(workspace, user)
-
-      await storeWorkspaceDomainFactory({ db })({
-        workspaceDomain: {
-          id: createRandomPassword(),
-          domain: 'example.org',
-          verified: true,
-          workspaceId: workspace.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdByUserId: user.id
-        }
-      })
-      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
-        id: workspace.id
-      })
-      expect(workspaceWithDomains?.domains.length).to.eq(1)
-    })
-
-    it('fuck', async () => {
+    it('returns a work', async () => {
       const user = await createAndStoreTestUser()
       await updateUserEmail({
         query: {
@@ -633,6 +606,39 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(1)
+    })
+  })
+
+  describe('getWorkspaceDomainsFactory creates a function, that', () => {
+    it('returns a workspace with domains', async () => {
+      const user = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(user)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user)
+
+      await storeWorkspaceDomainFactory({ db })({
+        workspaceDomain: {
+          id: createRandomPassword(),
+          domain: 'example.org',
+          verified: true,
+          workspaceId: workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
+        id: workspace.id
+      })
+      expect(workspaceWithDomains?.domains.length).to.eq(1)
     })
   })
 })
