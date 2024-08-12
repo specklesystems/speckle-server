@@ -1,36 +1,43 @@
 /* istanbul ignore file */
-'use strict'
-
-const passport = require('passport')
-const { Issuer, Strategy } = require('openid-client')
-const URL = require('url').URL
-const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
-  validateServerInvite,
+import passport from 'passport'
+import { Issuer, Strategy } from 'openid-client'
+import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
+  validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { logger } = require('@/logging/logging')
-const {
+} from '@/modules/serverinvites/services/processing'
+import {
   getOidcDiscoveryUrl,
-  getBaseUrl,
   getOidcClientId,
   getOidcClientSecret,
-  getOidcName
-} = require('@/modules/shared/helpers/envHelper')
-const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
-const {
+  getOidcName,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import { passportAuthenticate } from '@/modules/auth/services/passportService'
+import { UnverifiedEmailSSOLoginError } from '@/modules/core/errors/userinput'
+import {
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
-const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
+  updateAllInviteTargetsFactory,
+  findServerInviteFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
+import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import { get } from 'lodash'
+import { Optional } from '@speckle/shared'
 
-module.exports = async (app, session, sessionStorage, finalizeAuth) => {
+const oidcStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
-  const redirectUrl = new URL('/auth/oidc/callback', getBaseUrl()).toString()
+  const redirectUrl = new URL('/auth/oidc/callback', getServerOrigin()).toString()
 
   const client = new oidcIssuer.Client({
     // eslint-disable-next-line camelcase
@@ -42,18 +49,31 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     // eslint-disable-next-line camelcase
     response_types: ['code']
   })
+
   passport.use(
     'oidc',
-    new Strategy(
+    new Strategy<Express.User>(
       { client, passReqToCallback: true },
       async (req, tokenSet, userinfo, done) => {
         req.session.tokenSet = tokenSet
         req.session.userinfo = userinfo
 
         const serverInfo = await getServerInfo()
+        const logger = req.log.child({
+          authStrategy: 'oidc',
+          serverVersion: serverInfo.version
+        })
+
+        // TODO: req.session.inviteId doesn't appear to exist, but i'm not removing it to not break things
+        const token: Optional<string> =
+          get(req.session, 'inviteId') || req.session.token
 
         try {
           const email = userinfo['email']
+          if (!email) {
+            throw new Error('No email provided by the OIDC provider.')
+          }
+
           const name = getNameFromUserInfo(userinfo)
 
           const user = { email, name }
@@ -72,8 +92,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           // whether the server is invite only or not).
           if (existingUser) {
             const myUser = await findOrCreateUser({
-              user,
-              rawProfile: userinfo
+              user
             })
 
             return done(null, myUser)
@@ -82,8 +101,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           // if the server is not invite only, go ahead and log the user in.
           if (!serverInfo.inviteOnly) {
             const myUser = await findOrCreateUser({
-              user,
-              rawProfile: userinfo
+              user
             })
 
             // process invites
@@ -97,23 +115,23 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           }
 
           // if the server is invite only and we have no invite id, throw.
-          if (serverInfo.inviteOnly && !req.session.inviteId) {
+          if (serverInfo.inviteOnly && !token) {
             throw new Error('This server is invite only. Please provide an invite id.')
           }
 
           // validate the invite
-          const validInvite = await validateServerInvite(
-            user.email,
-            req.session.inviteId
-          )
+          const validInvite = await validateServerInviteFactory({
+            findServerInvite: findServerInviteFactory({ db })
+          })(user.email, token)
 
           // create the user
           const myUser = await findOrCreateUser({
             user: {
               ...user,
-              role: validInvite?.serverRole
-            },
-            rawProfile: userinfo
+              role: validInvite
+                ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
+                : undefined
+            }
           })
 
           await finalizeInvitedServerRegistrationFactory({
@@ -131,25 +149,28 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
         } catch (err) {
           logger.error(err)
-          return done(err, false, { message: err.message })
+          return done(err, undefined)
         }
       }
     )
   )
 
+  // 1. Auth init
   app.get(
     '/auth/oidc',
-    session,
-    sessionStorage,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
     passportAuthenticate('oidc', { scope: 'openid profile email' })
   )
+
+  // 2. Auth finalize
   app.get(
     '/auth/oidc/callback',
-    session,
+    sessionMiddleware,
     passportAuthenticate('oidc', {
       failureRedirect: '/error?message=Failed to authenticate.'
     }),
-    finalizeAuth
+    finalizeAuthMiddleware
   )
 
   return {
@@ -158,6 +179,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     icon: 'mdi-badge-account-horizontal-outline',
     color: 'blue darken-3',
     url: '/auth/oidc',
-    callbackUrl: new URL('/auth/oidc/callback', getBaseUrl()).toString()
+    callbackUrl: new URL('/auth/oidc/callback', getServerOrigin()).toString()
   }
 }
+
+export = oidcStrategyBuilder

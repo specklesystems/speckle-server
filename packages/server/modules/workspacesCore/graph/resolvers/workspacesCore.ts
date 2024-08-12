@@ -71,6 +71,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspaceList: async () => {
           throw new WorkspacesModuleDisabledError()
         }
+      },
+      ActiveUserMutations: {
+        workspaceMutations: async () => {
+          throw new WorkspacesModuleDisabledError()
+        }
       }
     } as Resolvers)
   : {}

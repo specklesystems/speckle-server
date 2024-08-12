@@ -6,6 +6,7 @@ import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,
   InviteResourceTargetType,
+  PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
@@ -37,7 +38,7 @@ export type CollectAndValidateResourceTargets = (params: {
   target: ResolvedTargetData
   targetUser: MaybeNullOrUndefined<UserWithOptionalRole>
   serverInfo: ServerInfo
-}) => MaybeAsync<InviteResourceTarget[]>
+}) => MaybeAsync<Array<InviteResourceTarget | PrimaryInviteResourceTarget>>
 
 export type BuildInviteEmailContents = (params: {
   invite: ServerInviteRecord

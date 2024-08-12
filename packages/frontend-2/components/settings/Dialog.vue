@@ -65,6 +65,24 @@
                 }"
                 @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
               />
+              <LayoutSidebarMenuGroupItem
+                label="Billing"
+                tag="Coming soon"
+                tooltip-text="Manage billing for your workspace"
+                disabled
+              />
+              <LayoutSidebarMenuGroupItem
+                label="Security"
+                tag="Coming soon"
+                tooltip-text="SSO, manage permissions, restrict domain access"
+                disabled
+              />
+              <LayoutSidebarMenuGroupItem
+                label="Regions"
+                tag="Coming soon"
+                tooltip-text="Set up regions for custom data residency"
+                disabled
+              />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
@@ -77,6 +95,7 @@
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"
+        :workspace-id="targetWorkspaceId"
       />
     </div>
   </LayoutDialog>
@@ -91,6 +110,7 @@ import SettingsServerGeneral from '~/components/settings/server/General.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
+import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -104,6 +124,7 @@ import {
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
+import { useIsWorkspacesEnabled } from '~/composables/globals'
 
 type MenuItem = {
   title: string
@@ -154,7 +175,10 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
     }
   },
   workspace: {
-    // Workspace menu items will be added here, general, members and projects
+    members: {
+      title: 'Members',
+      component: SettingsWorkspacesMembers
+    }
   }
 })
 

@@ -69,6 +69,8 @@ module.exports = {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    if (!user.email?.length) throw new UserInputError('E-mail address is required')
+
     let expectedRole = null
     if (user.role) {
       const isValidRole = Object.values(Roles.Server).includes(user.role)
@@ -128,6 +130,7 @@ module.exports = {
   },
 
   /**
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles}, bio?: string}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,
@@ -322,6 +325,9 @@ module.exports = {
    * TODO: this should be moved to repositories
    * Get all users or filter them with the specified searchQuery. This is meant for
    * server admins, because it exposes the User object (& thus the email).
+   * @param {number} limit
+   * @param {number} offset
+   * @param {string | null} searchQuery
    * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
    */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
@@ -346,7 +352,11 @@ module.exports = {
       .offset(offset)
   },
 
-  // TODO: this should be moved to repositories
+  /**
+   * TODO: this should be moved to repositories
+   * @param {string|null} searchQuery
+   * @returns
+   */
   async countUsers(searchQuery = null) {
     const query = Users().leftJoin(
       UserEmails.name,

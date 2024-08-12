@@ -1,11 +1,15 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type CreateUserEmail = ({
   userEmail
 }: {
-  userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }
-}) => Promise<string>
+  userEmail: Pick<UserEmail, 'email' | 'userId'> & {
+    primary?: boolean
+    verified?: boolean
+  }
+}) => Promise<UserEmail>
 
 export type UpdateUserEmail = (
   {
@@ -13,13 +17,13 @@ export type UpdateUserEmail = (
     update
   }: {
     query:
-      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
+      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean; verified?: boolean })
       | (Pick<UserEmail, 'email'> & { primary?: boolean })
       | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
   },
   options?: { trx: Knex.Transaction }
-) => Promise<UserEmail>
+) => Promise<Optional<UserEmail>>
 
 export type DeleteUserEmail = (
   userEmail: Pick<UserEmail, 'id' | 'userId'>
@@ -29,7 +33,7 @@ export type MarkUserEmailAsVerified = ({
   email
 }: {
   email: string
-}) => Promise<UserEmail>
+}) => Promise<Optional<UserEmail>>
 
 export type FindPrimaryEmailForUser = (
   query:
@@ -37,9 +41,9 @@ export type FindPrimaryEmailForUser = (
         userId: string
       }
     | { email: string }
-) => Promise<UserEmail>
+) => Promise<Optional<UserEmail>>
 
-export type FindEmail = (query: Partial<UserEmail>) => Promise<UserEmail>
+export type FindEmail = (query: Partial<UserEmail>) => Promise<Optional<UserEmail>>
 
 export type FindEmailsByUserId = ({
   userId

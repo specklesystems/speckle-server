@@ -11,12 +11,10 @@ export const workspaceFragment = gql`
   }
 `
 
-export const workspaceTeamFragment = gql`
-  fragment TestWorkspaceTeam on Workspace {
-    team {
-      id
-      role
-    }
+export const workspaceCollaboratorFragment = gql`
+  fragment TestWorkspaceCollaborator on WorkspaceCollaborator {
+    id
+    role
   }
 `
 
@@ -29,6 +27,15 @@ export const workspaceProjectFragment = gql`
   }
 `
 
+export const workspaceTeamFragment = gql`
+  fragment TestWorkspaceTeam on Workspace {
+    team {
+      id
+      role
+    }
+  }
+`
+
 export const createWorkspaceQuery = gql`
   mutation CreateWorkspace($input: WorkspaceCreateInput!) {
     workspaceMutations {
@@ -38,6 +45,14 @@ export const createWorkspaceQuery = gql`
     }
   }
   ${workspaceFragment}
+`
+
+export const deleteWorkspaceQuery = gql`
+  mutation DeleteWorkspace($workspaceId: String!) {
+    workspaceMutations {
+      delete(workspaceId: $workspaceId)
+    }
+  }
 `
 
 export const getWorkspaceQuery = gql`
@@ -99,7 +114,7 @@ export const createWorkspaceProjectQuery = gql`
   ${workspaceProjectFragment}
 `
 
-export const getWorkspaceProjects = gql`
+export const getWorkspaceProjectsQuery = gql`
   query GetWorkspaceProjects(
     $id: String!
     $limit: Int
@@ -117,4 +132,25 @@ export const getWorkspaceProjects = gql`
     }
   }
   ${workspaceProjectFragment}
+`
+
+export const getWorkspaceTeamQuery = gql`
+  query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
+    workspace(id: $workspaceId) {
+      team(filter: $filter) {
+        ...TestWorkspaceCollaborator
+      }
+    }
+  }
+  ${workspaceCollaboratorFragment}
+`
+
+export const leaveWorkspaceMutation = gql`
+  mutation ActiveUserLeaveWorkspace($id: ID!) {
+    activeUserMutations {
+      workspaceMutations {
+        leave(id: $id)
+      }
+    }
+  }
 `

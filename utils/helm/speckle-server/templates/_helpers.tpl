@@ -571,6 +571,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.licenseTokenSecret.secretName }}"
       key: {{ default "license_token" .Values.server.licenseTokenSecret.secretKey }}
+- name: FF_MULTIPLE_EMAILS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
 
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL

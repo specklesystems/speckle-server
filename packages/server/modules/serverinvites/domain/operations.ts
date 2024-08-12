@@ -2,13 +2,17 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   InviteResourceTarget,
   InviteResourceTargetType,
+  PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
-export type ServerInviteRecordInsertModel = Omit<ServerInviteRecord, 'createdAt'>
+export type ServerInviteRecordInsertModel = Omit<
+  ServerInviteRecord,
+  'createdAt' | 'updatedAt'
+>
 
 export type InsertInviteAndDeleteOld = (
   invite: ServerInviteRecordInsertModel,
@@ -56,7 +60,7 @@ export type QueryAllResourceInvites = <
   filter: Pick<
     InviteResourceTarget<TargetType, RoleType>,
     'resourceId' | 'resourceType'
-  >
+  > & { search?: string }
 ) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
 
 export type DeleteAllResourceInvites = <
@@ -101,5 +105,7 @@ export type CreateInviteParams = {
   target: string
   inviterId: string
   message?: string | null
-  primaryResourceTarget: InviteResourceTarget
+  primaryResourceTarget: PrimaryInviteResourceTarget
 }
+
+export type MarkInviteUpdated = (params: { inviteId: string }) => Promise<boolean>

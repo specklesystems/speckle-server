@@ -13,7 +13,7 @@
             :show-clear="!!search"
             placeholder="Search users"
             class="rounded-md border border-outline-3"
-            :model-value="bind.modelValue.value"
+            v-bind="bind"
             v-on="on"
           />
         </div>

@@ -18,6 +18,7 @@
         :project-id="projectId"
         :source-apps="sourceApps"
         :contributors="contributors"
+        :disable-default-links="false"
         @update:loading="finalLoading = $event"
         @clear-search="clearSearch"
         @model-clicked="(val) => router.push(modelRoute(projectId, val.id))"

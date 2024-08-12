@@ -1,11 +1,11 @@
-import type { UserInfo } from '@/modules/auth/domain/types'
+import type { UserinfoResponse } from 'openid-client'
 
 /* eslint-disable camelcase */
 export function getNameFromUserInfo({
   name,
   given_name,
   family_name
-}: Pick<UserInfo, 'name' | 'given_name' | 'family_name'>): string {
+}: Pick<UserinfoResponse, 'name' | 'given_name' | 'family_name'>): string {
   if (!name && !given_name && !family_name) {
     return ''
   }

@@ -18,6 +18,14 @@ export const useIsWorkspacesEnabled = () => {
   return ref(FF_WORKSPACES_MODULE_ENABLED)
 }
 
+export const useIsMultipleEmailsEnabled = () => {
+  const {
+    public: { FF_MULTIPLE_EMAILS_MODULE_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_MULTIPLE_EMAILS_MODULE_ENABLED)
+}
+
 export const useIsGendoModuleEnabled = () => {
   const {
     public: { FF_GENDOAI_MODULE_ENABLED }

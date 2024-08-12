@@ -1,29 +1,40 @@
 /* istanbul ignore file */
-'use strict'
-const passport = require('passport')
-const GoogleStrategy = require('passport-google-oauth20').Strategy
-const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
+import passport from 'passport'
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/processing')
-const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { logger } = require('@/logging/logging')
-const {
+} from '@/modules/serverinvites/services/processing'
+import { passportAuthenticate } from '@/modules/auth/services/passportService'
+import {
   UserInputError,
   UnverifiedEmailSSOLoginError
-} = require('@/modules/core/errors/userinput')
-const db = require('@/db/knex')
-const {
+} from '@/modules/core/errors/userinput'
+import db from '@/db/knex'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
   findServerInviteFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
+import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import {
+  getGoogleClientId,
+  getGoogleClientSecret
+} from '@/modules/shared/helpers/envHelper'
+import { ensureError } from '@speckle/shared'
 
-module.exports = async (app, session, sessionStorage, finalizeAuth) => {
-  const strategy = {
+const googleStrategyBuilder: AuthStrategyBuilder = async (
+  app,
+  sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
+  finalizeAuthMiddleware
+) => {
+  const strategy: AuthStrategyMetadata & { callbackUrl: string } = {
     id: 'google',
     name: 'Google',
     icon: 'mdi-google',
@@ -34,19 +45,27 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
   const myStrategy = new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: getGoogleClientId(),
+      clientSecret: getGoogleClientSecret(),
       callbackURL: strategy.callbackUrl,
       scope: ['profile', 'email'],
       passReqToCallback: true
     },
-    async (req, accessToken, refreshToken, profile, done) => {
+    async (req, _accessToken, _refreshToken, profile, done) => {
       const serverInfo = await getServerInfo()
+      const logger = req.log.child({
+        authStrategy: 'google',
+        profileId: profile.id,
+        serverVersion: serverInfo.version
+      })
 
       try {
-        const email = profile.emails[0].value
-        const name = profile.displayName
+        const email = profile.emails?.[0].value
+        if (!email) {
+          throw new Error('No email provided by Google')
+        }
 
+        const name = profile.displayName
         const user = { email, name, avatar: profile._json.picture }
 
         const existingUser = await getUserByEmail({ email: user.email })
@@ -62,13 +81,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
           return done(null, myUser)
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user })
 
           // process invites
           if (myUser.isNewUser) {
@@ -97,9 +116,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const myUser = await findOrCreateUser({
           user: {
             ...user,
-            role: validInvite?.serverRole
-          },
-          rawProfile: profile._raw
+            role: validInvite
+              ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
+              : undefined
+          }
         })
 
         // use the invite
@@ -117,22 +137,41 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           isInvite: !!validInvite
         })
       } catch (err) {
-        switch (err.constructor) {
+        const e = ensureError(
+          err,
+          'Unexpected issue occured while authenticating with Google'
+        )
+        switch (e.constructor) {
           case UserInputError:
             logger.info(err)
             break
           default:
             logger.error(err)
         }
-        return done(err, false, { message: err.message })
+        return done(err, false, { message: e.message })
       }
     }
   )
 
   passport.use(myStrategy)
 
-  app.get(strategy.url, session, sessionStorage, passportAuthenticate('google'))
-  app.get(strategy.callbackUrl, session, passportAuthenticate('google'), finalizeAuth)
+  // 1. Init Auth
+  app.get(
+    strategy.url,
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    passportAuthenticate('google')
+  )
+
+  // 2. Auth callback
+  app.get(
+    strategy.callbackUrl,
+    sessionMiddleware,
+    passportAuthenticate('google'),
+    finalizeAuthMiddleware
+  )
 
   return strategy
 }
+
+export = googleStrategyBuilder

@@ -74,7 +74,11 @@
               <div class="flex gap-3">
                 <PortalTarget name="pocket-actions"></PortalTarget>
                 <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+                <ViewerGlobalFilterReset
+                  v-if="hasAnyFiltersApplied"
+                  class="z-20"
+                  :embed="!!isEmbedEnabled"
+                />
               </div>
             </div>
             <div class="flex items-end justify-center sm:justify-end">
@@ -103,6 +107,7 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
+import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -118,6 +123,9 @@ const projectId = computed(() => route.params.id as string)
 const state = useSetupViewer({
   projectId
 })
+const {
+  filters: { hasAnyFiltersApplied }
+} = useFilterUtilities({ state })
 const { isEnabled: isEmbedEnabled, hideSelectionInfo, isTransparent } = useEmbed()
 
 emit('setup', state)
@@ -137,9 +145,20 @@ graphql(`
   }
 `)
 
-const title = computed(() =>
-  project.value?.name.length ? `Viewer - ${project.value.name}` : ''
-)
+const title = computed(() => {
+  if (project.value?.models?.items) {
+    const modelCount = project.value.models.items.length
+    const projectName = project.value.name || ''
+
+    if (modelCount > 1) {
+      return projectName ? `Multiple models - ${projectName}` : 'Multiple models'
+    } else if (modelCount === 1) {
+      const modelName = project.value.models.items[0].name || ''
+      return projectName ? `${modelName} - ${projectName}` : modelName
+    }
+  }
+  return ''
+})
 
 const modelName = computed(() => {
   if (project.value?.models?.items && project.value.models.items.length > 0) {

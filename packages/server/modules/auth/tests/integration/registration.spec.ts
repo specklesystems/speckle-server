@@ -10,17 +10,21 @@ import { updateServerInfo } from '@/modules/core/services/generic'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { UseStreamInviteDocument } from '@/test/graphql/generated/graphql'
+import {
+  CreateProjectInviteDocument,
+  CreateProjectInviteMutationVariables,
+  CreateServerInviteDocument,
+  CreateServerInviteMutationVariables,
+  UseStreamInviteDocument
+} from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
   testApolloServer,
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import {
-  createServerInviteDirectly,
-  createStreamInviteDirectly
-} from '@/test/speckle-helpers/inviteHelper'
+import { EmailSendingServiceMock } from '@/test/mocks/global'
+import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   BasicTestStream,
   createTestStreams,
@@ -32,6 +36,22 @@ import { expect } from 'chai'
 describe('Server registration', () => {
   let restApi: LocalAuthRestApiHelpers
   let apollo: TestApolloServer
+
+  const createInviteAsAdmin = async (
+    args: CreateProjectInviteMutationVariables | CreateServerInviteMutationVariables
+  ) => {
+    return await captureCreatedInvite(async () => {
+      if ('projectId' in args) {
+        await apollo.execute(CreateProjectInviteDocument, args, {
+          assertNoErrors: true
+        })
+      } else {
+        await apollo.execute(CreateServerInviteDocument, args, {
+          assertNoErrors: true
+        })
+      }
+    })
+  }
 
   const basicAdminUser: BasicTestUser = {
     name: 'Some Admin Guy',
@@ -49,12 +69,17 @@ describe('Server registration', () => {
   before(async () => {
     const ctx = await beforeEachContext()
     restApi = localAuthRestApi({ express: ctx.app })
-    apollo = await testApolloServer({
-      authUserId: basicAdminUser.id
-    })
 
     await createTestUsers([basicAdminUser])
     await createTestStreams([[basicAdminStream, basicAdminUser]])
+
+    apollo = await testApolloServer({
+      authUserId: basicAdminUser.id
+    })
+  })
+
+  afterEach(() => {
+    EmailSendingServiceMock.resetMockedFunctions()
   })
 
   describe('with local strategy (email/pw)', () => {
@@ -76,7 +101,7 @@ describe('Server registration', () => {
 
     itEach(
       <const>[
-        { key: 'email', msg: 'E-mail address is empty' },
+        { key: 'email', msg: 'E-mail address is required' },
         { key: 'name', msg: 'User name is required' },
         { key: 'password', msg: 'Password missing' }
       ],
@@ -113,18 +138,19 @@ describe('Server registration', () => {
     it('works with stream invite and allows joining stream afterwards', async () => {
       const params = generateRegistrationParams()
 
-      const invite = await createStreamInviteDirectly(
-        {
+      const invite = await createInviteAsAdmin({
+        input: {
           email: params.user.email,
-          stream: basicAdminStream
+          serverRole: Roles.Server.Admin
         },
-        basicAdminUser.id
-      )
+        projectId: basicAdminStream.id
+      })
       expect(invite.token).to.be.ok
 
       params.inviteToken = invite.token
 
       const newUser = await restApi.register(params)
+      expect(newUser.role).to.equal(Roles.Server.Admin)
 
       const res = await apollo.execute(
         UseStreamInviteDocument,
@@ -146,8 +172,7 @@ describe('Server registration', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.streamInviteUse).to.be.ok
-      expect(await findInviteFactory({ db })({ inviteId: invite.inviteId })).to.be.not
-        .ok
+      expect(await findInviteFactory({ db })({ inviteId: invite.id })).to.be.not.ok
 
       const userStreamRole = await getUserStreamRole(newUser.id, basicAdminStream.id)
       expect(userStreamRole).to.be.ok
@@ -183,23 +208,19 @@ describe('Server registration', () => {
             const params = generateRegistrationParams()
             params.challenge = challenge
 
-            const invite = stream
-              ? await createStreamInviteDirectly(
-                  {
-                    email: params.user.email,
-                    stream: basicAdminStream
-                  },
-                  basicAdminUser.id
-                )
-              : await createServerInviteDirectly(
-                  { email: params.user.email },
-                  basicAdminUser.id
-                )
+            const invite = await createInviteAsAdmin({
+              input: {
+                email: params.user.email,
+                serverRole: Roles.Server.Admin
+              },
+              ...(stream ? { projectId: basicAdminStream.id } : {})
+            })
             expect(invite.token).to.be.ok
 
             params.inviteToken = invite.token
 
-            await restApi.register(params)
+            const newUser = await restApi.register(params)
+            expect(newUser.role).to.equal(Roles.Server.Admin)
           }
         )
       })

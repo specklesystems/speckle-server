@@ -2,6 +2,7 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
+import { ResourceTargetTypeRoleTypeMap } from '@/modules/serverinvites/helpers/core'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 
@@ -20,10 +21,20 @@ export type InviteResourceTarget<
   resourceId: string
   resourceType: ResourceType
   role: RoleType
+}
+
+export type PrimaryInviteResourceTarget<
+  Resource extends InviteResourceTarget = InviteResourceTarget
+> = Resource & {
   /**
-   * Whether or not this is the primary target for the invite
+   * Marks the resource target as the primary, the one that will stored in the DB
    */
-  primary: boolean
+  primary: true
+
+  /**
+   * If invite also has secondary resource targets, you can specify the expected roles here
+   */
+  secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<
@@ -43,7 +54,8 @@ export type ServerInviteRecord<
   target: string
   inviterId: string
   createdAt: Date
+  updatedAt: Date
   message: Nullable<string>
-  resource: Resource
+  resource: PrimaryInviteResourceTarget<Resource>
   token: string
 }

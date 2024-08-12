@@ -20,8 +20,12 @@ import {
   BatchCreateWorkspaceInvitesMutationVariables,
   CancelWorkspaceInviteDocument,
   CancelWorkspaceInviteMutationVariables,
+  CreateProjectInviteDocument,
+  CreateProjectInviteMutationVariables,
   CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
+  CreateWorkspaceProjectInviteDocument,
+  CreateWorkspaceProjectInviteMutationVariables,
   GetMyWorkspaceInvitesDocument,
   GetWorkspaceInviteDocument,
   GetWorkspaceInviteQueryVariables,
@@ -35,10 +39,10 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
 import {
-  createStreamInviteDirectly,
+  captureCreatedInvite,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
-import { MaybeAsync, Roles } from '@speckle/shared'
+import { MaybeAsync, Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
@@ -50,7 +54,6 @@ import {
   createTestStreams,
   leaveStream
 } from '@/test/speckle-helpers/streamHelper'
-import { authorizeResolver } from '@/modules/shared'
 import { ForbiddenError } from 'apollo-server-express'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 import {
@@ -60,6 +63,8 @@ import {
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { getStream } from '@/modules/core/repositories/streams'
 
 enum InviteByTarget {
   Email = 'email',
@@ -84,6 +89,16 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const getMyInvites = async (options?: ExecuteOperationOptions) =>
     apollo.execute(GetMyWorkspaceInvitesDocument, {}, options)
 
+  const createDefaultProjectInvite = (
+    args: CreateProjectInviteMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateProjectInviteDocument, args, options)
+
+  const createWorkspaceProjectInvite = (
+    args: CreateWorkspaceProjectInviteMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateWorkspaceProjectInviteDocument, args, options)
+
   const useProjectInvite = async (
     args: UseWorkspaceProjectInviteMutationVariables,
     options?: ExecuteOperationOptions
@@ -94,6 +109,8 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     userId: string
     workspaceId: string
     streamId?: string
+    expectedWorkspaceRole?: WorkspaceRoles
+    expectedProjectRole?: StreamRoles
   }) => {
     const { shouldHaveAccess, userId, workspaceId, streamId } = params
 
@@ -106,14 +123,35 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
       }
     }
 
-    await wrapAccessCheck(() =>
-      authorizeResolver(userId, workspaceId, Roles.Workspace.Guest, null)
-    )
+    await wrapAccessCheck(async () => {
+      const workspace = await getWorkspaceFactory({ db })({ workspaceId, userId })
+      if (!workspace?.role) {
+        throw new ForbiddenError('Missing workspace role')
+      }
+
+      if (
+        params.expectedWorkspaceRole &&
+        workspace.role !== params.expectedWorkspaceRole
+      ) {
+        throw new ForbiddenError(
+          `Unexpected workspace role! Expected: ${params.expectedWorkspaceRole}, real: ${workspace.role}`
+        )
+      }
+    })
 
     if (streamId?.length) {
-      await wrapAccessCheck(() =>
-        authorizeResolver(userId, streamId, Roles.Stream.Reviewer, null)
-      )
+      await wrapAccessCheck(async () => {
+        const project = await getStream({ streamId, userId })
+        if (!project?.role) {
+          throw new ForbiddenError('Missing project role')
+        }
+
+        if (params.expectedProjectRole && project.role !== params.expectedProjectRole) {
+          throw new ForbiddenError(
+            `Unexpected project role! Expected: ${params.expectedProjectRole}, real: ${project.role}`
+          )
+        }
+      })
     }
   }
 
@@ -122,7 +160,7 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     options?: ExecuteOperationOptions
   ) => apollo.execute(CreateWorkspaceInviteDocument, args, options)
 
-  const batchCreateInvites = (
+  const batchCreateInvites = async (
     args: BatchCreateWorkspaceInvitesMutationVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(BatchCreateWorkspaceInvitesDocument, args, options)
@@ -146,7 +184,9 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     createInvite,
     batchCreateInvites,
     cancelInvite,
-    getWorkspaceWithTeam
+    getWorkspaceWithTeam,
+    createDefaultProjectInvite,
+    createWorkspaceProjectInvite
   }
 }
 
@@ -482,18 +522,22 @@ describe('Workspaces Invites GQL', () => {
       })
 
       beforeEach(async () => {
-        const inviteData = await createWorkspaceInviteDirectly(
-          {
-            workspaceId: myAdministrationWorkspace.id,
-            input: {
-              email: 'someRandomCancelableInviteGuy@asdasd.com',
-              role: WorkspaceRole.Member
-            }
-          },
-          me.id
+        const inviteData = await captureCreatedInvite(
+          async () =>
+            await gqlHelpers.createInvite(
+              {
+                workspaceId: myAdministrationWorkspace.id,
+                input: {
+                  email: 'someRandomCancelableInviteGuy@asdasd.com',
+                  role: WorkspaceRole.Member
+                }
+              },
+              { assertNoErrors: true }
+            )
         )
+
         cancelableInvite.workspaceId = myAdministrationWorkspace.id
-        cancelableInvite.inviteId = inviteData.inviteId
+        cancelableInvite.inviteId = inviteData.id
       })
 
       it("can't list invites, if not admin", async () => {
@@ -598,7 +642,11 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
-      const validateResourceAccess = async (params: { shouldHaveAccess: boolean }) => {
+      const validateResourceAccess = async (params: {
+        shouldHaveAccess: boolean
+        expectedWorkspaceRole?: WorkspaceRoles
+        expectedProjectRole?: StreamRoles
+      }) => {
         return gqlHelpers.validateResourceAccess({
           ...params,
           userId: otherGuy.id,
@@ -616,29 +664,39 @@ describe('Workspaces Invites GQL', () => {
       })
 
       beforeEach(async () => {
-        const workspaceInvite = await createWorkspaceInviteDirectly(
-          {
-            workspaceId: myInviteTargetWorkspace.id,
-            input: {
-              userId: otherGuy.id,
-              role: WorkspaceRole.Member
-            }
-          },
-          me.id
-        )
+        const workspaceInvite = await captureCreatedInvite(async () => {
+          await gqlHelpers.createInvite(
+            {
+              workspaceId: myInviteTargetWorkspace.id,
+              input: {
+                userId: otherGuy.id,
+                role: WorkspaceRole.Member
+              }
+            },
+            { assertNoErrors: true }
+          )
+        })
+
         processableWorkspaceInvite.workspaceId = myInviteTargetWorkspace.id
-        processableWorkspaceInvite.inviteId = workspaceInvite.inviteId
+        processableWorkspaceInvite.inviteId = workspaceInvite.id
         processableWorkspaceInvite.token = workspaceInvite.token
 
-        const projectInvite = await createStreamInviteDirectly(
-          {
-            user: otherGuy,
-            stream: myInviteTargetWorkspaceStream1
-          },
-          me.id
+        const projectInvite = await captureCreatedInvite(
+          async () =>
+            await gqlHelpers.createDefaultProjectInvite(
+              {
+                projectId: myInviteTargetWorkspaceStream1.id,
+                input: {
+                  userId: otherGuy.id,
+                  role: Roles.Stream.Owner
+                }
+              },
+              { assertNoErrors: true }
+            )
         )
+
         processableProjectInvite.projectId = myInviteTargetWorkspaceStream1.id
-        processableProjectInvite.inviteId = projectInvite.inviteId
+        processableProjectInvite.inviteId = projectInvite.id
         processableProjectInvite.token = projectInvite.token
       })
 
@@ -676,6 +734,7 @@ describe('Workspaces Invites GQL', () => {
         }
         await createTestWorkspaces([[brokenWorkspace, me]])
 
+        // Doing direct invite to avoid workspace id validation checks
         const brokenInvite = await createWorkspaceInviteDirectly(
           {
             workspaceId: brokenWorkspace.id,
@@ -815,7 +874,7 @@ describe('Workspaces Invites GQL', () => {
         }
       )
 
-      it("can't acccept invite, if token resource access rules prevent it", async () => {
+      it("can't accept invite, if token resource access rules prevent it", async () => {
         const res = await gqlHelpers.useInvite(
           {
             input: {
@@ -847,7 +906,7 @@ describe('Workspaces Invites GQL', () => {
         expect(invite).to.be.ok
       })
 
-      it('accepting workspace project invite also adds user to workspace', async () => {
+      it('accepting workspace project invite also adds user to workspace w/ guest role', async () => {
         const res = await gqlHelpers.useProjectInvite(
           {
             input: {
@@ -871,8 +930,69 @@ describe('Workspaces Invites GQL', () => {
         })
         expect(invite).to.be.not.ok
 
-        await validateResourceAccess({ shouldHaveAccess: true })
+        await validateResourceAccess({
+          shouldHaveAccess: true,
+          expectedWorkspaceRole: Roles.Workspace.Guest,
+          expectedProjectRole: Roles.Stream.Owner
+        })
       })
+
+      itEach(
+        [{ withRole: true }, { withRole: false }],
+        ({ withRole }) =>
+          `accepting workspace project invite created w/ createForWorkspace also adds user to workspace w/ ${
+            withRole ? 'selected' : 'default (guest)'
+          } role`,
+        async ({ withRole }) => {
+          const inviteData = await captureCreatedInvite(
+            async () =>
+              await gqlHelpers.createWorkspaceProjectInvite(
+                {
+                  projectId: myInviteTargetWorkspaceStream1.id,
+                  inputs: [
+                    {
+                      userId: otherGuy.id,
+                      role: Roles.Stream.Owner,
+                      workspaceRole: withRole ? Roles.Workspace.Admin : undefined
+                    }
+                  ]
+                },
+                { assertNoErrors: true }
+              )
+          )
+
+          const res = await gqlHelpers.useProjectInvite(
+            {
+              input: {
+                token: inviteData.token,
+                accept: true,
+                projectId: myInviteTargetWorkspaceStream1.id
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.projectMutations?.invites?.use).to.be.ok
+
+          const invite = await findInviteFactory({ db })({
+            inviteId: processableProjectInvite.inviteId
+          })
+          expect(invite).to.be.not.ok
+
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            expectedWorkspaceRole: withRole
+              ? Roles.Workspace.Admin
+              : Roles.Workspace.Guest,
+            expectedProjectRole: Roles.Stream.Owner
+          })
+        }
+      )
     })
   })
 
