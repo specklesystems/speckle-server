@@ -1,7 +1,11 @@
 <template>
   <div>
     <div
-      class="absolute z-10 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
+      class="absolute inset-0 backdrop-blur-sm z-10 pointer-events-none transition-all"
+      :class="isOpenMobile ? 'opacity-100' : 'opacity-0'"
+    />
+    <div
+      class="absolute z-20 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
       :class="isOpenMobile ? '' : '-translate-x-60 md:translate-x-0'"
     >
       <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
@@ -10,7 +14,7 @@
             <NuxtLink :to="homeRoute">
               <LayoutSidebarMenuGroupItem
                 label="Dashboard"
-                :active="isActive(homeRoute)"
+                :active="isActive(homeRoute, dashboardRoute)"
               >
                 <template #icon>
                   <HomeIcon class="h-5 w-5 text-foreground-2" />
@@ -132,7 +136,12 @@ import {
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import {
+  homeRoute,
+  projectsRoute,
+  workspaceRoute,
+  dashboardRoute
+} from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 
 const { activeUser } = useActiveUser()
@@ -145,8 +154,8 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 
-const isActive = (routeTo: string) => {
-  return route.path === routeTo
+const isActive = (...routes: string[]): boolean => {
+  return routes.some((routeTo) => route.path === routeTo)
 }
 
 const workspacesItems = computed(() =>
