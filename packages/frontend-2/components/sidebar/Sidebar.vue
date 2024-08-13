@@ -67,8 +67,11 @@
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
 
-            <NuxtLink to="#0" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
+            <NuxtLink
+              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
+              target="_blank"
+            >
+              <LayoutSidebarMenuGroupItem label="Give us feedback">
                 <template #icon>
                   <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -83,8 +86,11 @@
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
 
-            <NuxtLink to="#0" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
+            <NuxtLink
+              to="https://speckle.community/c/making-speckle/changelog"
+              target="_blank"
+            >
+              <LayoutSidebarMenuGroupItem label="Changelog">
                 <template #icon>
                   <ClockIcon class="h-5 w-5 text-foreground-2" />
                 </template>
