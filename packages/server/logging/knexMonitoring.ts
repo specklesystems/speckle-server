@@ -3,6 +3,7 @@ import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
+import { omit } from 'lodash'
 
 export const initKnexPrometheusMetrics = (params: {
   db: Knex
@@ -162,7 +163,7 @@ export const initKnexPrometheusMetrics = (params: {
     metricQueryErrors.inc()
     params.logger.warn(
       {
-        err,
+        err: omit(err, 'detail'),
         sql: querySpec.sql,
         sqlMethod: normalizeSqlMethod(querySpec.method),
         sqlQueryId: queryId,

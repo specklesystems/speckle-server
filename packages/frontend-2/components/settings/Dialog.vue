@@ -19,7 +19,7 @@
               <UserIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, key) in menuItemConfig.user"
+              v-for="(sidebarMenuItem, key) in userMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
@@ -33,7 +33,7 @@
               <ServerStackIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, key) in menuItemConfig.server"
+              v-for="(sidebarMenuItem, key) in serverMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
@@ -56,32 +56,20 @@
               collapsible
             >
               <LayoutSidebarMenuGroupItem
-                v-for="(workspaceMenuItem, itemKey) in menuItemConfig.workspace"
+                v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
                 :label="workspaceMenuItem.title"
-                :class="{
-                  'bg-highlight-2 hover:!bg-highlight-2':
-                    targetMenuItem === itemKey && targetWorkspaceId === workspaceItem.id
-                }"
+                :class="
+                  workspaceMenuItemClasses(
+                    itemKey,
+                    workspaceItem.id,
+                    workspaceMenuItem.disabled
+                  )
+                "
+                :tooltip-text="workspaceMenuItem.tooltipText"
+                :disabled="workspaceMenuItem.disabled"
+                :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
                 @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
-              />
-              <LayoutSidebarMenuGroupItem
-                label="Billing"
-                tag="Coming soon"
-                tooltip-text="Manage billing for your workspace"
-                disabled
-              />
-              <LayoutSidebarMenuGroupItem
-                label="Security"
-                tag="Coming soon"
-                tooltip-text="SSO, manage permissions, restrict domain access"
-                disabled
-              />
-              <LayoutSidebarMenuGroupItem
-                label="Regions"
-                tag="Coming soon"
-                tooltip-text="Set up regions for custom data residency"
-                disabled
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
@@ -102,101 +90,59 @@
 </template>
 
 <script setup lang="ts">
-import type { defineComponent } from 'vue'
-import SettingsUserProfile from '~/components/settings/user/Profile.vue'
-import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
-import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
-import SettingsServerGeneral from '~/components/settings/server/General.vue'
-import SettingsServerProjects from '~/components/settings/server/Projects.vue'
-import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
-import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
-import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
+import { useIsWorkspacesEnabled } from '~/composables/globals'
+import { useQuery } from '@vue/apollo-composable'
+import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
-import { settingsQueries } from '~/lib/common/helpers/route'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { useSettingsMenu } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
-import { useQuery } from '@vue/apollo-composable'
-import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
-import { useIsWorkspacesEnabled } from '~/composables/globals'
+import { graphql } from '~~/lib/common/generated/gql'
 
-type MenuItem = {
-  title: string
-  component: ReturnType<typeof defineComponent>
-}
+graphql(`
+  fragment SettingsDialog_User on User {
+    workspaces {
+      items {
+        id
+        name
+      }
+    }
+  }
+`)
+
+const isOpen = defineModel<boolean>('open', { required: true })
+const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
 
 const { activeUser: user } = useActiveUser()
+const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
+
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 
 const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
 
-const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }>({
-  user: {
-    [settingsQueries.user.profile]: {
-      title: 'Profile',
-      component: SettingsUserProfile
-    },
-    [settingsQueries.user.notifications]: {
-      title: 'Notifications',
-      component: SettingsUserNotifications
-    },
-    [settingsQueries.user.developerSettings]: {
-      title: 'Developer settings',
-      component: SettingsUserDeveloper
-    }
-  },
-  server: {
-    [settingsQueries.server.general]: {
-      title: 'General',
-      component: SettingsServerGeneral
-    },
-    [settingsQueries.server.projects]: {
-      title: 'Projects',
-      component: SettingsServerProjects
-    },
-    [settingsQueries.server.activeUsers]: {
-      title: 'Active users',
-      component: SettingsServerActiveUsers
-    },
-    [settingsQueries.server.pendingInvitations]: {
-      title: 'Pending invitations',
-      component: SettingsServerPendingInvitations
-    }
-  },
-  workspace: {
-    members: {
-      title: 'Members',
-      component: SettingsWorkspacesMembers
-    }
-  }
-})
-
-const isOpen = defineModel<boolean>('open', { required: true })
-const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
-
-const workspaceItems = computed(() =>
-  workspaceResult.value?.activeUser
-    ? workspaceResult.value.activeUser.workspaces.items
-    : []
+const workspaceItems = computed(
+  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
-const selectedMenuItem = computed((): MenuItem | null => {
+const selectedMenuItem = computed((): SettingsMenuItem | null => {
   const categories = [
-    menuItemConfig.value.user,
-    menuItemConfig.value.server,
-    menuItemConfig.value.workspace
+    userMenuItems.value,
+    serverMenuItems.value,
+    workspaceMenuItems.value
   ]
   for (const category of categories) {
     if (targetMenuItem.value && targetMenuItem.value in category) {
@@ -204,20 +150,27 @@ const selectedMenuItem = computed((): MenuItem | null => {
     }
   }
 
-  if (!isMobile.value && targetMenuItem.value) {
-    // Fallback for invalid queries/typos
-    return targetMenuItem.value.includes('server') && isAdmin.value
-      ? menuItemConfig.value.server.general
-      : menuItemConfig.value.user.profile
-  }
-
   return null
 })
 
-// Keep track of the selected workspace ID, to open the page for the correct workspace
 const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+}
+
+const workspaceMenuItemClasses = (
+  itemKey: string | number,
+  workspaceId: string,
+  disabled?: boolean
+) => {
+  if (
+    targetMenuItem.value === itemKey &&
+    targetWorkspaceId.value === workspaceId &&
+    !disabled
+  ) {
+    return 'bg-highlight-2 hover:!bg-highlight-2'
+  }
+  return ''
 }
 
 watch(
