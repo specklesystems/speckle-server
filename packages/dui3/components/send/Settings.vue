@@ -24,7 +24,6 @@ const emit = defineEmits<{ (e: 'update:settings', value: CardSetting[]): void }>
 const store = useHostAppStore()
 
 const defaultSendSettings = computed(() => store.sendSettings)
-console.log('defaultSendSettings', defaultSendSettings.value)
 const sendSettings = ref<CardSetting[] | undefined>(
   cloneDeep(props.settings ?? defaultSendSettings.value) // need to prevent mutation!
 )
