@@ -18,11 +18,7 @@ export const workspacePageQuery = graphql(`
       id
       ...WorkspaceHeader_Workspace
       projects(filter: $filter, cursor: $cursor) {
-        totalCount
-        items {
-          ...ProjectDashboardItem
-        }
-        cursor
+        ...WorkspaceProjects_ProjectCollection
       }
     }
   }

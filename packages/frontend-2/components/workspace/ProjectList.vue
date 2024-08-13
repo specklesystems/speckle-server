@@ -6,7 +6,7 @@
       :workspace-info="workspace"
       :project-count="workspace?.totalProjects?.totalCount"
     />
-    <div v-if="!showEmptyState" class="flex flex-col gap-4 mt-4">
+    <div class="flex flex-col gap-4 mt-4">
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
         <div class="flex flex-col sm:flex-row gap-2">
           <FormTextInput
