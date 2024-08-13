@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const workspaceAccessCheckQuery = graphql(`
+  query WorkspaceAccessCheck($id: String!) {
+    workspace(id: $id) {
+      id
+    }
+  }
+`)
+
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
     $workspaceId: String!

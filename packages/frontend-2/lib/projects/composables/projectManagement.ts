@@ -1,7 +1,7 @@
 import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isArray } from 'lodash-es'
+import { isArray, isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -154,18 +154,19 @@ export function useCreateProject() {
                     return details.DELETE
                   }
 
-                  const newVal = { ...value }
-                  if (Array.isArray(value.items)) {
-                    newVal.items = [
-                      details.ref('Project', newProject.id),
-                      ...value.items
-                    ]
-                  } else {
-                    newVal.items = [details.ref('Project', newProject.id)]
-                  }
-                  newVal.totalCount = (value.totalCount || 0) + 1
+                  const newItems = Array.isArray(value?.items)
+                    ? [details.ref('Project', newProject.id), ...value.items]
+                    : [details.ref('Project', newProject.id)]
 
-                  return newVal
+                  const newTotalCount = isUndefined(value?.totalCount)
+                    ? undefined
+                    : (value.totalCount || 0) + 1
+
+                  return {
+                    ...value,
+                    items: newItems,
+                    ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
+                  }
                 }
               )
             }

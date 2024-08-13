@@ -103,7 +103,7 @@ const documents = {
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
     "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    id\n    team {\n      id\n      user {\n        id\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n": types.WorkspaceInviteDialog_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
@@ -252,6 +252,7 @@ const documents = {
     "\n  fragment LinkableComment on Comment {\n    id\n    viewerResources {\n      modelId\n      versionId\n      objectId\n    }\n  }\n": types.LinkableCommentFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
+    "\n  query WorkspaceAccessCheck($id: String!) {\n    workspace(id: $id) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceHeader_Workspace\n      projects(filter: $filter, cursor: $cursor) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n        cursor\n      }\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -643,7 +644,7 @@ export function graphql(source: "\n  fragment WorkspaceInviteDialog_Workspace on
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceHeader_Workspace on Workspace {\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1236,6 +1237,10 @@ export function graphql(source: "\n  mutation UpdateRole($input: WorkspaceRoleUp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceAccessCheck($id: String!) {\n    workspace(id: $id) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceAccessCheck($id: String!) {\n    workspace(id: $id) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

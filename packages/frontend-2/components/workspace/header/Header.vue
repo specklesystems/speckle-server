@@ -39,6 +39,9 @@ graphql(`
     name
     logo
     description
+    totalProjects: projects {
+      totalCount
+    }
     team {
       id
       user {
