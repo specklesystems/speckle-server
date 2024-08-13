@@ -7,9 +7,7 @@
 
       <!-- Sidebar -->
       <div class="relative flex h-[calc(100dvh-3.5rem)]">
-        <div class="h-full w-64 shrink-0 border-r border-outline-3 px-2 py-3">
-          <Sidebar />
-        </div>
+        <Sidebar />
 
         <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
           <div class="container mx-auto px-12">

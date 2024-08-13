@@ -1,94 +1,123 @@
 <template>
-  <LayoutSidebar>
-    <LayoutSidebarMenu>
-      <LayoutSidebarMenuGroup>
-        <NuxtLink :to="homeRoute">
-          <LayoutSidebarMenuGroupItem label="Dashboard" :active="isActive(homeRoute)">
-            <template #icon>
-              <HomeIcon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
+  <div>
+    <div
+      class="absolute z-10 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
+      :class="isOpenMobile ? '' : '-translate-x-60 md:translate-x-0'"
+    >
+      <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebarMenu>
+          <LayoutSidebarMenuGroup>
+            <NuxtLink :to="homeRoute">
+              <LayoutSidebarMenuGroupItem
+                label="Dashboard"
+                :active="isActive(homeRoute)"
+              >
+                <template #icon>
+                  <HomeIcon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
 
-        <NuxtLink :to="projectsRoute">
-          <LayoutSidebarMenuGroupItem
-            label="Projects"
-            :active="isActive(projectsRoute)"
+            <NuxtLink :to="projectsRoute">
+              <LayoutSidebarMenuGroupItem
+                label="Projects"
+                :active="isActive(projectsRoute)"
+              >
+                <template #icon>
+                  <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
+
+          <LayoutSidebarMenuGroup
+            v-if="isWorkspacesEnabled"
+            collapsible
+            title="Workspaces"
           >
-            <template #icon>
-              <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+            <template #title-icon>
+              <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
             </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
-      </LayoutSidebarMenuGroup>
+            <NuxtLink v-for="(item, key) in workspacesItems" :key="key" :to="item.to">
+              <LayoutSidebarMenuGroupItem
+                :label="item.label"
+                :active="isActive(item.to)"
+              >
+                <template #icon>
+                  <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
 
-      <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" collapsible title="Workspaces">
-        <template #title-icon>
-          <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
-        </template>
-        <NuxtLink v-for="(item, key) in workspacesItems" :key="key" :to="item.to">
-          <LayoutSidebarMenuGroupItem :label="item.label" :active="isActive(item.to)">
-            <template #icon>
-              <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
-      </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup title="Resources">
+            <NuxtLink to="https://speckle.systems/features/connectors/" target="_blank">
+              <LayoutSidebarMenuGroupItem label="Connectors">
+                <template #icon>
+                  <IconConnectors class="h-4 w-4 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
 
-      <LayoutSidebarMenuGroup title="Resources">
-        <NuxtLink to="https://speckle.systems/features/connectors/" target="_blank">
-          <LayoutSidebarMenuGroupItem label="Connectors">
-            <template #icon>
-              <IconConnectors class="h-4 w-4 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
+            <NuxtLink to="https://speckle.community/" target="_blank">
+              <LayoutSidebarMenuGroupItem label="Community forum">
+                <template #icon>
+                  <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
 
-        <NuxtLink to="https://speckle.community/" target="_blank">
-          <LayoutSidebarMenuGroupItem label="Community forum">
-            <template #icon>
-              <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
+            <NuxtLink to="#0" target="_blank">
+              <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
+                <template #icon>
+                  <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
 
-        <NuxtLink to="#0" target="_blank">
-          <LayoutSidebarMenuGroupItem label="Give us feedback" to="/" external>
-            <template #icon>
-              <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
+            <NuxtLink to="https://speckle.guide/" target="_blank">
+              <LayoutSidebarMenuGroupItem label="Documentation">
+                <template #icon>
+                  <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
 
-        <NuxtLink to="https://speckle.guide/" target="_blank">
-          <LayoutSidebarMenuGroupItem label="Documentation">
-            <template #icon>
-              <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
-
-        <NuxtLink to="#0" target="_blank">
-          <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
-            <template #icon>
-              <ClockIcon class="h-5 w-5 text-foreground-2" />
-            </template>
-          </LayoutSidebarMenuGroupItem>
-        </NuxtLink>
-      </LayoutSidebarMenuGroup>
-    </LayoutSidebarMenu>
-  </LayoutSidebar>
+            <NuxtLink to="#0" target="_blank">
+              <LayoutSidebarMenuGroupItem label="Changelog" to="/" external>
+                <template #icon>
+                  <ClockIcon class="h-5 w-5 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
+        </LayoutSidebarMenu>
+      </LayoutSidebar>
+      <FormButton
+        class="md:hidden mt-2 -mr-10 ml-2"
+        :icon-left="isOpenMobile ? XMarkIcon : Bars3Icon"
+        color="outline"
+        hide-text
+        @click="isOpenMobile = !isOpenMobile"
+      >
+        Menu
+      </FormButton>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import {
   BriefcaseIcon,
+  XMarkIcon,
   ChatBubbleLeftIcon,
   GlobeAltIcon,
   ClockIcon,
   Squares2X2Icon,
-  HomeIcon
+  HomeIcon,
+  Bars3Icon
 } from '@heroicons/vue/24/outline'
 import {
+  FormButton,
   LayoutSidebar,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
@@ -103,6 +132,8 @@ import { useRoute } from 'vue-router'
 const { activeUser } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+
+const isOpenMobile = ref(false)
 
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
