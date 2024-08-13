@@ -409,3 +409,7 @@ export function postgresMaxConnections() {
 export function highFrequencyMetricsCollectionPeriodMs() {
   return getIntFromEnv('HIGH_FREQUENCY_METRICS_COLLECTION_PERIOD_MS', '100')
 }
+
+export function postgresQueryTimeoutSeconds() {
+  return getIntFromEnv('POSTGRES_QUERY_TIMEOUT_SECONDS', '3600') // 1 hour is default
+}

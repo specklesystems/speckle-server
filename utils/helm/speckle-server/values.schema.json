@@ -206,6 +206,11 @@
           "description": "This defines the level of security used when connecting to the Postgres database",
           "default": "require"
         },
+        "queryTimeoutSeconds": {
+          "type": "number",
+          "description": "This is the maximum length of time any query to the Postgres database can run before being timed out and cancelled.",
+          "default": 3600
+        },
         "connectionString": {
           "type": "object",
           "properties": {

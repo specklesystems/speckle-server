@@ -671,6 +671,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"
 
+- name: POSTGRES_QUERY_TIMEOUT_SECONDS
+  value: {{ .Values.db.queryTimeoutSeconds | quote }}
+
 {{- if .Values.db.useCertificate }}
 - name: NODE_EXTRA_CA_CERTS
   value: "/postgres-certificate/ca-certificate.crt"

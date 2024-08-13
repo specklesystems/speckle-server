@@ -4,6 +4,7 @@
 const env = process.env.NODE_ENV || 'development'
 const configs = require('@/knexfile.js')
 const { dbStartupLogger } = require('@/logging/logging')
+const { postgresQueryTimeoutSeconds } = require('@/modules/shared/helpers/envHelper')
 const config = configs[env]
 
 config.log = {
@@ -25,7 +26,9 @@ dbStartupLogger.info(`Loaded knex conf for ${env}`)
 const knex = require('knex')
 const instance = knex(config)
 const knexInstance = (params) => {
-  return instance(params).timeout(60 * 60 * 1000, { cancel: true }) //1 hour to run the query, after which it is cancelled
+  return instance(params).timeout(postgresQueryTimeoutSeconds() * 1000, {
+    cancel: true
+  })
 }
 
 module.exports = knexInstance
