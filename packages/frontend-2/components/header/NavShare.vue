@@ -1,9 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <Menu
-    as="div"
-    class="flex items-center relative sm:border-r border-outline-3 sm:pr-4"
-  >
+  <Menu as="div" class="flex items-center relative">
     <MenuButton :id="menuButtonId" as="div">
       <FormButton class="hidden sm:flex" :icon-right="ChevronDownIcon">
         Share

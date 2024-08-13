@@ -2,11 +2,11 @@
   <div class="text-foreground hover:text-primary-focus transition last:truncate">
     <NuxtLink
       :to="to"
-      class="flex gap-1 items-center text-body-sm ml-0.5"
-      active-class="text-primary text-heading group is-active"
+      class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2"
+      active-class="group is-active font-medium"
     >
       <div v-if="separator">
-        <ChevronRightIcon class="flex w-4 h-4 text-foreground-2" />
+        <ChevronRightIcon class="flex w-4 h-4" />
       </div>
       <div class="group-[.is-active]:truncate">
         {{ name || to }}
