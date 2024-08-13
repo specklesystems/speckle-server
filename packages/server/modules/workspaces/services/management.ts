@@ -308,12 +308,14 @@ export const updateWorkspaceRoleFactory =
       payload: { userId, workspaceId, role }
     })
 
-    if (role === Roles.Workspace.Guest) {
-      // Guests do not get new roles for existing projects
+    // Apply initial project role to existing workspace projects
+    const isFirstWorkspaceRole = !workspaceRoles.some((role) => role.userId === userId)
+
+    if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
+      // Guests do not get roles for existing workspace projects
       return
     }
 
-    // Update user role in all workspace projects
     const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
       getStreams
     })
