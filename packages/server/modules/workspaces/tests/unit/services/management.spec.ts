@@ -92,11 +92,9 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedRoles.length).to.equal(1)
-      expect(context.storedRoles[0]).to.deep.equal({
-        userId,
-        workspaceId: workspace.id,
-        role: Roles.Workspace.Admin
-      })
+      expect(context.storedRoles[0].userId).to.equal(userId)
+      expect(context.storedRoles[0].workspaceId).to.equal(workspace.id)
+      expect(context.storedRoles[0].role).to.equal(Roles.Workspace.Admin)
     })
     it('emits a workspace created event', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -374,12 +372,10 @@ describe('Workspace role services', () => {
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = {
+      const role: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Member
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
