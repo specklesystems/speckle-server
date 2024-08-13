@@ -605,6 +605,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: MAX_OBJECT_SIZE_MB
   value: {{ .Values.server.max_object_size_mb | quote }}
 
+- name: MAX_OBJECT_UPLOAD_FILE_SIZE_MB
+  value: {{ .Values.server.max_object_upload_file_size_mb | quote }}
+
   {{- if .Values.server.migration.movedFrom }}
 - name: MIGRATION_SERVER_MOVED_FROM
   value: {{ .Values.server.migration.movedFrom }}
