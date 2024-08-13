@@ -13,10 +13,10 @@
             </div>
 
             <UserAvatar v-if="!menuOpen" no-bg size="lg" hover-effect>
-              <BellIcon class="text-primary sm:text-foreground w-5 h-5" />
+              <BellIcon class="text-foreground w-5 h-5" />
             </UserAvatar>
             <UserAvatar v-else size="lg" hover-effect no-bg>
-              <XMarkIcon class="text-primary sm:text-foreground w-5 h-5" />
+              <XMarkIcon class="text-foreground w-5 h-5" />
             </UserAvatar>
           </div>
         </div>
