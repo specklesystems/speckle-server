@@ -566,6 +566,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
 
+{{- if .Values.featureFlags.workspaceModuleEnabled }}
+- name: LICENSE_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.licenseTokenSecret.secretName }}"
+      key: {{ default "license_token" .Values.server.licenseTokenSecret.secretKey }}
+{{- end }}
+
 - name: FF_MULTIPLE_EMAILS_MODULE_ENABLED
   value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
 
