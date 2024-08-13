@@ -4,8 +4,10 @@
     v-tippy="tooltipText"
     :to="to"
     class="group flex items-center space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 px-5"
-    :class="[!disabled && 'cursor-pointer hover:bg-primary-muted']"
-    exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
+    :class="[
+      !disabled && 'cursor-pointer hover:bg-primary-muted',
+      active && 'bg-highlight-2 hover:!bg-highlight-2'
+    ]"
   >
     <div class="flex items-center space-x-2" :class="[disabled && 'opacity-60']">
       <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
@@ -53,6 +55,7 @@ const props = defineProps<{
   tag?: string
   external?: boolean
   disabled?: boolean
+  active?: boolean
   tooltipText?: string
 }>()
 

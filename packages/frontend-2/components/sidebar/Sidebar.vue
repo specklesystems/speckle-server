@@ -3,15 +3,18 @@
     <LayoutSidebarMenu>
       <LayoutSidebarMenuGroup>
         <NuxtLink :to="homeRoute">
-          <LayoutSidebarMenuGroupItem label="Dashboard">
+          <LayoutSidebarMenuGroupItem label="Dashboard" :active="isActive(homeRoute)">
             <template #icon>
-              <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+              <HomeIcon class="h-5 w-5 text-foreground-2" />
             </template>
           </LayoutSidebarMenuGroupItem>
         </NuxtLink>
 
         <NuxtLink :to="projectsRoute">
-          <LayoutSidebarMenuGroupItem label="Projects">
+          <LayoutSidebarMenuGroupItem
+            label="Projects"
+            :active="isActive(projectsRoute)"
+          >
             <template #icon>
               <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
             </template>
@@ -19,16 +22,20 @@
         </NuxtLink>
       </LayoutSidebarMenuGroup>
 
-      <LayoutSidebarMenuGroup collapsible title="Workspaces">
+      <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" collapsible title="Workspaces">
         <template #title-icon>
           <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
         </template>
         <NuxtLink v-for="(item, key) in workspacesItems" :key="key" :to="item.to">
-          <LayoutSidebarMenuGroupItem :label="item.label" />
+          <LayoutSidebarMenuGroupItem :label="item.label" :active="isActive(item.to)">
+            <template #icon>
+              <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+            </template>
+          </LayoutSidebarMenuGroupItem>
         </NuxtLink>
       </LayoutSidebarMenuGroup>
 
-      <LayoutSidebarMenuGroup collapsible title="Resources">
+      <LayoutSidebarMenuGroup title="Resources">
         <NuxtLink to="https://speckle.systems/features/connectors/" target="_blank">
           <LayoutSidebarMenuGroupItem label="Connectors">
             <template #icon>
@@ -78,7 +85,8 @@ import {
   ChatBubbleLeftIcon,
   GlobeAltIcon,
   ClockIcon,
-  Squares2X2Icon
+  Squares2X2Icon,
+  HomeIcon
 } from '@heroicons/vue/24/outline'
 import {
   LayoutSidebar,
@@ -87,15 +95,22 @@ import {
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
+import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import { useRoute } from 'vue-router'
 
 const { activeUser } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
+const route = useRoute()
+
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
+
+const isActive = (routeTo: string) => {
+  return route.path === routeTo
+}
 
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
