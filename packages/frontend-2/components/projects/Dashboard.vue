@@ -20,12 +20,12 @@
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
     <div
       v-if="!showEmptyState"
-      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8"
+      class="flex flex-col gap-4 lg:flex-row lg:items-center mb-8"
     >
       <h1 class="text-heading-xl">Projects</h1>
 
       <div
-        class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
+        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2 grow lg:justify-end"
       >
         <FormTextInput
           v-model="search"
@@ -33,7 +33,7 @@
           :show-label="false"
           placeholder="Search projects..."
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60"
+          wrapper-classes="grow md:grow-0 md:w-48 min-w-36"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
@@ -42,7 +42,7 @@
           <FormSelectProjectRoles
             v-if="!showEmptyState"
             v-model="selectedRoles"
-            class="w-56 grow md:grow-0"
+            class="w-40 grow md:grow-0"
             fixed-height
           />
           <FormButton
