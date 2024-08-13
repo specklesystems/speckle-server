@@ -11,16 +11,20 @@ export function getSessionSecret() {
   return process.env.SESSION_SECRET
 }
 
+export function nodeEnv() {
+  return process.env.NODE_ENV
+}
+
 export function isTestEnv() {
-  return process.env.NODE_ENV === 'test'
+  return nodeEnv() === 'test'
 }
 
 export function isDevEnv() {
-  return process.env.NODE_ENV === 'development'
+  return nodeEnv() === 'development'
 }
 
 export function isProdEnv() {
-  return process.env.NODE_ENV === 'production'
+  return nodeEnv() === 'production'
 }
 
 export function getServerVersion() {
