@@ -145,8 +145,8 @@ export function useCreateProject() {
               modifyObjectFields<
                 { filter?: { search?: string } },
                 { items: Reference[]; totalCount: number }
-              >(cache, workspaceCacheId, (fieldName, variables, value, details) => {
-                if (fieldName !== 'projects') return
+              >(cache, workspaceCacheId, (_fieldName, variables, value, details) => {
+                if (_fieldName !== 'projects') return
                 if (variables?.filter?.search?.length) return
 
                 const newVal = { ...value }
@@ -163,8 +163,8 @@ export function useCreateProject() {
               evictObjectFields<
                 { filter?: { search?: string } },
                 { items: Reference[]; totalCount: number }
-              >(cache, workspaceCacheId, (fieldName, variables) => {
-                if (fieldName !== 'projects') return false
+              >(cache, workspaceCacheId, (_fieldName, variables) => {
+                if (_fieldName !== 'projects') return false
                 return !!variables?.filter?.search?.length
               })
             }

@@ -9,7 +9,7 @@ export const workspacePageQuery = graphql(`
     workspace(id: $workspaceId) {
       id
       role
-      ...WorkspaceInfo_Workspace
+      ...WorkspaceHeader_Workspace
       projects(filter: $filter, cursor: $cursor) {
         totalCount
         items {

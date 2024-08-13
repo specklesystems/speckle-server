@@ -17,7 +17,7 @@
             color="foundation"
             wrapper-classes="grow md:grow-0 md:w-60"
             :show-clear="!!search"
-            :model-value="bind.modelValue"
+            v-bind="bind"
             v-on="on"
           ></FormTextInput>
           <!-- <FormSelectProjectRoles
@@ -83,8 +83,7 @@ const {
   bind,
   value: search
 } = useDebouncedTextInput({
-  debouncedBy: 800,
-  model: ref('')
+  debouncedBy: 800
 })
 
 const {

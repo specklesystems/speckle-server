@@ -32,10 +32,10 @@
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceInfo_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment WorkspaceInfo_Workspace on Workspace {
+  fragment WorkspaceHeader_Workspace on Workspace {
     name
     logo
     description
@@ -51,7 +51,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspaceInfo: WorkspaceInfo_WorkspaceFragment
+  workspaceInfo: WorkspaceHeader_WorkspaceFragment
   projectCount?: number
 }>()
 
