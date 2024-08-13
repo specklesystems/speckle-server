@@ -57,7 +57,11 @@
     </div>
     <!-- Version selector wizard -->
     <div v-if="step === 3" class="mt-10">
-      <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
+      <SendFiltersAndSettings
+        v-model="filter"
+        @update:filter="(f) => (filter = f)"
+        @update:settings="(s) => (settings = s)"
+      />
       <div class="mt-2">
         <FormButton full-width @click="addModel">Publish</FormButton>
       </div>
@@ -76,6 +80,7 @@ import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import type { CardSetting } from '~/lib/models/card/setting'
 
 const { trackEvent } = useMixpanel()
 
@@ -91,6 +96,7 @@ const selectedAccountId = ref<string>(activeAccount.value?.accountInfo.id as str
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 const filter = ref<ISendFilter | undefined>(undefined)
+const settings = ref<CardSetting[] | undefined>(undefined)
 
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
   step.value++
@@ -147,6 +153,7 @@ const addModel = async () => {
   model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
+  model.settings = settings.value
   model.expired = false
 
   emit('close')
