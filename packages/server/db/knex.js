@@ -23,7 +23,10 @@ dbStartupLogger.info(`Loaded knex conf for ${env}`)
  * @type {import('knex').default}
  */
 const knex = require('knex')
-const knexInstance = knex(config)
+const instance = knex(config)
+const knexInstance = (params) => {
+  return instance(params).timeout(60 * 60 * 1000, { cancel: true }) //1 hour to run the query, after which it is cancelled
+}
 
 module.exports = knexInstance
 module.exports.db = knexInstance
