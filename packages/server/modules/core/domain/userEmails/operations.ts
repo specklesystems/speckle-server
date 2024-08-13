@@ -5,7 +5,10 @@ import { Knex } from 'knex'
 export type CreateUserEmail = ({
   userEmail
 }: {
-  userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }
+  userEmail: Pick<UserEmail, 'email' | 'userId'> & {
+    primary?: boolean
+    verified?: boolean
+  }
 }) => Promise<UserEmail>
 
 export type UpdateUserEmail = (
@@ -14,7 +17,7 @@ export type UpdateUserEmail = (
     update
   }: {
     query:
-      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
+      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean; verified?: boolean })
       | (Pick<UserEmail, 'email'> & { primary?: boolean })
       | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>

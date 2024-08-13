@@ -10,7 +10,7 @@
         placeholder="Search automations..."
         wrapper-classes="shrink-0"
         show-clear
-        :model-value="bind.modelValue.value"
+        v-bind="bind"
         v-on="on"
       />
       <FormButton

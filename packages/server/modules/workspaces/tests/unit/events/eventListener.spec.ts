@@ -7,7 +7,7 @@ import { expect } from 'chai'
 
 describe('Event handlers', () => {
   describe('onProjectCreatedFactory creates a function, that', () => {
-    it('grants project roles for all workspace admins and members', async () => {
+    it('grants project roles for all workspace members, except guests', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
 

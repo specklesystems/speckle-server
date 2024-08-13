@@ -43,6 +43,8 @@ featureFlags:
   noClosureWrites: false
   ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
   workspaceModuleEnabled: false
+  ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
+  multipleEmailsModuleEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -456,6 +458,14 @@ server:
   ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
   encryptionKeys:
     path: '/encryption-keys/keys.json'
+
+  licenseTokenSecret:
+    ## @param server.licenseTokenSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
+    secretName: ''
+    ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
+    ##
+    secretKey: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
