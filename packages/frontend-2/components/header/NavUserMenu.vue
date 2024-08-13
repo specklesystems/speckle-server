@@ -3,8 +3,8 @@
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
-        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
+        <UserAvatar v-if="!userOpen" :user="activeUser" hover-effect />
+        <UserAvatar v-else hover-effect>
           <XMarkIcon class="w-5 h-5" />
         </UserAvatar>
       </MenuButton>

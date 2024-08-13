@@ -3,10 +3,10 @@
     <HeaderNavBar />
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
-      <div class="h-14 w-full shrink-0"></div>
+      <div class="h-12 w-full shrink-0"></div>
 
       <!-- Sidebar -->
-      <div class="relative flex h-[calc(100dvh-3.5rem)]">
+      <div class="relative flex h-[calc(100dvh-3rem)]">
         <Sidebar />
 
         <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">

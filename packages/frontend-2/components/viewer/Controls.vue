@@ -5,7 +5,7 @@
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
       :class="
         showNavbar && !isEmbedEnabled
-          ? 'pt-[2.7rem]'
+          ? 'pt-[2.1rem]'
           : isTransparent
           ? 'pt-2'
           : 'pt-2 pb-16'
@@ -157,7 +157,7 @@
       @mousedown="startResizing"
     >
       <div
-        class="relative z-30 w-1 mt-2 ml-1 h-full pt-[2.5rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
+        class="relative z-30 w-1 mt-2 ml-1 h-full pt-[2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
       ></div>
       <div
         class="w-7 h-8 mr-1 bg-transparent group-hover:bg-primary rounded-r -translate-x-1 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
@@ -173,7 +173,7 @@
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
-      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[2.5rem]'}`"
+      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[2rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
