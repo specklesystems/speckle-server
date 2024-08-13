@@ -26,7 +26,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment,
-  WorkspaceCollection
+  UserWorkspacesArgs,
+  User
 } from '~/lib/common/generated/gql/graphql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
@@ -39,6 +40,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { isUndefined } from 'lodash-es'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -72,13 +74,19 @@ const onDelete = async () => {
         id: getCacheId('Workspace', props.workspace.id)
       })
 
-      modifyObjectFields<{ workspaces: WorkspaceCollection }, WorkspaceCollection>(
+      modifyObjectFields<UserWorkspacesArgs, User['workspaces']>(
         cache,
         activeUser.value.id,
-        (fieldName, _variables, value) => {
+        (_fieldName, variables, value, { DELETE }) => {
+          if (variables?.filter?.search?.length) return DELETE
+
+          const newTotalCount = isUndefined(value?.totalCount)
+            ? undefined
+            : Math.max(0, (value?.totalCount || 0) - 1)
+
           return {
             ...value,
-            totalCount: Math.max(0, (value?.totalCount || 0) - 1)
+            ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
           }
         },
         { fieldNameWhitelist: ['workspaces'] }

@@ -17,6 +17,7 @@ import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/manage
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -33,6 +34,14 @@ const initRoles = async () => {
 const workspacesModule: SpeckleModule = {
   async init(_, isInitial) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
+    const isWorkspaceLicenseValid = await validateModuleLicense({
+      requiredModules: ['workspaces']
+    })
+
+    if (!isWorkspaceLicenseValid)
+      throw new Error(
+        'The workspaces module needs a valid license to run, contact Speckle to get one.'
+      )
     moduleLogger.info('⚒️  Init workspaces module')
 
     if (isInitial) {

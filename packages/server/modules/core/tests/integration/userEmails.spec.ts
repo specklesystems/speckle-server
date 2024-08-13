@@ -27,6 +27,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
+import { UserEmailPrimaryUnverifiedError } from '@/modules/core/errors/userEmails'
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -136,6 +137,48 @@ describe('Core @user-emails', () => {
   })
 
   describe('setPrimaryUserEmail', () => {
+    it('should throw an error if trying to set non verified email as primary', async () => {
+      const email1 = createRandomEmail()
+      const email2 = createRandomEmail()
+      const userId = await createUser({
+        name: 'John Doe',
+        email: email1,
+        password: createRandomPassword()
+      })
+
+      await createUserEmailFactory({ db })({
+        userEmail: {
+          email: email2,
+          userId,
+          primary: false
+        }
+      })
+      const userEmail = await findEmailFactory({ db })({
+        userId,
+        email: email2
+      })
+
+      const err = await expectToThrow(() =>
+        setPrimaryUserEmailFactory({ db })({
+          id: userEmail!.id,
+          userId
+        })
+      )
+      expect(err.name).to.eq(new UserEmailPrimaryUnverifiedError().name)
+
+      const previousPrimary = await findEmailFactory({ db })({
+        userId,
+        email: email1
+      })
+      const newPrimary = await findEmailFactory({ db })({
+        userId,
+        email: email2
+      })
+
+      // nothing is changed
+      expect(previousPrimary?.primary).to.be.true
+      expect(newPrimary?.primary).to.be.false
+    })
     it('should set primary email', async () => {
       const email = createRandomEmail()
       const userId = await createUser({
@@ -148,6 +191,7 @@ describe('Core @user-emails', () => {
         userEmail: {
           email,
           userId,
+          verified: true,
           primary: false
         }
       })
@@ -180,7 +224,7 @@ describe('Core @user-emails', () => {
   })
 
   describe('createUserEmail', () => {
-    it('should throw an error when trying to create a a primary email for a user and there is already one for that user', async () => {
+    it('should throw an error when trying to create a primary email for a user and there is already one for that user', async () => {
       const email = createRandomEmail()
       const userId = await createUser({
         name: 'John Doe',
@@ -199,6 +243,40 @@ describe('Core @user-emails', () => {
       )
 
       expect(err.message).to.eq('A primary email already exists for this user')
+    })
+    it('should throw an error when trying to create an email for a user and the same email is already on the server', async () => {
+      const email = createRandomEmail()
+      const userId1 = await createUser({
+        name: 'John Doe 2',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const userId2 = await createUser({
+        name: 'John Doe',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+
+      // pre existing email
+      await createUserEmailFactory({ db })({
+        userEmail: {
+          email,
+          userId: userId1,
+          primary: false
+        }
+      })
+
+      const err = await expectToThrow(() =>
+        createUserEmailFactory({ db })({
+          userEmail: {
+            email,
+            userId: userId2,
+            primary: false
+          }
+        })
+      )
+
+      expect(err.message).to.eq('Email already exists')
     })
   })
 

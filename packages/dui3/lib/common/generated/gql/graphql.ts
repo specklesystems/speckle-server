@@ -2767,10 +2767,6 @@ export type ServerWorkspacesInfo = {
   workspacesEnabled: Scalars['Boolean']['output'];
 };
 
-export type SetPrimaryUserEmailInput = {
-  id: Scalars['ID']['input'];
-};
-
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -3577,16 +3573,6 @@ export type UserUpdateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UserWorkspaceMutations = {
-  __typename?: 'UserWorkspaceMutations';
-  leave: Scalars['Boolean']['output'];
-};
-
-
-export type UserWorkspaceMutationsLeaveArgs = {
-  id: Scalars['ID']['input'];
-};
-
 export type UserWorkspacesFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3807,12 +3793,6 @@ export type Workspace = {
   __typename?: 'Workspace';
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
-  /** Enable/Disable discovery of the workspace */
-  discoverabilityEnabled: Scalars['Boolean']['output'];
-  /** Enable/Disable restriction to invite users to workspace as Guests only */
-  domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
-  /** Verified workspace domains */
-  domains: Array<WorkspaceDomain>;
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
@@ -3850,17 +3830,6 @@ export type WorkspaceCollection = {
 export type WorkspaceCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-};
-
-export type WorkspaceDomain = {
-  __typename?: 'WorkspaceDomain';
-  domain: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-};
-
-export type WorkspaceDomainDeleteInput = {
-  id: Scalars['ID']['input'];
-  workspaceId: Scalars['ID']['input'];
 };
 
 export type WorkspaceInviteCreateInput = {
@@ -3910,18 +3879,11 @@ export type WorkspaceInviteUseInput = {
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
-  addDomain: Workspace;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
   updateRole: Workspace;
-};
-
-
-export type WorkspaceMutationsAddDomainArgs = {
-  input: AddDomainToWorkspaceInput;
 };
 
 
@@ -3935,11 +3897,6 @@ export type WorkspaceMutationsDeleteArgs = {
 };
 
 
-export type WorkspaceMutationsDeleteDomainArgs = {
-  input: WorkspaceDomainDeleteInput;
-};
-
-
 export type WorkspaceMutationsUpdateArgs = {
   input: WorkspaceUpdateInput;
 };
@@ -3947,19 +3904,6 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
-};
-
-export type WorkspaceProjectInviteCreateInput = {
-  /** Either this or userId must be filled */
-  email?: InputMaybe<Scalars['String']['input']>;
-  /** Defaults to the contributor role, if not specified */
-  role?: InputMaybe<Scalars['String']['input']>;
-  /** Can only be specified if guest mode is on or if the user is an admin */
-  serverRole?: InputMaybe<Scalars['String']['input']>;
-  /** Either this or email must be filled */
-  userId?: InputMaybe<Scalars['String']['input']>;
-  /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
-  workspaceRole?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceProjectsFilter = {
@@ -3987,8 +3931,6 @@ export type WorkspaceRoleUpdateInput = {
 
 export type WorkspaceUpdateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
-  discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
-  domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
@@ -4001,4 +3943,4 @@ export type AcccountTestQueryQueryVariables = Exact<{ [key: string]: never; }>;
 export type AcccountTestQueryQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', version?: string | null, name: string, company?: string | null } };
 
 
-export const AcccountTestQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AcccountTestQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}}]}}]}}]} as unknown as DocumentNode<AcccountTestQueryQuery, AcccountTestQueryQueryVariables>;
+export const AcccountTestQueryDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "AcccountTestQuery" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "serverInfo" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "version" } }, { "kind": "Field", "name": { "kind": "Name", "value": "name" } }, { "kind": "Field", "name": { "kind": "Name", "value": "company" } }] } }] } }] } as unknown as DocumentNode<AcccountTestQueryQuery, AcccountTestQueryQueryVariables>;

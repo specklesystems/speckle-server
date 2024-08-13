@@ -54,6 +54,11 @@
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
           "default": false
+        },
+        "multipleEmailsModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles multiple emails",
+          "default": false
         }
       }
     },
@@ -638,6 +643,21 @@
               "type": "string",
               "description": "The path where the encryption keys should be loaded from",
               "default": "/encryption-keys/keys.json"
+            }
+          }
+        },
+        "licenseTokenSecret": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
+              "default": ""
             }
           }
         },

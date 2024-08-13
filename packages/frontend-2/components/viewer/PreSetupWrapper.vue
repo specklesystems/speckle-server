@@ -115,9 +115,6 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const { showTour, showControls } = useViewerTour()
-const {
-  filters: { hasAnyFiltersApplied }
-} = useFilterUtilities()
 
 const modelId = computed(() => route.params.modelId as string)
 
@@ -126,6 +123,9 @@ const projectId = computed(() => route.params.id as string)
 const state = useSetupViewer({
   projectId
 })
+const {
+  filters: { hasAnyFiltersApplied }
+} = useFilterUtilities({ state })
 const { isEnabled: isEmbedEnabled, hideSelectionInfo, isTransparent } = useEmbed()
 
 emit('setup', state)

@@ -84,6 +84,7 @@
         ]"
         :user="user"
         :workspace-id="targetWorkspaceId"
+        @close="isOpen = false"
       />
     </div>
   </LayoutDialog>
@@ -93,7 +94,7 @@
 import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
-import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
+import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -126,7 +127,7 @@ const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 
