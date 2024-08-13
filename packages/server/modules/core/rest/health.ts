@@ -19,14 +19,14 @@ export default (app: express.Application) => {
   const knexFreeDbConnectionSamplerLiveness = knexFreeDbConnectionSamplerFactory({
     db,
     collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-    sampledDuration: 120000 //number of ms over which to average the database connections, before declaring not alive
+    sampledDuration: 600000 //number of ms over which to average the database connections, before declaring not alive. 10 minutes.
   })
   knexFreeDbConnectionSamplerLiveness.start()
 
   const knexFreeDbConnectionSamplerReadiness = knexFreeDbConnectionSamplerFactory({
     db,
     collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready
+    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
   })
   knexFreeDbConnectionSamplerReadiness.start()
 
