@@ -1,17 +1,34 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div>
+    <Portal to="mobile-navigation">
+      <div class="md:hidden">
+        <FormButton
+          :color="isOpenMobile ? 'outline' : 'subtle'"
+          size="sm"
+          class="mt-px"
+          @click="isOpenMobile = !isOpenMobile"
+        >
+          <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
+          <XMarkIcon v-else class="h-4 w-4 -ml-1 -mr-1" />
+        </FormButton>
+      </div>
+    </Portal>
     <div
-      class="md:hidden absolute inset-0 backdrop-blur-sm z-10 pointer-events-none transition-all"
-      :class="isOpenMobile ? 'opacity-100' : 'opacity-0'"
+      v-keyboard-clickable
+      class="md:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
+      :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+      @click="isOpenMobile = false"
     />
     <div
-      class="absolute z-20 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
+      class="absolute z-40 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
       :class="isOpenMobile ? '' : '-translate-x-60 md:translate-x-0'"
     >
       <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup>
-            <NuxtLink :to="homeRoute">
+            <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
               <LayoutSidebarMenuGroupItem
                 label="Dashboard"
                 :active="isActive(homeRoute, dashboardRoute)"
@@ -22,7 +39,7 @@
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
 
-            <NuxtLink :to="projectsRoute">
+            <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
               <LayoutSidebarMenuGroupItem
                 label="Projects"
                 :active="isActive(projectsRoute)"
@@ -42,7 +59,12 @@
             <template #title-icon>
               <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
             </template>
-            <NuxtLink v-for="(item, key) in workspacesItems" :key="key" :to="item.to">
+            <NuxtLink
+              v-for="(item, key) in workspacesItems"
+              :key="key"
+              :to="item.to"
+              @click="isOpenMobile = false"
+            >
               <LayoutSidebarMenuGroupItem
                 :label="item.label"
                 :active="isActive(item.to)"
@@ -103,15 +125,6 @@
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
-      <FormButton
-        class="md:hidden mt-2 -mr-10 ml-2"
-        :icon-left="isOpenMobile ? XMarkIcon : Bars3Icon"
-        color="outline"
-        hide-text
-        @click="isOpenMobile = !isOpenMobile"
-      >
-        Menu
-      </FormButton>
     </div>
   </div>
 </template>
@@ -123,8 +136,7 @@ import {
   GlobeAltIcon,
   ClockIcon,
   Squares2X2Icon,
-  HomeIcon,
-  Bars3Icon
+  HomeIcon
 } from '@heroicons/vue/24/outline'
 import {
   FormButton,

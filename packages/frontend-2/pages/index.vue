@@ -1,7 +1,12 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="dashboardRoute" name="Dashboard" :separator="false" />
+      <HeaderNavLink
+        :to="dashboardRoute"
+        name="Dashboard"
+        hide-chevron
+        :separator="false"
+      />
     </Portal>
     <div class="flex flex-col gap-y-12">
       <section>
