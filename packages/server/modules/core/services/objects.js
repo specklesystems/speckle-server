@@ -5,7 +5,10 @@ const { set, get, chunk } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
-const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
+const {
+  getMaximumObjectSizeMB,
+  postgresQueryTimeoutSeconds
+} = require('@/modules/shared/helpers/envHelper')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const {
   chunkInsertionObjectArray,
@@ -293,6 +296,8 @@ module.exports = {
         ])
       )
       .orderBy('objects.id')
+
+    q.timeout(postgresQueryTimeoutSeconds() * 1000, { cancel: true })
     return q.stream({ highWaterMark: 500 })
   },
 

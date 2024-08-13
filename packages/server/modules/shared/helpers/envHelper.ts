@@ -11,16 +11,20 @@ export function getSessionSecret() {
   return process.env.SESSION_SECRET
 }
 
+export function nodeEnv() {
+  return process.env.NODE_ENV
+}
+
 export function isTestEnv() {
-  return process.env.NODE_ENV === 'test'
+  return nodeEnv() === 'test'
 }
 
 export function isDevEnv() {
-  return process.env.NODE_ENV === 'development'
+  return nodeEnv() === 'development'
 }
 
 export function isProdEnv() {
-  return process.env.NODE_ENV === 'production'
+  return nodeEnv() === 'production'
 }
 
 export function getServerVersion() {
@@ -412,4 +416,8 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 
 export function maximumObjectUploadFileSizeMb() {
   return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '50')
+}
+
+export function postgresQueryTimeoutSeconds() {
+  return getIntFromEnv('POSTGRES_QUERY_TIMEOUT_SECONDS', '3600') // 1 hour is default
 }
