@@ -89,7 +89,9 @@ export const createWorkspaceFactory =
     await upsertWorkspaceRole({
       userId,
       role: Roles.Workspace.Admin,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
 
     // emit a workspace created event
@@ -284,7 +286,7 @@ export const updateWorkspaceRoleFactory =
     userId,
     role,
     skipProjectRoleUpdatesFor
-  }: WorkspaceAcl & {
+  }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
      * If this gets triggered from a project role update, we don't want to override that project's role to the default one
      */
@@ -299,8 +301,16 @@ export const updateWorkspaceRoleFactory =
       throw new WorkspaceAdminRequiredError()
     }
 
+    const currentRole = workspaceRoles.find((acl) => acl.userId === userId)
+
     // Perform upsert
-    await upsertWorkspaceRole({ userId, workspaceId, role })
+    await upsertWorkspaceRole({
+      userId,
+      workspaceId,
+      role,
+      createdAt: currentRole?.createdAt ?? new Date(),
+      updatedAt: new Date()
+    })
 
     // Update user role in all workspace projects
     // TODO: Should these be in a transaction with the workspace role change?

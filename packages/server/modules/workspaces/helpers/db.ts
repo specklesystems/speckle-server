@@ -12,5 +12,7 @@ export const Workspaces = buildTableHelper('workspaces', [
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
   'userId',
   'role',
-  'workspaceId'
+  'workspaceId',
+  'createdAt',
+  'updatedAt'
 ])

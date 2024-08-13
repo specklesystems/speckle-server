@@ -264,7 +264,13 @@ describe('Workspace role services', () => {
     it('deletes the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -279,7 +285,13 @@ describe('Workspace role services', () => {
     it('emits a role-deleted event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -295,7 +307,13 @@ describe('Workspace role services', () => {
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { deleteWorkspaceRole } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -311,7 +329,15 @@ describe('Workspace role services', () => {
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
-        workspaceRoles: [{ userId, workspaceId, role: Roles.Workspace.Member }],
+        workspaceRoles: [
+          {
+            userId,
+            workspaceId,
+            role: Roles.Workspace.Member,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ],
         workspaceProjects: [{ id: projectId } as StreamRecord],
         workspaceProjectRoles: [
           { userId, role: Roles.Stream.Contributor, resourceId: projectId }
@@ -328,7 +354,13 @@ describe('Workspace role services', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
@@ -342,7 +374,13 @@ describe('Workspace role services', () => {
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
@@ -357,7 +395,13 @@ describe('Workspace role services', () => {
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
       const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId,
@@ -376,7 +420,9 @@ describe('Workspace role services', () => {
       const workspaceRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Admin
+        role: Roles.Workspace.Admin,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({

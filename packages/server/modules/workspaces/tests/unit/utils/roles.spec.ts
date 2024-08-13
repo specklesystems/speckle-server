@@ -5,9 +5,27 @@ import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 
 describe('given a workspace with several admins', () => {
   const workspaceRoles: WorkspaceAcl[] = [
-    { workspaceId: 'workspace-id', userId: 'non-admin', role: Roles.Workspace.Member },
-    { workspaceId: 'workspace-id', userId: 'admin-a', role: Roles.Workspace.Admin },
-    { workspaceId: 'workspace-id', userId: 'admin-b', role: Roles.Workspace.Admin }
+    {
+      workspaceId: 'workspace-id',
+      userId: 'non-admin',
+      role: Roles.Workspace.Member,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      workspaceId: 'workspace-id',
+      userId: 'admin-a',
+      role: Roles.Workspace.Admin,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      workspaceId: 'workspace-id',
+      userId: 'admin-b',
+      role: Roles.Workspace.Admin,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
   ]
 
   describe('when testing a non-admin user', () => {
@@ -25,8 +43,20 @@ describe('given a workspace with several admins', () => {
 
 describe('given a workspace with one admin', () => {
   const workspaceRoles: WorkspaceAcl[] = [
-    { workspaceId: 'workspace-id', userId: 'non-admin', role: Roles.Workspace.Member },
-    { workspaceId: 'workspace-id', userId: 'admin', role: Roles.Workspace.Admin }
+    {
+      workspaceId: 'workspace-id',
+      userId: 'non-admin',
+      role: Roles.Workspace.Member,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      workspaceId: 'workspace-id',
+      userId: 'admin',
+      role: Roles.Workspace.Admin,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
   ]
 
   describe('when testing a non-admin user', () => {
@@ -44,8 +74,20 @@ describe('given a workspace with one admin', () => {
 
 describe('given a workspace', () => {
   const workspaceRoles: WorkspaceAcl[] = [
-    { workspaceId: 'workspace-id', userId: 'non-admin', role: Roles.Workspace.Member },
-    { workspaceId: 'workspace-id', userId: 'admin', role: Roles.Workspace.Admin }
+    {
+      workspaceId: 'workspace-id',
+      userId: 'non-admin',
+      role: Roles.Workspace.Member,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      workspaceId: 'workspace-id',
+      userId: 'admin',
+      role: Roles.Workspace.Admin,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
   ]
 
   describe('when testing a non-workspace user', () => {

@@ -11,7 +11,7 @@ import {
   createTestUser,
   createTestUsers
 } from '@/test/authHelper'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { Roles, wait, WorkspaceRoles } from '@speckle/shared'
 import {
   CreateProjectInviteDocument,
   CreateWorkspaceDocument,
@@ -168,8 +168,8 @@ describe('Workspaces GQL CRUD', () => {
           [
             {
               id: '',
-              name: 'John E Speckle',
-              email: 'large-workspace-user-e@example.org'
+              name: 'John F Speckle',
+              email: 'large-workspace-user-f-1@example.org'
             },
             'workspace:guest'
           ],
@@ -177,7 +177,7 @@ describe('Workspaces GQL CRUD', () => {
             {
               id: '',
               name: 'John F Speckle',
-              email: 'large-workspace-user-f@example.org'
+              email: 'large-workspace-user-f-2@example.org'
             },
             'workspace:guest'
           ]
@@ -186,6 +186,8 @@ describe('Workspaces GQL CRUD', () => {
         for (const [user, role] of workspaceMembers) {
           await createTestUser(user)
           await assignToWorkspace(largeWorkspace, user, role)
+          // Overly-careful guarantee that `createdAt` values are different
+          await wait(50)
         }
       })
 
@@ -206,12 +208,12 @@ describe('Workspaces GQL CRUD', () => {
 
         const memberNames = res.data?.workspace.team.items.map((user) => user.user.name)
         const expectedMemberNames = [
-          'John A Speckle',
-          'John B Speckle',
-          'John C Speckle',
+          'John F Speckle',
+          'John F Speckle',
           'John D Speckle',
-          'John E Speckle',
-          'John F Speckle'
+          'John C Speckle',
+          'John B Speckle',
+          'John A Speckle'
         ]
 
         expect(res).to.not.haveGraphQLErrors()
@@ -254,7 +256,7 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.workspace.team.cursor).to.exist
       })
 
-      it('should respect pagination', async () => {
+      it('should respect team pagination', async () => {
         const resA = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
           workspaceId: largeWorkspace.id,
           limit: 2

@@ -15,17 +15,23 @@ describe('Event handlers', () => {
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Admin
+          role: Roles.Workspace.Admin,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Member
+          role: Roles.Workspace.Member,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Guest
+          role: Roles.Workspace.Guest,
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       ]
 
