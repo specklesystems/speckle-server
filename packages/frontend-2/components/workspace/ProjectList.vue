@@ -20,12 +20,6 @@
             v-bind="bind"
             v-on="on"
           ></FormTextInput>
-          <!-- <FormSelectProjectRoles
-            v-if="!showEmptyState"
-            v-model="selectedRoles"
-            class="md:w-56 grow md:grow-0"
-            fixed-height
-          /> -->
         </div>
         <FormButton v-if="!isGuest" @click="openNewProject = true">
           New project
@@ -44,7 +38,7 @@
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
-        @infinite="infiniteLoad"
+        @infinite="onInfiniteLoad"
       />
     </template>
 
@@ -56,17 +50,14 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { useQueryLoading } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import type { Optional, StreamRoles } from '@speckle/shared'
 import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
 import { useDebouncedTextInput } from '@speckle/ui-components'
-
-const logger = useLogger()
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const infiniteLoaderId = ref('')
-const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
@@ -86,59 +77,26 @@ const {
   debouncedBy: 800
 })
 
-const {
-  result: projectsPanelResult,
-  fetchMore: fetchMoreProjects,
-  onResult: onProjectsResult,
-  variables: projectsVariables
-} = useQuery(workspacePageQuery, () => ({
-  workspaceId: props.workspaceId,
-  filter: {
-    search: (search.value || '').trim() || null
-  }
-}))
-
-onProjectsResult((res) => {
-  const projectsData = res.data?.workspace?.projects
-  if (projectsData) {
-    cursor.value = projectsData.cursor || null
-    infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
-  }
+const { query, onInfiniteLoad } = usePaginatedQuery({
+  query: workspacePageQuery,
+  baseVariables: computed(() => ({
+    workspaceId: props.workspaceId,
+    filter: {
+      search: (search.value || '').trim() || null
+    }
+  })),
+  resolveKey: (vars) => vars.workspaceId,
+  resolveCurrentResult: (result) => result?.workspace?.projects,
+  resolveNextPageVariables: (baseVariables, newCursor) => ({
+    ...baseVariables,
+    cursor: newCursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const workspace = computed(() => projectsPanelResult.value?.workspace)
-const projects = computed(() => projectsPanelResult.value?.workspace?.projects)
-
-const showEmptyState = computed(() => {
-  return !projects.value?.items?.length
-})
-
-const moreToLoad = computed(
-  () =>
-    (!projects.value || projects.value.items.length < projects.value.totalCount) &&
-    cursor.value
-)
-
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  if (!moreToLoad.value) return state.complete()
-
-  try {
-    await fetchMoreProjects({
-      variables: {
-        cursor: cursor.value
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
+const workspace = computed(() => query.result.value?.workspace)
+const projects = computed(() => query.result.value?.workspace?.projects)
+const showEmptyState = computed(() => !projects.value?.items?.length)
 
 watch(search, (newVal) => {
   showLoadingBar.value = !!newVal

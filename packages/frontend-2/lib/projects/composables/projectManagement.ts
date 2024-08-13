@@ -1,4 +1,4 @@
-import type { ApolloCache, Reference } from '@apollo/client/core'
+import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
@@ -15,16 +15,18 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery
+  AdminPanelProjectsListQuery,
+  WorkspaceProjectsArgs,
+  Workspace
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
   convertThrowIntoFetchResult,
-  evictObjectFields,
   getCacheId,
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
@@ -142,31 +144,30 @@ export function useCreateProject() {
             if (input.workspaceId) {
               const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
 
-              modifyObjectFields<
-                { filter?: { search?: string } },
-                { items: Reference[]; totalCount: number }
-              >(cache, workspaceCacheId, (_fieldName, variables, value, details) => {
-                if (_fieldName !== 'projects') return
-                if (variables?.filter?.search?.length) return
+              modifyObjectFields<WorkspaceProjectsArgs, Workspace['projects']>(
+                cache,
+                workspaceCacheId,
+                (_fieldName, variables, value, details) => {
+                  if (_fieldName !== 'projects') return
 
-                const newVal = { ...value }
-                if (Array.isArray(value.items)) {
-                  newVal.items = [details.ref('Project', newProject.id), ...value.items]
-                } else {
-                  newVal.items = [details.ref('Project', newProject.id)]
+                  if (variables?.filter?.search?.length) {
+                    return details.DELETE
+                  }
+
+                  const newVal = { ...value }
+                  if (Array.isArray(value.items)) {
+                    newVal.items = [
+                      details.ref('Project', newProject.id),
+                      ...value.items
+                    ]
+                  } else {
+                    newVal.items = [details.ref('Project', newProject.id)]
+                  }
+                  newVal.totalCount = (value.totalCount || 0) + 1
+
+                  return newVal
                 }
-                newVal.totalCount = (value.totalCount || 0) + 1
-
-                return newVal
-              })
-
-              evictObjectFields<
-                { filter?: { search?: string } },
-                { items: Reference[]; totalCount: number }
-              >(cache, workspaceCacheId, (_fieldName, variables) => {
-                if (_fieldName !== 'projects') return false
-                return !!variables?.filter?.search?.length
-              })
+              )
             }
           }
         }
