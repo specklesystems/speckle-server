@@ -11,6 +11,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceRolesCount,
   GetWorkspaces,
   UpsertWorkspace,
   UpsertWorkspaceRole
@@ -220,3 +221,14 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
       ).orWhereNotNull(Workspaces.col.id)
     })
 }
+
+export const getWorkspaceRolesCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceRolesCount =>
+  async ({ workspaceId }) => {
+    return (await tables
+      .workspacesAcl(db)
+      .select('role')
+      .where({ workspaceId })
+      .groupBy('role')
+      .count()) as { role: WorkspaceRoles; count: number }[]
+  }

@@ -157,6 +157,7 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  cost: Int!
 }
 
 input WorkspaceProjectsFilter {

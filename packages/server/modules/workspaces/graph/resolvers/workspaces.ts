@@ -48,7 +48,8 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  getWorkspaceRolesCountFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -71,7 +72,10 @@ import {
   getWorkspaceProjectsFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
-import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import {
+  getWorkspaceCost,
+  getWorkspacesForUserFactory
+} from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
@@ -458,6 +462,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
               filter: { ...(args.filter || {}) }
             }
           )
+        },
+        cost: async (parent) => {
+          return await getWorkspaceCost({
+            getWorkspaceRolesCount: getWorkspaceRolesCountFactory({ db })
+          })({ workspaceId: parent.id })
         }
       },
       WorkspaceCollaborator: {

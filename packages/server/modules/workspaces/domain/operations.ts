@@ -96,6 +96,12 @@ export type GetWorkspaceRolesForUser = (
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
+export type GetWorkspaceRolesCount = ({
+  workspaceId
+}: {
+  workspaceId: string
+}) => Promise<{ role: WorkspaceRoles; count: number }[]>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {

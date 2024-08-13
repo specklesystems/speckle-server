@@ -6,7 +6,8 @@ import {
   upsertWorkspaceRoleFactory,
   getWorkspaceRolesFactory,
   getWorkspaceRolesForUserFactory,
-  deleteWorkspaceFactory
+  deleteWorkspaceFactory,
+  getWorkspaceRolesCountFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -18,6 +19,7 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -279,6 +281,63 @@ describe('Workspace repositories', () => {
       }
 
       await expectToThrow(() => upsertWorkspaceRole(role))
+    })
+  })
+
+  describe.only('getWorkspaceRolesCountFactory creates a function, that', () => {
+    it('returns an empty array with no users in workspace', async () => {
+      expect(
+        await getWorkspaceRolesCountFactory({ db })({
+          workspaceId: createRandomPassword()
+        })
+      ).to.deep.eq([])
+    })
+    it('returns an array containing counts for each role', async () => {
+      const { id: userId1 } = await createAndStoreTestUser()
+      const { id: userId2 } = await createAndStoreTestUser()
+      const { id: userId3 } = await createAndStoreTestUser()
+      const { id: userId4 } = await createAndStoreTestUser()
+
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
+
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userId1,
+        role: 'workspace:admin'
+      })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userId2,
+        role: 'workspace:member'
+      })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userId3,
+        role: 'workspace:guest'
+      })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userId4,
+        role: 'workspace:guest'
+      })
+      expect(
+        await getWorkspaceRolesCountFactory({ db })({
+          workspaceId
+        })
+      ).to.deep.eq([
+        {
+          role: 'workspace:admin',
+          count: '1'
+        },
+        {
+          role: 'workspace:member',
+          count: '1'
+        },
+        {
+          role: 'workspace:guest',
+          count: '2'
+        }
+      ])
     })
   })
 })

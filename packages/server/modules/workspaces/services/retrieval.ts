@@ -1,9 +1,11 @@
 import {
   GetWorkspace,
-  GetWorkspaceRolesForUser
+  GetWorkspaceRolesForUser,
+  GetWorkspaceRolesCount
 } from '@/modules/workspaces/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { chunk, isNull } from 'lodash'
+import { getCostByWorkspaceRole } from '@/modules/workspaces/helpers/cost'
 
 type GetWorkspacesForUserArgs = {
   userId: string
@@ -35,4 +37,14 @@ export const getWorkspacesForUserFactory =
     }
 
     return workspaces
+  }
+
+export const getWorkspaceCost =
+  ({ getWorkspaceRolesCount }: { getWorkspaceRolesCount: GetWorkspaceRolesCount }) =>
+  async ({ workspaceId }: { workspaceId: string }) => {
+    const countByRole = await getWorkspaceRolesCount({ workspaceId })
+    return countByRole.reduce<number>(
+      (acc, curr) => acc + curr.count * getCostByWorkspaceRole(curr.role),
+      0
+    ) as number
   }
