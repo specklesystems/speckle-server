@@ -74,6 +74,8 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    id
+    name
     logo
     description
   }
