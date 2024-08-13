@@ -15,6 +15,7 @@ import type { Nullable } from '@speckle/shared'
 import type { HostAppError } from '~/lib/bridge/errorHandler'
 import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
+import type { CardSetting } from '~/lib/models/card/setting'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -139,6 +140,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       await removeModel(modelToRemove)
     }
   }
+
+  const sendSettings = ref<CardSetting[]>()
 
   /**
    * Send filters
@@ -396,6 +399,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const refreshSendFilters = async () =>
     (sendFilters.value = await app.$sendBinding?.getSendFilters())
 
+  const getSendSettings = async () =>
+    (sendSettings.value = await app.$sendBinding.getSendSettings())
+
   app.$baseBinding.on(
     'documentChanged',
     () =>
@@ -411,6 +417,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
   void refreshSendFilters()
+  void getSendSettings()
   void getHostAppName()
   void getHostAppVersion()
   void getConnectorVersion()
@@ -423,6 +430,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     projectModelGroups,
     models,
     sendFilters,
+    sendSettings,
     selectionFilter,
     everythingFilter,
     currentNotification,
@@ -441,6 +449,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendModelCancel,
     receiveModelCancel,
     refreshSendFilters,
+    getSendSettings,
     setModelSendResult,
     setModelReceiveResult,
     handleModelProgressEvents
