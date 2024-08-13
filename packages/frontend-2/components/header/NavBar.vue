@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="fixed z-20 top-0 h-14 bg-foundation shadow">
+    <nav class="fixed z-40 top-0 h-14 bg-foundation border-b border-outline-2">
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 pl-3 pr-4"
       >
@@ -22,13 +22,12 @@
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <!-- Notifications dropdown -->
-          <HeaderNavNotifications />
+          <HeaderNavNotifications v-if="hasNotifications" />
           <FormButton
             v-if="!activeUser"
             :to="loginUrl.fullPath"
-            color="invert"
+            color="outline"
             class="hidden md:flex"
-            size="sm"
           >
             Sign in
           </FormButton>
@@ -60,4 +59,10 @@ const loginUrl = computed(() =>
     }
   })
 )
+
+const hasNotifications = computed(() => {
+  if (!activeUser.value) return false
+  if (!activeUser.value?.verified) return true
+  return false
+})
 </script>

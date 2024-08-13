@@ -11,9 +11,10 @@ import {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
-  StreamRecord
+  StreamRecord,
+  UserRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -70,6 +71,11 @@ export type LimitedUserGraphQLReturn = Omit<
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
 
+export type UserGraphQLReturn = Pick<
+  UserRecord,
+  'id' | 'createdAt' | 'name' | 'bio' | 'company' | 'email' | 'verified' | 'avatar'
+>
+
 export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
   /**
    * Required for field resolvers, not actually returned in response
@@ -124,4 +130,12 @@ export type ServerInviteGraphQLReturnType = {
   id: string
   email: string
   invitedById: string
+}
+
+export type StreamCollaboratorGraphQLReturn = {
+  id: string
+  name: string
+  role: string
+  company?: MaybeNullOrUndefined<string>
+  avatar?: MaybeNullOrUndefined<string>
 }

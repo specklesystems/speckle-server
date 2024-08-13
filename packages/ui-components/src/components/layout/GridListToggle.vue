@@ -1,6 +1,6 @@
 <template>
   <button
-    class="max-w-max transition flex justify-center items-center gap-2 outline-none select-none h-8 text-foreground border-2 border-primary-muted dark:border-foundation bg-primary-muted rounded-md active:scale-[0.97] grow"
+    class="max-w-max transition flex justify-center items-center space-x-2 outline-none select-none h-8 text-foreground border-2 border-primary-muted dark:border-foundation bg-primary-muted rounded-md active:scale-[0.97] grow"
     @click="onClick"
   >
     <div class="relative flex bg-primary-muted rounded-md">
@@ -16,13 +16,13 @@
       </div>
       <div
         v-tippy="'List View'"
-        class="relative z-10 flex gap-1 items-center p-1 rounded-l"
+        class="relative z-10 flex space-x-1 items-center p-1 rounded-l"
       >
         <Bars3Icon class="h-5 w-5" />
       </div>
       <div
         v-tippy="'Grid View'"
-        class="relative z-10 flex gap-1 items-center p-1 rounded-r"
+        class="relative z-10 flex space-x-1 items-center p-1 rounded-r"
       >
         <Squares2X2Icon class="h-5 w-5" />
       </div>

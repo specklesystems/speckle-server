@@ -7,14 +7,14 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 my-8"
+        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 my-6"
       >
         <ProjectPageHeader :project="project" />
         <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
-      <LayoutTabsHoriztonal v-model:active-item="activePageTab" :items="pageTabItems">
+      <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage :project="project" />
-      </LayoutTabsHoriztonal>
+      </LayoutTabsHorizontal>
     </div>
   </div>
 </template>
@@ -24,13 +24,7 @@ import { Roles, type Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
-import {
-  CubeIcon,
-  ChatBubbleLeftRightIcon,
-  BoltIcon,
-  Cog6ToothIcon
-} from '@heroicons/vue/24/outline'
+import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 
 graphql(`
@@ -122,14 +116,12 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     {
       title: 'Models',
       id: 'models',
-      count: modelCount.value,
-      icon: CubeIcon
+      count: modelCount.value
     },
     {
       title: 'Discussions',
       id: 'discussions',
-      count: commentCount.value,
-      icon: ChatBubbleLeftRightIcon
+      count: commentCount.value
     }
   ]
 
@@ -137,7 +129,6 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     items.push({
       title: 'Automations',
       id: 'automations',
-      icon: BoltIcon,
       tag: 'Beta'
     })
   }
@@ -145,8 +136,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
   if (hasRole.value) {
     items.push({
       title: 'Settings',
-      id: 'settings',
-      icon: Cog6ToothIcon
+      id: 'settings'
     })
   }
 

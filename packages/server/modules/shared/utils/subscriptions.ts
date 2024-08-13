@@ -35,7 +35,11 @@ import {
   SubscriptionCommentThreadActivityArgs,
   MutationUserViewerActivityBroadcastArgs,
   SubscriptionUserViewerActivityArgs,
-  SubscriptionCommentActivityArgs
+  SubscriptionCommentActivityArgs,
+  StreamUpdateInput,
+  ProjectUpdateInput,
+  SubscriptionStreamUpdatedArgs,
+  SubscriptionStreamDeletedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -272,12 +276,38 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionCommentActivityArgs
   }
+  /**
+   * OLD ONES
+   */
+  [StreamSubscriptions.UserStreamAdded]: {
+    payload: {
+      userStreamAdded: { id: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.UserStreamRemoved]: {
+    payload: {
+      userStreamRemoved: { id: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.StreamUpdated]: {
+    payload: { streamUpdated: StreamUpdateInput | ProjectUpdateInput; id: string }
+    variables: SubscriptionStreamUpdatedArgs
+  }
+  [StreamSubscriptions.StreamDeleted]: {
+    payload: { streamDeleted: { streamId: string }; streamId: string }
+    variables: SubscriptionStreamDeletedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
   | CommentSubscriptions
   | FileImportSubscriptions
   | ProjectSubscriptions
+  | StreamSubscriptions
   | UserSubscriptions
   | ViewerSubscriptions
 

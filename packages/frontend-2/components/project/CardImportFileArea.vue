@@ -5,11 +5,11 @@
     :disabled="isUploading"
     :size-limit="maxSizeInBytes"
     :accept="accept"
-    class="flex items-center"
+    class="flex items-center h-full"
     @files-selected="onFilesSelected"
   >
     <div
-      class="w-full h-full border-dashed border-2 rounded-md p-4 flex items-center justify-center text-sm"
+      class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm"
       :class="[getDashedBorderClasses(isDraggingFiles)]"
     >
       <div
@@ -32,15 +32,11 @@
           :style="progressBarStyle"
         />
       </div>
-      <span
-        v-else
-        class="text-foreground-2 text-center leading-7"
-        :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
-      >
+      <span v-else class="text-body-xs text-foreground-2 text-center select-none">
         Use our
-        <FormButton link size="sm" external target="_blank" :to="connectorsPageUrl">
+        <NuxtLink target="_blank" :to="connectorsPageUrl" class="font-semibold">
           connectors
-        </FormButton>
+        </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to
         {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL
         file here.
@@ -79,13 +75,11 @@ const uploadZone = ref(
   }>
 )
 
-const isModelCardVariant = computed(() => !!props.modelName)
-
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   if (isDraggingFiles) return 'border-primary'
   if (errorMessage.value) return 'border-danger'
 
-  return isModelCardVariant.value ? 'border-blue-500/10' : 'border-outline-2'
+  return 'border-outline-2'
 }
 
 const triggerPicker = () => {

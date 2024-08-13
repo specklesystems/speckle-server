@@ -47,7 +47,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex label mb-1.5',
+      'flex text-body-xs font-medium',
       unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
     ]
     if (!unref(props.showLabel)) {
@@ -69,7 +69,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full text-foreground transition-all',
+      'block w-full text-foreground transition-all text-body-sm',
       coreInputClasses.value
     ]
 
@@ -84,7 +84,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const color = unref(props.color)
     if (color === 'foundation') {
       classParts.push(
-        'bg-foundation !border border-outline-3 focus:border-outline-1 focus:!outline-0 focus:!ring-0'
+        'bg-foundation !border border-outline-2 hover:border-outline-5 focus-visible:border-outline-4 !ring-0 focus-visible:!outline-0 !text-[13px]'
       )
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')
@@ -113,7 +113,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['mt-2 text-xs']
+    const classParts = ['text-body-2xs']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })
@@ -268,9 +268,9 @@ export function useDebouncedTextInput(params?: {
       }
     }
   }
-  const bind = {
-    modelValue: computed(() => model.value || '')
-  }
+  const bind = computed(() => ({
+    modelValue: model.value || ''
+  }))
 
   watch(value, (newVal, oldVal) => {
     if (oldVal === newVal && !oldVal && !newVal) return

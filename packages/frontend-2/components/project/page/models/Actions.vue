@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div>
+  <div class="relative z-30">
     <LayoutMenu
       v-model:open="showActionsMenu"
       :menu-id="menuId"
@@ -8,9 +8,13 @@
       @click.stop.prevent
       @chosen="onActionChosen"
     >
-      <FormButton size="sm" text @click="onButtonClick">
-        <EllipsisVerticalIcon class="w-4 h-4" />
-      </FormButton>
+      <FormButton
+        color="subtle"
+        hide-text
+        :icon-right="EllipsisHorizontalIcon"
+        class="!text-foreground-2"
+        @click="onButtonClick"
+      ></FormButton>
     </LayoutMenu>
     <ProjectPageModelsCardEditDialog
       v-model:open="isRenameDialogOpen"
@@ -39,15 +43,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
-import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import {
-  TrashIcon,
-  PencilIcon,
-  LinkIcon,
-  FingerPrintIcon,
-  ArrowUpTrayIcon,
-  CodeBracketIcon
-} from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -100,30 +96,26 @@ const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Edit',
+      title: 'Edit...',
       id: ActionTypes.Rename,
-      disabled: !props.canEdit,
-      icon: PencilIcon
+      disabled: !props.canEdit
     },
     {
-      title: 'Upload new version',
+      title: 'Upload new version...',
       id: ActionTypes.UploadVersion,
-      disabled: !props.canEdit,
-      icon: ArrowUpTrayIcon
+      disabled: !props.canEdit
     }
   ],
   [
-    { title: 'Copy link', id: ActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
-    { title: 'Embed model', id: ActionTypes.Embed, icon: CodeBracketIcon }
+    { title: 'Copy link', id: ActionTypes.Share },
+    { title: 'Copy ID', id: ActionTypes.CopyId },
+    { title: 'Embed model...', id: ActionTypes.Embed }
   ],
   [
     {
-      title: 'Delete',
+      title: 'Delete...',
       id: ActionTypes.Delete,
-      disabled: isMain.value || !props.canEdit,
-      icon: TrashIcon,
-      color: 'danger'
+      disabled: isMain.value || !props.canEdit
     }
   ]
 ])

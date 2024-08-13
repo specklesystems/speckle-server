@@ -6,15 +6,15 @@ import {
   deleteStream,
   getStreamUsers,
   grantPermissionsStream
-} from '../services/streams'
+} from '@/modules/core/services/streams'
 
 import {
   createBranch,
   getBranchByNameAndStreamId,
   deleteBranchById
-} from '../services/branches'
-import { createObject } from '../services/objects'
-import { createCommitByBranchName } from '../services/commits'
+} from '@/modules/core/services/branches'
+import { createObject } from '@/modules/core/services/objects'
+import { createCommitByBranchName } from '@/modules/core/services/commits'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import {
@@ -341,7 +341,10 @@ describe('Streams @core-streams', () => {
 
     it('Should update stream updatedAt on commit operations ', async () => {
       const testObject = { foo: 'bar', baz: 'qux', id: '' }
-      testObject.id = await createObject(updatableStream.id, testObject)
+      testObject.id = await createObject({
+        streamId: updatableStream.id,
+        object: testObject
+      })
 
       await createCommitByBranchName({
         streamId: updatableStream.id,

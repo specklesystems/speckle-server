@@ -11,9 +11,14 @@
     <div v-else class="relative group">
       <UserAvatar :user="modelAsUser" :size="size" />
       <div
-        class="opacity-0 transition-all absolute group-hover:opacity-100 inset-0 flex items-end justify-center bottom-4"
+        class="opacity-0 transition-all absolute group-hover:opacity-100 top-0 right-0 left-0 bottom-0 flex items-end justify-center bottom-4"
       >
-        <FormButton :disabled="disabled" color="secondary" @click="editMode = true">
+        <FormButton
+          size="sm"
+          :disabled="disabled"
+          color="outline"
+          @click="editMode = true"
+        >
           Change
         </FormButton>
       </div>

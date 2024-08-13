@@ -1,29 +1,86 @@
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceWithOptionalRole
+} from '@/modules/workspacesCore/domain/types'
+import {
+  DeleteWorkspace,
   DeleteWorkspaceRole,
   GetWorkspace,
+  GetWorkspaceCollaborators,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaces,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceAcl as DbWorkspaceAcl,
+  Workspaces
+} from '@/modules/workspaces/helpers/db'
+import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
+import { UserWithRole } from '@/modules/core/repositories/users'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import {
+  filterByResource,
+  InvitesRetrievalValidityFilter
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 
 const tables = {
+  streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
 
+export const getWorkspacesFactory =
+  ({ db }: { db: Knex }): GetWorkspaces =>
+  async (params: {
+    workspaceIds: string[]
+    /**
+     * Optionally - for each workspace, return the user's role in that workspace
+     */
+    userId?: string
+  }) => {
+    const { workspaceIds, userId } = params
+    if (!workspaceIds?.length) return []
+
+    const q = Workspaces.knex<WorkspaceWithOptionalRole[]>(db).whereIn(
+      Workspaces.col.id,
+      workspaceIds
+    )
+
+    if (userId) {
+      q.select([
+        ...Object.values(Workspaces.col),
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("workspace_acl"."role"))[1] as role`)
+      ])
+      q.leftJoin(DbWorkspaceAcl.name, function () {
+        this.on(DbWorkspaceAcl.col.workspaceId, Workspaces.col.id).andOnVal(
+          DbWorkspaceAcl.col.userId,
+          userId
+        )
+      })
+      q.groupBy(Workspaces.col.id)
+    }
+
+    const results = await q
+    return results
+  }
+
 export const getWorkspaceFactory =
   ({ db }: { db: Knex }): GetWorkspace =>
-  async ({ workspaceId }) => {
-    const workspace = await tables
-      .workspaces(db)
-      .select('*')
-      .where('id', '=', workspaceId)
-      .first()
+  async ({ workspaceId, userId }) => {
+    const [workspace] = await getWorkspacesFactory({ db })({
+      workspaceIds: [workspaceId],
+      userId
+    })
 
     return workspace || null
   }
@@ -35,7 +92,13 @@ export const upsertWorkspaceFactory =
       .workspaces(db)
       .insert(workspace)
       .onConflict('id')
-      .merge(['description', 'logoUrl', 'name', 'updatedAt'])
+      .merge(['description', 'logo', 'name', 'updatedAt'])
+  }
+
+export const deleteWorkspaceFactory =
+  ({ db }: { db: Knex }): DeleteWorkspace =>
+  async ({ workspaceId }) => {
+    await tables.workspaces(db).where({ id: workspaceId }).delete()
   }
 
 export const getWorkspaceRolesFactory =
@@ -93,7 +156,7 @@ export const upsertWorkspaceRoleFactory =
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
-      throw new Error(`Unexpected workspace role provided: ${role}`)
+      throw new WorkspaceInvalidRoleError()
     }
 
     await tables
@@ -102,3 +165,58 @@ export const upsertWorkspaceRoleFactory =
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
   }
+
+export const getWorkspaceCollaboratorsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
+  async ({ workspaceId, filter = {} }) => {
+    const query = DbWorkspaceAcl.knex(db)
+      .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
+        ...Users.cols,
+        knex.raw(`${DbWorkspaceAcl.col.role} as "workspaceRole"`),
+        knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
+      ])
+      .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+      .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
+      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
+
+    const { search, role } = filter || {}
+
+    if (search) {
+      query
+        .where(Users.col.name, 'ILIKE', `%${search}%`)
+        .orWhere(Users.col.email, 'ILIKE', `%${search}%`)
+    }
+
+    if (role) {
+      query.andWhere(DbWorkspaceAcl.col.role, role)
+    }
+
+    const items = (await query).map((i) => ({
+      ...removePrivateFields(i),
+      workspaceRole: i.workspaceRole,
+      role: i.role
+    }))
+
+    return items
+  }
+
+export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
+  return q
+    .leftJoin(
+      knex.raw(
+        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
+        {
+          workspaces: Workspaces.name,
+          resourceCol: ServerInvites.col.resource,
+          resourceType: WorkspaceInviteResourceType,
+          workspaceIdCol: Workspaces.col.id
+        }
+      )
+    )
+    .where((w1) => {
+      w1.whereNot((w2) =>
+        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
+      ).orWhereNotNull(Workspaces.col.id)
+    })
+}

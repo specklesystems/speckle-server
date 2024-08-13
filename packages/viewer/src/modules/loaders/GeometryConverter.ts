@@ -19,6 +19,8 @@ export enum SpeckleType {
   RevitInstance = 'RevitInstance',
   Text = 'Text',
   Transform = 'Transform',
+  InstanceProxy = 'InstanceProxy',
+  RenderMaterialProxy = 'RenderMaterialProxy',
   Unknown = 'Unknown'
 }
 

@@ -390,8 +390,20 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/20f72acc58/models/2cf8a736f8'
     // Rhino sRGB vertex colors
     // 'https://app.speckle.systems/projects/47bbaf594f/models/ef78e94f72'
+    // 'https://app.speckle.systems/projects/47bbaf594f/models/de52414725f8937b1f0e2f550ef9ca52'
     // qGIS sRGB vertex colors
-    'https://latest.speckle.systems/projects/5a6609a4b9/models/10f4931e8c'
+    // 'https://latest.speckle.systems/projects/5a6609a4b9/models/10f4931e8c'
+    // DUI3 blocks
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/c6f3f309a2'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/6b62c61a22'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/4dc5265453'
+
+    // DUI3 Render materials
+    // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/7a5e738c76'
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/0a4181c73b'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/bcf086cdc4'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/6221c985c0'
   )
 }
 

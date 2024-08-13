@@ -2,11 +2,12 @@
   <ProjectPageSettingsBlock
     background
     title="Discussions"
-    :icon="ChatBubbleLeftRightIcon"
     :disabled-message="disabled ? 'You must be a project owner' : undefined"
   >
     <template #introduction>
-      <p>Control who can leave comments on this project.</p>
+      <p class="text-body-xs text-foreground">
+        Control who can leave comments on this project.
+      </p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"
@@ -18,11 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  UserCircleIcon
-} from '@heroicons/vue/24/outline'
+import { UserGroupIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'

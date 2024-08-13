@@ -495,10 +495,13 @@ const createNewObject = async (
     return
   }
 
-  const newObjectId = await createObject(targetStreamId, {
-    ...newObject,
-    id: newObject.id,
-    speckleType: newObject.speckleType || newObject.speckle_type || 'Base'
+  const newObjectId = await createObject({
+    streamId: targetStreamId,
+    object: {
+      ...newObject,
+      id: newObject.id,
+      speckleType: newObject.speckleType || newObject.speckle_type || 'Base'
+    }
   })
 
   const newRecord = await getObject(newObjectId, targetStreamId)
@@ -554,7 +557,7 @@ const loadAllObjectsFromParent = async (
         () =>
           Promise.race([
             createNewObject(typedObj, targetStreamId, { logger }),
-            timeoutAt(30 * 1000, `Object create timed out! - ${id}`)
+            timeoutAt(10 * 1000, `Object create timed out! - ${id}`)
           ]),
         3
       )

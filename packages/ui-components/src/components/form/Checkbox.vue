@@ -19,7 +19,7 @@
     <div class="ml-2 text-sm" style="padding-top: 2px">
       <label
         :for="finalId"
-        class="font-medium text-foreground"
+        class="text-body-xs text-foreground"
         :class="{ 'sr-only': hideLabel }"
       >
         <span>{{ title }}</span>

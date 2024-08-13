@@ -4,7 +4,7 @@ import {
   createObjects,
   getObjectChildren,
   getObjectChildrenQuery
-} from '../../services/objects'
+} from '@/modules/core/services/objects'
 
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
@@ -66,10 +66,10 @@ export = {
         context.resourceAccessRules
       )
 
-      const ids = await createObjects(
-        args.objectInput.streamId,
-        args.objectInput.objects
-      )
+      const ids = await createObjects({
+        streamId: args.objectInput.streamId,
+        objects: args.objectInput.objects
+      })
       return ids
     }
   }
