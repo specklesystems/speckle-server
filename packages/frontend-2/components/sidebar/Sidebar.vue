@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="absolute inset-0 backdrop-blur-sm z-10 pointer-events-none transition-all"
+      class="md:hidden absolute inset-0 backdrop-blur-sm z-10 pointer-events-none transition-all"
       :class="isOpenMobile ? 'opacity-100' : 'opacity-0'"
     />
     <div
