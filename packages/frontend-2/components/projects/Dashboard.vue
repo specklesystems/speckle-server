@@ -18,41 +18,36 @@
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
-    <div
-      v-if="!showEmptyState"
-      class="flex flex-col gap-4 lg:flex-row lg:items-center mb-8"
-    >
-      <h1 class="text-heading-xl">Projects</h1>
 
-      <div
-        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2 grow lg:justify-end"
-      >
-        <FormTextInput
-          v-model="search"
-          name="modelsearch"
-          :show-label="false"
-          placeholder="Search projects..."
-          color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-48 min-w-36"
-          :show-clear="!!search"
-          @change="updateSearchImmediately"
-          @update:model-value="updateDebouncedSearch"
-        ></FormTextInput>
-        <div class="flex items-center space-x-2">
+    <div v-if="!showEmptyState" class="flex flex-col gap-4">
+      <div class="flex items-center gap-2 mb-2">
+        <Squares2X2Icon class="h-5 w-5" />
+        <h1 class="text-heading-lg">Projects</h1>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <FormTextInput
+            name="modelsearch"
+            :show-label="false"
+            placeholder="Search..."
+            :custom-icon="MagnifyingGlassIcon"
+            color="foundation"
+            wrapper-classes="grow md:grow-0 md:w-60"
+            :show-clear="!!search"
+            v-bind="bind"
+            v-on="on"
+          ></FormTextInput>
           <FormSelectProjectRoles
             v-if="!showEmptyState"
             v-model="selectedRoles"
-            class="w-40 grow md:grow-0"
+            class="md:w-56 grow md:grow-0"
             fixed-height
           />
-          <FormButton
-            v-if="!isGuest"
-            :icon-left="PlusIcon"
-            @click="openNewProject = true"
-          >
-            New project
-          </FormButton>
         </div>
+        <FormButton v-if="!isGuest" @click="openNewProject = true">
+          New project
+        </FormButton>
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
@@ -71,8 +66,8 @@
     <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
+
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,
@@ -80,7 +75,6 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   getCacheId,
@@ -92,32 +86,23 @@ import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/grap
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import type { PromoBanner } from '~/lib/promo-banners/types'
-
-const onUserProjectsUpdateSubscription = graphql(`
-  subscription OnUserProjectsUpdate {
-    userProjectsUpdated {
-      type
-      id
-      project {
-        ...ProjectDashboardItem
-      }
-    }
-  }
-`)
+import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
+import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 
 const logger = useLogger()
 
 const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
-const search = ref('')
-const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
+const { activeUser, isGuest } = useActiveUser()
+const { triggerNotification } = useGlobalToast()
+const areQueriesLoading = useQueryLoading()
+const apollo = useApolloClient().client
 
 const promoBanners = ref<PromoBanner[]>([
   {
@@ -130,10 +115,14 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
-const { activeUser, isGuest } = useActiveUser()
-const { triggerNotification } = useGlobalToast()
-const areQueriesLoading = useQueryLoading()
-const apollo = useApolloClient().client
+const {
+  on,
+  bind,
+  value: search
+} = useDebouncedTextInput({
+  debouncedBy: 800
+})
+
 const {
   result: projectsPanelResult,
   fetchMore: fetchMoreProjects,
@@ -141,7 +130,7 @@ const {
   variables: projectsVariables
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
-    search: (debouncedSearch.value || '').trim() || null,
+    search: (search.value || '').trim() || null,
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
 }))
@@ -152,7 +141,17 @@ onProjectsResult((res) => {
 })
 
 const { onResult: onUserProjectsUpdate } = useSubscription(
-  onUserProjectsUpdateSubscription
+  graphql(`
+    subscription OnUserProjectsUpdate {
+      userProjectsUpdated {
+        type
+        id
+        project {
+          ...ProjectDashboardItem
+        }
+      }
+    }
+  `)
 )
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
@@ -170,19 +169,6 @@ const moreToLoad = computed(
     (!projects.value || projects.value.items.length < projects.value.totalCount) &&
     cursor.value
 )
-
-const updateDebouncedSearch = debounce(() => {
-  debouncedSearch.value = search.value.trim()
-}, 1000)
-
-const updateSearchImmediately = () => {
-  updateDebouncedSearch.cancel()
-  debouncedSearch.value = search.value.trim()
-}
-
-const onDismissNewSpeckleBanner = () => {
-  hasDismissedNewSpeckleBanner.value = true
-}
 
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id
@@ -278,6 +264,11 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
+const clearSearch = () => {
+  search.value = ''
+  selectedRoles.value = []
+}
+
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
@@ -315,7 +306,7 @@ const showChecklist = computed(() => {
   if (hasDismissedChecklistTime.value === undefined) return true
   if (
     hasDismissedChecklistTime.value !== undefined &&
-    hasDismissedChecklistTimeAgo.value > 86400000 // 10_0000 // 86400000
+    hasDismissedChecklistTimeAgo.value > 86400000
   )
     return true
   return false
@@ -328,9 +319,7 @@ const showNewSpeckleBanner = computed(() => {
   return true
 })
 
-const clearSearch = () => {
-  search.value = ''
-  selectedRoles.value = []
-  updateSearchImmediately()
+const onDismissNewSpeckleBanner = () => {
+  hasDismissedNewSpeckleBanner.value = true
 }
 </script>
