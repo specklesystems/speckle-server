@@ -63,7 +63,10 @@ module.exports = (app) => {
       for (let cStart = 0; cStart < childrenList.length; cStart += cSize) {
         const childrenChunk = childrenList.slice(cStart, cStart + cSize)
 
-        req.log.info({iterationIndex}, 'Opening db stream on iteration {iterationIndex}')
+        req.log.info(
+          { iterationIndex },
+          'Opening db stream on iteration {iterationIndex}'
+        )
         const dbStream = await getObjectsStream({
           streamId: req.params.streamId,
           objectIds: childrenChunk
@@ -101,21 +104,23 @@ module.exports = (app) => {
           dbStream.once('data', (data) => {
             //HACK force premature close of connection after first iteration
             if (iterationIndex === 1) res.end()
-            req.log.debug({id: data.id }, 'DB stream data on iteration {iterationIndex} return {id}')
+            req.log.debug(
+              { id: data.id },
+              'DB stream data on iteration {iterationIndex} return {id}'
+            )
           })
           dbStream.once('end', (params) => {
             req.log.info(
               { iterationIndex: iterationIndex - 1 },
               'DB stream ended on iteration {iterationIndex}'
             )
-            resolve(params)
+            return resolve(params)
           })
-          dbStream.once('close', (params) => {
+          dbStream.once('close', () => {
             req.log.info(
               { iterationIndex: iterationIndex - 1 },
               'DB stream closed on iteration {iterationIndex}'
             )
-            return resolve(params)
           })
           dbStream.once('error', (params) => {
             req.log.error(
@@ -130,7 +135,7 @@ module.exports = (app) => {
       req.log.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     } finally {
-      req.log.warn({iterationIndex}, 'Finally block reached')
+      req.log.warn({ iterationIndex }, 'Finally block reached')
     }
 
     const numReadableDbStreamsBefore = databaseStreams.filter((s) => s.readable).length
