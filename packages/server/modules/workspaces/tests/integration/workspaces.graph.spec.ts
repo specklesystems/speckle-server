@@ -187,7 +187,7 @@ describe('Workspaces GQL CRUD', () => {
           await createTestUser(user)
           await assignToWorkspace(largeWorkspace, user, role)
           // Overly-careful guarantee that `createdAt` values are different
-          await wait(50)
+          await wait(1)
         }
       })
 

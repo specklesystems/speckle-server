@@ -177,24 +177,20 @@ export const getWorkspaceCollaboratorsFactory =
     const query = DbWorkspaceAcl.knex(db)
       .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
         ...Users.cols,
+        DbWorkspaceAcl.col.createdAt,
+        DbWorkspaceAcl.col.updatedAt,
         knex.raw(`${DbWorkspaceAcl.col.role} as "workspaceRole"`),
-        knex.raw(
-          `workspace_acl."${DbWorkspaceAcl.withoutTablePrefix.col.createdAt}" as "workspaceCreatedAt"`
-        ),
-        knex.raw(
-          `workspace_acl."${DbWorkspaceAcl.withoutTablePrefix.col.updatedAt}" as "workspaceUpdatedAt"`
-        ),
         knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
       ])
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .orderBy('workspaceCreatedAt', 'desc')
+      .orderBy(DbWorkspaceAcl.col.createdAt, 'desc')
       .groupBy(
         Users.col.id,
         DbWorkspaceAcl.col.role,
-        'workspaceCreatedAt',
-        'workspaceUpdatedAt'
+        DbWorkspaceAcl.col.createdAt,
+        DbWorkspaceAcl.col.updatedAt
       )
 
     const { search, role } = filter || {}
