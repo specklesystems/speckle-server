@@ -312,8 +312,20 @@ export const updateWorkspaceRoleFactory =
       updatedAt: new Date()
     })
 
-    // Update user role in all workspace projects
-    // TODO: Should these be in a transaction with the workspace role change?
+    // Emit new role
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: { userId, workspaceId, role }
+    })
+
+    // Apply initial project role to existing workspace projects
+    const isFirstWorkspaceRole = !workspaceRoles.some((role) => role.userId === userId)
+
+    if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
+      // Guests do not get roles for existing workspace projects
+      return
+    }
+
     const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
       getStreams
     })
@@ -331,10 +343,4 @@ export const updateWorkspaceRoleFactory =
         })
       )
     }
-
-    // Emit new role
-    await emitWorkspaceEvent({
-      eventName: WorkspaceEvents.RoleUpdated,
-      payload: { userId, workspaceId, role }
-    })
   }
