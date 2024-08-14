@@ -15,10 +15,18 @@
     <section>
       <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
-        <DashboardProjectCard
-          v-for="project in projects"
-          :key="project.id"
-          :project="project"
+        <template v-if="hasProjects">
+          <DashboardProjectCard
+            v-for="project in projects"
+            :key="project.id"
+            :project="project"
+          />
+        </template>
+        <QuickStartCard
+          v-else
+          title="Create your first project"
+          description="Projects are the place where your models and their versions live."
+          :buttons="createProjectButton"
         />
       </div>
     </section>
@@ -32,9 +40,12 @@
         />
       </div>
     </section>
+
+    <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
 <script setup lang="ts">
+import { type LayoutDialogButton } from '@speckle/ui-components'
 import { dashboardProjectsPageQuery } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
@@ -45,6 +56,7 @@ import { docsPageUrl, forumPageUrl } from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 useHead({ title: 'Dashboard' })
 
@@ -56,9 +68,12 @@ const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
 const { triggerNotification } = useGlobalToast()
+const { isGuest } = useActiveUser()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false
 })
+
+const openNewProject = ref(false)
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://speckle.systems',
@@ -102,8 +117,16 @@ const quickStartItems = shallowRef<QuickStartItem[]>([
     ]
   }
 ])
+const createProjectButton = shallowRef<LayoutDialogButton[]>([
+  {
+    text: 'Create a project',
+    props: { disabled: isGuest.value },
+    onClick: () => (openNewProject.value = true)
+  }
+])
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
+const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
 
 async function fetchTutorials() {
   const posts = await ghostContentApi.posts.browse({
