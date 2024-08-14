@@ -288,6 +288,25 @@ describe('Workspaces GQL CRUD', () => {
         expect(resC.data?.workspace.team.items.length).to.equal(0)
         expect(resC.data?.workspace.team.cursor).to.not.exist
       })
+
+      it('should return correct total count', async () => {
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.totalCount).to.equal(6)
+      })
+
+      it('should return correct total count while paginating', async () => {
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 1
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.totalCount).to.equal(6)
+      })
     })
 
     describe('query activeUser.workspaces', () => {

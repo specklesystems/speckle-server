@@ -48,7 +48,8 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  getWorkspaceCollaboratorsTotalCountFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -427,15 +428,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const getTeam = getWorkspaceCollaboratorsFactory({ db })
-          const collaborators = await getTeam({
+          const { items, cursor } = await getWorkspaceCollaboratorsFactory({ db })({
             workspaceId: parent.id,
             filter: removeNullOrUndefinedKeys(args?.filter || {}),
             limit: args.limit,
             cursor: args.cursor || undefined
           })
 
-          return collaborators
+          const totalCount = await getWorkspaceCollaboratorsTotalCountFactory({ db })({
+            workspaceId: parent.id
+          })
+
+          return {
+            items,
+            cursor,
+            totalCount
+          }
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({

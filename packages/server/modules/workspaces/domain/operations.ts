@@ -54,12 +54,19 @@ type GetWorkspaceCollaboratorsArgs = {
 type GetWorkspaceCollaboratorsReturnValue = {
   items: Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>
   cursor: string | null
-  totalCount: number
 }
 
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
 ) => Promise<GetWorkspaceCollaboratorsReturnValue>
+
+type GetWorkspaceCollaboratorsTotalCountArgs = {
+  workspaceId: string
+}
+
+export type GetWorkspaceCollaboratorsTotalCount = (
+  args: GetWorkspaceCollaboratorsTotalCountArgs
+) => Promise<number>
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string

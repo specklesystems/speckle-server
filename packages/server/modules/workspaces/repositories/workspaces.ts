@@ -8,6 +8,7 @@ import {
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceCollaborators,
+  GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
@@ -171,27 +172,39 @@ export const upsertWorkspaceRoleFactory =
       .merge(['role', 'createdAt', 'updatedAt'])
   }
 
+export const getWorkspaceCollaboratorsTotalCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
+  async ({ workspaceId }) => {
+    const [res] = await DbWorkspaceAcl.knex(db).where({ workspaceId }).count()
+    const count = parseInt(res.count)
+    return count || 0
+  }
+
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
   async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
     const query = DbWorkspaceAcl.knex(db)
       .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
         ...Users.cols,
-        DbWorkspaceAcl.col.createdAt,
-        DbWorkspaceAcl.col.updatedAt,
-        knex.raw(`${DbWorkspaceAcl.col.role} as "workspaceRole"`),
-        knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
+        knex.raw('(array_agg(??))[1] as ??', [ServerAcl.col.role, 'role']),
+        knex.raw('(array_agg(??))[1] as ??', [
+          DbWorkspaceAcl.col.role,
+          'workspaceRole'
+        ]),
+        knex.raw('(array_agg(??))[1] as ??', [
+          DbWorkspaceAcl.col.createdAt,
+          'workspaceRoleCreatedAt'
+        ]),
+        knex.raw('(array_agg(??))[1] as ??', [
+          DbWorkspaceAcl.col.updatedAt,
+          'workspaceRoleUpdatedAt'
+        ])
       ])
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .orderBy(DbWorkspaceAcl.col.createdAt, 'desc')
-      .groupBy(
-        Users.col.id,
-        DbWorkspaceAcl.col.role,
-        DbWorkspaceAcl.col.createdAt,
-        DbWorkspaceAcl.col.updatedAt
-      )
+      .orderBy('workspaceRoleCreatedAt', 'desc')
+      .groupBy(Users.col.id)
 
     const { search, role } = filter || {}
 
@@ -221,7 +234,6 @@ export const getWorkspaceCollaboratorsFactory =
 
     return {
       items,
-      totalCount: items.length,
       cursor: items.length
         ? encodeIsoDateCursor(items[items.length - 1].createdAt)
         : null
