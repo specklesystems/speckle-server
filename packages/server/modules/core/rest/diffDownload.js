@@ -63,9 +63,12 @@ module.exports = (app) => {
       for (let cStart = 0; cStart < childrenList.length; cStart += cSize) {
         const childrenChunk = childrenList.slice(cStart, cStart + cSize)
 
+        const numExistingReadableDbStreams = databaseStreams.filter(
+          (s) => s.readable
+        ).length
         req.log.info(
-          { iterationIndex },
-          'Opening db stream on iteration {iterationIndex}'
+          { iterationIndex, numReadableDbStreams: numExistingReadableDbStreams },
+          'Opening db stream on iteration {iterationIndex}. Existing db streams {numReadableDbStreams}'
         )
         const dbStream = await getObjectsStream({
           streamId: req.params.streamId,
@@ -101,7 +104,7 @@ module.exports = (app) => {
         iterationIndex++
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
-          dbStream.once('data', (data) => {
+          dbStream.on('data', (data) => {
             //HACK force premature close of connection after first iteration
             if (iterationIndex === 1) res.end()
             req.log.debug(
@@ -109,20 +112,20 @@ module.exports = (app) => {
               'DB stream data on iteration {iterationIndex} return {id}'
             )
           })
-          dbStream.once('end', (params) => {
+          dbStream.on('end', (params) => {
             req.log.info(
               { iterationIndex: iterationIndex - 1 },
               'DB stream ended on iteration {iterationIndex}'
             )
             return resolve(params)
           })
-          dbStream.once('close', () => {
+          dbStream.on('close', () => {
             req.log.info(
               { iterationIndex: iterationIndex - 1 },
               'DB stream closed on iteration {iterationIndex}'
             )
           })
-          dbStream.once('error', (params) => {
+          dbStream.on('error', (params) => {
             req.log.error(
               { iterationIndex: iterationIndex - 1 },
               'DB stream error on iteration {iterationIndex}'
