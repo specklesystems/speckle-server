@@ -11,7 +11,7 @@
     <div class="flex flex-col gap-y-12">
       <section>
         <h2 class="text-heading-sm text-foreground-2">Quick start</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
           <QuickStartCard
             v-for="quickStartItem in quickStartItems"
             :key="quickStartItem.title"

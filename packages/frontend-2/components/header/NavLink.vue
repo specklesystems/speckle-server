@@ -1,6 +1,6 @@
 <template>
   <div
-    class="text-foreground hover:text-primary-focus transition truncate flex gap-1 items-center"
+    class="text-foreground hover:text-primary-focus transition truncate flex gap-1 items-center ml-1"
   >
     <div v-if="separator">
       <svg
@@ -15,20 +15,19 @@
       </svg>
     </div>
     <NuxtLink
-      :to="to"
-      class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2"
+      :to="!disableLink ? to : undefined"
+      class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2 select-none"
       active-class="group is-active !text-foreground"
     >
       <div class="truncate">
         {{ name || to }}
       </div>
-      <ChevronDownIcon v-if="!hideChevron" class="h3 w-3" />
+      <!-- Chevron to return in future -->
+      <!-- <ChevronDownIcon v-if="!hideChevron" class="h-2.5 w-2.5" /> -->
     </NuxtLink>
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-
 defineProps({
   separator: {
     type: Boolean,
@@ -45,6 +44,10 @@ defineProps({
   name: {
     type: String,
     default: null
+  },
+  disableLink: {
+    type: Boolean,
+    default: false
   }
 })
 </script>

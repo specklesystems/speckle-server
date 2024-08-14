@@ -1,5 +1,7 @@
 <template>
-  <WorkspaceProjectList :workspace-id="workspaceId" />
+  <div>
+    <WorkspaceProjectList :workspace-id="workspaceId" />
+  </div>
 </template>
 <script setup lang="ts">
 import { useRoute } from 'vue-router'

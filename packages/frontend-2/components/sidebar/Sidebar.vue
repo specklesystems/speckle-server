@@ -51,8 +51,9 @@
             </NuxtLink>
           </LayoutSidebarMenuGroup>
 
+          <!-- Remove workspacesItems.length conditional at launch of Workspaces  -->
           <LayoutSidebarMenuGroup
-            v-if="isWorkspacesEnabled"
+            v-if="isWorkspacesEnabled && workspacesItems.length"
             collapsible
             title="Workspaces"
           >
