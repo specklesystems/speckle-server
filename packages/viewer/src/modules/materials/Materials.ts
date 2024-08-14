@@ -38,6 +38,10 @@ export interface DisplayStyle {
   opacity?: number
 }
 
+export interface TechnicalMaterial {
+  color: number
+}
+
 export enum FilterMaterialType {
   GHOST,
   GRADIENT,
@@ -162,6 +166,20 @@ export default class Materials {
       }
     }
     return displayStyle
+  }
+
+  public static technicalMaterialFromNode(
+    node: TreeNode | null
+  ): TechnicalMaterial | null {
+    if (!node) return null
+
+    let technicalMaterial: TechnicalMaterial | null = null
+    if (node.model.raw.color) {
+      technicalMaterial = {
+        color: node.model.raw.color
+      }
+    }
+    return technicalMaterial
   }
 
   public static fastCopy(from: Material, to: Material) {
