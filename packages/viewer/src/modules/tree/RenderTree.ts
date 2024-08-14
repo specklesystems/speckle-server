@@ -65,7 +65,7 @@ export class RenderTree {
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
-      const technicalMaterialNode = this.getTechincalMaterialNode(node)
+      const colorMaterialNode = this.getColorMaterialNode(node)
       ret = {
         id: node.model.id,
         subtreeId: node.model.subtreeId,
@@ -79,7 +79,7 @@ export class RenderTree {
         displayStyle: Materials.displayStyleFromNode(
           displayStyleNode || renderMaterialNode
         ),
-        technicalMaterial: Materials.technicalMaterialFromNode(technicalMaterialNode)
+        colorMaterial: Materials.colorMaterialFromNode(colorMaterialNode)
       }
     }
     return ret
@@ -111,7 +111,7 @@ export class RenderTree {
     return null
   }
 
-  private getTechincalMaterialNode(node: TreeNode): TreeNode | null {
+  private getColorMaterialNode(node: TreeNode): TreeNode | null {
     if (node.model.raw.color) {
       return node
     }

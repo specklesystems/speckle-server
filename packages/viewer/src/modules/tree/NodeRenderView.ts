@@ -2,7 +2,7 @@ import { Box3 } from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { GeometryAttributes, type GeometryData } from '../converter/Geometry.js'
 import Materials, {
-  TechnicalMaterial,
+  MinimalMaterial,
   type DisplayStyle,
   type RenderMaterial
 } from '../materials/Materials.js'
@@ -15,7 +15,7 @@ export interface NodeRenderData {
   geometry: GeometryData
   renderMaterial: RenderMaterial | null
   displayStyle: DisplayStyle | null
-  technicalMaterial: TechnicalMaterial | null
+  colorMaterial: MinimalMaterial | null
 }
 
 export class NodeRenderView {
