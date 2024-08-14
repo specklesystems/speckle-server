@@ -29,6 +29,7 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsInviteBanners
+      ...WorkspaceInviteBanners_User
     }
   }
 `)

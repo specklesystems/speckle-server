@@ -1,10 +1,18 @@
 <template>
-  <InviteBanner :invite="invite" :block="block" @processed="processInvite">
+  <InviteBanner
+    :invite="invite"
+    :block="block"
+    :disabled="loading"
+    @processed="processInvite"
+  >
     <template #message>
       <span class="font-medium">{{ invite.invitedBy.name }}</span>
-      has invited you to be part of the team from
-      <template v-if="showProjectName">the project {{ invite.projectName }}.</template>
-      <template v-else>this project.</template>
+      has invited you to be part of the team in
+      <template v-if="showProjectName">
+        the project
+        <span class="font-medium">{{ invite.projectName }}</span>
+      </template>
+      <template v-else>this project</template>
     </template>
   </InviteBanner>
 </template>

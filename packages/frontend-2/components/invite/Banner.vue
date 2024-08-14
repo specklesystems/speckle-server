@@ -10,9 +10,10 @@
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
           :size="buttonSize"
-          color="danger"
+          color="subtle"
           text
           :full-width="block"
+          :disabled="loading"
           @click="$emit('processed', false, token)"
         >
           Decline
@@ -20,8 +21,10 @@
         <FormButton
           :full-width="block"
           :size="buttonSize"
+          color="outline"
           class="px-4"
           :icon-left="CheckIcon"
+          :disabled="loading"
           @click="$emit('processed', true, token)"
         >
           Accept
@@ -30,7 +33,9 @@
       <template v-else>
         <FormButton
           :size="buttonSize"
+          color="outline"
           full-width
+          :disabled="loading"
           @click.stop.prevent="onLoginSignupClick"
         >
           {{ isForRegisteredUser ? 'Log in' : 'Sign up' }}
@@ -67,6 +72,7 @@ const props = defineProps<{
    * Render this as a big block, instead of a small row. Used in full-page project access error pages.
    */
   block?: boolean
+  loading?: boolean
 }>()
 
 const route = useRoute()
@@ -97,14 +103,14 @@ const mainInfoBlockClasses = computed(() => {
   if (props.block) {
     classParts.push('flex-col space-y-2')
   } else {
-    classParts.push('flex-row space-x-2 text-sm')
+    classParts.push('flex-row space-x-2 text-body-xs')
   }
 
   return classParts.join(' ')
 })
 
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
-const buttonSize = computed(() => (props.block ? 'lg' : 'base'))
+const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const isForRegisteredUser = computed(() => !!props.invite.user?.id)
 
 const onLoginSignupClick = async () => {

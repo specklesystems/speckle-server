@@ -1,0 +1,61 @@
+<template>
+  <InviteBanner :invite="invite" :block="block" @processed="processInvite">
+    <template #message>
+      <span class="font-medium">{{ invite.invitedBy.name }}</span>
+      has invited you to join
+      <template v-if="showWorkspaceName">
+        the workspace
+        <span class="font-medium">{{ invite.workspaceName }}</span>
+      </template>
+      <template v-else>this workspace</template>
+    </template>
+  </InviteBanner>
+</template>
+<script setup lang="ts">
+import type { Optional } from '@speckle/shared'
+import type { WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
+    id
+    invitedBy {
+      ...LimitedUserAvatar
+    }
+    workspaceId
+    workspaceName
+    token
+    user {
+      id
+    }
+  }
+`)
+
+const props = withDefaults(
+  defineProps<{
+    invite: WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment
+    showWorkspaceName?: boolean
+    /**
+     * Render this as a big block, instead of a small row. Used in full-page project access error pages.
+     */
+    block?: boolean
+  }>(),
+  { showWorkspaceName: true }
+)
+
+const loading = ref(false)
+
+const processInvite = async (accept: boolean, token: Optional<string>) => {
+  if (!token) return
+
+  loading.value = true
+  // const success = await useInvite({
+  //   projectId: props.invite.projectId,
+  //   accept,
+  //   token,
+  //   inviteId: props.invite.id
+  // })
+  loading.value = false
+  if (!success) return
+}
+</script>

@@ -2,7 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div
-      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
+      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-foundation divide-y divide-outline-3 border-b border-outline-3"
     >
       <div v-if="showChecklist">
         <OnboardingChecklistV1 show-intro />
@@ -11,10 +11,15 @@
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
       />
-      <ProjectsNewSpeckleBanner
-        v-if="showNewSpeckleBanner"
-        @dismissed="onDismissNewSpeckleBanner"
-      />
+      <WorkspaceInviteBanners
+        v-if="projectsPanelResult?.activeUser?.workspaceInvites?.length"
+        :invites="projectsPanelResult.activeUser"
+      >
+        <ProjectsNewSpeckleBanner
+          v-if="showNewSpeckleBanner"
+          @dismissed="onDismissNewSpeckleBanner"
+        />
+      </WorkspaceInviteBanners>
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />

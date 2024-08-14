@@ -76,3 +76,7 @@ export const useInviteUserToWorkspace = () => {
     return data?.workspaceMutations.invites.batchCreate
   }
 }
+
+export const useProcessWorkspaceInvite = () => {
+  // TODO
+}
