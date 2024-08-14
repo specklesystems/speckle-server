@@ -84,6 +84,7 @@
         ]"
         :user="user"
         :workspace-id="targetWorkspaceId"
+        @close="isOpen = false"
       />
     </div>
   </LayoutDialog>
