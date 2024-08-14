@@ -297,7 +297,6 @@ module.exports = {
       )
       .orderBy('objects.id')
 
-    q.timeout(postgresQueryTimeoutSeconds() * 1000, { cancel: true })
     return q.stream({ highWaterMark: 500 })
   },
 
@@ -663,6 +662,7 @@ module.exports = {
           '"id", "speckleType", "totalChildrenCount", "totalChildrenCountByDepth", "createdAt", data::text as "dataText"'
         )
       )
+      .timeout(postgresQueryTimeoutSeconds() * 1000, { cancel: true })
     return res.stream({ highWaterMark: 500 })
   },
 
