@@ -47,3 +47,20 @@ export const settingsUserEmailsQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesProjectsQuery = graphql(`
+  query SettingsWorkspacesProjects(
+    $workspaceId: String!
+    $limit: Int!
+    $cursor: String
+    $filter: WorkspaceProjectsFilter
+  ) {
+    workspace(id: $workspaceId) {
+      id
+      projects(limit: $limit, cursor: $cursor, filter: $filter) {
+        cursor
+        ...SettingsSharedProjects_ProjectCollection
+      }
+    }
+  }
+`)

@@ -3,12 +3,13 @@
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader
         title="Projects"
-        text="Manage projects across the server"
+        text="Manage projects in your workspace"
       />
       <SettingsSharedProjects
         v-model:search="search"
         :identifier="identifier"
         :projects="projects"
+        :workspace-id="workspaceId"
         @on-infinite-load="onInfiniteLoad"
         @close="$emit('close')"
       />
@@ -23,9 +24,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
+import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+
+const props = defineProps<{
+  workspaceId: string
+}>()
 
 defineEmits<{
   (e: 'close'): void
@@ -38,13 +42,14 @@ const {
   onInfiniteLoad,
   query: { result }
 } = usePaginatedQuery({
-  query: getProjectsQuery,
+  query: settingsWorkspacesProjectsQuery,
   baseVariables: computed(() => ({
-    query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    filter: { search: search.value?.length ? search.value : null },
+    workspaceId: props.workspaceId
   })),
-  resolveKey: (vars) => [vars.query || ''],
-  resolveCurrentResult: (res) => res?.admin.projectList,
+  resolveKey: (vars) => [vars.workspaceId, vars.filter.search || ''],
+  resolveCurrentResult: (res) => res?.workspace.projects,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
@@ -52,5 +57,5 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => result.value?.admin.projectList || [])
+const projects = computed(() => result.value?.workspace.projects || [])
 </script>
