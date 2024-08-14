@@ -157,7 +157,10 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
-  cost: Int!
+  """
+  Estimated cost in USD of this workspace calculated considering its active users
+  """
+  cost: Int! @hasWorkspaceRole(role: ADMIN)
 }
 
 input WorkspaceProjectsFilter {

@@ -284,7 +284,7 @@ describe('Workspace repositories', () => {
     })
   })
 
-  describe.only('getWorkspaceRolesCountFactory creates a function, that', () => {
+  describe('getWorkspaceRolesCountFactory creates a function, that', () => {
     it('returns an empty array with no users in workspace', async () => {
       expect(
         await getWorkspaceRolesCountFactory({ db })({
@@ -293,51 +293,56 @@ describe('Workspace repositories', () => {
       ).to.deep.eq([])
     })
     it('returns an array containing counts for each role', async () => {
-      const { id: userId1 } = await createAndStoreTestUser()
-      const { id: userId2 } = await createAndStoreTestUser()
-      const { id: userId3 } = await createAndStoreTestUser()
-      const { id: userId4 } = await createAndStoreTestUser()
+      const [{ id: userId1 }, { id: userId2 }, { id: userId3 }, { id: userId4 }] =
+        await Promise.all([
+          createAndStoreTestUser(),
+          createAndStoreTestUser(),
+          createAndStoreTestUser(),
+          createAndStoreTestUser()
+        ])
 
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({
-        workspaceId,
-        userId: userId1,
-        role: 'workspace:admin'
-      })
-      await upsertWorkspaceRole({
-        workspaceId,
-        userId: userId2,
-        role: 'workspace:member'
-      })
-      await upsertWorkspaceRole({
-        workspaceId,
-        userId: userId3,
-        role: 'workspace:guest'
-      })
-      await upsertWorkspaceRole({
-        workspaceId,
-        userId: userId4,
-        role: 'workspace:guest'
-      })
-      expect(
-        await getWorkspaceRolesCountFactory({ db })({
-          workspaceId
+      await Promise.all([
+        upsertWorkspaceRole({
+          workspaceId,
+          userId: userId1,
+          role: 'workspace:admin'
+        }),
+        upsertWorkspaceRole({
+          workspaceId,
+          userId: userId2,
+          role: 'workspace:member'
+        }),
+        upsertWorkspaceRole({
+          workspaceId,
+          userId: userId3,
+          role: 'workspace:guest'
+        }),
+        upsertWorkspaceRole({
+          workspaceId,
+          userId: userId4,
+          role: 'workspace:guest'
         })
-      ).to.deep.eq([
-        {
-          role: 'workspace:admin',
-          count: '1'
-        },
-        {
-          role: 'workspace:member',
-          count: '1'
-        },
-        {
-          role: 'workspace:guest',
-          count: '2'
-        }
       ])
+
+      const rolesCounts = await getWorkspaceRolesCountFactory({ db })({
+        workspaceId
+      })
+      expect(rolesCounts.length).to.eq(3)
+
+      expect(rolesCounts).to.deep.contain({
+        role: 'workspace:admin',
+        count: '1'
+      })
+      expect(rolesCounts).to.deep.contain({
+        role: 'workspace:member',
+        count: '1'
+      })
+      expect(rolesCounts).to.deep.contain({
+        role: 'workspace:guest',
+        count: '2'
+      })
     })
   })
 })
