@@ -35,10 +35,7 @@
 
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
-      <InfiniteLoading
-        :settings="{ identifier: infiniteLoaderId }"
-        @infinite="onInfiniteLoad"
-      />
+      <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
     </template>
 
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
@@ -74,7 +71,6 @@ graphql(`
   }
 `)
 
-const infiniteLoaderId = ref('')
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 
@@ -100,7 +96,7 @@ const { result: initialQueryResult } = useQuery(workspacePageQuery, {
   }
 })
 
-const { query, onInfiniteLoad } = usePaginatedQuery<
+const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
   { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },
   WorkspaceProjectsQueryQueryVariables
 >({
@@ -116,7 +112,6 @@ const { query, onInfiniteLoad } = usePaginatedQuery<
     search: vars.filter?.search || ''
   }),
   resolveCurrentResult: (result) => result?.workspace?.projects,
-  resolveInitialResult: () => workspace.value?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,
     cursor: newCursor
