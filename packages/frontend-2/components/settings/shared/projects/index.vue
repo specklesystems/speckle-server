@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
-import type { SettingsSharedProjects_ProjectCollectionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsSharedProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput } from '@speckle/ui-components'
@@ -115,7 +115,7 @@ graphql(`
 `)
 
 defineProps<{
-  projects?: SettingsSharedProjects_ProjectCollectionFragment['items']
+  projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
 }>()
 
