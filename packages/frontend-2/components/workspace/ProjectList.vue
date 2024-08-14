@@ -49,13 +49,20 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import { useQueryLoading } from '@vue/apollo-composable'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Optional, StreamRoles } from '@speckle/shared'
-import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
+import {
+  workspacePageQuery,
+  workspaceProjectsQuery
+} from '~~/lib/workspaces/graphql/queries'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
+import type {
+  WorkspaceProjects_ProjectCollectionFragment,
+  WorkspaceProjectsQueryQueryVariables
+} from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceProjects_ProjectCollection on ProjectCollection {
@@ -86,19 +93,31 @@ const {
   debouncedBy: 800
 })
 
-const { query, onInfiniteLoad } = usePaginatedQuery({
-  query: workspacePageQuery,
+const { result: initialQueryResult } = useQuery(workspacePageQuery, {
+  workspaceId: props.workspaceId,
+  filter: {
+    search: (search.value || '').trim() || null
+  }
+})
+
+const { query, onInfiniteLoad } = usePaginatedQuery<
+  { workspace: { projects: WorkspaceProjects_ProjectCollectionFragment } },
+  WorkspaceProjectsQueryQueryVariables
+>({
+  query: workspaceProjectsQuery,
   baseVariables: computed(() => ({
     workspaceId: props.workspaceId,
     filter: {
       search: (search.value || '').trim() || null
     }
   })),
-  resolveKey: (vars) => ({
+  resolveKey: (vars: WorkspaceProjectsQueryQueryVariables) => ({
     workspaceId: vars.workspaceId,
     search: vars.filter?.search || ''
   }),
   resolveCurrentResult: (result) => result?.workspace?.projects,
+  resolveInitialResult: (): WorkspaceProjects_ProjectCollectionFragment | undefined =>
+    workspace.value?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,
     cursor: newCursor
@@ -106,7 +125,7 @@ const { query, onInfiniteLoad } = usePaginatedQuery({
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const workspace = computed(() => query.result.value?.workspace)
+const workspace = computed(() => initialQueryResult.value?.workspace)
 const projects = computed(() => query.result.value?.workspace?.projects)
 const showEmptyState = computed(() => !projects.value?.items?.length)
 const showLoadingBar = computed(() => {

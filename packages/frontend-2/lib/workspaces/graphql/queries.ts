@@ -23,3 +23,17 @@ export const workspacePageQuery = graphql(`
     }
   }
 `)
+
+export const workspaceProjectsQuery = graphql(`
+  query WorkspaceProjectsQuery(
+    $workspaceId: String!
+    $filter: WorkspaceProjectsFilter
+    $cursor: String
+  ) {
+    workspace(id: $workspaceId) {
+      projects(filter: $filter, cursor: $cursor) {
+        ...WorkspaceProjects_ProjectCollection
+      }
+    }
+  }
+`)
