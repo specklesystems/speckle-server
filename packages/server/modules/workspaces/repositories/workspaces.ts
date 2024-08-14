@@ -225,10 +225,10 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
 export const getWorkspaceRolesCountFactory =
   ({ db }: { db: Knex }): GetWorkspaceRolesCount =>
   async ({ workspaceId }) => {
-    return (await tables
+    return await tables
       .workspacesAcl(db)
       .select('role')
       .where({ workspaceId })
       .groupBy('role')
-      .count()) as { role: WorkspaceRoles; count: number }[]
+      .count()
   }
