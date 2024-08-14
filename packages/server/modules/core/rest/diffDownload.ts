@@ -41,29 +41,40 @@ const handleGetObjectsFromStream: RequestHandler = async (req, res) => {
     new PassThrough({ highWaterMark: 16384 * 31 }),
     res,
     (err) => {
-      let errMessage =
-        'App error while streaming objects. Streamed {childCount} objects (size: {mbWritten} MB).'
-      if (
-        err &&
-        typeof err === 'object' &&
-        'code' in err &&
-        err.code === 'ERR_STREAM_PREMATURE_CLOSE'
-      ) {
-        errMessage =
-          'Client prematurely closed connection.  Streamed {childCount} objects (size: {mbWritten} MB).'
+      if (err) {
+        let errMessage =
+          'App error while streaming objects. Streamed {childCount} objects (size: {mbWritten} MB).'
+        if (
+          err &&
+          typeof err === 'object' &&
+          'code' in err &&
+          err.code === 'ERR_STREAM_PREMATURE_CLOSE'
+        ) {
+          errMessage =
+            'Client prematurely closed connection.  Streamed {childCount} objects (size: {mbWritten} MB).'
+        }
+        req.log.error(
+          {
+            err,
+            childCount: childrenList.length,
+            mbWritten: toMegabytesWith1DecimalPlace(gzipStream.bytesWritten)
+          },
+          errMessage
+        )
+
+        res.writeHead(499) // overwrite the status code to 499 (client closed connection)
+        speckleObjStream.emit('error', new Error(errMessage))
+        speckleObjStream.end()
+        return // exit early from callback
       }
-      req.log.error(
+
+      req.log.info(
         {
-          err,
           childCount: childrenList.length,
           mbWritten: toMegabytesWith1DecimalPlace(gzipStream.bytesWritten)
         },
-        errMessage
+        'Streamed {childCount} objects (size: {mbWritten} MB).'
       )
-
-      res.writeHead(499) // overwrite the status code to 499 (client closed connection)
-      speckleObjStream.emit('error', new Error(errMessage))
-      speckleObjStream.end() //FIXME does ending the speckleObjStream also send a response to the client, or do we need to call this as well?
     }
   )
 
@@ -87,6 +98,6 @@ const handleGetObjectsFromStream: RequestHandler = async (req, res) => {
     res.writeHead(500) //overwrite the status code to 500 (server error)
     speckleObjStream.emit('error', new Error('Database streaming error'))
   } finally {
-    speckleObjStream.end() //FIXME does ending the speckleObjStream also send a response to the client, or do we need to call res.end() as well?
+    speckleObjStream.end()
   }
 }
