@@ -18,7 +18,9 @@
       <div
         class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none"
       >
-        {{ projectCount || 0 }} Project{{ projectCount === 1 ? '' : 's' }}
+        {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
+          workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
+        }}
       </div>
       <UserAvatarGroup
         :users="team.map((teamMember) => teamMember.user)"
@@ -55,7 +57,6 @@ graphql(`
 
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
-  projectCount?: number
 }>()
 
 const team = computed(() => props.workspaceInfo.team || [])

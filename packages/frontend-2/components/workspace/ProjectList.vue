@@ -4,7 +4,6 @@
       v-if="workspace"
       :icon="Squares2X2Icon"
       :workspace-info="workspace"
-      :project-count="workspace?.totalProjects?.totalCount"
     />
     <div class="flex flex-col gap-4 mt-4">
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
@@ -16,7 +15,7 @@
             :custom-icon="MagnifyingGlassIcon"
             color="foundation"
             wrapper-classes="grow md:grow-0 md:w-60"
-            :show-clear="!!search"
+            show-clear
             v-bind="bind"
             v-on="on"
           ></FormTextInput>
@@ -60,7 +59,6 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 const infiniteLoaderId = ref('')
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
-const showLoadingBar = ref(false)
 
 const { isGuest } = useActiveUser()
 const areQueriesLoading = useQueryLoading()
@@ -97,12 +95,9 @@ const { query, onInfiniteLoad } = usePaginatedQuery({
 const workspace = computed(() => query.result.value?.workspace)
 const projects = computed(() => query.result.value?.workspace?.projects)
 const showEmptyState = computed(() => !projects.value?.items?.length)
-
-watch(search, (newVal) => {
-  showLoadingBar.value = !!newVal
+const showLoadingBar = computed(() => {
+  return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
 })
-
-watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
 const clearSearch = () => {
   search.value = ''
