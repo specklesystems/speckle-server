@@ -19,7 +19,10 @@
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
 
-    <ProjectsDashboardDiscoverableWorkspaces v-if="isWorkspacesEnabled" />
+    <ProjectsDashboardDiscoverableWorkspaces
+      v-if="isWorkspacesEnabled"
+      :discoverable-workspaces="discoverableWorkspaces"
+    />
 
     <div
       v-if="!showEmptyState"
@@ -159,6 +162,9 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
 )
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
+const discoverableWorkspaces = computed(
+  () => projectsPanelResult.value?.activeUser?.discoverableWorkspaces || []
+)
 const showEmptyState = computed(() => {
   const isFiltering =
     projectsVariables.value?.filter?.onlyWithRoles?.length ||

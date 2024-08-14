@@ -28,6 +28,9 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
+      discoverableWorkspaces {
+        ...DashboardDiscoverableWorkspaces_DiscoverableWorkspace
+      }
       ...ProjectsInviteBanners
     }
   }

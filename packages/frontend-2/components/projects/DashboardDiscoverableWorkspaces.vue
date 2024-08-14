@@ -37,17 +37,26 @@ here behind a flag for testing reasons.
 </template>
 
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import { useApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
+import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { dashboardJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
-import { dashboardDiscoverableWorkspacesQuery } from '~/lib/dashboard/graphql/queries'
+
+graphql(`
+  fragment DashboardDiscoverableWorkspaces_DiscoverableWorkspace on DiscoverableWorkspace {
+    id
+    name
+    description
+  }
+`)
+
+defineProps<{
+  discoverableWorkspaces: DashboardDiscoverableWorkspaces_DiscoverableWorkspace[]
+}>()
+
+const { client: apollo } = useApolloClient()
 
 const { triggerNotification } = useGlobalToast()
-
-const { result, refetch } = useQuery(dashboardDiscoverableWorkspacesQuery)
-const discoverableWorkspaces = computed(() => {
-  return result.value?.activeUser?.discoverableWorkspaces ?? []
-})
 
 const { mutate: joinWorkspace } = useMutation(dashboardJoinWorkspaceMutation)
 
@@ -56,7 +65,9 @@ const handleJoin = async (workspaceId: string) => {
 
   if (result?.data) {
     // TODO: Redirect to workspace dashboard on success
-    refetch()
+    apollo.cache.evict({
+      id: getCacheId('DiscoverableWorkspace', workspaceId)
+    })
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Joined workspace',

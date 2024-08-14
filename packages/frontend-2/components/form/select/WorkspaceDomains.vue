@@ -1,7 +1,7 @@
 <template>
   <FormSelectBase
     v-model="selectedValue"
-    :items="props.domains"
+    :items="domains"
     name="workspaceDomains"
     label="Verified Domains"
     class="min-w-[110px]"
