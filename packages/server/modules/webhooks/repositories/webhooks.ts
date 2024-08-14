@@ -34,7 +34,7 @@ export const createWebhookFactory =
     return webhookId
   }
 
-export const countWebhooksByStreamId =
+export const countWebhooksByStreamIdFactory =
   ({ db }: { db: Knex }): CountWebhooksByStreamId =>
   async ({ streamId }) => {
     const [res] = await tables(db).webhooksConfigs.where({ streamId }).count()
