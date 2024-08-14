@@ -31,7 +31,10 @@ export const settingsQueries: {
     general: 'server/general',
     projects: 'server/projects',
     activeUsers: 'server/active-users',
-    pendingInvitations: 'server/pending-invitations'
+    pendingInvitations: 'server/pending-invitations',
+    billing: 'server/billing',
+    security: 'server/security',
+    regions: 'regions'
   }
 }
 

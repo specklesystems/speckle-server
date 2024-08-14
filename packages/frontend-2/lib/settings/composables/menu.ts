@@ -19,21 +19,6 @@ export const useSettingsMenu = () => {
     members: {
       title: 'Members',
       component: SettingsWorkspacesMembers
-    },
-    billing: {
-      title: 'Billing',
-      disabled: true,
-      tooltipText: 'Manage billing for your workspace'
-    },
-    security: {
-      title: 'Security',
-      disabled: true,
-      tooltipText: 'SSO, manage permissions, restrict domain access'
-    },
-    regions: {
-      title: 'Regions',
-      disabled: true,
-      tooltipText: 'Set up regions for custom data residency'
     }
   })
 
@@ -68,6 +53,21 @@ export const useSettingsMenu = () => {
     [settingsQueries.server.pendingInvitations]: {
       title: 'Pending invitations',
       component: SettingsServerPendingInvitations
+    },
+    [settingsQueries.server.billing]: {
+      title: 'Billing',
+      disabled: true,
+      tooltipText: 'Manage billing for your workspace'
+    },
+    [settingsQueries.server.security]: {
+      title: 'Security',
+      disabled: true,
+      tooltipText: 'SSO, manage permissions, restrict domain access'
+    },
+    [settingsQueries.server.regions]: {
+      title: 'Regions',
+      disabled: true,
+      tooltipText: 'Set up regions for custom data residency'
     }
   })
 

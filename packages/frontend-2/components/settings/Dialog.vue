@@ -22,9 +22,7 @@
               v-for="(sidebarMenuItem, key) in userMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
-              }"
+              :class="workspaceMenuItemClasses({ key })"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -36,9 +34,15 @@
               v-for="(sidebarMenuItem, key) in serverMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
-              }"
+              :class="
+                workspaceMenuItemClasses({
+                  key,
+                  disabled: sidebarMenuItem.disabled
+                })
+              "
+              :tooltip-text="sidebarMenuItem.tooltipText"
+              :disabled="sidebarMenuItem.disabled"
+              :tag="sidebarMenuItem.disabled ? 'Coming soon' : undefined"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -50,26 +54,22 @@
               <ServerStackIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroup
-              v-for="(workspaceItem, key) in workspaceItems"
-              :key="key"
+              v-for="(workspaceItem, workspaceKey) in workspaceItems"
+              :key="workspaceKey"
               :title="workspaceItem.name"
               collapsible
             >
               <LayoutSidebarMenuGroupItem
-                v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
-                :key="`${key}-${itemKey}`"
+                v-for="(workspaceMenuItem, key) in workspaceMenuItems"
+                :key="`${workspaceKey}-${key}`"
                 :label="workspaceMenuItem.title"
                 :class="
-                  workspaceMenuItemClasses(
-                    itemKey,
-                    workspaceItem.id,
-                    workspaceMenuItem.disabled
-                  )
+                  workspaceMenuItemClasses({
+                    key: key,
+                    workspaceId: workspaceItem.id
+                  })
                 "
-                :tooltip-text="workspaceMenuItem.tooltipText"
-                :disabled="workspaceMenuItem.disabled"
-                :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
-                @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
+                @click="onWorkspaceMenuItemClick(workspaceItem.id, `${key}`)"
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
@@ -159,14 +159,18 @@ const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetMenuItem.value = target
 }
 
-const workspaceMenuItemClasses = (
-  itemKey: string | number,
-  workspaceId: string,
+const workspaceMenuItemClasses = ({
+  key,
+  disabled,
+  workspaceId
+}: {
+  key: string | number
   disabled?: boolean
-) => {
+  workspaceId?: string
+}) => {
   if (
-    targetMenuItem.value === itemKey &&
-    targetWorkspaceId.value === workspaceId &&
+    targetMenuItem.value === key &&
+    (workspaceId ? targetWorkspaceId.value === workspaceId : true) &&
     !disabled
   ) {
     return 'bg-highlight-2 hover:!bg-highlight-2'
