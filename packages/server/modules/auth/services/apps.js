@@ -204,6 +204,8 @@ module.exports = {
   },
 
   async createAuthorizationCode({ appId, userId, challenge }) {
+    if (!challenge) throw new Error('Please provide a valid challenge.')
+
     const ac = {
       id: crs({ length: 42 }),
       appId,

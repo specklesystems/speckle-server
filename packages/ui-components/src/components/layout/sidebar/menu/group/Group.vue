@@ -8,7 +8,7 @@
       >
         <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
         <h6
-          class="font-semibold text-foreground-2 text-xs flex items-center space-x-1.5"
+          class="font-semibold text-foreground-2 text-xs flex items-center space-x-1.5 truncate"
         >
           {{ title }}
         </h6>
@@ -20,7 +20,7 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <h6 class="font-semibold text-xs">
+        <h6 class="font-semibold text-xs truncate">
           {{ title }}
         </h6>
       </div>
