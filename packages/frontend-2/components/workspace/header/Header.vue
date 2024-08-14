@@ -26,8 +26,8 @@
         :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
-      <FormButton color="outline">Invite</FormButton>
-      <WorkspaceHeaderActions />
+      <FormButton color="outline" disabled>Invite</FormButton>
+      <!-- <WorkspaceHeaderActions /> -->
     </div>
   </div>
 </template>
