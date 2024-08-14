@@ -77,12 +77,12 @@ module.exports = (app) => {
         databaseStreams.push(dbStream)
         dbStream.on('data', (data) => {
           //HACK force premature close of connection after first iteration
-          if (iterationIndex === 1) {
+          if (iterationIndex === 0) {
             req.log.warn('Prematurely closing connection')
             res.end()
           }
           req.log.info(
-            { id: data.id, iterationIndex: iterationIndex - 1 },
+            { id: data.id, iterationIndex },
             'DB stream data on iteration {iterationIndex} return {id}'
           )
         })
@@ -112,31 +112,32 @@ module.exports = (app) => {
           'Number of readable db streams {numReadableDbStreams} at iteration {iterationIndex}'
         )
 
-        iterationIndex++
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
 
           dbStream.on('end', (params) => {
             req.log.info(
-              { iterationIndex: iterationIndex - 1 },
+              { iterationIndex },
               'DB stream ended on iteration {iterationIndex}'
             )
             return resolve(params)
           })
           dbStream.on('close', () => {
             req.log.info(
-              { iterationIndex: iterationIndex - 1 },
+              { iterationIndex },
               'DB stream closed on iteration {iterationIndex}'
             )
           })
           dbStream.on('error', (params) => {
             req.log.error(
-              { iterationIndex: iterationIndex - 1 },
+              { iterationIndex },
               'DB stream error on iteration {iterationIndex}'
             )
             return reject(params)
           })
         })
+
+        iterationIndex++
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
