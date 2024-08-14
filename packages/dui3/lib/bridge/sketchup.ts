@@ -344,6 +344,7 @@ export class SketchupBridge extends BaseBridge {
       // eslint-disable-next-line no-prototype-builtins
       if (data && data.hasOwnProperty('error')) {
         console.error(data)
+        this.emitter.emit('errorOnResponse', JSON.stringify(data))
         throw new Error(
           `Failed to run ${requestId}. The host app error is logged above.`
         )
