@@ -11,20 +11,32 @@ import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
 import type { Knex } from 'knex'
 
+type FreeConnectionsCalculator = {
+  mean: () => number
+}
+
 export default (app: express.Application) => {
-  const knexFreeDbConnectionSampler = knexFreeDbConnectionSamplerFactory({
+  const knexFreeDbConnectionSamplerLiveness = knexFreeDbConnectionSamplerFactory({
     db,
     collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready
+    sampledDuration: 600000 //number of ms over which to average the database connections, before declaring not alive. 10 minutes.
   })
-  knexFreeDbConnectionSampler.start()
+  knexFreeDbConnectionSamplerLiveness.start()
+
+  const knexFreeDbConnectionSamplerReadiness = knexFreeDbConnectionSamplerFactory({
+    db,
+    collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
+    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
+  })
+  knexFreeDbConnectionSamplerReadiness.start()
 
   app.options('/liveness')
   app.get(
     '/liveness',
     handleLivenessFactory({
       isRedisAlive,
-      isPostgresAlive
+      isPostgresAlive,
+      freeConnectionsCalculator: knexFreeDbConnectionSamplerLiveness
     })
   )
   app.options('/readiness')
@@ -33,7 +45,7 @@ export default (app: express.Application) => {
     handleReadinessFactory({
       isRedisAlive,
       isPostgresAlive,
-      freeConnectionsCalculator: knexFreeDbConnectionSampler
+      freeConnectionsCalculator: knexFreeDbConnectionSamplerReadiness
     })
   )
 }
@@ -42,6 +54,7 @@ const handleLivenessFactory =
   (deps: {
     isRedisAlive: RedisCheck
     isPostgresAlive: DBCheck
+    freeConnectionsCalculator: FreeConnectionsCalculator
   }): express.RequestHandler =>
   async (req, res) => {
     const postgres = await deps.isPostgresAlive()
@@ -69,13 +82,25 @@ const handleLivenessFactory =
       return
     }
 
+    const numFreeConnections = await deps.freeConnectionsCalculator.mean()
+    const percentageFreeConnections = Math.floor(
+      (numFreeConnections * 100) / postgresMaxConnections()
+    )
+    //unready if less than 10%
+    if (percentageFreeConnections < 10) {
+      const message =
+        'Liveness health check failed. Insufficient free database connections for a sustained duration.'
+      req.log.error(message)
+      res.status(500).json({
+        message
+      })
+      res.send()
+      return
+    }
+
     res.status(200)
     res.send()
   }
-
-type FreeConnectionsCalculator = {
-  mean: () => number
-}
 
 const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
@@ -112,7 +137,7 @@ const handleReadinessFactory = (deps: {
     const percentageFreeConnections = Math.floor(
       (numFreeConnections * 100) / postgresMaxConnections()
     )
-    //unready if less than 10% for 20s
+    //unready if less than 10%
     if (percentageFreeConnections < 10) {
       const message =
         'Readiness health check failed. Insufficient free database connections for a sustained duration.'
