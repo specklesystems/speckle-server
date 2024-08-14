@@ -29,7 +29,7 @@
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
         { id: 'contributors', header: 'Contributors', classes: 'col-span-2' }
       ]"
-      :items="projects.items"
+      :items="projects"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
       :on-row-click="handleProjectClick"
     >
@@ -77,7 +77,6 @@
     <SettingsSharedProjectsDeleteDialog
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
-      title="Delete project"
     />
 
     <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
@@ -95,6 +94,7 @@ import type { SettingsSharedProjects_ProjectCollectionFragment } from '~~/lib/co
 
 graphql(`
   fragment SettingsSharedProjects_ProjectCollection on ProjectCollection {
+    totalCount
     items {
       id
       name
@@ -120,12 +120,11 @@ graphql(`
 `)
 
 defineProps<{
-  projects: SettingsSharedProjects_ProjectCollectionFragment
+  projects?: SettingsSharedProjects_ProjectCollectionFragment['items']
   workspaceId?: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'on-infinite-load'): void
   (e: 'close'): void
 }>()
 

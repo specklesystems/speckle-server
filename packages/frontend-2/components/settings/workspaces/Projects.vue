@@ -7,14 +7,12 @@
       />
       <SettingsSharedProjects
         v-model:search="search"
-        :identifier="identifier"
         :projects="projects"
         :workspace-id="workspaceId"
-        @on-infinite-load="onInfiniteLoad"
         @close="$emit('close')"
       />
       <InfiniteLoading
-        v-if="projects?.items?.length"
+        v-if="projects?.length"
         :settings="{ identifier }"
         class="py-4"
         @infinite="onInfiniteLoad"
@@ -48,7 +46,7 @@ const {
     filter: { search: search.value?.length ? search.value : null },
     workspaceId: props.workspaceId
   })),
-  resolveKey: (vars) => [vars.workspaceId, vars.filter.search || ''],
+  resolveKey: (vars) => [vars.workspaceId, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspace.projects,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
@@ -57,5 +55,5 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => result.value?.workspace.projects || [])
+const projects = computed(() => result.value?.workspace.projects.items || [])
 </script>

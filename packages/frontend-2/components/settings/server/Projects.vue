@@ -7,13 +7,11 @@
       />
       <SettingsSharedProjects
         v-model:search="search"
-        :identifier="identifier"
         :projects="projects"
-        @on-infinite-load="onInfiniteLoad"
         @close="$emit('close')"
       />
       <InfiniteLoading
-        v-if="projects?.items?.length"
+        v-if="projects?.length"
         :settings="{ identifier }"
         class="py-4"
         @infinite="onInfiniteLoad"
@@ -52,5 +50,5 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => result.value?.admin.projectList || [])
+const projects = computed(() => result.value?.admin.projectList.items || [])
 </script>

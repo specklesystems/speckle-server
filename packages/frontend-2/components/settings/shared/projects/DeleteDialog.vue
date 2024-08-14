@@ -40,7 +40,6 @@ import type { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
-  title: string
   project: ProjectItem | null
 }>()
 
