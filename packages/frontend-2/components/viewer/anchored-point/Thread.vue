@@ -38,7 +38,7 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
+          class="thread-handle sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div

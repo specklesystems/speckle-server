@@ -4177,9 +4177,9 @@ export type UserProfileEditDialogAvatar_UserFragment = { __typename?: 'User', id
 
 export type SettingsWorkspacesGeneral_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, description?: string | null };
 
-export type SettingsWorkspacesMembers_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null };
-
 export type SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string };
+
+export type SettingsWorkspacesMembers_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null };
 
 export type SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, role: string, title: string, updatedAt: string, user?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } };
 

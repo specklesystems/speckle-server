@@ -22,8 +22,9 @@ export const mapWorkspaceRoleToProjectRole = (
 ): StreamRoles => {
   switch (workspaceRole) {
     case Roles.Workspace.Guest:
-    case Roles.Workspace.Member:
       return Roles.Stream.Reviewer
+    case Roles.Workspace.Member:
+      return Roles.Stream.Contributor
     case Roles.Workspace.Admin:
       return Roles.Stream.Owner
   }
