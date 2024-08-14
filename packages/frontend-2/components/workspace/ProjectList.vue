@@ -60,12 +60,12 @@ import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  WorkspaceProjects_ProjectCollectionFragment,
+  WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment WorkspaceProjects_ProjectCollection on ProjectCollection {
+  fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
     totalCount
     items {
       ...ProjectDashboardItem
@@ -101,7 +101,7 @@ const { result: initialQueryResult } = useQuery(workspacePageQuery, {
 })
 
 const { query, onInfiniteLoad } = usePaginatedQuery<
-  { workspace: { projects: WorkspaceProjects_ProjectCollectionFragment } },
+  { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },
   WorkspaceProjectsQueryQueryVariables
 >({
   query: workspaceProjectsQuery,
@@ -116,8 +116,7 @@ const { query, onInfiniteLoad } = usePaginatedQuery<
     search: vars.filter?.search || ''
   }),
   resolveCurrentResult: (result) => result?.workspace?.projects,
-  resolveInitialResult: (): WorkspaceProjects_ProjectCollectionFragment | undefined =>
-    workspace.value?.projects,
+  resolveInitialResult: () => workspace.value?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,
     cursor: newCursor
