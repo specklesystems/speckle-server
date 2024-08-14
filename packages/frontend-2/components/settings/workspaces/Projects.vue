@@ -24,6 +24,16 @@
 <script setup lang="ts">
 import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
+    totalCount
+    items {
+      ...SettingsSharedProjects_Project
+    }
+  }
+`)
 
 const props = defineProps<{
   workspaceId: string

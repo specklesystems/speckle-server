@@ -59,7 +59,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
       id
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
-        ...SettingsSharedProjects_ProjectCollection
+        ...SettingsWorkspacesProjects_ProjectCollection
       }
     }
   }

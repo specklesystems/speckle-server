@@ -71,7 +71,7 @@ export const getProjectsQuery = graphql(`
         cursor: $cursor
       ) {
         cursor
-        ...SettingsSharedProjects_ProjectCollection
+        ...SettingsServerProjects_ProjectCollection
       }
     }
   }

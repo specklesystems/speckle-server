@@ -83,35 +83,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
+import type { SettingsSharedProjects_ProjectCollectionFragment } from '~~/lib/common/generated/gql/graphql'
+import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
-import type { SettingsSharedProjects_ProjectCollectionFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment SettingsSharedProjects_ProjectCollection on ProjectCollection {
-    totalCount
-    items {
+  fragment SettingsSharedProjects_Project on Project {
+    id
+    name
+    visibility
+    createdAt
+    updatedAt
+    models {
+      totalCount
+    }
+    versions {
+      totalCount
+    }
+    team {
       id
-      name
-      visibility
-      createdAt
-      updatedAt
-      models {
-        totalCount
-      }
-      versions {
-        totalCount
-      }
-      team {
+      user {
+        name
         id
-        user {
-          name
-          id
-          avatar
-        }
+        avatar
       }
     }
   }

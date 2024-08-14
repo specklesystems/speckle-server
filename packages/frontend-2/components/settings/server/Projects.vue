@@ -24,7 +24,16 @@
 import { ref } from 'vue'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { graphql } from '~/lib/common/generated/gql'
 
+graphql(`
+  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {
+    totalCount
+    items {
+      ...SettingsSharedProjects_Project
+    }
+  }
+`)
 defineEmits<{
   (e: 'close'): void
 }>()
