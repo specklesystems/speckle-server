@@ -75,6 +75,17 @@ module.exports = (app) => {
           objectIds: childrenChunk
         })
         databaseStreams.push(dbStream)
+        dbStream.on('data', (data) => {
+          //HACK force premature close of connection after first iteration
+          if (iterationIndex === 1) {
+            req.log.warn('Prematurely closing connection')
+            res.end()
+          }
+          req.log.info(
+            { id: data.id, iterationIndex: iterationIndex - 1 },
+            'DB stream data on iteration {iterationIndex} return {id}'
+          )
+        })
 
         speckleObjStream.on('error', (err) => {
           req.log.error(
@@ -104,14 +115,7 @@ module.exports = (app) => {
         iterationIndex++
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
-          dbStream.on('data', (data) => {
-            //HACK force premature close of connection after first iteration
-            if (iterationIndex === 1) res.end()
-            req.log.debug(
-              { id: data.id },
-              'DB stream data on iteration {iterationIndex} return {id}'
-            )
-          })
+
           dbStream.on('end', (params) => {
             req.log.info(
               { iterationIndex: iterationIndex - 1 },
