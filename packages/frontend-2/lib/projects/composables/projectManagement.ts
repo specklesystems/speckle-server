@@ -140,7 +140,6 @@ export function useCreateProject() {
               { fieldNameWhitelist: ['admin'] }
             )
 
-            // New cache update for Workspace.projects
             if (input.workspaceId) {
               const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
 
@@ -148,15 +147,9 @@ export function useCreateProject() {
                 cache,
                 workspaceCacheId,
                 (_fieldName, variables, value, details) => {
-                  if (_fieldName !== 'projects') return
-
-                  if (variables?.filter?.search?.length) {
-                    return details.DELETE
-                  }
-
-                  const newItems = Array.isArray(value?.items)
-                    ? [details.ref('Project', newProject.id), ...value.items]
-                    : [details.ref('Project', newProject.id)]
+                  const newItems = isUndefined(value?.items)
+                    ? undefined
+                    : [details.ref('Project', newProject.id), ...value.items]
 
                   const newTotalCount = isUndefined(value?.totalCount)
                     ? undefined
@@ -164,9 +157,12 @@ export function useCreateProject() {
 
                   return {
                     ...value,
-                    items: newItems,
+                    ...(isUndefined(newItems) ? {} : { items: newItems }),
                     ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
                   }
+                },
+                {
+                  fieldNameWhitelist: ['projects']
                 }
               )
             }

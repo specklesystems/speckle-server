@@ -55,6 +55,17 @@ import type { Optional, StreamRoles } from '@speckle/shared'
 import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceProjects_ProjectCollection on ProjectCollection {
+    totalCount
+    items {
+      ...ProjectDashboardItem
+    }
+    cursor
+  }
+`)
 
 const infiniteLoaderId = ref('')
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
@@ -83,7 +94,10 @@ const { query, onInfiniteLoad } = usePaginatedQuery({
       search: (search.value || '').trim() || null
     }
   })),
-  resolveKey: (vars) => vars.workspaceId,
+  resolveKey: (vars) => ({
+    workspaceId: vars.workspaceId,
+    search: vars.filter?.search || ''
+  }),
   resolveCurrentResult: (result) => result?.workspace?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,

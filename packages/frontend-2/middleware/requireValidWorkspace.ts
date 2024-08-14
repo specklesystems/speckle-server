@@ -27,7 +27,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
   const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'WORKSPACE_NOT_FOUND'
+    (e) => e.extensions['code'] === 'WORKSPACE_NOT_FOUND_ERROR'
   )
   if (isForbidden) {
     return abortNavigation(
