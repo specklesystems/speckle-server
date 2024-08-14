@@ -38,6 +38,7 @@ import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
+    id
     name
     logo
     description
