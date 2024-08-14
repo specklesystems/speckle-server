@@ -34,7 +34,20 @@
       ]"
       @click="toggleOpen"
     >
-      <ChevronDownIcon :class="[isOpen && 'rotate-180']" class="h-2.5 w-2.5" />
+      <svg
+        width="8"
+        height="4"
+        viewBox="0 0 8 4"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        :class="[isOpen ? '' : '-rotate-90']"
+      >
+        <path
+          d="M3.64645 3.74984C3.84171 3.9451 4.15829 3.9451 4.35355 3.74984L7.14645 0.956947C7.46143 0.641965 7.23835 0.103394 6.79289 0.103394L1.20711 0.103394C0.761654 0.103394 0.53857 0.641964 0.853552 0.956946L3.64645 3.74984Z"
+          fill="#626263"
+        />
+      </svg>
+
       <h6 class="text-heading-sm text-foreground flex items-center space-x-1.5">
         {{ label }}
       </h6>
@@ -46,7 +59,6 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { ref, useSlots } from 'vue'
 
 const props = defineProps<{
