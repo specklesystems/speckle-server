@@ -5,9 +5,9 @@
     max-width="sm"
     :buttons="dialogButtons"
   >
-    <p>
+    <p class="text-body-xs text-foreground">
       Are you sure you want to
-      <span class="font-medium">permanently delete</span>
+      <span class="font-semibold">permanently delete</span>
       the selected workspace?
     </p>
     <div
@@ -15,9 +15,9 @@
     >
       {{ workspace.name }}
     </div>
-    <p>
+    <p class="text-body-xs text-foreground">
       This action
-      <span class="font-medium">cannot</span>
+      <span class="font-semibold">cannot</span>
       be undone.
     </p>
   </LayoutDialog>

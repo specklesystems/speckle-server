@@ -6,11 +6,9 @@
           name="search"
           :custom-icon="MagnifyingGlassIcon"
           color="foundation"
-          full-width
           search
           :show-clear="!!search"
           placeholder="Search projects"
-          class="rounded-md border border-outline-3"
           v-bind="bind"
           v-on="on"
         />
