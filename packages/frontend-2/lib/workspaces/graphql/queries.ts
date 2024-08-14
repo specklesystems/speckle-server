@@ -17,7 +17,7 @@ export const workspacePageQuery = graphql(`
     workspace(id: $workspaceId) {
       id
       ...WorkspaceHeader_Workspace
-      projects(filter: $filter, cursor: $cursor) {
+      projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
     }
@@ -31,7 +31,8 @@ export const workspaceProjectsQuery = graphql(`
     $cursor: String
   ) {
     workspace(id: $workspaceId) {
-      projects(filter: $filter, cursor: $cursor) {
+      id
+      projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
     }
