@@ -2,7 +2,8 @@ import { useMutation } from '@vue/apollo-composable'
 import type {
   Workspace,
   WorkspaceInviteCreateInput,
-  WorkspaceInvitedTeamArgs
+  WorkspaceInvitedTeamArgs,
+  WorkspaceInviteUseInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -11,7 +12,11 @@ import {
   getObjectReference,
   modifyObjectFields
 } from '~/lib/common/helpers/graphql'
-import { inviteToWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import {
+  inviteToWorkspaceMutation,
+  processWorkspaceInviteMutation
+} from '~/lib/workspaces/graphql/mutations'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -78,5 +83,47 @@ export const useInviteUserToWorkspace = () => {
 }
 
 export const useProcessWorkspaceInvite = () => {
-  // TODO
+  const { mutate } = useMutation(processWorkspaceInviteMutation)
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const mp = useMixpanel()
+
+  return async (params: { input: WorkspaceInviteUseInput }) => {
+    if (!activeUser.value) return
+
+    const { input } = params
+    const { data, errors } =
+      (await mutate(
+        { input },
+        {
+          update: (cache, { data }) => {
+            if (!data?.workspaceMutations.invites.use) return
+
+            // Evict Query.workspace & User.workspaces
+
+            // Update Query.workspaceInvite & User.workspaceInvites
+          }
+        }
+      ).catch(convertThrowIntoFetchResult)) || {}
+
+    if (data?.workspaceMutations.invites.use) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+      })
+      mp.track('Invite Action', {
+        type: 'workspace invite',
+        accepted: input.accept
+      })
+    } else {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to process invite',
+        description: err
+      })
+    }
+
+    return !!data?.workspaceMutations.invites.use
+  }
 }

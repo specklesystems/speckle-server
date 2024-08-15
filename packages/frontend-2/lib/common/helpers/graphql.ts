@@ -278,7 +278,7 @@ export function isReference(obj: unknown): obj is CacheObjectReference {
  * @param storeFieldName
  * @param fieldName
  */
-const revolveFieldNameAndVariables = <
+export const revolveFieldNameAndVariables = <
   V extends Optional<Record<string, unknown>> = undefined
 >(
   storeFieldName: string,
