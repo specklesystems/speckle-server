@@ -64,16 +64,20 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
+
+        const speckleObjStreamCloseHandler = () => {
+          dbStream.destroy()
+        }
+
+        speckleObjStream.once('close', speckleObjStreamCloseHandler)
+
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
-          dbStream.on('data', () => {
-            if (!speckleObjStream.writable) {
-              dbStream.destroy()
-            }
-          })
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
         })
+
+        speckleObjStream.removeListener('close', speckleObjStreamCloseHandler)
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
