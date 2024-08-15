@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import type { Optional } from '@speckle/shared'
 import type { WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
+import { useProcessWorkspaceInvite } from '~/lib/workspaces/composables/management'
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
@@ -31,6 +32,10 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  processed: [success: boolean]
+}>()
+
 const props = withDefaults(
   defineProps<{
     invite: WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment
@@ -43,19 +48,25 @@ const props = withDefaults(
   { showWorkspaceName: true }
 )
 
+const useInvite = useProcessWorkspaceInvite()
+
 const loading = ref(false)
 
 const processInvite = async (accept: boolean, token: Optional<string>) => {
   if (!token) return
 
   loading.value = true
-  // const success = await useInvite({
-  //   projectId: props.invite.projectId,
-  //   accept,
-  //   token,
-  //   inviteId: props.invite.id
-  // })
+  const success = await useInvite({
+    workspaceId: props.invite.workspaceId,
+    input: {
+      accept,
+      token
+    },
+    inviteId: props.invite.id
+  })
   loading.value = false
   if (!success) return
+
+  emit('processed', accept)
 }
 </script>

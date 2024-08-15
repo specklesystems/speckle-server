@@ -1,5 +1,10 @@
 import { useMutation } from '@vue/apollo-composable'
 import type {
+  Query,
+  QueryWorkspaceArgs,
+  QueryWorkspaceInviteArgs,
+  User,
+  UserWorkspacesArgs,
   Workspace,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
@@ -10,7 +15,9 @@ import {
   getCacheId,
   getFirstErrorMessage,
   getObjectReference,
-  modifyObjectFields
+  modifyObjectField,
+  modifyObjectFields,
+  ROOT_QUERY
 } from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
@@ -88,20 +95,63 @@ export const useProcessWorkspaceInvite = () => {
   const { triggerNotification } = useGlobalToast()
   const mp = useMixpanel()
 
-  return async (params: { input: WorkspaceInviteUseInput }) => {
-    if (!activeUser.value) return
+  return async (params: {
+    input: WorkspaceInviteUseInput
+    workspaceId: string
+    inviteId: string
+  }) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
 
-    const { input } = params
+    const { input, workspaceId, inviteId } = params
     const { data, errors } =
       (await mutate(
         { input },
         {
-          update: (cache, { data }) => {
-            if (!data?.workspaceMutations.invites.use) return
+          update: (cache, { data, errors }) => {
+            if (errors?.length) return
 
-            // Evict Query.workspace & User.workspaces
+            const accepted = data?.workspaceMutations.invites.use
 
-            // Update Query.workspaceInvite & User.workspaceInvites
+            if (accepted) {
+              // Evict Query.workspace
+              modifyObjectField<Query['workspace'], QueryWorkspaceArgs>(
+                cache,
+                ROOT_QUERY,
+                'workspace',
+                ({ variables, details: { DELETE } }) => {
+                  if (variables.id === workspaceId) return DELETE
+                }
+              )
+
+              // Evict all User.workspaces
+              modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+                cache,
+                getCacheId('User', userId),
+                'workspaces',
+                ({ details: { DELETE } }) => DELETE
+              )
+            }
+
+            // Set Query.workspaceInvite(id) = null (no invite)
+            modifyObjectField<Query['workspaceInvite'], QueryWorkspaceInviteArgs>(
+              cache,
+              ROOT_QUERY,
+              'workspaceInvite',
+              ({ value, variables, details: { readField } }) => {
+                if (value) {
+                  const workspaceId = readField('workspaceId', value)
+                  if (workspaceId === workspaceId) return null
+                } else {
+                  if (variables.workspaceId === workspaceId) return null
+                }
+              }
+            )
+
+            // Evict invite itself
+            cache.evict({
+              id: getCacheId('PendingWorkspaceCollaborator', inviteId)
+            })
           }
         }
       ).catch(convertThrowIntoFetchResult)) || {}

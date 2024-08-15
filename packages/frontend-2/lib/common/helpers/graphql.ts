@@ -476,3 +476,41 @@ export const getDateCursorFromReference = (params: {
   const iso = date.toISOString()
   return base64Encode(iso)
 }
+
+/**
+ * Simplified version of modifyObjectFields, just targetting a single field
+ * @see modifyObjectFields
+ */
+export const modifyObjectField = <
+  FieldData = unknown,
+  Variables extends Optional<Record<string, unknown>> = undefined
+>(
+  cache: ApolloCache<unknown>,
+  id: string,
+  fieldName: string,
+  updater: (params: {
+    fieldName: string
+    variables: Variables
+    value: ModifyFnCacheData<FieldData>
+    details: Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1] & {
+      ref: typeof getObjectReference
+      revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
+    }
+  }) =>
+    | Optional<ModifyFnCacheData<FieldData>>
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
+  options?: Partial<{
+    debug: boolean
+  }>
+) => {
+  modifyObjectFields<Variables, FieldData>(
+    cache,
+    id,
+    (field, variables, value, details) => {
+      if (field !== fieldName) return
+      return updater({ fieldName: field, variables, value, details })
+    },
+    options
+  )
+}

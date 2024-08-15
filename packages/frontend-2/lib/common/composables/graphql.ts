@@ -8,20 +8,12 @@ import type {
   DocumentParameter,
   OptionsParameter
 } from '@vue/apollo-composable/dist/useQuery'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import {
-  getObjectReference,
-  revolveFieldNameAndVariables,
-  convertThrowIntoFetchResult,
-  getCacheId,
-  type ModifyFnCacheData,
-  modifyObjectFields
-} from '~/lib/common/helpers/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
-import { isString, isUndefined } from 'lodash-es'
+import { isUndefined } from 'lodash-es'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
-import type { Modifier } from '@apollo/client/cache'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -247,67 +239,4 @@ export const usePageQueryStandardFetchPolicy = () => {
     // we only wanna do this when transitioning between CSR routes
     return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
   })
-}
-
-export type ApolloCacheKey = string | { id: string; typename: string }
-
-export const useApolloCacheModification = () => {
-  const client = useApolloClient().client
-  const cache = client.cache
-
-  const getKeyCacheId = (key: ApolloCacheKey): string => {
-    if (isString(key)) return key
-    return getCacheId(key.typename, key.id)
-  }
-
-  const evictObject = (key: ApolloCacheKey) => {
-    cache.evict({
-      id: getKeyCacheId(key)
-    })
-  }
-
-  const modifyObject = <GraphQLType extends Record<string, unknown>>(
-    key: ApolloCacheKey,
-    fields: {
-      [FieldName in keyof GraphQLType]: <
-        Variables extends Optional<Record<string, unknown>> = undefined,
-        FieldData = GraphQLType[FieldName]
-      >(params: {
-        variables: Variables
-        fieldName: FieldName
-        value: ModifyFnCacheData<FieldData>
-        details: Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1] & {
-          ref: typeof getObjectReference
-          revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
-        }
-      }) =>
-        | Optional<ModifyFnCacheData<FieldData>>
-        | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
-    }
-  ) => {
-    modifyObjectFields(
-      cache,
-      getKeyCacheId(key),
-      (fieldName, variables, value, details) => {
-        const fieldFn = fields[fieldName]
-        if (!fieldFn) return value
-
-        return fieldFn({
-          variables,
-          value,
-          fieldName,
-          details: {
-            ...details,
-            ref: getObjectReference,
-            revolveFieldNameAndVariables
-          }
-        })
-      }
-    )
-  }
-
-  return {
-    evictObject,
-    modifyObject
-  }
 }
