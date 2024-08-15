@@ -12,7 +12,7 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   getObjectReference,
   revolveFieldNameAndVariables,
-  type convertThrowIntoFetchResult,
+  convertThrowIntoFetchResult,
   getCacheId,
   type ModifyFnCacheData,
   modifyObjectFields
