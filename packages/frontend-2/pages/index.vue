@@ -95,7 +95,7 @@ const quickStartItems = shallowRef<QuickStartItem[]>([
     buttons: [
       {
         text: 'Open documentation',
-        props: { to: docsPageUrl, external: true }
+        props: { to: docsPageUrl }
       }
     ]
   },
@@ -105,7 +105,7 @@ const quickStartItems = shallowRef<QuickStartItem[]>([
     buttons: [
       {
         text: 'Ask a question',
-        props: { to: forumPageUrl, external: true }
+        props: { to: forumPageUrl }
       }
     ]
   }
