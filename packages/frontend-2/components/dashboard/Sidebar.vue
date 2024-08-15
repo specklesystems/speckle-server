@@ -31,7 +31,7 @@
             <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
               <LayoutSidebarMenuGroupItem
                 label="Dashboard"
-                :active="isActive(homeRoute, dashboardRoute)"
+                :active="isActive(homeRoute)"
               >
                 <template #icon>
                   <HomeIcon class="h-5 w-5 text-foreground-2" />
@@ -149,12 +149,7 @@ import {
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  homeRoute,
-  projectsRoute,
-  workspaceRoute,
-  dashboardRoute
-} from '~/lib/common/helpers/route'
+import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 
 const { activeUser } = useActiveUser()

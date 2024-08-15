@@ -1,12 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="dashboardRoute"
-        name="Dashboard"
-        hide-chevron
-        :separator="false"
-      />
+      <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
     <div class="flex flex-col gap-y-12">
       <section>
@@ -51,7 +46,7 @@ import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import GhostContentAPI from '@tryghost/content-api'
-import { docsPageUrl, forumPageUrl, dashboardRoute } from '~~/lib/common/helpers/route'
+import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -59,8 +54,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 useHead({ title: 'Dashboard' })
 
 definePageMeta({
-  middleware: ['dashboard-redirect'],
-  alias: ['/dashboard', '/profile']
+  middleware: ['homepage'],
+  alias: ['/profile', '/dashboard']
 })
 
 const config = useRuntimeConfig()

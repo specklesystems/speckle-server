@@ -18,7 +18,7 @@ useHead({
 })
 
 definePageMeta({
-  middleware: ['dashboard-redirect'],
+  middleware: ['auth'],
   alias: '/profile'
 })
 
