@@ -1,14 +1,12 @@
-'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+import type { Application } from 'express'
+import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
+import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
+import { getObjectsStream } from '@/modules/core/services/objects'
+import { pipeline, PassThrough } from 'stream'
 
-const { validatePermissionsReadStream } = require('./authUtils')
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
-const { getObjectsStream } = require('../services/objects')
-
-const { pipeline, PassThrough } = require('stream')
-
-module.exports = (app) => {
+export default (app: Application) => {
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
@@ -59,6 +57,7 @@ module.exports = (app) => {
     const cSize = 1000
     try {
       for (let cStart = 0; cStart < childrenList.length; cStart += cSize) {
+        if (!speckleObjStream.writable) break
         const childrenChunk = childrenList.slice(cStart, cStart + cSize)
 
         const dbStream = await getObjectsStream({
@@ -67,6 +66,11 @@ module.exports = (app) => {
         })
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
+          dbStream.on('data', () => {
+            if (!speckleObjStream.writable) {
+              dbStream.destroy()
+            }
+          })
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
         })
