@@ -5,8 +5,6 @@
     </Portal>
     <div class="flex flex-col gap-y-12">
       <section>
-        <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
-
         <h2 class="text-heading-sm text-foreground-2">Quick start</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
           <QuickStartCard
@@ -52,7 +50,6 @@ import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/rout
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { PromoBanner } from '~/lib/promo-banners/types'
 
 useHead({ title: 'Dashboard' })
 
@@ -68,17 +65,6 @@ const { triggerNotification } = useGlobalToast()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false
 })
-
-const promoBanners = ref<PromoBanner[]>([
-  {
-    id: 'speckleverse',
-    primaryText: 'Join our online hackathon!',
-    secondaryText: 'June 7 - 9, 2024',
-    url: 'https://beyond-the-speckleverse.devpost.com/',
-    priority: 1,
-    expiryDate: '2024-06-10'
-  }
-])
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://speckle.systems',

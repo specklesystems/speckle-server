@@ -1,16 +1,23 @@
 <template>
-  <div v-if="shouldShowBanner" class="flex gap-2 p-2 pb-1">
-    <ExclamationCircleIcon class="h-8 w-8 opacity-50" />
-    <div class="flex flex-col mb-1">
-      <div class="text-body-2xs mb-1">{{ verifyBannerText }}</div>
+  <div
+    v-if="shouldShowBanner"
+    class="flex flex-col mx-2 mt-1 mb-2 px-2 py-1.5 text-dark border border-outline-2 bg-foundation-1 rounded-md"
+  >
+    <div class="text-body-xs">{{ verifyBannerText }}</div>
+    <div class="">
       <FormButton
         size="sm"
-        color="outline"
+        text
         :disabled="loading"
+        link
+        class="font-medium text-danger-darker"
         @click="requestVerification"
       >
         {{ verifyBannerCtaText }}
       </FormButton>
+      <!-- <CommonTextLink @click="dismiss">
+        <XMarkIcon class="h-6 w-6" />
+      </CommonTextLink> -->
     </div>
   </div>
   <div v-else-if="noticeLoading">
@@ -26,7 +33,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { ExclamationCircleIcon } from '@heroicons/vue/24/solid'
 
 const reminderStateQuery = graphql(`
   query EmailVerificationBannerState {
