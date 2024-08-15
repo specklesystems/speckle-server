@@ -9,8 +9,10 @@
       {{ project.name }}
     </NuxtLink>
     <div class="flex-1">
-      <p class="text-body-3xs text-foreground-2 capitalize">
-        {{ project.role?.split(':').reverse()[0] }}
+      <p class="text-body-3xs text-foreground-2">
+        <span class="capitalize">
+          {{ project.role?.split(':').reverse()[0] }}
+        </span>
         <span class="pl-1 pr-2">•</span>
         <span v-tippy="updatedAt.full">
           {{ updatedAt.relative }}
