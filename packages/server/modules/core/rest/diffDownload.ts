@@ -41,16 +41,24 @@ export default (app: Application) => {
       res,
       (err) => {
         if (err) {
-          req.log.error(err, `App error streaming objects`)
-        } else {
-          req.log.info(
-            {
-              childCount: childrenList.length,
-              mbWritten: gzipStream.bytesWritten / 1000000
-            },
-            'Streamed {childCount} objects (size: {mbWritten} MB)'
-          )
+          switch (err.code) {
+            case 'ERR_STREAM_PREMATURE_CLOSE':
+              req.log.debug({ err }, 'Stream to client has prematurely closed')
+              break
+            default:
+              req.log.error(err, 'App error streaming objects')
+              break
+          }
+          return
         }
+
+        req.log.info(
+          {
+            childCount: childrenList.length,
+            mbWritten: gzipStream.bytesWritten / 1000000
+          },
+          'Streamed {childCount} objects (size: {mbWritten} MB)'
+        )
       }
     )
 
