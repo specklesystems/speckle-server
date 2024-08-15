@@ -38,3 +38,11 @@ export const workspaceProjectsQuery = graphql(`
     }
   }
 `)
+
+export const workspaceInviteQuery = graphql(`
+  query WorkspaceInvite($workspaceId: String!, $token: String) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
+    }
+  }
+`)

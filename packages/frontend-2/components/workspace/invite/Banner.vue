@@ -56,17 +56,22 @@ const processInvite = async (accept: boolean, token: Optional<string>) => {
   if (!token) return
 
   loading.value = true
-  const success = await useInvite({
-    workspaceId: props.invite.workspaceId,
-    input: {
-      accept,
-      token
+  const success = await useInvite(
+    {
+      workspaceId: props.invite.workspaceId,
+      input: {
+        accept,
+        token
+      },
+      inviteId: props.invite.id
     },
-    inviteId: props.invite.id
-  })
+    {
+      callback: () => {
+        emit('processed', accept)
+      }
+    }
+  )
   loading.value = false
   if (!success) return
-
-  emit('processed', accept)
 }
 </script>

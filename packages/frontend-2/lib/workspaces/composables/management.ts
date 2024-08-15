@@ -95,11 +95,19 @@ export const useProcessWorkspaceInvite = () => {
   const { triggerNotification } = useGlobalToast()
   const mp = useMixpanel()
 
-  return async (params: {
-    input: WorkspaceInviteUseInput
-    workspaceId: string
-    inviteId: string
-  }) => {
+  return async (
+    params: {
+      input: WorkspaceInviteUseInput
+      workspaceId: string
+      inviteId: string
+    },
+    options?: Partial<{
+      /**
+       * Do something once mutation has finished, before all cache updates
+       */
+      callback: () => void
+    }>
+  ) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -111,6 +119,7 @@ export const useProcessWorkspaceInvite = () => {
           update: (cache, { data, errors }) => {
             if (errors?.length) return
 
+            if (options?.callback) options.callback()
             const accepted = data?.workspaceMutations.invites.use
 
             if (accepted) {
