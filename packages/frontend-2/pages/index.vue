@@ -59,8 +59,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 useHead({ title: 'Dashboard' })
 
 definePageMeta({
-  middleware: ['auth'],
-  alias: '/dashboard'
+  middleware: ['dashboard-redirect'],
+  alias: ['/dashboard', '/profile']
 })
 
 const config = useRuntimeConfig()
