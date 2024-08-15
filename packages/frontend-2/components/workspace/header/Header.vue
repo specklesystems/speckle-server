@@ -1,11 +1,11 @@
 <template>
-  <div class="flex justify-between items-center">
-    <div class="flex gap-2 mb-3">
+  <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+    <div class="flex gap-2 mb-3 mt-2">
       <img
         v-if="workspaceInfo.logo"
-        :src="workspaceInfo.logo"
-        :alt="`${workspaceInfo.name}'s logo`"
-        class="w-5 h-5 mt-0.5 object-contain"
+        :src="workspaceInfo.logo || ''"
+        alt="Workspace logo"
+        class="w-5 h-5 mt-0.5"
       />
       <div class="flex flex-col">
         <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
