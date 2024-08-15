@@ -18,8 +18,7 @@ useHead({
 })
 
 definePageMeta({
-  middleware: ['auth'],
-  alias: '/profile'
+  middleware: ['auth']
 })
 
 const { isLoggedIn } = useActiveUser()
