@@ -20,7 +20,7 @@ const workspaceId = computed(() => route.params.id as Optional<string>)
 const { result } = useQuery(
   workspaceInviteQuery,
   () => ({
-    workspaceId: workspaceId.value || '',
+    workspaceId: workspaceId.value,
     token: token.value
   }),
   () => ({ enabled: !!workspaceId.value })

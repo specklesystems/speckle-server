@@ -1,9 +1,10 @@
 import type { Optional } from '@speckle/shared'
 import { activeUserQuery } from '~/lib/auth/composables/activeUser'
-import { loginServerInfoQuery } from '~/lib/auth/graphql/queries'
+import { authLoginPanelQuery } from '~/lib/auth/graphql/queries'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
+import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
@@ -45,12 +46,27 @@ export default defineNuxtPlugin(async (ctx) => {
     )
   }
 
+  // Preload workspace data
+  if (idParam && path.startsWith('/workspaces/')) {
+    promises.push(
+      preload({
+        queries: [
+          {
+            query: workspaceAccessCheckQuery,
+            variables: { id: idParam },
+            context: { skipLoggingErrors: true }
+          }
+        ]
+      })
+    )
+  }
+
   // Preload viewer data
   if (route.meta.key === '/projects/:id/models/resources') {
     // Unable to preload this from vue components due to SSR being essentially turned off for the viewer
     promises.push(
       preload({
-        queries: [{ query: loginServerInfoQuery }]
+        queries: [{ query: authLoginPanelQuery }]
       })
     )
   }

@@ -100,6 +100,8 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
+      if (!token?.length) return null
+
       return getServerInviteForTokenFactory({
         findServerInvite: findServerInviteFactory({ db })
       })(token)

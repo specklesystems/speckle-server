@@ -262,12 +262,15 @@ function buildPendingWorkspaceCollaboratorModel(
 export const getUserPendingWorkspaceInviteFactory =
   (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
   async (params: {
-    workspaceId: string
+    workspaceId: MaybeNullOrUndefined<string>
     userId: MaybeNullOrUndefined<string>
     token: MaybeNullOrUndefined<string>
   }) => {
     const { workspaceId, userId, token } = params
-    if (!userId && !token) return null
+    if (!userId?.length && !token?.length) return null
+    if (!token?.length && !workspaceId?.length) return null
+
+    // TODO: Test w/o token & workspace, or w/ just token
 
     const userTarget = userId ? buildUserTarget(userId) : undefined
 
@@ -279,7 +282,7 @@ export const getUserPendingWorkspaceInviteFactory =
       token: token || undefined,
       resourceFilter: {
         resourceType: WorkspaceInviteResourceType,
-        resourceId: workspaceId
+        resourceId: workspaceId || undefined
       }
     })
     if (!invite) return null

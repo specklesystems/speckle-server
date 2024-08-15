@@ -13,6 +13,11 @@
           </span>
           . You have to sign out from the current account to proceed.
         </template>
+        <template v-else>
+          using the
+          <span class="font-semibold">{{ invite.email }}</span>
+          email address.
+        </template>
       </template>
     </div>
     <div class="flex flex-col space-y-4">
@@ -48,6 +53,20 @@
             Sign out to continue
           </FormButton>
         </template>
+        <template v-else>
+          <FormButton
+            color="outline"
+            size="lg"
+            full-width
+            :disabled="loading"
+            @click="signOutGoToRegister"
+          >
+            Create new account
+          </FormButton>
+          <FormButton color="primary" size="lg" full-width :disabled="loading">
+            Add new email to existing account
+          </FormButton>
+        </template>
       </template>
     </div>
   </div>
@@ -61,6 +80,7 @@ import type { WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment } from '
 import {
   useNavigateToHome,
   useNavigateToLogin,
+  useNavigateToRegistration,
   workspaceRoute
 } from '~/lib/common/helpers/route'
 import { useProcessWorkspaceInvite } from '~/lib/workspaces/composables/management'
@@ -89,6 +109,7 @@ const postAuthRedirect = usePostAuthRedirect()
 const { logout } = useAuthManager()
 const goHome = useNavigateToHome()
 const goToLogin = useNavigateToLogin()
+const goToRegister = useNavigateToRegistration()
 const route = useRoute()
 const useInvite = useProcessWorkspaceInvite()
 const { activeUser } = useActiveUser()
@@ -139,9 +160,19 @@ const processInvite = async (accept: boolean) => {
 }
 
 const signOutGoToLogin = async () => {
-  await logout()
+  await logout({ skipRedirect: true })
   postAuthRedirect.setCurrentRoute(true)
   await goToLogin({
+    query: {
+      token: token.value
+    }
+  })
+}
+
+const signOutGoToRegister = async () => {
+  await logout({ skipRedirect: true })
+  postAuthRedirect.setCurrentRoute(true)
+  await goToRegister({
     query: {
       token: token.value
     }
