@@ -9,7 +9,7 @@
       <div class="relative flex h-[calc(100dvh-3rem)]">
         <DashboardSidebar />
 
-        <main class="w-full h-full overflow-y-auto simple-scrollbar pt-4 md:pt-8 pb-16">
+        <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
           <div class="container mx-auto px-6 md:px-12">
             <slot />
           </div>

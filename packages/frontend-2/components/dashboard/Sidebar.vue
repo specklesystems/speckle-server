@@ -57,9 +57,6 @@
             collapsible
             title="Workspaces"
           >
-            <template #title-icon>
-              <UserAvatar size="sm" :user="activeUser" hover-effect class="ml-1" />
-            </template>
             <NuxtLink
               v-for="(item, key) in workspacesItems"
               :key="key"
@@ -70,8 +67,12 @@
                 :label="item.label"
                 :active="isActive(item.to)"
               >
-                <template #icon>
-                  <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                <template v-if="item.logo" #icon>
+                  <img
+                    :src="item.logo"
+                    :alt="`${item.label}'s logo`"
+                    class="w-5 h-5 mt-0.5 object-contain"
+                  />
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
@@ -146,13 +147,11 @@ import {
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 
-const { activeUser } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 
@@ -171,7 +170,8 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.id)
+        to: workspaceRoute(workspace.id),
+        logo: workspace.logo
       }))
     : []
 )

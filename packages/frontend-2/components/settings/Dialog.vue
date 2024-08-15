@@ -110,6 +110,7 @@ graphql(`
       items {
         id
         name
+        logo
       }
     }
   }

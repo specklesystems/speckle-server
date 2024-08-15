@@ -84,7 +84,7 @@ const documents = {
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
-    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
+    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n        logo\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
     "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n": types.SettingsUserEmails_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogNotificationPreferences_User on User {\n    id\n    notificationPreferences\n  }\n": types.UserProfileEditDialogNotificationPreferences_UserFragmentDoc,
     "\n  fragment SettingsUserProfile_User on User {\n    ...UserProfileEditDialogChangePassword_User\n    ...UserProfileEditDialogDeleteAccount_User\n    ...UserProfileEditDialogBio_User\n  }\n": types.SettingsUserProfile_UserFragmentDoc,
@@ -576,7 +576,7 @@ export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n        logo\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n        logo\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
