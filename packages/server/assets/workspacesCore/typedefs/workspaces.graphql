@@ -195,6 +195,11 @@ type PendingWorkspaceCollaborator {
   workspaceId: String!
   workspaceName: String!
   """
+  E-mail address if target is unregistered or primary e-mail of target registered user
+  if token was specified to retrieve this invite
+  """
+  email: String
+  """
   E-mail address or name of the invited user
   """
   title: String!
@@ -208,7 +213,8 @@ type PendingWorkspaceCollaborator {
   """
   user: LimitedUser
   """
-  Only available if the active user is the pending workspace collaborator
+  Only available if the active user is the pending workspace collaborator or if it was already
+  specified when retrieving this invite
   """
   token: String
 }

@@ -483,6 +483,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return user ? removePrivateFields(user) : null
         },
         token: async (parent, _args, ctx) => {
+          // If it was specified with the request, just return it
+          if (parent.token?.length) return parent.token
+
           const authedUserId = ctx.userId
           const targetUserId = parent.user?.id
           const inviteId = parent.inviteId
@@ -494,6 +497,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const invite = await ctx.loaders.invites.getInvite.load(inviteId)
           return invite?.token || null
+        },
+        email: async (parent, _args, ctx) => {
+          if (!parent.user) return parent.email
+
+          // TODO: Tests to check token & email access?
+
+          const token = parent.token
+          const authedUserId = ctx.userId
+          const targetUserId = parent.user?.id
+
+          // Only returning it for the user that is the pending stream collaborator
+          // OR if the token was specified
+          if (
+            (!authedUserId || !targetUserId || authedUserId !== targetUserId) &&
+            !token
+          ) {
+            return null
+          }
+
+          return parent.email
         }
       },
       User: {
