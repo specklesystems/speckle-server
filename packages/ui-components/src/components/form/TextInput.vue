@@ -274,7 +274,7 @@ const {
 })
 
 const leadingIconClasses = computed(() => {
-  const classParts: string[] = ['h-5 w-5']
+  const classParts: string[] = ['h-4 w-4']
 
   if (errorMessage.value) {
     classParts.push('text-danger')

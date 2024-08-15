@@ -110,6 +110,10 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
 const { on, bind, value: search } = useDebouncedTextInput()
 const router = useRouter()
 
@@ -147,5 +151,6 @@ const openProjectDeleteDialog = (item: ItemType) => {
 
 const handleProjectClick = (item: ItemType) => {
   router.push(`/projects/${item.id}`)
+  emit('close')
 }
 </script>
