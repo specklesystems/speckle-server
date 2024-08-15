@@ -41,6 +41,7 @@ const documents = {
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
+    "\n  query HeaderNavNotificationBar {\n    activeUser {\n      projectInvites {\n        id\n        projectName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n      workspaceInvites {\n        id\n        workspaceName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.HeaderNavNotificationBarDocument,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.HeaderNavShare_ProjectFragmentDoc,
     "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    visibility\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectModelPageVersionsPaginationFragmentDoc,
@@ -401,6 +402,10 @@ export function graphql(source: "\n  fragment FormSelectProjects_Project on Proj
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query HeaderNavNotificationBar {\n    activeUser {\n      projectInvites {\n        id\n        projectName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n      workspaceInvites {\n        id\n        workspaceName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query HeaderNavNotificationBar {\n    activeUser {\n      projectInvites {\n        id\n        projectName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n      workspaceInvites {\n        id\n        workspaceName\n        invitedBy {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
