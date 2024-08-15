@@ -41,6 +41,7 @@ class ObjectLoader {
     }>
   })
 
+  async getTotalObjectCount(): Promise<number>
   async getAndConstructObject(
     onProgress: (e: { stage: ProgressStage; current: number; total: number }) => void
   ): SpeckleObject | SpeckleObject[]
