@@ -1,5 +1,5 @@
 <template>
-  <InviteBanner :invite="invite" :block="block" @processed="processInvite">
+  <InviteBanner :invite="invite" :disabled="loading" @processed="processInvite">
     <template #message>
       <span class="font-medium">{{ invite.invitedBy.name }}</span>
       has invited you to join
@@ -32,18 +32,10 @@ graphql(`
   }
 `)
 
-const emit = defineEmits<{
-  processed: [success: boolean]
-}>()
-
 const props = withDefaults(
   defineProps<{
     invite: WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment
     showWorkspaceName?: boolean
-    /**
-     * Render this as a big block, instead of a small row. Used in full-page project access error pages.
-     */
-    block?: boolean
   }>(),
   { showWorkspaceName: true }
 )
@@ -56,21 +48,14 @@ const processInvite = async (accept: boolean, token: Optional<string>) => {
   if (!token) return
 
   loading.value = true
-  const success = await useInvite(
-    {
-      workspaceId: props.invite.workspaceId,
-      input: {
-        accept,
-        token
-      },
-      inviteId: props.invite.id
+  const success = await useInvite({
+    workspaceId: props.invite.workspaceId,
+    input: {
+      accept,
+      token
     },
-    {
-      callback: () => {
-        emit('processed', accept)
-      }
-    }
-  )
+    inviteId: props.invite.id
+  })
   loading.value = false
   if (!success) return
 }

@@ -1,3 +1,4 @@
+import type { MaybeAsync } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import type {
   Query,
@@ -105,7 +106,7 @@ export const useProcessWorkspaceInvite = () => {
       /**
        * Do something once mutation has finished, before all cache updates
        */
-      callback: () => void
+      callback: () => MaybeAsync<void>
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -116,10 +117,10 @@ export const useProcessWorkspaceInvite = () => {
       (await mutate(
         { input },
         {
-          update: (cache, { data, errors }) => {
+          update: async (cache, { data, errors }) => {
             if (errors?.length) return
 
-            if (options?.callback) options.callback()
+            if (options?.callback) await options.callback()
             const accepted = data?.workspaceMutations.invites.use
 
             if (accepted) {

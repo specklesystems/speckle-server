@@ -22,6 +22,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!token || !accept) {
     return
   }
+
+  // TODO: Also support workspaces
   if (!to.path.startsWith('/projects/')) return
 
   const projectId = to.params.id as Optional<string>

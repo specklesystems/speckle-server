@@ -110,6 +110,7 @@ const documents = {
     "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    id\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBanners_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteBanners_UserFragmentDoc,
+    "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    title\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
@@ -265,7 +266,7 @@ const documents = {
     "\n  query WorkspaceAccessCheck($id: String!) {\n    workspace(id: $id) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceHeader_Workspace\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
-    "\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
+    "\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query LegacyViewerStreamRedirectMetadata($streamId: String!) {\n    project(id: $streamId) {\n      id\n      versions(limit: 1) {\n        totalCount\n        items {\n          id\n          model {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.LegacyViewerStreamRedirectMetadataDocument,
@@ -681,6 +682,10 @@ export function graphql(source: "\n  fragment WorkspaceInviteBanner_PendingWorks
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment WorkspaceInviteBanners_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteBanners_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    title\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    title\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1304,7 +1309,7 @@ export function graphql(source: "\n  query WorkspaceProjectsQuery(\n    $workspa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"];
+export function graphql(source: "\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceInvite($workspaceId: String!, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

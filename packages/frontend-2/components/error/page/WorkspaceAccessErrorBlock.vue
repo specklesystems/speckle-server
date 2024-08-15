@@ -1,12 +1,6 @@
 <template>
   <NuxtErrorBoundary @error="onError">
-    <WorkspaceInviteBanner
-      v-if="invite"
-      :invite="invite"
-      :show-workspace-name="false"
-      block
-      @processed="onProcessed"
-    />
+    <WorkspaceInviteBlock v-if="invite" :invite="invite" @processed="onProcessed" />
     <ErrorPageGenericUnauthorizedBlock v-else resource-type="workspace" />
   </NuxtErrorBoundary>
 </template>
