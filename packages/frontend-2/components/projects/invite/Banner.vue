@@ -2,11 +2,13 @@
   <div v-if="invite" :class="mainClasses">
     <div :class="mainInfoBlockClasses">
       <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
-      <div class="text-foreground">
+      <div class="text-foreground text-body-xs">
         <span class="font-medium">{{ invite.invitedBy.name }}</span>
         has invited you to be part of the team from
         <template v-if="showProjectName">
-          the project {{ invite.projectName }}.
+          the project
+          <span class="font-medium">{{ invite.projectName }}</span>
+          .
         </template>
         <template v-else>this project.</template>
       </div>
@@ -14,9 +16,8 @@
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
-          :size="buttonSize"
-          color="danger"
-          text
+          size="sm"
+          color="subtle"
           :full-width="block"
           @click="processInvite(false)"
         >
@@ -24,9 +25,8 @@
         </FormButton>
         <FormButton
           :full-width="block"
-          :size="buttonSize"
+          size="sm"
           class="px-4"
-          :icon-left="CheckIcon"
           @click="processInvite(true)"
         >
           Accept
@@ -55,7 +55,6 @@ import {
 } from '~~/lib/common/helpers/route'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { Optional } from '@speckle/shared'
-import { CheckIcon } from '@heroicons/vue/24/solid'
 import { useProjectInviteManager } from '~/lib/projects/composables/invites'
 
 graphql(`
@@ -107,7 +106,6 @@ const mainClasses = computed(() => {
   if (props.block) {
     classParts.push('')
   } else {
-    classParts.push('hover:bg-primary-muted')
     classParts.push('sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row sm:py-2')
   }
 
