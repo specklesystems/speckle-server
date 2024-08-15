@@ -53,7 +53,7 @@ const props = defineProps<{
 }>()
 
 const badgeColorClasses = computed(
-  () => props.colorClasses || 'bg-blue-100 text-blue-800'
+  () => props.colorClasses || 'bg-info-lighter text-outline-4'
 )
 
 const badgeDotIconColorClasses = computed(
@@ -64,13 +64,13 @@ const badgeClasses = computed(() => {
   const classParts: string[] = [
     'inline-flex items-center',
     badgeColorClasses.value,
-    props.size === 'lg' ? 'px-3 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+    props.size === 'lg' ? 'px-3 py-0.5 label' : 'p-1 caption font-medium'
   ]
 
   if (props.rounded) {
     classParts.push('rounded')
     classParts.push(
-      props.size === 'lg' ? 'px-2 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+      props.size === 'lg' ? 'px-2 py-0.5 label' : 'p-1 caption font-medium'
     )
   } else {
     classParts.push('rounded-full')
