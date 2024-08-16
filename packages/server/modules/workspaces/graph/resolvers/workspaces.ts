@@ -13,17 +13,20 @@ import {
   deleteAllResourceInvitesFactory,
   deleteInviteFactory,
   deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   queryAllResourceInvitesFactory,
-  queryAllUserResourceInvitesFactory
+  queryAllUserResourceInvitesFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   cancelResourceInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
@@ -75,6 +78,13 @@ import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retri
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -382,6 +392,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getStreams,
                 grantStreamPermissions
               })
+            }),
+            findEmail: findEmailFactory({ db }),
+            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+              createUserEmail: createUserEmailFactory({ db }),
+              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+              findEmail: findEmailFactory({ db }),
+              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+              }),
+              requestNewEmailVerification
             })
           })
 
@@ -390,7 +411,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             finalizerResourceAccessLimits: ctx.resourceAccessRules,
             token: args.input.token,
             accept: args.input.accept,
-            resourceType: WorkspaceInviteResourceType
+            resourceType: WorkspaceInviteResourceType,
+            allowAttachingNewEmail: args.input.addNewEmail ?? undefined
           })
 
           return true

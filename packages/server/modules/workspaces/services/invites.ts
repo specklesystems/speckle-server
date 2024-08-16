@@ -433,11 +433,9 @@ export const processFinalizedWorkspaceInviteFactory =
       )
     }
 
-    const target = resolveTarget(invite.target)
-
     if (action === InviteFinalizationAction.ACCEPT) {
       await deps.updateWorkspaceRole({
-        userId: target.userId!,
+        userId: finalizerUserId,
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member
       })

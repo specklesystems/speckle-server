@@ -44,8 +44,10 @@ export const validateAndCreateUserEmailFactory =
     // Update all invites referencing the email, to point to the user
     await deps.updateEmailInvites(result.email, result.userId)
 
-    // Request email verification
-    await deps.requestNewEmailVerification(result.id)
+    // Request email verification (if needed)
+    if (!userEmail.verified) {
+      await deps.requestNewEmailVerification(result.id)
+    }
 
     return result
   }
