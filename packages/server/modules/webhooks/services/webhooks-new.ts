@@ -23,10 +23,8 @@ export const createWebhook =
     secret,
     enabled,
     triggers
-  }: Pick<Webhook, 'streamId' | 'enabled'> &
-    Partial<
-      SetValuesNullable<Pick<Webhook, 'url' | 'description' | 'secret' | 'triggers'>>
-    >) => {
+  }: Pick<Webhook, 'streamId' | 'enabled' | 'triggers'> &
+    Partial<SetValuesNullable<Pick<Webhook, 'url' | 'description' | 'secret'>>>) => {
     const streamWebhookCount = await countWebhooksByStreamId({ streamId })
     if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
       throw new Error(
@@ -41,6 +39,6 @@ export const createWebhook =
       description: description ?? undefined,
       secret: secret ?? undefined,
       enabled,
-      triggers: triggers ?? []
+      triggers
     })
   }
