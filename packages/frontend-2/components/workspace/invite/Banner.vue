@@ -14,13 +14,14 @@
 <script setup lang="ts">
 import type { Optional } from '@speckle/shared'
 import type { WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
-import { useProcessWorkspaceInvite } from '~/lib/workspaces/composables/management'
+import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
   fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
     invitedBy {
+      id
       ...LimitedUserAvatar
     }
     workspaceId
@@ -29,6 +30,7 @@ graphql(`
     user {
       id
     }
+    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator
   }
 `)
 
@@ -40,23 +42,22 @@ const props = withDefaults(
   { showWorkspaceName: true }
 )
 
-const useInvite = useProcessWorkspaceInvite()
+const { loading, accept, decline } = useWorkspaceInviteManager(
+  {
+    invite: computed(() => props.invite)
+  },
+  {
+    preventRedirect: true
+  }
+)
 
-const loading = ref(false)
-
-const processInvite = async (accept: boolean, token: Optional<string>) => {
+const processInvite = async (shouldAccept: boolean, token: Optional<string>) => {
   if (!token) return
 
-  loading.value = true
-  const success = await useInvite({
-    workspaceId: props.invite.workspaceId,
-    input: {
-      accept,
-      token
-    },
-    inviteId: props.invite.id
-  })
-  loading.value = false
-  if (!success) return
+  if (shouldAccept) {
+    await accept()
+  } else {
+    await decline()
+  }
 }
 </script>

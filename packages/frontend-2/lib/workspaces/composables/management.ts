@@ -1,11 +1,14 @@
-import type { MaybeAsync } from '@speckle/shared'
+import type { RouteLocationNormalized } from '#vue-router'
+import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 import type {
   Query,
   QueryWorkspaceArgs,
   QueryWorkspaceInviteArgs,
   User,
   UserWorkspacesArgs,
+  UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
@@ -20,6 +23,7 @@ import {
   modifyObjectFields,
   ROOT_QUERY
 } from '~/lib/common/helpers/graphql'
+import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
   inviteToWorkspaceMutation,
@@ -185,5 +189,118 @@ export const useProcessWorkspaceInvite = () => {
     }
 
     return !!data?.workspaceMutations.invites.use
+  }
+}
+
+graphql(`
+  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
+    id
+    token
+    workspaceId
+    user {
+      id
+    }
+  }
+`)
+
+export const useWorkspaceInviteManager = <
+  Invite extends UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment = UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment
+>(
+  params: {
+    invite: Ref<Optional<Invite>>
+  },
+  options?: Partial<{
+    /**
+     * Whether to prevent any reloads/redirects on successful processing of the invite
+     */
+    preventRedirect: boolean
+    route: RouteLocationNormalized
+  }>
+) => {
+  const { invite } = params
+  const { preventRedirect } = options || {}
+
+  const useInvite = useProcessWorkspaceInvite()
+  const route = options?.route || useRoute()
+  const goHome = useNavigateToHome()
+  const { activeUser } = useActiveUser()
+
+  const loading = ref(false)
+
+  const token = computed(
+    () => (route.query.token as Optional<string>) || invite.value?.token
+  )
+  const isCurrentUserTarget = computed(
+    () =>
+      activeUser.value &&
+      invite.value?.user &&
+      activeUser.value.id === invite.value.user.id
+  )
+  const targetUser = computed((): Invite['user'] => invite.value?.user)
+  const needsToAddNewEmail = computed(
+    () => !isCurrentUserTarget.value && !targetUser.value
+  )
+  const canAddNewEmail = computed(() => needsToAddNewEmail.value && token.value)
+
+  const processInvite = async (
+    accept: boolean,
+    options?: Partial<{
+      /**
+       * If invite is attached to an unregistered email, the invite can only be used if this is set to true.
+       * Upon accepting such an invite, the unregistered email will be added to the user's account as well.
+       */
+      addNewEmail: boolean
+    }>
+  ) => {
+    const { addNewEmail } = options || {}
+    if (!token.value || !invite.value) return false
+    if (needsToAddNewEmail.value && !addNewEmail) return false
+
+    const workspaceId = invite.value.workspaceId
+    const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
+
+    loading.value = true
+    const success = await useInvite(
+      {
+        workspaceId,
+        input: {
+          accept,
+          token: token.value,
+          ...(shouldAddNewEmail ? { addNewEmail: shouldAddNewEmail } : {})
+        },
+        inviteId: invite.value.id
+      },
+      {
+        callback: async () => {
+          if (preventRedirect) return
+
+          // Redirect
+          if (accept) {
+            if (workspaceId) {
+              window.location.href = workspaceRoute(workspaceId)
+            } else {
+              window.location.reload()
+            }
+            await waitForever() // to prevent UI changes while reload is happening
+          } else {
+            await goHome()
+          }
+        }
+      }
+    )
+    loading.value = false
+
+    return !!success
+  }
+
+  return {
+    loading: computed(() => loading.value),
+    token,
+    isCurrentUserTarget,
+    targetUser,
+    accept: (options?: Parameters<typeof processInvite>[1]) =>
+      processInvite(true, options),
+    decline: (options?: Parameters<typeof processInvite>[1]) =>
+      processInvite(false, options)
   }
 }

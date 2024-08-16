@@ -5,11 +5,11 @@
       You're accepting an invitation to join
       <span class="font-semibold">{{ invite.workspaceName }}</span>
       <template v-if="!isCurrentUserTarget">
-        <template v-if="invite.user">
+        <template v-if="targetUser">
           however the invitation was sent to
           <span class="inline-flex items-center font-semibold">
-            <UserAvatar :user="invite.user" size="sm" class="mr-1" />
-            {{ invite.user.name }}
+            <UserAvatar :user="targetUser" size="sm" class="mr-1" />
+            {{ targetUser.name }}
           </span>
           . You have to sign out from the current account to proceed.
         </template>
@@ -27,7 +27,7 @@
           size="lg"
           full-width
           :disabled="loading"
-          @click="() => processInvite(true)"
+          @click="accept"
         >
           Accept
         </FormButton>
@@ -36,13 +36,13 @@
           size="lg"
           full-width
           :disabled="loading"
-          @click="() => processInvite(false)"
+          @click="decline"
         >
           Decline
         </FormButton>
       </template>
       <template v-else>
-        <template v-if="invite.user">
+        <template v-if="targetUser">
           <FormButton
             color="primary"
             size="lg"
@@ -63,7 +63,13 @@
           >
             Create new account
           </FormButton>
-          <FormButton color="primary" size="lg" full-width :disabled="loading">
+          <FormButton
+            color="primary"
+            size="lg"
+            full-width
+            :disabled="loading"
+            @click="acceptAndAddEmail"
+          >
             Add new email to existing account
           </FormButton>
         </template>
@@ -72,18 +78,16 @@
   </div>
 </template>
 <script setup lang="ts">
-import { waitForever, type Optional } from '@speckle/shared'
+import { RelativeURL } from '@speckle/shared'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 import {
-  useNavigateToHome,
   useNavigateToLogin,
-  useNavigateToRegistration,
-  workspaceRoute
+  useNavigateToRegistration
 } from '~/lib/common/helpers/route'
-import { useProcessWorkspaceInvite } from '~/lib/workspaces/composables/management'
+import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
 
 graphql(`
   fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -98,6 +102,7 @@ graphql(`
     }
     title
     email
+    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator
   }
 `)
 
@@ -105,59 +110,15 @@ const props = defineProps<{
   invite: WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment
 }>()
 
+const route = useRoute()
 const postAuthRedirect = usePostAuthRedirect()
 const { logout } = useAuthManager()
-const goHome = useNavigateToHome()
 const goToLogin = useNavigateToLogin()
 const goToRegister = useNavigateToRegistration()
-const route = useRoute()
-const useInvite = useProcessWorkspaceInvite()
-const { activeUser } = useActiveUser()
-
-const loading = ref(false)
-
-const token = computed(
-  () => (route.query.token as Optional<string>) || props.invite.token
-)
-const workspaceId = computed(() => route.params.id as Optional<string>)
-const isCurrentUserTarget = computed(
-  () =>
-    activeUser.value &&
-    props.invite.user &&
-    activeUser.value.id === props.invite.user.id
-)
-
-const processInvite = async (accept: boolean) => {
-  if (!token.value) return
-
-  loading.value = true
-  await useInvite(
-    {
-      workspaceId: props.invite.workspaceId,
-      input: {
-        accept,
-        token: token.value
-      },
-      inviteId: props.invite.id
-    },
-    {
-      callback: async () => {
-        // Redirect
-        if (accept) {
-          if (workspaceId.value) {
-            window.location.href = workspaceRoute(workspaceId.value)
-          } else {
-            window.location.reload()
-          }
-          await waitForever() // to prevent UI changes while reload is happening
-        } else {
-          await goHome()
-        }
-      }
-    }
-  )
-  loading.value = false
-}
+const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
+  useWorkspaceInviteManager({
+    invite: computed(() => props.invite)
+  })
 
 const signOutGoToLogin = async () => {
   await logout({ skipRedirect: true })
@@ -169,13 +130,24 @@ const signOutGoToLogin = async () => {
   })
 }
 
+/**
+ * Go to register and set post-auth redirect to accepting the invite
+ * and adding the target email to the account
+ */
 const signOutGoToRegister = async () => {
+  const currentRoute = new RelativeURL(route.fullPath)
+  currentRoute.searchParams.set('addNewEmail', 'true')
+  currentRoute.searchParams.set('token', token.value || '')
+  currentRoute.searchParams.set('accept', 'true')
+
   await logout({ skipRedirect: true })
-  postAuthRedirect.setCurrentRoute(true)
+  postAuthRedirect.set(currentRoute.toString(), true)
   await goToRegister({
     query: {
       token: token.value
     }
   })
 }
+
+const acceptAndAddEmail = () => accept({ addNewEmail: true })
 </script>
