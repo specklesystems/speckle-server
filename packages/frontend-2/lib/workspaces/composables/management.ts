@@ -1,6 +1,8 @@
-import { useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import type {
+  SettingsSidebarQuery,
   Workspace,
+  WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs
 } from '~/lib/common/generated/gql/graphql'
@@ -9,9 +11,13 @@ import {
   getCacheId,
   getFirstErrorMessage,
   getObjectReference,
-  modifyObjectFields
+  modifyObjectFields,
+  ROOT_QUERY
 } from '~/lib/common/helpers/graphql'
-import { inviteToWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
+import {
+  createWorkspaceMutation,
+  inviteToWorkspaceMutation
+} from '~/lib/workspaces/graphql/mutations'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -74,5 +80,63 @@ export const useInviteUserToWorkspace = () => {
     }
 
     return data?.workspaceMutations.invites.batchCreate
+  }
+}
+
+export function useCreateWorkspace() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { activeUser } = useActiveUser()
+
+  return async (input: WorkspaceCreateInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const res = await apollo
+      .mutate({
+        mutation: createWorkspaceMutation,
+        variables: { input },
+        update: (cache, { data }) => {
+          const newWorkspace = data?.workspaceMutations.create
+
+          if (newWorkspace?.id) {
+            // Update existing cache for workspaces
+            modifyObjectFields<undefined, { [key: string]: SettingsSidebarQuery }>(
+              cache,
+              ROOT_QUERY,
+              (_fieldName, _variables, value, details) => {
+                const workspaceListFields = Object.keys(value).filter(
+                  (k) =>
+                    details.revolveFieldNameAndVariables(k).fieldName ===
+                    'workspaceList'
+                )
+                const newVal: typeof value = { ...value }
+                for (const field of workspaceListFields) {
+                  delete newVal[field]
+                }
+                return newVal
+              },
+              { fieldNameWhitelist: ['workspace'] }
+            )
+          }
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!res.data?.workspaceMutations.create.id) {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Workspace creation failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace successfully created'
+      })
+    }
+
+    return res
   }
 }

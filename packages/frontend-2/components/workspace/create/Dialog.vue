@@ -6,30 +6,41 @@
     :buttons="dialogButtons"
     title="Create workspace"
   >
-    <FormTextInput
-      v-model:model-value="workspaceName"
-      name="workspace-name"
-      label="Name"
-      placeholder="My Workspace"
-      color="foundation"
-      size="lg"
-      show-label
-    />
+    <div class="flex flex-col gap-4">
+      <FormTextInput
+        v-model:model-value="workspaceName"
+        name="name"
+        label="Name"
+        placeholder="My Workspace"
+        color="foundation"
+        show-label
+        show-required
+      />
+      <FormTextInput
+        v-model:model-value="workspaceDescription"
+        name="description"
+        label="Description"
+        placeholder="My Workspace"
+        color="foundation"
+        show-label
+      />
+    </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useMutation } from '@vue/apollo-composable'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { createWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
+import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const workspaceName = ref<string>()
+const createWorkspace = useCreateWorkspace()
 
-const { triggerNotification } = useGlobalToast()
-const { mutate: createWorkspace } = useMutation(createWorkspaceMutation)
+const logger = useLogger()
+
+const workspaceName = ref<string>('')
+const workspaceDescription = ref<string>('')
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -37,7 +48,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
-      workspaceName.value = ''
+      resetFields()
     }
   },
   {
@@ -47,32 +58,30 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       color: 'primary'
     },
     disabled: !workspaceName.value?.length,
-    onClick: onCreate
+    onClick: handleCreateWorkspace
   }
 ])
 
-const onCreate = async () => {
-  if (!workspaceName.value) {
-    return
-  }
+const handleCreateWorkspace = async () => {
+  if (workspaceName.value?.length) {
+    try {
+      const newWorkspace = await createWorkspace({
+        name: workspaceName.value,
+        description: workspaceDescription.value
+      })
 
-  const result = await createWorkspace({ input: { name: workspaceName.value } })
-
-  if (result?.data) {
-    isOpen.value = false
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Workspace created',
-      description: `Created workspace ${workspaceName.value}`
-    })
-    workspaceName.value = undefined
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to create workspace',
-      description: errorMessage
-    })
+      if (newWorkspace) {
+        isOpen.value = false
+        resetFields()
+      }
+    } catch (error) {
+      logger.error('Workspace creation failed:', error)
+    }
   }
+}
+
+const resetFields = () => {
+  workspaceName.value = ''
+  workspaceDescription.value = ''
 }
 </script>
