@@ -46,7 +46,7 @@
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
-            <WorkspaceCreateWorkspaceButton @create="onWorkspaceCreated" />
+            <WorkspaceCreateButton @create="onWorkspaceCreated" />
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
               :key="key"
