@@ -3,7 +3,7 @@ import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 /**
- * Validate and insert new user email, potentially also associating it with an invite
+ * Validate and insert new user email
  */
 export type ValidateAndCreateUserEmail = (params: {
   userEmail: Pick<UserEmail, 'email' | 'userId'> & {
