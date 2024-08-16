@@ -322,6 +322,24 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getWorkspaceFactory({ db })({ workspaceId })
         },
+        leave: async (_parent, args, ctx) => {
+          const userId = ctx.userId!
+
+          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
+          const emitWorkspaceEvent = getEventBus().emit
+
+          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+            getWorkspaceRoles,
+            emitWorkspaceEvent,
+            getStreams,
+            revokeStreamPermissions
+          })
+
+          await deleteWorkspaceRole({ workspaceId: args.id, userId })
+
+          return true
+        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
@@ -584,29 +602,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
       AdminQueries: {
         workspaceList: async () => {
           throw new WorkspacesNotYetImplementedError()
-        }
-      },
-      ActiveUserMutations: {
-        workspaceMutations: () => ({})
-      },
-      UserWorkspaceMutations: {
-        leave: async (parent, args, ctx) => {
-          const userId = ctx.userId!
-
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
-
-          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-            getWorkspaceRoles,
-            emitWorkspaceEvent,
-            getStreams,
-            revokeStreamPermissions
-          })
-
-          await deleteWorkspaceRole({ workspaceId: args.id, userId })
-
-          return true
         }
       }
     } as Resolvers)

@@ -93,6 +93,7 @@ type WorkspaceMutations {
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
+  leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
   invites: WorkspaceInviteMutations!
 }
 
@@ -276,12 +277,4 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
-}
-
-type UserWorkspaceMutations {
-  leave(id: ID!): Boolean!
-}
-
-extend type ActiveUserMutations {
-  workspaceMutations: UserWorkspaceMutations
 }
