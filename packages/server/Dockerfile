@@ -1,7 +1,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 as build-stage
+FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 WORKDIR /speckle-server
@@ -39,7 +39,7 @@ RUN yarn workspaces foreach -W run build
 
 # install only production dependencies
 # we need a clean environment, free of build dependencies
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 as dependency-stage
+FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS dependency-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -56,7 +56,7 @@ COPY packages/objectloader/package.json ./packages/objectloader/
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
 
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 as production-stage
+FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 ARG FILE_SIZE_LIMIT_MB=100
