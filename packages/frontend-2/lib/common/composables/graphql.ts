@@ -8,12 +8,20 @@ import type {
   DocumentParameter,
   OptionsParameter
 } from '@vue/apollo-composable/dist/useQuery'
-import { useQuery } from '@vue/apollo-composable'
-import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import {
+  convertThrowIntoFetchResult,
+  getCacheId,
+  type ModifyFnCacheData
+} from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
+import type {
+  AllObjectFieldArgTypes,
+  AllObjectTypes
+} from '~/lib/common/generated/gql/graphql'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -238,5 +246,46 @@ export const usePageQueryStandardFetchPolicy = () => {
     // use cache, but reload in background
     // we only wanna do this when transitioning between CSR routes
     return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
+  })
+}
+
+const __brand = Symbol('privateBrand')
+type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> = string & {
+  [__brand]: Type
+}
+
+export const useApolloCacheModify = () => {
+  const cache = useApolloClient().client.cache
+
+  const getCacheRef = <Type extends keyof AllObjectTypes>(
+    typeName: Type,
+    id: string
+  ) => {
+    return getCacheId(typeName, id) as ApolloCacheObjectReference<Type>
+  }
+
+  const modifyObjectField = <
+    Type extends keyof AllObjectTypes,
+    Field extends keyof AllObjectTypes[Type]
+  >(
+    ref: ApolloCacheObjectReference<Type>,
+    field: Field,
+    modifier: (params: {
+      fieldName: Field
+      variables: Field extends keyof AllObjectFieldArgTypes[Type]
+        ? AllObjectFieldArgTypes[Type][Field]
+        : never
+      value: ModifyFnCacheData<AllObjectTypes[Type][Field]>
+    }) => void
+  ) => {}
+
+  // Test
+  const versionRef: ApolloCacheObjectReference<'Version'> = getCacheRef(
+    'Version',
+    '123'
+  )
+
+  modifyObjectField(versionRef, 'gendoAIRender', ({ fieldName, variables, value }) => {
+    fieldName && variables.id && value.__ref
   })
 }
