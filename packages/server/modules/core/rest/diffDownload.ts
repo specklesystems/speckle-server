@@ -90,7 +90,8 @@ export default (app: Application) => {
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
+    } finally {
+      speckleObjStream.end()
     }
-    speckleObjStream.end()
   })
 }
