@@ -29,8 +29,6 @@ const {
   getFileSizeLimit
 } = require('@/modules/blobstorage/services')
 
-const { isArray } = require('lodash')
-
 const {
   NotFoundError,
   ResourceMismatch,
@@ -178,7 +176,7 @@ exports.init = async (app) => {
       allowAnonymousUsersOnPublicStreams
     ]),
     async (req, res) => {
-      if (!isArray(req.body)) {
+      if (!Array.isArray(req.body)) {
         return res
           .status(400)
           .json({ error: 'An array of blob IDs expected in the body.' })

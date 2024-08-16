@@ -84,7 +84,7 @@ We have a detailed section on [deploying a Speckle server](https://speckle.guide
 ## TL;DR
 
 We're using yarn and its workspaces functionalities to manage the monorepo.
-Make sure you are using [Node](https://nodejs.org/en) version 18.
+Make sure you are using [Node](https://nodejs.org/en) version 22.
 To get started, run:
 
 1. `corepack enable`

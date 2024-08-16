@@ -3,7 +3,7 @@
 let
   corepack = pkgs.stdenv.mkDerivation {
     name = "corepack";
-    buildInputs = [ pkgs.nodejs-18_x ];
+    buildInputs = [ pkgs.nodejs-22_x ];
     phases = [ "installPhase" ];
     installPhase = ''
       mkdir -p $out/bin
@@ -15,7 +15,7 @@ in pkgs.mkShell {
     pkgs.docker
     pkgs.kind
     pkgs.kubectl
-    pkgs.nodejs-18_x
+    pkgs.nodejs-22_x
     pkgs.ctlptl
     pkgs.crane
     pkgs.kubernetes-helm

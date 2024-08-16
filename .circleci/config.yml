@@ -438,7 +438,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
       - image: cimg/redis:7.2.4
       - image: cimg/postgres:14.11
         environment:
@@ -558,7 +558,7 @@ jobs:
 
   test-frontend-2:
     docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+      - image: cimg/node:22.6.0-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -592,7 +592,7 @@ jobs:
 
   test-viewer:
     docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+      - image: cimg/node:22.6.0-browsers
     resource_class: large
     steps:
       - checkout
@@ -631,7 +631,7 @@ jobs:
 
   test-objectsender:
     docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+      - image: cimg/node:22.6.0-browsers
     resource_class: large
     steps:
       - checkout
@@ -719,7 +719,7 @@ jobs:
   ui-components-chromatic:
     resource_class: medium+
     docker: &docker-node-image
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
     steps:
       - checkout
       - restore_cache:
