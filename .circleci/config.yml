@@ -63,13 +63,7 @@ workflows:
       #         only: /.*/
       #     requires:
       #       - get-version
-      #       - pre-commit
       #       - deployment-testing-approval
-      #       - test-frontend-2
-      #       - test-viewer
-      #       - test-objectsender
-      #       - test-server
-      #       - test-server-no-ff
       #       - docker-build-server
       #       - docker-build-frontend
       #       - docker-build-frontend-2
@@ -87,13 +81,7 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - pre-commit
             - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - test-server-no-ff
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2

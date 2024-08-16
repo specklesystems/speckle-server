@@ -1,7 +1,7 @@
 import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isArray } from 'lodash-es'
+import { isArray, isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -15,7 +15,9 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery
+  AdminPanelProjectsListQuery,
+  WorkspaceProjectsArgs,
+  Workspace
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -24,6 +26,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
@@ -113,7 +116,10 @@ export function useCreateProject() {
         mutation: createProjectMutation,
         variables: { input },
         update: (cache, { data }) => {
-          if (data?.projectMutations.create.id) {
+          const newProject = data?.projectMutations.create
+
+          if (newProject?.id) {
+            // Existing cache update for projects
             modifyObjectFields<
               undefined,
               { [key: string]: AdminPanelProjectsListQuery }
@@ -133,6 +139,33 @@ export function useCreateProject() {
               },
               { fieldNameWhitelist: ['admin'] }
             )
+
+            if (input.workspaceId) {
+              const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
+
+              modifyObjectFields<WorkspaceProjectsArgs, Workspace['projects']>(
+                cache,
+                workspaceCacheId,
+                (_fieldName, variables, value, details) => {
+                  const newItems = isUndefined(value?.items)
+                    ? undefined
+                    : [details.ref('Project', newProject.id), ...value.items]
+
+                  const newTotalCount = isUndefined(value?.totalCount)
+                    ? undefined
+                    : (value.totalCount || 0) + 1
+
+                  return {
+                    ...value,
+                    ...(isUndefined(newItems) ? {} : { items: newItems }),
+                    ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
+                  }
+                },
+                {
+                  fieldNameWhitelist: ['projects']
+                }
+              )
+            }
           }
         }
       })
