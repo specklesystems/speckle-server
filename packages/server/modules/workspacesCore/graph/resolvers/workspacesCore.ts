@@ -27,6 +27,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        leave: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
@@ -69,11 +72,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       AdminQueries: {
         workspaceList: async () => {
-          throw new WorkspacesModuleDisabledError()
-        }
-      },
-      ActiveUserMutations: {
-        workspaceMutations: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       }
