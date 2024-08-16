@@ -208,8 +208,8 @@ export default class Materials {
     return plm
   }
 
-  private static minimalMaterialToString(technicalMatarial: MinimalMaterial) {
-    return technicalMatarial.color.toString()
+  private static minimalMaterialToString(minimalMaterial: MinimalMaterial) {
+    return minimalMaterial.color.toString()
   }
 
   private static hashCode(s: string): number {
@@ -262,13 +262,27 @@ export default class Materials {
     renderView: NodeRenderView,
     materialData?: RenderMaterial | DisplayStyle | MaterialOptions | null
   ): number {
+    /** See if we need to get the hash from the DUI3 color material. In DUI3, Points and Lines
+     *  always use the color material exclusively. Any other render material or display style is ignored
+     */
+    const colorMaterialData = renderView.renderData.colorMaterial
+    let mat = ''
+    const useColorMaterialHash =
+      colorMaterialData &&
+      !materialData &&
+      (renderView.geometryType === GeometryType.LINE ||
+        renderView.geometryType === GeometryType.POINT)
+
     if (!materialData) {
       materialData =
         renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
-    const colorMaterialData = renderView.renderData.colorMaterial
-    let mat = ''
-    if (materialData) {
+    /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
+     *  The technical material will contribute to the material hash
+     */
+    if (useColorMaterialHash) {
+      mat += Materials.minimalMaterialToString(colorMaterialData)
+    } else if (materialData) {
       mat =
         Materials.isRendeMaterial(materialData) &&
         (renderView.geometryType === GeometryType.MESH ||
@@ -284,16 +298,6 @@ export default class Materials {
       }
       if ((materialData as MaterialOptions).pointSize) {
         mat += '/' + (materialData as MaterialOptions).pointSize
-      }
-    } else if (colorMaterialData) {
-      /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
-       *  The technical material will contribute to the material hash
-       */
-      if (
-        renderView.geometryType === GeometryType.LINE ||
-        renderView.geometryType === GeometryType.POINT
-      ) {
-        mat += Materials.minimalMaterialToString(colorMaterialData)
       }
     }
 

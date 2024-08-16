@@ -331,13 +331,15 @@ export default class Batcher {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.LINE) {
       matRef =
-        renderViews[0].renderData.displayStyle ||
-        renderViews[0].renderData.colorMaterial
+        renderViews[0].renderData.colorMaterial !== undefined
+          ? renderViews[0].renderData.colorMaterial
+          : renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT) {
       matRef =
-        renderViews[0].renderData.renderMaterial ||
-        renderViews[0].renderData.displayStyle ||
-        renderViews[0].renderData.colorMaterial
+        renderViews[0].renderData.colorMaterial !== undefined
+          ? renderViews[0].renderData.colorMaterial
+          : renderViews[0].renderData.renderMaterial ||
+            renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {
