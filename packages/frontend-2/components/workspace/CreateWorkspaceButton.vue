@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full graphic-design">
+  <div class="w-full">
     <FormButton
       :disabled="!enableButton"
       full-width
@@ -94,42 +94,3 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 </script>
-
-<style lang="css">
-@keyframes cta {
-  from {
-    transform: scaleX(1) scaleY(1) rotate(-10deg);
-  }
-
-  to {
-    transform: scaleX(1.25) scaleY(1.1) rotate(10deg);
-  }
-}
-
-@keyframes ready {
-  to {
-    background-color: #fff;
-  }
-}
-
-.graphic-design {
-  transform: rotate(-10deg);
-  animation-name: cta;
-  animation-duration: 950ms;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-.graphic-design:hover {
-  animation-duration: 250ms;
-}
-
-.graphic-design:hover > button {
-  animation-name: ready;
-  animation-duration: 100ms;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-</style>
