@@ -60,7 +60,7 @@ export const getWorkspaceProjectsFactory =
     args: GetWorkspaceProjectsArgs,
     opts: GetWorkspaceProjectsOptions
   ): Promise<GetWorkspaceProjectsReturnValue> => {
-    const { streams, cursorDate } = await getStreams({
+    const { streams, cursorDate, totalCount } = await getStreams({
       cursor: opts.cursor ? parseCursorToDate(opts.cursor) : null,
       orderBy: null,
       limit: opts.limit || 25,
@@ -73,6 +73,6 @@ export const getWorkspaceProjectsFactory =
     return {
       items: streams,
       cursor: cursorDate ? convertDateToCursor(cursorDate) : null,
-      totalCount: streams.length
+      totalCount
     }
   }
