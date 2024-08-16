@@ -42,7 +42,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     },
     {
       route: to,
-      preventRedirect: true
+      preventRedirect: true,
+      preventErrorToasts: true
     }
   )
 

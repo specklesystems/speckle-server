@@ -4,7 +4,15 @@
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
       <span class="font-semibold">{{ invite.workspaceName }}</span>
-      <template v-if="isNewUser">
+      <template v-if="invite.user">
+        as
+        <div class="inline-flex items-center">
+          <UserAvatar :user="invite.user" size="sm" class="mr-1" />
+          <span class="font-semibold">{{ invite.user.name }}</span>
+        </div>
+        .
+      </template>
+      <template v-else>
         using the
         <span class="font-semibold">{{ invite.email }}</span>
         email address.
@@ -23,13 +31,12 @@ graphql(`
     email
     user {
       id
+      ...LimitedUserAvatar
     }
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   invite: AuthWorkspaceInviteHeader_PendingWorkspaceCollaboratorFragment
 }>()
-
-const isNewUser = computed(() => !props.invite.user)
 </script>

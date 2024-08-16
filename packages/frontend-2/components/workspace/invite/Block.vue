@@ -4,7 +4,8 @@
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
       <span class="font-semibold">{{ invite.workspaceName }}</span>
-      <template v-if="!isCurrentUserTarget">
+      <template v-if="isCurrentUserTarget">.</template>
+      <template v-else>
         <template v-if="targetUser">
           however the invitation was sent to
           <span class="inline-flex items-center font-semibold">
@@ -27,7 +28,7 @@
           size="lg"
           full-width
           :disabled="loading"
-          @click="accept"
+          @click="() => accept()"
         >
           Accept
         </FormButton>
@@ -36,7 +37,7 @@
           size="lg"
           full-width
           :disabled="loading"
-          @click="decline"
+          @click="() => decline()"
         >
           Decline
         </FormButton>

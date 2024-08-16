@@ -111,6 +111,7 @@ export const useProcessWorkspaceInvite = () => {
        * Do something once mutation has finished, before all cache updates
        */
       callback: () => MaybeAsync<void>
+      preventErrorToasts?: boolean
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -180,12 +181,14 @@ export const useProcessWorkspaceInvite = () => {
         accepted: input.accept
       })
     } else {
-      const err = getFirstErrorMessage(errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to process invite',
-        description: err
-      })
+      if (!options?.preventErrorToasts) {
+        const err = getFirstErrorMessage(errors)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Failed to process invite',
+          description: err
+        })
+      }
     }
 
     return !!data?.workspaceMutations.invites.use
@@ -215,10 +218,11 @@ export const useWorkspaceInviteManager = <
      */
     preventRedirect: boolean
     route: RouteLocationNormalized
+    preventErrorToasts: boolean
   }>
 ) => {
   const { invite } = params
-  const { preventRedirect } = options || {}
+  const { preventRedirect, preventErrorToasts } = options || {}
 
   const useInvite = useProcessWorkspaceInvite()
   const route = options?.route || useRoute()
@@ -285,7 +289,8 @@ export const useWorkspaceInviteManager = <
           } else {
             await goHome()
           }
-        }
+        },
+        preventErrorToasts
       }
     )
     loading.value = false
