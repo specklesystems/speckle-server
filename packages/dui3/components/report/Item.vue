@@ -8,6 +8,9 @@
         <div v-if="reportItem.status === 1">
           <CheckCircleIcon class="w-4 stroke-green-500 text-green-500" />
         </div>
+        <div v-else-if="reportItem.status === 3">
+          <ExclamationTriangleIcon class="w-4 text-warning"></ExclamationTriangleIcon>
+        </div>
         <div v-else>
           <ExclamationCircleIcon class="w-4 text-danger"></ExclamationCircleIcon>
         </div>
@@ -64,6 +67,7 @@
 <script setup lang="ts">
 import {
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   CheckCircleIcon,
   ChevronUpIcon,
   ChevronDownIcon,

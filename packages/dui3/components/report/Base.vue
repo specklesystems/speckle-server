@@ -27,6 +27,16 @@
             {{ numberOfSuccess }}
           </button>
           <button
+            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-warning"
+            :class="warningToggle ? 'border-2 border-warning' : ''"
+            @click="warningToggle = !warningToggle"
+          >
+            <ExclamationTriangleIcon
+              class="w-4 mr-1 stroke-warning-500 text-warning-500"
+            ></ExclamationTriangleIcon>
+            {{ numberOfWarning }}
+          </button>
+          <button
             class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-danger"
             :class="failedToggle ? 'border-2 border-danger' : ''"
             @click="failedToggle = !failedToggle"
@@ -57,6 +67,7 @@
 import {
   InformationCircleIcon,
   ExclamationCircleIcon,
+  ExclamationTriangleIcon,
   CheckCircleIcon
 } from '@heroicons/vue/20/solid'
 import type { ConversionResult } from '~~/lib/conversions/conversionResult'
@@ -68,6 +79,7 @@ const props = defineProps<{
 const showReportDialog = ref(false)
 
 const successToggle = ref(false) // Status 1
+const warningToggle = ref(false) // Status 3
 const failedToggle = ref(true) // Status 4
 
 const toggleDialog = () => {
@@ -90,6 +102,9 @@ const filteredReports = computed(() => {
     if (failedToggle.value && report.status === 4) {
       return true
     }
+    if (warningToggle.value && report.status === 3) {
+      return true
+    }
     // TODO: do more later!
     return false
   })
@@ -97,6 +112,10 @@ const filteredReports = computed(() => {
 
 const numberOfSuccess = computed(
   () => props.report.filter((r) => r.status === 1).length
+)
+
+const numberOfWarning = computed(
+  () => props.report.filter((r) => r.status === 3).length
 )
 
 const numberOfFailed = computed(() => props.report.filter((r) => r.status === 4).length)
