@@ -62,7 +62,7 @@ const badgeDotIconColorClasses = computed(
 
 const badgeClasses = computed(() => {
   const classParts: string[] = [
-    'inline-flex items-center',
+    'inline-flex items-center select-none',
     badgeColorClasses.value,
     props.size === 'lg' ? 'px-3 py-0.5 label' : 'p-1 caption font-medium'
   ]
@@ -70,7 +70,7 @@ const badgeClasses = computed(() => {
   if (props.rounded) {
     classParts.push('rounded')
     classParts.push(
-      props.size === 'lg' ? 'px-2 py-0.5 label' : 'p-1 caption font-medium'
+      props.size === 'lg' ? 'px-2 py-0.5 label' : 'px-1 py-0.5 caption font-medium'
     )
   } else {
     classParts.push('rounded-full')
