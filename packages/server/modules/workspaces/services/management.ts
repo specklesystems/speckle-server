@@ -23,6 +23,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceAdminRequiredError,
+  WorkspaceInvalidDescriptionError,
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
 import {
@@ -134,6 +135,9 @@ export const updateWorkspaceFactory =
     if (isEmpty(workspaceInput.name)) {
       // Do not allow setting an empty name (empty descriptions allowed)
       delete workspaceInput.name
+    }
+    if (!!workspaceInput.description && workspaceInput.description.length > 512) {
+      throw new WorkspaceInvalidDescriptionError()
     }
 
     const workspace = {

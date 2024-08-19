@@ -2,7 +2,8 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <ProjectsDashboardHeader
-      :user="projectsPanelResult?.activeUser || undefined"
+      :projects-invites="projectsPanelResult?.activeUser || undefined"
+      :workspaces-invites="workspacesInvitesResult?.activeUser || undefined"
       class="mb-10"
     />
 
@@ -61,7 +62,10 @@ import {
   useQueryLoading,
   useSubscription
 } from '@vue/apollo-composable'
-import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
+import {
+  projectsDashboardQuery,
+  projectsDashboardWorkspaceInvitesQuery
+} from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   getCacheId,
@@ -88,6 +92,7 @@ const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const {
   on,
@@ -108,6 +113,14 @@ const {
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
 }))
+
+const { result: workspacesInvitesResult } = useQuery(
+  projectsDashboardWorkspaceInvitesQuery,
+  undefined,
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 
 onProjectsResult((res) => {
   cursor.value = res.data?.activeUser?.projects.cursor || null

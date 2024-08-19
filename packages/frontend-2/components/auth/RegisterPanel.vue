@@ -72,6 +72,11 @@ const registerPanelQuery = graphql(`
       id
       email
     }
+  }
+`)
+
+const registerPanelWorkspaceInviteQuery = graphql(`
+  query AuthRegisterPanelWorkspaceInvite($token: String) {
     workspaceInvite(token: $token) {
       id
       ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator
@@ -79,10 +84,20 @@ const registerPanelQuery = graphql(`
   }
 `)
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
 const { result } = useQuery(registerPanelQuery, () => ({
   token: inviteToken.value
 }))
+const { result: workspaceInviteResult } = useQuery(
+  registerPanelWorkspaceInviteQuery,
+  () => ({
+    token: inviteToken.value
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 
 const newsletterConsent = ref(false)
 
@@ -97,5 +112,5 @@ const hasThirdPartyStrategies = computed(() =>
 )
 
 const isInviteOnly = computed(() => !!serverInfo.value?.inviteOnly)
-const workspaceInvite = computed(() => result.value?.workspaceInvite)
+const workspaceInvite = computed(() => workspaceInviteResult.value?.workspaceInvite)
 </script>
