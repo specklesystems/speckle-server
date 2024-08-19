@@ -245,9 +245,8 @@ extend type User {
   """
   Get all invitations to workspaces that the active user has
   """
-  workspaceInvites: [PendingWorkspaceCollaborator!]!
+  workspaceInvites: [PendingWorkspaceCollaborator!]
     @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "workspace:read")
     @isOwner
 }
 
