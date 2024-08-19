@@ -11,9 +11,9 @@
   >
     <slot>
       <div
-        v-if="user?.avatar"
+        v-if="user?.avatar || logo"
         class="h-full w-full bg-cover bg-center bg-no-repeat"
-        :style="{ backgroundImage: `url('${user.avatar}')` }"
+        :style="{ backgroundImage: `url('${user ? user.avatar : logo}')` }"
       />
       <div
         v-else-if="initials"
@@ -41,6 +41,7 @@ const props = withDefaults(
     active?: boolean
     noBorder?: boolean
     noBg?: boolean
+    logo?: string
   }>(),
   {
     size: 'base',
@@ -52,7 +53,7 @@ const props = withDefaults(
 const { sizeClasses, iconClasses } = useAvatarSizeClasses({ props: toRefs(props) })
 
 const initials = computed(() => {
-  if (!props.user?.name.length) return
+  if (!props.user?.name?.length) return
   const parts = props.user.name.split(' ')
   const firstLetter = parts[0]?.[0] || ''
   const secondLetter = parts[1]?.[0] || ''

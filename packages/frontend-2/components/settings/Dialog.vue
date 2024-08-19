@@ -55,6 +55,9 @@
               :title="workspaceItem.name"
               collapsible
             >
+              <template #title-icon>
+                <UserAvatar :logo="workspaceItem.logo" size="sm" />
+              </template>
               <LayoutSidebarMenuGroupItem
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
@@ -118,6 +121,7 @@ graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
+        ...SettingsWorkspacesGeneralEditAvatar_Workspace
         id
         name
       }
