@@ -6,6 +6,7 @@
       <div class="grid md:grid-cols-2 pt-4">
         <div class="flex items-center justify-center">
           <SettingsWorkspacesGeneralEditAvatar
+            v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
             size="xxl"
           />

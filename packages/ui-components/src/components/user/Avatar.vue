@@ -41,7 +41,7 @@ const props = withDefaults(
     active?: boolean
     noBorder?: boolean
     noBg?: boolean
-    logo?: string
+    logo?: MaybeNullOrUndefined<string>
   }>(),
   {
     size: 'base',
