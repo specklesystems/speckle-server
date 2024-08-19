@@ -11,8 +11,7 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         workspaceInvite: async () => {
-          // Easier to manage in FE if this doesn't throw, just returns null
-          return null
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Mutation: {
@@ -69,8 +68,7 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         workspaceInvites: async () => {
-          // Easier to manage in FE if this doesn't throw, just returns empty
-          return []
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Project: {
