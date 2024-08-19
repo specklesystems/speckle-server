@@ -4,13 +4,13 @@
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
       <span class="font-semibold">{{ invite.workspaceName }}</span>
+      <!-- prettier-ignore -->
       <template v-if="invite.user">
         as
         <div class="inline-flex items-center">
           <UserAvatar :user="invite.user" size="sm" class="mr-1" />
           <span class="font-semibold">{{ invite.user.name }}</span>
-        </div>
-        .
+        </div>.
       </template>
       <template v-else>
         using the

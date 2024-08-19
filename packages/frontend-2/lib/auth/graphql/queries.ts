@@ -1,18 +1,23 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const authLoginPanelQuery = graphql(`
-  query AuthLoginPanel($token: String) {
-    workspaceInvite(token: $token) {
-      id
-      email
-      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator
-      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator
-    }
+  query AuthLoginPanel {
     serverInfo {
       authStrategies {
         id
       }
       ...AuthStategiesServerInfoFragment
+    }
+  }
+`)
+
+export const authLoginPanelWorkspaceInviteQuery = graphql(`
+  query AuthLoginPanelWorkspaceInvite($token: String) {
+    workspaceInvite(token: $token) {
+      id
+      email
+      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator
+      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator
     }
   }
 `)

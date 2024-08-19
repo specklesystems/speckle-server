@@ -6,8 +6,14 @@
       <div v-if="showChecklist">
         <OnboardingChecklistV1 show-intro />
       </div>
-      <ProjectsInviteBanners v-if="user?.projectInvites?.length" :invites="user" />
-      <WorkspaceInviteBanners v-if="user?.workspaceInvites?.length" :invites="user" />
+      <ProjectsInviteBanners
+        v-if="projectsInvites?.projectInvites?.length"
+        :invites="projectsInvites"
+      />
+      <WorkspaceInviteBanners
+        v-if="workspacesInvites?.workspaceInvites?.length"
+        :invites="workspacesInvites"
+      />
       <ProjectsNewSpeckleBanner
         v-if="showNewSpeckleBanner"
         @dismissed="onDismissNewSpeckleBanner"
@@ -19,18 +25,27 @@
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ProjectsDashboardHeader_UserFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  ProjectsDashboardHeaderProjects_UserFragment,
+  ProjectsDashboardHeaderWorkspaces_UserFragment
+} from '~/lib/common/generated/gql/graphql'
 import type { PromoBanner } from '~/lib/promo-banners/types'
 
 graphql(`
-  fragment ProjectsDashboardHeader_User on User {
+  fragment ProjectsDashboardHeaderProjects_User on User {
     ...ProjectsInviteBanners
+  }
+`)
+
+graphql(`
+  fragment ProjectsDashboardHeaderWorkspaces_User on User {
     ...WorkspaceInviteBanners_User
   }
 `)
 
 const props = defineProps<{
-  user?: ProjectsDashboardHeader_UserFragment
+  projectsInvites?: ProjectsDashboardHeaderProjects_UserFragment
+  workspacesInvites?: ProjectsDashboardHeaderWorkspaces_UserFragment
 }>()
 
 const promoBanners = ref<PromoBanner[]>([
@@ -89,7 +104,10 @@ const showChecklist = computed(() => {
 
 const showNewSpeckleBanner = computed(() => {
   if (hasDismissedNewSpeckleBanner.value) return false
-  if (props.user?.projectInvites.length || props.user?.workspaceInvites?.length)
+  if (
+    props.projectsInvites?.projectInvites.length ||
+    props.workspacesInvites?.workspaceInvites?.length
+  )
     return false
 
   return true

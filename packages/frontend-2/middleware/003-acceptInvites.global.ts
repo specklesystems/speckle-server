@@ -70,7 +70,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         ]
       : [])
   ])
-  if (workspaceInviteData.data?.workspaceInvite) {
+  if (workspaceInviteData?.data?.workspaceInvite) {
     workspaceInvite.value = workspaceInviteData.data.workspaceInvite
   }
 
