@@ -156,10 +156,8 @@ export const getWorkspaceTeamQuery = gql`
 
 export const leaveWorkspaceMutation = gql`
   mutation ActiveUserLeaveWorkspace($id: ID!) {
-    activeUserMutations {
-      workspaceMutations {
-        leave(id: $id)
-      }
+    workspaceMutations {
+      leave(id: $id)
     }
   }
 `
