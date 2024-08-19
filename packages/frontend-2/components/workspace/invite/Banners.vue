@@ -23,5 +23,5 @@ const props = defineProps<{
   invites: WorkspaceInviteBanners_UserFragment
 }>()
 
-const items = computed(() => props.invites.workspaceInvites)
+const items = computed(() => props.invites.workspaceInvites || [])
 </script>

@@ -89,7 +89,7 @@ const showChecklist = computed(() => {
 
 const showNewSpeckleBanner = computed(() => {
   if (hasDismissedNewSpeckleBanner.value) return false
-  if (props.user?.projectInvites.length || props.user?.workspaceInvites.length)
+  if (props.user?.projectInvites.length || props.user?.workspaceInvites?.length)
     return false
 
   return true

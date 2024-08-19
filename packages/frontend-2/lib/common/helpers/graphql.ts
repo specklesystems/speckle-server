@@ -13,7 +13,15 @@ import type {
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
-import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
+import {
+  flatten,
+  isUndefined,
+  has,
+  isFunction,
+  isString,
+  isArray,
+  intersection
+} from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
 import type { PartialDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
@@ -21,6 +29,7 @@ import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
 import { base64Encode } from '~/lib/common/helpers/encodeDecode'
+import type { ErrorResponse } from '@apollo/client/link/error'
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
@@ -514,3 +523,16 @@ export const modifyObjectField = <
     options
   )
 }
+
+/**
+ * Build skipLoggingErrors function that skips logging errors if there's only one error and it's related to a specific field
+ */
+export const skipLoggingErrorsIfOneFieldError =
+  (fieldName: string | string[]) =>
+  (err: ErrorResponse): boolean => {
+    const fieldNames = isArray(fieldName) ? fieldName : [fieldName]
+    return (
+      err.graphQLErrors?.length === 1 &&
+      err.graphQLErrors.some((e) => intersection(e.path || [], fieldNames).length > 0)
+    )
+  }
