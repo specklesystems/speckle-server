@@ -36,8 +36,8 @@ import { ClipboardIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsUserProfile_User on User {
-    ...UserProfileEditDialogChangePassword_User
-    ...UserProfileEditDialogDeleteAccount_User
+    ...SettingsUserProfileChangePassword_User
+    ...SettingsUserProfileDeleteAccount_User
     ...SettingsUserProfileDetails_User
   }
 `)
