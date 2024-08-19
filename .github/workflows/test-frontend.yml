@@ -1,0 +1,28 @@
+name: Image digest update
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  test-frontend:
+    name: Test Frontend 2
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'yarn'
+      - name: yarn install
+        run: yarn install --frozen-lockfile --immutable
+      - name: yarn build:public
+        run: yarn build:public
+      - name: yarn lint:ci
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
