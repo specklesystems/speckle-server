@@ -41,3 +41,13 @@ export const createWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const processWorkspaceInviteMutation = graphql(`
+  mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {
+    workspaceMutations {
+      invites {
+        use(input: $input)
+      }
+    }
+  }
+`)

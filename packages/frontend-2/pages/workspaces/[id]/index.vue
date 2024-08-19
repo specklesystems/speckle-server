@@ -8,6 +8,6 @@ const route = useRoute()
 const workspaceId = computed(() => route.params.id as string)
 
 definePageMeta({
-  middleware: ['auth', 'requires-workspaces-enabled', 'require-valid-workspace']
+  middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
 })
 </script>

@@ -100,7 +100,7 @@ extend type Query {
   """
   Receive metadata about an invite by the invite token
   """
-  serverInviteByToken(token: String!): ServerInvite
+  serverInviteByToken(token: String): ServerInvite
 }
 
 type ServerInvite {

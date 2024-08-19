@@ -3,12 +3,14 @@ import type { SettingsMenuItems } from '~/lib/settings/helpers/types'
 import SettingsUserProfile from '~/components/settings/user/Profile.vue'
 import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
 import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
+import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 
 export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
@@ -37,7 +39,7 @@ export const useSettingsMenu = () => {
     }
   })
 
-  const userMenuItems = shallowRef<SettingsMenuItems>({
+  const userMenuItemValues: SettingsMenuItems = {
     [settingsQueries.user.profile]: {
       title: 'Profile',
       component: SettingsUserProfile
@@ -50,7 +52,16 @@ export const useSettingsMenu = () => {
       title: 'Developer settings',
       component: SettingsUserDeveloper
     }
-  })
+  }
+
+  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
+  if (multipleEmailsEnabled)
+    userMenuItemValues[settingsQueries.user.emails] = {
+      title: 'Email addresses',
+      component: SettingsUserEmails
+    }
+
+  const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 
   const serverMenuItems = shallowRef<SettingsMenuItems>({
     [settingsQueries.server.general]: {

@@ -10,7 +10,7 @@
         color="foundation"
         :rules="emailRules"
         show-label
-        :disabled="loading"
+        :disabled="!!(loading || shouldForceInviteEmail)"
         auto-focus
       />
       <FormTextInput
@@ -49,14 +49,27 @@ import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { forgottenPasswordRoute } from '~~/lib/common/helpers/route'
 import { useMounted } from '@vueuse/core'
+import { graphql } from '~/lib/common/generated/gql'
+import type { AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 
 type FormValues = { email: string; password: string }
 
+graphql(`
+  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
+    id
+    email
+    user {
+      id
+    }
+  }
+`)
+
 const props = defineProps<{
   challenge: string
+  workspaceInvite?: AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragment
 }>()
 
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit, setValues } = useForm<FormValues>()
 
 const loading = ref(false)
 const emailRules = [isEmail]
@@ -65,6 +78,12 @@ const passwordRules = [isRequired]
 const isMounted = useMounted()
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+
+const inviteEmail = computed(() => props.workspaceInvite?.email)
+const isInviteForExistingUser = computed(() => !!props.workspaceInvite?.user)
+const shouldForceInviteEmail = computed(
+  () => !!(inviteEmail.value && isInviteForExistingUser.value)
+)
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
@@ -80,4 +99,14 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
     loading.value = false
   }
 })
+
+watch(
+  shouldForceInviteEmail,
+  (shouldForce) => {
+    if (shouldForce) {
+      setValues({ email: inviteEmail.value || '' })
+    }
+  },
+  { immediate: true }
+)
 </script>
