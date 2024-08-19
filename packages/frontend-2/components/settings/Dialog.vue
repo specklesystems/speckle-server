@@ -167,16 +167,10 @@ const workspaceMenuItemClasses = (
   itemKey: string | number,
   workspaceId: string,
   disabled?: boolean
-) => {
-  if (
-    targetMenuItem.value === itemKey &&
-    targetWorkspaceId.value === workspaceId &&
-    !disabled
-  ) {
-    return true
-  }
-  return false
-}
+) =>
+  targetMenuItem.value === itemKey &&
+  targetWorkspaceId.value === workspaceId &&
+  !disabled
 
 watch(
   () => user.value,

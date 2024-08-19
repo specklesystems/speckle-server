@@ -51,8 +51,6 @@ export const projectAutomationRoute = (projectId: string, automationId: string) 
   return `${projectRoute(projectId, 'automations')}/${automationId}`
 }
 
-export const workspaceRoute = (workspaceId: string) => `/workspaces/${workspaceId}`
-
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,

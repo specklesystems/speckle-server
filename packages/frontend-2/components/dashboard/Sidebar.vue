@@ -79,7 +79,7 @@
           </LayoutSidebarMenuGroup>
 
           <LayoutSidebarMenuGroup title="Resources">
-            <NuxtLink to="https://speckle.systems/features/connectors/" target="_blank">
+            <NuxtLink :to="connectorsPageUrl" target="_blank">
               <LayoutSidebarMenuGroupItem label="Connectors">
                 <template #icon>
                   <IconConnectors class="h-4 w-4 text-foreground-2" />
@@ -149,7 +149,12 @@ import {
 } from '@speckle/ui-components'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { homeRoute, projectsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import {
+  homeRoute,
+  projectsRoute,
+  workspaceRoute,
+  connectorsPageUrl
+} from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
