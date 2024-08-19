@@ -98,7 +98,7 @@ const documents = {
     "\n  fragment SettingsUserEmailCards_UserEmail on UserEmail {\n    email\n    id\n    primary\n    verified\n  }\n": types.SettingsUserEmailCards_UserEmailFragmentDoc,
     "\n  fragment UserProfileEditDialogChangePassword_User on User {\n    id\n    email\n  }\n": types.UserProfileEditDialogChangePassword_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogDeleteAccount_User on User {\n    id\n    email\n  }\n": types.UserProfileEditDialogDeleteAccount_UserFragmentDoc,
-    "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.UserProfileEditDialogBio_UserFragmentDoc,
+    "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.UserProfileEditDialogBio_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    logo\n    description\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
@@ -653,7 +653,7 @@ export function graphql(source: "\n  fragment UserProfileEditDialogDeleteAccount
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n"];
+export function graphql(source: "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
