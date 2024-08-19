@@ -15,8 +15,9 @@
       </svg>
     </div>
     <NuxtLink
-      :to="!disableLink ? to : undefined"
+      :to="disableLink ? undefined : to"
       class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2 select-none truncate"
+      :class="disableLink ? '' : 'hover:!text-foreground'"
       active-class="group is-active !text-foreground"
     >
       <div class="truncate">
