@@ -7,12 +7,15 @@
       <template v-if="isCurrentUserTarget">.</template>
       <template v-else>
         <template v-if="targetUser">
-          however the invitation was sent to
-          <span class="inline-flex items-center font-semibold">
-            <UserAvatar :user="targetUser" size="sm" class="mr-1" />
-            {{ targetUser.name }}
-          </span>
-          . You have to sign out from the current account to proceed.
+          <!-- prettier-ignore -->
+          <template v-if="activeUser">
+            however the invitation was sent to
+            <span class="inline-flex items-center font-semibold">
+              <UserAvatar :user="targetUser" size="sm" class="mr-1" />
+              {{ targetUser.name }}
+            </span>. You have to sign out from the current account to proceed.
+          </template>
+          <template v-else>. Please sign in to proceed.</template>
         </template>
         <template v-else>
           using the
@@ -49,9 +52,9 @@
             size="lg"
             full-width
             :disabled="loading"
-            @click="signOutGoToLogin"
+            @click="() => signOutGoToLogin"
           >
-            Sign out to continue
+            {{ activeUser ? 'Sign out to continue' : 'Sign in to continue' }}
           </FormButton>
         </template>
         <template v-else>
@@ -69,7 +72,12 @@
             size="lg"
             full-width
             :disabled="loading"
-            @click="acceptAndAddEmail"
+            @click="
+              () =>
+                activeUser
+                  ? acceptAndAddEmail()
+                  : signOutGoToLogin({ addNewEmail: true })
+            "
           >
             Add new email to existing account
           </FormButton>
@@ -111,6 +119,7 @@ const props = defineProps<{
   invite: WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment
 }>()
 
+const { activeUser } = useActiveUser()
 const route = useRoute()
 const postAuthRedirect = usePostAuthRedirect()
 const { logout } = useAuthManager()
@@ -121,9 +130,32 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
     invite: computed(() => props.invite)
   })
 
-const signOutGoToLogin = async () => {
+const buildPostAuthRedirectUrl = (params: {
+  autoAccept?: boolean
+  addNewEmail?: boolean
+}) => {
+  const currentRoute = new RelativeURL(route.fullPath)
+  if (params.addNewEmail) {
+    currentRoute.searchParams.set('addNewEmail', 'true')
+  }
+  if (params.autoAccept) {
+    currentRoute.searchParams.set('accept', 'true')
+  }
+  if (token.value) {
+    currentRoute.searchParams.set('token', token.value)
+  }
+
+  return currentRoute.toString()
+}
+
+const signOutGoToLogin = async (params?: { addNewEmail?: boolean }) => {
+  const postAuthRedirectUrl = buildPostAuthRedirectUrl({
+    addNewEmail: params?.addNewEmail || false,
+    autoAccept: true
+  })
+
   await logout({ skipRedirect: true })
-  postAuthRedirect.setCurrentRoute(true)
+  postAuthRedirect.set(postAuthRedirectUrl, true)
   await goToLogin({
     query: {
       token: token.value
@@ -136,13 +168,13 @@ const signOutGoToLogin = async () => {
  * and adding the target email to the account
  */
 const signOutGoToRegister = async () => {
-  const currentRoute = new RelativeURL(route.fullPath)
-  currentRoute.searchParams.set('addNewEmail', 'true')
-  currentRoute.searchParams.set('token', token.value || '')
-  currentRoute.searchParams.set('accept', 'true')
+  const postAuthRedirectUrl = buildPostAuthRedirectUrl({
+    addNewEmail: true,
+    autoAccept: true
+  })
 
   await logout({ skipRedirect: true })
-  postAuthRedirect.set(currentRoute.toString(), true)
+  postAuthRedirect.set(postAuthRedirectUrl, true)
   await goToRegister({
     query: {
       token: token.value
