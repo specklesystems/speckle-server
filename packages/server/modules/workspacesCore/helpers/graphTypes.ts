@@ -17,6 +17,11 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
   invitedById: string
   user: LimitedUserRecord | null
   updatedAt: Date
+  email: string
+  /**
+   * The token that was specified when retrieving this collaborator, if any
+   */
+  token?: string
 }
 
 export type WorkspaceCollaboratorGraphQLReturn = UserWithRole<LimitedUserRecord> & {

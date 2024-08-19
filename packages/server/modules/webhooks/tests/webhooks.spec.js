@@ -6,7 +6,6 @@ const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const {
-  createWebhook,
   getStreamWebhooks,
   getLastWebhookEvents,
   getWebhook,
@@ -17,6 +16,12 @@ const {
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
+const {
+  createWebhookFactory,
+  countWebhooksByStreamIdFactory
+} = require('../repositories/webhooks')
+const { db } = require('@/db/knex')
+const { createWebhook } = require('../services/webhooks-new')
 
 describe('Webhooks @webhooks', () => {
   let server, sendRequest, app
@@ -59,7 +64,10 @@ describe('Webhooks @webhooks', () => {
 
   describe('Create, Read, Update, Delete Webhooks', () => {
     it('Should create a webhook', async () => {
-      webhookOne.id = await createWebhook(webhookOne)
+      webhookOne.id = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhookOne)
       expect(webhookOne).to.have.property('id')
       expect(webhookOne.id).to.not.be.null
     })
@@ -90,7 +98,10 @@ describe('Webhooks @webhooks', () => {
       let streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
       expect(streamWebhooks).to.have.lengthOf(0)
 
-      webhookOne.id = await createWebhook(webhookOne)
+      webhookOne.id = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhookOne)
       streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
       expect(streamWebhooks).to.have.lengthOf(1)
       expect(streamWebhooks[0]).to.have.property('url')
@@ -255,11 +266,17 @@ describe('Webhooks @webhooks', () => {
     it('Should have a webhook limit for streams', async () => {
       const limit = 100
       for (let i = 0; i < limit - 1; i++) {
-        await createWebhook(webhookOne)
+        await createWebhook({
+          createWebhookConfig: createWebhookFactory({ db }),
+          countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+        })(webhookOne)
       }
 
       try {
-        await createWebhook(webhookOne)
+        await createWebhook({
+          createWebhookConfig: createWebhookFactory({ db }),
+          countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+        })(webhookOne)
       } catch (err) {
         if (err.toString().indexOf('Maximum') > -1) return
       }

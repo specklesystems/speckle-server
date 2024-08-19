@@ -13,11 +13,33 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { before } from 'mocha'
 import { testApolloServer } from '@/test/graphqlHelper'
 import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+
+const createUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification
+})
 
 describe('Users (GraphQL)', () => {
   const me: BasicTestUser = {
@@ -105,7 +127,7 @@ describe('Users (GraphQL)', () => {
           email: createRandomEmail(),
           password: createRandomPassword()
         })
-        await createUserEmailFactory({ db })({
+        await createUserEmail({
           userEmail: {
             email: createRandomEmail(),
             userId,

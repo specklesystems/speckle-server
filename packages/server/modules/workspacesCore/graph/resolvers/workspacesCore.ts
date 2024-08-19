@@ -9,6 +9,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Query: {
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvite: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Mutation: {
@@ -62,6 +65,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       User: {
         workspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvites: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },
