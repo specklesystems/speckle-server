@@ -10,3 +10,5 @@ export type CreateWebhook = (
 export type CountWebhooksByStreamId = ({
   streamId
 }: Pick<Webhook, 'streamId'>) => Promise<number>
+
+export type GetWebhookById = ({ id }: Pick<Webhook, 'id'>) => Promise<Webhook | null>

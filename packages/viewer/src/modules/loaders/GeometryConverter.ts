@@ -21,6 +21,7 @@ export enum SpeckleType {
   Transform = 'Transform',
   InstanceProxy = 'InstanceProxy',
   RenderMaterialProxy = 'RenderMaterialProxy',
+  ColorProxy = 'ColorProxy',
   Unknown = 'Unknown'
 }
 

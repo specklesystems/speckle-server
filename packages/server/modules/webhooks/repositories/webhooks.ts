@@ -2,7 +2,8 @@ import { Knex } from 'knex'
 import { Webhook } from '@/modules/webhooks/domain/types'
 import {
   CountWebhooksByStreamId,
-  CreateWebhook
+  CreateWebhook,
+  GetWebhookById
 } from '@/modules/webhooks/domain/operations'
 
 type WebhookConfig = Omit<Webhook, 'triggers'> & { triggers: Record<string, true> }
@@ -14,6 +15,9 @@ const tables = (db: Knex) => ({
 
 const toTriggersObj = (triggers: string[]): Record<string, true> =>
   triggers.reduce((acc, trigger) => ({ ...acc, [trigger]: true }), {})
+
+const toTriggersArray = (triggers: Record<string, true>): string[] =>
+  Object.keys(triggers)
 
 export const createWebhookFactory =
   ({ db }: { db: Knex }): CreateWebhook =>
@@ -39,4 +43,15 @@ export const countWebhooksByStreamIdFactory =
   async ({ streamId }) => {
     const [res] = await tables(db).webhooksConfigs.where({ streamId }).count()
     return parseInt(res.count.toString())
+  }
+
+export const getWebhookByIdFactory =
+  ({ db }: { db: Knex }): GetWebhookById =>
+  async ({ id }) => {
+    const webhook = await tables(db).webhooksConfigs.select('*').where({ id }).first()
+    if (!webhook) {
+      return null
+    }
+
+    return { ...webhook, triggers: toTriggersArray(webhook.triggers) }
   }

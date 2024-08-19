@@ -11,15 +11,6 @@ const Users = () => knex('users')
 const { getServerInfo } = require('../../core/services/generic')
 
 module.exports = {
-  async getWebhook({ id }) {
-    const webhook = await WebhooksConfig().select('*').where({ id }).first()
-    if (webhook) {
-      webhook.triggers = Object.keys(webhook.triggers)
-    }
-
-    return webhook
-  },
-
   async updateWebhook({ id, url, description, secret, enabled, triggers }) {
     const fieldsToUpdate = {
       updatedAt: new Date()
