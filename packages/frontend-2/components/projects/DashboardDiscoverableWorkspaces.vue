@@ -38,20 +38,23 @@ here behind a flag for testing reasons.
 
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
-import { useApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { dashboardJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
+import type { Workspace } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment DashboardDiscoverableWorkspaces_DiscoverableWorkspace on DiscoverableWorkspace {
-    id
-    name
-    description
+  fragment DiscoverableWorkspaces_User on User {
+    discoverableWorkspaces {
+      id
+      name
+      description
+    }
   }
 `)
 
 defineProps<{
-  discoverableWorkspaces: DashboardDiscoverableWorkspaces_DiscoverableWorkspace[]
+  discoverableWorkspaces: Pick<Workspace, 'id' | 'name' | 'description'>[]
 }>()
 
 const { client: apollo } = useApolloClient()

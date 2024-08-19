@@ -35,7 +35,6 @@
         <FormSelectWorkspaceRoles
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
-          :disabled="!isCurrentUser(item.id)"
           @update:model-value="
             (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
           "
@@ -57,7 +56,6 @@
 // Todo: Enable searching once supported
 import type { WorkspaceRoles } from '@speckle/shared'
 import { workspaceUpdateRoleMutation } from '~~/lib/workspaces/graphql/mutations'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useMutation } from '@vue/apollo-composable'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -101,7 +99,6 @@ const props = defineProps<{
 
 const { triggerNotification } = useGlobalToast()
 // const { on, bind, value: search } = useDebouncedTextInput()
-const { activeUser } = useActiveUser()
 const { mutate: updateChangeRole } = useMutation(workspaceUpdateRoleMutation)
 
 const showChangeUserRoleDialog = ref(false)
@@ -116,7 +113,6 @@ const members = computed(() =>
 )
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
-const isCurrentUser = (id: string) => id === activeUser.value?.id
 
 const openChangeUserRoleDialog = (
   user: UserItem,

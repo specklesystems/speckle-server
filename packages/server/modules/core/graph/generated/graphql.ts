@@ -38,7 +38,6 @@ export type ActiveUserMutations = {
   finishOnboarding: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
-  workspaceMutations?: Maybe<UserWorkspaceMutations>;
 };
 
 
@@ -1741,6 +1740,11 @@ export type PendingStreamCollaborator = {
 
 export type PendingWorkspaceCollaborator = {
   __typename?: 'PendingWorkspaceCollaborator';
+  /**
+   * E-mail address if target is unregistered or primary e-mail of target registered user
+   * if token was specified to retrieve this invite
+   */
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
@@ -1748,7 +1752,10 @@ export type PendingWorkspaceCollaborator = {
   role: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
   title: Scalars['String']['output'];
-  /** Only available if the active user is the pending workspace collaborator */
+  /**
+   * Only available if the active user is the pending workspace collaborator or if it was already
+   * specified when retrieving this invite
+   */
   token?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
@@ -2472,10 +2479,11 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   workspace: Workspace;
   /**
-   * Look for an invitation to a workspace, for the current user (authed or not). If token
-   * isn't specified, the server will look for any valid invite.
+   * Look for an invitation to a workspace, for the current user (authed or not).
    *
    * If token is specified, it will return the corresponding invite even if it belongs to a different user.
+   *
+   * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
 };
@@ -2558,7 +2566,7 @@ export type QueryProjectInviteArgs = {
 
 
 export type QueryServerInviteByTokenArgs = {
-  token: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2611,7 +2619,7 @@ export type QueryWorkspaceArgs = {
 
 export type QueryWorkspaceInviteArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
-  workspaceId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -3610,16 +3618,6 @@ export type UserUpdateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UserWorkspaceMutations = {
-  __typename?: 'UserWorkspaceMutations';
-  leave: Scalars['Boolean']['output'];
-};
-
-
-export type UserWorkspaceMutationsLeaveArgs = {
-  id: Scalars['ID']['input'];
-};
-
 export type UserWorkspacesFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3800,7 +3798,7 @@ export type WebhookCreateInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   secret?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-  triggers: Array<InputMaybe<Scalars['String']['input']>>;
+  triggers: Array<Scalars['String']['input']>;
   url: Scalars['String']['input'];
 };
 
@@ -3950,6 +3948,11 @@ export type WorkspaceInviteMutationsUseArgs = {
 
 export type WorkspaceInviteUseInput = {
   accept: Scalars['Boolean']['input'];
+  /**
+   * If invite is attached to an unregistered email, the invite can only be used if this is set to true.
+   * Upon accepting such an invite, the unregistered email will be added to the user's account as well.
+   */
+  addNewEmail?: InputMaybe<Scalars['Boolean']['input']>;
   token: Scalars['String']['input'];
 };
 
@@ -3961,6 +3964,7 @@ export type WorkspaceMutations = {
   deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
   join: Workspace;
+  leave: Scalars['Boolean']['output'];
   update: Workspace;
   updateRole: Workspace;
 };
@@ -3988,6 +3992,11 @@ export type WorkspaceMutationsDeleteDomainArgs = {
 
 export type WorkspaceMutationsJoinArgs = {
   input: JoinWorkspaceInput;
+};
+
+
+export type WorkspaceMutationsLeaveArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -4335,7 +4344,6 @@ export type ResolversTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   UserUpdateInput: UserUpdateInput;
-  UserWorkspaceMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   UserWorkspacesFilter: UserWorkspacesFilter;
   Version: ResolverTypeWrapper<VersionGraphQLReturn>;
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
@@ -4567,7 +4575,6 @@ export type ResolversParentTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   UserUpdateInput: UserUpdateInput;
-  UserWorkspaceMutations: MutationsObjectGraphQLReturn;
   UserWorkspacesFilter: UserWorkspacesFilter;
   Version: VersionGraphQLReturn;
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
@@ -4642,7 +4649,6 @@ export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentTyp
   emailMutations?: Resolver<ResolversTypes['UserEmailMutations'], ParentType, ContextType>;
   finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
-  workspaceMutations?: Resolver<Maybe<ResolversTypes['UserWorkspaceMutations']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5276,6 +5282,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 };
 
 export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PendingWorkspaceCollaborator'] = ResolversParentTypes['PendingWorkspaceCollaborator']> = {
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
@@ -5487,7 +5494,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
-  serverInviteByToken?: Resolver<Maybe<ResolversTypes['ServerInvite']>, ParentType, ContextType, RequireFields<QueryServerInviteByTokenArgs, 'token'>>;
+  serverInviteByToken?: Resolver<Maybe<ResolversTypes['ServerInvite']>, ParentType, ContextType, Partial<QueryServerInviteByTokenArgs>>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
   streamAccessRequest?: Resolver<Maybe<ResolversTypes['StreamAccessRequest']>, ParentType, ContextType, RequireFields<QueryStreamAccessRequestArgs, 'streamId'>>;
@@ -5498,7 +5505,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
-  workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, RequireFields<QueryWorkspaceInviteArgs, 'workspaceId'>>;
+  workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, Partial<QueryWorkspaceInviteArgs>>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {
@@ -5820,11 +5827,6 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type UserWorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserWorkspaceMutations'] = ResolversParentTypes['UserWorkspaceMutations']> = {
-  leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserWorkspaceMutationsLeaveArgs, 'id'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
@@ -5984,6 +5986,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   deleteDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteDomainArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   join?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsJoinArgs, 'input'>>;
+  leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6104,7 +6107,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserEmailMutations?: UserEmailMutationsResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
-  UserWorkspaceMutations?: UserWorkspaceMutationsResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;
   VersionCollection?: VersionCollectionResolvers<ContextType>;
   VersionCreatedTrigger?: VersionCreatedTriggerResolvers<ContextType>;

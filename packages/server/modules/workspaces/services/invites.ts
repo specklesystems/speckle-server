@@ -7,7 +7,7 @@ import {
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
+import { UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getUser } from '@/modules/core/repositories/users'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -268,8 +268,11 @@ ${inviter.name} has just sent you this invitation to join the "${workspace.name}
 
 function buildPendingWorkspaceCollaboratorModel(
   invite: ServerInviteRecord<WorkspaceInviteResourceTarget>,
-  targetUser: Nullable<LimitedUserRecord>
+  targetUser: Nullable<UserRecord>,
+  token?: string
 ): PendingWorkspaceCollaboratorGraphQLReturn {
+  const { userEmail } = resolveTarget(invite.target)
+
   return {
     id: `invite:${invite.id}`,
     inviteId: invite.id,
@@ -277,20 +280,25 @@ function buildPendingWorkspaceCollaboratorModel(
     title: resolveInviteTargetTitle(invite, targetUser),
     role: invite.resource.role || Roles.Workspace.Member,
     invitedById: invite.inviterId,
-    user: targetUser,
-    updatedAt: invite.updatedAt
+    user: targetUser ? removePrivateFields(targetUser) : null,
+    updatedAt: invite.updatedAt,
+    email: targetUser?.email || userEmail || '',
+    token
   }
 }
 
 export const getUserPendingWorkspaceInviteFactory =
   (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
   async (params: {
-    workspaceId: string
+    workspaceId: MaybeNullOrUndefined<string>
     userId: MaybeNullOrUndefined<string>
     token: MaybeNullOrUndefined<string>
   }) => {
     const { workspaceId, userId, token } = params
-    if (!userId && !token) return null
+    if (!userId?.length && !token?.length) return null
+    if (!token?.length && !workspaceId?.length) return null
+
+    // TODO: Test w/o token & workspace, or w/ just token
 
     const userTarget = userId ? buildUserTarget(userId) : undefined
 
@@ -302,7 +310,7 @@ export const getUserPendingWorkspaceInviteFactory =
       token: token || undefined,
       resourceFilter: {
         resourceType: WorkspaceInviteResourceType,
-        resourceId: workspaceId
+        resourceId: workspaceId || undefined
       }
     })
     if (!invite) return null
@@ -310,7 +318,11 @@ export const getUserPendingWorkspaceInviteFactory =
     const targetUserId = resolveTarget(invite.target).userId
     const targetUser = targetUserId ? await deps.getUser(targetUserId) : null
 
-    return buildPendingWorkspaceCollaboratorModel(invite, targetUser)
+    return buildPendingWorkspaceCollaboratorModel(
+      invite,
+      targetUser,
+      token || undefined
+    )
   }
 
 export const getUserPendingWorkspaceInvitesFactory =
@@ -363,10 +375,10 @@ export const getPendingWorkspaceCollaboratorsFactory =
     // Build results
     const results = []
     for (const invite of invites) {
-      let user: LimitedUserRecord | null = null
+      let user: UserRecord | null = null
       const { userId } = resolveTarget(invite.target)
       if (userId && usersById[userId]) {
-        user = removePrivateFields(usersById[userId])
+        user = usersById[userId]
       }
 
       results.push(buildPendingWorkspaceCollaboratorModel(invite, user))
@@ -449,11 +461,9 @@ export const processFinalizedWorkspaceInviteFactory =
       )
     }
 
-    const target = resolveTarget(invite.target)
-
     if (action === InviteFinalizationAction.ACCEPT) {
       await deps.updateWorkspaceRole({
-        userId: target.userId!,
+        userId: finalizerUserId,
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member
       })

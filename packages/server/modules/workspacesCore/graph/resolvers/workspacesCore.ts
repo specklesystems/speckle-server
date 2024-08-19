@@ -9,6 +9,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Query: {
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvite: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Mutation: {
@@ -27,7 +30,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-        invites: () => ({}),
         addDomain: async () => {
           throw new WorkspacesModuleDisabledError()
         },
@@ -36,7 +38,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         join: async () => {
           throw new WorkspacesModuleDisabledError()
-        }
+        },
+        leave: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        invites: () => ({})
       },
       WorkspaceInviteMutations: {
         create: async () => {
@@ -87,11 +93,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       AdminQueries: {
         workspaceList: async () => {
-          throw new WorkspacesModuleDisabledError()
-        }
-      },
-      ActiveUserMutations: {
-        workspaceMutations: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       }

@@ -28,10 +28,17 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
-      discoverableWorkspaces {
-        ...DashboardDiscoverableWorkspaces_DiscoverableWorkspace
-      }
       ...ProjectsInviteBanners
+      ...ProjectsDashboardHeaderProjects_User
+    }
+  }
+`)
+
+export const projectsDashboardWorkspaceQuery = graphql(`
+  query ProjectsDashboardWorkspaceQuery {
+    activeUser {
+      id
+      ...ProjectsDashboardHeaderWorkspaces_User
     }
   }
 `)

@@ -16,6 +16,11 @@ export class WorkspaceInvalidLogoError extends BaseError {
   static code = 'WORKSPACE_INVALID_LOGO_ERROR'
 }
 
+export class WorkspaceInvalidDescriptionError extends BaseError {
+  static defaultMessage = 'Provided description is too long'
+  static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
+}
+
 export class WorkspaceQueryError extends BaseError {
   static defaultMessage = 'Unexpected error during query operation'
   static code = 'WORKSPACE_QUERY_ERROR'

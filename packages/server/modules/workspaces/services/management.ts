@@ -33,7 +33,8 @@ import {
   WorkspaceDomainBlockedError,
   WorkspaceNotFoundError,
   WorkspaceProtectedError,
-  WorkspaceUnverifiedDomainError
+  WorkspaceUnverifiedDomainError,
+  WorkspaceInvalidDescriptionError
 } from '@/modules/workspaces/errors/workspace'
 import {
   isUserLastWorkspaceAdmin,
@@ -153,6 +154,9 @@ export const updateWorkspaceFactory =
     if (isEmpty(workspaceInput.name)) {
       // Do not allow setting an empty name (empty descriptions allowed)
       delete workspaceInput.name
+    }
+    if (!!workspaceInput.description && workspaceInput.description.length > 512) {
+      throw new WorkspaceInvalidDescriptionError()
     }
 
     const workspace = {
