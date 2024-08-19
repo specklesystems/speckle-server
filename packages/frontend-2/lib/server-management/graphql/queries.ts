@@ -71,29 +71,7 @@ export const getProjectsQuery = graphql(`
         cursor: $cursor
       ) {
         cursor
-        items {
-          id
-          name
-          visibility
-          createdAt
-          updatedAt
-          models {
-            totalCount
-          }
-          versions {
-            totalCount
-          }
-          team {
-            id
-            user {
-              name
-              id
-              avatar
-            }
-          }
-        }
-        totalCount
-        cursor
+        ...SettingsServerProjects_ProjectCollection
       }
     }
   }
