@@ -1,4 +1,4 @@
-import type { RouteLocationNormalized } from '#vue-router'
+import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'

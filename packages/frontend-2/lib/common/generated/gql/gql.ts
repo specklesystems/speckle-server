@@ -84,6 +84,7 @@ const documents = {
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n": types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
     "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
+    "\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeader_UserFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
     "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
@@ -136,7 +137,7 @@ const documents = {
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
-    "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
+    "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
     "\n  mutation CreateAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": types.CreateAccessTokenDocument,
     "\n  mutation DeleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": types.DeleteApplicationDocument,
@@ -186,7 +187,7 @@ const documents = {
     "\n  mutation CreateTestAutomation(\n    $projectId: ID!\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": types.CreateTestAutomationDocument,
     "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n    }\n  }\n": types.ProjectAccessCheckDocument,
     "\n  query ProjectRoleCheck($id: String!) {\n    project(id: $id) {\n      id\n      role\n    }\n  }\n": types.ProjectRoleCheckDocument,
-    "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsInviteBanners\n      ...WorkspaceInviteBanners_User\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
+    "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
     "\n  query ProjectPageQuery($id: String!, $token: String) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n    projectInvite(projectId: $id, token: $token) {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectPageQueryDocument,
     "\n  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {\n    project(id: $projectId) {\n      id\n      models(cursor: null, limit: 16, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n      pendingImportedModels {\n        ...PendingFileUpload\n      }\n    }\n  }\n": types.ProjectLatestModelsDocument,
     "\n  query ProjectLatestModelsPagination(\n    $projectId: String!\n    $filter: ProjectModelsFilter\n    $cursor: String = null\n  ) {\n    project(id: $projectId) {\n      id\n      models(cursor: $cursor, limit: 16, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestModelsPaginationDocument,
@@ -585,6 +586,10 @@ export function graphql(source: "\n  fragment ProjectsDashboardFilled on Project
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -793,7 +798,7 @@ export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"): (typeof documents)["\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -993,7 +998,7 @@ export function graphql(source: "\n  query ProjectRoleCheck($id: String!) {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsInviteBanners\n      ...WorkspaceInviteBanners_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsInviteBanners\n      ...WorkspaceInviteBanners_User\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
