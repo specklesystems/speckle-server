@@ -52,7 +52,7 @@
             size="lg"
             full-width
             :disabled="loading"
-            @click="() => signOutGoToLogin"
+            @click="() => signOutGoToLogin()"
           >
             {{ activeUser ? 'Sign out to continue' : 'Sign in to continue' }}
           </FormButton>
