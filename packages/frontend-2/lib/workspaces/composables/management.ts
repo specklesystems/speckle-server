@@ -34,10 +34,12 @@ export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const { mutate } = useMutation(inviteToWorkspaceMutation)
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   return async (workspaceId: string, inputs: WorkspaceInviteCreateInput[]) => {
     const userId = activeUser.value?.id
     if (!userId) return
+    if (!isWorkspacesEnabled.value) return
 
     const { data, errors } =
       (await mutate(
@@ -99,6 +101,7 @@ export const useProcessWorkspaceInvite = () => {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const mp = useMixpanel()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   return async (
     params: {
@@ -114,6 +117,7 @@ export const useProcessWorkspaceInvite = () => {
       preventErrorToasts?: boolean
     }>
   ) => {
+    if (!isWorkspacesEnabled.value) return
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -221,6 +225,7 @@ export const useWorkspaceInviteManager = <
     preventErrorToasts: boolean
   }>
 ) => {
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
   const { invite } = params
   const { preventRedirect, preventErrorToasts } = options || {}
 
@@ -257,6 +262,7 @@ export const useWorkspaceInviteManager = <
     }>
   ) => {
     const { addNewEmail } = options || {}
+    if (!isWorkspacesEnabled.value) return false
     if (!token.value || !invite.value) return false
     if (needsToAddNewEmail.value && !addNewEmail) return false
 

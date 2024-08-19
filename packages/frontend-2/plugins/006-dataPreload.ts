@@ -14,6 +14,7 @@ export default defineNuxtPlugin(async (ctx) => {
   const logger = useLogger()
   const route = ctx._route
   const preload = usePreloadApolloQueries()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   if (!route) {
     logger.info('No route obj found, skipping data preload...')
@@ -47,7 +48,7 @@ export default defineNuxtPlugin(async (ctx) => {
   }
 
   // Preload workspace data
-  if (idParam && path.startsWith('/workspaces/')) {
+  if (idParam && path.startsWith('/workspaces/') && isWorkspacesEnabled.value) {
     promises.push(
       preload({
         queries: [
