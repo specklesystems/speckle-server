@@ -24,6 +24,7 @@ export const settingsWorkspacesMembersQuery = graphql(`
     workspace(id: $workspaceId) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
+      ...SettingsWorkspacesMembersGuestsTable_Workspace
       ...SettingsWorkspacesMembersInvitesTable_Workspace
     }
   }
