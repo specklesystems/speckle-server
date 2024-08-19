@@ -118,7 +118,7 @@ const { result: workspacesInvitesResult } = useQuery(
   projectsDashboardWorkspaceInvitesQuery,
   undefined,
   () => ({
-    enabled: isWorkspacesEnabled
+    enabled: isWorkspacesEnabled.value
   })
 )
 
