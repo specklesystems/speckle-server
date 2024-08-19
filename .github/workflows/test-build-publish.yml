@@ -1,10 +1,22 @@
-name: Image digest update
+name: Test, Build, and Publish Speckle server
 
 on:
   workflow_dispatch:
   push:
 
 jobs:
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.1
+
   test-frontend-2:
     name: Test Frontend 2
     runs-on: ubuntu-latest
