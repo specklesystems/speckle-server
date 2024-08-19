@@ -16,26 +16,23 @@
 </template>
 
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { activeUserEmailsQuery } from '~/lib/user/graphql/queries'
-import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
+import type { Workspace } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   workspaceId: string
 }>()
 
-const emit = defineEmits<{
-  added: [WorkspaceDomainInfo_SettingsFragment[]]
-}>()
-
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { result: activeUserEmails } = useQuery(activeUserEmailsQuery)
-const { mutate: addWorkspaceDomain } = useMutation(settingsAddWorkspaceDomainMutation)
 const { triggerNotification } = useGlobalToast()
+
+const apollo = useApolloClient().client
 
 const verifiedUserDomains = computed(() => {
   const emails = new Set<string>()
@@ -59,29 +56,43 @@ const onSelectedDomainUpdate = (e?: string | string[]) => {
 }
 
 const onAdd = async () => {
-  const domain = selectedDomain.value
+  const result = await apollo
+    .mutate({
+      mutation: settingsAddWorkspaceDomainMutation,
+      variables: {
+        input: {
+          domain: selectedDomain.value,
+          workspaceId: props.workspaceId
+        }
+      },
+      update: (cache, res) => {
+        const { data } = res
+        if (!data?.workspaceMutations) return
 
-  const result = await addWorkspaceDomain({
-    input: {
-      domain,
-      workspaceId: props.workspaceId
-    }
-  }).catch(convertThrowIntoFetchResult)
+        cache.modify<Workspace>({
+          id: getCacheId('Workspace', props.workspaceId),
+          fields: {
+            domains() {
+              return [...(data?.workspaceMutations.addDomain.domains || [])]
+            }
+          }
+        })
+      }
+    })
+    .catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
     isOpen.value = false
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Domain added',
-      description: `The verified domain ${domain} has been added to your workspace`
+      description: `The verified domain ${selectedDomain.value} has been added to your workspace`
     })
-    emit('added', result.data.workspaceMutations.addDomain.domains)
   } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Failed to add verified domain',
-      description: errorMessage
+      description: getFirstErrorMessage(result?.errors)
     })
   }
 }

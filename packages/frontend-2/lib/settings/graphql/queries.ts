@@ -50,7 +50,7 @@ export const settingsUserEmailsQuery = graphql(`
 `)
 
 export const settingsWorkspaceSecurityQuery = graphql(`
-  query SettingsWorkspaceSecutiry($workspaceId: String!) {
+  query SettingsWorkspaceSecurity($workspaceId: String!) {
     workspace(id: $workspaceId) {
       domains {
         id

@@ -13,34 +13,52 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useMutation } from '@vue/apollo-composable'
-import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { useApolloClient } from '@vue/apollo-composable'
+import {
+  type Workspace,
+  type WorkspaceSettingsSecurity_WorkspaceDomainFragment
+} from '~/lib/common/generated/gql/graphql'
+import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 
 const props = defineProps<{
   workspaceId: string
-  domain: WorkspaceDomainInfo_SettingsFragment
+  domain: WorkspaceSettingsSecurity_WorkspaceDomainFragment
 }>()
 
-const emit = defineEmits<{
-  removed: [WorkspaceDomainInfo_SettingsFragment[]]
-}>()
+const apollo = useApolloClient().client
 
-const { mutate: deleteWorkspaceDomain } = useMutation(
-  settingsDeleteWorkspaceDomainMutation
-)
 const { triggerNotification } = useGlobalToast()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const handleRemove = async () => {
-  const result = await deleteWorkspaceDomain({
-    input: {
-      workspaceId: props.workspaceId,
-      id: props.domain.id
-    }
-  }).catch(convertThrowIntoFetchResult)
+  const result = await apollo
+    .mutate({
+      mutation: settingsDeleteWorkspaceDomainMutation,
+      variables: {
+        input: {
+          workspaceId: props.workspaceId,
+          id: props.domain.id
+        }
+      },
+      update: (cache, res) => {
+        const { data } = res
+        if (!data?.workspaceMutations) return
+
+        cache.modify<Workspace>({
+          id: getCacheId('Workspace', props.workspaceId),
+          fields: {
+            domains(currentDomains, { isReference }) {
+              return [...currentDomains].filter((domain) =>
+                isReference(domain) ? false : domain.id !== props.domain.id
+              )
+            }
+          }
+        })
+      }
+    })
+    .catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
     isOpen.value = false
@@ -49,13 +67,11 @@ const handleRemove = async () => {
       title: 'Domain removed',
       description: `Removed domain successfully`
     })
-    emit('removed', result.data.workspaceMutations.deleteDomain.domains)
   } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Failed to remove domain',
-      description: errorMessage
+      description: getFirstErrorMessage(result?.errors)
     })
   }
 }

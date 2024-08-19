@@ -57,7 +57,7 @@ export const settingsNewEmailVerificationMutation = graphql(`
 `)
 
 export const settingsUpdateWorkspaceSecurity = graphql(`
-  mutation UpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {
+  mutation SettingsUpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {
     workspaceMutations {
       update(input: $input) {
         domainBasedMembershipProtectionEnabled

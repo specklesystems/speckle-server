@@ -46,28 +46,29 @@
     <SettingsWorkspacesSecurityAddDialog
       v-model:open="showAddDialog"
       :workspace-id="workspaceId"
-      @added="handleDomainsChanged"
     />
     <SettingsWorkspacesSecurityRemoveDialog
       v-if="removeDialogDomain"
       v-model:open="showRemoveDialog"
       :workspace-id="workspaceId"
       :domain="removeDialogDomain"
-      @removed="handleDomainsChanged"
     />
   </section>
 </template>
 
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type { WorkspaceDomainInfo_SettingsFragment } from '~/lib/common/generated/gql/graphql'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { settingsUpdateWorkspaceSecurity } from '~/lib/settings/graphql/mutations'
+import type {
+  Workspace,
+  WorkspaceSettingsSecurity_WorkspaceDomainFragment
+} from '~/lib/common/generated/gql/graphql'
+import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/gql/graphql'
+import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspaceSecurityQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
-  fragment WorkspaceDomainInfo_Settings on WorkspaceDomain {
+  fragment WorkspaceSettingsSecurity_WorkspaceDomain on WorkspaceDomain {
     id
     domain
   }
@@ -78,88 +79,115 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
+const apollo = useApolloClient().client
 
-const { result, refetch } = useQuery(settingsWorkspaceSecurityQuery, {
+const { result: workspaceSecuritySettings } = useQuery(settingsWorkspaceSecurityQuery, {
   workspaceId: props.workspaceId
 })
-const { mutate: updateWorkspaceSecurity } = useMutation(settingsUpdateWorkspaceSecurity)
-
-const domains = ref<WorkspaceDomainInfo_SettingsFragment[]>([])
+const domains = ref<WorkspaceSettingsSecurity_WorkspaceDomainFragment[]>([])
 
 const showAddDialog = ref(false)
-const handleDomainsChanged = (nextDomains: WorkspaceDomainInfo_SettingsFragment[]) => {
-  domains.value = nextDomains
-  refetch()
-}
 
 const showRemoveDialog = ref(false)
-const removeDialogDomain = ref<WorkspaceDomainInfo_SettingsFragment>()
-const openRemoveDialog = (domain: WorkspaceDomainInfo_SettingsFragment) => {
+const removeDialogDomain = ref<WorkspaceSettingsSecurity_WorkspaceDomainFragment>()
+const openRemoveDialog = (
+  domain: WorkspaceSettingsSecurity_WorkspaceDomainFragment
+) => {
   removeDialogDomain.value = domain
   showRemoveDialog.value = true
 }
 
-const isDomainProtectionEnabledInternal = ref(false)
 const isDomainProtectionEnabled = computed({
-  get: () => isDomainProtectionEnabledInternal.value,
+  get: () => workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false,
   set: async (newVal) => {
-    isDomainProtectionEnabledInternal.value = newVal
+    const result = await apollo
+      .mutate({
+        mutation: SettingsUpdateWorkspaceSecurityDocument,
+        variables: {
+          input: {
+            id: props.workspaceId,
+            domainBasedMembershipProtectionEnabled: newVal
+          }
+        },
+        optimisticResponse: {
+          workspaceMutations: {
+            update: {
+              __typename: 'Workspace',
+              domainBasedMembershipProtectionEnabled: newVal,
+              discoverabilityEnabled:
+                workspaceSecuritySettings.value?.workspace.discoverabilityEnabled ||
+                false
+            }
+          }
+        },
+        update: (cache, res) => {
+          const { data } = res
+          if (!data?.workspaceMutations) return
 
-    const result = await updateWorkspaceSecurity({
-      input: {
-        id: props.workspaceId,
-        domainBasedMembershipProtectionEnabled: newVal
-      }
-    })
+          cache.modify<Workspace>({
+            id: getCacheId('Workspace', props.workspaceId),
+            fields: {
+              discoverabilityEnabled: () =>
+                res.data?.workspaceMutations.update.discoverabilityEnabled || false
+            }
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     if (!result?.data) {
-      const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: errorMessage
+        description: getFirstErrorMessage(result?.errors)
       })
-      return
     }
-
-    isDomainProtectionEnabledInternal.value =
-      result.data.workspaceMutations.update.domainBasedMembershipProtectionEnabled
   }
 })
 
-const isDomainDiscoverabilityEnabledInternal = ref(false)
 const isDomainDiscoverabilityEnabled = computed({
-  get: () => isDomainDiscoverabilityEnabledInternal.value,
+  get: () => workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false,
   set: async (newVal) => {
-    isDomainDiscoverabilityEnabledInternal.value = newVal
+    const result = await apollo.mutate({
+      mutation: SettingsUpdateWorkspaceSecurityDocument,
+      variables: {
+        input: {
+          id: props.workspaceId,
+          discoverabilityEnabled: newVal
+        }
+      },
+      optimisticResponse: {
+        workspaceMutations: {
+          update: {
+            __typename: 'Workspace',
+            domainBasedMembershipProtectionEnabled:
+              workspaceSecuritySettings.value?.workspace
+                .domainBasedMembershipProtectionEnabled || false,
+            discoverabilityEnabled: newVal
+          }
+        }
+      },
+      update: (cache, res) => {
+        const { data } = res
+        if (!data?.workspaceMutations) return
 
-    const result = await updateWorkspaceSecurity({
-      input: {
-        id: props.workspaceId,
-        discoverabilityEnabled: newVal
+        cache.modify<Workspace>({
+          id: getCacheId('Workspace', props.workspaceId),
+          fields: {
+            domainBasedMembershipProtectionEnabled: () =>
+              workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false
+          }
+        })
       }
     })
 
     if (!result?.data) {
-      const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: errorMessage
+        description: getFirstErrorMessage(result?.errors)
       })
-      return
     }
-
-    isDomainDiscoverabilityEnabledInternal.value =
-      result.data.workspaceMutations.update.discoverabilityEnabled
   }
-})
-
-watch(result, (value) => {
-  domains.value = value?.workspace.domains ?? []
-  isDomainProtectionEnabledInternal.value =
-    value?.workspace.domainBasedMembershipProtectionEnabled ?? false
-  isDomainDiscoverabilityEnabledInternal.value =
-    value?.workspace.discoverabilityEnabled ?? false
 })
 </script>
