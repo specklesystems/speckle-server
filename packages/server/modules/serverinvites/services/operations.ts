@@ -27,6 +27,12 @@ export type FinalizeInvite = (params: {
   accept: boolean
   token: string
   resourceType?: InviteResourceTargetType
+  /**
+   * If true, finalization also allows accepting an invite that technically belongs to a different
+   * email, one that is not yet attached to any user account.
+   * If the invite is accepted, the email will be attached to the user account as well in a verified state.
+   */
+  allowAttachingNewEmail?: boolean
 }) => Promise<void>
 
 export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>

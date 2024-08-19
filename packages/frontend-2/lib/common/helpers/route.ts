@@ -86,6 +86,8 @@ export const automationFunctionsRoute = '/functions'
 export const automationFunctionRoute = (functionId: string) =>
   `${automationFunctionsRoute}/${functionId}`
 
+export const workspaceRoute = (id: string) => `/workspaces/${id}`
+
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
   return (params?: { query?: LocationQueryRaw }) => {

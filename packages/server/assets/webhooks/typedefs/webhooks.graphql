@@ -72,7 +72,7 @@ input WebhookCreateInput {
   streamId: String!
   url: String!
   description: String
-  triggers: [String]!
+  triggers: [String!]!
   secret: String
   enabled: Boolean
 }

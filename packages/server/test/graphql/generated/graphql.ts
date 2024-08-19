@@ -1714,6 +1714,11 @@ export type PendingStreamCollaborator = {
 
 export type PendingWorkspaceCollaborator = {
   __typename?: 'PendingWorkspaceCollaborator';
+  /**
+   * E-mail address if target is unregistered or primary e-mail of target registered user
+   * if token was specified to retrieve this invite
+   */
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
@@ -1721,7 +1726,10 @@ export type PendingWorkspaceCollaborator = {
   role: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
   title: Scalars['String']['output'];
-  /** Only available if the active user is the pending workspace collaborator */
+  /**
+   * Only available if the active user is the pending workspace collaborator or if it was already
+   * specified when retrieving this invite
+   */
   token?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   /** Set only if user is registered */
@@ -2445,10 +2453,11 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   workspace: Workspace;
   /**
-   * Look for an invitation to a workspace, for the current user (authed or not). If token
-   * isn't specified, the server will look for any valid invite.
+   * Look for an invitation to a workspace, for the current user (authed or not).
    *
    * If token is specified, it will return the corresponding invite even if it belongs to a different user.
+   *
+   * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
 };
@@ -2531,7 +2540,7 @@ export type QueryProjectInviteArgs = {
 
 
 export type QueryServerInviteByTokenArgs = {
-  token: Scalars['String']['input'];
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -2584,7 +2593,7 @@ export type QueryWorkspaceArgs = {
 
 export type QueryWorkspaceInviteArgs = {
   token?: InputMaybe<Scalars['String']['input']>;
-  workspaceId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -3761,7 +3770,7 @@ export type WebhookCreateInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   secret?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-  triggers: Array<InputMaybe<Scalars['String']['input']>>;
+  triggers: Array<Scalars['String']['input']>;
   url: Scalars['String']['input'];
 };
 
@@ -3894,6 +3903,11 @@ export type WorkspaceInviteMutationsUseArgs = {
 
 export type WorkspaceInviteUseInput = {
   accept: Scalars['Boolean']['input'];
+  /**
+   * If invite is attached to an unregistered email, the invite can only be used if this is set to true.
+   * Upon accepting such an invite, the unregistered email will be added to the user's account as well.
+   */
+  addNewEmail?: InputMaybe<Scalars['Boolean']['input']>;
   token: Scalars['String']['input'];
 };
 

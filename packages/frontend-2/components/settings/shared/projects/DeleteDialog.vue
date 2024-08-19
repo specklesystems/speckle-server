@@ -1,14 +1,17 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>Delete project</template>
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 text-body-xs text-foreground">
       <p>
         Are you sure you want to
-        <strong>permanently delete</strong>
+        <span class="font-medium">permanently delete</span>
         the selected project?
       </p>
-      <div v-if="project">
-        <strong>{{ project.name }}</strong>
+      <div
+        v-if="project"
+        class="rounded border bg-foundation-2 border-outline-3 text-body-2xs py-3 px-4"
+      >
+        <p class="font-medium">{{ project.name }}</p>
         <p>
           {{ project.models.totalCount }} models,
           {{ project.versions.totalCount }} versions,
@@ -16,7 +19,7 @@
       </div>
       <p>
         This action
-        <strong>cannot</strong>
+        <span class="font-medium">cannot</span>
         be undone.
       </p>
     </div>
@@ -40,7 +43,6 @@ import type { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
-  title: string
   project: ProjectItem | null
 }>()
 
@@ -122,14 +124,14 @@ const deleteConfirmed = async () => {
 
 const dialogButtons: LayoutDialogButton[] = [
   {
-    text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
-    onClick: deleteConfirmed
-  },
-  {
     text: 'Cancel',
     props: { color: 'outline', fullWidth: true },
     onClick: () => (isOpen.value = false)
+  },
+  {
+    text: 'Delete',
+    props: { color: 'danger', fullWidth: true },
+    onClick: deleteConfirmed
   }
 ]
 </script>

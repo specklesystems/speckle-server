@@ -69,7 +69,13 @@
                 :tooltip-text="workspaceMenuItem.tooltipText"
                 :disabled="workspaceMenuItem.disabled"
                 :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
-                @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
+                @click="
+                  onWorkspaceMenuItemClick(
+                    workspaceItem.id,
+                    `${itemKey}`,
+                    workspaceMenuItem.disabled
+                  )
+                "
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
@@ -154,7 +160,8 @@ const selectedMenuItem = computed((): SettingsMenuItem | null => {
   return null
 })
 
-const onWorkspaceMenuItemClick = (id: string, target: string) => {
+const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean) => {
+  if (disabled) return
   targetWorkspaceId.value = id
   targetMenuItem.value = target
 }

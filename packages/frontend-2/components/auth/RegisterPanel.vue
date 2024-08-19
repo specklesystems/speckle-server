@@ -1,7 +1,7 @@
 <template>
   <div class="--mx-auto w-full">
     <div class="space-y-6">
-      <div class="flex flex-col items-center gap-y-2">
+      <div v-if="!workspaceInvite" class="flex flex-col items-center gap-y-2">
         <h1 class="text-heading-xl text-center inline-block">
           Create your Speckle account
         </h1>
@@ -9,6 +9,7 @@
           Connectivity, Collaboration and Automation for 3D
         </h2>
       </div>
+      <AuthWorkspaceInviteHeader v-else :invite="workspaceInvite" />
       <template v-if="isInviteOnly && !inviteToken">
         <div class="flex space-x-2 items-center">
           <ExclamationTriangleIcon class="h-8 w-8 text-warning" />
@@ -17,7 +18,7 @@
             follow the instructions in it.
           </div>
         </div>
-        <div class="flex space-x-2 items-center justify-center">
+        <div v-if="!inviteEmail" class="flex space-x-2 items-center justify-center">
           <span>Already have an account?</span>
           <CommonTextLink :to="loginRoute">Log in</CommonTextLink>
         </div>
@@ -28,6 +29,7 @@
           :server-info="serverInfo"
           :challenge="challenge"
           :app-id="appId"
+          :newsletter-consent="newsletterConsent"
         />
         <div>
           <div
@@ -38,6 +40,7 @@
           </div>
           <AuthRegisterWithEmailBlock
             v-if="serverInfo && hasLocalStrategy"
+            v-model:newsletter-consent="newsletterConsent"
             :challenge="challenge"
             :server-info="serverInfo"
             :invite-email="inviteEmail"
@@ -51,19 +54,20 @@
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
-import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { loginRoute } from '~~/lib/common/helpers/route'
 
-graphql(`
-  fragment AuthRegisterPanelServerInfo on ServerInfo {
-    inviteOnly
-  }
-`)
-
-const serverInviteQuery = graphql(`
-  query RegisterPanelServerInvite($token: String!) {
+const registerPanelQuery = graphql(`
+  query AuthRegisterPanel($token: String) {
+    serverInfo {
+      inviteOnly
+      authStrategies {
+        id
+      }
+      ...AuthStategiesServerInfoFragment
+      ...ServerTermsOfServicePrivacyPolicyFragment
+    }
     serverInviteByToken(token: $token) {
       id
       email
@@ -71,21 +75,33 @@ const serverInviteQuery = graphql(`
   }
 `)
 
-const newsletterConsent = ref(false)
-
-provide('newsletterconsent', newsletterConsent)
-
-const { result } = useQuery(loginServerInfoQuery)
-const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
-const { result: inviteMetadata } = useQuery(
-  serverInviteQuery,
-  () => ({ token: inviteToken.value || '' }),
-  {
-    enabled: computed(() => !!inviteToken.value?.length)
+const registerPanelWorkspaceInviteQuery = graphql(`
+  query AuthRegisterPanelWorkspaceInvite($token: String) {
+    workspaceInvite(token: $token) {
+      id
+      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator
+    }
   }
+`)
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
+const { result } = useQuery(registerPanelQuery, () => ({
+  token: inviteToken.value
+}))
+const { result: workspaceInviteResult } = useQuery(
+  registerPanelWorkspaceInviteQuery,
+  () => ({
+    token: inviteToken.value
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
 )
 
-const inviteEmail = computed(() => inviteMetadata.value?.serverInviteByToken?.email)
+const newsletterConsent = ref(false)
+
+const inviteEmail = computed(() => result.value?.serverInviteByToken?.email)
 const serverInfo = computed(() => result.value?.serverInfo)
 const hasLocalStrategy = computed(() =>
   (serverInfo.value?.authStrategies || []).some((s) => s.id === AuthStrategy.Local)
@@ -96,4 +112,5 @@ const hasThirdPartyStrategies = computed(() =>
 )
 
 const isInviteOnly = computed(() => !!serverInfo.value?.inviteOnly)
+const workspaceInvite = computed(() => workspaceInviteResult.value?.workspaceInvite)
 </script>
