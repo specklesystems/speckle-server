@@ -2,6 +2,7 @@
   <div>
     <div v-if="project">
       <ProjectsInviteBanner
+        v-if="invite"
         :invite="invite"
         :show-project-name="false"
         @processed="onInviteAccepted"

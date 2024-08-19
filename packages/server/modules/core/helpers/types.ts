@@ -11,13 +11,7 @@ export type UserRecord = {
   name: string
   bio: Nullable<string>
   company: Nullable<string>
-  /**
-   * @deprecated Use UserEmails table
-   */
   email: string
-  /**
-   * @deprecated Use UserEmails table
-   */
   verified: boolean
   avatar: string
   profiles: Nullable<string>
