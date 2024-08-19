@@ -56,11 +56,16 @@ import { useQuery } from '@vue/apollo-composable'
 import { capitalize } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesMembersInvitesTable_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  useCancelWorkspaceInvite,
+  useResendWorkspaceInvite
+} from '~/lib/settings/composables/workspaces'
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
+    inviteId
     role
     title
     updatedAt
@@ -92,6 +97,8 @@ const props = defineProps<{
 
 const search = ref('')
 
+const cancelInvite = useCancelWorkspaceInvite()
+const resendInvite = useResendWorkspaceInvite()
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesInvitesSearchQuery,
   () => ({
@@ -112,12 +119,24 @@ const buttons = computed(() => [
   {
     label: 'Resend invite',
     icon: EnvelopeIcon,
-    action: () => ({})
+    action: async (item: NonNullable<typeof invites.value>[0]) => {
+      await resendInvite({
+        input: {
+          workspaceId: props.workspaceId,
+          inviteId: item.inviteId
+        }
+      })
+    }
   },
   {
     label: 'Delete invite',
     icon: XMarkIcon,
-    action: () => ({})
+    action: async (item: NonNullable<typeof invites.value>[0]) => {
+      await cancelInvite({
+        workspaceId: props.workspaceId,
+        inviteId: item.inviteId
+      })
+    }
   }
 ])
 const roleDisplayName = (role: string) => capitalize(role.split(':')[1])
