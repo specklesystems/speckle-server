@@ -10,6 +10,7 @@ import {
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
 
 export type InviteResult = {
@@ -35,7 +36,10 @@ export type FinalizeInvite = (params: {
   allowAttachingNewEmail?: boolean
 }) => Promise<void>
 
-export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>
+export type ResendInviteEmail = (params: {
+  inviteId: string
+  resourceFilter?: ServerInviteResourceFilter
+}) => Promise<void>
 
 export type CollectAndValidateResourceTargets = (params: {
   input: CreateInviteParams
