@@ -32,7 +32,7 @@
         <AuthLoginWithEmailBlock
           v-if="hasLocalStrategy"
           :challenge="challenge"
-          :workspace-invite="result?.workspaceInvite || undefined"
+          :workspace-invite="workspaceInvite || undefined"
         />
         <div v-if="!forcedInviteEmail" class="text-center text-body-sm">
           <span class="mr-2">Don't have an account?</span>
@@ -52,7 +52,10 @@ import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables
 import { LayoutDialog } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
-import { authLoginPanelQuery } from '~/lib/auth/graphql/queries'
+import {
+  authLoginPanelQuery,
+  authLoginPanelWorkspaceInviteQuery
+} from '~/lib/auth/graphql/queries'
 
 const props = withDefaults(
   defineProps<{
@@ -71,9 +74,19 @@ const { appId, challenge } = useLoginOrRegisterUtils()
 const { isLoggedIn } = useActiveUser()
 const { inviteToken } = useAuthManager()
 const router = useRouter()
-const { result } = useQuery(authLoginPanelQuery, () => ({
-  token: inviteToken.value
-}))
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result } = useQuery(authLoginPanelQuery)
+
+const { result: workspaceInviteResult } = useQuery(
+  authLoginPanelWorkspaceInviteQuery,
+  () => ({
+    token: inviteToken.value
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 
 const finalRegisterRoute = computed(() => {
   const result = router.resolve({
@@ -87,7 +100,7 @@ const concreteComponent = computed(() => {
   return props.dialogMode ? LayoutDialog : 'div'
 })
 
-const workspaceInvite = computed(() => result.value?.workspaceInvite)
+const workspaceInvite = computed(() => workspaceInviteResult.value?.workspaceInvite)
 const forcedInviteEmail = computed(() => workspaceInvite.value?.email)
 
 const serverInfo = computed(() => result.value?.serverInfo)
