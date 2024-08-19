@@ -38,7 +38,7 @@ graphql(`
   fragment SettingsUserProfile_User on User {
     ...UserProfileEditDialogChangePassword_User
     ...UserProfileEditDialogDeleteAccount_User
-    ...UserProfileEditDialogBio_User
+    ...SettingsUserProfileDetails_User
   }
 `)
 
