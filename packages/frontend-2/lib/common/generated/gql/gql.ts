@@ -14,7 +14,8 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 const documents = {
     "\n  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    email\n    user {\n      id\n    }\n  }\n": types.AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragmentDoc,
-    "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n": types.AuthRegisterPanelDocument,
+    "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": types.AuthRegisterPanelDocument,
+    "\n  query AuthRegisterPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n": types.AuthRegisterPanelWorkspaceInviteDocument,
     "\n  fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {\n    termsOfService\n  }\n": types.ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc,
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
@@ -84,7 +85,8 @@ const documents = {
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n": types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
     "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
-    "\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeader_UserFragmentDoc,
+    "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    ...ProjectsInviteBanners\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
+    "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
     "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
@@ -102,6 +104,8 @@ const documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
+    "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
+    "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      id\n      ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    invitedTeam(filter: $invitesFilter) {\n      ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n": types.SettingsWorkspacesMembersMembersTable_WorkspaceCollaboratorFragmentDoc,
@@ -121,7 +125,8 @@ const documents = {
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
-    "\n  query AuthLoginPanel($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": types.AuthLoginPanelDocument,
+    "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": types.AuthLoginPanelDocument,
+    "\n  query AuthLoginPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.AuthLoginPanelWorkspaceInviteDocument,
     "\n  query AuthorizableAppMetadata($id: String!) {\n    app(id: $id) {\n      id\n      name\n      description\n      trustByDefault\n      redirectUrl\n      scopes {\n        name\n        description\n      }\n      author {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.AuthorizableAppMetadataDocument,
     "\n  fragment FunctionRunStatusForSummary on AutomateFunctionRun {\n    id\n    status\n  }\n": types.FunctionRunStatusForSummaryFragmentDoc,
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": types.TriggeredAutomationsStatusSummaryFragmentDoc,
@@ -140,7 +145,8 @@ const documents = {
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
-    "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
+    "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
+    "\n  query DashboardProjectsPageWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n": types.DashboardProjectsPageWorkspaceInvitesQueryDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
     "\n  mutation CreateAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": types.CreateAccessTokenDocument,
     "\n  mutation DeleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": types.DeleteApplicationDocument,
@@ -190,7 +196,8 @@ const documents = {
     "\n  mutation CreateTestAutomation(\n    $projectId: ID!\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": types.CreateTestAutomationDocument,
     "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n    }\n  }\n": types.ProjectAccessCheckDocument,
     "\n  query ProjectRoleCheck($id: String!) {\n    project(id: $id) {\n      id\n      role\n    }\n  }\n": types.ProjectRoleCheckDocument,
-    "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
+    "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
+    "\n  query ProjectsDashboardWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n": types.ProjectsDashboardWorkspaceInvitesQueryDocument,
     "\n  query ProjectPageQuery($id: String!, $token: String) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n    projectInvite(projectId: $id, token: $token) {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectPageQueryDocument,
     "\n  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {\n    project(id: $projectId) {\n      id\n      models(cursor: null, limit: 16, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n      pendingImportedModels {\n        ...PendingFileUpload\n      }\n    }\n  }\n": types.ProjectLatestModelsDocument,
     "\n  query ProjectLatestModelsPagination(\n    $projectId: String!\n    $filter: ProjectModelsFilter\n    $cursor: String = null\n  ) {\n    project(id: $projectId) {\n      id\n      models(cursor: $cursor, limit: 16, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestModelsPaginationDocument,
@@ -239,7 +246,7 @@ const documents = {
     "\n  mutation SettingsDeleteWorkspace($workspaceId: String!) {\n    workspaceMutations {\n      delete(workspaceId: $workspaceId)\n    }\n  }\n": types.SettingsDeleteWorkspaceDocument,
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
-    "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
+    "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
     "\n  query SettingsWorkspacesInvitesSearch(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesInvitesSearchDocument,
     "\n  query SettingsUserEmailsQuery {\n    activeUser {\n      ...SettingsUserEmails_User\n    }\n  }\n": types.SettingsUserEmailsQueryDocument,
     "\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n": types.SettingsWorkspacesProjectsDocument,
@@ -310,7 +317,11 @@ export function graphql(source: "\n  fragment AuthLoginWithEmailBlock_PendingWor
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n"];
+export function graphql(source: "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n"): (typeof documents)["\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AuthRegisterPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query AuthRegisterPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -590,7 +601,11 @@ export function graphql(source: "\n  fragment ProjectsDashboardFilled on Project
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeader_User on User {\n    ...ProjectsInviteBanners\n    ...WorkspaceInviteBanners_User\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    ...ProjectsInviteBanners\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    ...ProjectsInviteBanners\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -659,6 +674,14 @@ export function graphql(source: "\n  fragment SettingsWorkspacesMembers_Workspac
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      id\n      ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      id\n      ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -738,7 +761,11 @@ export function graphql(source: "\n  mutation RequestVerificationByEmail($email:
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AuthLoginPanel($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n"): (typeof documents)["\n  query AuthLoginPanel($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n"];
+export function graphql(source: "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n"): (typeof documents)["\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AuthLoginPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query AuthLoginPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -814,7 +841,11 @@ export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"): (typeof documents)["\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"];
+export function graphql(source: "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n"): (typeof documents)["\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DashboardProjectsPageWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n"): (typeof documents)["\n  query DashboardProjectsPageWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1014,7 +1045,11 @@ export function graphql(source: "\n  query ProjectRoleCheck($id: String!) {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeader_User\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectsDashboardWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardWorkspaceInvitesQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1210,7 +1245,7 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

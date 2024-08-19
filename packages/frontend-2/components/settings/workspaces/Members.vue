@@ -13,7 +13,11 @@
             :workspace="workspace"
             :workspace-id="workspaceId"
           />
-          <div v-if="activeItem.id === 'guests'">Guests</div>
+          <SettingsWorkspacesMembersGuestsTable
+            v-if="activeItem.id === 'guests'"
+            :workspace="workspace"
+            :workspace-id="workspaceId"
+          />
           <SettingsWorkspacesMembersInvitesTable
             v-if="activeItem.id === 'invites'"
             :workspace-id="workspaceId"

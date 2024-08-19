@@ -1,6 +1,9 @@
 import type { Optional } from '@speckle/shared'
 import { activeUserQuery } from '~/lib/auth/composables/activeUser'
-import { authLoginPanelQuery } from '~/lib/auth/graphql/queries'
+import {
+  authLoginPanelQuery,
+  authLoginPanelWorkspaceInviteQuery
+} from '~/lib/auth/graphql/queries'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
@@ -67,7 +70,12 @@ export default defineNuxtPlugin(async (ctx) => {
     // Unable to preload this from vue components due to SSR being essentially turned off for the viewer
     promises.push(
       preload({
-        queries: [{ query: authLoginPanelQuery }]
+        queries: [
+          { query: authLoginPanelQuery },
+          ...(isWorkspacesEnabled.value
+            ? [{ query: authLoginPanelWorkspaceInviteQuery }]
+            : [])
+        ]
       })
     )
   }
