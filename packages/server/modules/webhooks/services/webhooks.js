@@ -9,33 +9,8 @@ const WebhooksEvents = () => knex('webhooks_events')
 const Users = () => knex('users')
 
 const { getServerInfo } = require('../../core/services/generic')
-const MAX_STREAM_WEBHOOKS = 100
 
 module.exports = {
-  async createWebhook({ streamId, url, description, secret, enabled, triggers }) {
-    const streamWebhookCount = await module.exports.getStreamWebhooksCount({ streamId })
-    if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
-      throw new Error(
-        `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`
-      )
-    }
-
-    const triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
-
-    const [{ id }] = await WebhooksConfig()
-      .returning('id')
-      .insert({
-        id: crs({ length: 10 }),
-        streamId,
-        url,
-        description,
-        secret,
-        enabled,
-        triggers: triggersObj
-      })
-    return id
-  },
-
   async getWebhook({ id }) {
     const webhook = await WebhooksConfig().select('*').where({ id }).first()
     if (webhook) {
@@ -80,11 +55,6 @@ module.exports = {
     }
 
     return webhooks
-  },
-
-  async getStreamWebhooksCount({ streamId }) {
-    const [res] = await WebhooksConfig().count().where({ streamId })
-    return parseInt(res.count)
   },
 
   async dispatchStreamEvent({ streamId, event, eventPayload }, { trx } = {}) {

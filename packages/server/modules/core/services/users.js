@@ -35,9 +35,23 @@ const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 const {
   createUserEmailFactory,
   findPrimaryEmailForUserFactory,
-  findEmailFactory
+  findEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
 } = require('@/modules/core/repositories/userEmails')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
 const { db } = require('@/db/knex')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  requestNewEmailVerification
+} = require('@/modules/emails/services/verification/request')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -116,7 +130,18 @@ module.exports = {
 
     await Acl().insert({ userId: newId, role: userRole })
 
-    await createUserEmailFactory({ db })({
+    const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    })
+
+    await validateAndCreateUserEmail({
       userEmail: {
         email: user.email,
         userId: user.id,

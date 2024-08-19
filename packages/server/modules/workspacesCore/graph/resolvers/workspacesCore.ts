@@ -9,6 +9,10 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Query: {
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvite: async () => {
+          // Easier to manage in FE if this doesn't throw, just returns null
+          return null
         }
       },
       Mutation: {
@@ -25,6 +29,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         updateRole: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        leave: async () => {
           throw new WorkspacesModuleDisabledError()
         },
         invites: () => ({})
@@ -60,6 +67,10 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       User: {
         workspaces: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvites: async () => {
+          // Easier to manage in FE if this doesn't throw, just returns empty
+          return []
         }
       },
       Project: {
@@ -69,11 +80,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       AdminQueries: {
         workspaceList: async () => {
-          throw new WorkspacesModuleDisabledError()
-        }
-      },
-      ActiveUserMutations: {
-        workspaceMutations: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       }
