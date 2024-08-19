@@ -16,12 +16,13 @@ import {
 } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
-import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import { fakeTypedVal, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 import type {
   AllObjectFieldArgTypes,
   AllObjectTypes
 } from '~/lib/common/generated/gql/graphql'
+import type { Get, Paths, ReadonlyDeep, Tagged } from 'type-fest'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -249,10 +250,19 @@ export const usePageQueryStandardFetchPolicy = () => {
   })
 }
 
-const __brand = Symbol('privateBrand')
-type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> = string & {
-  [__brand]: Type
+type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> = Tagged<
+  string,
+  Type
+>
+
+type DeepRequired<T> = {
+  [K in keyof T]-?: NonNullable<T[K]> extends object
+    ? DeepRequired<NonNullable<T[K]>>
+    : NonNullable<T[K]>
 }
+
+const a = fakeTypedVal<DeepRequired<{ a?: { b: { c: string } } }>>()
+a.a.b.c
 
 export const useApolloCacheModify = () => {
   const cache = useApolloClient().client.cache
@@ -275,9 +285,17 @@ export const useApolloCacheModify = () => {
       variables: Field extends keyof AllObjectFieldArgTypes[Type]
         ? AllObjectFieldArgTypes[Type][Field]
         : never
-      value: ModifyFnCacheData<AllObjectTypes[Type][Field]>
+      value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
     }) => void
   ) => {}
+
+  /**
+   * Utils:
+   * - update({paths})
+   * - get(path)
+   * - evict()
+   * - read(path) - also uses readField to get realy underyling values
+   */
 
   // Test
   const versionRef: ApolloCacheObjectReference<'Version'> = getCacheRef(
@@ -285,7 +303,56 @@ export const useApolloCacheModify = () => {
     '123'
   )
 
+  const queryRef = '' as ApolloCacheObjectReference<'Query'>
+
   modifyObjectField(versionRef, 'gendoAIRender', ({ fieldName, variables, value }) => {
     fieldName && variables.id && value.__ref
+  })
+  modifyObjectField(queryRef, 'streams', ({ fieldName, variables, value }) => {
+    fieldName && variables.limit && value?.__typename
+
+    type RequiredValue = NonNullable<DeepRequired<typeof value>>
+
+    /**
+     * Update at path, only if it exists and can be walked to (no undefined/null chains)
+     */
+    const update = <Path extends Paths<RequiredValue>>(
+      path: Path,
+      modifier: (val: Get<RequiredValue, Path>) => Get<RequiredValue, Path>
+    ) => {}
+
+    const val = fakeTypedVal<RequiredValue>()
+    val.items
+
+    const a = null as unknown as Get<RequiredValue, 'items'>
+
+    update('items', (val) => {
+      return []
+    })
+
+    const updateMultiple = <Path extends Paths<RequiredValue>>(
+      paths: Partial<{
+        [K in Path]: (val: Get<RequiredValue, K>) => Get<RequiredValue, K>
+      }>,
+      options?: Partial<{
+        value: typeof value
+      }>
+    ) => {
+      return value
+    }
+
+    updateMultiple(
+      {
+        items: (val) => [...val],
+        totalCount: (val) => val + 1,
+        'items.0': (val) => undefined,
+        __typename: (val) => 'StreamCollection'
+      },
+      { value }
+    )
+
+    return {
+      ...value
+    }
   })
 }
