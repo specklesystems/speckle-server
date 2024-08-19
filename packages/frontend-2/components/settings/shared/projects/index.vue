@@ -7,7 +7,6 @@
           :custom-icon="MagnifyingGlassIcon"
           color="foundation"
           search
-          :show-clear="!!search"
           placeholder="Search projects"
           v-bind="bind"
           v-on="on"

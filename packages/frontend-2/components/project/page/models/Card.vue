@@ -37,7 +37,21 @@
           @upload-version="triggerVersionUpload"
         />
       </div>
-      <div class="flex items-center justify-center my-1">
+      <div class="relative flex items-center justify-center my-1">
+        <div
+          v-if="
+            isAutomateModuleEnabled &&
+            !isPendingModelFragment(model) &&
+            model.automationsStatus
+          "
+          class="z-30 absolute top-0 left-0"
+        >
+          <AutomateRunsTriggerStatus
+            :project-id="projectId"
+            :status="model.automationsStatus"
+            :model-id="model.id"
+          />
+        </div>
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
@@ -97,20 +111,6 @@
             {{ versionCount }}
           </FormButton>
         </div>
-      </div>
-      <div
-        v-if="
-          isAutomateModuleEnabled &&
-          !isPendingModelFragment(model) &&
-          model.automationsStatus
-        "
-        class="z-20 absolute top-0 left-0"
-      >
-        <AutomateRunsTriggerStatus
-          :project-id="projectId"
-          :status="model.automationsStatus"
-          :model-id="model.id"
-        />
       </div>
     </div>
   </div>

@@ -2,7 +2,6 @@ const { ForbiddenError } = require('apollo-server-express')
 
 const { authorizeResolver } = require('@/modules/shared')
 const {
-  createWebhook,
   getWebhook,
   updateWebhook,
   deleteWebhook,
@@ -54,25 +53,6 @@ module.exports = {
   },
 
   Mutation: {
-    async webhookCreate(parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.webhook.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
-
-      const id = await createWebhook({
-        streamId: args.webhook.streamId,
-        url: args.webhook.url,
-        description: args.webhook.description,
-        secret: args.webhook.secret,
-        enabled: args.webhook.enabled !== false,
-        triggers: args.webhook.triggers
-      })
-
-      return id
-    },
     async webhookUpdate(parent, args, context) {
       await authorizeResolver(
         context.userId,

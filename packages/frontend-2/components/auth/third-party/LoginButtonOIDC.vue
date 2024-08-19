@@ -6,15 +6,24 @@
 </template>
 <script setup lang="ts">
 import { IdentificationIcon } from '@heroicons/vue/24/outline'
-import { useQuery } from '@vue/apollo-composable'
-import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
+import { graphql } from '~/lib/common/generated/gql'
+import type { AuthThirdPartyLoginButtonOidc_ServerInfoFragment } from '~/lib/common/generated/gql/graphql'
 
-defineProps<{
+graphql(`
+  fragment AuthThirdPartyLoginButtonOIDC_ServerInfo on ServerInfo {
+    authStrategies {
+      id
+      name
+    }
+  }
+`)
+
+const props = defineProps<{
   to: string
+  serverInfo: AuthThirdPartyLoginButtonOidc_ServerInfoFragment
 }>()
 
-const { result } = useQuery(loginServerInfoQuery)
-const authStrategies = computed(() => result.value?.serverInfo.authStrategies)
+const authStrategies = computed(() => props.serverInfo.authStrategies)
 
 const oidcName = computed(() => {
   const oidcStrategy = authStrategies.value?.find((strategy) => strategy.id === 'oidc')

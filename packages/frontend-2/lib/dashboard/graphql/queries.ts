@@ -9,6 +9,7 @@ export const dashboardProjectsPageQuery = graphql(`
           ...DashboardProjectCard_Project
         }
       }
+      ...ProjectsDashboardHeader_User
     }
   }
 `)
