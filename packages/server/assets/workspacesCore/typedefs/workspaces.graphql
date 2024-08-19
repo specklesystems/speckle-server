@@ -87,6 +87,7 @@ type WorkspaceMutations {
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  leave(id: ID!): Boolean!
   invites: WorkspaceInviteMutations!
 }
 
@@ -259,12 +260,4 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
-}
-
-type UserWorkspaceMutations {
-  leave(id: ID!): Boolean!
-}
-
-extend type ActiveUserMutations {
-  workspaceMutations: UserWorkspaceMutations
 }
