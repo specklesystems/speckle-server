@@ -41,6 +41,20 @@ export const LoggingExpressMiddleware = HttpLogger({
     return 'info'
   },
 
+  customReceivedMessage() {
+    return '{requestPath} request received'
+  },
+
+  customReceivedObject(req, res, loggableObject: Record<string, unknown>) {
+    const requestPath = getRequestPath(req) || 'unknown'
+    const country = req.headers['cf-ipcountry'] as Optional<string>
+    return {
+      ...loggableObject,
+      requestPath,
+      country
+    }
+  },
+
   customSuccessMessage() {
     return '{requestPath} request {requestStatus} in {responseTime} ms'
   },
