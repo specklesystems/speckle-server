@@ -20,7 +20,7 @@ jobs:
           node-version: 18.x
           cache: 'yarn'
       - name: yarn install
-        run: yarn install --frozen-lockfile --immutable
+        run: yarn install --immutable --immutable-cache
       - name: yarn build:public
         run: yarn build:public
       - name: yarn lint:ci
