@@ -7,7 +7,7 @@
   >
     <p class="text-body-xs text-foreground">
       Are you sure you want to
-      <span class="font-semibold">permanently delete</span>
+      <span class="font-medium">permanently delete</span>
       the selected workspace?
     </p>
     <div
@@ -17,7 +17,7 @@
     </div>
     <p class="text-body-xs text-foreground">
       This action
-      <span class="font-semibold">cannot</span>
+      <span class="font-medium">cannot</span>
       be undone.
     </p>
   </LayoutDialog>
