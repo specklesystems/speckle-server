@@ -43,7 +43,7 @@ export default (app: Application) => {
         if (err) {
           switch (err.code) {
             case 'ERR_STREAM_PREMATURE_CLOSE':
-              req.log.debug({ err }, 'Stream to client has prematurely closed')
+              req.log.info({ err }, 'Stream to client has prematurely closed')
               break
             default:
               req.log.error(err, 'App error streaming objects')

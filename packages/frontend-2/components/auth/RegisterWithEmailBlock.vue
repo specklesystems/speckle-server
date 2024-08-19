@@ -3,18 +3,6 @@
   <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
       <FormTextInput
-        type="text"
-        name="name"
-        label="Full name"
-        placeholder="My name"
-        size="lg"
-        :rules="nameRules"
-        color="foundation"
-        show-label
-        :disabled="loading"
-        auto-focus
-      />
-      <FormTextInput
         v-model="email"
         type="email"
         name="email"
@@ -25,6 +13,18 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+      />
+      <FormTextInput
+        type="text"
+        name="name"
+        label="Full name"
+        placeholder="My name"
+        size="lg"
+        :rules="nameRules"
+        color="foundation"
+        show-label
+        :disabled="loading"
+        auto-focus
       />
       <FormTextInput
         v-model="password"
@@ -66,7 +66,7 @@
       class="mt-2 text-body-2xs text-foreground-2 text-center terms-of-service"
       v-html="serverInfo.termsOfService"
     />
-    <div class="mt-2 sm:mt-4 text-center text-body-sm">
+    <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-sm">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
         Log in
@@ -111,16 +111,15 @@ const { handleSubmit } = useForm<FormValues>()
 const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
-
 const isMounted = useMounted()
+
+const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
 const emailRules = [isEmail]
 const nameRules = [isRequired]
-
-const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
 
@@ -140,7 +139,7 @@ const onSubmit = handleSubmit(async (fullUser) => {
       user,
       challenge: props.challenge,
       inviteToken: inviteToken.value,
-      newsletter: newsletterConsent?.value
+      newsletter: newsletterConsent.value
     })
   } catch (e) {
     triggerNotification({
