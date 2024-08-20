@@ -26,7 +26,7 @@ import {
   cloneDeep
 } from 'lodash-es'
 import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
-import type { Get, PartialDeep, Paths } from 'type-fest'
+import type { Get, PartialDeep, Paths, ReadonlyDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
@@ -591,7 +591,11 @@ export const modifyObjectField = <
     variables: Field extends keyof AllObjectFieldArgTypes[Type]
       ? AllObjectFieldArgTypes[Type][Field]
       : never
-    value: ModifyObjectFieldValue<Type, Field>
+    /**
+     * Value found in the cache. Read-only and should not be mutated directly. Use the
+     * createUpdatedValue() helper to build a new value with updated fields.
+     */
+    value: ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
     helpers: {
       /**
        * Build new value with the values at specific paths updated with the provided updater functions,
