@@ -67,12 +67,8 @@
                 :label="item.label"
                 :active="isActive(item.to)"
               >
-                <template v-if="item.logo" #icon>
-                  <img
-                    :src="item.logo"
-                    :alt="`${item.label}'s logo`"
-                    class="w-5 h-5 mt-0.5 object-contain"
-                  />
+                <template #icon>
+                  <UserAvatar :logo="item.logo" size="sm" />
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
