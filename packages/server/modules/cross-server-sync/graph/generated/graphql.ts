@@ -3802,7 +3802,7 @@ export type WebhookUpdateInput = {
   id: Scalars['String']['input'];
   secret?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-  triggers?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  triggers?: InputMaybe<Array<Scalars['String']['input']>>;
   url?: InputMaybe<Scalars['String']['input']>;
 };
 

@@ -101,10 +101,10 @@ const documents = {
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      id\n      ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    inviteId\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
@@ -669,19 +669,19 @@ export function graphql(source: "\n  fragment SettingsWorkspacesGeneral_Workspac
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
