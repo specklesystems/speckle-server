@@ -10,6 +10,7 @@ import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 
 export const useSettingsMenu = () => {
@@ -21,6 +22,10 @@ export const useSettingsMenu = () => {
     members: {
       title: 'Members',
       component: SettingsWorkspacesMembers
+    },
+    projects: {
+      title: 'Projects',
+      component: SettingsWorkspacesProjects
     },
     billing: {
       title: 'Billing',

@@ -26,6 +26,7 @@ export default class SpeckleConverter {
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
   private instanceProxies: { [id: string]: TreeNode } = {}
   private renderMaterialMap: { [id: string]: SpeckleObject } = {}
+  private colorMap: { [id: string]: number } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -51,6 +52,7 @@ export default class SpeckleConverter {
     InstanceDefinitionProxy: this.InstanceDefinitionProxyToNode.bind(this),
     InstanceProxy: this.InstanceProxyToNode.bind(this),
     RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
+    ColorProxy: this.ColorProxyToNode.bind(this),
     Parameter: null
   }
 
@@ -563,6 +565,25 @@ export default class SpeckleConverter {
     }
   }
 
+  private async ColorProxyToNode(obj: SpeckleObject, _node: TreeNode) {
+    if (!obj.value || typeof obj.value !== 'number') {
+      Logger.error(`Color ${obj.id} has no value, or value is not a number!`)
+      return
+    }
+    if (!obj.objects || !Array.isArray(obj.objects) || obj.objects.length === 0) {
+      Logger.warn(`Color Proxy ${obj.id} has no target objects!`)
+      return
+    }
+    const colorValue = obj.value
+    const targetObjects = obj.objects as []
+    for (let k = 0; k < targetObjects.length; k++) {
+      if (this.colorMap[targetObjects[k]]) {
+        Logger.error(`Overwritting color ${targetObjects[k]}`)
+      }
+      this.colorMap[targetObjects[k]] = colorValue
+    }
+  }
+
   private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
     return (obj.DefinitionId || obj.definitionId) as string
   }
@@ -680,8 +701,9 @@ export default class SpeckleConverter {
   }
 
   public async applyMaterials() {
-    let count = Object.keys(this.renderMaterialMap).length
-    if (count === 0) return
+    let renderMaterialCount = Object.keys(this.renderMaterialMap).length
+    let colorCount = Object.keys(this.colorMap).length
+    if (renderMaterialCount === 0 && colorCount === 0) return
 
     /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
@@ -689,10 +711,14 @@ export default class SpeckleConverter {
       const applicationId = node.model.raw.applicationId.toString()
       if (this.renderMaterialMap[applicationId] !== undefined) {
         node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
-        count--
+        renderMaterialCount--
+      }
+      if (this.colorMap[applicationId] !== undefined) {
+        node.model.raw.color = this.colorMap[applicationId]
+        colorCount--
       }
       /** Break out when all applicationIds are accounted for*/
-      if (count === 0) return false
+      if (renderMaterialCount === 0 && colorCount === 0) return false
       return true
     })
   }

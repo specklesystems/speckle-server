@@ -126,6 +126,11 @@ input WorkspaceInviteUseInput {
   addNewEmail: Boolean
 }
 
+input WorkspaceInviteResendInput {
+  workspaceId: String!
+  inviteId: String!
+}
+
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
     @hasScope(scope: "users:invite")
@@ -134,6 +139,9 @@ type WorkspaceInviteMutations {
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
+  resend(input: WorkspaceInviteResendInput!): Boolean!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)

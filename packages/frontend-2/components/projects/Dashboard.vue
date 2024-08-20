@@ -4,7 +4,6 @@
     <ProjectsDashboardHeader
       :projects-invites="projectsPanelResult?.activeUser || undefined"
       :workspaces-invites="workspacesInvitesResult?.activeUser || undefined"
-      class="mb-10"
     />
 
     <div v-if="!showEmptyState" class="flex flex-col gap-4">

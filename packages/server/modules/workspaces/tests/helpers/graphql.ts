@@ -159,3 +159,13 @@ export const createWorkspaceProjectInviteMutation = gql`
     }
   }
 `
+
+export const resendWorkspaceInviteMutation = gql`
+  mutation ResendWorkspaceInvite($input: WorkspaceInviteResendInput!) {
+    workspaceMutations {
+      invites {
+        resend(input: $input)
+      }
+    }
+  }
+`

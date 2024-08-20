@@ -1313,7 +1313,7 @@
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
+          "default": 100
         },
         "requests": {
           "type": "object",

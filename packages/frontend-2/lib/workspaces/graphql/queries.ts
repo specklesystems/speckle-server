@@ -13,6 +13,7 @@ export const workspacePageQuery = graphql(`
     $workspaceId: String!
     $filter: WorkspaceProjectsFilter
     $cursor: String
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
     workspace(id: $workspaceId) {
       id

@@ -36,6 +36,8 @@ import { Euler, Vector3 } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 
+import { Color } from 'three'
+
 export default class Sandbox {
   private viewer: Viewer
   private pane: Pane
@@ -141,6 +143,7 @@ export default class Sandbox {
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
@@ -375,6 +378,7 @@ export default class Sandbox {
       input.onchange = (e) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
@@ -470,9 +474,6 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
-      // this.viewer
-      //   .getExtension(FilteringExtension)
-      //   .hideObjects([this.viewer.getWorldTree().root.model.children[0].id])
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -490,6 +491,40 @@ export default class Sandbox {
         this.viewer.requestRender(UpdateFlags.RENDER_RESET)
         await waitForAnimation(1000)
       }
+    })
+
+    const colors = this.tabs.pages[0].addButton({
+      title: `PM's Colors`
+    })
+    colors.on('click', async () => {
+      const colorNodes = this.viewer.getWorldTree().findAll(
+        (node: TreeNode) =>
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+          node.model.renderView &&
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          node.model.renderView.renderData.colorMaterial &&
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          node.model.renderView.geometryType === GeometryType.MESH
+      )
+      const colorMap: { [color: number]: Array<string> } = {}
+      for (let k = 0; k < colorNodes.length; k++) {
+        const node = colorNodes[k]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const color: number = node.model.renderView.renderData.colorMaterial.color
+        if (!colorMap[color]) colorMap[color] = []
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        colorMap[color].push(node.model.id)
+      }
+      const colorGroups = []
+
+      for (const color in colorMap) {
+        colorGroups.push({
+          objectIds: colorMap[color],
+          color: '#' + new Color(Number.parseInt(color)).getHexString()
+        })
+      }
+      console.log(colorGroups)
+      this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
     })
 
     this.tabs.pages[0]

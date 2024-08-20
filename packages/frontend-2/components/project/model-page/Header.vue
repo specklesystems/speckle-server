@@ -2,6 +2,11 @@
   <div>
     <Portal to="navigation">
       <HeaderNavLink
+        :to="projectsRoute"
+        name="Projects"
+        :seperator="false"
+      ></HeaderNavLink>
+      <HeaderNavLink
         :to="projectRoute(project.id)"
         :name="project.name"
       ></HeaderNavLink>
@@ -22,7 +27,11 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectModelPageHeaderProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
+import {
+  projectRoute,
+  modelVersionsRoute,
+  projectsRoute
+} from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectModelPageHeaderProject on Project {

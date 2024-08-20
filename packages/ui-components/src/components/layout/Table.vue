@@ -51,6 +51,7 @@
               <template v-if="buttons">
                 <div v-for="button in buttons" :key="button.label">
                   <FormButton
+                    v-tippy="button.tooltip"
                     :icon-left="button.icon"
                     size="sm"
                     color="outline"
@@ -87,6 +88,7 @@ import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { CommonLoadingBar, FormButton } from '~~/src/lib'
+import { directive as vTippy } from 'vue-tippy'
 
 export type TableColumn<I> = {
   id: I
@@ -99,6 +101,7 @@ export type RowButton<T = unknown> = {
   label: string
   action: (item: T) => unknown
   class?: string
+  tooltip?: string
 }
 
 const props = withDefaults(
