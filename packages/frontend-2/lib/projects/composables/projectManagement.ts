@@ -1,7 +1,8 @@
 import type { ApolloCache } from '@apollo/client/core'
+import type { Optional } from '@speckle/shared'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isArray, isUndefined } from 'lodash-es'
+import { isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -17,7 +18,9 @@ import type {
   UpdateProjectMetadataMutation,
   AdminPanelProjectsListQuery,
   WorkspaceProjectsArgs,
-  Workspace
+  Workspace,
+  WorkspaceProjectInviteCreateInput,
+  InviteProjectUserMutation
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -33,6 +36,7 @@ import {
   createProjectMutation,
   deleteProjectMutation,
   inviteProjectUserMutation,
+  inviteWorkspaceProjectUserMutation,
   leaveProjectMutation,
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
@@ -230,20 +234,42 @@ export function useInviteUserToProject() {
 
   return async (
     projectId: string,
-    input: ProjectInviteCreateInput | ProjectInviteCreateInput[]
+    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
   ) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
-    const { data, errors } = await apollo
-      .mutate({
-        mutation: inviteProjectUserMutation,
-        variables: { input: isArray(input) ? input : [input], projectId }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const isWorkspaceInput = (
+      input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
+    ): input is WorkspaceProjectInviteCreateInput[] => {
+      return input.some((i) => 'workspaceRole' in i)
+    }
 
-    if (!data?.projectMutations.invites.batchCreate.id) {
-      const err = getFirstErrorMessage(errors)
+    let res: Optional<
+      InviteProjectUserMutation['projectMutations']['invites']['batchCreate']
+    > = undefined
+    let err: Optional<string> = undefined
+    if (isWorkspaceInput(input)) {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteWorkspaceProjectUserMutation,
+          variables: { inputs: input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.createForWorkspace
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    } else {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteProjectUserMutation,
+          variables: { input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.batchCreate
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    }
+
+    if (err) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Invitation failed',
@@ -256,7 +282,7 @@ export function useInviteUserToProject() {
       })
     }
 
-    return data?.projectMutations.invites.batchCreate
+    return res
   }
 }
 

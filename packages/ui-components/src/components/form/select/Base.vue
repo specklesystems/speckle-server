@@ -11,7 +11,7 @@
     >
       <ListboxLabel
         :id="labelId"
-        class="flex text-heading-sm text-foreground mb-1.5"
+        class="flex text-body-xs text-foreground font-medium"
         :class="{ 'sr-only': !showLabel }"
         :for="buttonId"
       >
@@ -213,6 +213,7 @@ import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const isObjectLikeType = (v: unknown): v is Record<string, unknown> => isObjectLike(v)
 
@@ -221,6 +222,10 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps({
+  size: {
+    type: String as PropType<Optional<InputSize>>,
+    default: undefined
+  },
   multiple: {
     type: Boolean,
     default: false
@@ -360,6 +365,9 @@ const props = defineProps({
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * @deprecated Use size attribute instead
+   */
   fixedHeight: {
     type: Boolean,
     default: false
@@ -451,6 +459,22 @@ const renderClearButton = computed(
   () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
 )
 
+const sizeClasses = computed((): string => {
+  if (!props.size) return ''
+
+  switch (props.size) {
+    case 'sm':
+      return 'h-6 text-body-sm'
+    case 'lg':
+      return 'h-10 text-[13px]'
+    case 'xl':
+      return 'h-14 text-sm'
+    case 'base':
+    default:
+      return 'h-8 text-body-sm'
+  }
+})
+
 const buttonsWrapperClasses = computed(() => {
   const classParts: string[] = ['relative flex group']
 
@@ -472,6 +496,8 @@ const buttonsWrapperClasses = computed(() => {
 
   if (props.fixedHeight) {
     classParts.push('h-8')
+  } else if (sizeClasses.value?.length) {
+    classParts.push(sizeClasses.value)
   }
 
   return classParts.join(' ')
