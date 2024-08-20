@@ -3,7 +3,6 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
-    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
       :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
@@ -66,7 +65,6 @@ import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/rout
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { PromoBanner } from '~/lib/promo-banners/types'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
 useHead({ title: 'Dashboard' })
@@ -181,15 +179,4 @@ const onDownloadManager = (extension: ManagerExtension) => {
     })
   }
 }
-
-const promoBanners = ref<PromoBanner[]>([
-  {
-    id: 'speckleverse',
-    primaryText: 'Join our online hackathon!',
-    secondaryText: 'June 7 - 9, 2024',
-    url: 'https://beyond-the-speckleverse.devpost.com/',
-    priority: 1,
-    expiryDate: '2024-06-10'
-  }
-])
 </script>
