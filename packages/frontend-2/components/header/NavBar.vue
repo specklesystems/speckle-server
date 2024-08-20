@@ -4,7 +4,7 @@
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
-        <HeaderLogoBlock :active="false" to="/" class="hidden md:flex lg:min-w-40" />
+        <HeaderLogoBlock :active="false" to="/" class="hidden lg:flex lg:min-w-40" />
         <div class="flex items-center truncate">
           <ClientOnly>
             <PortalTarget name="mobile-navigation"></PortalTarget>
