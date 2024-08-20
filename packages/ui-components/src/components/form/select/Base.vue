@@ -627,7 +627,7 @@ const listboxOptionsClasses = computed(() => {
   if (props.mountMenuOnBody) {
     classParts.push('fixed z-50')
   } else {
-    classParts.push('absolute top-[100%] w-full z-10')
+    classParts.push('absolute top-[100%] w-full z-40')
   }
 
   return classParts.join(' ')
