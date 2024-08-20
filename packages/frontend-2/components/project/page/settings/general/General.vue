@@ -50,6 +50,7 @@ import type { ProjectUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamInternals } from '~/lib/projects/composables/team'
+import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 
 const projectPageSettingsGeneralQuery = graphql(`
   query ProjectPageSettingsGeneral($projectId: String!) {
@@ -81,9 +82,7 @@ const { result: pageResult } = useQuery(
     // doesn't kill the entire query
     errorPolicy: 'all',
     context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
+      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
     }
   })
 )

@@ -1,4 +1,8 @@
 import knex from '@/db/knex'
+import {
+  createRandomEmail,
+  createRandomPassword
+} from '@/modules/core/helpers/testHelpers'
 import { createStream } from '@/modules/core/services/streams'
 import { createUser } from '@/modules/core/services/users'
 import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
@@ -42,8 +46,8 @@ describe('Webhooks cleanup @webhooks', () => {
   it('Cleans orphans, leaves live ones intact', async () => {
     const ownerId = await createUser({
       name: 'User',
-      email: 'user@gmail.com',
-      password: 'jdsadjsadasfdsa'
+      email: createRandomEmail(),
+      password: createRandomPassword()
     })
     const streamId = await createStream({
       name: 'foo',
