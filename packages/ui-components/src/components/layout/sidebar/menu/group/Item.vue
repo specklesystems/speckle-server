@@ -16,6 +16,10 @@
       <span :class="$slots.icon ? '' : 'pl-2'">
         {{ label }}
       </span>
+      <ArrowUpRightIcon
+        v-if="external"
+        class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover:opacity-100"
+      />
     </div>
     <div
       v-if="tag"
@@ -49,6 +53,7 @@
 <script setup lang="ts">
 import { ref, useSlots } from 'vue'
 import Arrow from '~~/src/components/layout/sidebar/menu/group/Arrow.vue'
+import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   label: string
