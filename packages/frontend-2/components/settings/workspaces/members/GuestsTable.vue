@@ -59,8 +59,10 @@ graphql(`
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
-      id
-      ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
+      items {
+        id
+        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
+      }
     }
   }
 `)
@@ -71,7 +73,7 @@ const props = defineProps<{
 }>()
 
 const guests = computed(() =>
-  (props.workspace?.team || [])
+  (props.workspace?.team?.items || [])
     .filter(({ role }) => role === Roles.Workspace.Guest)
     .map(({ user, ...rest }) => ({
       ...user,

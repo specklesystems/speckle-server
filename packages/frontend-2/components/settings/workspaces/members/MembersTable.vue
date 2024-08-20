@@ -86,8 +86,10 @@ graphql(`
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
-      id
-      ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+      items {
+        id
+        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+      }
     }
   }
 `)
@@ -106,7 +108,7 @@ const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
 const members = computed(() =>
-  (props.workspace?.team || []).map(({ user, ...rest }) => ({
+  (props.workspace?.team?.items || []).map(({ user, ...rest }) => ({
     ...user,
     ...rest
   }))
