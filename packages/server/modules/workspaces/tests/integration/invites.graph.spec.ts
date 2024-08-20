@@ -916,6 +916,25 @@ describe('Workspaces Invites GQL', () => {
         }
       )
 
+      it("can't accept the invite, if it belongs to another user", async () => {
+        const res = await gqlHelpers.useInvite(
+          {
+            input: {
+              accept: true,
+              token: processableWorkspaceInvite.token
+            }
+          },
+          {
+            context: {
+              userId: myWorkspaceFriend.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.use).to.not.be.ok
+      })
+
       it("can't accept invite, if token resource access rules prevent it", async () => {
         const res = await gqlHelpers.useInvite(
           {

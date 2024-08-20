@@ -1,5 +1,6 @@
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import {
+  InviteFinalizedForNewEmail,
   InviteFinalizingError,
   NoInviteFoundError
 } from '@/modules/serverinvites/errors'
@@ -146,7 +147,7 @@ export const finalizeResourceInviteFactory =
     const finalizerUserTarget = buildUserTarget(finalizerUserId)
     const invite = await findInvite({
       token,
-      target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
+      // target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
       resourceFilter: resourceType ? { resourceType } : undefined
     })
     if (!invite) {
@@ -165,13 +166,27 @@ export const finalizeResourceInviteFactory =
       }
     }
 
-    if (!isNewEmailTarget && invite.target !== finalizerUserTarget) {
-      throw new InviteFinalizingError('Attempted to finalize mismatched invite', {
-        info: {
-          finalizerUserId,
-          invite
-        }
-      })
+    if (isNewEmailTarget) {
+      if (!allowAttachingNewEmail) {
+        throw new InviteFinalizedForNewEmail(
+          InviteFinalizedForNewEmail.defaultMessage,
+          {
+            info: {
+              finalizerUserId,
+              invite
+            }
+          }
+        )
+      }
+    } else {
+      if (invite.target !== finalizerUserTarget) {
+        throw new InviteFinalizingError('Attempted to finalize mismatched invite', {
+          info: {
+            finalizerUserId,
+            invite
+          }
+        })
+      }
     }
 
     const action = accept

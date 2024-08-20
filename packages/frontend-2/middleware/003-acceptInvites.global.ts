@@ -46,7 +46,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
     {
       route: to,
       preventRedirect: true,
-      preventErrorToasts: true
+      preventErrorToasts: (errors) => {
+        // Don't show if INVITE_FINALIZED_FOR_NEW_EMAIL
+        const isNewEmailError = errors.some(
+          (e) => e.extensions?.code === 'INVITE_FINALIZED_FOR_NEW_EMAIL'
+        )
+        if (isNewEmailError) return true
+
+        return false
+      }
     }
   )
 
