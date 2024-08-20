@@ -26,9 +26,15 @@
         :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
-      <FormButton color="outline" disabled>Invite</FormButton>
-      <!-- <WorkspaceHeaderActions /> -->
+      <FormButton color="outline" @click="showInviteDialog = !showInviteDialog">
+        Invite
+      </FormButton>
     </div>
+    <WorkspaceInviteDialog
+      v-model:open="showInviteDialog"
+      :workspace-id="workspaceInfo.id"
+      :workspace="workspaceInfo"
+    />
   </div>
 </template>
 
@@ -53,12 +59,15 @@ graphql(`
         ...LimitedUserAvatar
       }
     }
+    ...WorkspaceInviteDialog_Workspace
   }
 `)
 
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
+
+const showInviteDialog = ref(false)
 
 const team = computed(() => props.workspaceInfo.team || [])
 </script>

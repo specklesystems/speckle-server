@@ -47,6 +47,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         cancel: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        resend: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Workspace: {
