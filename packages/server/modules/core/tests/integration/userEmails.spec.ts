@@ -406,7 +406,7 @@ describe('Core @user-emails', () => {
       const newEmail = createRandomEmail()
       const createdEmail = (
         await createUserEmail({
-          userEmail: { email: newEmail, userId, primary: true }
+          userEmail: { email: newEmail, userId, primary: false }
         })
       )?.email
 
