@@ -152,7 +152,7 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[2.45rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
       @mousedown="startResizing"
     >
