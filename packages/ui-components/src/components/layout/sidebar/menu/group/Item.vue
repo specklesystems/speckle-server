@@ -29,14 +29,14 @@
       v-tippy="tooltipText"
       class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
       :class="[
-        !disabled && 'cursor-pointer hover:bg-foundation-3',
+        !disabled && 'cursor-pointer text-foreground-2 hover:text-foreground',
         disabled && 'opacity-60'
       ]"
       @click="toggleOpen"
     >
-      <Arrow class="text-foreground-2" :class="[isOpen ? '' : '-rotate-90']" />
+      <Arrow :class="[isOpen ? '' : '-rotate-90']" />
 
-      <h6 class="text-heading-sm text-foreground flex items-center space-x-1.5">
+      <h6 class="text-heading-sm flex items-center space-x-1.5">
         {{ label }}
       </h6>
     </button>
