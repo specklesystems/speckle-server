@@ -22,9 +22,10 @@ import {
   isArray,
   intersection,
   get,
-  set
+  set,
+  cloneDeep
 } from 'lodash-es'
-import type { Modifier, Reference } from '@apollo/client/cache'
+import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
 import type { Get, PartialDeep, Paths, ReadonlyDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
@@ -525,46 +526,6 @@ export const skipLoggingErrorsIfOneFieldError =
     )
   }
 
-/**
- * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
- * @see modifyObjectFields
- */
-export const modifyObjectField = <
-  Type extends keyof AllObjectTypes,
-  Field extends keyof AllObjectTypes[Type]
->(
-  cache: ApolloCache<unknown>,
-  key: ApolloCacheObjectKey<Type>,
-  fieldName: Field,
-  updater: (params: {
-    fieldName: string
-    variables: Field extends keyof AllObjectFieldArgTypes[Type]
-      ? AllObjectFieldArgTypes[Type][Field]
-      : never
-    value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-    details: Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1]
-  }) =>
-    | Optional<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-    | Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1]['DELETE']
-    | Parameters<
-        Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-      >[1]['INVALIDATE'],
-  options?: Partial<{
-    debug: boolean
-  }>
-) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modifyObjectFields<any, any>(
-    cache,
-    key,
-    (field, variables, value, details) => {
-      if (field !== fieldName) return
-      return updater({ fieldName: field, variables, value, details })
-    },
-    options
-  )
-}
-
 type DeepRequired<T> = {
   [K in keyof T]-?: NonNullable<T[K]> extends object
     ? DeepRequired<NonNullable<T[K]>>
@@ -592,4 +553,92 @@ export const updatePathIfExists = <
   }
 
   return val
+}
+
+/**
+ * Get value from specific path in object, only if it exists.
+ */
+export const getFromPathIfExists = <
+  Value,
+  Path extends Paths<DeepRequired<Value>> & string
+>(
+  val: MaybeNullOrUndefined<Value>,
+  path: Path
+): Optional<Get<Value, Path>> => {
+  if (!val) return undefined
+  if (!has(val, path)) return undefined
+  return get(val, path) as Get<Value, Path>
+}
+
+/**
+ * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
+ * @see modifyObjectFields
+ */
+export const modifyObjectField = <
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+>(
+  cache: ApolloCache<unknown>,
+  key: ApolloCacheObjectKey<Type>,
+  fieldName: Field,
+  updater: (params: {
+    fieldName: string
+    variables: Field extends keyof AllObjectFieldArgTypes[Type]
+      ? AllObjectFieldArgTypes[Type][Field]
+      : never
+    value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+    details: ModifierDetails
+  }) =>
+    | Optional<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+    | ModifierDetails['DELETE']
+    | ModifierDetails['INVALIDATE'],
+  options?: Partial<{
+    debug: boolean
+  }>
+) => {
+  type Value = ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+
+  // TODO: Properly typed ModifyFnCacheData w/ CacheObjectReference?
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modifyObjectFields<any, any>(
+    cache,
+    key,
+    (field, variables, value, details) => {
+      if (field !== fieldName) return
+
+      // Build helpers & clone value to allow for direct mutation
+      const clonedValue = cloneDeep(value)
+      const update = <Path extends Paths<DeepRequired<Value>> & string>(
+        path: Path,
+        pathUpdate: (
+          val: Get<DeepRequired<Value>, Path>
+        ) => Get<DeepRequired<Value>, Path>
+      ) => updatePathIfExists<Value, Path>(clonedValue, path, pathUpdate)
+      const get = <Path extends Paths<DeepRequired<Value>> & string>(path: Path) =>
+        getFromPathIfExists<Value, Path>(clonedValue, path)
+      const evict = () => details.DELETE
+      const readField = <
+        ReadFieldType extends keyof AllObjectTypes,
+        ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
+      >(
+        fieldName: ReadFieldName,
+        ref: CacheObjectReference<ReadFieldType>
+      ) =>
+        details.readField(
+          fieldName,
+          ref
+        ) as AllObjectTypes[ReadFieldType][ReadFieldName]
+
+      const helpers = {
+        update,
+        get,
+        evict,
+        readField
+      }
+
+      return updater({ fieldName: field, variables, value, details })
+    },
+    options
+  )
 }

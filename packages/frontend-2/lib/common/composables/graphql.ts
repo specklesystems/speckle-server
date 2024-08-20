@@ -12,6 +12,7 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
+  getFromPathIfExists,
   updatePathIfExists,
   updatePathsIfExist,
   type ApolloCacheObjectKey,
@@ -331,6 +332,7 @@ export const useApolloCacheModify = () => {
     //   return []
     // })
 
+    const zztest = getFromPathIfExists(value, 'items.0')
     updatePathIfExists(value, 'totalCount', (val) => val + 1)
 
     // const updateMultiple = <Path extends Paths<RequiredValue>>(
