@@ -21,15 +21,26 @@ import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
 import { base64Encode } from '~/lib/common/helpers/encodeDecode'
+import type { AllObjectTypes } from '~/lib/common/generated/gql/graphql'
+import type { Tagged } from 'type-fest/source/opaque'
+
+/**
+ * Cache key of a specific cached GQL object. Tends to look like `Type:id`.
+ */
+export type ApolloCacheObjectKey<Type extends keyof AllObjectTypes> = Tagged<
+  string,
+  Type
+>
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
 export const isServerParseError = (err: Error): err is ServerParseError =>
   has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
 
-export const ROOT_QUERY = 'ROOT_QUERY'
-export const ROOT_MUTATION = 'ROOT_MUTATION'
-export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
+export const ROOT_QUERY = 'ROOT_QUERY' as ApolloCacheObjectKey<'Query'>
+export const ROOT_MUTATION = 'ROOT_MUTATION' as ApolloCacheObjectKey<'Mutation'>
+export const ROOT_SUBSCRIPTION =
+  'ROOT_SUBSCRIPTION' as ApolloCacheObjectKey<'Subscription'>
 
 /**
  * Utility type for typing cached data in Apollo modify functions.
@@ -56,14 +67,17 @@ export type ModifyFnCacheData<Data> = Data extends
 /**
  * Get a cached object's identifier
  */
-export function getCacheId(typeName: string, id: string) {
+export function getCacheId<Type extends keyof AllObjectTypes>(
+  typeName: Type,
+  id: string
+): ApolloCacheObjectKey<Type> {
   const cachedId = defaultDataIdFromObject({
     __typename: typeName,
     id
   })
   if (!cachedId) throw new Error('Unable to build Apollo cache ID')
 
-  return cachedId
+  return cachedId as ApolloCacheObjectKey<Type>
 }
 
 export function isInvalidAuth(error: ApolloError | NetworkError) {
@@ -256,16 +270,23 @@ export function getStoreFieldName(
  * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
  * identifiable objects or object arrays
  */
-export type CacheObjectReference = Reference
+export type CacheObjectReference<Type extends string = string> = {
+  readonly __ref: Type extends keyof AllObjectTypes
+    ? ApolloCacheObjectKey<Type>
+    : string
+}
 
 /**
  * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
  * if you want to add new ones you shouldn't add the entire object, but only its reference
  */
-export function getObjectReference(typeName: string, id: string): CacheObjectReference {
+export function getObjectReference<Type extends keyof AllObjectTypes>(
+  typeName: Type,
+  id: string
+): CacheObjectReference<Type> {
   return {
     __ref: getCacheId(typeName, id)
-  }
+  } as CacheObjectReference<Type>
 }
 
 export function isReference(obj: unknown): obj is CacheObjectReference {
