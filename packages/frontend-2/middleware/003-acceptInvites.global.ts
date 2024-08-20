@@ -49,8 +49,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
       route: to,
       preventRedirect: true,
       preventErrorToasts: (errors) => {
-        // Don't show if INVITE_FINALIZED_FOR_NEW_EMAIL and doesn't have any workspace access yet
-        // cause we expect to user to manually press the "Add email" button in that scenario
+        // Don't show if INVITE_FINALIZED_FOR_NEW_EMAIL and doesn't have any workspace access yet,
+        // cause we expect the user to manually press the "Add email" button in that scenario
         const isNewEmailError = errors.some(
           (e) => e.extensions?.code === 'INVITE_FINALIZED_FOR_NEW_EMAIL'
         )
