@@ -695,7 +695,8 @@ export default class Sandbox {
           DYNAMIC_AO: 5,
           DYNAMIC_AO_BLURED: 6,
           PROGRESSIVE_AO: 7,
-          FINAL: 8
+          FINAL: 8,
+          EDGES: 9
         }
       })
       .on('change', () => {

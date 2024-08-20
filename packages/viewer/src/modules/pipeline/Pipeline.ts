@@ -25,6 +25,7 @@ import { StencilMaskPass } from './StencilMaskPass.js'
 import { OverlayPass } from './OverlayPass.js'
 import { ObjectLayers } from '../../IViewer.js'
 import type { BatchUpdateRange } from '../batching/Batch.js'
+import { EdgePass } from './EdgePass.js'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -35,7 +36,8 @@ export enum PipelineOutputType {
   DYNAMIC_AO = 5,
   DYNAMIC_AO_BLURED = 6,
   PROGRESSIVE_AO = 7,
-  FINAL = 8
+  FINAL = 8,
+  EDGES = 9
 }
 
 export interface PipelineOptions {
@@ -74,6 +76,7 @@ export class Pipeline {
   private copyOutputPass: CopyOutputPass
   private staticAoPass: StaticAOPass
   private overlayPass: OverlayPass
+  private edgesPass: EdgePass
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -208,6 +211,19 @@ export class Pipeline {
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.debugPipeline = true
         break
+      case PipelineOutputType.EDGES:
+        pipeline.push(this.depthPass)
+        pipeline.push(this.normalsPass)
+        pipeline.push(this.edgesPass)
+        pipeline.push(this.copyOutputPass)
+        this.depthPass.enabled = true
+        this.normalsPass.enabled = true
+        this.depthPass.depthType = DepthType.LINEAR_DEPTH
+        this.depthPass.depthSize = DepthSize.FULL
+        this.copyOutputPass.setTexture('tDiffuse', this.edgesPass.outputTexture)
+        this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
+        this.debugPipeline = true
+        break
       default:
         break
     }
@@ -251,6 +267,7 @@ export class Pipeline {
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
     this.overlayPass = new OverlayPass()
+    this.edgesPass = new EdgePass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
@@ -362,6 +379,8 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
     this.staticAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
+    this.edgesPass.setTexture('tDepth', this.depthPass.outputTexture)
+    this.edgesPass.setTexture('tNormal', this.normalsPass.outputTexture)
 
     const pipeline = []
     pipeline.push(this.depthPass)
@@ -412,6 +431,7 @@ export class Pipeline {
     this.staticAoPass.update(renderer.scene, renderer.renderingCamera)
     this.applySaoPass.update(renderer.scene, renderer.renderingCamera)
     this.overlayPass.update(renderer.scene, renderer.renderingCamera)
+    this.edgesPass.update(renderer.scene, renderer.renderingCamera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)
