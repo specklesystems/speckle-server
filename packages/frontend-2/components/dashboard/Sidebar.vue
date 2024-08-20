@@ -80,7 +80,7 @@
 
           <LayoutSidebarMenuGroup title="Resources">
             <NuxtLink :to="connectorsPageUrl" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Connectors">
+              <LayoutSidebarMenuGroupItem label="Connectors" external>
                 <template #icon>
                   <IconConnectors class="h-4 w-4 text-foreground-2" />
                 </template>
@@ -88,7 +88,7 @@
             </NuxtLink>
 
             <NuxtLink to="https://speckle.community/" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Community forum">
+              <LayoutSidebarMenuGroupItem label="Community forum" external>
                 <template #icon>
                   <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -99,7 +99,7 @@
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
               target="_blank"
             >
-              <LayoutSidebarMenuGroupItem label="Give us feedback">
+              <LayoutSidebarMenuGroupItem label="Give us feedback" external>
                 <template #icon>
                   <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -107,7 +107,7 @@
             </NuxtLink>
 
             <NuxtLink to="https://speckle.guide/" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Documentation">
+              <LayoutSidebarMenuGroupItem label="Documentation" external>
                 <template #icon>
                   <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -118,7 +118,7 @@
               to="https://speckle.community/c/making-speckle/changelog"
               target="_blank"
             >
-              <LayoutSidebarMenuGroupItem label="Changelog">
+              <LayoutSidebarMenuGroupItem label="Changelog" external>
                 <template #icon>
                   <ClockIcon class="h-5 w-5 text-foreground-2" />
                 </template>
