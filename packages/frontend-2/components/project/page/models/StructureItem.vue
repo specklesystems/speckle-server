@@ -2,164 +2,187 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <NuxtLink
+  <div
+    v-keyboard-clickable
     class="space-y-4 relative"
-    :to="model && !isEmptyModel ? modelRoute(props.project.id, model.id) : undefined"
+    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
+    @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
-    <div
-      v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
-    >
-      <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
-        <!-- Name -->
-        <div
-          class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
-        >
-          <span class="text-heading text-foreground">
-            {{ name }}
-          </span>
-          <span
-            v-if="model"
-            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
+    <div class="absolute right-2 top-5">
+      <FormButton
+        v-if="hasSubmodels"
+        size="sm"
+        color="outline"
+        :to="viewAllUrl"
+        :disabled="!viewAllUrl"
+        class="mt-px"
+        @click.stop="trackFederateModels"
+      >
+        View all
+      </FormButton>
+    </div>
+
+    <NuxtLink :to="model ? modelRoute(props.project.id, model.id) : undefined">
+      <div
+        v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
+        class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      >
+        <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
+          <!-- Name -->
+          <div
+            class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
           >
-            <ProjectPageModelsActions
-              v-model:open="showActionsMenu"
-              :model="model"
-              :project="project"
-              :can-edit="canContribute"
-              @click.stop.prevent
-              @model-updated="$emit('model-updated')"
-              @upload-version="triggerVersionUpload"
-            />
-          </span>
-        </div>
-        <!-- Empty model action -->
-        <NuxtLink
-          v-if="itemType === StructureItemType.EmptyModel"
-          :class="[
-            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
-            'opacity-0 group-hover:opacity-100 transition duration-200',
-            'hover:text-primary p-1'
-          ]"
-          @click.stop="$emit('create-submodel', model?.name || '')"
-        >
-          <PlusIcon class="w-3 h-3" />
-          submodel
-        </NuxtLink>
-        <!-- Spacer -->
-        <div class="flex-grow"></div>
-        <ProjectCardImportFileArea
-          v-if="!isPendingFileUpload(item)"
-          ref="importArea"
-          :project-id="project.id"
-          :model-name="item.fullName"
-          class="hidden"
-        />
-        <div
-          v-if="
-            !isPendingFileUpload(item) &&
-            (pendingVersion || itemType === StructureItemType.EmptyModel)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :project-id="project.id"
-            :model-name="item.fullName"
-            class="h-full w-full"
-          />
-        </div>
-        <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
-          <div class="text-body-3xs text-foreground-2 text-right">
-            Updated
-            <span v-tippy="updatedAt.full">
-              {{ updatedAt.relative }}
+            <span class="text-heading text-foreground">
+              {{ name }}
+            </span>
+            <span
+              v-if="model"
+              class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
+            >
+              <ProjectPageModelsActions
+                v-model:open="showActionsMenu"
+                :model="model"
+                :project="project"
+                :can-edit="canContribute"
+                @click.stop.prevent
+                @model-updated="$emit('model-updated')"
+                @upload-version="triggerVersionUpload"
+              />
             </span>
           </div>
-          <div class="space-x-2 flex flex-row pils">
-            <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
-              <IconDiscussions class="w-4 h-4" />
-              <span>{{ model?.commentThreadCount.totalCount }}</span>
-            </div>
-            <div v-if="model?.automationsStatus">
-              <AutomateRunsTriggerStatus
-                :project-id="project.id"
-                :status="model.automationsStatus"
-                :model-id="model.id"
-              />
-            </div>
-
-            <div class="flex gap-2 items-center">
-              <FormButton
-                v-if="!isPendingFileUpload(item) && model?.id"
-                rounded
-                size="sm"
-                class="gap-0.5"
-                color="subtle"
-                @click.stop="onVersionsClick"
-              >
-                <IconVersions class="h-4 w-4" />
-                {{ model?.versionCount.totalCount }}
-              </FormButton>
-            </div>
+          <!-- Empty model action -->
+          <div
+            v-if="itemType === StructureItemType.EmptyModel"
+            :class="[
+              'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
+              'opacity-0 group-hover:opacity-100 transition duration-200',
+              'hover:text-primary p-1'
+            ]"
+            @click.stop="$emit('create-submodel', model?.name || '')"
+          >
+            <PlusIcon class="w-3 h-3" />
+            submodel
           </div>
-        </div>
-        <ProjectPendingFileImportStatus
-          v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
-          :upload="pendingModel"
-          class="text-foreground-2 text-sm flex flex-col items-center space-y-1 mr-4"
-        />
-      </div>
-      <!-- Preview or icon section -->
-      <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
-        class="w-20 h-16"
-      >
-        <NuxtLink
-          :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3"
-        >
-          <PreviewImage
-            v-if="item.model?.previewUrl"
-            :preview-url="item.model.previewUrl"
+          <!-- Spacer -->
+          <div class="flex-grow"></div>
+          <ProjectCardImportFileArea
+            v-if="!isPendingFileUpload(item)"
+            ref="importArea"
+            :project-id="project.id"
+            :model-name="item.fullName"
+            class="hidden"
           />
-        </NuxtLink>
-      </div>
-    </div>
-    <!-- Doubling up for mixed items -->
-    <div
-      v-if="hasSubmodels"
-      class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
-    >
-      <button
-        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
-        href="/test"
-        @click.stop="expanded = !expanded"
-      >
-        <!-- Icon -->
-        <div>
-          <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14">
-            <ChevronDownIcon
-              :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
+          <div
+            v-if="
+              !isPendingFileUpload(item) &&
+              (pendingVersion || itemType === StructureItemType.EmptyModel)
+            "
+            class="flex items-center h-full"
+          >
+            <ProjectPendingFileImportStatus
+              v-if="pendingVersion"
+              :upload="pendingVersion"
+              type="subversion"
+              class="px-4 w-full"
+            />
+            <ProjectCardImportFileArea
+              v-else
+              :project-id="project.id"
+              :model-name="item.fullName"
+              class="h-full w-full"
             />
           </div>
+          <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
+            <div class="text-body-3xs text-foreground-2 text-right">
+              Updated
+              <span v-tippy="updatedAt.full">
+                {{ updatedAt.relative }}
+              </span>
+            </div>
+            <div class="space-x-2 flex flex-row pils">
+              <div
+                class="text-body-xs text-foreground flex items-center space-x-1 pl-2"
+              >
+                <IconDiscussions class="w-4 h-4" />
+                <span>{{ model?.commentThreadCount.totalCount }}</span>
+              </div>
+              <div v-if="model?.automationsStatus">
+                <AutomateRunsTriggerStatus
+                  :project-id="project.id"
+                  :status="model.automationsStatus"
+                  :model-id="model.id"
+                />
+              </div>
+
+              <div class="flex gap-2 items-center">
+                <FormButton
+                  v-if="!isPendingFileUpload(item) && model?.id"
+                  rounded
+                  size="sm"
+                  class="gap-0.5"
+                  color="subtle"
+                  @click.stop="onVersionsClick"
+                >
+                  <IconVersions class="h-4 w-4" />
+                  {{ model?.versionCount.totalCount }}
+                </FormButton>
+              </div>
+            </div>
+          </div>
+          <ProjectPendingFileImportStatus
+            v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
+            :upload="pendingModel"
+            class="text-foreground-2 text-sm flex flex-col items-center space-y-1 mr-4"
+          />
         </div>
-        <!-- Name -->
-        <FolderIcon class="w-4 h-4 text-foreground" />
-        <div class="ml-2 text-heading text-foreground flex-grow text-left">
-          {{ name }}
+        <!-- Preview or icon section -->
+        <div
+          v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
+          class="w-20 h-16"
+        >
+          <NuxtLink
+            :to="modelLink || ''"
+            class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3"
+          >
+            <PreviewImage
+              v-if="item.model?.previewUrl"
+              :preview-url="item.model.previewUrl"
+            />
+          </NuxtLink>
         </div>
-        <!-- Preview -->
-        <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
-          <!-- Commented out so that we need to load less data, can be added back -->
-          <!-- <div
+      </div>
+      <!-- Doubling up for mixed items -->
+      <div
+        v-if="hasSubmodels"
+        class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
+      >
+        <button
+          class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
+          href="/test"
+          @click.stop="expanded = !expanded"
+        >
+          <!-- Icon -->
+          <div>
+            <div
+              class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14"
+            >
+              <ChevronDownIcon
+                :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
+              />
+            </div>
+          </div>
+          <!-- Name -->
+          <FolderIcon class="w-4 h-4 text-foreground" />
+          <div class="ml-2 text-heading text-foreground flex-grow text-left">
+            {{ name }}
+          </div>
+          <!-- Preview -->
+          <div
+            class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4"
+          >
+            <!-- Commented out so that we need to load less data, can be added back -->
+            <!-- <div
             v-for="(child, index) in item.children"
             :key="index"
             :class="`w-16 h-16 ml-2`"
@@ -170,52 +193,44 @@
               {{ child?.name }}
             </div>
           </div> -->
-          <div class="text-body-3xs text-foreground-2">
-            Updated
-            <span v-tippy="updatedAt.full">
-              {{ updatedAt.relative }}
-            </span>
-          </div>
-          <FormButton
-            size="sm"
-            color="outline"
-            :to="viewAllUrl"
-            :disabled="!viewAllUrl"
-            @click.stop="trackFederateModels"
-          >
-            View all
-          </FormButton>
-        </div>
-      </button>
-      <!-- Children list -->
-      <div
-        v-if="hasChildren && expanded && !isPendingFileUpload(item)"
-        class="pl-8 mt-2 space-y-2"
-      >
-        <div v-if="childrenLoading" class="mr-8">
-          <CommonLoadingBar loading />
-        </div>
-
-        <template v-else>
-          <div v-for="child in children" :key="child.fullName" class="flex">
-            <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
-              <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
+            <div class="text-body-3xs text-foreground-2 pr-20 sm:pr-16">
+              Updated
+              <span v-tippy="updatedAt.full">
+                {{ updatedAt.relative }}
+              </span>
             </div>
-
-            <ProjectPageModelsStructureItem
-              :item="child"
-              :project="project"
-              :can-contribute="canContribute"
-              class="flex-grow"
-              @model-updated="onModelUpdated"
-              @create-submodel="emit('create-submodel', $event)"
-            />
           </div>
-        </template>
-        <div v-if="canContribute" class="mr-8"></div>
+        </button>
+        <!-- Children list -->
+        <div
+          v-if="hasChildren && expanded && !isPendingFileUpload(item)"
+          class="pl-8 mt-2 space-y-2"
+        >
+          <div v-if="childrenLoading" class="mr-8">
+            <CommonLoadingBar loading />
+          </div>
+
+          <template v-else>
+            <div v-for="child in children" :key="child.fullName" class="flex">
+              <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
+                <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
+              </div>
+
+              <ProjectPageModelsStructureItem
+                :item="child"
+                :project="project"
+                :can-contribute="canContribute"
+                class="flex-grow"
+                @model-updated="onModelUpdated"
+                @create-submodel="emit('create-submodel', $event)"
+              />
+            </div>
+          </template>
+          <div v-if="canContribute" class="mr-8"></div>
+        </div>
       </div>
-    </div>
-  </NuxtLink>
+    </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
@@ -414,6 +429,12 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
+}
+
+const onCardClick = () => {
+  if (model.value && !isEmptyModel.value) {
+    router.push(modelRoute(props.project.id, model.value.id))
+  }
 }
 
 const onVersionsClick = () => {
