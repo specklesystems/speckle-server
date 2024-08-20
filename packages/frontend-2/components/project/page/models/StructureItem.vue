@@ -23,7 +23,9 @@
       </FormButton>
     </div>
 
-    <NuxtLink :to="model ? modelRoute(props.project.id, model.id) : undefined">
+    <NuxtLink
+      :to="model && !isEmptyModel ? modelRoute(props.project.id, model.id) : undefined"
+    >
       <div
         v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
         class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
