@@ -6,6 +6,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 import { useProjectInviteManager } from '~/lib/projects/composables/invites'
 import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
+import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 const autoAcceptableWorkspaceInviteQuery = graphql(`
   query AutoAcceptableWorkspaceInvite($token: String!, $workspaceId: String!) {
@@ -29,6 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const token = to.query.token as Optional<string>
   const accept = to.query.accept === 'true'
   const addNewEmail = to.query.addNewEmail === 'true'
+  let hasWorkspaceAccess = false
 
   if (!idParam?.length) return
   if (!shouldTryProjectAccept && !shouldTryWorkspaceAccept) return
@@ -47,25 +49,26 @@ export default defineNuxtRouteMiddleware(async (to) => {
       route: to,
       preventRedirect: true,
       preventErrorToasts: (errors) => {
-        // Don't show if INVITE_FINALIZED_FOR_NEW_EMAIL
+        // Don't show if INVITE_FINALIZED_FOR_NEW_EMAIL and doesn't have any workspace access yet
+        // cause we expect to user to manually press the "Add email" button in that scenario
         const isNewEmailError = errors.some(
           (e) => e.extensions?.code === 'INVITE_FINALIZED_FOR_NEW_EMAIL'
         )
-        if (isNewEmailError) return true
+        if (isNewEmailError && !hasWorkspaceAccess) return true
 
         return false
       }
     }
   )
 
-  const [activeUserData, workspaceInviteData] = await Promise.all([
+  const [activeUserData, workspaceInviteData, workspaceAccessData] = await Promise.all([
     client
       .query({
         query: activeUserQuery
       })
       .catch(convertThrowIntoFetchResult),
     ...(shouldTryWorkspaceAccept
-      ? [
+      ? <const>[
           client
             .query({
               query: autoAcceptableWorkspaceInviteQuery,
@@ -74,12 +77,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
                 workspaceId: idParam
               }
             })
+            .catch(convertThrowIntoFetchResult),
+          client
+            .query({
+              query: workspaceAccessCheckQuery,
+              variables: {
+                id: idParam
+              }
+            })
             .catch(convertThrowIntoFetchResult)
         ]
       : [])
   ])
+
   if (workspaceInviteData?.data?.workspaceInvite) {
     workspaceInvite.value = workspaceInviteData.data.workspaceInvite
+  }
+  if (workspaceAccessData?.data?.workspace.id) {
+    hasWorkspaceAccess = true
   }
 
   // Ignore if not logged in
