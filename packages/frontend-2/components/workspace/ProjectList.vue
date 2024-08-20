@@ -1,5 +1,9 @@
 <template>
   <div>
+    <Portal to="navigation">
+      <HeaderNavLink disable-link name="Workspaces" :separator="false" />
+      <HeaderNavLink :to="workspaceRoute(workspaceId)" :name="workspace?.name" />
+    </Portal>
     <WorkspaceHeader
       v-if="workspace"
       :icon="Squares2X2Icon"
@@ -60,6 +64,7 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {

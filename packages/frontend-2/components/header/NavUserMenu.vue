@@ -3,10 +3,10 @@
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
-        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
-          <XMarkIcon class="w-5 h-5" />
-        </UserAvatar>
+        <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
+          <UserAvatar :user="activeUser" />
+          <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
+        </div>
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -136,7 +136,7 @@
 import { isString } from 'lodash'
 import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

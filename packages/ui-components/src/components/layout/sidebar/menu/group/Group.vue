@@ -19,7 +19,7 @@
           {{ title }}
         </h6>
       </button>
-      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2">
+      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-4">
         <div
           v-if="$slots['title-icon']"
           class="h-5 w-5 flex items-center justify-center"

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between items-center">
+  <div class="flex flex-col sm:flex-row justify-between sm:items-center">
     <div class="flex gap-2 mb-3 mt-2">
       <img
         v-if="workspaceInfo.logo"
