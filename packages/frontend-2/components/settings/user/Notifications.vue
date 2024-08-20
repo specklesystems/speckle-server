@@ -53,17 +53,17 @@ import { capitalize, cloneDeep } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateNotificationPreferences } from '~~/lib/user/composables/management'
 import type { NotificationPreferences } from '~~/lib/user/helpers/components'
-import type { UserProfileEditDialogNotificationPreferences_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsUserNotifications_UserFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment UserProfileEditDialogNotificationPreferences_User on User {
+  fragment SettingsUserNotifications_User on User {
     id
     notificationPreferences
   }
 `)
 
 const props = defineProps<{
-  user: UserProfileEditDialogNotificationPreferences_UserFragment
+  user: SettingsUserNotifications_UserFragment
 }>()
 
 const { mutate, loading } = useUpdateNotificationPreferences()
