@@ -51,6 +51,7 @@ type WorkspaceCreateArgs = {
     name: string
     description: string | null
     logo: string | null
+    defaultLogoIndex: number
   }
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
@@ -108,6 +109,7 @@ type WorkspaceUpdateArgs = {
     name?: string | null
     description?: string | null
     logo?: string | null
+    defaultLogoIndex?: number | null
   }
 }
 
