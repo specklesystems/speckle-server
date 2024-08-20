@@ -26,7 +26,11 @@
         :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
-      <FormButton color="outline" @click="showInviteDialog = !showInviteDialog">
+      <FormButton
+        color="outline"
+        :disabled="!isWorkspaceAdmin"
+        @click="showInviteDialog = !showInviteDialog"
+      >
         Invite
       </FormButton>
     </div>
@@ -39,12 +43,14 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
     id
+    role
     name
     logo
     description
@@ -70,4 +76,7 @@ const props = defineProps<{
 const showInviteDialog = ref(false)
 
 const team = computed(() => props.workspaceInfo.team || [])
+const isWorkspaceAdmin = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Admin
+)
 </script>

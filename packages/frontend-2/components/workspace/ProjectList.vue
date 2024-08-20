@@ -64,6 +64,7 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
+import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
@@ -94,12 +95,23 @@ const {
   debouncedBy: 800
 })
 
-const { result: initialQueryResult } = useQuery(workspacePageQuery, {
-  workspaceId: props.workspaceId,
-  filter: {
-    search: (search.value || '').trim() || null
-  }
-})
+const { result: initialQueryResult } = useQuery(
+  workspacePageQuery,
+  {
+    workspaceId: props.workspaceId,
+    filter: {
+      search: (search.value || '').trim() || null
+    }
+  },
+  () => ({
+    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
+    // doesn't kill the entire query
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
+    }
+  })
+)
 
 const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
   { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },

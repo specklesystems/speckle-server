@@ -3,7 +3,7 @@
 <template>
   <div>
     <Portal to="mobile-navigation">
-      <div class="md:hidden">
+      <div class="lg:hidden">
         <FormButton
           :color="isOpenMobile ? 'outline' : 'subtle'"
           size="sm"
@@ -17,13 +17,13 @@
     </Portal>
     <div
       v-keyboard-clickable
-      class="md:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
+      class="lg:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
       :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       @click="isOpenMobile = false"
     />
     <div
-      class="absolute z-40 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
-      :class="isOpenMobile ? '' : '-translate-x-60 md:translate-x-0'"
+      class="absolute z-40 lg:static h-full flex w-60 lg:w-64 shrink-0 transition-all"
+      :class="isOpenMobile ? '' : '-translate-x-60 lg:translate-x-0'"
     >
       <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
         <LayoutSidebarMenu>
