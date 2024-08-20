@@ -137,8 +137,8 @@ export const useProcessWorkspaceInvite = () => {
                 cache,
                 ROOT_QUERY,
                 'workspace',
-                ({ variables, details: { DELETE } }) => {
-                  if (variables.id === workspaceId) return DELETE
+                ({ variables, helpers: { evict } }) => {
+                  if (variables.id === workspaceId) return evict()
                 }
               )
 
@@ -147,7 +147,7 @@ export const useProcessWorkspaceInvite = () => {
                 cache,
                 getCacheId('User', userId),
                 'workspaces',
-                ({ details: { DELETE } }) => DELETE
+                ({ helpers: { evict } }) => evict()
               )
             }
 
@@ -156,7 +156,7 @@ export const useProcessWorkspaceInvite = () => {
               cache,
               ROOT_QUERY,
               'workspaceInvite',
-              ({ value, variables, details: { readField } }) => {
+              ({ value, variables, helpers: { readField } }) => {
                 if (value) {
                   const workspaceId = readField('workspaceId', value)
                   if (workspaceId === workspaceId) return null

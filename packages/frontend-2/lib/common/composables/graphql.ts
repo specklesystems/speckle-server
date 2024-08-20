@@ -8,25 +8,12 @@ import type {
   DocumentParameter,
   OptionsParameter
 } from '@vue/apollo-composable/dist/useQuery'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import {
-  convertThrowIntoFetchResult,
-  getCacheId,
-  getFromPathIfExists,
-  updatePathIfExists,
-  updatePathsIfExist,
-  type ApolloCacheObjectKey,
-  type ModifyFnCacheData
-} from '~/lib/common/helpers/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
-import { fakeTypedVal, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
+import { type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
-import type {
-  AllObjectFieldArgTypes,
-  AllObjectTypes
-} from '~/lib/common/generated/gql/graphql'
-import type { Get, Paths, ReadonlyDeep, Tagged } from 'type-fest'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -251,113 +238,5 @@ export const usePageQueryStandardFetchPolicy = () => {
     // use cache, but reload in background
     // we only wanna do this when transitioning between CSR routes
     return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
-  })
-}
-
-type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> =
-  ApolloCacheObjectKey<Type>
-
-type DeepRequired<T> = {
-  [K in keyof T]-?: NonNullable<T[K]> extends object
-    ? DeepRequired<NonNullable<T[K]>>
-    : NonNullable<T[K]>
-}
-
-const a = fakeTypedVal<DeepRequired<{ a?: { b: { c: string } } }>>()
-a.a.b.c
-
-export const useApolloCacheModify = () => {
-  const cache = useApolloClient().client.cache
-
-  const getCacheRef = <Type extends keyof AllObjectTypes>(
-    typeName: Type,
-    id: string
-  ) => {
-    return getCacheId(typeName, id)
-  }
-
-  const modifyObjectField = <
-    Type extends keyof AllObjectTypes,
-    Field extends keyof AllObjectTypes[Type]
-  >(
-    ref: ApolloCacheObjectReference<Type>,
-    field: Field,
-    modifier: (params: {
-      fieldName: Field
-      variables: Field extends keyof AllObjectFieldArgTypes[Type]
-        ? AllObjectFieldArgTypes[Type][Field]
-        : never
-      value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-    }) => void
-  ) => {}
-
-  /**
-   * Utils:
-   * - update({paths})
-   * - get(path)
-   * - evict()
-   * - read(path) - also uses readField to get realy underyling values
-   */
-
-  // Test
-  const versionRef: ApolloCacheObjectReference<'Version'> = getCacheRef(
-    'Version',
-    '123'
-  )
-
-  const queryRef = '' as ApolloCacheObjectReference<'Query'>
-
-  modifyObjectField(versionRef, 'gendoAIRender', ({ fieldName, variables, value }) => {
-    fieldName && variables.id && value.__ref
-  })
-  modifyObjectField(queryRef, 'streams', ({ fieldName, variables, value }) => {
-    fieldName && variables.limit && value?.__typename
-
-    // type RequiredValue = NonNullable<DeepRequired<typeof value>>
-
-    // /**
-    //  * Update at path, only if it exists and can be walked to (no undefined/null chains)
-    //  */
-    // const update = <Path extends Paths<RequiredValue>>(
-    //   path: Path,
-    //   modifier: (val: Get<RequiredValue, Path>) => Get<RequiredValue, Path>
-    // ) => {}
-
-    // const val = fakeTypedVal<RequiredValue>()
-    // val.items
-
-    // const a = null as unknown as Get<RequiredValue, 'items'>
-
-    // update('items', (val) => {
-    //   return []
-    // })
-
-    const zztest = getFromPathIfExists(value, 'items.0')
-    updatePathIfExists(value, 'totalCount', (val) => val + 1)
-
-    // const updateMultiple = <Path extends Paths<RequiredValue>>(
-    //   paths: Partial<{
-    //     [K in Path]: (val: Get<RequiredValue, K>) => Get<RequiredValue, K>
-    //   }>,
-    //   options?: Partial<{
-    //     value: typeof value
-    //   }>
-    // ) => {
-    //   return value
-    // }
-
-    // updateMultiple(
-    //   {
-    //     items: (val) => [...val],
-    //     totalCount: (val) => val + 1,
-    //     'items.0': (val) => undefined,
-    //     __typename: (val) => 'StreamCollection'
-    //   },
-    //   { value }
-    // )
-
-    return {
-      ...value
-    }
   })
 }

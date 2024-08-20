@@ -57,27 +57,23 @@ export const ROOT_MUTATION = 'ROOT_MUTATION' as ApolloCacheObjectKey<'Mutation'>
 export const ROOT_SUBSCRIPTION =
   'ROOT_SUBSCRIPTION' as ApolloCacheObjectKey<'Subscription'>
 
+type ModifyFnCacheDataSingle<Data> = Data extends Record<string, unknown>
+  ? Data extends { id: string; __typename?: infer TypeName }
+    ? CacheObjectReference<TypeName extends keyof AllObjectTypes ? TypeName : string>
+    : PartialDeep<{
+        [key in keyof Data]: ModifyFnCacheData<Data[key]>
+      }>
+  : Data
+
 /**
  * Utility type for typing cached data in Apollo modify functions.
  * Essentially inside a modify function all references to cached objects that can be uniquely identified (have an ID field) are converted
  * to CacheObjectReference objects and additionally all properties are optional as you can never know what exactly has been requested & cached
  * and what hasn't
  */
-export type ModifyFnCacheData<Data> = Data extends
-  | Record<string, unknown>
-  | Record<string, unknown>[]
-  ? Data extends { id: string }
-    ? CacheObjectReference
-    : Data extends { id: string }[]
-    ? CacheObjectReference[]
-    : PartialDeep<{
-        [key in keyof Data]: Data[key] extends { id: string }
-          ? CacheObjectReference
-          : Data[key] extends { id: string }[]
-          ? CacheObjectReference[]
-          : ModifyFnCacheData<Data[key]>
-      }>
-  : Data
+export type ModifyFnCacheData<Data> = Data extends Array<infer ArrayItem>
+  ? ModifyFnCacheDataSingle<ArrayItem>[]
+  : ModifyFnCacheDataSingle<Data>
 
 /**
  * Get a cached object's identifier
@@ -582,6 +578,16 @@ export const getFromPathIfExists = <
   return get(val, path) as Get<Value, Path>
 }
 
+type ModifyObjectFieldValue<
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+> = ModifyFnCacheData<AllObjectTypes[Type][Field]>
+
+type FullModifyObjectFieldValue<
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+> = DeepRequired<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+
 /**
  * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
  * @see modifyObjectFields
@@ -598,20 +604,46 @@ export const modifyObjectField = <
     variables: Field extends keyof AllObjectFieldArgTypes[Type]
       ? AllObjectFieldArgTypes[Type][Field]
       : never
-    value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-    details: ModifierDetails
+    value: ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
+    helpers: {
+      /**
+       * Update value at a specific path, only if it exists in the cache value
+       */
+      update: <Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string>(
+        path: Path,
+        pathUpdate: (
+          val: Get<FullModifyObjectFieldValue<Type, Field>, Path>
+        ) => Get<FullModifyObjectFieldValue<Type, Field>, Path>
+      ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+      /**
+       * Get value from specific path, only if it exists in the cache value
+       */
+      get: <Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string>(
+        path: Path
+      ) => Optional<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+      /**
+       * Invoke and return this out from the modify call to evict the field from the cache
+       */
+      evict: () => ModifierDetails['DELETE']
+      /**
+       * Read field data from a Reference object
+       */
+      readField: <
+        ReadFieldType extends keyof AllObjectTypes,
+        ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
+      >(
+        fieldName: ReadFieldName,
+        ref: CacheObjectReference<ReadFieldType>
+      ) => AllObjectTypes[ReadFieldType][ReadFieldName]
+    }
   }) =>
-    | Optional<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+    | Optional<ModifyObjectFieldValue<Type, Field>>
     | ModifierDetails['DELETE']
     | ModifierDetails['INVALIDATE'],
   options?: Partial<{
     debug: boolean
   }>
 ) => {
-  type Value = ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-
-  // TODO: Properly typed ModifyFnCacheData w/ CacheObjectReference?
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   modifyObjectFields<any, any>(
     cache,
@@ -621,14 +653,28 @@ export const modifyObjectField = <
 
       // Build helpers & clone value to allow for direct mutation
       const clonedValue = cloneDeep(value)
-      const update = <Path extends Paths<DeepRequired<Value>> & string>(
+      const update = <
+        Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string
+      >(
         path: Path,
         pathUpdate: (
-          val: Get<DeepRequired<Value>, Path>
-        ) => Get<DeepRequired<Value>, Path>
-      ) => updatePathIfExists<Value, Path>(clonedValue, path, pathUpdate)
-      const get = <Path extends Paths<DeepRequired<Value>> & string>(path: Path) =>
-        getFromPathIfExists<Value, Path>(clonedValue, path)
+          val: Get<FullModifyObjectFieldValue<Type, Field>, Path>
+        ) => Get<FullModifyObjectFieldValue<Type, Field>, Path>
+      ) =>
+        updatePathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(
+          clonedValue,
+          path,
+          pathUpdate
+        )
+      const get = <
+        Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string
+      >(
+        path: Path
+      ) =>
+        getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(
+          clonedValue,
+          path
+        )
       const evict = () => details.DELETE
       const readField = <
         ReadFieldType extends keyof AllObjectTypes,
@@ -642,14 +688,12 @@ export const modifyObjectField = <
           ref
         ) as AllObjectTypes[ReadFieldType][ReadFieldName]
 
-      const helpers = {
-        update,
-        get,
-        evict,
-        readField
-      }
-
-      return updater({ fieldName: field, variables, value, details })
+      return updater({
+        fieldName: field,
+        variables,
+        value,
+        helpers: { update, get, evict, readField }
+      })
     },
     options
   )
