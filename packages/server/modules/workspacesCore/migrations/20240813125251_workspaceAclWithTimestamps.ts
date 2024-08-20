@@ -2,8 +2,14 @@ import { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable('workspace_acl', (table) => {
-    table.timestamp('createdAt', { precision: 3, useTz: true }).notNullable()
-    table.timestamp('updatedAt', { precision: 3, useTz: true }).notNullable()
+    table
+      .timestamp('createdAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
+    table
+      .timestamp('updatedAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
   })
 }
 
