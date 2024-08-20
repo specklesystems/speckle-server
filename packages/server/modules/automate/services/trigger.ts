@@ -110,9 +110,8 @@ export const onModelVersionCreate =
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
           automateLogger.error(
-            'Failure while triggering run onModelVersionCreate',
-            error,
-            params
+            { error, params },
+            'Failure while triggering run onModelVersionCreate'
           )
         }
       })

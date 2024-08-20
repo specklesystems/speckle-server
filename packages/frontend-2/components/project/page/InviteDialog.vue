@@ -1,7 +1,16 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Invite to project</template>
-    <div class="flex flex-col my-2">
+    <div class="flex flex-col gap-4 my-2">
+      <FormSelectWorkspaceRoles
+        v-if="project?.workspaceId"
+        v-model="workspaceRole"
+        show-label
+        label="Workspace role"
+        size="lg"
+        help="If target user does not have a role in the parent workspace, they will be assigned this role."
+        :allow-unset="false"
+      />
       <FormTextInput
         v-model="search"
         name="search"
@@ -25,7 +34,7 @@
       </FormTextInput>
       <div
         v-if="hasTargets"
-        class="flex flex-col border bg-foundation border-primary-muted mt-2 rounded-md"
+        class="flex flex-col border bg-foundation border-primary-muted rounded-md"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -52,11 +61,12 @@
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import type { ServerRoles, StreamRoles } from '@speckle/shared'
+import type { ServerRoles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
 import type {
   ProjectInviteCreateInput,
-  ProjectPageInviteDialog_ProjectFragment
+  ProjectPageInviteDialog_ProjectFragment,
+  WorkspaceProjectInviteCreateInput
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isString } from 'lodash-es'
@@ -72,6 +82,7 @@ import { filterInvalidInviteTargets } from '~/lib/workspaces/helpers/invites'
 graphql(`
   fragment ProjectPageInviteDialog_Project on Project {
     id
+    workspaceId
     ...ProjectPageTeamInternals_Project
   }
 `)
@@ -94,6 +105,7 @@ const { collaboratorListItems } = useTeamInternals(projectData)
 const loading = ref(false)
 const search = ref('')
 const role = ref<StreamRoles>(Roles.Stream.Contributor)
+const workspaceRole = ref<WorkspaceRoles>(Roles.Workspace.Guest)
 
 const { isGuestMode } = useServerInfo()
 const createInvite = useInviteUserToProject()
@@ -132,17 +144,23 @@ const onInviteUser = async (
     emailTargetServerRole: serverRole
   })
 
-  const inputs: ProjectInviteCreateInput[] = users.map((u) => ({
-    role: role.value,
-    ...(isString(u)
-      ? {
-          email: u,
-          serverRole
-        }
-      : {
-          userId: u.id
-        })
-  }))
+  const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
+    users.map((u) => ({
+      role: role.value,
+      ...(isString(u)
+        ? {
+            email: u,
+            serverRole
+          }
+        : {
+            userId: u.id
+          }),
+      ...(props.project?.workspaceId
+        ? {
+            workspaceRole: workspaceRole.value
+          }
+        : {})
+    }))
   if (!inputs.length) return
 
   const isEmail = !!inputs.find((u) => !!u.email)

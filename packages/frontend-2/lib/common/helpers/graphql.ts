@@ -127,6 +127,18 @@ export function convertThrowIntoFetchResult(
   if (err instanceof ApolloError) {
     gqlErrors = err.graphQLErrors
     apolloError = err
+
+    if (!gqlErrors.length) {
+      if (
+        err.networkError &&
+        'result' in err.networkError &&
+        !isString(err.networkError.result) &&
+        isArray(err.networkError.result.errors)
+      ) {
+        const errors = err.networkError.result.errors as Array<{ message: string }>
+        gqlErrors = errors.map((e) => new GraphQLError(e.message))
+      }
+    }
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {

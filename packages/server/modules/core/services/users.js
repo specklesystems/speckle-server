@@ -145,7 +145,8 @@ module.exports = {
       userEmail: {
         email: user.email,
         userId: user.id,
-        verified: user.verified
+        verified: user.verified,
+        primary: true
       }
     })
 
