@@ -10,20 +10,18 @@
       :workspace-info="workspace"
     />
     <div class="flex flex-col gap-4 mt-4">
-      <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <div class="flex flex-col sm:flex-row gap-2">
-          <FormTextInput
-            name="modelsearch"
-            :show-label="false"
-            placeholder="Search..."
-            :custom-icon="MagnifyingGlassIcon"
-            color="foundation"
-            wrapper-classes="grow md:grow-0 md:w-60"
-            show-clear
-            v-bind="bind"
-            v-on="on"
-          ></FormTextInput>
-        </div>
+      <div class="flex flex-row gap-2 sm:items-center justify-between">
+        <FormTextInput
+          name="modelsearch"
+          :show-label="false"
+          placeholder="Search..."
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          wrapper-classes="grow md:grow-0 md:w-60"
+          show-clear
+          v-bind="bind"
+          v-on="on"
+        />
         <FormButton v-if="!isGuest" @click="openNewProject = true">
           New project
         </FormButton>
