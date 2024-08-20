@@ -27,7 +27,7 @@
           <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
         </div>
         <div
-          class="relative z-30 w-1 h-full pt-[4.2rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
+          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
           @mousedown="startResizing"
         ></div>
       </div>

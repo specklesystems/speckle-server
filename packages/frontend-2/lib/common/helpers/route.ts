@@ -6,6 +6,7 @@ import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHas
 export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
 export const homeRoute = '/'
+export const projectsRoute = '/projects'
 export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
