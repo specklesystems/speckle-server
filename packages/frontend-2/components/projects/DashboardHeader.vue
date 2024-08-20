@@ -1,8 +1,6 @@
 <template>
   <div>
-    <div
-      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 bg-foundation divide-y divide-outline-3 border-b border-outline-3"
-    >
+    <div class="bg-foundation divide-y divide-outline-3 mb-8 empty:mb-0">
       <div v-if="showChecklist">
         <OnboardingChecklistV1 show-intro />
       </div>

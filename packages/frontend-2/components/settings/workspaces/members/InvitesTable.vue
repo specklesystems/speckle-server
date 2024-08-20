@@ -118,6 +118,7 @@ const invites = computed(() =>
 const buttons = computed(() => [
   {
     label: 'Resend invite',
+    tooltip: 'Resend invite',
     icon: EnvelopeIcon,
     action: async (item: NonNullable<typeof invites.value>[0]) => {
       await resendInvite({
@@ -130,6 +131,7 @@ const buttons = computed(() => [
   },
   {
     label: 'Delete invite',
+    tooltip: 'Delete invite',
     icon: XMarkIcon,
     action: async (item: NonNullable<typeof invites.value>[0]) => {
       await cancelInvite({
