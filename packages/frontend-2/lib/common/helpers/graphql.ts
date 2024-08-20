@@ -23,14 +23,17 @@ import {
   intersection
 } from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
-import type { PartialDeep } from 'type-fest'
+import type { PartialDeep, ReadonlyDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
 import { base64Encode } from '~/lib/common/helpers/encodeDecode'
 import type { ErrorResponse } from '@apollo/client/link/error'
-import type { AllObjectTypes } from '~/lib/common/generated/gql/graphql'
+import type {
+  AllObjectFieldArgTypes,
+  AllObjectTypes
+} from '~/lib/common/generated/gql/graphql'
 import type { Tagged } from 'type-fest/source/opaque'
 
 /**
@@ -508,35 +511,40 @@ export const getDateCursorFromReference = (params: {
 }
 
 /**
- * Simplified version of modifyObjectFields, just targetting a single field
+ * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
  * @see modifyObjectFields
  */
 export const modifyObjectField = <
-  FieldData = unknown,
-  Variables extends Optional<Record<string, unknown>> = undefined
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
 >(
   cache: ApolloCache<unknown>,
-  id: string,
-  fieldName: string,
+  key: ApolloCacheObjectKey<Type>,
+  fieldName: Field,
   updater: (params: {
     fieldName: string
-    variables: Variables
-    value: ModifyFnCacheData<FieldData>
-    details: Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1] & {
+    variables: Field extends keyof AllObjectFieldArgTypes[Type]
+      ? AllObjectFieldArgTypes[Type][Field]
+      : never
+    value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+    details: Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1] & {
       ref: typeof getObjectReference
       revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
   }) =>
-    | Optional<ModifyFnCacheData<FieldData>>
-    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
-    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
+    | Optional<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+    | Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1]['DELETE']
+    | Parameters<
+        Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
+      >[1]['INVALIDATE'],
   options?: Partial<{
     debug: boolean
   }>
 ) => {
-  modifyObjectFields<Variables, FieldData>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modifyObjectFields<any, any>(
     cache,
-    id,
+    key,
     (field, variables, value, details) => {
       if (field !== fieldName) return
       return updater({ fieldName: field, variables, value, details })

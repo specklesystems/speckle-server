@@ -12,6 +12,7 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
+  type ApolloCacheObjectKey,
   type ModifyFnCacheData
 } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
@@ -250,10 +251,8 @@ export const usePageQueryStandardFetchPolicy = () => {
   })
 }
 
-type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> = Tagged<
-  string,
-  Type
->
+type ApolloCacheObjectReference<Type extends keyof AllObjectTypes> =
+  ApolloCacheObjectKey<Type>
 
 type DeepRequired<T> = {
   [K in keyof T]-?: NonNullable<T[K]> extends object
@@ -271,7 +270,7 @@ export const useApolloCacheModify = () => {
     typeName: Type,
     id: string
   ) => {
-    return getCacheId(typeName, id) as ApolloCacheObjectReference<Type>
+    return getCacheId(typeName, id)
   }
 
   const modifyObjectField = <

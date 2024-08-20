@@ -3,11 +3,6 @@ import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  Query,
-  QueryWorkspaceArgs,
-  QueryWorkspaceInviteArgs,
-  User,
-  UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceInviteCreateInput,
@@ -134,7 +129,7 @@ export const useProcessWorkspaceInvite = () => {
 
             if (accepted) {
               // Evict Query.workspace
-              modifyObjectField<Query['workspace'], QueryWorkspaceArgs>(
+              modifyObjectField(
                 cache,
                 ROOT_QUERY,
                 'workspace',
@@ -144,7 +139,7 @@ export const useProcessWorkspaceInvite = () => {
               )
 
               // Evict all User.workspaces
-              modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+              modifyObjectField(
                 cache,
                 getCacheId('User', userId),
                 'workspaces',
@@ -153,7 +148,7 @@ export const useProcessWorkspaceInvite = () => {
             }
 
             // Set Query.workspaceInvite(id) = null (no invite)
-            modifyObjectField<Query['workspaceInvite'], QueryWorkspaceInviteArgs>(
+            modifyObjectField(
               cache,
               ROOT_QUERY,
               'workspaceInvite',
