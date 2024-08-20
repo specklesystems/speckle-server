@@ -1,9 +1,6 @@
 <template>
   <div>
     <div class="bg-foundation divide-y divide-outline-3 mb-8 empty:mb-0">
-      <div v-if="showChecklist">
-        <OnboardingChecklistV1 show-intro />
-      </div>
       <ProjectsInviteBanners
         v-if="projectsInvites?.projectInvites?.length"
         :invites="projectsInvites"
@@ -12,16 +9,11 @@
         v-if="workspacesInvites?.workspaceInvites?.length"
         :invites="workspacesInvites"
       />
-      <ProjectsNewSpeckleBanner
-        v-if="showNewSpeckleBanner"
-        @dismissed="onDismissNewSpeckleBanner"
-      />
     </div>
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
   </div>
 </template>
 <script setup lang="ts">
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectsDashboardHeaderProjects_UserFragment,
@@ -41,77 +33,10 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   projectsInvites?: ProjectsDashboardHeaderProjects_UserFragment
   workspacesInvites?: ProjectsDashboardHeaderWorkspaces_UserFragment
 }>()
 
-const promoBanners = ref<PromoBanner[]>([
-  {
-    id: 'speckleverse',
-    primaryText: 'Join our online hackathon!',
-    secondaryText: 'June 7 - 9, 2024',
-    url: 'https://beyond-the-speckleverse.devpost.com/',
-    priority: 1,
-    expiryDate: '2024-06-10'
-  }
-])
-
-const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
-  `hasCompletedChecklistV1`,
-  {
-    default: () => false
-  }
-)
-
-const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
-  `hasDismissedChecklistTime`,
-  { default: () => undefined }
-)
-
-const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
-  `hasDismissedChecklistForever`,
-  {
-    default: () => false
-  }
-)
-
-const hasDismissedChecklistTimeAgo = computed(() => {
-  return (
-    new Date().getTime() -
-    new Date(hasDismissedChecklistTime.value || Date.now()).getTime()
-  )
-})
-
-const hasDismissedNewSpeckleBanner = useSynchronizedCookie<boolean | undefined>(
-  `hasDismissedNewSpeckleBanner`,
-  { default: () => false }
-)
-
-const showChecklist = computed(() => {
-  if (hasDismissedChecklistForever.value) return false
-  if (hasCompletedChecklistV1.value) return false
-  if (hasDismissedChecklistTime.value === undefined) return true
-  if (
-    hasDismissedChecklistTime.value !== undefined &&
-    hasDismissedChecklistTimeAgo.value > 86400000
-  )
-    return true
-  return false
-})
-
-const showNewSpeckleBanner = computed(() => {
-  if (hasDismissedNewSpeckleBanner.value) return false
-  if (
-    props.projectsInvites?.projectInvites.length ||
-    props.workspacesInvites?.workspaceInvites?.length
-  )
-    return false
-
-  return true
-})
-
-const onDismissNewSpeckleBanner = () => {
-  hasDismissedNewSpeckleBanner.value = true
-}
+const promoBanners = ref<PromoBanner[]>([])
 </script>
