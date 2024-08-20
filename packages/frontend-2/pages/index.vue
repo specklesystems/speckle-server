@@ -20,10 +20,18 @@
       <section>
         <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
-          <DashboardProjectCard
-            v-for="project in projects"
-            :key="project.id"
-            :project="project"
+          <template v-if="hasProjects">
+            <DashboardProjectCard
+              v-for="project in projects"
+              :key="project.id"
+              :project="project"
+            />
+          </template>
+          <QuickStartCard
+            v-else
+            title="Create your first project"
+            description="Projects are the place where your models and their versions live."
+            :buttons="createProjectButton"
           />
         </div>
       </section>
@@ -52,6 +60,7 @@ import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { PromoBanner } from '~/lib/promo-banners/types'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 useHead({ title: 'Dashboard' })
 
@@ -67,6 +76,9 @@ const { triggerNotification } = useGlobalToast()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false
 })
+const { isGuest } = useActiveUser()
+
+const openNewProject = ref(false)
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://speckle.systems',
@@ -111,7 +123,16 @@ const quickStartItems = shallowRef<QuickStartItem[]>([
   }
 ])
 
+const createProjectButton = shallowRef<LayoutDialogButton[]>([
+  {
+    text: 'Create a project',
+    props: { disabled: isGuest.value },
+    onClick: () => (openNewProject.value = true)
+  }
+])
+
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
+const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
 
 async function fetchTutorials() {
   const posts = await ghostContentApi.posts.browse({
