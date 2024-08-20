@@ -3,10 +3,17 @@
     v-if="!hasNoModelCards"
     class="fixed top-0 h-10 bg-foundation max-w-full w-full shadow hover:shadow-md transition z-20"
   >
-    <div class="px-2">
+    <div class="px-2 select-none">
       <div class="flex items-center h-10 transition-all justify-between">
         <div class="flex items-center">
           <HeaderLogoBlock :active="false" minimal class="mr-0" />
+          <!-- <div class="ml-2">Speckle</div> -->
+          <div
+            title="3.0 is coming!"
+            class="ml-1 text-tiny bg-primary rounded-full px-2 py-[2px] text-foreground-on-primary transition hover:scale-110"
+          >
+            beta
+          </div>
           <div class="flex flex-shrink-0 items-center -ml-2 md:ml-0">
             <PortalTarget name="navigation"></PortalTarget>
           </div>

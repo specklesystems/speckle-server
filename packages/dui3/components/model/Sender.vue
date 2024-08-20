@@ -9,7 +9,7 @@
     <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
     <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events vuejs-accessibility/no-static-element-interactions-->
     <div
-      class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 py-2 max-[275px]:space-y-2"
+      class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 pb-2 max-[275px]:space-y-2"
       @mouseenter="hover = true"
       @mouseleave="hover = false"
     >
@@ -18,7 +18,7 @@
           v-tippy="'Edit what gets published'"
           :icon-left="Square3Stack3DIcon"
           text
-          size="sm"
+          size="xs"
           color="card"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress || noWriteAccess"
@@ -40,7 +40,7 @@
           text
           color="secondary"
           size="xs"
-          class="truncate mt-[2px]"
+          class="truncate"
           :disabled="!!modelCard.progress || noWriteAccess"
           @click.stop="openFilterDialog = true"
         >
