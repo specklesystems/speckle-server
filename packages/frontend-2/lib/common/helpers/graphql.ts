@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type {
   FetchResult,
@@ -20,10 +20,12 @@ import {
   isFunction,
   isString,
   isArray,
-  intersection
+  intersection,
+  get,
+  set
 } from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
-import type { PartialDeep, ReadonlyDeep } from 'type-fest'
+import type { Get, PartialDeep, Paths, ReadonlyDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
@@ -511,6 +513,19 @@ export const getDateCursorFromReference = (params: {
 }
 
 /**
+ * Build skipLoggingErrors function that skips logging errors if there's only one error and it's related to a specific field
+ */
+export const skipLoggingErrorsIfOneFieldError =
+  (fieldName: string | string[]) =>
+  (err: ErrorResponse): boolean => {
+    const fieldNames = isArray(fieldName) ? fieldName : [fieldName]
+    return (
+      err.graphQLErrors?.length === 1 &&
+      err.graphQLErrors.some((e) => intersection(e.path || [], fieldNames).length > 0)
+    )
+  }
+
+/**
  * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
  * @see modifyObjectFields
  */
@@ -527,10 +542,7 @@ export const modifyObjectField = <
       ? AllObjectFieldArgTypes[Type][Field]
       : never
     value: ReadonlyDeep<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
-    details: Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1] & {
-      ref: typeof getObjectReference
-      revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
-    }
+    details: Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1]
   }) =>
     | Optional<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
     | Parameters<Modifier<ModifyFnCacheData<AllObjectTypes[Type][Field]>>>[1]['DELETE']
@@ -553,15 +565,31 @@ export const modifyObjectField = <
   )
 }
 
+type DeepRequired<T> = {
+  [K in keyof T]-?: NonNullable<T[K]> extends object
+    ? DeepRequired<NonNullable<T[K]>>
+    : NonNullable<T[K]>
+}
+
 /**
- * Build skipLoggingErrors function that skips logging errors if there's only one error and it's related to a specific field
+ * Update field at specific path in object, only if it exists. Useful for cache modification
+ * when fields should only be updated if they exist.
  */
-export const skipLoggingErrorsIfOneFieldError =
-  (fieldName: string | string[]) =>
-  (err: ErrorResponse): boolean => {
-    const fieldNames = isArray(fieldName) ? fieldName : [fieldName]
-    return (
-      err.graphQLErrors?.length === 1 &&
-      err.graphQLErrors.some((e) => intersection(e.path || [], fieldNames).length > 0)
-    )
+export const updatePathIfExists = <
+  Value,
+  Path extends Paths<DeepRequired<Value>> & string
+>(
+  val: MaybeNullOrUndefined<Value>,
+  path: Path,
+  updater: (val: Get<DeepRequired<Value>, Path>) => Get<DeepRequired<Value>, Path>
+) => {
+  if (!val) return val
+
+  if (has(val, path)) {
+    const pathVal = get(val, path) as Get<DeepRequired<Value>, Path>
+    const newVal = updater(pathVal)
+    set(val, path, newVal)
   }
+
+  return val
+}

@@ -12,6 +12,8 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
+  updatePathIfExists,
+  updatePathsIfExist,
   type ApolloCacheObjectKey,
   type ModifyFnCacheData
 } from '~/lib/common/helpers/graphql'
@@ -310,45 +312,47 @@ export const useApolloCacheModify = () => {
   modifyObjectField(queryRef, 'streams', ({ fieldName, variables, value }) => {
     fieldName && variables.limit && value?.__typename
 
-    type RequiredValue = NonNullable<DeepRequired<typeof value>>
+    // type RequiredValue = NonNullable<DeepRequired<typeof value>>
 
-    /**
-     * Update at path, only if it exists and can be walked to (no undefined/null chains)
-     */
-    const update = <Path extends Paths<RequiredValue>>(
-      path: Path,
-      modifier: (val: Get<RequiredValue, Path>) => Get<RequiredValue, Path>
-    ) => {}
+    // /**
+    //  * Update at path, only if it exists and can be walked to (no undefined/null chains)
+    //  */
+    // const update = <Path extends Paths<RequiredValue>>(
+    //   path: Path,
+    //   modifier: (val: Get<RequiredValue, Path>) => Get<RequiredValue, Path>
+    // ) => {}
 
-    const val = fakeTypedVal<RequiredValue>()
-    val.items
+    // const val = fakeTypedVal<RequiredValue>()
+    // val.items
 
-    const a = null as unknown as Get<RequiredValue, 'items'>
+    // const a = null as unknown as Get<RequiredValue, 'items'>
 
-    update('items', (val) => {
-      return []
-    })
+    // update('items', (val) => {
+    //   return []
+    // })
 
-    const updateMultiple = <Path extends Paths<RequiredValue>>(
-      paths: Partial<{
-        [K in Path]: (val: Get<RequiredValue, K>) => Get<RequiredValue, K>
-      }>,
-      options?: Partial<{
-        value: typeof value
-      }>
-    ) => {
-      return value
-    }
+    updatePathIfExists(value, 'totalCount', (val) => val + 1)
 
-    updateMultiple(
-      {
-        items: (val) => [...val],
-        totalCount: (val) => val + 1,
-        'items.0': (val) => undefined,
-        __typename: (val) => 'StreamCollection'
-      },
-      { value }
-    )
+    // const updateMultiple = <Path extends Paths<RequiredValue>>(
+    //   paths: Partial<{
+    //     [K in Path]: (val: Get<RequiredValue, K>) => Get<RequiredValue, K>
+    //   }>,
+    //   options?: Partial<{
+    //     value: typeof value
+    //   }>
+    // ) => {
+    //   return value
+    // }
+
+    // updateMultiple(
+    //   {
+    //     items: (val) => [...val],
+    //     totalCount: (val) => val + 1,
+    //     'items.0': (val) => undefined,
+    //     __typename: (val) => 'StreamCollection'
+    //   },
+    //   { value }
+    // )
 
     return {
       ...value
