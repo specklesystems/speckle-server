@@ -299,3 +299,7 @@ extend type AdminQueries {
 input UserWorkspacesFilter {
   search: String
 }
+
+extend type Project {
+  workspaceId: String
+}
