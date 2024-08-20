@@ -2,11 +2,9 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div
-    v-keyboard-clickable
+  <NuxtLink
     class="space-y-4 relative"
-    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
-    @click="onCardClick"
+    :to="model && !isEmptyModel ? modelRoute(props.project.id, model.id) : undefined"
     @mouseleave="showActionsMenu = false"
   >
     <div
@@ -172,7 +170,7 @@
               {{ child?.name }}
             </div>
           </div> -->
-          <div class="text-body-2xs text-foreground-2">
+          <div class="text-body-3xs text-foreground-2">
             Updated
             <span v-tippy="updatedAt.full">
               {{ updatedAt.relative }}
@@ -217,7 +215,7 @@
         <div v-if="canContribute" class="mr-8"></div>
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
@@ -416,12 +414,6 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
-}
-
-const onCardClick = () => {
-  if (model.value && !isEmptyModel.value) {
-    router.push(modelRoute(props.project.id, model.value.id))
-  }
 }
 
 const onVersionsClick = () => {

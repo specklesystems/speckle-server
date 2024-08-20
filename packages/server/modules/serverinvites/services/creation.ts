@@ -197,10 +197,10 @@ export const resendInviteEmailFactory =
     findInvite: FindInvite
     markInviteUpdated: MarkInviteUpdated
   }): ResendInviteEmail =>
-  async (params: { inviteId: string }) => {
+  async (params) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
-    const { inviteId } = params
-    const invite = await findInvite({ inviteId })
+    const { inviteId, resourceFilter } = params
+    const invite = await findInvite({ inviteId, resourceFilter })
     if (!invite) {
       throw new InviteCreateValidationError('Invite not found')
     }

@@ -13,11 +13,11 @@ export const roleSelectItems: Record<
   },
   [Roles.Workspace.Member]: {
     id: Roles.Workspace.Member,
-    title: 'Can edit'
+    title: 'Member'
   },
   [Roles.Workspace.Guest]: {
     id: Roles.Workspace.Guest,
-    title: 'Can view'
+    title: 'Guest'
   },
   ['delete']: {
     id: 'delete',

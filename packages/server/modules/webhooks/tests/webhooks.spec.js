@@ -8,7 +8,6 @@ const { createPersonalAccessToken } = require('../../core/services/tokens')
 const {
   getStreamWebhooks,
   getLastWebhookEvents,
-  getWebhook,
   updateWebhook,
   deleteWebhook,
   dispatchStreamEvent
@@ -18,12 +17,14 @@ const { createStream, grantPermissionsStream } = require('../../core/services/st
 const { Scopes, Roles } = require('@speckle/shared')
 const {
   createWebhookFactory,
-  countWebhooksByStreamIdFactory
+  countWebhooksByStreamIdFactory,
+  getWebhookByIdFactory
 } = require('../repositories/webhooks')
 const { db } = require('@/db/knex')
 const { createWebhook } = require('../services/webhooks-new')
 
 describe('Webhooks @webhooks', () => {
+  const getWebhook = getWebhookByIdFactory({ db })
   let server, sendRequest, app
 
   const userOne = {
@@ -91,7 +92,7 @@ describe('Webhooks @webhooks', () => {
     it('Should delete a webhook', async () => {
       await deleteWebhook({ id: webhookOne.id })
       const webhook = await getWebhook({ id: webhookOne.id })
-      expect(webhook).to.be.undefined
+      expect(webhook).to.be.null
     })
 
     it('Should get webhooks for stream', async () => {

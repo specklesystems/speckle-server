@@ -1,16 +1,21 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <Menu
-    as="div"
-    class="flex items-center relative sm:border-r border-outline-3 sm:pr-4"
-  >
+  <Menu as="div" class="flex items-center relative">
     <MenuButton :id="menuButtonId" as="div">
+      <!-- Desktop Button -->
       <FormButton class="hidden sm:flex" :icon-right="ChevronDownIcon">
         Share
       </FormButton>
-      <button class="sm:hidden mt-1.5">
-        <ShareIcon class="h-5 w-5 text-primary" />
-      </button>
+      <!-- Mobile Button -->
+      <FormButton
+        color="subtle"
+        size="sm"
+        class="sm:hidden"
+        :icon-right="ShareIcon"
+        hide-text
+      >
+        Share
+      </FormButton>
     </MenuButton>
     <Transition
       enter-active-class="transition ease-out duration-200"
