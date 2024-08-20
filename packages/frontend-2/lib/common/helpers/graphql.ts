@@ -629,9 +629,9 @@ export const modifyObjectField = <
         ReadFieldType extends keyof AllObjectTypes,
         ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
       >(
-        fieldName: ReadFieldName,
-        ref: CacheObjectReference<ReadFieldType>
-      ) => AllObjectTypes[ReadFieldType][ReadFieldName]
+        ref: CacheObjectReference<ReadFieldType>,
+        fieldName: ReadFieldName
+      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
       /**
        * Build a reference object for a specific object in the cache
        */
@@ -681,8 +681,8 @@ export const modifyObjectField = <
         ReadFieldType extends keyof AllObjectTypes,
         ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
       >(
-        fieldName: ReadFieldName,
-        ref: CacheObjectReference<ReadFieldType>
+        ref: CacheObjectReference<ReadFieldType>,
+        fieldName: ReadFieldName
       ) =>
         details.readField(
           fieldName,
