@@ -4,6 +4,10 @@
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <ProjectsDashboardHeader
+      :projects-invites="projectsResult?.activeUser || undefined"
+      :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
+    />
     <div class="flex flex-col gap-y-12">
       <section>
         <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
@@ -49,7 +53,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { dashboardProjectsPageQuery } from '~~/lib/dashboard/graphql/queries'
+import {
+  dashboardProjectsPageQuery,
+  dashboardProjectsPageWorkspaceInvitesQuery
+} from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -71,7 +78,15 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
+const { result: workspaceInvitesResult } = useQuery(
+  dashboardProjectsPageWorkspaceInvitesQuery,
+  undefined,
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 const { triggerNotification } = useGlobalToast()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false
