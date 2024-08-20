@@ -9,7 +9,7 @@
     @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
-    <div class="absolute right-2 top-5">
+    <div class="absolute z-10 right-2 top-5">
       <FormButton
         v-if="hasSubmodels"
         size="sm"
@@ -20,6 +20,17 @@
         @click.stop="trackFederateModels"
       >
         View all
+      </FormButton>
+      <FormButton
+        v-if="hasVersions && !isPendingFileUpload(item) && model?.id"
+        rounded
+        size="sm"
+        class="hidden sm:flex z-20 gap-0.5 mt-[9px]"
+        color="subtle"
+        @click.stop="onVersionsClick"
+      >
+        <IconVersions class="h-4 w-4" />
+        {{ model?.versionCount.totalCount }}
       </FormButton>
     </div>
 
@@ -95,7 +106,10 @@
               class="h-full w-full"
             />
           </div>
-          <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
+          <div
+            v-else-if="hasVersions"
+            class="hidden sm:flex items-center gap-x-2 pr-12"
+          >
             <div class="text-body-3xs text-foreground-2 text-right">
               Updated
               <span v-tippy="updatedAt.full">
@@ -115,20 +129,6 @@
                   :status="model.automationsStatus"
                   :model-id="model.id"
                 />
-              </div>
-
-              <div class="flex gap-2 items-center">
-                <FormButton
-                  v-if="!isPendingFileUpload(item) && model?.id"
-                  rounded
-                  size="sm"
-                  class="gap-0.5"
-                  color="subtle"
-                  @click.stop="onVersionsClick"
-                >
-                  <IconVersions class="h-4 w-4" />
-                  {{ model?.versionCount.totalCount }}
-                </FormButton>
               </div>
             </div>
           </div>
