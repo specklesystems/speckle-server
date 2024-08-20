@@ -8,7 +8,7 @@
         :to="modelRoute(projectId, model.id)"
         class="absolute z-10 inset-0"
       />
-      <div class="relative z-20 flex justify-between items-center h-10">
+      <div class="relative z-30 flex justify-between items-center h-10">
         <NuxtLink
           :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
           class="w-full"
