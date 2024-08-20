@@ -1,10 +1,10 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events vuejs-accessibility/no-static-element-interactions -->
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer dark:border-gray-800 border-gray-300 border`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer dark:border-gray-800 border-gray-300 border group`"
     @click="highlightModel"
   >
-    <div v-if="modelData" class="relative px-2 py-2">
+    <div v-if="modelData" class="relative px-2 py-1">
       <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
           <!-- CTA button -->
@@ -27,7 +27,6 @@
             v-else
             class="z-10 transition rounded-full hover:shadow-md bg-foundation"
           >
-            <!-- <ExclamationCircleIcon class="w-8 text-danger" /> -->
             <ArrowUpCircleIcon v-if="isSender" class="w-8 text-danger" />
             <ArrowDownCircleIcon v-else class="w-8 text-danger" />
           </button>
@@ -39,7 +38,7 @@
           />
         </div>
 
-        <div class="grow min-w-0" :title="modelData.name">
+        <div class="grow min-w-0 py-1">
           <div class="caption text-foreground-2 truncate">
             {{ folderPath }}
           </div>
@@ -64,6 +63,7 @@
     <div v-else class="px-1 py-1">Error loading data.</div>
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
+    <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
     <div v-if="!noWriteAccess" class="px-2">
       <slot></slot>
     </div>

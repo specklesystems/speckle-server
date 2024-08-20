@@ -51,7 +51,7 @@
         </div>
       </LayoutPanel>
     </div>
-    <div v-if="accounts.length !== 0" class="space-y-4 mt-4 max-w-2/3 mb-16">
+    <div v-if="accounts.length !== 0" class="space-y-2 mt-2 max-w-2/3 mb-16">
       <div v-for="project in store.projectModelGroups" :key="project.projectId">
         <CommonProjectModelGroup :project="project" />
       </div>

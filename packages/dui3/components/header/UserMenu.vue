@@ -4,7 +4,7 @@
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
         <button
-          class="rounded-full transition hover:bg-primary hover:text-foreground-on-primary p-1 shadow-md"
+          class="rounded-full transition hover:bg-primary hover:text-foreground-on-primary p-1"
         >
           <Bars3Icon v-if="!open" class="w-4" />
           <XMarkIcon v-else class="w-4" />

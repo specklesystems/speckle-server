@@ -4,7 +4,7 @@
     :project="project"
     @manual-publish-or-load="handleMainButtonClick"
   >
-    <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
+    <div class="flex max-[275px]:flex-col items-center space-x-2 pb-2">
       <div class="shrink-0">
         <FormButton
           v-tippy="
@@ -16,7 +16,7 @@
           "
           :icon-left="ClockIcon"
           text
-          size="sm"
+          size="xs"
           :color="isExpired ? 'warning' : 'card'"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress"
