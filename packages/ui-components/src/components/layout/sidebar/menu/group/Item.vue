@@ -5,8 +5,8 @@
     :to="to"
     class="group flex items-center space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 px-5"
     :class="[
-      !disabled && 'cursor-pointer hover:bg-primary-muted',
-      active && 'bg-highlight-2 hover:!bg-highlight-2'
+      !disabled && 'cursor-pointer hover:bg-highlight-1',
+      active && 'bg-highlight-3 hover:!bg-highlight-3'
     ]"
   >
     <div class="flex items-center space-x-2" :class="[disabled && 'opacity-60']">
