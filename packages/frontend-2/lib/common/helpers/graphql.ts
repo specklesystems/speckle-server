@@ -26,7 +26,7 @@ import {
   cloneDeep
 } from 'lodash-es'
 import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
-import type { Get, PartialDeep, Paths, ReadonlyDeep } from 'type-fest'
+import type { Get, PartialDeep, Paths } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
@@ -355,6 +355,7 @@ export const revolveFieldNameAndVariables = <
  * better filtering capabilities to filter filters to update (e.g. you can actually get each field's variables)
  * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
  * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ * @deprecated Use modifyObjectField instead
  */
 export function modifyObjectFields<
   Variables extends Optional<Record<string, unknown>> = undefined,
@@ -439,6 +440,7 @@ export function modifyObjectFields<
  * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
  * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
  * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ * @deprecated Use modifyObjectField instead, just return the evict() call from the updater
  */
 export function evictObjectFields<
   V extends Optional<Record<string, unknown>> = undefined,
@@ -534,28 +536,21 @@ export const skipLoggingErrorsIfOneFieldError =
     )
   }
 
-type DeepRequired<T> = {
-  [K in keyof T]-?: NonNullable<T[K]> extends object
-    ? DeepRequired<NonNullable<T[K]>>
-    : NonNullable<T[K]>
-}
+type NonUndefined<T> = T extends undefined ? never : T
 
 /**
  * Update field at specific path in object, only if it exists. Useful for cache modification
  * when fields should only be updated if they exist.
  */
-export const updatePathIfExists = <
-  Value,
-  Path extends Paths<DeepRequired<Value>> & string
->(
-  val: MaybeNullOrUndefined<Value>,
+export const updatePathIfExists = <Value, Path extends Paths<Value> & string>(
+  val: Value,
   path: Path,
-  updater: (val: Get<DeepRequired<Value>, Path>) => Get<DeepRequired<Value>, Path>
+  updater: (val: NonUndefined<Get<Value, Path>>) => NonUndefined<Get<Value, Path>>
 ) => {
   if (!val) return val
 
   if (has(val, path)) {
-    const pathVal = get(val, path) as Get<DeepRequired<Value>, Path>
+    const pathVal = get(val, path) as NonUndefined<Get<Value, Path>>
     const newVal = updater(pathVal)
     set(val, path, newVal)
   }
@@ -566,10 +561,7 @@ export const updatePathIfExists = <
 /**
  * Get value from specific path in object, only if it exists.
  */
-export const getFromPathIfExists = <
-  Value,
-  Path extends Paths<DeepRequired<Value>> & string
->(
+export const getFromPathIfExists = <Value, Path extends Paths<Value> & string>(
   val: MaybeNullOrUndefined<Value>,
   path: Path
 ): Optional<Get<Value, Path>> => {
@@ -582,11 +574,6 @@ type ModifyObjectFieldValue<
   Type extends keyof AllObjectTypes,
   Field extends keyof AllObjectTypes[Type]
 > = ModifyFnCacheData<AllObjectTypes[Type][Field]>
-
-type FullModifyObjectFieldValue<
-  Type extends keyof AllObjectTypes,
-  Field extends keyof AllObjectTypes[Type]
-> = DeepRequired<ModifyFnCacheData<AllObjectTypes[Type][Field]>>
 
 /**
  * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
@@ -604,21 +591,31 @@ export const modifyObjectField = <
     variables: Field extends keyof AllObjectFieldArgTypes[Type]
       ? AllObjectFieldArgTypes[Type][Field]
       : never
-    value: ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
+    value: ModifyObjectFieldValue<Type, Field>
     helpers: {
       /**
-       * Update value at a specific path, only if it exists in the cache value
+       * Build new value with the values at specific paths updated with the provided updater functions,
+       * ONLY if the paths exist in the cache.
+       *
+       * This function operates on a deeply cloned value that is safe to mutate
        */
-      update: <Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string>(
-        path: Path,
-        pathUpdate: (
-          val: Get<FullModifyObjectFieldValue<Type, Field>, Path>
-        ) => Get<FullModifyObjectFieldValue<Type, Field>, Path>
-      ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+      createUpdatedValue: (
+        updateHandler: (params: {
+          /**
+           * Invoke this function to update one specific path in the object
+           */
+          update: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+            path: Path,
+            pathUpdate: (
+              val: NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+            ) => NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+          ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+        }) => void
+      ) => ModifyObjectFieldValue<Type, Field>
       /**
        * Get value from specific path, only if it exists in the cache value
        */
-      get: <Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string>(
+      get: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
         path: Path
       ) => Optional<Get<ModifyObjectFieldValue<Type, Field>, Path>>
       /**
@@ -635,6 +632,10 @@ export const modifyObjectField = <
         fieldName: ReadFieldName,
         ref: CacheObjectReference<ReadFieldType>
       ) => AllObjectTypes[ReadFieldType][ReadFieldName]
+      /**
+       * Build a reference object for a specific object in the cache
+       */
+      ref: typeof getObjectReference
     }
   }) =>
     | Optional<ModifyObjectFieldValue<Type, Field>>
@@ -652,29 +653,29 @@ export const modifyObjectField = <
       if (field !== fieldName) return
 
       // Build helpers & clone value to allow for direct mutation
-      const clonedValue = cloneDeep(value)
-      const update = <
-        Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string
-      >(
-        path: Path,
-        pathUpdate: (
-          val: Get<FullModifyObjectFieldValue<Type, Field>, Path>
-        ) => Get<FullModifyObjectFieldValue<Type, Field>, Path>
-      ) =>
-        updatePathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(
-          clonedValue,
-          path,
-          pathUpdate
-        )
-      const get = <
-        Path extends Paths<FullModifyObjectFieldValue<Type, Field>> & string
-      >(
+      const createUpdatedValue = (
+        updateHandler: (params: {
+          update: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+            path: Path,
+            pathUpdate: (
+              val: NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+            ) => NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+          ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+        }) => void
+      ) => {
+        let clonedValue = cloneDeep(value) as ModifyObjectFieldValue<Type, Field>
+        updateHandler({
+          update: (path, pathUpdate) => {
+            clonedValue = updatePathIfExists(value, path, pathUpdate)
+            return clonedValue
+          }
+        })
+        return clonedValue
+      }
+
+      const get = <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
         path: Path
-      ) =>
-        getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(
-          clonedValue,
-          path
-        )
+      ) => getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(value, path)
       const evict = () => details.DELETE
       const readField = <
         ReadFieldType extends keyof AllObjectTypes,
@@ -692,7 +693,7 @@ export const modifyObjectField = <
         fieldName: field,
         variables,
         value,
-        helpers: { update, get, evict, readField }
+        helpers: { createUpdatedValue, get, evict, readField, ref: getObjectReference }
       })
     },
     options
