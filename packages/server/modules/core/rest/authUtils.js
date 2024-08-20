@@ -12,20 +12,29 @@ module.exports = {
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
-    } catch {
+    } catch (err) {
+      req.log.debug(
+        { err },
+        'User does not have the required server role to read stream.'
+      )
       return { result: false, status: 401 }
     }
 
     if (!stream) return { result: false, status: 404 }
 
     if (!stream.isPublic && req.context.auth === false) {
+      req.log.debug('User is not authenticated, so cannot read from non-public stream.')
       return { result: false, status: 401 }
     }
 
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch {
+      } catch (err) {
+        req.log.debug(
+          { err },
+          'User does not have the required server role to read from public stream.'
+        )
         return { result: false, status: 401 }
       }
 
@@ -36,7 +45,11 @@ module.exports = {
           Roles.Stream.Reviewer,
           req.context.resourceAccessRules
         )
-      } catch {
+      } catch (err) {
+        req.log.debug(
+          { err },
+          'User does not have the required stream role to read from stream.'
+        )
         return { result: false, status: 401 }
       }
     }
@@ -45,18 +58,27 @@ module.exports = {
 
   async validatePermissionsWriteStream(streamId, req) {
     if (!req.context || !req.context.auth) {
+      req.log.debug('User is not authenticated, so cannot write to stream.')
       return { result: false, status: 401 }
     }
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
-    } catch {
+    } catch (err) {
+      req.log.debug(
+        { err },
+        'User does not have the required server role to write to stream.'
+      )
       return { result: false, status: 401 }
     }
 
     try {
       await validateScopes(req.context.scopes, Scopes.Streams.Write)
-    } catch {
+    } catch (err) {
+      req.log.debug(
+        { err },
+        'User does not have the required scopes to write to stream.'
+      )
       return { result: false, status: 401 }
     }
 
@@ -67,7 +89,8 @@ module.exports = {
         Roles.Stream.Contributor,
         req.context.resourceAccessRules
       )
-    } catch {
+    } catch (err) {
+      req.log.debug({ err }, 'User does not have the required stream role to write.')
       return { result: false, status: 401 }
     }
 
