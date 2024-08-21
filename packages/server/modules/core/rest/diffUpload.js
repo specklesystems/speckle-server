@@ -41,7 +41,6 @@ module.exports = (app) => {
     const response = {}
     Object.assign(response, ...mappedObjects)
 
-    req.log.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'

@@ -7,13 +7,19 @@
         @click="isOpen = !isOpen"
       >
         <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
+        <div
+          v-if="$slots['title-icon']"
+          class="h-5 w-5 flex items-center justify-center"
+        >
+          <slot name="title-icon"></slot>
+        </div>
         <h6
           class="font-semibold text-foreground-2 text-xs flex items-center space-x-1.5 truncate"
         >
           {{ title }}
         </h6>
       </button>
-      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2">
+      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-4">
         <div
           v-if="$slots['title-icon']"
           class="h-5 w-5 flex items-center justify-center"

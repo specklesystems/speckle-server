@@ -13,7 +13,8 @@ export function useUserSearch(params: { variables: Ref<UserSearchQueryVariables>
   const {
     result,
     variables: usedVariables,
-    refetch
+    refetch,
+    loading
   } = useQuery(userSearchQuery, variables, () => ({
     debounce: 300,
     enabled: (variables.value.query || '').length >= 3
@@ -22,6 +23,7 @@ export function useUserSearch(params: { variables: Ref<UserSearchQueryVariables>
   return {
     userSearch: result,
     searchVariables: usedVariables,
-    refetch
+    refetch,
+    loading
   }
 }

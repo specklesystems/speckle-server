@@ -3,7 +3,14 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-      <div class="pt-4">
+      <div class="grid md:grid-cols-2 pt-4">
+        <div class="flex items-center justify-center">
+          <SettingsWorkspacesGeneralEditAvatar
+            v-if="workspaceResult?.workspace"
+            :workspace="workspaceResult?.workspace"
+            size="xxl"
+          />
+        </div>
         <div class="pt-6 md:pt-0">
           <FormTextInput
             v-model="name"
@@ -73,11 +80,12 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
+    ...SettingsWorkspacesGeneralEditAvatar_Workspace
     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
     id
     name
-    logo
     description
+    logo
   }
 `)
 

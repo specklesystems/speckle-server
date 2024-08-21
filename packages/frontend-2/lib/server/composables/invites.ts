@@ -82,7 +82,7 @@ export const useResolveInviteTargets = (params: {
 }) => {
   const { search, excludeUserIds, excludeEmails } = params
 
-  const { userSearch, searchVariables } = useUserSearch({
+  const { userSearch, searchVariables, loading } = useUserSearch({
     variables: computed(() => ({
       query: search.value || '',
       limit: 5
@@ -90,6 +90,8 @@ export const useResolveInviteTargets = (params: {
   })
 
   const emails = computed(() => {
+    if (loading.value) return []
+
     const query = searchVariables.value?.query || ''
     const multipleEmails = isValidEmail(query)
       ? [query]

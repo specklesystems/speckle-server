@@ -1,14 +1,13 @@
 <template>
-  <component
-    :is="linkComponent"
+  <div
     v-if="!hasChildren"
     v-tippy="tooltipText"
     :to="to"
     class="group flex items-center space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 px-5"
-    :class="[!disabled && 'cursor-pointer hover:bg-primary-muted']"
-    exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
-    :external="external"
-    :target="external ? '_blank' : undefined"
+    :class="[
+      !disabled && 'cursor-pointer hover:bg-highlight-1',
+      active && 'bg-highlight-3 hover:!bg-highlight-3'
+    ]"
   >
     <div class="flex items-center space-x-2" :class="[disabled && 'opacity-60']">
       <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
@@ -17,6 +16,10 @@
       <span :class="$slots.icon ? '' : 'pl-2'">
         {{ label }}
       </span>
+      <ArrowUpRightIcon
+        v-if="external"
+        class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover:opacity-100"
+      />
     </div>
     <div
       v-if="tag"
@@ -24,19 +27,20 @@
     >
       {{ tag }}
     </div>
-  </component>
+  </div>
   <div v-else class="flex flex-col">
     <button
       v-tippy="tooltipText"
       class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
       :class="[
-        !disabled && 'cursor-pointer hover:bg-foundation-3',
+        !disabled && 'cursor-pointer text-foreground-2 hover:text-foreground',
         disabled && 'opacity-60'
       ]"
       @click="toggleOpen"
     >
-      <ChevronDownIcon :class="[isOpen && 'rotate-180']" class="h-2.5 w-2.5" />
-      <h6 class="text-heading-sm text-foreground flex items-center space-x-1.5">
+      <Arrow :class="[isOpen ? '' : '-rotate-90']" />
+
+      <h6 class="text-heading-sm flex items-center space-x-1.5">
         {{ label }}
       </h6>
     </button>
@@ -47,8 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { ref, computed, resolveDynamicComponent, useSlots } from 'vue'
+import { ref, useSlots } from 'vue'
+import Arrow from '~~/src/components/layout/sidebar/menu/group/Arrow.vue'
+import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   label: string
@@ -56,18 +61,11 @@ const props = defineProps<{
   tag?: string
   external?: boolean
   disabled?: boolean
+  active?: boolean
   tooltipText?: string
 }>()
 
 const isOpen = ref(true)
-
-const NuxtLink = resolveDynamicComponent('NuxtLink')
-
-const linkComponent = computed(() => {
-  if (props.disabled) return 'div'
-  if (props.to) return NuxtLink
-  return 'a'
-})
 
 const slots = useSlots()
 

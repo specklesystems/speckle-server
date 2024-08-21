@@ -13,17 +13,24 @@ import {
   deleteAllResourceInvitesFactory,
   deleteInviteFactory,
   deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
+  markInviteUpdatedfactory,
   queryAllResourceInvitesFactory,
-  queryAllUserResourceInvitesFactory
+  queryAllUserResourceInvitesFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  createAndSendInviteFactory,
+  resendInviteEmailFactory
+} from '@/modules/serverinvites/services/creation'
 import {
   cancelResourceInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
@@ -75,6 +82,13 @@ import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retri
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -274,7 +288,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
-          authorizeResolver(
+          await authorizeResolver(
             context.userId,
             workspaceId,
             Roles.Workspace.Admin,
@@ -333,6 +347,38 @@ export = FF_WORKSPACES_MODULE_ENABLED
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
+        resend: async (_parent, args, ctx) => {
+          const {
+            input: { inviteId, workspaceId }
+          } = args
+
+          await authorizeResolver(
+            ctx.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const resendInviteEmail = resendInviteEmailFactory({
+            buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
+              getStream,
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
+            findUserByTarget: findUserByTargetFactory(),
+            findInvite: findInviteFactory({ db }),
+            markInviteUpdated: markInviteUpdatedfactory({ db })
+          })
+
+          await resendInviteEmail({
+            inviteId,
+            resourceFilter: {
+              resourceType: WorkspaceInviteResourceType,
+              resourceId: workspaceId
+            }
+          })
+
+          return true
+        },
         create: async (_parent, args, ctx) => {
           const createInvite = createWorkspaceInviteFactory({
             createAndSendInvite: buildCreateAndSendWorkspaceInvite()
@@ -400,6 +446,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getStreams,
                 grantStreamPermissions
               })
+            }),
+            findEmail: findEmailFactory({ db }),
+            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+              createUserEmail: createUserEmailFactory({ db }),
+              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+              findEmail: findEmailFactory({ db }),
+              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+              }),
+              requestNewEmailVerification
             })
           })
 
@@ -408,7 +465,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             finalizerResourceAccessLimits: ctx.resourceAccessRules,
             token: args.input.token,
             accept: args.input.accept,
-            resourceType: WorkspaceInviteResourceType
+            resourceType: WorkspaceInviteResourceType,
+            allowAttachingNewEmail: args.input.addNewEmail ?? undefined
           })
 
           return true
@@ -501,6 +559,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return user ? removePrivateFields(user) : null
         },
         token: async (parent, _args, ctx) => {
+          // If it was specified with the request, just return it
+          if (parent.token?.length) return parent.token
+
           const authedUserId = ctx.userId
           const targetUserId = parent.user?.id
           const inviteId = parent.inviteId
@@ -512,6 +573,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const invite = await ctx.loaders.invites.getInvite.load(inviteId)
           return invite?.token || null
+        },
+        email: async (parent, _args, ctx) => {
+          if (!parent.user) return parent.email
+
+          // TODO: Tests to check token & email access?
+
+          const token = parent.token
+          const authedUserId = ctx.userId
+          const targetUserId = parent.user?.id
+
+          // Only returning it for the user that is the pending stream collaborator
+          // OR if the token was specified
+          if (
+            (!authedUserId || !targetUserId || authedUserId !== targetUserId) &&
+            !token
+          ) {
+            return null
+          }
+
+          return parent.email
         }
       },
       User: {

@@ -13,6 +13,8 @@
         v-bind="button.props || {}"
         :disabled="button.props?.disabled || button.disabled"
         :submit="button.props?.submit || button.submit"
+        target="_blank"
+        external
         size="sm"
         color="outline"
         @click="($event) => button.onClick?.($event)"

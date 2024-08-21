@@ -21,7 +21,7 @@
         enter-from-class="opacity-0"
         enter-active-class="transition duration-1000"
       >
-        <HeaderNavBar v-show="showNavbar" class="relative z-20 mb-6" />
+        <HeaderNavBar v-show="showNavbar" class="relative z-20" />
       </Transition>
     </ClientOnly>
     <main class="absolute top-0 left-0 z-10 h-[100dvh] w-screen">

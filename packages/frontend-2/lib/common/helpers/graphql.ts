@@ -13,7 +13,15 @@ import type {
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
-import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
+import {
+  flatten,
+  isUndefined,
+  has,
+  isFunction,
+  isString,
+  isArray,
+  intersection
+} from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
 import type { PartialDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
@@ -21,6 +29,7 @@ import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
 import { base64Encode } from '~/lib/common/helpers/encodeDecode'
+import type { ErrorResponse } from '@apollo/client/link/error'
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
@@ -98,6 +107,18 @@ export function convertThrowIntoFetchResult(
   if (err instanceof ApolloError) {
     gqlErrors = err.graphQLErrors
     apolloError = err
+
+    if (!gqlErrors.length) {
+      if (
+        err.networkError &&
+        'result' in err.networkError &&
+        !isString(err.networkError.result) &&
+        isArray(err.networkError.result.errors)
+      ) {
+        const errors = err.networkError.result.errors as Array<{ message: string }>
+        gqlErrors = errors.map((e) => new GraphQLError(e.message))
+      }
+    }
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
@@ -278,7 +299,7 @@ export function isReference(obj: unknown): obj is CacheObjectReference {
  * @param storeFieldName
  * @param fieldName
  */
-const revolveFieldNameAndVariables = <
+export const revolveFieldNameAndVariables = <
   V extends Optional<Record<string, unknown>> = undefined
 >(
   storeFieldName: string,
@@ -476,3 +497,54 @@ export const getDateCursorFromReference = (params: {
   const iso = date.toISOString()
   return base64Encode(iso)
 }
+
+/**
+ * Simplified version of modifyObjectFields, just targetting a single field
+ * @see modifyObjectFields
+ */
+export const modifyObjectField = <
+  FieldData = unknown,
+  Variables extends Optional<Record<string, unknown>> = undefined
+>(
+  cache: ApolloCache<unknown>,
+  id: string,
+  fieldName: string,
+  updater: (params: {
+    fieldName: string
+    variables: Variables
+    value: ModifyFnCacheData<FieldData>
+    details: Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1] & {
+      ref: typeof getObjectReference
+      revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
+    }
+  }) =>
+    | Optional<ModifyFnCacheData<FieldData>>
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
+  options?: Partial<{
+    debug: boolean
+  }>
+) => {
+  modifyObjectFields<Variables, FieldData>(
+    cache,
+    id,
+    (field, variables, value, details) => {
+      if (field !== fieldName) return
+      return updater({ fieldName: field, variables, value, details })
+    },
+    options
+  )
+}
+
+/**
+ * Build skipLoggingErrors function that skips logging errors if there's only one error and it's related to a specific field
+ */
+export const skipLoggingErrorsIfOneFieldError =
+  (fieldName: string | string[]) =>
+  (err: ErrorResponse): boolean => {
+    const fieldNames = isArray(fieldName) ? fieldName : [fieldName]
+    return (
+      err.graphQLErrors?.length === 1 &&
+      err.graphQLErrors.some((e) => intersection(e.path || [], fieldNames).length > 0)
+    )
+  }
