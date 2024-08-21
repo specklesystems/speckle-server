@@ -89,8 +89,6 @@ export function useAddByUrl() {
         //version = res.data.project.model.versions.items[0] as VersionListItemFragment
       }
     } catch (err) {
-      // TODO
-      console.log(err)
       urlParseError.value = 'Failed to retrieve project info.'
       return
     }

@@ -112,7 +112,6 @@ const updateSearchText = (text: string | undefined) => {
 
 watch(urlParsedData, (newVal) => {
   if (!newVal) return
-  console.log(newVal)
   selectProject(newVal.account?.accountInfo.id, newVal.project)
   selectModel(newVal.model)
 })

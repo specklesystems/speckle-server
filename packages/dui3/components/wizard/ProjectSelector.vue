@@ -130,7 +130,6 @@ const selectedAccountId = ref<string>()
 
 watch(searchText, () => {
   newProjectName.value = searchText.value
-  console.log('adsf')
   emit('search-text-update', searchText.value)
 })
 
