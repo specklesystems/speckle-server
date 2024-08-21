@@ -1,0 +1,26 @@
+[
+  {
+    "name": "speckle_server_postgres",
+    "listen": "0.0.0.0:5436",
+    "upstream": "postgres:5432",
+    "enabled": true
+  },
+  {
+    "name": "speckle_server_redis",
+    "listen": "0.0.0.0:6376",
+    "upstream": "redis:6379",
+    "enabled": true
+  },
+  {
+    "name": "speckle_server_minio",
+    "listen": "0.0.0.0:9006",
+    "upstream": "minio:9000",
+    "enabled": true
+  },
+  {
+    "name": "speckle_server_maildev",
+    "listen": "0.0.0.0:1026",
+    "upstream": "maildev:1025",
+    "enabled": true
+  }
+]
