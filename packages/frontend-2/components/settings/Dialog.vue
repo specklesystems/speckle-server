@@ -125,8 +125,6 @@ graphql(`
         ...WorkspaceAvatar_Workspace
         id
         name
-        logo
-        defaultLogoIndex
       }
     }
   }

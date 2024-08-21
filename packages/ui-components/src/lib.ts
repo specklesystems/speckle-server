@@ -97,6 +97,7 @@ import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
 
 export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
+export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 
 export {
   CommonLoadingIcon,
