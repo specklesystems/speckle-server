@@ -13,10 +13,11 @@ import cookieParser from 'cookie-parser'
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger } from '@/logging/logging'
+import { startupLogger, shutdownLogger, subscriptionLogger } from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
-  LoggingExpressMiddleware
+  LoggingExpressMiddleware,
+  sanitizeHeaders
 } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
@@ -58,7 +59,6 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
-import { subscriptionLogger } from '@/logging/logging'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -159,6 +159,7 @@ function buildApolloSubscriptionServer(
       ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+        const logger = connContext.request.log || subscriptionLogger
 
         const possiblePaths = [
           'Authorization',
@@ -170,7 +171,11 @@ function buildApolloSubscriptionServer(
         // Resolve token
         let token: string
         try {
-          subscriptionLogger.debug('New websocket connection')
+          const requestId = get(connectionParams, 'headers.x-request-id') as string
+          logger.debug(
+            { requestId, headers: sanitizeHeaders(connContext.request.headers) },
+            'New websocket connection'
+          )
           let header: Optional<string>
 
           for (const possiblePath of possiblePaths) {
@@ -202,10 +207,10 @@ function buildApolloSubscriptionServer(
           })
           buildCtx.log.info(
             {
-              user_id: buildCtx.userId,
+              userId: buildCtx.userId,
               ws_protocol: webSocket.protocol,
               ws_url: webSocket.url,
-              request: { ...connContext.request.headers }
+              headers: sanitizeHeaders(connContext.request.headers)
             },
             'Websocket connected and subscription context built.'
           )
@@ -215,11 +220,12 @@ function buildApolloSubscriptionServer(
         }
       },
       onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
-        subscriptionLogger.debug(
+        const logger = connContext.request.log || subscriptionLogger
+        logger.debug(
           {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
-            request: { ...connContext.request.headers }
+            headers: sanitizeHeaders(connContext.request.headers)
           },
           'Websocket disconnected.'
         )
@@ -233,6 +239,18 @@ function buildApolloSubscriptionServer(
           subscriptionType: baseParams.operationName
         })
         const ctx = baseParams.context as GraphQLContext
+
+        const logger = ctx.log || subscriptionLogger
+        logger.debug(
+          {
+            graphql_operation_name: baseParams.operationName,
+            userId: baseParams.context.userId,
+            graphql_query: baseParams.query.toString(),
+            graphql_variables: redactSensitiveVariables(baseParams.variables),
+            graphql_operation_type: 'subscription'
+          },
+          'Subscription started tp {graphqlOperationName}'
+        )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()

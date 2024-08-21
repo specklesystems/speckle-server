@@ -23,6 +23,22 @@ const DetermineRequestId = (
   return headers[0] || uuidGenerator()
 }
 
+export const sanitizeHeaders = (headers: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(headers).filter(
+      ([key]) =>
+        ![
+          'cookie',
+          'authorization',
+          'cf-connecting-ip',
+          'true-client-ip',
+          'x-real-ip',
+          'x-forwarded-for',
+          'x-original-forwarded-for'
+        ].includes(key.toLocaleLowerCase())
+    )
+  )
+
 export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: true,
@@ -99,20 +115,7 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: getRequestPath(req.raw),
         // Allowlist useful headers
-        headers: Object.fromEntries(
-          Object.entries(req.raw.headers).filter(
-            ([key]) =>
-              ![
-                'cookie',
-                'authorization',
-                'cf-connecting-ip',
-                'true-client-ip',
-                'x-real-ip',
-                'x-forwarded-for',
-                'x-original-forwarded-for'
-              ].includes(key.toLocaleLowerCase())
-          )
-        )
+        headers: sanitizeHeaders(req.raw.headers)
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
