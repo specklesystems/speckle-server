@@ -31,6 +31,8 @@ import {
   GetWorkspaceInviteQueryVariables,
   GetWorkspaceWithTeamDocument,
   GetWorkspaceWithTeamQueryVariables,
+  ResendWorkspaceInviteDocument,
+  ResendWorkspaceInviteMutationVariables,
   UseWorkspaceInviteDocument,
   UseWorkspaceInviteMutationVariables,
   UseWorkspaceProjectInviteDocument,
@@ -113,6 +115,11 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     args: CreateWorkspaceProjectInviteMutationVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(CreateWorkspaceProjectInviteDocument, args, options)
+
+  const resendWorkspaceInvite = (
+    args: ResendWorkspaceInviteMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(ResendWorkspaceInviteDocument, args, options)
 
   const useProjectInvite = async (
     args: UseWorkspaceProjectInviteMutationVariables,
@@ -201,7 +208,8 @@ const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
     cancelInvite,
     getWorkspaceWithTeam,
     createDefaultProjectInvite,
-    createWorkspaceProjectInvite
+    createWorkspaceProjectInvite,
+    resendWorkspaceInvite
   }
 }
 
@@ -809,6 +817,40 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
       })
 
+      it('cant resend the invite email w/ mismatched workspaceId', async () => {
+        const res = await gqlHelpers.resendWorkspaceInvite({
+          input: {
+            workspaceId: myFirstWorkspace.id,
+            inviteId: processableWorkspaceInvite.inviteId
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('Invite not found')
+        expect(res.data?.workspaceMutations.invites.resend).to.not.be.ok
+      })
+
+      it('can resend the invite email', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const res = await gqlHelpers.resendWorkspaceInvite({
+          input: {
+            workspaceId: myInviteTargetWorkspace.id,
+            inviteId: processableWorkspaceInvite.inviteId
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations.invites.resend).to.be.ok
+
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
+        const emailParams = sendEmailInvocations.args[0][0]
+        expect(emailParams).to.be.ok
+        expect(emailParams.to).to.eq(otherGuy.email)
+      })
+
       it("can't retrieve broken invite with invalid workspaceIds", async () => {
         const brokenWorkspace: BasicTestWorkspace = {
           name: 'Broken Workspace',
@@ -956,6 +998,25 @@ describe('Workspaces Invites GQL', () => {
           await validateResourceAccess({ shouldHaveAccess: accept })
         }
       )
+
+      it("can't accept the invite, if it belongs to another user", async () => {
+        const res = await gqlHelpers.useInvite(
+          {
+            input: {
+              accept: true,
+              token: processableWorkspaceInvite.token
+            }
+          },
+          {
+            context: {
+              userId: myWorkspaceFriend.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.use).to.not.be.ok
+      })
 
       it("can't accept invite, if token resource access rules prevent it", async () => {
         const res = await gqlHelpers.useInvite(

@@ -1,26 +1,21 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div
-    v-keyboard-clickable
-    class="space-y-4 relative"
-    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
-    @click="onCardClick"
-    @mouseleave="showActionsMenu = false"
-  >
+  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
         <div
           class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
         >
-          <span class="text-heading text-foreground">
-            {{ name }}
-          </span>
+          <NuxtLink :to="modelLink || undefined">
+            <span class="text-heading text-foreground hover:text-primary">
+              {{ name }}
+            </span>
+          </NuxtLink>
           <span
             v-if="model"
             class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
@@ -126,7 +121,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -405,10 +400,6 @@ const {
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
 
-const isEmptyModel = computed(() => {
-  return itemType.value === StructureItemType.EmptyModel
-})
-
 const onModelUpdated = () => {
   emit('model-updated')
   refetchChildren()
@@ -416,12 +407,6 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
-}
-
-const onCardClick = () => {
-  if (model.value && !isEmptyModel.value) {
-    router.push(modelRoute(props.project.id, model.value.id))
-  }
 }
 
 const onVersionsClick = () => {

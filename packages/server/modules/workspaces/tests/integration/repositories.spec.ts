@@ -69,6 +69,7 @@ const createAndStoreTestWorkspace = async (
     logo: null,
     domainBasedMembershipProtectionEnabled: false,
     discoverabilityEnabled: false,
+    defaultLogoIndex: 0,
     ...workspaceOverrides
   }
 

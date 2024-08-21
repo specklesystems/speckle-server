@@ -125,6 +125,7 @@ export const upsertWorkspaceFactory =
       .merge([
         'description',
         'logo',
+        'defaultLogoIndex',
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',

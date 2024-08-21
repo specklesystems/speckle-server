@@ -49,6 +49,23 @@ export const settingsUserEmailsQuery = graphql(`
   }
 `)
 
+export const settingsWorkspacesProjectsQuery = graphql(`
+  query SettingsWorkspacesProjects(
+    $workspaceId: String!
+    $limit: Int!
+    $cursor: String
+    $filter: WorkspaceProjectsFilter
+  ) {
+    workspace(id: $workspaceId) {
+      id
+      projects(limit: $limit, cursor: $cursor, filter: $filter) {
+        cursor
+        ...SettingsWorkspacesProjects_ProjectCollection
+      }
+    }
+  }
+`)
+
 export const settingsWorkspacesSecurityQuery = graphql(`
   query SettingsWorkspaceSecurity($workspaceId: String!) {
     workspace(id: $workspaceId) {

@@ -22,9 +22,7 @@
               v-for="(sidebarMenuItem, key) in userMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
-              }"
+              :active="targetMenuItem === key"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -36,9 +34,7 @@
               v-for="(sidebarMenuItem, key) in serverMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
-              }"
+              :active="targetMenuItem === key"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
@@ -55,11 +51,18 @@
               :title="workspaceItem.name"
               collapsible
             >
+              <template #title-icon>
+                <WorkspaceAvatar
+                  :logo="workspaceItem.logo"
+                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  size="sm"
+                />
+              </template>
               <LayoutSidebarMenuGroupItem
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
                 :label="workspaceMenuItem.title"
-                :class="
+                :active="
                   workspaceMenuItemClasses(
                     itemKey,
                     workspaceItem.id,
@@ -118,6 +121,8 @@ graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
+        ...SettingsWorkspacesGeneralEditAvatar_Workspace
+        ...WorkspaceAvatar_Workspace
         id
         name
       }
@@ -170,16 +175,10 @@ const workspaceMenuItemClasses = (
   itemKey: string | number,
   workspaceId: string,
   disabled?: boolean
-) => {
-  if (
-    targetMenuItem.value === itemKey &&
-    targetWorkspaceId.value === workspaceId &&
-    !disabled
-  ) {
-    return 'bg-highlight-2 hover:!bg-highlight-2'
-  }
-  return ''
-}
+) =>
+  targetMenuItem.value === itemKey &&
+  targetWorkspaceId.value === workspaceId &&
+  !disabled
 
 watch(
   () => user.value,

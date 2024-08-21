@@ -76,6 +76,28 @@ export const deleteWorkspaceMutation = graphql(`
   }
 `)
 
+export const settingsResendWorkspaceInviteMutation = graphql(`
+  mutation SettingsResendWorkspaceInvite($input: WorkspaceInviteResendInput!) {
+    workspaceMutations {
+      invites {
+        resend(input: $input)
+      }
+    }
+  }
+`)
+
+export const settingsCancelWorkspaceInviteMutation = graphql(`
+  mutation SettingsCancelWorkspaceInvite($workspaceId: String!, $inviteId: String!) {
+    workspaceMutations {
+      invites {
+        cancel(workspaceId: $workspaceId, inviteId: $inviteId) {
+          id
+        }
+      }
+    }
+  }
+`)
+
 export const settingsAddWorkspaceDomainMutation = graphql(`
   mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
     workspaceMutations {

@@ -17,13 +17,17 @@ import {
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
+  markInviteUpdatedfactory,
   queryAllResourceInvitesFactory,
   queryAllUserResourceInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  createAndSendInviteFactory,
+  resendInviteEmailFactory
+} from '@/modules/serverinvites/services/creation'
 import {
   cancelResourceInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -231,7 +235,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description } = args.input
+          const { name, description, defaultLogoIndex } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -244,7 +248,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceInput: {
               name,
               description: description || null,
-              logo: null
+              logo: null,
+              defaultLogoIndex: defaultLogoIndex || 0
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -299,7 +304,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
-          authorizeResolver(
+          await authorizeResolver(
             context.userId,
             workspaceId,
             Roles.Workspace.Admin,
@@ -414,6 +419,38 @@ export = FF_WORKSPACES_MODULE_ENABLED
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
+        resend: async (_parent, args, ctx) => {
+          const {
+            input: { inviteId, workspaceId }
+          } = args
+
+          await authorizeResolver(
+            ctx.userId!,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const resendInviteEmail = resendInviteEmailFactory({
+            buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
+              getStream,
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
+            findUserByTarget: findUserByTargetFactory(),
+            findInvite: findInviteFactory({ db }),
+            markInviteUpdated: markInviteUpdatedfactory({ db })
+          })
+
+          await resendInviteEmail({
+            inviteId,
+            resourceFilter: {
+              resourceType: WorkspaceInviteResourceType,
+              resourceId: workspaceId
+            }
+          })
+
+          return true
+        },
         create: async (_parent, args, ctx) => {
           const createInvite = createWorkspaceInviteFactory({
             createAndSendInvite: buildCreateAndSendWorkspaceInvite()

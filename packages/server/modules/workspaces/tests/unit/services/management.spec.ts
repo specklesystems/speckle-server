@@ -82,7 +82,8 @@ const getCreateWorkspaceInput = () => {
     workspaceInput: {
       description: 'foobar',
       logo: null,
-      name: cryptoRandomString({ length: 6 })
+      name: cryptoRandomString({ length: 6 }),
+      defaultLogoIndex: 0
     }
   }
 }
@@ -662,7 +663,8 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false
+                  domainBasedMembershipProtectionEnabled: false,
+                  defaultLogoIndex: 0
                 }
               },
               getDomains: async () => {
@@ -703,7 +705,8 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false
+          domainBasedMembershipProtectionEnabled: false,
+          defaultLogoIndex: 0
         }
 
         await addDomainToWorkspaceFactory({
@@ -756,7 +759,8 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false
+          domainBasedMembershipProtectionEnabled: false,
+          defaultLogoIndex: 0
         }
 
         await addDomainToWorkspaceFactory({
@@ -816,7 +820,8 @@ describe('Workspace role services', () => {
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
-          domains: []
+          domains: [],
+          defaultLogoIndex: 0
         }
 
         let workspaceData: Workspace = {

@@ -10,6 +10,7 @@ const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
     id: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
     logo: null,
+    defaultLogoIndex: 0,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
     createdAt: new Date(),

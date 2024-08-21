@@ -1,11 +1,10 @@
 <template>
-  <div class="flex justify-between items-center">
+  <div class="flex flex-col sm:flex-row justify-between sm:items-center">
     <div class="flex gap-2 mb-3 mt-2">
-      <img
-        v-if="workspaceInfo.logo"
-        :src="workspaceInfo.logo || ''"
-        alt="Workspace logo"
-        class="w-5 h-5 mt-0.5"
+      <WorkspaceAvatar
+        :logo="workspaceInfo.logo"
+        :default-logo-index="workspaceInfo.defaultLogoIndex"
+        size="sm"
       />
       <div class="flex flex-col">
         <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
@@ -26,19 +25,32 @@
         :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
-      <FormButton color="outline" disabled>Invite</FormButton>
-      <!-- <WorkspaceHeaderActions /> -->
+      <FormButton
+        color="outline"
+        :disabled="!isWorkspaceAdmin"
+        @click="showInviteDialog = !showInviteDialog"
+      >
+        Invite
+      </FormButton>
     </div>
+    <WorkspaceInviteDialog
+      v-model:open="showInviteDialog"
+      :workspace-id="workspaceInfo.id"
+      :workspace="workspaceInfo"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
+    ...WorkspaceAvatar_Workspace
     id
+    role
     name
     logo
     description
@@ -53,6 +65,7 @@ graphql(`
         ...LimitedUserAvatar
       }
     }
+    ...WorkspaceInviteDialog_Workspace
   }
 `)
 
@@ -60,5 +73,10 @@ const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
+const showInviteDialog = ref(false)
+
 const team = computed(() => props.workspaceInfo.team || [])
+const isWorkspaceAdmin = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Admin
+)
 </script>

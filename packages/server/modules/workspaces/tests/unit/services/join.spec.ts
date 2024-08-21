@@ -29,7 +29,8 @@ const createTestWorkspaceWithDomains = (
     logo: null,
     domains: [],
     discoverabilityEnabled: false,
-    domainBasedMembershipProtectionEnabled: false
+    domainBasedMembershipProtectionEnabled: false,
+    defaultLogoIndex: 0
   }
   if (arg) assign(workspace, arg)
   return workspace

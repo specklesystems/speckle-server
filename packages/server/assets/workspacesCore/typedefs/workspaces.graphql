@@ -16,6 +16,7 @@ extend type Query {
 input WorkspaceCreateInput {
   name: String!
   description: String
+  defaultLogoIndex: Int
 }
 
 input WorkspaceUpdateInput {
@@ -26,6 +27,7 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
+  defaultLogoIndex: Int
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
 }
@@ -151,6 +153,11 @@ input WorkspaceInviteUseInput {
   addNewEmail: Boolean
 }
 
+input WorkspaceInviteResendInput {
+  workspaceId: String!
+  inviteId: String!
+}
+
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
     @hasScope(scope: "users:invite")
@@ -159,6 +166,9 @@ type WorkspaceInviteMutations {
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
+  resend(input: WorkspaceInviteResendInput!): Boolean!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
@@ -178,6 +188,10 @@ type Workspace {
   Logo image as base64-encoded string
   """
   logo: String
+  """
+  Selected fallback when `logo` not set
+  """
+  defaultLogoIndex: Int!
   """
   Verified workspace domains
   """
@@ -330,4 +344,8 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+}
+
+extend type Project {
+  workspaceId: String
 }

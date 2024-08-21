@@ -424,7 +424,7 @@ server:
   weeklyDigestEnabled: false
 
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
+  max_object_size_mb: 100
   ## @param server.max_object_upload_file_size_mb Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server
   max_object_upload_file_size_mb: 50
   ## @param server.max_project_models_per_page The maximum number of models that can be returned in a single page of a query for all models of a project
@@ -812,9 +812,6 @@ objects:
     enabled: false
     ## @param objects.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
-
-  ## @param objects.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
 
   requests:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
