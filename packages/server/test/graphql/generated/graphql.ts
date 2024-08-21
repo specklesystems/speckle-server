@@ -3809,6 +3809,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Billing data for Workspaces beta */
+  billing: WorkspaceBilling;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -3839,6 +3841,19 @@ export type WorkspaceProjectsArgs = {
 
 export type WorkspaceTeamArgs = {
   filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
+export type WorkspaceBilling = {
+  __typename?: 'WorkspaceBilling';
+  version?: Maybe<WorkspaceBillingVersion>;
+};
+
+export type WorkspaceBillingVersion = {
+  __typename?: 'WorkspaceBillingVersion';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 export type WorkspaceCollaborator = {

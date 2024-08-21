@@ -3819,6 +3819,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Billing data for Workspaces beta */
+  billing: WorkspaceBilling;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -3849,6 +3851,19 @@ export type WorkspaceProjectsArgs = {
 
 export type WorkspaceTeamArgs = {
   filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
+export type WorkspaceBilling = {
+  __typename?: 'WorkspaceBilling';
+  version?: Maybe<WorkspaceBillingVersion>;
+};
+
+export type WorkspaceBillingVersion = {
+  __typename?: 'WorkspaceBillingVersion';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 export type WorkspaceCollaborator = {
@@ -4318,6 +4333,8 @@ export type ResolversTypes = {
   WebhookEventCollection: ResolverTypeWrapper<WebhookEventCollection>;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: ResolverTypeWrapper<WorkspaceGraphQLReturn>;
+  WorkspaceBilling: ResolverTypeWrapper<WorkspaceBilling>;
+  WorkspaceBillingVersion: ResolverTypeWrapper<WorkspaceBillingVersion>;
   WorkspaceCollaborator: ResolverTypeWrapper<WorkspaceCollaboratorGraphQLReturn>;
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCreateInput: WorkspaceCreateInput;
@@ -4544,6 +4561,8 @@ export type ResolversParentTypes = {
   WebhookEventCollection: WebhookEventCollection;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: WorkspaceGraphQLReturn;
+  WorkspaceBilling: WorkspaceBilling;
+  WorkspaceBillingVersion: WorkspaceBillingVersion;
   WorkspaceCollaborator: WorkspaceCollaboratorGraphQLReturn;
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCreateInput: WorkspaceCreateInput;
@@ -5877,6 +5896,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
+  billing?: Resolver<ResolversTypes['WorkspaceBilling'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -5887,6 +5907,17 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType, Partial<WorkspaceTeamArgs>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceBillingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceBilling'] = ResolversParentTypes['WorkspaceBilling']> = {
+  version?: Resolver<Maybe<ResolversTypes['WorkspaceBillingVersion']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceBillingVersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceBillingVersion'] = ResolversParentTypes['WorkspaceBillingVersion']> = {
+  current?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  max?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6050,6 +6081,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WebhookEvent?: WebhookEventResolvers<ContextType>;
   WebhookEventCollection?: WebhookEventCollectionResolvers<ContextType>;
   Workspace?: WorkspaceResolvers<ContextType>;
+  WorkspaceBilling?: WorkspaceBillingResolvers<ContextType>;
+  WorkspaceBillingVersion?: WorkspaceBillingVersionResolvers<ContextType>;
   WorkspaceCollaborator?: WorkspaceCollaboratorResolvers<ContextType>;
   WorkspaceCollection?: WorkspaceCollectionResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;

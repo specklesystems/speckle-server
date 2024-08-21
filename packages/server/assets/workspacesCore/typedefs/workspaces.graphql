@@ -151,6 +151,21 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+type WorkspaceBillingVersion {
+  """
+  Total number of versions of all projects in the workspace
+  """
+  current: Int!
+  """
+  Maximum number of version of all projects in the workspace with no additional cost
+  """
+  max: Int!
+}
+
+type WorkspaceBilling {
+  version: WorkspaceBillingVersion
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -177,6 +192,10 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  """
+  Billing data for Workspaces beta
+  """
+  billing: WorkspaceBilling!
 }
 
 input WorkspaceProjectsFilter {
