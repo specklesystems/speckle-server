@@ -22,19 +22,16 @@ import {
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
-import {
-  ApolloServer,
-  ForbiddenError,
-  ApolloServerExpressConfig,
-  ApolloError
-} from 'apollo-server-express'
+import { ApolloServer, ForbiddenError, ApolloError } from 'apollo-server-express'
+import type { ApolloServerExpressConfig } from 'apollo-server-express'
 import {
   ApolloServerPluginLandingPageLocalDefault,
   ApolloServerPluginUsageReportingDisabled,
   ApolloServerPluginUsageReporting
 } from 'apollo-server-core'
 
-import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
+import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
+import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -61,6 +58,7 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { subscriptionLogger } from '@/logging/logging'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -154,21 +152,26 @@ function buildApolloSubscriptionServer(
       execute,
       subscribe,
       validationRules: apolloServer.requestOptions.validationRules,
-      onConnect: async (connectionParams: Record<string, unknown>) => {
+      onConnect: async (
+        connectionParams: Record<string, unknown>,
+        webSocket: WebSocket,
+        connContext: ConnectionContext
+      ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+
+        const possiblePaths = [
+          'Authorization',
+          'authorization',
+          'headers.Authorization',
+          'headers.authorization'
+        ]
 
         // Resolve token
         let token: string
         try {
+          subscriptionLogger.debug('New websocket connection')
           let header: Optional<string>
-
-          const possiblePaths = [
-            'Authorization',
-            'authorization',
-            'headers.Authorization',
-            'headers.authorization'
-          ]
 
           for (const possiblePath of possiblePaths) {
             if (has(connectionParams, possiblePath)) {
@@ -192,12 +195,34 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token, cleanLoadersEarly: false })
+          const buildCtx = await buildContext({
+            req: null,
+            token,
+            cleanLoadersEarly: false
+          })
+          buildCtx.log.info(
+            {
+              user_id: buildCtx.userId,
+              ws_protocol: webSocket.protocol,
+              ws_url: webSocket.url,
+              request: { ...connContext.request.headers }
+            },
+            'Websocket connected and subscription context built.'
+          )
+          return buildCtx
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
       },
-      onDisconnect: () => {
+      onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
+        subscriptionLogger.debug(
+          {
+            ws_protocol: webSocket.protocol,
+            ws_url: webSocket.url,
+            request: { ...connContext.request.headers }
+          },
+          'Websocket disconnected.'
+        )
         metricConnectedClients.dec()
       },
       onOperation: (...params: [() => void, ExecutionParams]) => {
@@ -230,7 +255,8 @@ function buildApolloSubscriptionServer(
         }
 
         return baseParams
-      }
+      },
+      keepAlive: 30000 //milliseconds. Loadbalancers may otherwise close the connection after 60000ms of inactivity
     },
     {
       server,
