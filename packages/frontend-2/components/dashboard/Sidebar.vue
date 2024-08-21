@@ -68,7 +68,11 @@
                 :active="isActive(item.to)"
               >
                 <template #icon>
-                  <UserAvatar :logo="item.logo" size="sm" />
+                  <WorkspaceAvatar
+                    :logo="item.logo"
+                    :default-logo-index="item.defaultLogoIndex"
+                    size="sm"
+                  />
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
@@ -172,7 +176,8 @@ const workspacesItems = computed(() =>
         label: workspace.name,
         id: workspace.id,
         to: workspaceRoute(workspace.id),
-        logo: workspace.logo
+        logo: workspace.logo,
+        defaultLogoIndex: workspace.defaultLogoIndex
       }))
     : []
 )

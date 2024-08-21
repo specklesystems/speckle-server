@@ -52,7 +52,11 @@
               collapsible
             >
               <template #title-icon>
-                <UserAvatar :logo="workspaceItem.logo" size="sm" />
+                <WorkspaceAvatar
+                  :logo="workspaceItem.logo"
+                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  size="sm"
+                />
               </template>
               <LayoutSidebarMenuGroupItem
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
@@ -118,9 +122,9 @@ graphql(`
     workspaces {
       items {
         ...SettingsWorkspacesGeneralEditAvatar_Workspace
+        ...WorkspaceAvatar_Workspace
         id
         name
-        logo
       }
     }
   }
