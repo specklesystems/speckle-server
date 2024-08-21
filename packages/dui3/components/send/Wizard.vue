@@ -42,10 +42,13 @@
         </button>
       </div>
     </template>
-
     <!-- Project selector wizard -->
     <div v-if="step === 1">
-      <WizardProjectSelector disable-no-write-access-projects @next="selectProject" />
+      <WizardProjectSelector
+        disable-no-write-access-projects
+        @next="selectProject"
+        @search-text-update="updateSearchText"
+      />
     </div>
     <!-- Model selector wizard -->
     <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
@@ -66,6 +69,7 @@
         <FormButton full-width @click="addModel">Publish</FormButton>
       </div>
     </div>
+    <div v-if="urlParseError" class="p-2 text-xs text-danger">{{ urlParseError }}</div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -81,6 +85,7 @@ import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { CardSetting } from '~/lib/models/card/setting'
+import { useAddByUrl } from '~/lib/core/composables/addByUrl'
 
 const { trackEvent } = useMixpanel()
 
@@ -97,6 +102,19 @@ const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 const filter = ref<ISendFilter | undefined>(undefined)
 const settings = ref<CardSetting[] | undefined>(undefined)
+
+const { tryParseUrl, urlParsedData, urlParseError } = useAddByUrl()
+const updateSearchText = (text: string | undefined) => {
+  urlParseError.value = undefined
+  if (!text) return
+  tryParseUrl(text, 'sender')
+}
+
+watch(urlParsedData, (newVal) => {
+  if (!newVal) return
+  selectProject(newVal.account?.accountInfo.id, newVal.project)
+  selectModel(newVal.model)
+})
 
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
   step.value++
@@ -125,6 +143,7 @@ watch(step, (newVal, oldVal) => {
 
 const hostAppStore = useHostAppStore()
 
+// accountId, serverUrl, projectId, modelId, sendFilter, settings
 const addModel = async () => {
   void trackEvent('DUI3 Action', {
     name: 'Publish Wizard',
@@ -149,8 +168,8 @@ const addModel = async () => {
 
   const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
-  model.projectId = selectedProject.value?.id as string
   model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
+  model.projectId = selectedProject.value?.id as string
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
   model.settings = settings.value
