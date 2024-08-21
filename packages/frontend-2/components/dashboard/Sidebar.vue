@@ -78,7 +78,7 @@
             <NuxtLink :to="connectorsPageUrl" target="_blank">
               <LayoutSidebarMenuGroupItem label="Connectors" external>
                 <template #icon>
-                  <IconConnectors class="h-4 w-4 text-foreground-2" />
+                  <IconConnectors class="h-4 w-4 ml-px text-foreground-2" />
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
