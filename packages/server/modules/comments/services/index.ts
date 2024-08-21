@@ -288,12 +288,10 @@ export async function archiveComment({
  * `resources` takes precedence.
  */
 type GetCommentsParams = {
-  // resources?: ResourceIdentifier[] | null
   limit?: number | null
   cursor?: string | null
   userId?: string | null
   replies?: boolean | null
-  // streamId: string
   archived?: boolean | null
 } & (
   | {
