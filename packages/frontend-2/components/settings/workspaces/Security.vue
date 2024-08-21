@@ -7,7 +7,7 @@
         <div
           class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4 mt-4"
         >
-          <FormButton @click="showAddDialog = true">Add Domain</FormButton>
+          <FormButton @click="showAddDomainDialog = true">Add Domain</FormButton>
         </div>
         <LayoutTable
           class="mt-2 md:mt-4"
@@ -15,7 +15,7 @@
             { id: 'domain', header: 'Domain', classes: 'col-span-3' },
             { id: 'delete', header: 'Delete', classes: 'col-span-2' }
           ]"
-          :items="domains"
+          :items="workspaceDomains"
         >
           <template #domain="{ item }">
             <span class="text-body-xs text-foreground">
@@ -43,13 +43,15 @@
         />
       </div>
     </div>
-    <SettingsWorkspacesSecurityAddDialog
-      v-model:open="showAddDialog"
+    <SettingsWorkspacesSecurityDomainAddDialog
+      v-if="verifiedUser"
+      v-model:open="showAddDomainDialog"
       :workspace-id="workspaceId"
+      :verified-user="verifiedUser"
     />
-    <SettingsWorkspacesSecurityRemoveDialog
+    <SettingsWorkspacesSecurityDomainRemoveDialog
       v-if="removeDialogDomain"
-      v-model:open="showRemoveDialog"
+      v-model:open="showRemoveDomainDialog"
       :workspace-id="workspaceId"
       :domain="removeDialogDomain"
     />
@@ -61,16 +63,22 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   Workspace,
-  WorkspaceSettingsSecurity_WorkspaceDomainFragment
+  SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
 } from '~/lib/common/generated/gql/graphql'
 import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/gql/graphql'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { settingsWorkspaceSecurityQuery } from '~/lib/settings/graphql/queries'
+import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
-  fragment WorkspaceSettingsSecurity_WorkspaceDomain on WorkspaceDomain {
-    id
-    domain
+  fragment SettingsWorkspacesSecurity_Workspace on Workspace {
+    domains {
+      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
+    }
+    domainBasedMembershipProtectionEnabled
+    discoverabilityEnabled
+  }
+  fragment SettingsWorkspacesSecurity_User on User {
+    ...SettingsWorkspacesSecurityDomainAddDialog_User
   }
 `)
 
@@ -81,21 +89,26 @@ const props = defineProps<{
 const { triggerNotification } = useGlobalToast()
 const apollo = useApolloClient().client
 
-const { result: workspaceSecuritySettings } = useQuery(settingsWorkspaceSecurityQuery, {
-  workspaceId: props.workspaceId
+const showAddDomainDialog = ref(false)
+
+const showRemoveDomainDialog = ref(false)
+const removeDialogDomain =
+  ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
+
+const { result: workspaceSecuritySettings } = useQuery(
+  settingsWorkspacesSecurityQuery,
+  {
+    workspaceId: props.workspaceId
+  }
+)
+
+const verifiedUser = computed(() => {
+  return workspaceSecuritySettings.value?.activeUser
 })
-const domains = ref<WorkspaceSettingsSecurity_WorkspaceDomainFragment[]>([])
 
-const showAddDialog = ref(false)
-
-const showRemoveDialog = ref(false)
-const removeDialogDomain = ref<WorkspaceSettingsSecurity_WorkspaceDomainFragment>()
-const openRemoveDialog = (
-  domain: WorkspaceSettingsSecurity_WorkspaceDomainFragment
-) => {
-  removeDialogDomain.value = domain
-  showRemoveDialog.value = true
-}
+const workspaceDomains = computed(() => {
+  return workspaceSecuritySettings.value?.workspace.domains || []
+})
 
 const isDomainProtectionEnabled = computed({
   get: () => workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false,
@@ -190,4 +203,11 @@ const isDomainDiscoverabilityEnabled = computed({
     }
   }
 })
+
+const openRemoveDialog = (
+  domain: SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
+) => {
+  removeDialogDomain.value = domain
+  showRemoveDomainDialog.value = true
+}
 </script>

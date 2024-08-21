@@ -14,16 +14,24 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useApolloClient } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 import {
   type Workspace,
-  type WorkspaceSettingsSecurity_WorkspaceDomainFragment
+  type SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
 } from '~/lib/common/generated/gql/graphql'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 
+graphql(`
+  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {
+    id
+    domain
+  }
+`)
+
 const props = defineProps<{
   workspaceId: string
-  domain: WorkspaceSettingsSecurity_WorkspaceDomainFragment
+  domain: SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
 }>()
 
 const apollo = useApolloClient().client

@@ -16,44 +16,51 @@
 </template>
 
 <script setup lang="ts">
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useApolloClient } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { activeUserEmailsQuery } from '~/lib/user/graphql/queries'
-import type { Workspace } from '~/lib/common/generated/gql/graphql'
+import type {
+  SettingsWorkspacesSecurityDomainAddDialog_UserFragment,
+  Workspace
+} from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import { isString } from 'lodash-es'
+
+graphql(`
+  fragment SettingsWorkspacesSecurityDomainAddDialog_User on User {
+    emails {
+      email
+      verified
+    }
+  }
+`)
 
 const props = defineProps<{
   workspaceId: string
+  verifiedUser: SettingsWorkspacesSecurityDomainAddDialog_UserFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { result: activeUserEmails } = useQuery(activeUserEmailsQuery)
 const { triggerNotification } = useGlobalToast()
 
 const apollo = useApolloClient().client
 
-const verifiedUserDomains = computed(() => {
-  const emails = new Set<string>()
-
-  for (const email of activeUserEmails?.value?.activeUser?.emails ?? []) {
-    if (!email.verified) {
-      continue
-    }
-    emails.add(email.email.split('@')[1])
-  }
-
-  return [...emails]
-})
-
 const selectedDomain = ref<string>('')
 const onSelectedDomainUpdate = (e?: string | string[]) => {
-  if (typeof e !== 'string') {
+  if (!isString(e)) {
     return
   }
   selectedDomain.value = e
 }
+
+const verifiedUserDomains = computed(() => {
+  const verifiedEmails =
+    props.verifiedUser.emails?.filter((email) => email.verified) || []
+  const verifiedDomains = verifiedEmails.map((email) => email.email.split('@')[1])
+  return verifiedDomains
+})
 
 const onAdd = async () => {
   const result = await apollo

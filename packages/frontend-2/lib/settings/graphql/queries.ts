@@ -49,15 +49,13 @@ export const settingsUserEmailsQuery = graphql(`
   }
 `)
 
-export const settingsWorkspaceSecurityQuery = graphql(`
+export const settingsWorkspacesSecurityQuery = graphql(`
   query SettingsWorkspaceSecurity($workspaceId: String!) {
     workspace(id: $workspaceId) {
-      domains {
-        id
-        domain
-      }
-      domainBasedMembershipProtectionEnabled
-      discoverabilityEnabled
+      ...SettingsWorkspacesSecurity_Workspace
+    }
+    activeUser {
+      ...SettingsWorkspacesSecurity_User
     }
   }
 `)
