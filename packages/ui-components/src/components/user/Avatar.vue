@@ -21,7 +21,6 @@
       >
         {{ initials }}
       </div>
-      <img v-else-if="logo" :src="logo" :alt="altText" />
       <div v-else><UserCircleIcon :class="iconClasses" /></div>
     </slot>
     <slot name="absolute-anchor" />
@@ -42,8 +41,6 @@ const props = withDefaults(
     active?: boolean
     noBorder?: boolean
     noBg?: boolean
-    logo?: MaybeNullOrUndefined<string>
-    altText: string
   }>(),
   {
     size: 'base',
