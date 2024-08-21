@@ -4220,13 +4220,13 @@ export type UserProfileEditDialogAvatar_UserFragment = { __typename?: 'User', id
 
 export type SettingsWorkspacesGeneral_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, description?: string | null, logo?: string | null };
 
-export type SettingsWorkspacesMembers_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null };
-
-export type SettingsWorkspacesProjects_ProjectCollectionFragment = { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, visibility: ProjectVisibility, createdAt: string, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number }, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', name: string, id: string, avatar?: string | null } }> }> };
-
 export type SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string };
 
 export type SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment = { __typename?: 'Workspace', id: string, logo?: string | null, name: string };
+
+export type SettingsWorkspacesMembers_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null };
+
+export type SettingsWorkspacesProjects_ProjectCollectionFragment = { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, visibility: ProjectVisibility, createdAt: string, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number }, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', name: string, id: string, avatar?: string | null } }> }> };
 
 export type SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null, verified?: boolean | null } };
 

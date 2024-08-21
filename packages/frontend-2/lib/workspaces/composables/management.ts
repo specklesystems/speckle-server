@@ -12,7 +12,8 @@ import type {
   Workspace,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -27,7 +28,8 @@ import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
@@ -321,5 +323,31 @@ export const useWorkspaceInviteManager = <
       processInvite(true, options),
     decline: (options?: Parameters<typeof processInvite>[1]) =>
       processInvite(false, options)
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
   }
 }
