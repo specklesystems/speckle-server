@@ -853,8 +853,10 @@ export type DiscoverableStreamsSortingInput = {
 
 export type DiscoverableWorkspace = {
   __typename?: 'DiscoverableWorkspace';
+  defaultLogoIndex: Scalars['Int']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
 };
 

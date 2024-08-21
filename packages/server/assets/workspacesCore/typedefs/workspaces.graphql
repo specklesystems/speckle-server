@@ -226,6 +226,8 @@ type DiscoverableWorkspace {
   id: ID!
   name: String!
   description: String
+  logo: String
+  defaultLogoIndex: Int!
 }
 
 type WorkspaceDomain {

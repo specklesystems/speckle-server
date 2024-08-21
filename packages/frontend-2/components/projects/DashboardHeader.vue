@@ -30,7 +30,6 @@ graphql(`
 graphql(`
   fragment ProjectsDashboardHeaderWorkspaces_User on User {
     ...WorkspaceInviteBanners_User
-    ...DiscoverableWorkspaces_User
   }
 `)
 

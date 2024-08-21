@@ -14,7 +14,7 @@ export const dashboardProjectsPageQuery = graphql(`
   }
 `)
 
-export const dashboardProjectsPageWorkspaceQuery = graphql(`
+export const dashboardProjectsPageWorkspacesQuery = graphql(`
   query DashboardProjectsPageWorkspaceQuery {
     activeUser {
       id

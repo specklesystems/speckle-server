@@ -22,7 +22,9 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<Pick<Workspace, 'id' | 'name' | 'description'>[]>
+}) => Promise<
+  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+>
 
 export type GetWorkspace = (args: {
   workspaceId: string

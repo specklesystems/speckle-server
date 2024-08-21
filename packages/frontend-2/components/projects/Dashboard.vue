@@ -7,11 +7,6 @@
       class="mb-10"
     />
 
-    <ProjectsDashboardDiscoverableWorkspaces
-      v-if="isWorkspacesEnabled"
-      :discoverable-workspaces="discoverableWorkspaces"
-    />
-
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
@@ -147,9 +142,6 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
 )
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
-const discoverableWorkspaces = computed(
-  () => workspacesResult.value?.activeUser?.discoverableWorkspaces || []
-)
 const showEmptyState = computed(() => {
   const isFiltering =
     projectsVariables.value?.filter?.onlyWithRoles?.length ||

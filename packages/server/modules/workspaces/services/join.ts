@@ -45,7 +45,7 @@ export const joinWorkspaceFactory =
     const role = Roles.Workspace.Member
     await insertWorkspaceRole({ userId, workspaceId, role })
     await emitWorkspaceEvent({
-      eventName: WorkspaceEvents.Discovered,
+      eventName: WorkspaceEvents.JoinedFromDiscovery,
       payload: { userId, workspaceId }
     })
     await emitWorkspaceEvent({

@@ -1,7 +1,12 @@
 <template>
   <div :class="mainClasses">
     <div :class="mainInfoBlockClasses">
-      <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
+      <UserAvatar v-if="invite.invitedBy" :user="invite.invitedBy" :size="avatarSize" />
+      <WorkspaceAvatar
+        v-if="invite.workspace"
+        :logo="invite.workspace.logo"
+        :default-logo-index="invite.workspace.defaultLogoIndex"
+      />
       <div class="text-foreground">
         <slot name="message" />
       </div>
@@ -59,7 +64,11 @@ defineEmits<{
 }>()
 
 type GenericInviteItem = {
-  invitedBy: AvatarUserType
+  invitedBy?: AvatarUserType
+  workspace?: {
+    logo?: string
+    defaultLogoIndex: number
+  }
   user?: MaybeNullOrUndefined<{
     id: string
   }>

@@ -5,31 +5,34 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
-      <div>
+      <section>
         <SettingsSectionHeader title="Workspace domains" subheading />
-        <FormButton @click="showAddDomainDialog = true">Add domain</FormButton>
-        <LayoutTable
-          class="mt-2 md:mt-4"
-          :columns="[
-            { id: 'domain', header: 'Domain', classes: 'col-span-3' },
-            { id: 'delete', header: 'Delete', classes: 'col-span-2' }
-          ]"
-          :items="workspaceDomains"
-        >
-          <template #domain="{ item }">
-            <span class="text-body-xs text-foreground">
-              {{ `@${item.domain}` }}
-            </span>
-          </template>
-          <template #delete="{ item }">
-            <FormButton color="danger" @click="() => openRemoveDialog(item)">
-              Delete
-            </FormButton>
-          </template>
-        </LayoutTable>
-      </div>
-      <div>
-        <SettingsSectionHeader title="Domain features" subheading class="mt-8" />
+        <div class="pt-4">
+          <FormButton @click="showAddDomainDialog = true">Add domain</FormButton>
+          <LayoutTable
+            class="mt-2 md:mt-4 w-full"
+            :columns="[
+              { id: 'domain', header: 'Domain', classes: 'col-span-6' },
+              { id: 'delete', header: 'Delete', classes: 'col-span-6' }
+            ]"
+            :items="workspaceDomains"
+          >
+            <template #domain="{ item }">
+              <span class="text-body-xs text-foreground">
+                {{ `@${item.domain}` }}
+              </span>
+            </template>
+            <template #delete="{ item }">
+              <FormButton color="danger" @click="() => openRemoveDialog(item)">
+                Delete
+              </FormButton>
+            </template>
+          </LayoutTable>
+        </div>
+      </section>
+      <hr class="my-6 md:my-10" />
+      <div class="flex flex-col space-y-3">
+        <SettingsSectionHeader title="Domain features" subheading class="mb-3" />
         <FormSwitch
           v-model="isDomainProtectionEnabled"
           name="domain-protection"

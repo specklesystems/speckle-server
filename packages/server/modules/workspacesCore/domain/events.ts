@@ -9,7 +9,7 @@ export const WorkspaceEvents = {
   Updated: `${workspaceEventPrefix}updated`,
   RoleDeleted: `${workspaceEventPrefix}role-deleted`,
   RoleUpdated: `${workspaceEventPrefix}role-updated`,
-  Discovered: `${workspaceEventPrefix}discovered`
+  JoinedFromDiscovery: `${workspaceEventPrefix}joined-from-discovery`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
@@ -20,12 +20,12 @@ type WorkspaceCreatedPayload = Workspace & {
 type WorkspaceUpdatedPayload = Workspace
 type WorkspaceRoleDeletedPayload = WorkspaceAcl
 type WorkspaceRoleUpdatedPayload = WorkspaceAcl
-type WorkspaceDiscoveredPayload = { userId: string; workspaceId: string }
+type WorkspaceJoinedFromDiscoveryPayload = { userId: string; workspaceId: string }
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
-  [WorkspaceEvents.Discovered]: WorkspaceDiscoveredPayload
+  [WorkspaceEvents.JoinedFromDiscovery]: WorkspaceJoinedFromDiscoveryPayload
 }

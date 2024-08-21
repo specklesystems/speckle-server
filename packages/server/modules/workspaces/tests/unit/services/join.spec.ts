@@ -130,7 +130,7 @@ describe('Workspace join services', () => {
         role: Roles.Workspace.Member
       })
       expect(firedEvents).deep.equal([
-        WorkspaceEvents.Discovered,
+        WorkspaceEvents.JoinedFromDiscovery,
         WorkspaceEvents.RoleUpdated
       ])
     })

@@ -27,6 +27,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { Roles } from '@speckle/shared'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
+import { truncateTables } from '@/test/hooks'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -303,10 +304,7 @@ describe('Workspace repositories', () => {
 
   describe('getDiscoverableWorkspacesForUserFactory creates a function, that', () => {
     afterEach(async () => {
-      const workspaces = await db.table('workspaces').select('*')
-      await Promise.all(
-        workspaces.map(({ id: workspaceId }) => deleteWorkspace({ workspaceId }))
-      )
+      await truncateTables(['workspaces'])
     })
 
     it('should return only one workspace where multiple emails match', async () => {
