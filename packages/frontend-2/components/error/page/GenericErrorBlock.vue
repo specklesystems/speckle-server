@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <div class="flex flex-col items-center space-y-8">
+  <div class="flex flex-col items-center space-y-4">
     <!-- <ErrorPageProjectInviteBanner /> -->
-    <h1 class="h1 font-medium">Error {{ error.statusCode || 500 }}</h1>
-    <div class="flex flex-col items-center space-y-1">
-      <h2 class="h2 text-foreground-2 text-center mx-4 break-words max-w-full">
+    <h1 class="text-heading-2xl">Error {{ error.statusCode || 500 }}</h1>
+    <div class="flex flex-col items-center space-y-2">
+      <h2 class="text-heading-lg text-foreground-2 mx-4 break-words max-w-full">
         {{ error.message }}
       </h2>
       <button
@@ -21,7 +21,7 @@
       class="max-w-xl text-body-xs text-foreground-2"
       v-html="error.stack"
     />
-    <FormButton :to="homeRoute" size="lg">Go Home</FormButton>
+    <FormButton :to="homeRoute">Go home</FormButton>
   </div>
 </template>
 <script setup lang="ts">
