@@ -1,9 +1,11 @@
 <template>
   <div class="flex flex-col sm:flex-row justify-between sm:items-center">
     <div class="flex gap-2 mb-3 mt-2">
-      <div class="flex items-center">
-        <UserAvatar :logo="workspaceInfo.logo" size="lg" />
-      </div>
+      <WorkspaceAvatar
+        :logo="workspaceInfo.logo"
+        :default-logo-index="workspaceInfo.defaultLogoIndex"
+        size="sm"
+      />
       <div class="flex flex-col">
         <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
         <div class="text-body-xs text-foreground-2">
@@ -46,6 +48,7 @@ import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
+    ...WorkspaceAvatar_Workspace
     id
     role
     name

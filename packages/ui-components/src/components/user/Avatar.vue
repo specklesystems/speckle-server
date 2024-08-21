@@ -11,9 +11,9 @@
   >
     <slot>
       <div
-        v-if="user?.avatar || logo"
+        v-if="user?.avatar"
         class="h-full w-full bg-cover bg-center bg-no-repeat"
-        :style="{ backgroundImage: `url('${user ? user.avatar : logo}')` }"
+        :style="{ backgroundImage: `url('${user.avatar}')` }"
       />
       <div
         v-else-if="initials"
@@ -21,6 +21,7 @@
       >
         {{ initials }}
       </div>
+      <img v-else-if="logo" :src="logo" :alt="altText" />
       <div v-else><UserCircleIcon :class="iconClasses" /></div>
     </slot>
     <slot name="absolute-anchor" />
@@ -42,6 +43,7 @@ const props = withDefaults(
     noBorder?: boolean
     noBg?: boolean
     logo?: MaybeNullOrUndefined<string>
+    altText: string
   }>(),
   {
     size: 'base',

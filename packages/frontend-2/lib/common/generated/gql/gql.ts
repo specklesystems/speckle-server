@@ -89,7 +89,7 @@ const documents = {
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
-    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        id\n        name\n        logo\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
+    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n        logo\n        defaultLogoIndex\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  fragment SettingsSharedProjects_Project on Project {\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models {\n      totalCount\n    }\n    versions {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
     "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n": types.SettingsUserEmails_UserFragmentDoc,
@@ -116,9 +116,10 @@ const documents = {
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
+    "\n  fragment WorkspaceAvatar_Workspace on Workspace {\n    id\n    logo\n    defaultLogoIndex\n  }\n": types.WorkspaceAvatar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    id\n    team {\n      id\n      user {\n        id\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n": types.WorkspaceInviteDialog_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...ProjectDashboardItem\n    }\n    cursor\n  }\n": types.WorkspaceProjectList_ProjectCollectionFragmentDoc,
-    "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBanners_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteBanners_UserFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
@@ -621,7 +622,7 @@ export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        id\n        name\n        logo\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        id\n        name\n        logo\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n        logo\n        defaultLogoIndex\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n        logo\n        defaultLogoIndex\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -729,6 +730,10 @@ export function graphql(source: "\n  fragment ViewerModelVersionCardItem on Vers
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment WorkspaceAvatar_Workspace on Workspace {\n    id\n    logo\n    defaultLogoIndex\n  }\n"): (typeof documents)["\n  fragment WorkspaceAvatar_Workspace on Workspace {\n    id\n    logo\n    defaultLogoIndex\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    id\n    team {\n      id\n      user {\n        id\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    id\n    team {\n      id\n      user {\n        id\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -737,7 +742,7 @@ export function graphql(source: "\n  fragment WorkspaceProjectList_ProjectCollec
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceHeader_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    role\n    name\n    logo\n    description\n    totalProjects: projects {\n      totalCount\n    }\n    team {\n      id\n      user {\n        id\n        name\n        ...LimitedUserAvatar\n      }\n    }\n    ...WorkspaceInviteDialog_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
