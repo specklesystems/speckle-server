@@ -12,7 +12,7 @@
           class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
         >
           <NuxtLink :to="modelLink || undefined">
-            <span class="text-heading text-foreground">
+            <span class="text-heading text-foreground hover:text-primary">
               {{ name }}
             </span>
           </NuxtLink>
