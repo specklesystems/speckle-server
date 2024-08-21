@@ -76,7 +76,7 @@ export function useAvatarSizeClasses(params: {
         return 'h1'
       case 'base':
       default:
-        return 'text-sm'
+        return 'text-body-2xs'
     }
   })
 

@@ -9,6 +9,7 @@ import {
 import {
   cancelResourceInviteFactory,
   deleteInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
 import {
@@ -29,7 +30,9 @@ import {
   deleteInviteFactory as deleteInviteFromDbFactory,
   queryAllUserResourceInvitesFactory,
   queryAllResourceInvitesFactory,
-  markInviteUpdatedfactory
+  markInviteUpdatedfactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
   createProjectInviteFactory,
@@ -57,6 +60,13 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -100,6 +110,8 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
+      if (!token?.length) return null
+
       return getServerInviteForTokenFactory({
         findServerInvite: findServerInviteFactory({ db })
       })(token)
@@ -262,7 +274,18 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args),
+          findEmail: findEmailFactory({ db }),
+          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+            createUserEmail: createUserEmailFactory({ db }),
+            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+            findEmail: findEmailFactory({ db }),
+            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+            }),
+            requestNewEmailVerification
+          })
         })
       })
 
@@ -388,7 +411,18 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args),
+          findEmail: findEmailFactory({ db }),
+          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+            createUserEmail: createUserEmailFactory({ db }),
+            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+            findEmail: findEmailFactory({ db }),
+            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+            }),
+            requestNewEmailVerification
+          })
         })
       })
 

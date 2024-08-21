@@ -406,8 +406,12 @@ describe('Upload/Download Routes @api-rest', () => {
         try {
           const o = JSON.parse(res.body)
           expect(Object.keys(o).length).to.equal(objectIds.length)
+          // console.log(JSON.stringify(Object.keys(o), undefined, 4))
           for (let i = 0; i < objBatches[0].length; i++) {
-            assert(o[objBatches[0][i].id] === true, 'Server is missing an object')
+            assert(
+              o[objBatches[0][i].id] === true,
+              `Server is missing an object: ${objBatches[0][i].id}`
+            )
           }
           for (let i = 0; i < fakeIds.length; i++) {
             assert(

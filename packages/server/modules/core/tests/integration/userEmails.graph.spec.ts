@@ -8,6 +8,7 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import {
   createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
@@ -18,6 +19,24 @@ import {
   SetPrimaryUserEmailDocument
 } from '@/test/graphql/generated/graphql'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+
+const createUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification
+})
 
 describe('User emails graphql @core', () => {
   before(async () => {
@@ -69,7 +88,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const { id } = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmail({
         userEmail: {
           email,
           userId,
@@ -99,7 +118,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const { id } = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmail({
         userEmail: {
           email,
           userId,

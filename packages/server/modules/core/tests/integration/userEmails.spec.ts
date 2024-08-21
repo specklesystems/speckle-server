@@ -18,6 +18,7 @@ import {
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
   findEmailFactory,
   findPrimaryEmailForUserFactory,
   setPrimaryUserEmailFactory,
@@ -28,6 +29,24 @@ import { MaybeNullOrUndefined } from '@speckle/shared'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
 import { UserEmailPrimaryUnverifiedError } from '@/modules/core/errors/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+
+const createUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification
+})
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -81,7 +100,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email: createRandomEmail(),
           userId,
@@ -105,7 +124,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email,
           userId,
@@ -146,7 +165,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email: email2,
           userId,
@@ -187,7 +206,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email,
           userId,
@@ -223,7 +242,7 @@ describe('Core @user-emails', () => {
     })
   })
 
-  describe('createUserEmail', () => {
+  describe('validateAndCreateUserEmailFactory', () => {
     it('should throw an error when trying to create a primary email for a user and there is already one for that user', async () => {
       const email = createRandomEmail()
       const userId = await createUser({
@@ -233,7 +252,7 @@ describe('Core @user-emails', () => {
       })
 
       const err = await expectToThrow(() =>
-        createUserEmailFactory({ db })({
+        createUserEmail({
           userEmail: {
             email,
             userId,
@@ -258,7 +277,7 @@ describe('Core @user-emails', () => {
       })
 
       // pre existing email
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email,
           userId: userId1,
@@ -267,7 +286,7 @@ describe('Core @user-emails', () => {
       })
 
       const err = await expectToThrow(() =>
-        createUserEmailFactory({ db })({
+        createUserEmail({
           userEmail: {
             email,
             userId: userId2,
@@ -289,7 +308,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await createUserEmailFactory({ db })({
+      await createUserEmail({
         userEmail: {
           email,
           userId,
@@ -382,12 +401,12 @@ describe('Core @user-emails', () => {
       updateEmailDirectly(newEmail)
     })
 
-    it('with createUserEmailFactory()', async () => {
+    it('with validateAndCreateUserEmailFactory()', async () => {
       const { id: userId } = randomCaseGuy
       const newEmail = createRandomEmail()
       const createdEmail = (
-        await createUserEmailFactory({ db })({
-          userEmail: { email: newEmail, userId }
+        await createUserEmail({
+          userEmail: { email: newEmail, userId, primary: false }
         })
       )?.email
 
