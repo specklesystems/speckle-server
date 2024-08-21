@@ -6,7 +6,6 @@ import type {
   Query,
   QueryWorkspaceArgs,
   QueryWorkspaceInviteArgs,
-  SettingsSidebarQuery,
   User,
   UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
@@ -34,6 +33,7 @@ import {
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
+import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -340,30 +340,8 @@ export function useCreateWorkspace() {
       .mutate({
         mutation: createWorkspaceMutation,
         variables: { input },
-        update: (cache, { data }) => {
-          const newWorkspace = data?.workspaceMutations.create
-
-          if (newWorkspace?.id) {
-            // Update existing cache for workspaces
-            modifyObjectFields<undefined, { [key: string]: SettingsSidebarQuery }>(
-              cache,
-              ROOT_QUERY,
-              (_fieldName, _variables, value, details) => {
-                const workspaceListFields = Object.keys(value).filter(
-                  (k) =>
-                    details.revolveFieldNameAndVariables(k).fieldName ===
-                    'workspaceList'
-                )
-                const newVal: typeof value = { ...value }
-                for (const field of workspaceListFields) {
-                  delete newVal[field]
-                }
-                return newVal
-              },
-              { fieldNameWhitelist: ['workspace'] }
-            )
-          }
-        }
+        // TODO: Remove this and fix the cache update
+        refetchQueries: [{ query: settingsSidebarQuery }]
       })
       .catch(convertThrowIntoFetchResult)
 

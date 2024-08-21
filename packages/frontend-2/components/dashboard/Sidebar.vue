@@ -76,6 +76,15 @@
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
+            <LayoutSidebarMenuGroupItem
+              v-if="isUserAdmin"
+              label="Add workspace"
+              @click="showWorkspaceCreateDialog = true"
+            >
+              <template #icon>
+                <PlusIcon class="h-4 w-4 text-foreground-2" />
+              </template>
+            </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
 
           <LayoutSidebarMenuGroup title="Resources">
@@ -128,6 +137,8 @@
         </LayoutSidebarMenu>
       </LayoutSidebar>
     </div>
+
+    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -138,7 +149,8 @@ import {
   GlobeAltIcon,
   ClockIcon,
   Squares2X2Icon,
-  HomeIcon
+  HomeIcon,
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 import {
   FormButton,
@@ -156,11 +168,14 @@ import {
   connectorsPageUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const { activeUser: user } = useActiveUser()
 
 const isOpenMobile = ref(false)
+const showWorkspaceCreateDialog = ref(false)
 
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
@@ -170,6 +185,7 @@ const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
 
+const isUserAdmin = computed(() => user.value?.role === 'server:admin')
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({

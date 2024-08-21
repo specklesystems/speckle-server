@@ -11,7 +11,7 @@
         v-model:model-value="workspaceName"
         name="name"
         label="Name"
-        placeholder="My Workspace"
+        placeholder="Workspace name"
         color="foundation"
         show-label
         show-required
@@ -20,7 +20,7 @@
         v-model:model-value="workspaceDescription"
         name="description"
         label="Description"
-        placeholder="My Workspace"
+        placeholder="Workspace description"
         color="foundation"
         show-label
       />
@@ -32,11 +32,12 @@
 import { ref, computed } from 'vue'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
+import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
-
+const { generateDefaultLogoIndex } = useWorkspacesAvatar()
 const logger = useLogger()
 
 const workspaceName = ref<string>('')
@@ -67,7 +68,8 @@ const handleCreateWorkspace = async () => {
     try {
       const newWorkspace = await createWorkspace({
         name: workspaceName.value,
-        description: workspaceDescription.value
+        description: workspaceDescription.value,
+        defaultLogoIndex: generateDefaultLogoIndex()
       })
 
       if (newWorkspace) {

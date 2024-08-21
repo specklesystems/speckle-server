@@ -42,12 +42,12 @@
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
-            <WorkspaceCreateButton @create="onWorkspaceCreated" />
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
               :key="key"
               :title="workspaceItem.name"
               collapsible
+              :collapsed="true"
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -79,6 +79,15 @@
                 "
               />
             </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroupItem
+              v-if="isAdmin"
+              label="Add workspace"
+              @click="showWorkspaceCreateDialog = true"
+            >
+              <template #icon>
+                <PlusIcon class="h-4 w-4 text-foreground-2" />
+              </template>
+            </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -94,6 +103,8 @@
         @close="isOpen = false"
       />
     </div>
+
+    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
   </LayoutDialog>
 </template>
 
@@ -104,7 +115,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import { UserIcon, ServerStackIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu } from '~/lib/settings/composables/menu'
 import {
@@ -136,12 +147,13 @@ const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult, refetch } = useQuery(settingsSidebarQuery, null, {
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 
 const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
+const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
@@ -166,10 +178,6 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
   if (disabled) return
   targetWorkspaceId.value = id
   targetMenuItem.value = target
-}
-
-const onWorkspaceCreated = async () => {
-  await refetch()
 }
 
 const workspaceMenuItemClasses = (
