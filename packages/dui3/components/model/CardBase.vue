@@ -281,6 +281,15 @@ defineExpose({
   queryData
 })
 
+const failRate = computed(() => {
+  if (!props.modelCard.report) return 0
+  return (
+    (props.modelCard.report.filter((r) => r.status === 4).length /
+      props.modelCard.report.length) *
+    100
+  )
+})
+
 const cardBgColor = computed(() => {
   if (props.modelCard.error || noWriteAccess.value)
     return 'bg-red-500/10 hover:bg-red-500/20'
@@ -288,8 +297,14 @@ const cardBgColor = computed(() => {
   if (
     (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
     (props.modelCard as IReceiverModelCard).displayReceiveComplete === true
-  )
+  ) {
+    if (failRate.value > 80) {
+      return 'bg-red-500/10 hover:bg-red-500/20'
+    } else if (failRate.value > 50) {
+      return 'bg-orange-500/10'
+    }
     return 'bg-green-500/10 hover:bg-green-500/20'
+  }
   if (
     (props.modelCard as IReceiverModelCard).selectedVersionId !==
       (props.modelCard as IReceiverModelCard).latestVersionId &&

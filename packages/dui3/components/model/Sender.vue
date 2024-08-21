@@ -194,12 +194,43 @@ const errorNotification = computed(() => {
   return notification
 })
 
+const failRate = computed(() => {
+  if (!props.modelCard.report) return 0
+  return (
+    (props.modelCard.report.filter((r) => r.status === 4).length /
+      props.modelCard.report.length) *
+    100
+  )
+})
+
+const sendResultNotificationText = computed(() => {
+  if (failRate.value === 100) {
+    return 'All of the object conversions are failed!'
+  } else if (failRate.value > 80) {
+    return 'Most of the object conversions are failed!'
+  } else if (failRate.value > 50) {
+    return 'Some of the object conversions are failed!'
+  }
+  return 'Version created!'
+})
+
+const sendResultNotificationLevel = computed(() => {
+  if (failRate.value === 100) {
+    return 'danger'
+  } else if (failRate.value > 80) {
+    return 'warning'
+  } else if (failRate.value > 50) {
+    return 'warning'
+  }
+  return 'success'
+})
+
 const latestVersionNotification = computed(() => {
   if (!props.modelCard.latestCreatedVersionId) return
   const notification = {} as ModelCardNotification
   notification.dismissible = true
-  notification.level = 'success'
-  notification.text = 'Version created!'
+  notification.level = sendResultNotificationLevel.value
+  notification.text = sendResultNotificationText.value
   notification.report = props.modelCard.report
   notification.cta = {
     name: 'View',
