@@ -1,6 +1,7 @@
 <template>
   <div>
     <SettingsWorkspacesMembersTableHeader
+      v-model:search="search"
       search-placeholder="Search members..."
       :workspace-id="workspaceId"
       :workspace="workspace"
@@ -14,6 +15,12 @@
         { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"
       :items="members"
+      :loading="searchResultLoading"
+      :empty-message="
+        search.length
+          ? `No members found for '${search}'`
+          : 'This workspace has no members'
+      "
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -32,8 +39,8 @@
         </span>
       </template>
       <template #role="{ item }">
+        <!-- :model-value="item.role as WorkspaceRoles" -->
         <FormSelectWorkspaceRoles
-          :model-value="item.role as WorkspaceRoles"
           fully-control-value
           @update:model-value="
             (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
@@ -53,10 +60,10 @@
 </template>
 
 <script setup lang="ts">
-// Todo: Enable searching once supported
 import type { WorkspaceRoles } from '@speckle/shared'
 import { workspaceUpdateRoleMutation } from '~~/lib/workspaces/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
+import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
@@ -99,20 +106,36 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const search = ref('')
+
 const { triggerNotification } = useGlobalToast()
-// const { on, bind, value: search } = useDebouncedTextInput()
 const { mutate: updateChangeRole } = useMutation(workspaceUpdateRoleMutation)
+const { result: searchResult, loading: searchResultLoading } = useQuery(
+  settingsWorkspacesMembersSearchQuery,
+  () => ({
+    filter: {
+      search: search.value
+    },
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    enabled: !!search.value.length
+  })
+)
 
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
-const members = computed(() =>
-  (props.workspace?.team?.items || []).map(({ user, ...rest }) => ({
+const members = computed(() => {
+  const memberArray = search.value.length
+    ? searchResult.value?.workspace?.team.items
+    : props.workspace?.team.items
+  return (memberArray || []).map(({ user, ...rest }) => ({
     ...user,
     ...rest
   }))
-)
+})
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 

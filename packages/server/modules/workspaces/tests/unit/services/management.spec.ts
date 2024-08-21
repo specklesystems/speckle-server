@@ -61,7 +61,8 @@ const getCreateWorkspaceInput = () => {
     workspaceInput: {
       description: 'foobar',
       logo: null,
-      name: cryptoRandomString({ length: 6 })
+      name: cryptoRandomString({ length: 6 }),
+      defaultLogoIndex: 0
     }
   }
 }

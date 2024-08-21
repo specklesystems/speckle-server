@@ -102,7 +102,9 @@ const resendInvite = useResendWorkspaceInvite()
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesInvitesSearchQuery,
   () => ({
-    invitesSearch: search.value,
+    invitesFilter: {
+      search: search.value
+    },
     workspaceId: props.workspaceId
   }),
   () => ({
@@ -112,7 +114,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const invites = computed(() =>
   search.value.length
-    ? searchResult.value?.workspace.invitedTeam || props.workspace?.invitedTeam
+    ? searchResult.value?.workspace.invitedTeam
     : props.workspace?.invitedTeam
 )
 const buttons = computed(() => [

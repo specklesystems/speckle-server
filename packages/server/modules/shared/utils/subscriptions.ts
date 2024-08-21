@@ -31,6 +31,11 @@ import {
   GendoAiRender,
   SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
   SubscriptionProjectVersionGendoAiRenderCreatedArgs,
+  CommentThreadActivityMessage,
+  SubscriptionCommentThreadActivityArgs,
+  MutationUserViewerActivityBroadcastArgs,
+  SubscriptionUserViewerActivityArgs,
+  SubscriptionCommentActivityArgs,
   StreamUpdateInput,
   ProjectUpdateInput,
   SubscriptionStreamUpdatedArgs,
@@ -48,6 +53,7 @@ import {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -241,6 +247,35 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectAutomationsUpdatedArgs
   }
+  [CommentSubscriptions.CommentThreadActivity]: {
+    payload: {
+      commentThreadActivity: Partial<CommentThreadActivityMessage> &
+        Pick<CommentThreadActivityMessage, 'type'>
+      streamId: string
+      commentId: string
+    }
+    variables: SubscriptionCommentThreadActivityArgs
+  }
+  [CommentSubscriptions.ViewerActivity]: {
+    payload: {
+      userViewerActivity: MutationUserViewerActivityBroadcastArgs
+      streamId: string
+      resourceId: string
+      authorId: string
+    }
+    variables: SubscriptionUserViewerActivityArgs
+  }
+  [CommentSubscriptions.CommentActivity]: {
+    payload: {
+      commentActivity: {
+        type: 'comment-added'
+        comment: CommentRecord
+      }
+      streamId: string
+      resourceIds: string[]
+    }
+    variables: SubscriptionCommentActivityArgs
+  }
   /**
    * OLD ONES
    */
@@ -269,11 +304,12 @@ type SubscriptionTypeMap = {
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
-  | UserSubscriptions
-  | ProjectSubscriptions
-  | ViewerSubscriptions
+  | CommentSubscriptions
   | FileImportSubscriptions
+  | ProjectSubscriptions
   | StreamSubscriptions
+  | UserSubscriptions
+  | ViewerSubscriptions
 
 /**
  * Publish a GQL subscription event

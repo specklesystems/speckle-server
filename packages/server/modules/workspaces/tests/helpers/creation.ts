@@ -61,7 +61,8 @@ export const createTestWorkspace = async (
     workspaceInput: {
       name: workspace.name,
       description: workspace.description || null,
-      logo: workspace.logo || null
+      logo: workspace.logo || null,
+      defaultLogoIndex: 0
     },
     userResourceAccessLimits: null
   })
