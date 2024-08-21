@@ -28,8 +28,17 @@ import { graphql } from '~/lib/common/generated/gql'
 import { isString } from 'lodash-es'
 
 graphql(`
+  fragment SettingsWorkspacesSecurityDomainAddDialog_Workspace on Workspace {
+    id
+    domains {
+      id
+      domain
+    }
+  }
   fragment SettingsWorkspacesSecurityDomainAddDialog_User on User {
+    id
     emails {
+      id
       email
       verified
     }
@@ -55,12 +64,13 @@ const onSelectedDomainUpdate = (e?: string | string[]) => {
   selectedDomain.value = e
 }
 
-const verifiedUserDomains = computed(() => {
-  const verifiedEmails =
-    props.verifiedUser.emails?.filter((email) => email.verified) || []
-  const verifiedDomains = verifiedEmails.map((email) => email.email.split('@')[1])
-  return verifiedDomains
-})
+const verifiedUserDomains = computed(() => [
+  ...new Set(
+    (props.verifiedUser.emails ?? [])
+      .filter((email) => email.verified)
+      .map((email) => email.email.split('@')[1])
+  )
+])
 
 const onAdd = async () => {
   const result = await apollo

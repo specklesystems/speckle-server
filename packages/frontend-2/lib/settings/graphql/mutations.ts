@@ -60,6 +60,7 @@ export const settingsUpdateWorkspaceSecurity = graphql(`
   mutation SettingsUpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {
     workspaceMutations {
       update(input: $input) {
+        id
         domainBasedMembershipProtectionEnabled
         discoverabilityEnabled
       }
@@ -79,10 +80,7 @@ export const settingsAddWorkspaceDomainMutation = graphql(`
   mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
     workspaceMutations {
       addDomain(input: $input) {
-        domains {
-          id
-          domain
-        }
+        ...SettingsWorkspacesSecurityDomainAddDialog_Workspace
       }
     }
   }
@@ -92,10 +90,7 @@ export const settingsDeleteWorkspaceDomainMutation = graphql(`
   mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
     workspaceMutations {
       deleteDomain(input: $input) {
-        domains {
-          id
-          domain
-        }
+        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace
       }
     }
   }

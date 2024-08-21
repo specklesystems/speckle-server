@@ -1,14 +1,13 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader title="Security" text="Be secure 😤" />
+      <SettingsSectionHeader
+        title="Security"
+        text="Manage verified workspace domains and associated features."
+      />
       <div>
-        <SettingsSectionHeader title="Workspace Domains" subheading />
-        <div
-          class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4 mt-4"
-        >
-          <FormButton @click="showAddDomainDialog = true">Add Domain</FormButton>
-        </div>
+        <SettingsSectionHeader title="Workspace domains" subheading />
+        <FormButton @click="showAddDomainDialog = true">Add domain</FormButton>
         <LayoutTable
           class="mt-2 md:mt-4"
           :columns="[
@@ -30,16 +29,16 @@
         </LayoutTable>
       </div>
       <div>
-        <SettingsSectionHeader title="Domain Features" subheading class="mt-8" />
+        <SettingsSectionHeader title="Domain features" subheading class="mt-8" />
         <FormSwitch
           v-model="isDomainProtectionEnabled"
           name="domain-protection"
-          label="Enable Domain Protection"
+          label="Enable domain protection"
         />
         <FormSwitch
           v-model="isDomainDiscoverabilityEnabled"
           name="domain-discoverability"
-          label="Enable Domain Discoverability"
+          label="Enable domain discoverability"
         />
       </div>
     </div>
@@ -71,6 +70,7 @@ import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
+    id
     domains {
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }

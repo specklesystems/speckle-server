@@ -23,15 +23,14 @@ export const useSettingsMenu = () => {
       title: 'Members',
       component: SettingsWorkspacesMembers
     },
+    security: {
+      title: 'Security',
+      component: SettingsWorkspacesSecurity
+    },
     billing: {
       title: 'Billing',
       disabled: true,
       tooltipText: 'Manage billing for your workspace'
-    },
-    security: {
-      title: 'Security',
-      component: SettingsWorkspacesSecurity,
-      tooltipText: 'SSO, manage permissions, restrict domain access'
     },
     regions: {
       title: 'Regions',

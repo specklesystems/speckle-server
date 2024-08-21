@@ -3,7 +3,7 @@
     v-model="selectedValue"
     :items="domains"
     name="workspaceDomains"
-    label="Verified Domains"
+    label="Verified domains"
     class="min-w-[110px]"
     size="sm"
   >

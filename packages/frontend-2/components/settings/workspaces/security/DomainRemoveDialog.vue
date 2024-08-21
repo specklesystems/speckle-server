@@ -5,9 +5,11 @@
     max-width="sm"
     :buttons="dialogButtons"
   >
-    Are you sure you want to remove
-    <b>@{{ domain.domain }}</b>
-    from your workspace's verified domains?
+    <p class="text-body-xs text-foreground">
+      Are you sure you want to remove
+      <span class="font-semibold">@{{ domain.domain }}</span>
+      from your workspace's verified domains?
+    </p>
   </LayoutDialog>
 </template>
 
@@ -23,6 +25,12 @@ import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 
 graphql(`
+  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {
+    id
+    domains {
+      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
+    }
+  }
   fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {
     id
     domain

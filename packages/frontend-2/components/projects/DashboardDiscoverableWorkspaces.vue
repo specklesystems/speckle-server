@@ -22,13 +22,13 @@ here behind a flag for testing reasons.
       <div class="flex flex-row flex-shrink items-center">
         <div class="w-8 h-8 mr-4 rounded-full bg-primary"></div>
         <div class="flex flex-col justify-start">
-          <div class="mb-1">
+          <p class="text-body-xs text-foreground">
             You can join
-            <b>{{ workspace.name }}</b>
-          </div>
-          <div class="text-xs">
+            <span class="font-semibold">{{ workspace.name }}</span>
+          </p>
+          <p class="text-body-xs text-foreground">
             {{ workspace.description }}
-          </div>
+          </p>
         </div>
       </div>
       <FormButton size="lg" @click="() => handleJoin(workspace.id)">Join</FormButton>
