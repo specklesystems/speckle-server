@@ -373,6 +373,7 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should properly check if the server has a list of objects', (done) => {
+    //FIXME this relies on the objBatches having already been sent to the server and is not an isolated test
     const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
@@ -393,12 +394,12 @@ describe('Upload/Download Routes @api-rest', () => {
       .send({ objects: JSON.stringify(objectIds) })
       .buffer()
       .parse((res, cb) => {
-        res.data = ''
+        let data = ''
         res.on('data', (chunk) => {
-          res.data += chunk.toString()
+          data += chunk.toString()
         })
         res.on('end', () => {
-          cb(null, res.data)
+          cb(null, data)
         })
       })
       .end((err, res) => {

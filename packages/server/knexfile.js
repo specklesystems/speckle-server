@@ -83,7 +83,7 @@ const config = {
   test: {
     ...commonConfig,
     connection: {
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test',
+      connectionString: connectionUri || 'postgres://127.0.0.1:5436/speckle2_test',
       application_name: 'speckle_server'
     },
     asyncStackTraces: true
@@ -91,7 +91,7 @@ const config = {
   development: {
     ...commonConfig,
     connection: {
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev',
+      connectionString: connectionUri || 'postgres://127.0.0.1:5432/speckle2_dev',
       application_name: 'speckle_server'
     },
     asyncStackTraces: true

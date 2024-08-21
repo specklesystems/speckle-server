@@ -81,7 +81,7 @@ services:
       # This mounts the toxiproxy.json file into the container at /config/toxiproxy.json
       - ./setup/toxiproxy/toxiproxy.json:/config/toxiproxy.json
     # This command starts toxiproxy with the configuration file
-    entrypoint: /toxiproxy -config /config/toxiproxy.json
+    entrypoint: /toxiproxy -host 0.0.0.0 -port 8474 -config /config/toxiproxy.json
     ports:
       # open ports to match the 'listen' ports in the toxiproxy.json file
       - 127.0.0.1:8474:8474 # Toxiproxy API
