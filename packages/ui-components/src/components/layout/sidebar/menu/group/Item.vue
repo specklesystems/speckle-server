@@ -5,8 +5,8 @@
     :to="to"
     class="group flex items-center space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 px-5"
     :class="[
-      !disabled && 'cursor-pointer hover:bg-primary-muted',
-      active && 'bg-highlight-2 hover:!bg-highlight-2'
+      !disabled && 'cursor-pointer hover:bg-highlight-1',
+      active && 'bg-highlight-3 hover:!bg-highlight-3'
     ]"
   >
     <div class="flex items-center space-x-2" :class="[disabled && 'opacity-60']">
@@ -16,6 +16,10 @@
       <span :class="$slots.icon ? '' : 'pl-2'">
         {{ label }}
       </span>
+      <ArrowUpRightIcon
+        v-if="external"
+        class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover:opacity-100"
+      />
     </div>
     <div
       v-if="tag"
@@ -29,14 +33,14 @@
       v-tippy="tooltipText"
       class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
       :class="[
-        !disabled && 'cursor-pointer hover:bg-foundation-3',
+        !disabled && 'cursor-pointer text-foreground-2 hover:text-foreground',
         disabled && 'opacity-60'
       ]"
       @click="toggleOpen"
     >
-      <Arrow class="text-foreground-2" :class="[isOpen ? '' : '-rotate-90']" />
+      <Arrow :class="[isOpen ? '' : '-rotate-90']" />
 
-      <h6 class="text-heading-sm text-foreground flex items-center space-x-1.5">
+      <h6 class="text-heading-sm flex items-center space-x-1.5">
         {{ label }}
       </h6>
     </button>
@@ -49,6 +53,7 @@
 <script setup lang="ts">
 import { ref, useSlots } from 'vue'
 import Arrow from '~~/src/components/layout/sidebar/menu/group/Arrow.vue'
+import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   label: string

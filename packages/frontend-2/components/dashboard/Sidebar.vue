@@ -3,7 +3,7 @@
 <template>
   <div>
     <Portal to="mobile-navigation">
-      <div class="md:hidden">
+      <div class="lg:hidden">
         <FormButton
           :color="isOpenMobile ? 'outline' : 'subtle'"
           size="sm"
@@ -17,13 +17,13 @@
     </Portal>
     <div
       v-keyboard-clickable
-      class="md:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
+      class="lg:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
       :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       @click="isOpenMobile = false"
     />
     <div
-      class="absolute z-40 md:static h-full flex w-60 md:w-64 shrink-0 transition-all"
-      :class="isOpenMobile ? '' : '-translate-x-60 md:translate-x-0'"
+      class="absolute z-40 lg:static h-full flex w-60 lg:w-64 shrink-0 transition-all"
+      :class="isOpenMobile ? '' : '-translate-x-60 lg:translate-x-0'"
     >
       <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
         <LayoutSidebarMenu>
@@ -67,12 +67,8 @@
                 :label="item.label"
                 :active="isActive(item.to)"
               >
-                <template v-if="item.logo" #icon>
-                  <img
-                    :src="item.logo"
-                    :alt="`${item.label}'s logo`"
-                    class="w-5 h-5 mt-0.5 object-contain"
-                  />
+                <template #icon>
+                  <UserAvatar :logo="item.logo" size="sm" />
                 </template>
               </LayoutSidebarMenuGroupItem>
             </NuxtLink>
@@ -80,7 +76,7 @@
 
           <LayoutSidebarMenuGroup title="Resources">
             <NuxtLink :to="connectorsPageUrl" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Connectors">
+              <LayoutSidebarMenuGroupItem label="Connectors" external>
                 <template #icon>
                   <IconConnectors class="h-4 w-4 text-foreground-2" />
                 </template>
@@ -88,7 +84,7 @@
             </NuxtLink>
 
             <NuxtLink to="https://speckle.community/" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Community forum">
+              <LayoutSidebarMenuGroupItem label="Community forum" external>
                 <template #icon>
                   <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -99,7 +95,7 @@
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
               target="_blank"
             >
-              <LayoutSidebarMenuGroupItem label="Give us feedback">
+              <LayoutSidebarMenuGroupItem label="Give us feedback" external>
                 <template #icon>
                   <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -107,7 +103,7 @@
             </NuxtLink>
 
             <NuxtLink to="https://speckle.guide/" target="_blank">
-              <LayoutSidebarMenuGroupItem label="Documentation">
+              <LayoutSidebarMenuGroupItem label="Documentation" external>
                 <template #icon>
                   <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
                 </template>
@@ -118,7 +114,7 @@
               to="https://speckle.community/c/making-speckle/changelog"
               target="_blank"
             >
-              <LayoutSidebarMenuGroupItem label="Changelog">
+              <LayoutSidebarMenuGroupItem label="Changelog" external>
                 <template #icon>
                   <ClockIcon class="h-5 w-5 text-foreground-2" />
                 </template>

@@ -68,6 +68,21 @@ export const inviteProjectUserMutation = graphql(`
   }
 `)
 
+export const inviteWorkspaceProjectUserMutation = graphql(`
+  mutation InviteWorkspaceProjectUser(
+    $projectId: ID!
+    $inputs: [WorkspaceProjectInviteCreateInput!]!
+  ) {
+    projectMutations {
+      invites {
+        createForWorkspace(projectId: $projectId, inputs: $inputs) {
+          ...ProjectPageTeamDialog
+        }
+      }
+    }
+  }
+`)
+
 export const cancelProjectInviteMutation = graphql(`
   mutation CancelProjectInvite($projectId: ID!, $inviteId: String!) {
     projectMutations {

@@ -1804,6 +1804,7 @@ export type Project = {
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
+  workspaceId?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -5268,6 +5269,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
   webhooks?: Resolver<ResolversTypes['WebhookCollection'], ParentType, ContextType, Partial<ProjectWebhooksArgs>>;
   workspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
+  workspaceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

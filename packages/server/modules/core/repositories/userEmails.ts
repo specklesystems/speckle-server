@@ -42,7 +42,6 @@ export const createUserEmailFactory =
     const [row] = await db<UserEmail>(UserEmails.name).insert(
       {
         id,
-        primary: true,
         email: email.toLowerCase().trim(),
         ...rest
       },

@@ -32,6 +32,8 @@ import {
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation
 } from '~/lib/workspaces/graphql/mutations'
+import { isFunction } from 'lodash-es'
+import type { GraphQLError } from 'graphql'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -117,7 +119,9 @@ export const useProcessWorkspaceInvite = () => {
        * Do something once mutation has finished, before all cache updates
        */
       callback: () => MaybeAsync<void>
-      preventErrorToasts?: boolean
+      preventErrorToasts?:
+        | boolean
+        | ((errors: GraphQLError[], errMsg: string) => boolean)
     }>
   ) => {
     if (!isWorkspacesEnabled.value) return
@@ -188,7 +192,12 @@ export const useProcessWorkspaceInvite = () => {
         accepted: input.accept
       })
     } else {
-      if (!options?.preventErrorToasts) {
+      const err = getFirstErrorMessage(errors)
+      const preventErrorToasts = isFunction(options?.preventErrorToasts)
+        ? options?.preventErrorToasts(errors?.slice() || [], err)
+        : options?.preventErrorToasts
+
+      if (!preventErrorToasts) {
         const err = getFirstErrorMessage(errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
@@ -225,7 +234,7 @@ export const useWorkspaceInviteManager = <
      */
     preventRedirect: boolean
     route: RouteLocationNormalized
-    preventErrorToasts: boolean
+    preventErrorToasts: boolean | ((errors: GraphQLError[], errMsg: string) => boolean)
   }>
 ) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -267,7 +276,6 @@ export const useWorkspaceInviteManager = <
     const { addNewEmail } = options || {}
     if (!isWorkspacesEnabled.value) return false
     if (!token.value || !invite.value) return false
-    if (needsToAddNewEmail.value && !addNewEmail) return false
 
     const workspaceId = invite.value.workspaceId
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
