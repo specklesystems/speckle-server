@@ -289,7 +289,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
-          authorizeResolver(
+          await authorizeResolver(
             context.userId,
             workspaceId,
             Roles.Workspace.Admin,

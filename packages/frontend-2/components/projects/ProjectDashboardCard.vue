@@ -39,7 +39,7 @@
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-grow col-span-4 lg:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden lg:[&>*:nth-child(2)]:block"
+        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 flex-grow col-span-4 xl:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden xl:[&>*:nth-child(2)]:block"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"

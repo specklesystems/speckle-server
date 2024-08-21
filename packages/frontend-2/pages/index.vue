@@ -3,7 +3,10 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
-    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <ProjectsDashboardHeader
+      :projects-invites="projectsResult?.activeUser || undefined"
+      :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
+    />
     <div class="flex flex-col gap-y-12">
       <section>
         <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
@@ -49,7 +52,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { dashboardProjectsPageQuery } from '~~/lib/dashboard/graphql/queries'
+import {
+  dashboardProjectsPageQuery,
+  dashboardProjectsPageWorkspaceInvitesQuery
+} from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -59,7 +65,6 @@ import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/rout
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { PromoBanner } from '~/lib/promo-banners/types'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
 useHead({ title: 'Dashboard' })
@@ -71,7 +76,15 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
+const { result: workspaceInvitesResult } = useQuery(
+  dashboardProjectsPageWorkspaceInvitesQuery,
+  undefined,
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 const { triggerNotification } = useGlobalToast()
 const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
   server: false
@@ -166,15 +179,4 @@ const onDownloadManager = (extension: ManagerExtension) => {
     })
   }
 }
-
-const promoBanners = ref<PromoBanner[]>([
-  {
-    id: 'speckleverse',
-    primaryText: 'Join our online hackathon!',
-    secondaryText: 'June 7 - 9, 2024',
-    url: 'https://beyond-the-speckleverse.devpost.com/',
-    priority: 1,
-    expiryDate: '2024-06-10'
-  }
-])
 </script>
