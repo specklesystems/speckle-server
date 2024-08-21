@@ -15511,6 +15511,7 @@ __metadata:
     string-pixel-width: "npm:^1.10.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     supertest: "npm:^4.0.2"
+    toxiproxy-node-client: "npm:^4.0.0"
     ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.0.0"
     type-fest: "npm:^2.19.0"
@@ -23349,6 +23350,17 @@ __metadata:
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
   checksum: 10/6ae80dda9736bb4762ce717f1a26ff997d94672d3a5799ad9941c24d4fb019c1dff45be8272f08d1975d7950bac281f3ba24aff5ecd49ef5a04d872ec428782f
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.7.2":
+  version: 1.7.4
+  resolution: "axios@npm:1.7.4"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 10/7a1429be1e3d0c2e1b96d4bba4d113efbfabc7c724bed107beb535c782c7bea447ff634886b0c7c43395a264d085450d009eb1154b5f38a8bae49d469fdcbc61
   languageName: node
   linkType: hard
 
@@ -48113,6 +48125,15 @@ __metadata:
     universalify: "npm:^0.2.0"
     url-parse: "npm:^1.5.3"
   checksum: 10/75663f4e2cd085f16af0b217e4218772adf0617fb3227171102618a54ce0187a164e505d61f773ed7d65988f8ff8a8f935d381f87da981752c1171b076b4afac
+  languageName: node
+  linkType: hard
+
+"toxiproxy-node-client@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "toxiproxy-node-client@npm:4.0.0"
+  dependencies:
+    axios: "npm:^1.7.2"
+  checksum: 10/57c71d1dad603ffdfcca6de665b7478afeb4da299d78f806dce3369af515ef58ed23dad1c1b0ae9a94bd8bc985695afcf59747e84c84fd808bdf712044de3fa3
   languageName: node
   linkType: hard
 
