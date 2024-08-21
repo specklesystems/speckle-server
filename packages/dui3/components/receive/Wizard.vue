@@ -44,7 +44,11 @@
     </template>
     <div>
       <div v-if="step === 1">
-        <WizardProjectSelector :show-new-project="false" @next="selectProject" />
+        <WizardProjectSelector
+          :show-new-project="false"
+          @next="selectProject"
+          @search-text-update="updateSearchText"
+        />
       </div>
       <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
         <div>
@@ -62,10 +66,13 @@
           :account-id="selectedAccountId"
           :project-id="selectedProject.id"
           :model-id="selectedModel.id"
+          :selected-version-id="urlParsedVersionId"
+          :from-wizard="true"
           @next="selectVersionAndAddModel"
         />
       </div>
     </div>
+    <div v-if="urlParseError" class="p-2 text-xs text-danger">{{ urlParseError }}</div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -80,6 +87,7 @@ import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useAddByUrl } from '~/lib/core/composables/addByUrl'
 
 const { trackEvent } = useMixpanel()
 
@@ -106,6 +114,21 @@ const selectedAccountId = ref<string>(activeAccount.value?.accountInfo.id as str
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 
+const { tryParseUrl, urlParsedData, urlParseError } = useAddByUrl()
+const updateSearchText = (text: string | undefined) => {
+  urlParseError.value = undefined
+  if (!text) return
+  tryParseUrl(text, 'receiver')
+}
+
+const urlParsedVersionId = ref<string>()
+watch(urlParsedData, (newVal) => {
+  if (!newVal) return
+  selectProject(newVal.account?.accountInfo.id, newVal.project)
+  selectModel(newVal.model)
+  if (newVal.version) urlParsedVersionId.value = newVal.version.id
+})
+
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
   step.value++
   selectedAccountId.value = accountId
@@ -120,6 +143,7 @@ const selectModel = (model: ModelListModelItemFragment) => {
   void trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'model selected' })
 }
 
+// accountId, serverUrl,  ModelListModelItemFragment, VersionListItemFragment
 const selectVersionAndAddModel = async (
   version: VersionListItemFragment,
   latestVersion: VersionListItemFragment
@@ -135,6 +159,7 @@ const selectVersionAndAddModel = async (
       m.modelId === selectedModel.value?.id &&
       m.typeDiscriminator === 'ReceiverModelCard'
   ) as ReceiverModelCard
+
   if (existingModel) {
     emit('close')
     // Patch the existing model card with new versions!
@@ -148,8 +173,9 @@ const selectVersionAndAddModel = async (
 
   const modelCard = new ReceiverModelCard()
   modelCard.accountId = selectedAccountId.value
-  modelCard.projectId = selectedProject.value?.id as string
   modelCard.serverUrl = activeAccount.value.accountInfo.serverInfo.url
+
+  modelCard.projectId = selectedProject.value?.id as string
   modelCard.modelId = selectedModel.value?.id as string
 
   modelCard.projectName = selectedProject.value?.name as string

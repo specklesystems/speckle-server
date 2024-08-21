@@ -99,10 +99,12 @@ import type { ProjectListProjectItemFragment } from 'lib/common/generated/gql/gr
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
 const { trackEvent } = useMixpanel()
 
 const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
+  (e: 'search-text-update', text: string | undefined): void
 }>()
 
 const props = withDefaults(
@@ -119,14 +121,18 @@ const props = withDefaults(
 const searchText = ref<string>()
 const newProjectName = ref<string>()
 
-watch(searchText, () => (newProjectName.value = searchText.value))
-
 const showNewProjectDialog = ref(false)
 const accountStore = useAccountStore()
 const { activeAccount } = storeToRefs(accountStore)
 
 const accountId = computed(() => activeAccount.value.accountInfo.id)
 const selectedAccountId = ref<string>()
+
+watch(searchText, () => {
+  newProjectName.value = searchText.value
+  console.log('adsf')
+  emit('search-text-update', searchText.value)
+})
 
 const selectAccount = (account: DUIAccount) => {
   selectedAccountId.value = account.accountInfo.id
