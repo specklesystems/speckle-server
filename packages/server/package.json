@@ -43,8 +43,6 @@
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^10.0.4",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
-    "@sentry/node": "^6.17.9",
-    "@sentry/tracing": "^6.17.9",
     "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
     "ajv": "^8.12.0",

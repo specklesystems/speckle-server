@@ -1,8 +1,6 @@
 import ExpressSession from 'express-session'
 import ConnectRedis from 'connect-redis'
 import passport from 'passport'
-
-import sentry from '@/logging/sentryHelper'
 import { createAuthorizationCode } from '@/modules/auth/services/apps'
 import {
   getFrontendOrigin,
@@ -134,7 +132,6 @@ const setupStrategies = async (app: Express) => {
 
       return res.redirect(redirectUrl)
     } catch (err) {
-      sentry({ err })
       authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy(noop)
       return res.status(401).send({
