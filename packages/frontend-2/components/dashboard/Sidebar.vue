@@ -140,7 +140,10 @@
       </div>
     </template>
 
-    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
+    <WorkspaceCreateDialog
+      v-model:open="showWorkspaceCreateDialog"
+      navigate-on-success
+    />
   </div>
 </template>
 <script setup lang="ts">
