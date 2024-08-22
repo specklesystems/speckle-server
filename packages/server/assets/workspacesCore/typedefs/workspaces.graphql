@@ -195,7 +195,7 @@ type Workspace {
   """
   Billing data for Workspaces beta
   """
-  billing: WorkspaceBilling!
+  billing: WorkspaceBilling! @hasWorkspaceRole(role: MEMBER)
 }
 
 input WorkspaceProjectsFilter {
