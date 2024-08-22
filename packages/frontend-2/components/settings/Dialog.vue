@@ -38,10 +38,7 @@
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup
-            v-if="isWorkspacesEnabled && hasWorkspaceItems"
-            title="Workspace settings"
-          >
+          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
@@ -50,6 +47,7 @@
               :key="key"
               :title="workspaceItem.name"
               collapsible
+              :collapsed="true"
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -81,6 +79,15 @@
                 "
               />
             </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroupItem
+              v-if="isAdmin"
+              label="Add workspace"
+              @click="showWorkspaceCreateDialog = true"
+            >
+              <template #icon>
+                <PlusIcon class="h-4 w-4 text-foreground-2" />
+              </template>
+            </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -96,6 +103,8 @@
         @close="isOpen = false"
       />
     </div>
+
+    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
   </LayoutDialog>
 </template>
 
@@ -106,7 +115,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import { UserIcon, ServerStackIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu } from '~/lib/settings/composables/menu'
 import {
@@ -144,11 +153,11 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 
 const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
+const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
-const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): SettingsMenuItem | null => {
   const categories = [
