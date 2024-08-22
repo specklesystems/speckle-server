@@ -230,7 +230,8 @@ function buildApolloSubscriptionServer(
         }
 
         return baseParams
-      }
+      },
+      keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
     {
       server,
