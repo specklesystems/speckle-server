@@ -7,7 +7,8 @@ import {
   getMailchimpStatus,
   getMailchimpNewsletterIds,
   getMailchimpOnboardingIds,
-  getSessionSecret
+  getSessionSecret,
+  enableMixpanel
 } from '@/modules/shared/helpers/envHelper'
 import { isSSLServer, getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { authLogger, logger } from '@/logging/logging'
@@ -102,7 +103,7 @@ const setupStrategies = async (app: Express) => {
         // Send event to MP
         const userEmail = req.user.email
         const isInvite = !!req.user.isInvite
-        if (userEmail) {
+        if (userEmail && enableMixpanel()) {
           await mixpanel({ userEmail, req }).track('Sign Up', {
             isInvite
           })
