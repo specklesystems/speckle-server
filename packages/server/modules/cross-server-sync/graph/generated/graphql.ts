@@ -2692,6 +2692,8 @@ export type ServerInfo = {
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
   name: Scalars['String']['output'];
+  objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
+  objectSizeLimitBytes: Scalars['Int']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
   scopes: Array<Scope>;

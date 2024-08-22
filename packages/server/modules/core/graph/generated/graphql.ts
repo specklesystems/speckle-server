@@ -2703,6 +2703,8 @@ export type ServerInfo = {
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
   name: Scalars['String']['output'];
+  objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
+  objectSizeLimitBytes: Scalars['Int']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
   scopes: Array<Scope>;
@@ -5521,6 +5523,8 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
   scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
   serverRoles?: Resolver<Array<ResolversTypes['ServerRoleItem']>, ParentType, ContextType>;

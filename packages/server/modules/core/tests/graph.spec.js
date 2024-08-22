@@ -1636,6 +1636,8 @@ describe('GraphQL API Core @core-api', () => {
               name
               description
             }
+            objectSizeLimitBytes
+            objectMultipartUploadSizeLimitBytes
           }
         }`
 
@@ -1652,6 +1654,8 @@ describe('GraphQL API Core @core-api', () => {
       expect(si.description).to.be.a('string')
       expect(si.roles).to.be.a('array')
       expect(si.scopes).to.be.a('array')
+      expect(si.objectSizeLimitBytes).to.be.a('number')
+      expect(si.objectMultipartUploadSizeLimitBytes).to.be.a('number')
     })
 
     it('Should update the server info object', async () => {
