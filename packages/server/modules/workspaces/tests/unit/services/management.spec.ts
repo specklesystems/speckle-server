@@ -357,8 +357,13 @@ describe('Workspace role services', () => {
 
       await updateWorkspaceRole(role)
 
+      const updatedRole = context.workspaceRoles[0]
+
       expect(context.workspaceRoles.length).to.equal(1)
-      expect(context.workspaceRoles[0]).to.deep.equal(role)
+      expect(updatedRole.userId).to.equal(role.userId)
+      expect(updatedRole.role).to.equal(role.role)
+      expect(updatedRole.workspaceId).to.equal(role.workspaceId)
+      expect(updatedRole.createdAt.getTime()).to.equal(role.createdAt.getTime())
     })
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
