@@ -83,8 +83,7 @@ export const modelListFragment = graphql(`
     versions(limit: 1) {
       totalCount
       items {
-        id
-        sourceApplication
+        ...VersionListItem
       }
     }
   }
@@ -145,6 +144,35 @@ export const modelVersionsQuery = graphql(`
             ...VersionListItem
           }
         }
+      }
+    }
+  }
+`)
+
+export const projectAddByUrlQueryWithVersion = graphql(`
+  query ProjectAddByUrlQueryWithVersion(
+    $projectId: String!
+    $modelId: String!
+    $versionId: String!
+  ) {
+    project(id: $projectId) {
+      ...ProjectListProjectItem
+      model(id: $modelId) {
+        ...ModelListModelItem
+        version(id: $versionId) {
+          ...VersionListItem
+        }
+      }
+    }
+  }
+`)
+
+export const projectAddByUrlQueryWithoutVersion = graphql(`
+  query ProjectAddByUrlQueryWithoutVersion($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      ...ProjectListProjectItem
+      model(id: $modelId) {
+        ...ModelListModelItem
       }
     }
   }

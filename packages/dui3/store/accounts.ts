@@ -170,6 +170,13 @@ export const useAccountStore = defineStore('accountStore', () => {
     return activeAccount.value
   }
 
+  const accountByServerUrl = (serverUrl: string) => {
+    const accountMatchWithServerUrl = accounts.value.find(
+      (acc) => acc.accountInfo.serverInfo.url === serverUrl
+    )
+    if (accountMatchWithServerUrl) return accountMatchWithServerUrl
+  }
+
   const provideClients = () => {
     provideApolloClients(apolloClients)
   }
@@ -185,6 +192,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     defaultAccount,
     activeAccount,
     userSelectedAccount,
+    accountByServerUrl,
     isAccountExistsById,
     isAccountExistsByServer,
     refreshAccounts,

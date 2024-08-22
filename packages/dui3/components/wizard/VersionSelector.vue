@@ -12,6 +12,7 @@
           :index="index"
           :latest-version-id="latestVersion.id"
           :selected-version-id="selectedVersionId"
+          :from-wizard="fromWizard"
           @click="$emit('next', version, latestVersion)"
         />
       </div>
@@ -40,6 +41,7 @@ const props = defineProps<{
   projectId: string
   modelId: string
   selectedVersionId?: string
+  fromWizard?: boolean
 }>()
 
 const {
