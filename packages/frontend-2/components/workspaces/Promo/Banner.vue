@@ -26,9 +26,20 @@
         Control and easier collaboration with a shared space for your team and data.
       </p>
       <div class="flex mt-6 gap-2">
-        <FormButton color="outline">Create workspace</FormButton>
+        <FormButton :disabled="!isAdmin" color="outline" @click="$emit('create')">
+          Create workspace
+        </FormButton>
         <FormButton color="subtle">Learn more</FormButton>
       </div>
     </div>
   </div>
 </template>
+<script setup lang="ts">
+defineProps<{
+  isAdmin: boolean
+}>()
+
+defineEmits<{
+  (e: 'create'): void
+}>()
+</script>
