@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>Are you sure you want to change the role of the selected user?</p>
       <div v-if="newRole && oldRole" class="flex flex-col gap-3">
-        <div class="flex items-center gap-2 font-semibold">
+        <div class="flex items-center gap-2 font-medium">
           {{ name }}
         </div>
         <div class="flex gap-2 items-center">

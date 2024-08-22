@@ -3,7 +3,7 @@
     <template #header>Remove user</template>
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>Are you sure you want to remove the following user from the workspace?</p>
-      <p class="font-semibold">
+      <p class="font-medium">
         {{ name }}
       </p>
     </div>
