@@ -39,11 +39,13 @@ module.exports = {
         })
 
         const transaction = {
-          start: Date.now(),
+          start: apolloRequestStart,
           op,
-          name
+          name,
+          finish: () => {
+            //TODO add tracing with opentelemetry
+          }
         }
-        //TODO add better tracing with opentelemetry
 
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
