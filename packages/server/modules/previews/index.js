@@ -27,6 +27,7 @@ const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
 const cors = require('cors')
+const { isDatabaseSubscriptionsEnabled } = require('../shared/helpers/envHelper')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -278,7 +279,7 @@ exports.init = (app, isInitial) => {
     )
   })
 
-  if (isInitial) {
+  if (isInitial && isDatabaseSubscriptionsEnabled()) {
     listenForPreviewGenerationUpdates()
   }
 }

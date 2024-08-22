@@ -9,6 +9,10 @@ const { moduleLogger } = require('@/logging/logging')
 const {
   listenForImportUpdates
 } = require('@/modules/fileuploads/services/resultListener')
+const {
+  isFileUploadsEnabled,
+  isDatabaseSubscriptionsEnabled
+} = require('../shared/helpers/envHelper')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -27,7 +31,7 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
 }
 
 exports.init = async (app, isInitial) => {
-  if (process.env.DISABLE_FILE_UPLOADS) {
+  if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
   } else {
@@ -77,7 +81,7 @@ exports.init = async (app, isInitial) => {
     }
   )
 
-  if (isInitial) {
+  if (isInitial && isDatabaseSubscriptionsEnabled()) {
     listenForImportUpdates()
   }
 }

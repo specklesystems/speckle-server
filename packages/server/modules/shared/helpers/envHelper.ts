@@ -28,7 +28,7 @@ export function getServerVersion() {
 }
 
 export function isApolloMonitoringEnabled() {
-  return [true, 'true'].includes(process.env.APOLLO_SCHEMA_REPORTING || false)
+  return getBooleanFromEnv('APOLLO_SCHEMA_REPORTING')
 }
 
 export function getApolloServerVersion() {
@@ -165,7 +165,7 @@ export function getAzureAdClientSecret() {
 }
 
 export function getMailchimpStatus() {
-  return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
+  return getBooleanFromEnv('MAILCHIMP_ENABLED')
 }
 
 export function getMailchimpConfig() {
@@ -290,7 +290,7 @@ export function getServerMovedTo() {
 }
 
 export function adminOverrideEnabled() {
-  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
 }
 
 export function enableMixpanel() {
@@ -299,8 +299,8 @@ export function enableMixpanel() {
     return getBooleanFromEnv('FORCE_ENABLE_MP')
   }
 
-  // if not explicitly set to '0' or 'false', it is enabled by default
-  return !['0', 'false'].includes(process.env.ENABLE_MP || 'true')
+  // it is enabled by default
+  return getBooleanFromEnv('ENABLE_MP', true)
 }
 
 export function speckleAutomateUrl() {
@@ -309,7 +309,7 @@ export function speckleAutomateUrl() {
 }
 
 export function weeklyEmailDigestEnabled() {
-  return process.env.WEEKLY_DIGEST_ENABLED === 'true'
+  return getBooleanFromEnv('WEEKLY_DIGEST_ENABLED')
 }
 
 /**
@@ -399,7 +399,15 @@ export function getLicenseToken(): string | undefined {
 }
 
 export function isEmailEnabled() {
-  return process.env.EMAIL === 'true'
+  return getBooleanFromEnv('EMAIL')
+}
+
+export function isFileUploadsEnabled() {
+  return getBooleanFromEnv('DISABLE_FILE_UPLOADS')
+}
+
+export function isDatabaseSubscriptionsEnabled() {
+  return getBooleanFromEnv('ENABLE_DATABASE_SUBSCRIPTIONS', true)
 }
 
 export function postgresMaxConnections() {

@@ -16,7 +16,10 @@ import scopes from '@/modules/core/scopes'
 import roles from '@/modules/core/roles'
 import Redis from 'ioredis'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  getRedisUrl,
+  isDatabaseSubscriptionsEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
@@ -58,7 +61,7 @@ const coreModule: SpeckleModule<{
 
     if (isInitial) {
       // Setup global pg notification listener
-      setupResultListener()
+      if (isDatabaseSubscriptionsEnabled()) setupResultListener()
 
       // Init mp
       mp.initialize()
