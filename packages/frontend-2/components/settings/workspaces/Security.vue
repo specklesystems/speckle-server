@@ -129,6 +129,7 @@ const isDomainProtectionEnabled = computed({
           workspaceMutations: {
             update: {
               __typename: 'Workspace',
+              id: props.workspaceId,
               domainBasedMembershipProtectionEnabled: newVal,
               discoverabilityEnabled:
                 workspaceSecuritySettings.value?.workspace.discoverabilityEnabled ||
@@ -176,6 +177,7 @@ const isDomainDiscoverabilityEnabled = computed({
         workspaceMutations: {
           update: {
             __typename: 'Workspace',
+            id: props.workspaceId,
             domainBasedMembershipProtectionEnabled:
               workspaceSecuritySettings.value?.workspace
                 .domainBasedMembershipProtectionEnabled || false,

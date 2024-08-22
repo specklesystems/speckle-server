@@ -34,9 +34,20 @@ const props = defineProps<{
 const { client: apollo } = useApolloClient()
 const { triggerNotification } = useGlobalToast()
 
-const invite = computed(() => ({ workspace: props.workspace }))
+const invite = computed(() => ({
+  workspace: {
+    id: props.workspace.id,
+    logo: props.workspace.logo || undefined,
+    defaultLogoIndex: props.workspace.defaultLogoIndex
+  }
+}))
 
-const processJoin = async () => {
+const processJoin = async (accept: boolean) => {
+  if (!accept) {
+    // TODO: Somehow enable dismissing the discoverable workspace invite
+    return
+  }
+
   const result = await apollo
     .mutate({
       mutation: DashboardJoinWorkspaceDocument,
