@@ -123,9 +123,15 @@ export async function authContextMiddleware(
   if (!authContext.auth && authContext.err) {
     let message = 'Unknown Auth context error'
     let status = 500
-    message = authContext.err?.message || message
-    if (authContext.err instanceof UnauthorizedError) status = 401
-    if (authContext.err instanceof ForbiddenError) status = 403
+    if (authContext.err instanceof UnauthorizedError) {
+      status = 401
+      message = authContext.err?.message || message
+    }
+    if (authContext.err instanceof ForbiddenError) {
+      status = 403
+      message = authContext.err?.message || message
+    }
+    if (status === 500) req.log.error({ err: authContext.err }, 'Auth context error')
     return res.status(status).json({ error: message })
   }
   req.context = authContext

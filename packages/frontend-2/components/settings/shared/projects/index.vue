@@ -12,7 +12,7 @@
           v-on="on"
         />
       </div>
-      <FormButton :icon-left="PlusIcon" @click="openNewProject = true">New</FormButton>
+      <FormButton @click="openNewProject = true">Create</FormButton>
     </div>
 
     <LayoutTable
@@ -84,7 +84,7 @@
 import { ref } from 'vue'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import type { SettingsSharedProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'

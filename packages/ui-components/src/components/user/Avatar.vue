@@ -11,9 +11,9 @@
   >
     <slot>
       <div
-        v-if="user?.avatar || logo"
+        v-if="user?.avatar"
         class="h-full w-full bg-cover bg-center bg-no-repeat"
-        :style="{ backgroundImage: `url('${user ? user.avatar : logo}')` }"
+        :style="{ backgroundImage: `url('${user.avatar}')` }"
       />
       <div
         v-else-if="initials"
@@ -41,7 +41,6 @@ const props = withDefaults(
     active?: boolean
     noBorder?: boolean
     noBg?: boolean
-    logo?: MaybeNullOrUndefined<string>
   }>(),
   {
     size: 'base',
