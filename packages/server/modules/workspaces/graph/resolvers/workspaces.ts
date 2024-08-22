@@ -225,7 +225,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description } = args.input
+          const { name, description, defaultLogoIndex } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -238,7 +238,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceInput: {
               name,
               description: description || null,
-              logo: null
+              logo: null,
+              defaultLogoIndex: defaultLogoIndex || 0
             },
             userResourceAccessLimits: context.resourceAccessRules
           })

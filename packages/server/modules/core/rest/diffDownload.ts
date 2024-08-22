@@ -74,7 +74,8 @@ export default (app: Application) => {
         })
 
         const speckleObjStreamCloseHandler = () => {
-          dbStream.destroy()
+          // https://knexjs.org/faq/recipes.html#manually-closing-streams
+          dbStream.end.bind(dbStream)
         }
 
         speckleObjStream.once('close', speckleObjStreamCloseHandler)
