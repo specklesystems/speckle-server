@@ -1,1 +1,2 @@
 export const WorkspaceInviteResourceType = 'workspace'
+export const WORKSPACE_MAX_PROJECTS_VERSIONS = 500

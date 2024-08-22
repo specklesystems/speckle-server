@@ -38,7 +38,10 @@ import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/service
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import {
+  WORKSPACE_MAX_PROJECTS_VERSIONS,
+  WorkspaceInviteResourceType
+} from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
@@ -55,7 +58,8 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  countProjectsVersionsByWorkspaceIdFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -89,6 +93,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -534,6 +539,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
               filter: { ...(args.filter || {}) }
             }
           )
+        },
+        billing: (parent) => ({ parent })
+      },
+      WorkspaceBilling: {
+        version: async (parent) => {
+          return {
+            current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
+              workspaceId: (parent as { parent: Workspace }).parent.id
+            }),
+            max: WORKSPACE_MAX_PROJECTS_VERSIONS
+          }
         }
       },
       WorkspaceCollaborator: {

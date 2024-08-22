@@ -123,3 +123,9 @@ export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
+
+export type CountProjectsVersionsByWorkspaceId = ({
+  workspaceId
+}: {
+  workspaceId: string
+}) => Promise<number>
