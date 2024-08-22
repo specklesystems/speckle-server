@@ -1,5 +1,5 @@
-const expect = require('chai').expect
-const { redactSensitiveVariables } = require('@/logging/loggingHelper')
+import { expect } from 'chai'
+import { redactSensitiveVariables } from '@/logging/loggingHelper'
 
 describe('loggingHelper', () => {
   describe('filterSensitiveVariables', () => {
