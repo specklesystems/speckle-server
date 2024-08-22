@@ -12,7 +12,8 @@ import type {
   Workspace,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -27,8 +28,11 @@ import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
+import { isFunction } from 'lodash-es'
+import type { GraphQLError } from 'graphql'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -114,7 +118,9 @@ export const useProcessWorkspaceInvite = () => {
        * Do something once mutation has finished, before all cache updates
        */
       callback: () => MaybeAsync<void>
-      preventErrorToasts?: boolean
+      preventErrorToasts?:
+        | boolean
+        | ((errors: GraphQLError[], errMsg: string) => boolean)
     }>
   ) => {
     if (!isWorkspacesEnabled.value) return
@@ -185,7 +191,12 @@ export const useProcessWorkspaceInvite = () => {
         accepted: input.accept
       })
     } else {
-      if (!options?.preventErrorToasts) {
+      const err = getFirstErrorMessage(errors)
+      const preventErrorToasts = isFunction(options?.preventErrorToasts)
+        ? options?.preventErrorToasts(errors?.slice() || [], err)
+        : options?.preventErrorToasts
+
+      if (!preventErrorToasts) {
         const err = getFirstErrorMessage(errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
@@ -222,7 +233,7 @@ export const useWorkspaceInviteManager = <
      */
     preventRedirect: boolean
     route: RouteLocationNormalized
-    preventErrorToasts: boolean
+    preventErrorToasts: boolean | ((errors: GraphQLError[], errMsg: string) => boolean)
   }>
 ) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -264,7 +275,6 @@ export const useWorkspaceInviteManager = <
     const { addNewEmail } = options || {}
     if (!isWorkspacesEnabled.value) return false
     if (!token.value || !invite.value) return false
-    if (needsToAddNewEmail.value && !addNewEmail) return false
 
     const workspaceId = invite.value.workspaceId
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
@@ -313,5 +323,31 @@ export const useWorkspaceInviteManager = <
       processInvite(true, options),
     decline: (options?: Parameters<typeof processInvite>[1]) =>
       processInvite(false, options)
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
   }
 }

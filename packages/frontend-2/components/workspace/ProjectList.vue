@@ -1,25 +1,27 @@
 <template>
   <div>
+    <Portal to="navigation">
+      <HeaderNavLink disable-link name="Workspaces" :separator="false" />
+      <HeaderNavLink :to="workspaceRoute(workspaceId)" :name="workspace?.name" />
+    </Portal>
     <WorkspaceHeader
       v-if="workspace"
       :icon="Squares2X2Icon"
       :workspace-info="workspace"
     />
     <div class="flex flex-col gap-4 mt-4">
-      <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <div class="flex flex-col sm:flex-row gap-2">
-          <FormTextInput
-            name="modelsearch"
-            :show-label="false"
-            placeholder="Search..."
-            :custom-icon="MagnifyingGlassIcon"
-            color="foundation"
-            wrapper-classes="grow md:grow-0 md:w-60"
-            show-clear
-            v-bind="bind"
-            v-on="on"
-          ></FormTextInput>
-        </div>
+      <div class="flex flex-row gap-2 sm:items-center justify-between">
+        <FormTextInput
+          name="modelsearch"
+          :show-label="false"
+          placeholder="Search..."
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          wrapper-classes="grow md:grow-0 md:w-60"
+          show-clear
+          v-bind="bind"
+          v-on="on"
+        />
         <FormButton v-if="!isGuest" @click="openNewProject = true">
           New project
         </FormButton>
@@ -60,6 +62,8 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
+import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -89,12 +93,23 @@ const {
   debouncedBy: 800
 })
 
-const { result: initialQueryResult } = useQuery(workspacePageQuery, {
-  workspaceId: props.workspaceId,
-  filter: {
-    search: (search.value || '').trim() || null
-  }
-})
+const { result: initialQueryResult } = useQuery(
+  workspacePageQuery,
+  {
+    workspaceId: props.workspaceId,
+    filter: {
+      search: (search.value || '').trim() || null
+    }
+  },
+  () => ({
+    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
+    // doesn't kill the entire query
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
+    }
+  })
+)
 
 const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
   { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },
@@ -122,7 +137,13 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 
 const workspace = computed(() => initialQueryResult.value?.workspace)
 const projects = computed(() => query.result.value?.workspace?.projects)
-const showEmptyState = computed(() => !projects.value?.items?.length)
+
+const showEmptyState = computed(() => {
+  if (search.value) return false
+
+  return projects.value && !projects.value?.items?.length
+})
+
 const showLoadingBar = computed(() => {
   return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
 })

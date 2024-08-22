@@ -11,7 +11,7 @@
         <h3 v-if="tutorial.title" class="text-body-2xs text-foreground truncate">
           {{ tutorial.title }}
         </h3>
-        <p class="text-body-3xs text-foreground-2 capitalize mt-2">
+        <p class="text-body-3xs text-foreground-2 mt-2">
           <span v-tippy="updatedAt.full">
             {{ updatedAt.relative }}
           </span>

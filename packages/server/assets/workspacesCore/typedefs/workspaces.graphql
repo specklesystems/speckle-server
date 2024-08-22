@@ -16,6 +16,7 @@ extend type Query {
 input WorkspaceCreateInput {
   name: String!
   description: String
+  defaultLogoIndex: Int
 }
 
 input WorkspaceUpdateInput {
@@ -26,6 +27,7 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
+  defaultLogoIndex: Int
 }
 
 input WorkspaceRoleUpdateInput {
@@ -162,6 +164,10 @@ type Workspace {
   """
   logo: String
   """
+  Selected fallback when `logo` not set
+  """
+  defaultLogoIndex: Int!
+  """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
@@ -285,4 +291,8 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+}
+
+extend type Project {
+  workspaceId: String
 }

@@ -5,6 +5,7 @@
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
+      :menu-position="HorizontalDirection.Right"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -46,6 +47,7 @@ import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
