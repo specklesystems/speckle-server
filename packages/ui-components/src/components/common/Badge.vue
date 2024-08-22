@@ -64,18 +64,24 @@ const badgeClasses = computed(() => {
   const classParts: string[] = [
     'inline-flex items-center select-none',
     badgeColorClasses.value,
-    props.size === 'lg' ? 'px-3 py-0.5 label' : 'p-1 caption font-medium'
+    props.size === 'lg'
+      ? 'px-3 py-0.5 text-body-2xs'
+      : 'p-1 text-body-3xs text-body-3xs font-medium'
   ]
 
   if (props.rounded) {
     classParts.push('rounded')
     classParts.push(
-      props.size === 'lg' ? 'px-2 py-0.5 label' : 'px-1 py-0.5 caption font-medium'
+      props.size === 'lg'
+        ? 'px-2 py-0.5 text-body-2xs'
+        : 'px-1.1 py-0.5 text-body-3xs font-medium'
     )
   } else {
     classParts.push('rounded-full')
     classParts.push(
-      props.size === 'lg' ? 'px-2.5 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+      props.size === 'lg'
+        ? 'px-2.5 py-0.5 text-body-2xs'
+        : 'px-2.5 py-0.5 text-body-3xs font-medium'
     )
   }
 

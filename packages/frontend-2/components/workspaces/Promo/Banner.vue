@@ -17,7 +17,7 @@
     </div>
 
     <div class="relative z-10 text-foreground max-w-lg">
-      <div class="flex gap-1 items-center">
+      <div class="flex gap-2 items-center">
         <h3 class="text-heading-lg">Introducing Workspaces</h3>
         <CommonBadge rounded class="">NEW</CommonBadge>
       </div>

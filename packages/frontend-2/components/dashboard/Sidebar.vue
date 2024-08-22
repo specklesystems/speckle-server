@@ -23,8 +23,8 @@
         @click="isOpenMobile = false"
       />
       <div
-        class="absolute z-40 lg:static h-full flex w-60 lg:w-64 shrink-0 transition-all"
-        :class="isOpenMobile ? '' : '-translate-x-60 lg:translate-x-0'"
+        class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
+        :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
         <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
           <LayoutSidebarMenu>
@@ -58,6 +58,17 @@
               collapsible
               title="Workspaces"
             >
+              <NuxtLink v-if="!workspacesItems.length" to="/workspaces/">
+                <LayoutSidebarMenuGroupItem
+                  label="Introducing workspaces"
+                  :active="isActive('/workspaces/')"
+                  tag="NEW"
+                >
+                  <template #icon>
+                    <IconWorkspaces class="h-4 w-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
               <NuxtLink
                 v-for="(item, key) in workspacesItems"
                 :key="key"
