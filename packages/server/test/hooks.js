@@ -12,6 +12,7 @@ const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
 const { once } = require('events')
+const toxiproxyClient = require('toxiproxy-node-client')
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -77,9 +78,18 @@ const initializeTestServer = async (server, app) => {
   }
 }
 
+let tProxyClient
+const getToxiProxyClient = () => {
+  if (!tProxyClient)
+    tProxyClient = new toxiproxyClient.Toxiproxy('http://127.0.0.1:8474')
+  return tProxyClient
+}
+
 exports.mochaHooks = {
   beforeAll: async () => {
     logger.info('running before all')
+    const toxiClient = getToxiProxyClient()
+    await toxiClient.reset()
     await unlock()
     await exports.truncateTables()
     await knex.migrate.rollback()
@@ -88,6 +98,8 @@ exports.mochaHooks = {
   },
   afterAll: async () => {
     logger.info('running after all')
+    const toxiClient = getToxiProxyClient()
+    await toxiClient.reset()
     await unlock()
     await shutdown()
   }
@@ -104,3 +116,4 @@ exports.beforeEachContext = async () => {
 }
 
 exports.initializeTestServer = initializeTestServer
+exports.getToxiProxyClient = getToxiProxyClient

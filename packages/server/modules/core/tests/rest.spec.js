@@ -5,7 +5,7 @@ const request = require('supertest')
 const assert = require('assert')
 const crypto = require('crypto')
 
-const { beforeEachContext } = require('@/test/hooks')
+const { beforeEachContext, getToxiProxyClient } = require('@/test/hooks')
 const { createManyObjects } = require('@/test/helpers')
 
 const { createUser } = require('../services/users')
@@ -33,6 +33,7 @@ describe('Upload/Download Routes @api-rest', () => {
   const privateTestStream = { name: 'Private Test Stream', isPublic: false }
 
   let app
+  let toxiProxyClient
   before(async () => {
     ;({ app } = await beforeEachContext())
 
@@ -73,6 +74,13 @@ describe('Upload/Download Routes @api-rest', () => {
       ...privateTestStream,
       ownerId: userA.id
     })
+  })
+  beforeEach(async () => {
+    toxiProxyClient = getToxiProxyClient()
+    await toxiProxyClient.reset()
+  })
+  afterEach(async () => {
+    await toxiProxyClient.reset()
   })
 
   it('Should not allow download requests without an authorization token or valid streamId', async () => {
@@ -424,6 +432,27 @@ describe('Upload/Download Routes @api-rest', () => {
         } catch (err) {
           done(err)
         }
+      })
+  })
+
+  it('Should send a 500 if the database is unavailable', async (done) => {
+    const objectIds = []
+    for (let i = 0; i < objBatches[0].length; i++) {
+      objectIds.push(objBatches[0][i].id)
+    }
+
+    const proxy = await toxiProxyClient.get('speckle_server_postgres')
+    console.log(`proxy: ${JSON.stringify(proxy)}`)
+    proxy.update({ enabled: false })
+
+    request(app)
+      .post(`/api/diff/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: JSON.stringify(objectIds) })
+      .buffer()
+      .end((err, res) => {
+        if (err) done(err)
+        expect(res).to.have.status(500)
       })
   })
 })
