@@ -17,6 +17,7 @@ export const getRolesFactory =
           'Database error occurred while attempting to get Roles',
           { cause: e }
         )
+      throw e
     }
     return roles
   }
