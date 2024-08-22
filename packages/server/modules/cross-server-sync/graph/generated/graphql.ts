@@ -3809,6 +3809,8 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   createdAt: Scalars['DateTime']['output'];
+  /** Selected fallback when `logo` not set */
+  defaultLogoIndex: Scalars['Int']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
@@ -3855,6 +3857,7 @@ export type WorkspaceCollection = {
 };
 
 export type WorkspaceCreateInput = {
+  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
@@ -4001,6 +4004,7 @@ export type WorkspaceTeamFilter = {
 };
 
 export type WorkspaceUpdateInput = {
+  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   /** Logo image as base64-encoded string */

@@ -308,8 +308,13 @@ const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
 const hiddenSpeckleTypes = [
-  'Objects.Other.DisplayStyle',
-  'Objects.Other.Revit.RevitMaterial',
+  'Objects.Other', // From a fast look at the current object model, and the new one, all of this can be safely ignored (partially be ready for complaints)
+  // 'Objects.Other.DisplayStyle',
+  // 'Objects.Other.Revit.RevitMaterial',
+  'ColorProxy',
+  'InstanceDefinitionProxy', // Note, but not InstanceProxy - wish we could just go for "*Proxy*" but...
+  'GroupProxy',
+  'RenderMaterialProxy', // It's now partially included in the objects.other namespace, but we might move the class around, so... better safe than sorry!
   'Objects.BuiltElements.Revit.ProjectInfo',
   'Objects.BuiltElements.View',
   'Objects.BuiltElements.View3D'

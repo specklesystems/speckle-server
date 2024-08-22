@@ -8,7 +8,7 @@
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
         ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[4.2rem] sm:h-[calc(100dvh-4.2rem)]'
+        : 'sm:top-[3.8rem] sm:h-[calc(100dvh-3.8rem)]'
     ]"
   >
     <div
@@ -61,7 +61,7 @@
         </div>
         <div class="w-full" :class="$slots.actions ? 'h-[4.5rem]' : 'h-10'"></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md"
+          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
         >
           <slot></slot>
         </div>

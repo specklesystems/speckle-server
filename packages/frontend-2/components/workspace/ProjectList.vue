@@ -137,7 +137,13 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 
 const workspace = computed(() => initialQueryResult.value?.workspace)
 const projects = computed(() => query.result.value?.workspace?.projects)
-const showEmptyState = computed(() => !projects.value?.items?.length)
+
+const showEmptyState = computed(() => {
+  if (search.value) return false
+
+  return projects.value && !projects.value?.items?.length
+})
+
 const showLoadingBar = computed(() => {
   return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
 })

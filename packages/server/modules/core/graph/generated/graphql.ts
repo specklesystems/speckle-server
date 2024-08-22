@@ -3820,6 +3820,8 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   createdAt: Scalars['DateTime']['output'];
+  /** Selected fallback when `logo` not set */
+  defaultLogoIndex: Scalars['Int']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
@@ -3866,6 +3868,7 @@ export type WorkspaceCollection = {
 };
 
 export type WorkspaceCreateInput = {
+  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
@@ -4012,6 +4015,7 @@ export type WorkspaceTeamFilter = {
 };
 
 export type WorkspaceUpdateInput = {
+  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   /** Logo image as base64-encoded string */
@@ -5878,6 +5882,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  defaultLogoIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;

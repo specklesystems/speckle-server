@@ -70,13 +70,18 @@ const props = defineProps<{
    */
   items: LayoutMenuItem[][]
   menuId?: string
+  menuPosition?: HorizontalDirection
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
-const { direction: menuDirection } = useResponsiveHorizontalDirectionCalculation({
+const { direction: calculatedDirection } = useResponsiveHorizontalDirectionCalculation({
   el: computed(() => menuItems.value?.el || null),
   defaultDirection: HorizontalDirection.Left,
   stopUpdatesBelowWidth: 300
+})
+
+const menuDirection = computed(() => {
+  return props.menuPosition || calculatedDirection.value
 })
 
 const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
