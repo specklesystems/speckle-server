@@ -137,6 +137,7 @@
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
         </LayoutSidebar>
+        <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
       </div>
     </template>
 
