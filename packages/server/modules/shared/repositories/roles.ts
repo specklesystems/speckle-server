@@ -1,6 +1,7 @@
 import { GetRoles, UpsertRole } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Knex } from 'knex'
+import { DatabaseError } from '@/modules/shared/errors'
 
 let roles: UserRole[]
 
@@ -8,7 +9,15 @@ export const getRolesFactory =
   ({ db }: { db: Knex }): GetRoles =>
   async () => {
     if (roles) return roles
-    roles = await db('user_roles').select('*')
+    try {
+      roles = await db('user_roles').select('*')
+    } catch (e) {
+      if (e instanceof Error)
+        throw new DatabaseError(
+          'Database error occurred while attempting to get Roles',
+          { cause: e }
+        )
+    }
     return roles
   }
 
