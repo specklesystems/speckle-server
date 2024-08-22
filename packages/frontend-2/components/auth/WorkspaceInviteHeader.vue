@@ -3,18 +3,18 @@
     <h1 class="text-heading-xl text-center">Join workspace</h1>
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
-      <span class="font-semibold">{{ invite.workspaceName }}</span>
+      <span class="font-medium">{{ invite.workspaceName }}</span>
       <!-- prettier-ignore -->
       <template v-if="invite.user">
         as
         <div class="inline-flex items-center">
           <UserAvatar :user="invite.user" size="sm" class="mr-1" />
-          <span class="font-semibold">{{ invite.user.name }}</span>
+          <span class="font-medium">{{ invite.user.name }}</span>
         </div>.
       </template>
       <template v-else>
         using the
-        <span class="font-semibold">{{ invite.email }}</span>
+        <span class="font-medium">{{ invite.email }}</span>
         email address.
       </template>
     </div>

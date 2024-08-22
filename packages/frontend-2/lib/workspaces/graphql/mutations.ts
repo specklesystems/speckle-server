@@ -33,6 +33,16 @@ export const inviteToWorkspaceMutation = graphql(`
   }
 `)
 
+export const createWorkspaceMutation = graphql(`
+  mutation CreateWorkspace($input: WorkspaceCreateInput!) {
+    workspaceMutations {
+      create(input: $input) {
+        id
+      }
+    }
+  }
+`)
+
 export const processWorkspaceInviteMutation = graphql(`
   mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {
     workspaceMutations {

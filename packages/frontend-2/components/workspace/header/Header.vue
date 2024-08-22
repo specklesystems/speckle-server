@@ -1,11 +1,13 @@
 <template>
   <div class="flex flex-col sm:flex-row justify-between sm:items-center">
     <div class="flex gap-2 mb-3 mt-2">
-      <WorkspaceAvatar
-        :logo="workspaceInfo.logo"
-        :default-logo-index="workspaceInfo.defaultLogoIndex"
-        size="sm"
-      />
+      <div class="flex items-center">
+        <WorkspaceAvatar
+          :logo="workspaceInfo.logo"
+          :default-logo-index="workspaceInfo.defaultLogoIndex"
+          size="lg"
+        />
+      </div>
       <div class="flex flex-col">
         <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
         <div class="text-body-xs text-foreground-2">
