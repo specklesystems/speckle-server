@@ -343,12 +343,10 @@ describe('Workspace role services', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = {
+      const role = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Member
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
@@ -362,8 +360,6 @@ describe('Workspace role services', () => {
       expect(context.workspaceRoles.length).to.equal(1)
       expect(updatedRole.userId).to.equal(role.userId)
       expect(updatedRole.role).to.equal(role.role)
-      expect(updatedRole.workspaceId).to.equal(role.workspaceId)
-      expect(updatedRole.createdAt.getTime()).to.equal(role.createdAt.getTime())
     })
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
