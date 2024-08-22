@@ -125,7 +125,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
     enabled: !!search.value.length
   })
 )
-// const { on, bind, value: search } = useDebouncedTextInput()
+
 const updateUserRole = useWorkspaceUpdateRole()
 
 const showChangeUserRoleDialog = ref(false)
