@@ -13,6 +13,7 @@
         label="Name"
         placeholder="Workspace name"
         color="foundation"
+        :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
         show-required
       />
@@ -21,6 +22,7 @@
         name="description"
         label="Description"
         placeholder="Workspace description"
+        :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
         show-label
       />
@@ -29,16 +31,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { useForm } from 'vee-validate'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+
+type FormValues = { name: string; description: string }
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
 const { generateDefaultLogoIndex } = useWorkspacesAvatar()
-const logger = useLogger()
+const { handleSubmit } = useForm<FormValues>()
 
 const workspaceName = ref<string>('')
 const workspaceDescription = ref<string>('')
@@ -49,7 +54,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
-      resetFields()
     }
   },
   {
@@ -58,32 +62,19 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       fullWidth: true,
       color: 'primary'
     },
-    disabled: !workspaceName.value?.length,
     onClick: handleCreateWorkspace
   }
 ])
 
-const handleCreateWorkspace = async () => {
-  if (workspaceName.value?.length) {
-    try {
-      const newWorkspace = await createWorkspace({
-        name: workspaceName.value,
-        description: workspaceDescription.value,
-        defaultLogoIndex: generateDefaultLogoIndex()
-      })
+const handleCreateWorkspace = handleSubmit(async () => {
+  const newWorkspace = await createWorkspace({
+    name: workspaceName.value,
+    description: workspaceDescription.value,
+    defaultLogoIndex: generateDefaultLogoIndex()
+  })
 
-      if (newWorkspace) {
-        isOpen.value = false
-        resetFields()
-      }
-    } catch (error) {
-      logger.error('Workspace creation failed:', error)
-    }
+  if (newWorkspace) {
+    isOpen.value = false
   }
-}
-
-const resetFields = () => {
-  workspaceName.value = ''
-  workspaceDescription.value = ''
-}
+})
 </script>

@@ -13,7 +13,8 @@ import type {
   WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -29,11 +30,11 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import {
   createWorkspaceMutation,
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
-import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -339,26 +340,51 @@ export function useCreateWorkspace() {
     const res = await apollo
       .mutate({
         mutation: createWorkspaceMutation,
-        variables: { input },
-        // TODO: Remove this and fix the cache update
-        refetchQueries: [{ query: settingsSidebarQuery }]
+        variables: { input }
+        // TODO: Fix the cache update
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!res.data?.workspaceMutations.create.id) {
+    if (res.data?.workspaceMutations.create.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace successfully created'
+      })
+    } else {
       const err = getFirstErrorMessage(res.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Workspace creation failed',
         description: err
       })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Workspace successfully created'
-      })
     }
 
     return res
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
   }
 }
