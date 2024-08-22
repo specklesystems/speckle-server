@@ -13,7 +13,9 @@ module.exports = {
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
-    } catch {
+    } catch (e) {
+      if (e instanceof DatabaseError) return { result: false, status: 500 }
+      req.log.info({ err: e }, 'Error while checking stream contributor role')
       return { result: false, status: 401 }
     }
 
@@ -26,7 +28,8 @@ module.exports = {
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch {
+      } catch (e) {
+        req.log.info({ err: e }, 'Error while validating scopes')
         return { result: false, status: 401 }
       }
 
@@ -37,7 +40,9 @@ module.exports = {
           Roles.Stream.Reviewer,
           req.context.resourceAccessRules
         )
-      } catch {
+      } catch (e) {
+        if (e instanceof DatabaseError) return { result: false, status: 500 }
+        req.log.info({ err: e }, 'Error while checking stream contributor role')
         return { result: false, status: 401 }
       }
     }
@@ -53,14 +58,14 @@ module.exports = {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
     } catch (e) {
       if (e instanceof DatabaseError) return { result: false, status: 500 }
-      req.log.error(e, 'Error while checking server role')
+      req.log.info({ err: e }, 'Error while checking server role')
       return { result: false, status: 401 }
     }
 
     try {
       await validateScopes(req.context.scopes, Scopes.Streams.Write)
     } catch (e) {
-      req.log.error(e, 'Error while checking scopes')
+      req.log.info({ err: e }, 'Error while checking scopes')
       return { result: false, status: 401 }
     }
 
@@ -73,7 +78,7 @@ module.exports = {
       )
     } catch (e) {
       if (e instanceof DatabaseError) return { result: false, status: 500 }
-      req.log.error(e, 'Error while checking stream contributor role')
+      req.log.info({ err: e }, 'Error while checking stream contributor role')
       return { result: false, status: 401 }
     }
 
