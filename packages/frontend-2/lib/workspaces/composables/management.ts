@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   Query,
@@ -10,6 +10,7 @@ import type {
   UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
+  WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
   WorkspaceInviteUseInput,
@@ -27,6 +28,7 @@ import {
 import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
+  createWorkspaceMutation,
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
   workspaceUpdateRoleMutation
@@ -323,6 +325,41 @@ export const useWorkspaceInviteManager = <
       processInvite(true, options),
     decline: (options?: Parameters<typeof processInvite>[1]) =>
       processInvite(false, options)
+  }
+}
+
+export function useCreateWorkspace() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { activeUser } = useActiveUser()
+
+  return async (input: WorkspaceCreateInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const res = await apollo
+      .mutate({
+        mutation: createWorkspaceMutation,
+        variables: { input }
+        // TODO: Fix the cache update
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (res.data?.workspaceMutations.create.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace successfully created'
+      })
+    } else {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Workspace creation failed',
+        description: err
+      })
+    }
+
+    return res
   }
 }
 

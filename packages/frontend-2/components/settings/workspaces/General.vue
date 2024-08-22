@@ -17,9 +17,8 @@
             color="foundation"
             label="Name"
             name="name"
-            placeholder="Example Ltd."
+            placeholder="Workspace name"
             show-label
-            :disabled="!isAdmin"
             :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
             validate-on-value-update
             @change="save()"
@@ -30,9 +29,8 @@
             color="foundation"
             label="Description"
             name="description"
-            placeholder="This is your workspace"
+            placeholder="Workspace description"
             show-label
-            :disabled="!isAdmin"
             :rules="[isStringOfLength({ maxLength: 512 })]"
             @change="save()"
           />
@@ -48,7 +46,7 @@
           ask you to type in your workspace name and press the delete button.
         </div>
         <div>
-          <FormButton :disabled="!isAdmin" color="danger" @click="openDeleteDialog">
+          <FormButton color="danger" @click="openDeleteDialog">
             Delete workspace
           </FormButton>
         </div>
@@ -65,8 +63,6 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
-import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { Roles } from '@speckle/shared'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
@@ -95,7 +91,6 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { activeUser: user } = useActiveUser()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -106,8 +101,6 @@ const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () =
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
-
-const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
