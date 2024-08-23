@@ -5,7 +5,7 @@
     <div class="absolute inset-0">
       <NuxtImg
         src="workspaces.png"
-        alt="Introducing Workspaces"
+        alt="Introducing workspaces"
         class="absolute top-0 right-0 w-full sm:w-7/12 h-full object-cover"
       />
 
@@ -18,7 +18,7 @@
 
     <div class="relative z-10 text-foreground max-w-lg">
       <div class="flex gap-2 items-center">
-        <h3 class="text-heading-lg">Introducing Workspaces</h3>
+        <h3 class="text-heading-lg">Introducing workspaces</h3>
         <CommonBadge rounded class="">NEW</CommonBadge>
       </div>
       <p class="text-body-sm mt-4">
