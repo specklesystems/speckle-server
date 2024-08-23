@@ -61,16 +61,14 @@ export const updateWebhookFactory =
   ({ db }: { db: Knex }): UpdateWebhook =>
   async ({ webhookId, webhookInput }) => {
     const { triggers, ...update } = webhookInput
+    let triggersObj: Record<string, true> | undefined
     if (triggers) {
-      ;(
-        update as Omit<
-          Partial<Parameters<UpdateWebhook>[0]['webhookInput']>,
-          'triggers'
-        > & { triggers?: Record<string, true> }
-      ).triggers = toTriggersObj(triggers)
+      triggersObj = toTriggersObj(triggers)
     }
 
-    await tables(db).webhooksConfigs.where({ id: webhookId }).update(update)
+    await tables(db)
+      .webhooksConfigs.where({ id: webhookId })
+      .update({ ...update, triggers: triggersObj })
 
     return webhookId
   }
