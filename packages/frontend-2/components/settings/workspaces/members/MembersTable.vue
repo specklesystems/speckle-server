@@ -11,12 +11,14 @@
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
         { id: 'verified', header: 'Status', classes: 'col-span-3' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' }
+        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
       :items="members"
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }
-      ]"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -43,6 +45,22 @@
           "
         />
       </template>
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu"
+          :items="actionsItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            color="subtle"
+            hide-text
+            :icon-right="EllipsisHorizontalIcon"
+            @click="showActionsMenu = !showActionsMenu"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
 
     <SettingsSharedChangeRoleDialog
@@ -62,12 +80,13 @@
 </template>
 
 <script setup lang="ts">
-// Todo: Enable searching once supported
 import type { WorkspaceRoles } from '@speckle/shared'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -96,6 +115,11 @@ graphql(`
   }
 `)
 
+enum ActionTypes {
+  RemoveMember = 'remove-member',
+  LeaveWorkspace = 'leave-workspace'
+}
+
 const props = defineProps<{
   workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
   workspaceId: string
@@ -108,6 +132,7 @@ const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
+const showActionsMenu = ref(false)
 
 const members = computed(() =>
   (props.workspace?.team || []).map(({ user, ...rest }) => ({
@@ -117,6 +142,11 @@ const members = computed(() =>
 )
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
+
+const actionsItems: LayoutMenuItem[][] = [
+  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }],
+  [{ title: 'Leave workspace', id: ActionTypes.LeaveWorkspace }]
+]
 
 const openChangeUserRoleDialog = (
   user: UserItem,
@@ -151,5 +181,18 @@ const onRemoveUser = async () => {
     role: null,
     workspaceId: props.workspaceId
   })
+}
+
+const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
+  userToModify.value = user
+
+  switch (actionItem.id) {
+    case ActionTypes.RemoveMember:
+      openDeleteUserRoleDialog(user)
+      break
+    // case ActionTypes.LeaveWorkspace:
+    //   console.log('leave', user)
+    //   break
+  }
 }
 </script>
