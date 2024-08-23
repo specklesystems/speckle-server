@@ -4,7 +4,7 @@
   >
     <div class="absolute inset-0">
       <img
-        src="~/public/images/workspace/workspaces.png"
+        src="~~/assets/images/workspaces.png"
         alt="Introducing workspaces"
         class="absolute top-0 right-0 w-full sm:w-7/12 h-full object-cover"
       />
