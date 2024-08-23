@@ -76,7 +76,7 @@ export class Pipeline {
   private copyOutputPass: CopyOutputPass
   private staticAoPass: StaticAOPass
   private overlayPass: OverlayPass
-  private edgesPass: EdgePass
+  public edgesPass: EdgePass
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -111,10 +111,19 @@ export class Pipeline {
     switch (outputType) {
       case PipelineOutputType.FINAL:
         pipeline = this.getDefaultPipeline()
+        this.depthPass.enabled = true
+        this.normalsPass.enabled = true
+        this.depthPass.depthType = DepthType.LINEAR_DEPTH
+        this.depthPass.depthSize = DepthSize.FULL
+        this.debugPipeline = true
+
         this.depthPass.depthSize = DepthSize.FULL
         this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-        this.debugPipeline = false
+        this.applySaoPass.materialCopy.uniforms['tEdges'].value =
+          this.edgesPass.outputTexture
+        this.applySaoPass.materialCopy.needsUpdate = true
+        // this.debugPipeline = false
         break
 
       case PipelineOutputType.DEPTH_RGBA:
@@ -385,6 +394,7 @@ export class Pipeline {
     const pipeline = []
     pipeline.push(this.depthPass)
     pipeline.push(this.normalsPass)
+    pipeline.push(this.edgesPass)
     pipeline.push(this.dynamicAoPass)
     pipeline.push(this.staticAoPass)
     pipeline.push(this.stencilPass)

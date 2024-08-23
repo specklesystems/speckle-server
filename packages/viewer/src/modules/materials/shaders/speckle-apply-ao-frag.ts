@@ -1,5 +1,6 @@
 export const speckleApplyAoFrag = `
 		uniform sampler2D tDiffuse;
+        uniform sampler2D tEdges;
 		varying vec2 vUv;
         #if ACCUMULATE == 1
             uniform float frameIndex;
@@ -22,5 +23,6 @@ export const speckleApplyAoFrag = `
             #else
                 gl_FragColor.rgb = dynamicSample;
             #endif
+            gl_FragColor.rgb = texture2D( tEdges, vUv ).rgb;
 			gl_FragColor.a = 1.;
 		}`

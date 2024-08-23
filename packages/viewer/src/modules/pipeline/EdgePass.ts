@@ -25,7 +25,7 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
   private camera: Camera | null = null
   private scene: Scene | null = null
   private renderTarget: WebGLRenderTarget
-  private edgesMaterial: ShaderMaterial
+  public edgesMaterial: ShaderMaterial
   private fsQuad: FullScreenQuad
 
   public onBeforeRender: (() => void) | undefined = undefined
@@ -46,6 +46,13 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
         tDepth: { value: null },
         tNormal: { value: null },
         size: { value: new Vector2(512, 512) },
+
+        uDepthMultiplier: { value: 1 },
+        uDepthBias: { value: 1 },
+        uNormalMultiplier: { value: 1 },
+        uNormalBias: { value: 1 },
+        uOutlineThickness: { value: 1 },
+        uOutlineDensity: { value: 0 },
 
         cameraNear: { value: 1 },
         cameraFar: { value: 100 },

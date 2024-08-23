@@ -3,6 +3,12 @@ export const speckleEdgesGeneratorFrag = /* glsl */ `
 varying vec2 vUv;
 uniform sampler2D tDepth;
 uniform sampler2D tNormal;
+uniform float uDepthMultiplier;
+uniform float uDepthBias;
+uniform float uNormalMultiplier;
+uniform float uNormalBias;
+uniform float uOutlineThickness;
+uniform float uOutlineDensity;
 uniform vec2 size;
 
 uniform float cameraNear;
@@ -215,8 +221,8 @@ float SobelSampleDepth(vec2 uv, vec3 offset){
 }
 
 float SobelSampleDepth2(vec2 uv){
-	float w = 1.0 / size.x;
-	float h = 1.0 / size.y;
+	float w = 1.0 / size.x * uOutlineDensity;
+	float h = 1.0 / size.y * uOutlineThickness;
 	float n[9];
 	n[0] = getLinearDepth( uv + vec2( -w, -h));
 	n[1] = getLinearDepth( uv + vec2(0.0, -h));
@@ -235,20 +241,18 @@ float SobelSampleDepth2(vec2 uv){
 }
 
 void main() {
-	float _OutlineThickness = 1.;
-	float _OutlineDepthMultiplier = 1.;
-	float _OutlineDepthBias = 1.;
-	vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * _OutlineThickness;
+	vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
 	// float sobel = SobelSampleDepth(vUv, offset);
 	// sobel = 1. - pow(abs(saturate(sobel) * _OutlineDepthMultiplier), _OutlineDepthBias);
-	float sobelDepth = SobelSampleDepth2(vUv);
-	sobelDepth = pow(abs(saturate(sobelDepth) * _OutlineDepthMultiplier), _OutlineDepthBias);
+	float sobelDepth = SobelSampleDepth(vUv, offset);
+	sobelDepth = pow(abs(saturate(sobelDepth) * uDepthMultiplier), uDepthBias);
 	// gl_FragColor = vec4(sobel, sobel, sobel, 1.);
 	
-	vec3 sobelNormalVec = abs(SobelSampleNormal2(vUv));
+	vec3 sobelNormalVec = abs(SobelSampleNormal(tNormal, vUv, offset));
 	float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
-	sobelNormal = pow(abs(sobelNormal * _OutlineDepthMultiplier), _OutlineDepthBias);
+	sobelNormal = pow(abs(sobelNormal * uNormalMultiplier), uNormalBias);
 
-	float sobelOutline = saturate(max(sobelDepth, sobelNormal));
+	float sobelOutline = 1. - saturate(max(sobelDepth, sobelNormal));
+	sobelOutline = smoothstep(uOutlineDensity, 1.0, sobelOutline);
 	gl_FragColor = vec4(sobelOutline, sobelOutline, sobelOutline, 1.);
 }`

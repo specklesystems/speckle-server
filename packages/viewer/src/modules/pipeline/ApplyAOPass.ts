@@ -38,6 +38,7 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
       uniforms: {
         tDiffuse: { value: null },
         tDiffuseInterp: { value: null },
+        tEdges: { value: null },
         frameIndex: { value: 0 }
       },
       vertexShader: speckleApplyAoVert,

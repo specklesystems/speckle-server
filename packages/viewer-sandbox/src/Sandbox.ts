@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -144,7 +145,6 @@ export default class Sandbox {
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -276,7 +276,6 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
@@ -379,7 +378,6 @@ export default class Sandbox {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
@@ -414,7 +412,7 @@ export default class Sandbox {
     })
     toggleSectionBox.on('click', () => {
       let box = this.viewer.getRenderer().boxFromObjects(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
@@ -436,7 +434,7 @@ export default class Sandbox {
     })
     zoomExtents.on('click', () => {
       this.viewer.getExtension(CameraController).setCameraView(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
         true
       )
@@ -499,20 +497,18 @@ export default class Sandbox {
     colors.on('click', async () => {
       const colorNodes = this.viewer.getWorldTree().findAll(
         (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           node.model.renderView &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.renderData.colorMaterial &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.geometryType === GeometryType.MESH
       )
       const colorMap: { [color: number]: Array<string> } = {}
       for (let k = 0; k < colorNodes.length; k++) {
         const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const color: number = node.model.renderView.renderData.colorMaterial.color
         if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         colorMap[color].push(node.model.id)
       }
       const colorGroups = []
@@ -556,6 +552,102 @@ export default class Sandbox {
             .setCameraView(sides[k] as CanonicalView, true)
         })
     }
+    const edgesParams = {
+      depthMultiplier: 1,
+      depthBias: 1,
+      normalMultiplier: 1,
+      normalBias: 1,
+      outlineDensity: 0,
+      outlineThickness: 1
+    }
+    const edgesFolder = this.tabs.pages[0].addFolder({
+      title: 'Edges',
+      expanded: true
+    })
+    edgesFolder
+      .addInput(edgesParams, 'depthMultiplier', {
+        label: 'depthMultiplier',
+        min: 0,
+        max: 5,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uDepthMultiplier'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'depthBias', {
+        label: 'depthBias',
+        min: 0,
+        max: 5,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uDepthBias'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'normalMultiplier', {
+        label: 'normalMultiplier',
+        min: 0,
+        max: 5,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uNormalMultiplier'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'normalBias', {
+        label: 'normalBias',
+        min: 0,
+        max: 50,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uNormalBias'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'outlineDensity', {
+        label: 'outlineDensity',
+        min: 0,
+        max: 1,
+        step: 0.01
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uOutlineDensity'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'outlineThickness', {
+        label: 'outlineThickness',
+        min: 0,
+        max: 10,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+          'uOutlineThickness'
+        ].value = value.value
+        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
   }
 
   makeSceneUI() {
@@ -1334,9 +1426,8 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }
