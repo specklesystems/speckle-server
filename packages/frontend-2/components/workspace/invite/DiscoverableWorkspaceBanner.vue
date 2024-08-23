@@ -25,6 +25,17 @@ graphql(`
     logo
     defaultLogoIndex
   }
+  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {
+    id
+    name
+    description
+    createdAt
+    updatedAt
+    logo
+    defaultLogoIndex
+    domainBasedMembershipProtectionEnabled
+    discoverabilityEnabled
+  }
 `)
 
 const props = defineProps<{
@@ -33,6 +44,7 @@ const props = defineProps<{
 
 const { client: apollo } = useApolloClient()
 const { triggerNotification } = useGlobalToast()
+const router = useRouter()
 
 const invite = computed(() => ({
   workspace: {
@@ -68,6 +80,7 @@ const processJoin = async (accept: boolean) => {
       title: 'Joined workspace',
       description: 'Successfully joined workspace'
     })
+    router.push(`/workspaces/${props.workspace.id}`)
   } else {
     triggerNotification({
       type: ToastNotificationType.Danger,

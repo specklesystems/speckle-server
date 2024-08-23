@@ -4,7 +4,7 @@ export const dashboardJoinWorkspaceMutation = graphql(`
   mutation DashboardJoinWorkspace($input: JoinWorkspaceInput!) {
     workspaceMutations {
       join(input: $input) {
-        id
+        ...WorkspaceInviteDiscoverableWorkspaceBanner_Workspace
       }
     }
   }
