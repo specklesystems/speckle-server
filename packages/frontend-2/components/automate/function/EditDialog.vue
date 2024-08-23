@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit Function"
+    title="Edit function"
     :buttons="buttons"
     max-width="md"
     buttons-wrapper-classes="justify-between"
@@ -32,8 +32,8 @@ const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: {
-      color: 'secondary',
-      textColor: 'primary'
+      color: 'outline',
+      class: '!text-primary'
     },
     onClick: () => (open.value = false)
   },

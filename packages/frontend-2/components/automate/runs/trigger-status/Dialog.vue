@@ -10,7 +10,7 @@
             />
           </div>
           <div class="flex min-w-0 flex-col gap-1">
-            <h4 :class="[`h6 sm:h5 font-bold whitespace-normal`, summary.titleColor]">
+            <h4 :class="[`h6 sm:h5 font-medium whitespace-normal`, summary.titleColor]">
               {{ summary.title }}
             </h4>
             <div class="caption text-foreground-2 whitespace-normal">
@@ -34,7 +34,7 @@
       >
         <FormButton
           text
-          size="xs"
+          size="sm"
           target="_blank"
           external
           to="https://speckle.systems/blog/automate-with-speckle/"
@@ -45,7 +45,7 @@
         <div
           class="flex w-full justify-between order-1 sm:order-2 sm:justify-normal sm:w-auto sm:space-x-1"
         >
-          <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
+          <FormButton color="outline" @click="showDialog = false">Close</FormButton>
           <FormButton :to="viewUrl">
             Open {{ versionId ? 'Version' : 'Model' }}
           </FormButton>

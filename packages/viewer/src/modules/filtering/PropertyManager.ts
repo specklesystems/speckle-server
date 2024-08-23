@@ -1,5 +1,5 @@
-import flatten from '../../helpers/flatten'
-import { type TreeNode, WorldTree } from '../tree/WorldTree'
+import flatten from '../../helpers/flatten.js'
+import { type TreeNode, WorldTree } from '../tree/WorldTree.js'
 
 export class PropertyManager {
   private propCache = {} as Record<string, PropertyInfo[]>

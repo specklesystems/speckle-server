@@ -1,7 +1,16 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Invite to Project</template>
-    <div class="flex flex-col mt-2">
+    <template #header>Invite to project</template>
+    <div class="flex flex-col gap-4 my-2">
+      <FormSelectWorkspaceRoles
+        v-if="project?.workspaceId"
+        v-model="workspaceRole"
+        show-label
+        label="Workspace role"
+        size="lg"
+        help="If target user does not have a role in the parent workspace, they will be assigned this role."
+        :allow-unset="false"
+      />
       <FormTextInput
         v-model="search"
         name="search"
@@ -24,8 +33,8 @@
         </template>
       </FormTextInput>
       <div
-        v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border bg-foundation border-primary-muted mt-2"
+        v-if="hasTargets"
+        class="flex flex-col border bg-foundation border-primary-muted rounded-md"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -43,7 +52,7 @@
           :stream-role="role"
           :disabled="loading"
           :is-guest-mode="isGuestMode"
-          class="mx-1 my-2"
+          class="p-2"
           @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
         />
       </div>
@@ -52,26 +61,28 @@
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import type { ServerRoles, StreamRoles } from '@speckle/shared'
-import { useUserSearch } from '~~/lib/common/composables/users'
+import type { ServerRoles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
 import type {
   ProjectInviteCreateInput,
-  ProjectPageInviteDialog_ProjectFragment
+  ProjectPageInviteDialog_ProjectFragment,
+  WorkspaceProjectInviteCreateInput
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
-import { isEmail } from '~~/lib/common/helpers/validation'
-import { isArray, isString } from 'lodash-es'
+import { isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import { useResolveInviteTargets } from '~/lib/server/composables/invites'
+import { filterInvalidInviteTargets } from '~/lib/workspaces/helpers/invites'
 
 graphql(`
   fragment ProjectPageInviteDialog_Project on Project {
     id
+    workspaceId
     ...ProjectPageTeamInternals_Project
   }
 `)
@@ -85,78 +96,56 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const mp = useMixpanel()
+
+const projectId = computed(() => props.projectId as string)
+const projectData = computed(() => props.project)
+const { collaboratorListItems } = useTeamInternals(projectData)
 
 const loading = ref(false)
 const search = ref('')
 const role = ref<StreamRoles>(Roles.Stream.Contributor)
+const workspaceRole = ref<WorkspaceRoles>(Roles.Workspace.Guest)
 
 const { isGuestMode } = useServerInfo()
 const createInvite = useInviteUserToProject()
-const { userSearch, searchVariables } = useUserSearch({
-  variables: computed(() => ({
-    query: search.value,
-    limit: 5
-  }))
+const {
+  users: searchUsers,
+  emails: selectedEmails,
+  hasTargets
+} = useResolveInviteTargets({
+  search,
+  excludeUserIds: computed(() =>
+    collaboratorListItems.value
+      .filter((i): i is SetFullyRequired<typeof i, 'user'> => !!i.user?.id)
+      .map((t) => t.user.id)
+  )
 })
-
-const projectId = computed(() => props.projectId as string)
-
-const projectData = computed(() => props.project)
-
-const { collaboratorListItems } = useTeamInternals(projectData)
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }
   }
 ])
 
-const selectedEmails = computed(() => {
-  const query = searchVariables.value?.query || ''
-  if (isValidEmail(query)) return [query]
-
-  const multipleEmails = query.split(',').map((i) => i.trim())
-  const validEmails = multipleEmails.filter((e) => isValidEmail(e))
-  return validEmails.length ? validEmails : null
-})
-
 const isOwnerSelected = computed(() => role.value === Roles.Stream.Owner)
 
-const searchUsers = computed(() => {
-  const searchResults = userSearch.value?.userSearch.items || []
-  const collaboratorIds = new Set(
-    collaboratorListItems.value
-      .filter((i): i is SetFullyRequired<typeof i, 'user'> => !!i.user?.id)
-      .map((t) => t.user.id)
-  )
-  return searchResults.filter((r) => !collaboratorIds.has(r.id))
-})
-
-const isValidEmail = (val: string) =>
-  isEmail(val || '', {
-    field: '',
-    value: '',
-    form: {}
-  }) === true
-    ? true
-    : false
-
-const mp = useMixpanel()
 const onInviteUser = async (
   user: InvitableUser | InvitableUser[],
   serverRole?: ServerRoles
 ) => {
-  const users = (isArray(user) ? user : [user]).filter(
-    (u) => !isOwnerSelected.value || isString(u) || u.role !== Roles.Server.Guest
-  )
+  serverRole = serverRole || Roles.Server.User
+  const users = filterInvalidInviteTargets(user, {
+    isTargetResourceOwner: isOwnerSelected.value,
+    emailTargetServerRole: serverRole
+  })
 
-  const inputs: ProjectInviteCreateInput[] = users
-    .filter((u) => (isString(u) ? isValidEmail(u) : u))
-    .map((u) => ({
+  const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
+    users.map((u) => ({
       role: role.value,
       ...(isString(u)
         ? {
@@ -165,7 +154,12 @@ const onInviteUser = async (
           }
         : {
             userId: u.id
-          })
+          }),
+      ...(props.project?.workspaceId
+        ? {
+            workspaceRole: workspaceRole.value
+          }
+        : {})
     }))
   if (!inputs.length) return
 

@@ -15,8 +15,8 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
-import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass.js'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,

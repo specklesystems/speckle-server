@@ -8,23 +8,29 @@
       controls
     />
     <div class="mt-2">
-      <div v-if="hasSupportedOs" class="flex justify-center flex-col space-y-2">
+      <div
+        v-if="hasSupportedOs"
+        class="flex justify-center flex-col space-y-2 w-full items-center"
+      >
         <FormButton
-          size="xl"
+          size="lg"
           class="shadow-md"
           @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
         >
-          Download For {{ os }}
+          Download for {{ os }}
         </FormButton>
         <FormButton
-          size="xs"
+          size="sm"
           text
           @click.stop="downloadManager(os === 'Windows' ? 'dmg' : 'exe')"
         >
           Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
         </FormButton>
       </div>
-      <div v-else class="flex justify-center flex-col space-y-2 text-sm sm:text-base">
+      <div
+        v-else
+        class="flex justify-center flex-col space-y-2 text-body-xs text-foreground w-full items-center text-center"
+      >
         <p>
           Speckle Connectors exist only for applications running on Windows or Mac OS.
           If you want, you can still go ahead and download Speckle Manager for

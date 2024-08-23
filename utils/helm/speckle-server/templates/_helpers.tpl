@@ -563,6 +563,20 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_AUTOMATE_MODULE_ENABLED
   value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
 
+- name: FF_WORKSPACES_MODULE_ENABLED
+  value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+
+{{- if .Values.featureFlags.workspaceModuleEnabled }}
+- name: LICENSE_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.licenseTokenSecret.secretName }}"
+      key: {{ default "license_token" .Values.server.licenseTokenSecret.secretKey }}
+{{- end }}
+
+- name: FF_MULTIPLE_EMAILS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
@@ -590,6 +604,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAX_OBJECT_SIZE_MB
   value: {{ .Values.server.max_object_size_mb | quote }}
+
+- name: MAX_OBJECT_UPLOAD_FILE_SIZE_MB
+  value: {{ .Values.server.max_object_upload_file_size_mb | quote }}
 
   {{- if .Values.server.migration.movedFrom }}
 - name: MIGRATION_SERVER_MOVED_FROM

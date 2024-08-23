@@ -1,15 +1,15 @@
 <template>
   <div>
     <FormTextInput
-      label="Select Function"
+      label="Select function"
       :show-label="showLabel"
       :show-required="showRequired"
       name="search"
       color="foundation"
       placeholder="Search Functions..."
       show-clear
-      :model-value="bind.modelValue.value"
       full-width
+      v-bind="bind"
       v-on="on"
     />
     <div class="mt-4">

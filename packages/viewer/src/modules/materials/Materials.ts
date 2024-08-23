@@ -1,19 +1,19 @@
 import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
-import { GeometryType } from '../batching/Batch'
-import { type TreeNode } from '../tree/WorldTree'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import SpeckleLineMaterial from './SpeckleLineMaterial'
-import SpeckleStandardMaterial from './SpeckleStandardMaterial'
-import SpecklePointMaterial from './SpecklePointMaterial'
-import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
+import { GeometryType } from '../batching/Batch.js'
+import { type TreeNode } from '../tree/WorldTree.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import SpeckleLineMaterial from './SpeckleLineMaterial.js'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial.js'
+import SpecklePointMaterial from './SpecklePointMaterial.js'
+import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial.js'
 import defaultGradientTexture from '../../assets/gradient.png'
-import { Assets } from '../Assets'
-import { getConversionFactor } from '../converter/Units'
-import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import SpeckleTextMaterial from './SpeckleTextMaterial'
-import { SpeckleMaterial } from './SpeckleMaterial'
-import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
-import { type Asset, AssetType, type MaterialOptions } from '../../IViewer'
+import { Assets } from '../Assets.js'
+import { getConversionFactor } from '../converter/Units.js'
+import SpeckleGhostMaterial from './SpeckleGhostMaterial.js'
+import SpeckleTextMaterial from './SpeckleTextMaterial.js'
+import { SpeckleMaterial } from './SpeckleMaterial.js'
+import SpecklePointColouredMaterial from './SpecklePointColouredMaterial.js'
+import { type Asset, AssetType, type MaterialOptions } from '../../IViewer.js'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -21,20 +21,23 @@ const defaultGradient: Asset = {
   type: AssetType.TEXTURE_8BPP
 }
 
-export interface RenderMaterial {
+export interface RenderMaterial extends MinimalMaterial {
   id: string
-  color: number
+  emissive: number
   opacity: number
   roughness: number
   metalness: number
   vertexColors: boolean
 }
 
-export interface DisplayStyle {
+export interface DisplayStyle extends MinimalMaterial {
   id: string
-  color: number
   lineWeight: number
   opacity?: number
+}
+
+export interface MinimalMaterial {
+  color: number
 }
 
 export enum FilterMaterialType {
@@ -122,6 +125,7 @@ export default class Materials {
       renderMaterial = {
         id: materialNode.model.raw.renderMaterial.id,
         color: materialNode.model.raw.renderMaterial.diffuse,
+        emissive: materialNode.model.raw.renderMaterial.emissive,
         opacity:
           materialNode.model.raw.renderMaterial.opacity !== undefined
             ? materialNode.model.raw.renderMaterial.opacity
@@ -162,6 +166,18 @@ export default class Materials {
     return displayStyle
   }
 
+  public static colorMaterialFromNode(node: TreeNode | null): MinimalMaterial | null {
+    if (!node) return null
+
+    let colorMaterial: MinimalMaterial | null = null
+    if (node.model.raw.color) {
+      colorMaterial = {
+        color: node.model.raw.color
+      }
+    }
+    return colorMaterial
+  }
+
   public static fastCopy(from: Material, to: Material) {
     ;(to as unknown as SpeckleMaterial).fastCopy(from, to)
     /** Doing it via three.js is slow as hell */
@@ -190,6 +206,10 @@ export default class Materials {
       displayStyle.lineWeight?.toString() +
       displayStyle.opacity?.toString()
     return plm
+  }
+
+  private static minimalMaterialToString(minimalMaterial: MinimalMaterial) {
+    return minimalMaterial.color.toString()
   }
 
   private static hashCode(s: string): number {
@@ -242,20 +262,34 @@ export default class Materials {
     renderView: NodeRenderView,
     materialData?: RenderMaterial | DisplayStyle | MaterialOptions | null
   ): number {
+    /** See if we need to get the hash from the DUI3 color material. In DUI3, Points and Lines
+     *  always use the color material exclusively. Any other render material or display style is ignored
+     */
+    const colorMaterialData = renderView.renderData.colorMaterial
+    let mat = ''
+    const useColorMaterialHash =
+      colorMaterialData &&
+      !materialData &&
+      (renderView.geometryType === GeometryType.LINE ||
+        renderView.geometryType === GeometryType.POINT)
+
     if (!materialData) {
       materialData =
         renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
-    let mat = ''
-    if (materialData) {
+    /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
+     *  The technical material will contribute to the material hash
+     */
+    if (useColorMaterialHash) {
+      mat += Materials.minimalMaterialToString(colorMaterialData)
+    } else if (materialData) {
       mat =
         Materials.isRendeMaterial(materialData) &&
         (renderView.geometryType === GeometryType.MESH ||
-          renderView.geometryType === GeometryType.POINT ||
+          renderView.geometryType === GeometryType.POINT || // Maybe even include GeometryType.POINT_CLOUD actually?
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
-            // && renderView.geometryType !== GeometryType.POINT // Allow Points to use displayStyle
             renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
           : ''
@@ -266,6 +300,7 @@ export default class Materials {
         mat += '/' + (materialData as MaterialOptions).pointSize
       }
     }
+
     let geometry = ''
     if (renderView.renderData.geometry.attributes)
       geometry = renderView.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
@@ -664,7 +699,7 @@ export default class Materials {
     const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial(
       {
         color: materialData.color,
-        emissive: 0x0,
+        emissive: 0x0, // materialData.emissive. Disabling this for now
         roughness: materialData.roughness,
         metalness: materialData.metalness,
         opacity: materialData.opacity,
@@ -677,6 +712,7 @@ export default class Materials {
     mat.depthWrite = mat.transparent ? false : true
     mat.clipShadows = true
     mat.color.convertSRGBToLinear()
+    mat.emissive.convertSRGBToLinear()
     mat.updateArtificialRoughness(Materials.DEFAULT_ARTIFICIAL_ROUGHNESS)
     return mat
   }
@@ -721,14 +757,16 @@ export default class Materials {
     const mat = new SpecklePointMaterial(
       {
         color: safeColor,
-        opacity: materialData.opacity,
-        vertexColors: materialData.vertexColors,
+        ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
+        ...(materialData.vertexColors !== undefined && {
+          vertexColors: materialData.vertexColors
+        }),
         size: 2,
         sizeAttenuation: false
       },
       ['USE_RTE']
     )
-    mat.transparent = mat.opacity < 1 ? true : false
+    if (mat.opacity !== undefined) mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.toneMapped = false
     mat.color.convertSRGBToLinear()
@@ -754,7 +792,7 @@ export default class Materials {
 
   public getMaterial(
     hash: number,
-    material: RenderMaterial | DisplayStyle | null,
+    material: RenderMaterial | DisplayStyle | MinimalMaterial | null,
     type: GeometryType
   ): Material {
     let mat

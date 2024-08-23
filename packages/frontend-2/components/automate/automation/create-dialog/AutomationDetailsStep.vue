@@ -3,7 +3,7 @@
     <FormSelectProjects
       v-if="!preselectedProject"
       v-model="project"
-      label="Speckle Project"
+      label="Speckle project"
       show-label
       help="Choose the project where your target model is located"
       show-required
@@ -29,7 +29,7 @@
     <FormTextInput
       v-model="automationName"
       name="automationName"
-      label="Automation Name"
+      label="Automation name"
       color="foundation"
       show-label
       help="Give your automation a name"

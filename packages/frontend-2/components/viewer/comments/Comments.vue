@@ -4,11 +4,12 @@
     <template #actions>
       <FormButton
         text
-        size="xs"
+        size="sm"
+        color="subtle"
         :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
         @click="showVisibilityOptions = !showVisibilityOptions"
       >
-        Discussion Visibility Options
+        Discussion visibility options
       </FormButton>
     </template>
     <div class="flex flex-col">
@@ -18,17 +19,17 @@
       >
         <div>
           <FormButton
-            size="xs"
+            size="sm"
             :icon-left="!hideBubbles ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             @click="hideBubbles = !hideBubbles"
           >
-            Show In 3D Model
+            Show in 3D model
           </FormButton>
         </div>
         <div>
           <FormButton
-            size="xs"
+            size="sm"
             :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
@@ -41,7 +42,7 @@
         </div>
         <div>
           <FormButton
-            size="xs"
+            size="sm"
             :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             class="!text-left"

@@ -179,7 +179,7 @@ export function useViewerUserActivityTracking(params: {
     if (sessionId.value === incomingSessionId) return
     if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
-        description: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
+        title: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
         type: ToastNotificationType.Info
       })
 
@@ -214,7 +214,7 @@ export function useViewerUserActivityTracking(params: {
       !Object.keys(users.value).includes(incomingSessionId)
     ) {
       triggerNotification({
-        description: `${userData.userName} joined.`,
+        title: `${userData.userName} joined.`,
         type: ToastNotificationType.Info
       })
     }

@@ -44,6 +44,10 @@ type FormValues = {
   description?: string
 }
 
+const props = defineProps<{
+  workspaceId?: string
+}>()
+
 const emit = defineEmits<{
   (e: 'created'): void
 }>()
@@ -60,7 +64,8 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
     ...values,
-    visibility: visibility.value
+    visibility: visibility.value,
+    workspaceId: props.workspaceId
   })
   emit('created')
   mp.track('Stream Action', { type: 'action', name: 'create' })
@@ -70,7 +75,7 @@ const onSubmit = handleSubmit(async (values) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       open.value = false
     }
@@ -78,9 +83,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      color: 'default',
       fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: onSubmit

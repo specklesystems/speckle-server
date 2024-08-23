@@ -13,7 +13,7 @@ export type ProgressStage = 'download' | 'construction'
 /**
  * ObjectLoader class
  */
-export default class ObjectLoader {
+class ObjectLoader {
   constructor(params: {
     serverUrl: string
     streamId: string
@@ -41,6 +41,7 @@ export default class ObjectLoader {
     }>
   })
 
+  async getTotalObjectCount(): Promise<number>
   async getAndConstructObject(
     onProgress: (e: { stage: ProgressStage; current: number; total: number }) => void
   ): SpeckleObject | SpeckleObject[]
@@ -49,3 +50,5 @@ export default class ObjectLoader {
   async getObject(id: string): Promise<Record<string, unknown>>
   dispose(): void
 }
+
+export default ObjectLoader

@@ -18,7 +18,7 @@ import {
   ShapecastIntersection,
   SplitStrategy
 } from 'three-mesh-bvh'
-import { MeshIntersection } from './SpeckleRaycaster'
+import { MeshIntersection } from './SpeckleRaycaster.js'
 
 const SKIP_GENERATION = Symbol('skip tree generation')
 

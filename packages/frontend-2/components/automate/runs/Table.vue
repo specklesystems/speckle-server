@@ -4,7 +4,7 @@
       :columns="[
         { id: 'status', header: 'status', classes: 'col-span-2' },
         { id: 'runId', header: 'Run ID', classes: 'col-span-3' },
-        { id: 'modelVersion', header: 'Model Version', classes: 'col-span-3' },
+        { id: 'modelVersion', header: 'Model version', classes: 'col-span-3' },
         { id: 'date', header: 'Date', classes: 'col-span-2' },
         { id: 'duration', header: 'Duration', classes: 'col-span-2' }
       ]"
@@ -14,7 +14,7 @@
           icon: EyeIcon,
           label: 'View',
           action: onView,
-          textColor: 'primary'
+          class: '!text-primary'
         }
       ]"
       empty-message="Automation does not have any runs"

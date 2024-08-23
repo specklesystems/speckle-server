@@ -1,7 +1,7 @@
 <template>
   <FormButton
-    :link="!noUnderline"
-    :text="noUnderline"
+    :link="underline"
+    :text="!underline"
     :to="to"
     :external="external"
     :disabled="disabled"
@@ -22,7 +22,7 @@ import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
-type LinkSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+type LinkSize = 'sm' | 'base' | 'lg'
 const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
 
 const props = defineProps({
@@ -70,7 +70,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  noUnderline: {
+  underline: {
     type: Boolean,
     default: false
   }

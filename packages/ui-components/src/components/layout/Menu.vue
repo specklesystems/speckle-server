@@ -18,7 +18,7 @@
       <MenuItems
         ref="menuItems"
         :class="[
-          'absolute mt-2 w-48 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
       >
@@ -36,7 +36,7 @@
                 :disabled="disabled"
                 @click="chooseItem(item, $event)"
               >
-                <Component :is="item.icon" v-if="item.icon" class="h-5 w-5" />
+                <Component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
                 <slot name="item" :item="item">{{ item.title }}</slot>
               </button>
             </span>
@@ -70,13 +70,18 @@ const props = defineProps<{
    */
   items: LayoutMenuItem[][]
   menuId?: string
+  menuPosition?: HorizontalDirection
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
-const { direction: menuDirection } = useResponsiveHorizontalDirectionCalculation({
+const { direction: calculatedDirection } = useResponsiveHorizontalDirectionCalculation({
   el: computed(() => menuItems.value?.el || null),
   defaultDirection: HorizontalDirection.Left,
   stopUpdatesBelowWidth: 300
+})
+
+const menuDirection = computed(() => {
+  return props.menuPosition || calculatedDirection.value
 })
 
 const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
@@ -94,11 +99,11 @@ const buildButtonClassses = (params: {
 }) => {
   const { active, disabled, color } = params
   const classParts = [
-    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-sm'
+    'group flex space-x-2 w-full items-center rounded-md px-2 py-1 text-body-xs'
   ]
 
   if (active && !color) {
-    classParts.push('bg-foundation-focus text-foreground')
+    classParts.push('bg-primary-muted text-foreground')
   } else if (disabled) {
     classParts.push('text-foreground-disabled')
   } else if (color === 'danger' && active) {

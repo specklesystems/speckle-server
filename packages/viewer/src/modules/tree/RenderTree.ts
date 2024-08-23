@@ -1,10 +1,10 @@
 import { Matrix4 } from 'three'
-import { type TreeNode, WorldTree } from './WorldTree'
-import Materials from '../materials/Materials'
-import { type NodeRenderData, NodeRenderView } from './NodeRenderView'
-import Logger from 'js-logger'
-import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
-import { Geometry } from '../converter/Geometry'
+import { type TreeNode, WorldTree } from './WorldTree.js'
+import Materials from '../materials/Materials.js'
+import { type NodeRenderData, NodeRenderView } from './NodeRenderView.js'
+import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter.js'
+import { Geometry } from '../converter/Geometry.js'
+import Logger from '../utils/Logger.js'
 
 export class RenderTree {
   private tree: WorldTree
@@ -65,6 +65,7 @@ export class RenderTree {
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
+      const colorMaterialNode = this.getColorMaterialNode(node)
       ret = {
         id: node.model.id,
         subtreeId: node.model.subtreeId,
@@ -77,7 +78,8 @@ export class RenderTree {
         /** Line-type geometry can also use a renderMaterial*/
         displayStyle: Materials.displayStyleFromNode(
           displayStyleNode || renderMaterialNode
-        )
+        ),
+        colorMaterial: Materials.colorMaterialFromNode(colorMaterialNode)
       }
     }
     return ret
@@ -103,6 +105,19 @@ export class RenderTree {
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
+        return ancestors[k]
+      }
+    }
+    return null
+  }
+
+  private getColorMaterialNode(node: TreeNode): TreeNode | null {
+    if (node.model.raw.color) {
+      return node
+    }
+    const ancestors = this.tree.getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.raw.color) {
         return ancestors[k]
       }
     }

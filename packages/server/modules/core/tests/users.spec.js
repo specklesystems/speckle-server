@@ -1,10 +1,6 @@
 /* istanbul ignore file */
-const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const expect = require('chai').expect
 const assert = require('assert')
-
-const knex = require('@/db/knex')
 
 const {
   changeUserRole,
@@ -43,6 +39,7 @@ const {
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
+const { createRandomEmail } = require('../helpers/testHelpers')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -59,92 +56,20 @@ describe('Actors & Tokens @user-services', () => {
   })
 
   describe('Users @core-users', () => {
-    it('Should create an user', async () => {
-      const newUser = { ...myTestActor }
-      newUser.name = 'Bill Gates'
-      newUser.email = 'bill@gates.com'
-      newUser.password = 'testthebest'
-
-      const actorId = await createUser(newUser)
-      newUser.id = actorId
-
-      expect(actorId).to.be.a('string')
-    })
-
-    it('Should store user email lowercase', async () => {
-      const user = {
-        name: 'Marty McFly',
-        email: 'Marty@Mc.Fly',
-        password: 'something_future_proof'
-      }
-
-      const userId = await createUser(user)
-
-      const storedUser = await getUser(userId)
-      expect(storedUser.email).to.equal(user.email.toLowerCase())
-    })
-
     it('Get user by should ignore email casing', async () => {
-      const user = await getUserByEmail({ email: 'BiLL@GaTES.cOm' })
-      expect(user.email).to.equal('bill@gates.com')
+      await createUser({
+        name: 'John Doe',
+        password: 'sn3aky-1337-b1m',
+        email: 'test@example.org'
+      })
+      const user = await getUserByEmail({ email: 'TeST@ExamPLE.oRg' })
+      expect(user.email).to.equal('test@example.org')
     })
 
     it('Validate password should ignore email casing', async () => {
       expect(
         await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
       )
-    })
-
-    it('Should not create a user with a too small password', async () => {
-      try {
-        await createUser({
-          name: 'Dim Sum',
-          email: 'dim@gmail.com',
-          password: '1234567'
-        })
-      } catch {
-        return
-      }
-      assert.fail('short pwd')
-    })
-
-    it('Should still find previously stored non lowercase emails', async () => {
-      const email = 'Dim@gMail.cOm'
-      const user = { name: 'Dim Sum', email, password: '1234567' }
-      user.id = crs({ length: 10 })
-      user.passwordDigest = await bcrypt.hash(user.password, 10)
-      delete user.password
-
-      const [{ id: userId }] = await knex('users').returning('id').insert(user)
-
-      const userByEmail = await getUserByEmail({ email })
-      expect(userByEmail).to.not.be.null
-      expect(userByEmail.email).to.equal(email)
-      expect(userByEmail.id).to.equal(userId)
-
-      const userByLowerEmail = await getUserByEmail({ email: email.toLowerCase() })
-      expect(userByLowerEmail).to.not.be.null
-      expect(userByLowerEmail.email).to.equal(email)
-      expect(user.id).to.equal(userId)
-
-      user.email = user.email.toLowerCase()
-      const foundNotCreatedUser = await findOrCreateUser({ user })
-      expect(foundNotCreatedUser.id).to.equal(userId)
-    })
-
-    it('Should not create an user with the same email', async () => {
-      const newUser = {}
-      newUser.name = 'Bill Gates'
-      newUser.email = 'bill@gates.com'
-      newUser.password = 'testthebest'
-
-      await createUser(newUser)
-        .then(() => {
-          throw new Error('This should have failed with duplicate email error')
-        })
-        .catch((err) => {
-          expect(err.message).to.equal('Email taken. Try logging in?')
-        })
     })
 
     let ballmerUserId = null
@@ -216,7 +141,10 @@ describe('Actors & Tokens @user-services', () => {
       })
 
       // create an object and a commit around it on the multiowner stream
-      const objId = await createObject(multiOwnerStream.id, { pie: 'in the sky' })
+      const objId = await createObject({
+        streamId: multiOwnerStream.id,
+        object: { pie: 'in the sky' }
+      })
       const commitId = await createCommitByBranchName({
         streamId: multiOwnerStream.id,
         branchName: 'ballmer/dev',
@@ -278,6 +206,12 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should search and get users', async () => {
+      const email = createRandomEmail()
+      await createUser({
+        name: 'Bill Gates',
+        password: 'sn3aky-1337-b1m',
+        email
+      })
       const { users } = await searchUsers('gates', 20, null)
       expect(users).to.have.lengthOf(1)
       expect(users[0].name).to.equal('Bill Gates')

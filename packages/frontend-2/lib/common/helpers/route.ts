@@ -6,6 +6,7 @@ import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHas
 export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
 export const homeRoute = '/'
+export const projectsRoute = '/projects'
 export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
@@ -13,6 +14,27 @@ export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
+export const docsPageUrl = 'https://speckle.guide/'
+export const forumPageUrl = 'https://speckle.community/'
+
+export const settingsQueries: {
+  [key: string]: {
+    [key: string]: string
+  }
+} = {
+  user: {
+    profile: 'user/profile',
+    notifications: 'user/notifications',
+    developerSettings: 'user/developer-settings',
+    emails: 'user/emails'
+  },
+  server: {
+    general: 'server/general',
+    projects: 'server/projects',
+    activeUsers: 'server/active-users',
+    pendingInvitations: 'server/pending-invitations'
+  }
+}
 
 export const projectRoute = (
   id: string,
@@ -64,6 +86,8 @@ export const automationFunctionsRoute = '/functions'
 
 export const automationFunctionRoute = (functionId: string) =>
   `${automationFunctionsRoute}/${functionId}`
+
+export const workspaceRoute = (id: string) => `/workspaces/${id}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

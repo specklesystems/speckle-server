@@ -1,7 +1,9 @@
 <template>
   <ProjectPageSettingsBlock title="Collaborators">
     <template #introduction>
-      <p>Invite new collaborators and set permissions.</p>
+      <p class="text-body-xs text-foreground">
+        Invite new collaborators and set permissions.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
@@ -13,10 +15,10 @@
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="bg-foundation flex items-center gap-2 py-3 px-4 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
+        class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
-        <UserAvatar :user="collaborator.user" size="sm" />
-        <span class="grow truncate text-sm">{{ collaborator.title }}</span>
+        <UserAvatar :user="collaborator.user" />
+        <span class="grow truncate text-body-xs">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
@@ -28,7 +30,7 @@
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
-          <span v-else class="shrink-0 text-sm">
+          <span v-else class="shrink-0 text-body-2xs">
             {{ roleSelectItems[collaborator.role].title }}
           </span>
         </template>
@@ -40,7 +42,7 @@
             <FormButton
               class="shrink-0"
               color="danger"
-              size="xs"
+              size="sm"
               :disabled="loading"
               @click="
                 cancelInvite({
@@ -49,7 +51,7 @@
                 })
               "
             >
-              Cancel Invite
+              Cancel invite
             </FormButton>
           </div>
         </template>

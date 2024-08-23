@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
 import './bootstrap'
 import http from 'http'
@@ -229,7 +230,8 @@ function buildApolloSubscriptionServer(
         }
 
         return baseParams
-      }
+      },
+      keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
     {
       server,
@@ -333,6 +335,16 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
+  app.use(
+    async (
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+      next()
+    }
+  )
   app.use(mixpanelTrackerHelperMiddleware)
 
   app.use(Sentry.Handlers.errorHandler())

@@ -1,4 +1,4 @@
-import EventEmitter from '../EventEmitter'
+import EventEmitter from '../EventEmitter.js'
 
 export enum LoaderEvent {
   LoadProgress = 'load-progress',

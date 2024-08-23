@@ -1,11 +1,11 @@
 <template>
   <div class="rounded-md" :class="[containerClasses, textClasses]">
     <div class="flex" :class="subcontainerClasses">
-      <div class="flex-shrink-0">
+      <div v-if="!hideIcon" class="flex-shrink-0">
         <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
       <div :class="mainContentContainerClasses">
-        <h3 class="text-sm" :class="[hasDescription ? 'font-medium' : '']">
+        <h3 v-if="hasTitle" class="text-sm" :class="{ 'font-medium': hasDescription }">
           <slot name="title">Title</slot>
         </h3>
         <div v-if="hasDescription" :class="descriptionWrapperClasses">
@@ -75,6 +75,7 @@ const props = withDefaults(
       externalUrl?: boolean
     }>
     customIcon?: PropAnyComponent
+    hideIcon?: boolean
     size?: Size
   }>(),
   {
@@ -85,6 +86,7 @@ const props = withDefaults(
 
 const slots = useSlots()
 const hasDescription = computed(() => !!slots['description'])
+const hasTitle = computed(() => !!slots['title'])
 
 const icon = computed(() => {
   if (props.customIcon) return props.customIcon
@@ -117,16 +119,22 @@ const containerClasses = computed(() => {
 
   switch (props.color) {
     case 'success':
-      classParts.push('bg-success-lighter border-l-4 border-success')
+      classParts.push(
+        `bg-success-lighter ${!props.hideIcon && 'border-l-4 border-success'}`
+      )
       break
     case 'info':
-      classParts.push('bg-info-lighter border-l-4 border-info')
+      classParts.push(`bg-info-lighter ${!props.hideIcon && 'border-l-4 border-info'}`)
       break
     case 'danger':
-      classParts.push('bg-danger-lighter border-l-4 border-danger')
+      classParts.push(
+        `bg-danger-lighter ${!props.hideIcon && 'border-l-4 border-danger'}`
+      )
       break
     case 'warning':
-      classParts.push('bg-warning-lighter border-l-4 border-warning')
+      classParts.push(
+        `bg-warning-lighter ${!props.hideIcon && 'border-l-4 border-warning'}`
+      )
       break
   }
 
@@ -185,8 +193,12 @@ const descriptionWrapperClasses = computed(() => {
       break
     case 'default':
     default:
-      classParts.push('mt-1 sm:mt-2 text-xs sm:text-sm')
+      classParts.push('text-xs sm:text-sm')
       break
+  }
+
+  if (hasTitle.value && props.size !== 'xs') {
+    classParts.push('mt-1 sm:mt-2')
   }
 
   return classParts.join(' ')
@@ -297,10 +309,10 @@ const buttonClasses = computed(() => {
 const actionSize = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'xs'
+      return 'small'
     case 'default':
     default:
-      return 'sm'
+      return 'base'
   }
 })
 </script>

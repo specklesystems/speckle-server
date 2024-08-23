@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Delete Webhook"
+    title="Delete webhook"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
@@ -108,7 +108,7 @@ const deleteConfirmed = async () => {
 const dialogButtons: LayoutDialogButton[] = [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => (isOpen.value = false)
   },
   {

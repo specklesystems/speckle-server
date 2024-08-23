@@ -59,7 +59,7 @@ export const RoleInfo = Object.freeze(<const>{
         'A role assigned workspace members. They have access to resources in the workspace.'
     },
     [Roles.Workspace.Guest]: {
-      title: 'Member',
+      title: 'Guest',
       description:
         'A role assigned workspace guests. Their access to resources in the workspace is limited to resources they have explicit roles on.'
     }
@@ -113,6 +113,7 @@ export const Scopes = Object.freeze(<const>{
   },
   Workspaces: {
     Create: 'workspace:create',
+    Read: 'workspace:read',
     Update: 'workspace:update',
     Delete: 'workspace:delete'
   }
@@ -140,7 +141,7 @@ export type AvailableScopes =
   | AppScopes
   | AutomateScopes
   | AutomateFunctionScopes
-  | WorkspaceRoles
+  | WorkspaceScopes
 
 /**
  * All scopes

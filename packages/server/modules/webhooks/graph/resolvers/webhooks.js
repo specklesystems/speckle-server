@@ -2,8 +2,6 @@ const { ForbiddenError } = require('apollo-server-express')
 
 const { authorizeResolver } = require('@/modules/shared')
 const {
-  createWebhook,
-  getWebhook,
   updateWebhook,
   deleteWebhook,
   getStreamWebhooks,
@@ -11,6 +9,8 @@ const {
   getWebhookEventsCount
 } = require('../../services/webhooks')
 const { Roles } = require('@speckle/shared')
+const { getWebhookByIdFactory } = require('../../repositories/webhooks')
+const { db } = require('@/db/knex')
 
 const streamWebhooksResolver = async (parent, args, context) => {
   await authorizeResolver(
@@ -21,7 +21,7 @@ const streamWebhooksResolver = async (parent, args, context) => {
   )
 
   if (args.id) {
-    const wh = await getWebhook({ id: args.id })
+    const wh = await getWebhookByIdFactory({ db })({ id: args.id })
     const items = wh ? [wh] : []
     return { items, totalCount: items.length }
   }
@@ -54,25 +54,6 @@ module.exports = {
   },
 
   Mutation: {
-    async webhookCreate(parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.webhook.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
-
-      const id = await createWebhook({
-        streamId: args.webhook.streamId,
-        url: args.webhook.url,
-        description: args.webhook.description,
-        secret: args.webhook.secret,
-        enabled: args.webhook.enabled !== false,
-        triggers: args.webhook.triggers
-      })
-
-      return id
-    },
     async webhookUpdate(parent, args, context) {
       await authorizeResolver(
         context.userId,
@@ -81,7 +62,7 @@ module.exports = {
         context.resourceAccessRules
       )
 
-      const wh = await getWebhook({ id: args.webhook.id })
+      const wh = await getWebhookByIdFactory({ db })({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)
         throw new ForbiddenError(
           'The webhook id and stream id do not match. Please check your inputs.'
@@ -106,7 +87,7 @@ module.exports = {
         context.resourceAccessRules
       )
 
-      const wh = await getWebhook({ id: args.webhook.id })
+      const wh = await getWebhookByIdFactory({ db })({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)
         throw new ForbiddenError(
           'The webhook id and stream id do not match. Please check your inputs.'

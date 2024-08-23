@@ -1,0 +1,43 @@
+type UserEmail {
+  id: ID!
+  email: String!
+  verified: Boolean!
+  primary: Boolean!
+  userId: ID!
+}
+
+extend type User {
+  emails: [UserEmail!]! @isOwner
+}
+
+input CreateUserEmailInput {
+  email: String!
+}
+input DeleteUserEmailInput {
+  id: ID!
+}
+input SetPrimaryUserEmailInput {
+  id: ID!
+}
+input EmailVerificationRequestInput {
+  id: ID!
+}
+
+type UserEmailMutations {
+  create(input: CreateUserEmailInput!): User!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+  delete(input: DeleteUserEmailInput!): User!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+  setPrimary(input: SetPrimaryUserEmailInput!): User!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+  requestNewEmailVerification(input: EmailVerificationRequestInput!): Boolean
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+}
+
+extend type ActiveUserMutations {
+  emailMutations: UserEmailMutations!
+}

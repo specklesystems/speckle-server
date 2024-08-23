@@ -7,11 +7,14 @@
     <div class="xxx-bg-foundation sm:rounded-xl p-4 sm:pb-2 w-full relative">
       <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" class="mr-1" />
-        <span class="grow truncate text-xs sm:text-sm font-bold">
+        <span class="grow truncate text-xs sm:text-sm font-medium">
           {{ comment.author.name }}
         </span>
-        <span class="text-xs truncate text-foreground-2 font-medium sm:font-bold">
-          {{ timeFromNow }}
+        <span
+          v-tippy="createdAt.full"
+          class="text-xs truncate text-foreground-2 font-medium"
+        >
+          {{ createdAt.relative }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">
@@ -43,7 +46,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 // import { Roles } from '@speckle/shared'
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
@@ -58,6 +60,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'mounted'): void
 }>()
+
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.comment.createdAt),
+    relative: formattedRelativeDate(props.comment.createdAt, { capitalize: true })
+  }
+})
 
 // const archiveComment = useArchiveComment()
 // const { activeUser } = useActiveUser()
@@ -77,5 +86,4 @@ const emit = defineEmits<{
 // const absoluteDate = computed(() =>
 //   dayjs(props.comment.createdAt).toDate().toLocaleString()
 // )
-const timeFromNow = computed(() => dayjs(props.comment.createdAt).fromNow())
 </script>

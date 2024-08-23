@@ -1,8 +1,8 @@
-import { type ExtendedIntersection } from '../objects/SpeckleRaycaster'
-import { Extension } from './Extension'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { type ExtendedIntersection } from '../objects/SpeckleRaycaster.js'
+import { Extension } from './Extension.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import { Material, Vector2 } from 'three'
-import { InputEvent } from '../input/Input'
+import { InputEvent } from '../input/Input.js'
 import { MathUtils } from 'three'
 import {
   type IViewer,
@@ -10,15 +10,15 @@ import {
   type SelectionEvent,
   UpdateFlags,
   ViewerEvent
-} from '../../IViewer'
+} from '../../IViewer.js'
 import Materials, {
   type DisplayStyle,
   type RenderMaterial
-} from '../materials/Materials'
-import { StencilOutlineType } from '../../IViewer'
-import { type MaterialOptions } from '../materials/MaterialOptions'
-import { type TreeNode } from '../tree/WorldTree'
-import { CameraController } from './CameraController'
+} from '../materials/Materials.js'
+import { StencilOutlineType } from '../../IViewer.js'
+import { type MaterialOptions } from '../materials/MaterialOptions.js'
+import { type TreeNode } from '../tree/WorldTree.js'
+import { CameraController } from './CameraController.js'
 
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
@@ -29,6 +29,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   selectionMaterialData: {
     id: MathUtils.generateUUID(),
     color: 0x047efb,
+    emissive: 0x0,
     opacity: 1,
     roughness: 1,
     metalness: 0,

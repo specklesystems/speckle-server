@@ -1,9 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
+  <div
+    class="relative group bg-foundation-2 border border-outline-2 p-2 rounded-lg pr-12"
+  >
     <div
       v-if="isMultiline"
-      class="relative z-10 text-xs sm:text-sm text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
+      class="relative z-10 text-body-xs text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
       @keypress="keyboardClick(selectAllText)"
     >
       {{ value }}
@@ -16,10 +18,9 @@
       :model-value="value"
       class="relative z-10 text-sm text-foreground font-mono"
     />
-    <div class="absolute inset-0 right-2 flex justify-end items-center">
+    <div class="absolute top-2 right-2 flex justify-end items-center">
       <FormButton
-        color="invert"
-        size="sm"
+        color="outline"
         :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"
         hide-text
         @click="handleCopy"
