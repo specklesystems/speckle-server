@@ -3,8 +3,8 @@
     class="relative w-full bg-foundation-page border border-outline-2 rounded-lg overflow-hidden p-12"
   >
     <div class="absolute inset-0">
-      <NuxtImg
-        src="workspaces.png"
+      <img
+        src="~/public/images/workspace/workspaces.png"
         alt="Introducing workspaces"
         class="absolute top-0 right-0 w-full sm:w-7/12 h-full object-cover"
       />
