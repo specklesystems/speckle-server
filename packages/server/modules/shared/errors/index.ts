@@ -82,5 +82,10 @@ export class EnvironmentResourceError extends BaseError {
     'An error occurred while trying to access a resource in the environment.'
 }
 
+export class DatabaseError extends BaseError {
+  static code = 'DATABASE_ERROR'
+  static defaultMessage = 'An error occurred while trying to access the database.'
+}
+
 export { BaseError }
 export type { Info }
