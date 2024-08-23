@@ -33,10 +33,10 @@
         </span>
       </template>
       <template #role="{ item }">
-        <!-- fully-control-value -->
         <FormSelectWorkspaceRoles
           :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
+          fully-control-value
           @update:model-value="
             (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
           "
