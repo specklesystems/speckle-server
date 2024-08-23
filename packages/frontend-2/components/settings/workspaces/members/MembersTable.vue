@@ -54,9 +54,9 @@
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
-            color="subtle"
+            :color="showActionsMenu ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="EllipsisHorizontalIcon"
+            :icon-right="showActionsMenu ? XMarkIcon : EllipsisHorizontalIcon"
             @click="showActionsMenu = !showActionsMenu"
           />
         </LayoutMenu>
@@ -83,7 +83,7 @@
 import type { WorkspaceRoles } from '@speckle/shared'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
