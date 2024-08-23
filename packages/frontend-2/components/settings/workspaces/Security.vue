@@ -46,9 +46,9 @@
       </div>
     </div>
     <SettingsWorkspacesSecurityDomainAddDialog
-      v-if="verifiedUser"
+      v-if="verifiedUser && workspace"
       v-model:open="showAddDomainDialog"
-      :workspace-id="workspaceId"
+      :workspace="workspace"
       :verified-user="verifiedUser"
     />
     <SettingsWorkspacesSecurityDomainRemoveDialog
@@ -105,6 +105,9 @@ const { result: workspaceSecuritySettings } = useQuery(
   }
 )
 
+const workspace = computed(() => {
+  return workspaceSecuritySettings.value?.workspace
+})
 const verifiedUser = computed(() => {
   return workspaceSecuritySettings.value?.activeUser
 })
@@ -114,7 +117,9 @@ const workspaceDomains = computed(() => {
 })
 
 const isDomainProtectionEnabled = computed({
-  get: () => workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false,
+  get: () =>
+    workspaceSecuritySettings.value?.workspace.domainBasedMembershipProtectionEnabled ||
+    false,
   set: async (newVal) => {
     const result = await apollo
       .mutate({
@@ -144,8 +149,9 @@ const isDomainProtectionEnabled = computed({
           cache.modify<Workspace>({
             id: getCacheId('Workspace', props.workspaceId),
             fields: {
-              discoverabilityEnabled: () =>
-                res.data?.workspaceMutations.update.discoverabilityEnabled || false
+              domainBasedMembershipProtectionEnabled: () =>
+                res.data?.workspaceMutations.update
+                  .domainBasedMembershipProtectionEnabled || false
             }
           })
         }
@@ -192,8 +198,8 @@ const isDomainDiscoverabilityEnabled = computed({
         cache.modify<Workspace>({
           id: getCacheId('Workspace', props.workspaceId),
           fields: {
-            domainBasedMembershipProtectionEnabled: () =>
-              workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false
+            discoverabilityEnabled: () =>
+              res.data?.workspaceMutations.update.discoverabilityEnabled || false
           }
         })
       }

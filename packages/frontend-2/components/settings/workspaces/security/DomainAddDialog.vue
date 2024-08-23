@@ -22,6 +22,7 @@ import { settingsAddWorkspaceDomainMutation } from '~/lib/settings/graphql/mutat
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import type {
   SettingsWorkspacesSecurityDomainAddDialog_UserFragment,
+  SettingsWorkspacesSecurityDomainAddDialog_WorkspaceFragment,
   Workspace
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
@@ -34,6 +35,7 @@ graphql(`
       id
       domain
     }
+    discoverabilityEnabled
   }
   fragment SettingsWorkspacesSecurityDomainAddDialog_User on User {
     id
@@ -46,9 +48,11 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspaceId: string
+  workspace: SettingsWorkspacesSecurityDomainAddDialog_WorkspaceFragment
   verifiedUser: SettingsWorkspacesSecurityDomainAddDialog_UserFragment
 }>()
+
+const { workspace } = toRefs(props)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -79,7 +83,27 @@ const onAdd = async () => {
       variables: {
         input: {
           domain: selectedDomain.value,
-          workspaceId: props.workspaceId
+          workspaceId: workspace.value.id
+        }
+      },
+      optimisticResponse: {
+        workspaceMutations: {
+          addDomain: {
+            __typename: 'Workspace',
+            id: workspace.value.id,
+            domains: [
+              ...workspace.value.domains,
+              {
+                __typename: 'WorkspaceDomain',
+                id: '',
+                domain: selectedDomain.value
+              }
+            ],
+            discoverabilityEnabled:
+              workspace.value.domains.length === 0
+                ? true
+                : workspace.value.discoverabilityEnabled
+          }
         }
       },
       update: (cache, res) => {
@@ -87,8 +111,11 @@ const onAdd = async () => {
         if (!data?.workspaceMutations) return
 
         cache.modify<Workspace>({
-          id: getCacheId('Workspace', props.workspaceId),
+          id: getCacheId('Workspace', props.workspace.id),
           fields: {
+            discoverabilityEnabled() {
+              return data?.workspaceMutations.addDomain.discoverabilityEnabled || false
+            },
             domains() {
               return [...(data?.workspaceMutations.addDomain.domains || [])]
             }

@@ -44,7 +44,7 @@ const invite = computed(() => ({
 
 const processJoin = async (accept: boolean) => {
   if (!accept) {
-    // TODO: Somehow enable dismissing the discoverable workspace invite
+    // TODO: Use cookies to enable dismissing the discoverable workspace invite
     return
   }
 
