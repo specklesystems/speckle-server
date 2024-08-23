@@ -126,7 +126,10 @@
       </Transition>
     </Menu>
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
-    <SettingsDialog v-model:target-menu-item="settingsDialogTarget" />
+    <SettingsDialog
+      v-model:open="isOpen"
+      v-model:target-menu-item="settingsDialogTarget"
+    />
   </div>
 </template>
 <script setup lang="ts">
