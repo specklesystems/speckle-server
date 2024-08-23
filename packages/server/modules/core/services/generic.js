@@ -23,8 +23,10 @@ module.exports = {
     serverInfo.canonicalUrl = getServerOrigin()
     const movedTo = getServerMovedTo()
     const movedFrom = getServerMovedFrom()
-    serverInfo.objectSizeLimitBytes = getMaximumObjectSizeMB() * 1024 * 1024
-    serverInfo.objectMultipartUploadSizeLimitBytes = getFileSizeLimitMB() * 1024 * 1024
+    serverInfo.configuration = {
+      objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
+      objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024
+    }
     if (movedTo || movedFrom) serverInfo.migration = { movedTo, movedFrom }
     return serverInfo
   },
