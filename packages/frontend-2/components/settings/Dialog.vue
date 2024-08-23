@@ -40,7 +40,7 @@
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
             <template #title-icon>
-              <ServerStackIcon class="h-5 w-5" />
+              <IconWorkspaces class="h-4 w-4 text-foreground-2" />
             </template>
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
