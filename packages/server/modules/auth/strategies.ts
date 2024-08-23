@@ -1,15 +1,14 @@
 import ExpressSession from 'express-session'
 import ConnectRedis from 'connect-redis'
 import passport from 'passport'
-
-import sentry from '@/logging/sentryHelper'
 import { createAuthorizationCode } from '@/modules/auth/services/apps'
 import {
   getFrontendOrigin,
   getMailchimpStatus,
   getMailchimpNewsletterIds,
   getMailchimpOnboardingIds,
-  getSessionSecret
+  getSessionSecret,
+  enableMixpanel
 } from '@/modules/shared/helpers/envHelper'
 import { isSSLServer, getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { authLogger, logger } from '@/logging/logging'
@@ -104,7 +103,7 @@ const setupStrategies = async (app: Express) => {
         // Send event to MP
         const userEmail = req.user.email
         const isInvite = !!req.user.isInvite
-        if (userEmail) {
+        if (userEmail && enableMixpanel()) {
           await mixpanel({ userEmail, req }).track('Sign Up', {
             isInvite
           })
@@ -134,7 +133,6 @@ const setupStrategies = async (app: Express) => {
 
       return res.redirect(redirectUrl)
     } catch (err) {
-      sentry({ err })
       authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy(noop)
       return res.status(401).send({

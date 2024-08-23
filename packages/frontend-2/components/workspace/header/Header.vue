@@ -28,8 +28,8 @@
         class="max-w-[104px]"
       />
       <FormButton
+        v-if="isWorkspaceAdmin"
         color="outline"
-        :disabled="!isWorkspaceAdmin"
         @click="showInviteDialog = !showInviteDialog"
       >
         Invite
