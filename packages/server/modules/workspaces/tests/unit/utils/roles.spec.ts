@@ -8,23 +8,17 @@ describe('given a workspace with several admins', () => {
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',
-      role: Roles.Workspace.Member,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Member
     },
     {
       workspaceId: 'workspace-id',
       userId: 'admin-a',
-      role: Roles.Workspace.Admin,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Admin
     },
     {
       workspaceId: 'workspace-id',
       userId: 'admin-b',
-      role: Roles.Workspace.Admin,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Admin
     }
   ]
 
@@ -46,16 +40,12 @@ describe('given a workspace with one admin', () => {
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',
-      role: Roles.Workspace.Member,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Member
     },
     {
       workspaceId: 'workspace-id',
       userId: 'admin',
-      role: Roles.Workspace.Admin,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Admin
     }
   ]
 
@@ -77,16 +67,12 @@ describe('given a workspace', () => {
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',
-      role: Roles.Workspace.Member,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Member
     },
     {
       workspaceId: 'workspace-id',
       userId: 'admin',
-      role: Roles.Workspace.Admin,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: Roles.Workspace.Admin
     }
   ]
 

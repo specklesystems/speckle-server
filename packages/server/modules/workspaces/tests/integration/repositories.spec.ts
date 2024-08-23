@@ -144,9 +144,7 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         userId,
         workspaceId,
-        role: 'workspace:member',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:member'
       })
       await deleteWorkspaceRole({ userId, workspaceId })
 
@@ -161,9 +159,7 @@ describe('Workspace repositories', () => {
       const createdRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: 'workspace:member',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:member'
       }
       await upsertWorkspaceRole(createdRole)
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
@@ -187,16 +183,12 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdA,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdB,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
 
       const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -215,9 +207,7 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId,
         userId,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
 
       const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
@@ -245,16 +235,12 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser({ userId })
@@ -274,16 +260,12 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: 'workspace:admin'
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser(

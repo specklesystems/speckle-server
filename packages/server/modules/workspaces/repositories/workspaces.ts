@@ -1,6 +1,7 @@
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceAclUpdate,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -22,6 +23,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceAclUpdates,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
@@ -37,11 +39,13 @@ import {
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { clamp } from 'lodash'
+import cryptoRandomString from 'crypto-random-string'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
-  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
+  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
+  workspacesAclUpdates: (db: Knex) => db<WorkspaceAclUpdate>('workspace_acl_updates')
 }
 
 export const getWorkspacesFactory =
@@ -158,7 +162,7 @@ export const deleteWorkspaceRoleFactory =
 
 export const upsertWorkspaceRoleFactory =
   ({ db }: { db: Knex }): UpsertWorkspaceRole =>
-  async ({ userId, workspaceId, role, createdAt, updatedAt }) => {
+  async ({ userId, workspaceId, role }) => {
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
@@ -167,9 +171,17 @@ export const upsertWorkspaceRoleFactory =
 
     await tables
       .workspacesAcl(db)
-      .insert({ userId, workspaceId, role, createdAt, updatedAt })
+      .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
-      .merge(['role', 'createdAt', 'updatedAt'])
+      .merge(['role'])
+
+    await tables.workspacesAclUpdates(db).insert({
+      id: cryptoRandomString({ length: 10 }),
+      updatedAt: new Date(),
+      userId,
+      workspaceId,
+      role
+    })
   }
 
 export const getWorkspaceCollaboratorsTotalCountFactory =
@@ -184,26 +196,28 @@ export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
   async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
     const query = DbWorkspaceAcl.knex(db)
-      .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
+      .select<
+        Array<
+          UserWithRole & { workspaceRole: WorkspaceRoles; workspaceRoleUpdatedAt: Date }
+        >
+      >([
         ...Users.cols,
         knex.raw('(array_agg(??))[1] as ??', [ServerAcl.col.role, 'role']),
         knex.raw('(array_agg(??))[1] as ??', [
           DbWorkspaceAcl.col.role,
           'workspaceRole'
         ]),
-        knex.raw('(array_agg(??))[1] as ??', [
-          DbWorkspaceAcl.col.createdAt,
-          'workspaceRoleCreatedAt'
-        ]),
-        knex.raw('(array_agg(??))[1] as ??', [
-          DbWorkspaceAcl.col.updatedAt,
+        knex.raw('(array_agg(?? ORDER BY ?? ASC))[1] as ??', [
+          WorkspaceAclUpdates.col.updatedAt,
+          WorkspaceAclUpdates.col.updatedAt,
           'workspaceRoleUpdatedAt'
         ])
       ])
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .orderBy('workspaceRoleCreatedAt', 'desc')
+      .innerJoin(WorkspaceAclUpdates.name, WorkspaceAclUpdates.col.userId, Users.col.id)
+      .orderBy('workspaceRoleUpdatedAt', 'desc')
       .groupBy(Users.col.id)
 
     const { search, role } = filter || {}
@@ -219,7 +233,11 @@ export const getWorkspaceCollaboratorsFactory =
     }
 
     if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', decodeIsoDateCursor(cursor))
+      query.andWhere(
+        WorkspaceAclUpdates.col.updatedAt,
+        '<',
+        decodeIsoDateCursor(cursor)
+      )
     }
 
     if (limit) {
@@ -229,13 +247,14 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
-      role: i.role
+      role: i.role,
+      updatedAt: i.workspaceRoleUpdatedAt
     }))
 
     return {
       items,
       cursor: items.length
-        ? encodeIsoDateCursor(items[items.length - 1].createdAt)
+        ? encodeIsoDateCursor(items[items.length - 1].updatedAt)
         : null
     }
   }

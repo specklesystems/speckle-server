@@ -34,6 +34,7 @@ import {
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import knex from '@/db/knex'
+import { shuffle } from 'lodash'
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -187,6 +188,12 @@ describe('Workspaces GQL CRUD', () => {
           await createTestUser(user)
           await assignToWorkspace(largeWorkspace, user, role)
           // Overly-careful guarantee that `createdAt` values are different
+          await wait(1)
+        }
+
+        for (const [user, role] of shuffle(workspaceMembers)) {
+          // Simulate future changes to user roles
+          await assignToWorkspace(largeWorkspace, user, role)
           await wait(1)
         }
       })

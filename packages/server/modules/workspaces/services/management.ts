@@ -91,9 +91,7 @@ export const createWorkspaceFactory =
     await upsertWorkspaceRole({
       userId,
       role: Roles.Workspace.Admin,
-      workspaceId: workspace.id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      workspaceId: workspace.id
     })
 
     // emit a workspace created event
@@ -307,15 +305,11 @@ export const updateWorkspaceRoleFactory =
       throw new WorkspaceAdminRequiredError()
     }
 
-    const currentRole = workspaceRoles.find((acl) => acl.userId === userId)
-
     // Perform upsert
     await upsertWorkspaceRole({
       userId,
       workspaceId,
-      role,
-      createdAt: currentRole?.createdAt ?? new Date(),
-      updatedAt: new Date()
+      role
     })
 
     // Emit new role

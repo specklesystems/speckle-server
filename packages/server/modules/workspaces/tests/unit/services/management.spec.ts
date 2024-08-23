@@ -256,9 +256,7 @@ describe('Workspace role services', () => {
       const role: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Member
       }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
@@ -277,9 +275,7 @@ describe('Workspace role services', () => {
       const role: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Member
       }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
@@ -299,9 +295,7 @@ describe('Workspace role services', () => {
       const role: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Admin,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Admin
       }
 
       const { deleteWorkspaceRole } = buildDeleteWorkspaceRoleAndTestContext({
@@ -322,9 +316,7 @@ describe('Workspace role services', () => {
           {
             userId,
             workspaceId,
-            role: Roles.Workspace.Member,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            role: Roles.Workspace.Member
           }
         ],
         workspaceProjects: [{ id: projectId } as StreamRecord],
@@ -386,9 +378,7 @@ describe('Workspace role services', () => {
       const role: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Admin,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Admin
       }
 
       const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext({
@@ -408,9 +398,7 @@ describe('Workspace role services', () => {
       const workspaceRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        role: Roles.Workspace.Member
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
