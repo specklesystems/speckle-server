@@ -1,5 +1,5 @@
 export const useSettingsDialog = () => {
-  const isOpen = ref(true)
+  const isOpen = ref(false)
 
   const toggleDialog = () => {
     isOpen.value = !isOpen.value
