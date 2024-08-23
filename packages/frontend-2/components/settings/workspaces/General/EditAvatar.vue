@@ -3,6 +3,7 @@
     v-model:edit-mode="editMode"
     :model-value="workspace.logo"
     :placeholder="workspace.name"
+    :default-img="defaultAvatar"
     name="edit-avatar"
     :disabled="loading"
     :size="size"
@@ -15,6 +16,7 @@ import type { SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment } from '~~/l
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
 import { useUpdateWorkspace } from '~~/lib/settings/composables/management'
+import { useWorkspacesAvatar } from '~~/lib/workspaces/composables/avatar'
 
 graphql(`
   fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {
@@ -29,8 +31,10 @@ const props = defineProps<{
   size: UserAvatarSize
 }>()
 
-const editMode = ref(false)
 const { mutate, loading } = useUpdateWorkspace()
+const { defaultAvatar } = useWorkspacesAvatar()
+
+const editMode = ref(false)
 
 const onSave = async (newVal: MaybeNullOrUndefined<string>) => {
   if (props.workspace.logo === newVal) return
@@ -42,4 +46,8 @@ const onSave = async (newVal: MaybeNullOrUndefined<string>) => {
   })
   editMode.value = false
 }
+
+// const avatar = computed(() =>
+//   props.workspace.logo ? props.workspace.logo : defaultAvatar.value
+// )
 </script>
