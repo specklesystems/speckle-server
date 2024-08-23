@@ -839,18 +839,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "{{ .Values.server.mailchimp.onboardingStepId}}"
 {{- end }}
 
-# *** Tracking / Tracing ***
-- name: SENTRY_DSN
-  value: {{ .Values.server.sentry_dns }}
-{{- if .Values.server.disable_tracing }}
-- name: DISABLE_TRACING
-  value: "true"
-{{- end }}
-{{- if .Values.server.disable_tracking }}
-- name: DISABLE_TRACKING
-  value: "true"
-{{- end }}
-
 # Monitoring - Apollo
 {{- if .Values.server.monitoring.apollo.enabled }}
 - name: APOLLO_GRAPH_ID
