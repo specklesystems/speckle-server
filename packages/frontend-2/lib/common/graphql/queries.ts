@@ -38,7 +38,9 @@ export const userSearchQuery = graphql(`
 export const serverInfoBlobSizeLimitQuery = graphql(`
   query ServerInfoBlobSizeLimit {
     serverInfo {
-      blobSizeLimitBytes
+      configuration {
+        blobSizeLimitBytes
+      }
     }
   }
 `)

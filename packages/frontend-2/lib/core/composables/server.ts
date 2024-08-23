@@ -8,7 +8,6 @@ export const mainServerInfoDataQuery = graphql(`
   query MainServerInfoData {
     serverInfo {
       adminContact
-      blobSizeLimitBytes
       canonicalUrl
       company
       description
