@@ -332,8 +332,18 @@ export function useCreateWorkspace() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
+  const router = useRouter()
 
-  return async (input: WorkspaceCreateInput) => {
+  return async (
+    input: WorkspaceCreateInput,
+    options?: Partial<{
+      /**
+       * Determines whether to navigate to the new workspace upon creation.
+       * Defaults to false.
+       */
+      navigateOnSuccess: boolean
+    }>
+  ) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -350,6 +360,10 @@ export function useCreateWorkspace() {
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'
       })
+
+      if (options?.navigateOnSuccess === true) {
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+      }
     } else {
       const err = getFirstErrorMessage(res.errors)
       triggerNotification({
