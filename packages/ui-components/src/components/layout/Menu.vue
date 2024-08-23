@@ -13,7 +13,7 @@
         ref="menuItems"
         :class="[
           'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50',
-          menuDirection === HorizontalDirection.Left ? 'right-0' : 'left-0'
+          menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
         :style="menuItemsStyles"
       >
@@ -74,8 +74,12 @@ const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
 const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
 const menuButtonWrapper = ref(null as Nullable<HTMLElement>)
 const isOpenInternally = ref(false)
-
 const isMounted = ref(false)
+
+const finalOpen = computed({
+  get: () => props.open || false,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const menuButtonBounding = useElementBounding(menuButtonWrapper, {
   windowResize: true,
@@ -156,11 +160,6 @@ const processOpen = (val: unknown): val is boolean => {
 watch(isOpenInternally, (newVal, oldVal) => {
   if (newVal === oldVal) return
   finalOpen.value = newVal
-})
-
-const finalOpen = computed({
-  get: () => props.open || false,
-  set: (newVal) => emit('update:open', newVal)
 })
 
 watch(finalOpen, (shouldBeOpen) => {
