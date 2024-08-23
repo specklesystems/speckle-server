@@ -135,11 +135,14 @@ export const getWorkspaceRolesForUserFactory =
 
 export const deleteWorkspaceRoleFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceRole =>
-  async ({ userId, workspaceId }) => {
-    const deletedRoles = await tables
-      .workspacesAcl(db)
-      .where({ workspaceId, userId })
-      .delete('*')
+  async ({ userId, workspaceId }, opts) => {
+    const query = tables.workspacesAcl(db).where({ workspaceId, userId }).delete('*')
+
+    if (opts?.trx) {
+      query.transacting(opts.trx)
+    }
+
+    const deletedRoles = await query
 
     if (deletedRoles.length === 0) {
       return null
@@ -152,18 +155,24 @@ export const deleteWorkspaceRoleFactory =
 
 export const upsertWorkspaceRoleFactory =
   ({ db }: { db: Knex }): UpsertWorkspaceRole =>
-  async ({ userId, workspaceId, role }) => {
+  async ({ userId, workspaceId, role }, opts) => {
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
       throw new WorkspaceInvalidRoleError()
     }
 
-    await tables
+    const query = tables
       .workspacesAcl(db)
       .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
+
+    if (opts?.trx) {
+      query.transacting(opts.trx)
+    }
+
+    await query
   }
 
 export const getWorkspaceCollaboratorsFactory =
