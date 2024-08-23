@@ -490,7 +490,7 @@ describe('Workspaces Invites GQL', () => {
         expect(sendEmailInvocations.args).to.have.lengthOf(1)
         const emailParams = sendEmailInvocations.args[0][0]
         expect(emailParams).to.be.ok
-        expect(emailParams.to).to.eq(randomUnregisteredEmail)
+        expect(emailParams.to).to.eq(otherGuy.email)
         expect(emailParams.subject).to.be.ok
 
         // Validate that invite exists
