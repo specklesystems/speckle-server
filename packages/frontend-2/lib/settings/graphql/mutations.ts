@@ -85,3 +85,11 @@ export const settingsCancelWorkspaceInviteMutation = graphql(`
     }
   }
 `)
+
+export const settingsLeaveWorkspaceMutation = graphql(`
+  mutation SettingsLeaveWorkspace($leaveId: ID!) {
+    workspaceMutations {
+      leave(id: $leaveId)
+    }
+  }
+`)

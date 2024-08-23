@@ -130,7 +130,6 @@ graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
-        ...SettingsWorkspacesGeneralEditAvatar_Workspace
         ...WorkspaceAvatar_Workspace
         id
         name
