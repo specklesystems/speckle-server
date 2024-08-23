@@ -48,6 +48,7 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
      */
     this.renderTarget.depthBuffer = true
     this.renderTarget.stencilBuffer = true
+    this.renderTarget.samples = 8
 
     this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
     this.normalsMaterial.blending = NoBlending

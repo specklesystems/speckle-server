@@ -38,6 +38,7 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })
+    this.renderTarget.samples = 8
 
     this.edgesMaterial = new ShaderMaterial({
       fragmentShader: speckleEdgesGeneratorFrag,
