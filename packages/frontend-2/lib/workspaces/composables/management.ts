@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   Query,
@@ -10,9 +10,11 @@ import type {
   UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
+  WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -26,8 +28,10 @@ import {
 import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
+  createWorkspaceMutation,
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
@@ -321,5 +325,80 @@ export const useWorkspaceInviteManager = <
       processInvite(true, options),
     decline: (options?: Parameters<typeof processInvite>[1]) =>
       processInvite(false, options)
+  }
+}
+
+export function useCreateWorkspace() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { activeUser } = useActiveUser()
+  const router = useRouter()
+
+  return async (
+    input: WorkspaceCreateInput,
+    options?: Partial<{
+      /**
+       * Determines whether to navigate to the new workspace upon creation.
+       * Defaults to false.
+       */
+      navigateOnSuccess: boolean
+    }>
+  ) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const res = await apollo
+      .mutate({
+        mutation: createWorkspaceMutation,
+        variables: { input }
+        // TODO: Fix the cache update
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (res.data?.workspaceMutations.create.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace successfully created'
+      })
+
+      if (options?.navigateOnSuccess === true) {
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+      }
+    } else {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Workspace creation failed',
+        description: err
+      })
+    }
+
+    return res
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
   }
 }

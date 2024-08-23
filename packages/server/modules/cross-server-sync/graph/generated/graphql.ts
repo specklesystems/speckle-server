@@ -2690,6 +2690,14 @@ export type ServerAutomateInfo = {
   availableFunctionTemplates: Array<AutomateFunctionTemplate>;
 };
 
+/** Server configuration. */
+export type ServerConfiguration = {
+  __typename?: 'ServerConfiguration';
+  blobSizeLimitBytes: Scalars['Int']['output'];
+  objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
+  objectSizeLimitBytes: Scalars['Int']['output'];
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
@@ -2699,9 +2707,16 @@ export type ServerInfo = {
   automate: ServerAutomateInfo;
   /** Base URL of Speckle Automate, if set */
   automateUrl?: Maybe<Scalars['String']['output']>;
+  /** @deprecated Use the ServerInfo{configuration{blobSizeLimitBytes}} field instead. */
   blobSizeLimitBytes: Scalars['Int']['output'];
   canonicalUrl?: Maybe<Scalars['String']['output']>;
   company?: Maybe<Scalars['String']['output']>;
+  /**
+   * Configuration values that are specific to this server.
+   * These are read-only and can only be adjusted during server setup.
+   * Please contact your server administrator if you wish to suggest a change to these values.
+   */
+  configuration: ServerConfiguration;
   description?: Maybe<Scalars['String']['output']>;
   /** Whether or not to show messaging about FE2 (banners etc.) */
   enableNewWebUiMessaging?: Maybe<Scalars['Boolean']['output']>;

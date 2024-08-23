@@ -291,6 +291,7 @@ const documents = {
     "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
+    "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {\n    workspaceMutations {\n      invites {\n        use(input: $input)\n      }\n    }\n  }\n": types.ProcessWorkspaceInviteDocument,
     "\n  query WorkspaceAccessCheck($id: String!) {\n    workspace(id: $id) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceHeader_Workspace\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspacePageQueryDocument,
@@ -1436,6 +1437,10 @@ export function graphql(source: "\n  mutation UpdateRole($input: WorkspaceRoleUp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -3,14 +3,14 @@
     <h1 class="text-heading-xl text-center">Join workspace</h1>
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
-      <span class="font-semibold">{{ invite.workspaceName }}</span>
+      <span class="font-medium">{{ invite.workspaceName }}</span>
       <template v-if="isCurrentUserTarget">.</template>
       <template v-else>
         <template v-if="targetUser">
           <!-- prettier-ignore -->
           <template v-if="activeUser">
             however the invitation was sent to
-            <span class="inline-flex items-center font-semibold">
+            <span class="inline-flex items-center font-medium">
               <UserAvatar :user="targetUser" size="sm" class="mr-1" />
               {{ targetUser.name }}
             </span>. You have to sign out from the current account to proceed.
@@ -19,7 +19,7 @@
         </template>
         <template v-else>
           using the
-          <span class="font-semibold">{{ invite.email }}</span>
+          <span class="font-medium">{{ invite.email }}</span>
           email address.
         </template>
       </template>
