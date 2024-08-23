@@ -46,8 +46,4 @@ const onSave = async (newVal: MaybeNullOrUndefined<string>) => {
   })
   editMode.value = false
 }
-
-// const avatar = computed(() =>
-//   props.workspace.logo ? props.workspace.logo : defaultAvatar.value
-// )
 </script>
