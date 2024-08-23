@@ -40,6 +40,7 @@
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
+      :is-guest="isGuest"
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
