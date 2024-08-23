@@ -15,7 +15,6 @@ import {
 } from '@/modules/automate/repositories/automations'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { getUserById } from '@/modules/core/services/users'
-import { enableMixpanel } from '@/modules/shared/helpers/envHelper'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
 
@@ -72,19 +71,17 @@ const onAutomationRunStatusUpdated =
       automationWithRevision.projectId
     )
 
-    if (enableMixpanel()) {
-      const mp = mixpanel({ userEmail, req: undefined })
-      await mp.track('Automate Function Run Finished', {
-        automationId,
-        automationRevisionId: automationWithRevision.id,
-        automationName: automationWithRevision.name,
-        runId: run.id,
-        functionRunId: functionRun.id,
-        status: functionRun.status,
-        durationInSeconds: functionRun.elapsed / 1000,
-        durationInMilliseconds: functionRun.elapsed
-      })
-    }
+    const mp = mixpanel({ userEmail, req: undefined })
+    await mp.track('Automate Function Run Finished', {
+      automationId,
+      automationRevisionId: automationWithRevision.id,
+      automationName: automationWithRevision.name,
+      runId: run.id,
+      functionRunId: functionRun.id,
+      status: functionRun.status,
+      durationInSeconds: functionRun.elapsed / 1000,
+      durationInMilliseconds: functionRun.elapsed
+    })
   }
 
 const getUserEmailFromAutomationRun =
@@ -133,16 +130,14 @@ const onRunCreated =
           automationRun,
           automation.projectId
         )
-        if (enableMixpanel()) {
-          const mp = mixpanel({ userEmail, req: undefined })
-          await mp.track('Automation Run Triggered', {
-            automationId: automation.id,
-            automationName: automation.name,
-            automationRunId: automationRun.id,
-            projectId: automation.projectId,
-            source
-          })
-        }
+        const mp = mixpanel({ userEmail, req: undefined })
+        await mp.track('Automation Run Triggered', {
+          automationId: automation.id,
+          automationName: automation.name,
+          automationRunId: automationRun.id,
+          projectId: automation.projectId,
+          source
+        })
         break
       }
       // runs created from a user interaction are tracked in the frontend
