@@ -2683,6 +2683,14 @@ export type ServerAutomateInfo = {
   availableFunctionTemplates: Array<AutomateFunctionTemplate>;
 };
 
+/** Server configuration. */
+export type ServerConfiguration = {
+  __typename?: 'ServerConfiguration';
+  blobSizeLimitBytes: Scalars['Int']['output'];
+  objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
+  objectSizeLimitBytes: Scalars['Int']['output'];
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
@@ -2692,9 +2700,16 @@ export type ServerInfo = {
   automate: ServerAutomateInfo;
   /** Base URL of Speckle Automate, if set */
   automateUrl?: Maybe<Scalars['String']['output']>;
+  /** @deprecated Use the ServerInfo{configuration{blobSizeLimitBytes}} field instead. */
   blobSizeLimitBytes: Scalars['Int']['output'];
   canonicalUrl?: Maybe<Scalars['String']['output']>;
   company?: Maybe<Scalars['String']['output']>;
+  /**
+   * Configuration values that are specific to this server.
+   * These are read-only and can only be adjusted during server setup.
+   * Please contact your server administrator if you wish to suggest a change to these values.
+   */
+  configuration: ServerConfiguration;
   description?: Maybe<Scalars['String']['output']>;
   /** Whether or not to show messaging about FE2 (banners etc.) */
   enableNewWebUiMessaging?: Maybe<Scalars['Boolean']['output']>;
@@ -4256,6 +4271,7 @@ export type ResolversTypes = {
   ServerApp: ResolverTypeWrapper<ServerApp>;
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItem>;
   ServerAutomateInfo: ResolverTypeWrapper<ServerAutomateInfo>;
+  ServerConfiguration: ResolverTypeWrapper<ServerConfiguration>;
   ServerInfo: ResolverTypeWrapper<ServerInfo>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
@@ -4488,6 +4504,7 @@ export type ResolversParentTypes = {
   ServerApp: ServerApp;
   ServerAppListItem: ServerAppListItem;
   ServerAutomateInfo: ServerAutomateInfo;
+  ServerConfiguration: ServerConfiguration;
   ServerInfo: ServerInfo;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
@@ -5507,6 +5524,13 @@ export type ServerAutomateInfoResolvers<ContextType = GraphQLContext, ParentType
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ServerConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerConfiguration'] = ResolversParentTypes['ServerConfiguration']> = {
+  blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerInfo'] = ResolversParentTypes['ServerInfo']> = {
   adminContact?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authStrategies?: Resolver<Array<ResolversTypes['AuthStrategy']>, ParentType, ContextType>;
@@ -5515,6 +5539,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  configuration?: Resolver<ResolversTypes['ServerConfiguration'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enableNewWebUiMessaging?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -6018,6 +6043,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerApp?: ServerAppResolvers<ContextType>;
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerAutomateInfo?: ServerAutomateInfoResolvers<ContextType>;
+  ServerConfiguration?: ServerConfigurationResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
   ServerMigration?: ServerMigrationResolvers<ContextType>;
