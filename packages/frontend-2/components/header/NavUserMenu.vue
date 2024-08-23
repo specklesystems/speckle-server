@@ -30,7 +30,7 @@
                 external
                 :href="connectorsPageUrl"
               >
-                {{ isOpen }} Connector downloads
+                Connector downloads
               </NuxtLink>
             </MenuItem>
           </div>
@@ -127,7 +127,7 @@
     </Menu>
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     <SettingsDialog
-      v-model:open="isOpen"
+      v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
     />
   </div>
@@ -146,7 +146,6 @@ import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
-import { useSettingsDialog } from '~/lib/settings/composables/dialog'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -159,9 +158,9 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
-const { isOpen, toggleDialog } = useSettingsDialog()
 
 const showInviteDialog = ref(false)
+const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -175,7 +174,7 @@ const toggleInviteDialog = () => {
 }
 
 const toggleSettingsDialog = (target: string) => {
-  toggleDialog()
+  showSettingsDialog.value = true
 
   // On mobile open the modal but dont set the target
   settingsDialogTarget.value = !isMobile.value ? target : null
@@ -200,7 +199,7 @@ onMounted(() => {
       return
     }
 
-    toggleDialog()
+    showSettingsDialog.value = true
     settingsDialogTarget.value = settingsQuery
     deleteSettingsQuery()
   }

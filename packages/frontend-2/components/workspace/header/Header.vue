@@ -34,7 +34,7 @@
       >
         Invite
       </FormButton>
-      <!-- <LayoutMenu
+      <LayoutMenu
         v-model:open="showActionsMenu"
         :items="actionsItems"
         @click.stop.prevent
@@ -46,12 +46,17 @@
           :icon-right="EllipsisHorizontalIcon"
           @click="showActionsMenu = !showActionsMenu"
         />
-      </LayoutMenu> -->
+      </LayoutMenu>
     </div>
     <WorkspaceInviteDialog
       v-model:open="showInviteDialog"
       :workspace-id="workspaceInfo.id"
       :workspace="workspaceInfo"
+    />
+    <SettingsDialog
+      v-model:open="showSettingsDialog"
+      target-menu-item="general"
+      :target-workspace-id="workspaceInfo.id"
     />
   </div>
 </template>
@@ -60,9 +65,9 @@
 import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
-// import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-// import { useSettingsDialog } from '~/lib/settings/composables/dialog'
-// import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -87,38 +92,38 @@ graphql(`
   }
 `)
 
-// enum ActionTypes {
-//   Settings = 'settings',
-//   CopyLink = 'copy-link'
-// }
+enum ActionTypes {
+  Settings = 'settings',
+  CopyLink = 'copy-link'
+}
 
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
-// const { toggleDialog: toggleSettingsDialog } = useSettingsDialog()
-
 const showInviteDialog = ref(false)
-// const showActionsMenu = ref(false)
+const showActionsMenu = ref(false)
+const showSettingsDialog = ref(false)
 
 const team = computed(() => props.workspaceInfo.team || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
-// const actionsItems = computed<LayoutMenuItem[][]>(() => [
-//   [
-//     { title: 'Copy link', id: ActionTypes.CopyLink },
-//     { title: 'Settings...', id: ActionTypes.Settings }
-//   ]
-// ])
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [{ title: 'Copy link', id: ActionTypes.CopyLink }],
+  [{ title: 'Settings...', id: ActionTypes.Settings }]
+])
 
-// const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
-//   const { item } = params
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
 
-//   switch (item.id) {
-//     case ActionTypes.Settings:
-//       // toggleSettingsDialog()
-//       break
-//   }
-// }
+  switch (item.id) {
+    case ActionTypes.CopyLink:
+      copyWorkspaceLink(props.workspaceInfo.id)
+      break
+    case ActionTypes.Settings:
+      showSettingsDialog.value = true
+      break
+  }
+}
 </script>

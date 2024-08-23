@@ -296,7 +296,6 @@ const onScroll = throttle((e: { target: EventTarget | null }) => {
 // Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
 // This maintains user scroll position when Headless UI dialogs are activated.
 watch(open, (newValue) => {
-  console.log('LayoutDialog: ', newValue)
   if (isClient) {
     const html = document.documentElement
     if (newValue) {

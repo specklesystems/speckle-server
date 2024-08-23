@@ -47,7 +47,7 @@
               :key="key"
               :title="workspaceItem.name"
               collapsible
-              :collapsed="true"
+              :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -100,6 +100,7 @@
         ]"
         :user="user"
         :workspace-id="targetWorkspaceId"
+        @close="isOpen = false"
       />
     </div>
 
@@ -117,7 +118,6 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu } from '~/lib/settings/composables/menu'
-import { useSettingsDialog } from '~/lib/settings/composables/dialog'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -139,13 +139,11 @@ graphql(`
   }
 `)
 
+const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
+const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 
 const { activeUser: user } = useActiveUser()
-// const settingsDialog = useSettingsDialog()
-
-const { isOpen } = useSettingsDialog()
-
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 
@@ -155,7 +153,6 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 })
 
 const isMobile = breakpoints.smaller('md')
-const targetWorkspaceId = ref<string | null>(null)
 const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
@@ -192,10 +189,13 @@ const workspaceMenuItemClasses = (
   targetWorkspaceId.value === workspaceId &&
   !disabled
 
-// watch(
-//   () => isOpen.value,
-//   (newVal) => {
-//     console.log('SettingsDialog: ', isOpen.value)
-//   }
-// )
+watch(
+  () => user.value,
+  (newVal) => {
+    if (!newVal) {
+      isOpen.value = false
+    }
+  },
+  { immediate: true }
+)
 </script>
