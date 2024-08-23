@@ -58,7 +58,7 @@
               collapsible
               title="Workspaces"
             >
-              <NuxtLink v-if="!workspacesItems.length" to="/workspaces/">
+              <NuxtLink to="/workspaces/">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive('/workspaces/')"
