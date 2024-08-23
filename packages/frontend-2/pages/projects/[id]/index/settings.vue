@@ -38,6 +38,13 @@ const route = useRoute()
 const router = useRouter()
 
 const isOwner = computed(() => attrs.project.role === Roles.Stream.Owner)
+const projectName = computed(() =>
+  attrs.project.name.length ? attrs.project.name : ''
+)
+
+useHead({
+  title: `Settings | ${projectName.value}`
+})
 
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
