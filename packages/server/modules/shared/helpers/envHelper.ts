@@ -411,5 +411,5 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 }
 
 export function maximumObjectUploadFileSizeMb() {
-  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '50')
+  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
 }
