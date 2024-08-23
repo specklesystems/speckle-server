@@ -1,5 +1,12 @@
 extend type ServerInfo {
   blobSizeLimitBytes: Int!
+    @deprecated(
+      reason: "Use the ServerInfo{configuration{blobSizeLimitBytes}} field instead."
+    )
+}
+
+extend type ServerConfiguration {
+  blobSizeLimitBytes: Int!
 }
 
 extend type Stream {
