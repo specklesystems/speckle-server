@@ -7,7 +7,8 @@ import {
   ForbiddenError,
   UnauthorizedError,
   ContextError,
-  BadRequestError
+  BadRequestError,
+  DatabaseError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
@@ -110,7 +111,16 @@ export function validateRole<T extends AvailableRoles>({
   roleGetter
 }: RoleValidationInput<T>): AuthPipelineFunction {
   return async ({ context, authResult }): Promise<AuthData> => {
-    const roles = await rolesLookup()
+    let roles: UserRoleData<T>[]
+    try {
+      roles = await rolesLookup()
+    } catch (e) {
+      if (e instanceof DatabaseError) {
+        return authFailed(context, e)
+      }
+      throw e
+    }
+
     //having the required role doesn't rescue from authResult failure
     if (authHasFailed(authResult)) return { context, authResult }
 

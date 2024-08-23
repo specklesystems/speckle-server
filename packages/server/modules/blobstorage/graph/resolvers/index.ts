@@ -55,6 +55,12 @@ const streamBlobResolvers = {
 
 export = {
   ServerInfo: {
+    //deprecated
+    blobSizeLimitBytes() {
+      return getFileSizeLimit()
+    }
+  },
+  ServerConfiguration: {
     blobSizeLimitBytes() {
       return getFileSizeLimit()
     }

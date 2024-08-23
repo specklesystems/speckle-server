@@ -1,7 +1,7 @@
 /**
  * @returns {Record<string, unknown>}
  */
-const redactSensitiveVariables = (variables) => {
+export const redactSensitiveVariables = (variables: unknown): unknown => {
   if (!variables) {
     return variables
   }
@@ -31,9 +31,5 @@ const redactSensitiveVariables = (variables) => {
 
     acc[key] = val
     return acc
-  }, {})
-}
-
-module.exports = {
-  redactSensitiveVariables
+  }, {} as Record<string, unknown>)
 }
