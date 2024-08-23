@@ -970,12 +970,14 @@ export async function grantStreamPermissions(
   const { streamId, userId, role } = params
 
   // assert we are not removing last admin from project
-  const existingRole = await StreamAcl.knex<StreamAclRecord>().where({
-    [StreamAcl.col.resourceId]: streamId,
-    [StreamAcl.col.userId]: userId
-  })
+  const existingRole = await StreamAcl.knex<StreamAclRecord>()
+    .where({
+      [StreamAcl.col.resourceId]: streamId,
+      [StreamAcl.col.userId]: userId
+    })
+    .first()
 
-  if (existingRole.role === Roles.Stream.Owner && role !== Roles.Stream.Owner) {
+  if (existingRole?.role === Roles.Stream.Owner && role !== Roles.Stream.Owner) {
     const [countObj] = await StreamAcl.knex()
       .where({
         resourceId: streamId,
@@ -1066,7 +1068,7 @@ export async function revokeStreamPermissions(
       const deleteQuery = StreamAcl.knex().where({ resourceId: streamId, userId }).del()
 
       if (opts?.trx) {
-        deleteQuery.transacting(opts?.trx)
+        deleteQuery.transacting(opts.trx)
       }
 
       await deleteQuery

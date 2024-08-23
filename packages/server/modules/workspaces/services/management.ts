@@ -234,6 +234,7 @@ export const deleteWorkspaceRoleFactory =
       // Perform delete
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId }, { trx })
       if (!deletedRole) {
+        // await trx.commit()
         return null
       }
 
@@ -257,12 +258,14 @@ export const deleteWorkspaceRoleFactory =
         payload: deletedRole
       })
 
-      await trx.commit()
-
       return deletedRole
     } catch (e) {
       await trx.rollback()
-      return null
+      throw e
+    } finally {
+      if (!trx.isCompleted()) {
+        await trx.commit()
+      }
     }
   }
 
@@ -357,9 +360,12 @@ export const updateWorkspaceRoleFactory =
           })
         )
       }
-
-      await trx.commit()
     } catch (e) {
       await trx.rollback()
+      throw e
+    } finally {
+      if (!trx.isCompleted()) {
+        await trx.commit()
+      }
     }
   }
