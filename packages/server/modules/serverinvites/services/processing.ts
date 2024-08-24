@@ -1,11 +1,13 @@
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import {
+  InviteFinalizedForNewEmail,
   InviteFinalizingError,
   NoInviteFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
-  isProjectResourceTarget
+  isProjectResourceTarget,
+  resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
@@ -33,6 +35,10 @@ import { noop } from 'lodash'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import {
+  FindEmail,
+  ValidateAndCreateUserEmail
+} from '@/modules/core/domain/userEmails/operations'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -112,6 +118,8 @@ type FinalizeResourceInviteFactoryDeps = {
   deleteInvitesByTarget: DeleteInvitesByTarget
   insertInviteAndDeleteOld: InsertInviteAndDeleteOld
   emitEvent: EventBusEmit
+  findEmail: FindEmail
+  validateAndCreateUserEmail: ValidateAndCreateUserEmail
 }
 
 export const finalizeResourceInviteFactory =
@@ -123,28 +131,62 @@ export const finalizeResourceInviteFactory =
       processInvite,
       deleteInvitesByTarget,
       insertInviteAndDeleteOld,
-      emitEvent
+      emitEvent,
+      findEmail,
+      validateAndCreateUserEmail
     } = deps
     const {
       finalizerUserId,
       accept,
       token,
       resourceType,
-      finalizerResourceAccessLimits
+      finalizerResourceAccessLimits,
+      allowAttachingNewEmail
     } = params
 
+    const finalizerUserTarget = buildUserTarget(finalizerUserId)
     const invite = await findInvite({
       token,
-      target: buildUserTarget(finalizerUserId),
+      // target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
       resourceFilter: resourceType ? { resourceType } : undefined
     })
     if (!invite) {
-      throw new NoInviteFoundError(
-        'Attempted to finalize nonexistant resource invite',
-        {
-          info: params
-        }
-      )
+      throw new NoInviteFoundError('Attempted to finalize nonexistant invite', {
+        info: params
+      })
+    }
+
+    const inviteTarget = resolveTarget(invite.target)
+    let isNewEmailTarget = !!inviteTarget.userEmail?.length
+    if (isNewEmailTarget && allowAttachingNewEmail) {
+      const existingEmail = await findEmail({ email: inviteTarget.userEmail! })
+      if (existingEmail) {
+        // This shouldn't really happen, but just in case
+        isNewEmailTarget = false
+      }
+    }
+
+    if (isNewEmailTarget) {
+      if (!allowAttachingNewEmail) {
+        throw new InviteFinalizedForNewEmail(
+          InviteFinalizedForNewEmail.defaultMessage,
+          {
+            info: {
+              finalizerUserId,
+              invite
+            }
+          }
+        )
+      }
+    } else {
+      if (invite.target !== finalizerUserTarget) {
+        throw new InviteFinalizingError('Attempted to finalize mismatched invite', {
+          info: {
+            finalizerUserId,
+            invite
+          }
+        })
+      }
     }
 
     const action = accept
@@ -161,13 +203,24 @@ export const finalizeResourceInviteFactory =
     // Delete invites first, so that any subscriptions fired by processInvite
     // don't return the invite back to the frontend
     await deleteInvitesByTarget(
-      buildUserTarget(finalizerUserId),
+      invite.target,
       invite.resource.resourceType,
       invite.resource.resourceId
     )
 
-    // Process invite
     try {
+      // Add email
+      if (isNewEmailTarget) {
+        await validateAndCreateUserEmail({
+          userEmail: {
+            email: inviteTarget.userEmail!,
+            userId: finalizerUserId,
+            verified: true
+          }
+        })
+      }
+
+      // Process invite
       await processInvite({
         invite,
         finalizerUserId,

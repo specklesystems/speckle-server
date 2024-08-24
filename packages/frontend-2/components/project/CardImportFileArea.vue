@@ -34,7 +34,7 @@
       </div>
       <span v-else class="text-body-xs text-foreground-2 text-center select-none">
         Use our
-        <NuxtLink target="_blank" :to="connectorsPageUrl" class="font-semibold">
+        <NuxtLink target="_blank" :to="connectorsPageUrl" class="font-medium">
           connectors
         </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to

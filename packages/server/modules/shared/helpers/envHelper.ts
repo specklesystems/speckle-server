@@ -394,6 +394,10 @@ export function getGendoAIAPIEndpoint() {
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
 
+export function getLicenseToken(): string | undefined {
+  return process.env.LICENSE_TOKEN
+}
+
 export function isEmailEnabled() {
   return process.env.EMAIL === 'true'
 }
@@ -404,4 +408,8 @@ export function postgresMaxConnections() {
 
 export function highFrequencyMetricsCollectionPeriodMs() {
   return getIntFromEnv('HIGH_FREQUENCY_METRICS_COLLECTION_PERIOD_MS', '100')
+}
+
+export function maximumObjectUploadFileSizeMb() {
+  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '50')
 }

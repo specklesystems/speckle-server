@@ -6,6 +6,11 @@
         <Portal to="navigation">
           <ViewerScope :state="state">
             <HeaderNavLink
+              :to="projectsRoute"
+              name="Projects"
+              :separator="false"
+            ></HeaderNavLink>
+            <HeaderNavLink
               :to="`/projects/${project?.id}`"
               :name="project?.name"
             ></HeaderNavLink>
@@ -42,7 +47,7 @@
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="relative z-20" />
+          <ViewerLoadingBar class="absolute -top-2 left-0 w-full z-40" />
 
           <!-- Sidebar controls -->
           <Transition
@@ -108,6 +113,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
+import { projectsRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]

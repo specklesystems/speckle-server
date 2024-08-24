@@ -128,6 +128,18 @@ class ObjectLoader {
     Object.values(this.intervals).forEach((i) => clearInterval(i.interval))
   }
 
+  async getTotalObjectCount() {
+    /** This is fine, because it gets cached */
+    const rootObjJson = await this.getRawRootObject()
+    /** Ideally we shouldn't to a `parse` here since it's going to pointlessly allocate
+     *  But doing string gymnastics in order to get closure length is going to be the same
+     *  if not even more memory constly
+     */
+    const rootObj = JSON.parse(rootObjJson)
+    const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
+    return totalChildrenCount
+  }
+
   /**
    * Use this method to receive and construct the object. It will return the full, de-referenced and de-chunked original object.
    * @param {*} onProgress
@@ -545,6 +557,10 @@ class ObjectLoader {
       return {}
     }
 
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
+    }
+
     const ret = {}
 
     for (let i = 0; i < ids.length; i += 500) {
@@ -575,9 +591,13 @@ class ObjectLoader {
     return ret
   }
 
-  cacheStoreObjects(objects) {
+  async cacheStoreObjects(objects) {
     if (!this.supportsCache()) {
       return {}
+    }
+
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
     }
 
     try {

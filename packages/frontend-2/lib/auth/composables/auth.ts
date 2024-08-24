@@ -318,6 +318,7 @@ export const useAuthManager = () => {
   const logout = async (
     options?: Partial<{
       skipToast: boolean
+      skipRedirect: boolean
     }>
   ) => {
     await saveNewToken(undefined, { skipRedirect: true })
@@ -331,7 +332,7 @@ export const useAuthManager = () => {
     }
 
     postAuthRedirect.deleteState()
-    goToLogin()
+    if (!options?.skipRedirect) goToLogin()
   }
 
   return {

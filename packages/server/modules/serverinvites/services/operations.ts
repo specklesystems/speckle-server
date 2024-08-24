@@ -10,6 +10,7 @@ import {
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
 
 export type InviteResult = {
@@ -27,9 +28,18 @@ export type FinalizeInvite = (params: {
   accept: boolean
   token: string
   resourceType?: InviteResourceTargetType
+  /**
+   * If true, finalization also allows accepting an invite that technically belongs to a different
+   * email, one that is not yet attached to any user account.
+   * If the invite is accepted, the email will be attached to the user account as well in a verified state.
+   */
+  allowAttachingNewEmail?: boolean
 }) => Promise<void>
 
-export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>
+export type ResendInviteEmail = (params: {
+  inviteId: string
+  resourceFilter?: ServerInviteResourceFilter
+}) => Promise<void>
 
 export type CollectAndValidateResourceTargets = (params: {
   input: CreateInviteParams

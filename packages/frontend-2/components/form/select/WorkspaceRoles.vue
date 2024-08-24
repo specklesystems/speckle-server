@@ -4,13 +4,13 @@
     :items="roles"
     :multiple="multiple"
     name="workspaceRoles"
-    label="Workspace roles"
+    :label="label"
     class="min-w-[110px]"
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
     :fully-control-value="fullyControlValue"
-    size="sm"
+    :disabled="disabled"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -45,7 +45,7 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-// Todo: Refactor this to have one component for project/server/workspace roles
+// TODO: Refactor this to have one component for project/server/workspace roles
 
 import { Roles, RoleInfo } from '@speckle/shared'
 import type { Nullable, WorkspaceRoles } from '@speckle/shared'
@@ -64,7 +64,12 @@ const props = defineProps({
     type: [String, Array] as PropType<ValueType>,
     default: undefined
   },
-  fullyControlValue: Boolean
+  fullyControlValue: Boolean,
+  label: {
+    type: String,
+    default: 'Workspace Roles'
+  },
+  disabled: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

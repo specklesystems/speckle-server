@@ -14,6 +14,7 @@
         { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"
       :items="members"
+      :buttons="tableButtons"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -33,9 +34,9 @@
       </template>
       <template #role="{ item }">
         <FormSelectWorkspaceRoles
+          :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
-          :disabled="!isCurrentUser(item.id)"
           @update:model-value="
             (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
           "
@@ -50,22 +51,22 @@
       :new-role="newRole"
       @update-role="onUpdateRole"
     />
+
+    <SettingsSharedDeleteUserDialog
+      v-model:open="showDeleteUserRoleDialog"
+      :name="userToModify?.name ?? ''"
+      @remove-user="onRemoveUser"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-// Todo: Enable searching once supported
 import type { WorkspaceRoles } from '@speckle/shared'
-import { workspaceUpdateRoleMutation } from '~~/lib/workspaces/graphql/mutations'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useMutation } from '@vue/apollo-composable'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import {
-  convertThrowIntoFetchResult,
-  getFirstErrorMessage
-} from '~~/lib/common/helpers/graphql'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import { TrashIcon } from '@heroicons/vue/24/outline'
+import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
+import { Roles } from '@speckle/shared'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -99,12 +100,10 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { triggerNotification } = useGlobalToast()
-// const { on, bind, value: search } = useDebouncedTextInput()
-const { activeUser } = useActiveUser()
-const { mutate: updateChangeRole } = useMutation(workspaceUpdateRoleMutation)
+const updateUserRole = useWorkspaceUpdateRole()
 
 const showChangeUserRoleDialog = ref(false)
+const showDeleteUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
@@ -116,7 +115,12 @@ const members = computed(() =>
 )
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
-const isCurrentUser = (id: string) => id === activeUser.value?.id
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const tableButtons = computed(() =>
+  isWorkspaceAdmin.value
+    ? [{ icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }]
+    : []
+)
 
 const openChangeUserRoleDialog = (
   user: UserItem,
@@ -128,30 +132,28 @@ const openChangeUserRoleDialog = (
   showChangeUserRoleDialog.value = true
 }
 
+const openDeleteUserRoleDialog = (user: UserItem) => {
+  userToModify.value = user
+  showDeleteUserRoleDialog.value = true
+}
+
 const onUpdateRole = async () => {
   if (!userToModify.value || !newRole.value) return
 
-  const mutationResult = await updateChangeRole({
-    input: {
-      userId: userToModify.value.id,
-      role: newRole.value,
-      workspaceId: props.workspaceId
-    }
-  }).catch(convertThrowIntoFetchResult)
+  await updateUserRole({
+    userId: userToModify.value.id,
+    role: newRole.value,
+    workspaceId: props.workspaceId
+  })
+}
 
-  if (mutationResult?.data?.workspaceMutations?.updateRole) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'User role updated',
-      description: 'The user role has been updated'
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(mutationResult?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to update role',
-      description: errorMessage
-    })
-  }
+const onRemoveUser = async () => {
+  if (!userToModify.value?.id) return
+
+  await updateUserRole({
+    userId: userToModify.value.id,
+    role: null,
+    workspaceId: props.workspaceId
+  })
 }
 </script>

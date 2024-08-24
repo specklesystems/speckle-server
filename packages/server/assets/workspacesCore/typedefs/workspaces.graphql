@@ -1,20 +1,22 @@
 extend type Query {
   workspace(id: String!): Workspace!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
 
   """
-  Look for an invitation to a workspace, for the current user (authed or not). If token
-  isn't specified, the server will look for any valid invite.
+  Look for an invitation to a workspace, for the current user (authed or not).
 
   If token is specified, it will return the corresponding invite even if it belongs to a different user.
+
+  Either token or workspaceId must be specified, or both
   """
-  workspaceInvite(workspaceId: String!, token: String): PendingWorkspaceCollaborator
+  workspaceInvite(workspaceId: String, token: String): PendingWorkspaceCollaborator
 }
 
 input WorkspaceCreateInput {
   name: String!
   description: String
+  defaultLogoIndex: Int
 }
 
 input WorkspaceUpdateInput {
@@ -25,6 +27,7 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
+  defaultLogoIndex: Int
 }
 
 input WorkspaceRoleUpdateInput {
@@ -76,17 +79,23 @@ extend type ProjectInviteMutations {
 }
 
 extend type Mutation {
-  workspaceMutations: WorkspaceMutations! @hasServerRole(role: SERVER_USER)
+  workspaceMutations: WorkspaceMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
 type WorkspaceMutations {
   create(input: WorkspaceCreateInput!): Workspace!
-    @hasServerRole(role: SERVER_ADMIN)
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:create")
-  delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
-  update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
+  delete(workspaceId: String!): Boolean!
+    @hasScope(scope: "workspace:delete")
+    @hasServerRole(role: SERVER_USER)
+  update(input: WorkspaceUpdateInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
+  leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
   invites: WorkspaceInviteMutations!
 }
 
@@ -112,6 +121,16 @@ input WorkspaceInviteCreateInput {
 input WorkspaceInviteUseInput {
   token: String!
   accept: Boolean!
+  """
+  If invite is attached to an unregistered email, the invite can only be used if this is set to true.
+  Upon accepting such an invite, the unregistered email will be added to the user's account as well.
+  """
+  addNewEmail: Boolean
+}
+
+input WorkspaceInviteResendInput {
+  workspaceId: String!
+  inviteId: String!
 }
 
 type WorkspaceInviteMutations {
@@ -122,6 +141,9 @@ type WorkspaceInviteMutations {
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
+  resend(input: WorkspaceInviteResendInput!): Boolean!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
@@ -141,6 +163,10 @@ type Workspace {
   Logo image as base64-encoded string
   """
   logo: String
+  """
+  Selected fallback when `logo` not set
+  """
+  defaultLogoIndex: Int!
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
@@ -190,6 +216,11 @@ type PendingWorkspaceCollaborator {
   workspaceId: String!
   workspaceName: String!
   """
+  E-mail address if target is unregistered or primary e-mail of target registered user
+  if token was specified to retrieve this invite
+  """
+  email: String
+  """
   E-mail address or name of the invited user
   """
   title: String!
@@ -203,7 +234,8 @@ type PendingWorkspaceCollaborator {
   """
   user: LimitedUser
   """
-  Only available if the active user is the pending workspace collaborator
+  Only available if the active user is the pending workspace collaborator or if it was already
+  specified when retrieving this invite
   """
   token: String
 }
@@ -261,10 +293,6 @@ input UserWorkspacesFilter {
   search: String
 }
 
-type UserWorkspaceMutations {
-  leave(id: ID!): Boolean!
-}
-
-extend type ActiveUserMutations {
-  workspaceMutations: UserWorkspaceMutations
+extend type Project {
+  workspaceId: String
 }

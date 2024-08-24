@@ -14,7 +14,10 @@
         v-on="on"
       />
     </div>
-    <FormButton @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
+    <FormButton
+      v-if="isWorkspaceAdmin"
+      @click="() => (isInviteDialogOpen = !isInviteDialogOpen)"
+    >
       Invite
     </FormButton>
     <WorkspaceInviteDialog
@@ -29,15 +32,17 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
     id
+    role
     ...WorkspaceInviteDialog_Workspace
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   searchPlaceholder: string
   workspaceId: string
   workspace?: SettingsWorkspacesMembersTableHeader_WorkspaceFragment
@@ -46,4 +51,6 @@ defineProps<{
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const isInviteDialogOpen = ref(false)
+
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 </script>

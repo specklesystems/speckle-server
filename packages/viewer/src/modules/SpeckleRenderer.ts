@@ -742,6 +742,8 @@ export default class SpeckleRenderer {
     }
   }
 
+  /** TO DO!
+   * This can mess up materials if multiple materials exist in the ranges argument */
   private flattenDrawRanges(ranges: Array<BatchUpdateRange>): Array<BatchUpdateRange> {
     if (ranges.length < 3) return ranges
 

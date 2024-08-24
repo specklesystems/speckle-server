@@ -554,7 +554,12 @@
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
+          "default": 100
+        },
+        "max_object_upload_file_size_mb": {
+          "type": "number",
+          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server",
+          "default": 50
         },
         "max_project_models_per_page": {
           "type": "number",
@@ -638,6 +643,21 @@
               "type": "string",
               "description": "The path where the encryption keys should be loaded from",
               "default": "/encryption-keys/keys.json"
+            }
+          }
+        },
+        "licenseTokenSecret": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
+              "default": ""
             }
           }
         },
@@ -1203,11 +1223,6 @@
             }
           }
         },
-        "sentry_dns": {
-          "type": "string",
-          "description": "(Optional) The Data Source Name that was provided by Sentry.io",
-          "default": ""
-        },
         "disable_tracking": {
           "type": "boolean",
           "description": "If set to true, will prevent tracking metrics from being collected",
@@ -1289,11 +1304,6 @@
               "default": "7000"
             }
           }
-        },
-        "max_object_size_mb": {
-          "type": "number",
-          "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
         },
         "requests": {
           "type": "object",

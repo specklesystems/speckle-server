@@ -37,14 +37,6 @@ spec:
       ports:
         - port: 443
 {{- end }}
-{{- if .Values.server.sentry_dns }}
-    # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
-    - to:
-      - ipBlock:
-          cidr: 34.120.195.249/32
-      ports:
-        - port: 443
-{{- end }}
 {{- if .Values.server.email.enabled }}
     # email server
 {{ include "speckle.networkpolicy.egress.email" $ | indent 4 }}

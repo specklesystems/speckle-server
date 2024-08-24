@@ -61,7 +61,8 @@ const getCreateWorkspaceInput = () => {
     workspaceInput: {
       description: 'foobar',
       logo: null,
-      name: cryptoRandomString({ length: 6 })
+      name: cryptoRandomString({ length: 6 }),
+      defaultLogoIndex: 0
     }
   }
 }
@@ -210,15 +211,10 @@ const buildUpdateWorkspaceRoleAndTestContext = (
   const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
     upsertWorkspaceRole: async (role) => {
-      const currentRoleIndex = context.workspaceRoles.findIndex(
-        (acl) => acl.userId === role.userId && acl.workspaceId === role.workspaceId
+      context.workspaceRoles = context.workspaceRoles.filter(
+        (acl) => acl.userId !== role.userId
       )
-
-      if (currentRoleIndex >= 0) {
-        context.workspaceRoles[currentRoleIndex] = role
-      } else {
-        context.workspaceRoles.push(role)
-      }
+      context.workspaceRoles.push(role)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
       context.eventData.isCalled = true
@@ -233,21 +229,16 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       cursorDate: null
     }),
     grantStreamPermissions: async (role) => {
-      const currentRoleIndex = context.workspaceProjectRoles.findIndex(
-        (acl) => acl.userId === role.userId && acl.resourceId === role.streamId
-      )
-
       const streamAcl: StreamAclRecord = {
         userId: role.userId,
         role: role.role,
         resourceId: role.streamId
       }
 
-      if (currentRoleIndex > 0) {
-        context.workspaceProjectRoles[currentRoleIndex] = streamAcl
-      } else {
-        context.workspaceProjectRoles.push(streamAcl)
-      }
+      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+        (acl) => acl.userId !== role.userId
+      )
+      context.workspaceProjectRoles.push(streamAcl)
 
       return {} as StreamRecord
     },
@@ -368,7 +359,7 @@ describe('Workspace role services', () => {
         updateWorkspaceRole({ ...role, role: Roles.Workspace.Member })
       )
     })
-    it('sets roles on workspace projects', async () => {
+    it('sets roles on workspace projects when user added to workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
@@ -376,7 +367,7 @@ describe('Workspace role services', () => {
       const workspaceRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Admin
+        role: Roles.Workspace.Member
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
@@ -389,7 +380,34 @@ describe('Workspace role services', () => {
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
-      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Owner)
+      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
+    })
+
+    it('does not change roles on workspace projects for changes to existing workspace users', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const projectId = cryptoRandomString({ length: 10 })
+
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceProjects: [{ id: projectId } as StreamRecord]
+      })
+
+      await updateWorkspaceRole({
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member
+      })
+      await updateWorkspaceRole({
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      })
+
+      expect(context.workspaceProjectRoles.length).to.equal(1)
+      expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
+      expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
+      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
     })
   })
 })

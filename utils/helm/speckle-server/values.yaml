@@ -424,7 +424,9 @@ server:
   weeklyDigestEnabled: false
 
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
+  max_object_size_mb: 100
+  ## @param server.max_object_upload_file_size_mb Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server
+  max_object_upload_file_size_mb: 50
   ## @param server.max_project_models_per_page The maximum number of models that can be returned in a single page of a query for all models of a project
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
@@ -456,6 +458,14 @@ server:
   ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
   encryptionKeys:
     path: '/encryption-keys/keys.json'
+
+  licenseTokenSecret:
+    ## @param server.licenseTokenSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
+    secretName: ''
+    ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
+    ##
+    secretKey: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -743,17 +753,10 @@ server:
         secretKey: ''
     ## @param server.monitoring.mp (Optional) If server.monitoring.mp.enabled is set to false, metrics will not be collected by the Speckle server.
     mp: {}
-  ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
-  ## Sentry.io allows events within Speckle to be monitored
-  ##
-
-  sentry_dns: ''
   ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
-  ## Setting this value to false requires `sentry_dns` to be set
   ##
   disable_tracking: false
   ## @param server.disable_tracing If set to true, will prevent tracing metrics from being collected
-  ## Setting this value to false requires `sentry_dns` to be set
   ##
   disable_tracing: false
   networkPolicy:
@@ -802,9 +805,6 @@ objects:
     enabled: false
     ## @param objects.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
-
-  ## @param objects.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
 
   requests:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
