@@ -20,9 +20,7 @@
             v-on="on"
           />
         </div>
-        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-          Invite
-        </FormButton>
+        <FormButton @click="toggleInviteDialog">Invite</FormButton>
       </div>
 
       <LayoutTable
@@ -52,13 +50,8 @@
 
         <template #resend="{ item }">
           <FormButton
-            :link="true"
-            text
-            :class="{
-              'font-medium': true,
-              'text-primary': !successfullyResentInvites.includes(item.id),
-              'text-foreground': successfullyResentInvites.includes(item.id)
-            }"
+            color="outline"
+            size="sm"
             :disabled="successfullyResentInvites.includes(item.id)"
             @click="resendInvitation(item as InviteItem)"
           >
@@ -91,7 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { adminResendInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'

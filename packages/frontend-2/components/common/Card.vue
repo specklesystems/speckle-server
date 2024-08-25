@@ -1,11 +1,15 @@
 <template>
-  <div class="border border-outline-3 rounded-lg p-5 pt-4">
+  <div class="border border-outline-3 rounded-lg p-5 py-4">
     <div v-if="$slots.icon" class="mb-4">
       <slot name="icon" />
     </div>
 
-    <p class="text-heading-sm text-foreground">{{ title }}</p>
-    <p class="text-body-xs text-foreground-2 pt-1">{{ description }}</p>
+    <p v-if="title" class="text-heading-sm text-foreground">{{ title }}</p>
+    <p v-if="description" class="text-body-xs text-foreground-2 pt-1">
+      {{ description }}
+    </p>
+
+    <slot />
 
     <div
       v-if="buttons"
