@@ -1,0 +1,96 @@
+name: Image digest update
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .yarnrc.yml .
+      - .yarn
+      - package.json
+      - packages/frontend-2/type-augmentations/stubs
+      - packages/preview-service
+      - packages/viewer
+      - packages/objectloader
+      - packages/shared
+
+jobs:
+  preview-service-acceptance:
+    name: Preview Service Acceptance test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Docker Hub image
+        image: postgres:14
+        env:
+          POSTGRES_DB: preview_service_test
+          POSTGRES_PASSWORD: preview_service_test
+          POSTGRES_USER: preview_service_test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    permissions:
+      contents: write # to update the screenshot saved in the branch. This is a HACK as GitHub API does not yet support uploading attachments to a comment.
+      pull-requests: write # to write a comment on the PR
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+      - name: Install dependencies
+        working-directory: utils/preview-service-acceptance
+        run: yarn install
+
+      #TODO load the docker image from a previous job
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and load preview-service Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./packages/preview-service/Dockerfile
+          load: true
+          push: false
+          tags: speckle/preview-service:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run the acceptance test
+        working-directory: packages/preview-service
+        run: yarn test:acceptance
+        env:
+          PREVIEW_SERVICE_IMAGE: speckle/preview-service:local
+          OUTPUT_FILE_PATH: /tmp/preview-service-output.png
+          NODE_ENV: test
+          PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@localhost:5432/preview_service_test
+
+      - uses: actions/upload-artifact@v4
+        name: Upload the output from the preview-service
+        id: upload-preview-service-output
+        with:
+          name: preview-service-output
+          path: /tmp/preview-service-output.png
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📸 Preview service has generated the following image:<br/><img src="${{ steps.upload-preview-service-output.outputs.artifact-url }}"/><br/>'
+            })

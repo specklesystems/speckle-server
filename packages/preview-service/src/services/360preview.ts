@@ -1,12 +1,12 @@
 import type { GeneratePreview } from '@/clients/previewService.js'
-import type { ObjectIdentifier } from '@/domain/domain.js'
+import type { Angle, ObjectIdentifier, PreviewId } from '@/domain/domain.js'
 import type { InsertPreview } from '@/repositories/previews.js'
 import crypto from 'crypto'
 import { joinImages } from 'join-images'
 
 export type GenerateAndStore360Preview = (
   task: ObjectIdentifier
-) => Promise<{ metadata: Record<string, string> }>
+) => Promise<{ metadata: Record<Angle, PreviewId> }>
 export const generateAndStore360PreviewFactory =
   (deps: {
     generatePreview: GeneratePreview
@@ -16,15 +16,23 @@ export const generateAndStore360PreviewFactory =
     const responseBody = await deps.generatePreview(task)
 
     // metadata is key of angle and value of previewId
-    const metadata: Record<string, string> = {}
+    const metadata: Record<Angle, PreviewId> = {}
     const allImgsArr: Buffer[] = []
     let i = 0
-    for (const angle in responseBody) {
+    for (const aKey in responseBody) {
+      const angle = aKey as Angle
+      const value = responseBody[angle]
+      if (!value) {
+        continue
+      }
       const imgBuffer = Buffer.from(
-        responseBody[angle].replace(/^data:image\/\w+;base64,/, ''),
+        value.replace(/^data:image\/\w+;base64,/, ''),
         'base64'
       )
-      const previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
+      const previewId = crypto
+        .createHash('md5')
+        .update(imgBuffer)
+        .digest('hex') as PreviewId
 
       // Save first preview image
       if (i++ === 0) {
@@ -44,10 +52,10 @@ export const generateAndStore360PreviewFactory =
     })
     const png = fullImg.png({ quality: 95 })
     const buff = await png.toBuffer()
-    const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
+    const fullImgId = crypto.createHash('md5').update(buff).digest('hex') as PreviewId
 
     await deps.insertPreview({ previewId: fullImgId, imgBuffer: buff })
-    metadata['all'] = fullImgId
+    metadata['all' as Angle] = fullImgId
 
     return { metadata }
   }

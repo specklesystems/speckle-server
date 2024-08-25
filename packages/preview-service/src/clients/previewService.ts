@@ -1,11 +1,15 @@
-import type { ObjectIdentifier } from '@/domain/domain.js'
+import type { Angle, ObjectIdentifier } from '@/domain/domain.js'
+import { isCastableToBrand } from '@/utils/brand.js'
 import { z } from 'zod'
 
-const previewResponseSchema = z.record(z.string())
+const previewResponseSchema = z.record(
+  z.string().refine((value): value is Angle => isCastableToBrand<Angle>(value)),
+  z.string()
+)
 
 export type GeneratePreview = (
   task: ObjectIdentifier
-) => Promise<Record<string, string>>
+) => Promise<Record<Angle, string | undefined>>
 
 export const generatePreviewFactory =
   (deps: { serviceOrigin: string }): GeneratePreview =>

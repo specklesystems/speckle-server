@@ -1,7 +1,7 @@
 import type { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
-const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
+export const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
 
 type DbObject = {
   id: string

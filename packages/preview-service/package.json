@@ -28,7 +28,8 @@
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint .",
     "start": "node --loader=./dist/src/aliasLoader.js ./bin/www",
-    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest --run"
+    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle --exclude 'tests/acceptance/**/*.spec.ts'",
+    "test:acceptance": "NODE_ENV=test LOG_LEVEL=debug LOG_PRETTY=true vitest run 'tests/acceptance/acceptance.spec.ts' --sequence.shuffle --hookTimeout 60000 --testNamePattern 'Acceptance'"
   },
   "dependencies": {
     "@speckle/objectloader": "workspace:^",

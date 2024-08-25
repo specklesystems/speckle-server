@@ -1,8 +1,8 @@
-import type { ObjectIdentifier } from '@/domain/domain.js'
+import type { Angle, ObjectIdentifier, PreviewId } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
 export type ObjectPreviewRow = ObjectIdentifier & {
-  preview: unknown
+  preview: Record<Angle, PreviewId>
   previewStatus: number
   lastUpdate: number
 }
