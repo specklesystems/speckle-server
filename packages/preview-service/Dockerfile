@@ -58,7 +58,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
-    google-chrome-stable=126.0.6478.126-1 \
+    google-chrome-stable=128.0.6613.84-1 \
     fonts-ipafont-gothic=00303-23 \
     fonts-wqy-zenhei=0.9.45-8 \
     fonts-thai-tlwg=1:0.7.3-1 \
