@@ -63,7 +63,7 @@ const workspaceName = ref<string>('')
 const workspaceDescription = ref<string>('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref<number>()
+const defaultLogoIndex = ref<number>(0)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -107,12 +107,16 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
   editAvatarMode.value = false
 }
 
+const reset = () => {
+  defaultLogoIndex.value = generateDefaultLogoIndex()
+  workspaceName.value = ''
+  workspaceDescription.value = ''
+  workspaceLogo.value = null
+}
+
 watch(isOpen, (newVal) => {
   if (newVal) {
-    defaultLogoIndex.value = generateDefaultLogoIndex()
-    workspaceName.value = ''
-    workspaceDescription.value = ''
-    workspaceLogo.value = null
+    reset()
   }
 })
 </script>
