@@ -5,7 +5,6 @@
       v-if="hasSendSettings"
       @update:settings="updateSettings"
     ></SendSettings>
-    <pre>{{ hasSendSettings }}</pre>
   </div>
 </template>
 <script setup lang="ts">
