@@ -53,11 +53,12 @@
     </div>
     <LayoutDialog
       v-model:open="openFilterDialog"
-      :title="`Change filter for ${cardBase?.modelData?.displayName}`"
+      :title="`Change filter`"
       fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
       <SendSettings
+        v-if="hasSendSettings"
         :settings="modelCard.settings"
         @update:settings="updateSettings"
       ></SendSettings>
@@ -143,6 +144,9 @@ const updateSettings = (settings: CardSetting[]) => {
   newSettings = settings
 }
 
+const hasSendSettings = computed(
+  () => store.sendSettings && store.sendSettings?.length > 0
+)
 const saveFilter = async () => {
   void trackEvent('DUI3 Action', {
     name: 'Publish Card Filter Change',
