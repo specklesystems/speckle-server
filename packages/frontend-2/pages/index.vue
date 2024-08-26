@@ -8,36 +8,38 @@
       :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
     />
     <div class="flex flex-col gap-y-12">
-      <section>
-        <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
-          <CommonCard
-            v-for="quickStartItem in quickStartItems"
-            :key="quickStartItem.title"
-            :title="quickStartItem.title"
-            :description="quickStartItem.description"
-            :buttons="quickStartItem.buttons"
-          />
-        </div>
-      </section>
-      <section>
-        <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
-          <template v-if="hasProjects">
-            <DashboardProjectCard
-              v-for="project in projects"
-              :key="project.id"
-              :project="project"
+      <div class="flex flex-col-reverse md:flex-col gap-y-12">
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
+            <CommonCard
+              v-for="quickStartItem in quickStartItems"
+              :key="quickStartItem.title"
+              :title="quickStartItem.title"
+              :description="quickStartItem.description"
+              :buttons="quickStartItem.buttons"
             />
-          </template>
-          <CommonCard
-            v-else
-            title="Create your first project"
-            description="Projects are the place where your models and their versions live."
-            :buttons="createProjectButton"
-          />
-        </div>
-      </section>
+          </div>
+        </section>
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
+            <template v-if="hasProjects">
+              <DashboardProjectCard
+                v-for="project in projects"
+                :key="project.id"
+                :project="project"
+              />
+            </template>
+            <CommonCard
+              v-else
+              title="Create your first project"
+              description="Projects are the place where your models and their versions live."
+              :buttons="createProjectButton"
+            />
+          </div>
+        </section>
+      </div>
       <section>
         <h2 class="text-heading-sm text-foreground-2">News &amp; tutorials</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
