@@ -177,6 +177,29 @@ const expiredNotification = computed(() => {
   return notification
 })
 
+const failRate = computed(() => {
+  if (!props.modelCard.report) return 0
+  return (
+    (props.modelCard.report.filter((r) => r.status === 4).length /
+      props.modelCard.report.length) *
+    100
+  )
+})
+
+const receiveResultNotificationText = computed(() => {
+  if (failRate.value > 80) {
+    return 'Model loaded. Some objects have failed to convert!'
+  }
+  return 'Model loaded!'
+})
+
+const receiveResultNotificationLevel = computed(() => {
+  if (failRate.value > 80) {
+    return 'warning'
+  }
+  return 'info'
+})
+
 const receiveResultNotification = computed(() => {
   if (
     !props.modelCard.bakedObjectIds ||
@@ -186,8 +209,8 @@ const receiveResultNotification = computed(() => {
 
   const notification = {} as ModelCardNotification
   notification.dismissible = true
-  notification.level = 'success'
-  notification.text = 'Model loaded!'
+  notification.level = receiveResultNotificationLevel.value
+  notification.text = receiveResultNotificationText.value
   notification.report = props.modelCard.report
   notification.cta = {
     name: 'Highlight',

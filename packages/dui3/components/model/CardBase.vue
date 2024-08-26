@@ -173,7 +173,6 @@ import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
 import type { IModelCard } from '~~/lib/models/card'
 import { useAccountStore } from '~/store/accounts'
-import type { ISenderModelCard } from 'lib/models/card/send'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
@@ -282,20 +281,24 @@ defineExpose({
 })
 
 const cardBgColor = computed(() => {
-  if (props.modelCard.error || noWriteAccess.value)
-    return 'bg-red-500/10 hover:bg-red-500/20'
-  if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
-  if (
-    (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
-    (props.modelCard as IReceiverModelCard).displayReceiveComplete === true
-  )
-    return 'bg-green-500/10 hover:bg-green-500/20'
-  if (
-    (props.modelCard as IReceiverModelCard).selectedVersionId !==
-      (props.modelCard as IReceiverModelCard).latestVersionId &&
-    !(props.modelCard as IReceiverModelCard).hasDismissedUpdateWarning
-  )
-    return 'bg-orange-500/10'
+  // if (props.modelCard.error || noWriteAccess.value)
+  //   return 'bg-red-500/10 hover:bg-red-500/20'
+  // if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
+  // if (
+  //   (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
+  //   (props.modelCard as IReceiverModelCard).displayReceiveComplete === true
+  // ) {
+  //   if (failRate.value > 80) {
+  //     return 'bg-orange-500/10'
+  //   }
+  //   return 'bg-blue-500/10 hover:bg-blue-500/20'
+  // }
+  // if (
+  //   (props.modelCard as IReceiverModelCard).selectedVersionId !==
+  //     (props.modelCard as IReceiverModelCard).latestVersionId &&
+  //   !(props.modelCard as IReceiverModelCard).hasDismissedUpdateWarning
+  // )
+  //   return 'bg-orange-500/10'
   return 'bg-foundation dark:bg-neutral-800 hover:bg-blue-500/10 '
 })
 
