@@ -4,7 +4,9 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
   grantStreamPermissions,
-  revokeStreamPermissions
+  grantStreamPermissionsFactory,
+  revokeStreamPermissions,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -321,8 +323,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
               emitWorkspaceEvent: getEventBus().emit,
-              revokeStreamPermissions,
               getStreams
             })
 
@@ -341,8 +343,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
               emitWorkspaceEvent: getEventBus().emit,
-              grantStreamPermissions,
               getStreams
             })
 
