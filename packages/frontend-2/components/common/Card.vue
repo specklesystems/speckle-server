@@ -37,8 +37,8 @@
 import { type LayoutDialogButton } from '@speckle/ui-components'
 
 defineProps<{
-  title: string
-  description: string
+  title?: string
+  description?: string
   buttons?: LayoutDialogButton[]
 }>()
 </script>
