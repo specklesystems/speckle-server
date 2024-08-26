@@ -10,6 +10,7 @@ import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 
@@ -27,15 +28,14 @@ export const useSettingsMenu = () => {
       title: 'Projects',
       component: SettingsWorkspacesProjects
     },
+    security: {
+      title: 'Security',
+      component: SettingsWorkspacesSecurity
+    },
     billing: {
       title: 'Billing',
       disabled: true,
       tooltipText: 'Manage billing for your workspace'
-    },
-    security: {
-      title: 'Security',
-      disabled: true,
-      tooltipText: 'SSO, manage permissions, restrict domain access'
     },
     regions: {
       title: 'Regions',
