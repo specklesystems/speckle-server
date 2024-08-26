@@ -6,7 +6,18 @@
     :buttons="dialogButtons"
     title="Create workspace"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-center px-6">
+      <UserAvatarEditable
+        v-model:edit-mode="editAvatarMode"
+        :model-value="workspaceLogo"
+        :placeholder="workspaceName"
+        :default-img="defaultAvatar"
+        name="edit-avatar"
+        size="xxl"
+        @save="editAvatarMode = false"
+      />
+    </div>
+    <div class="flex flex-col gap-4 w-full">
       <FormTextInput
         v-model:model-value="workspaceName"
         name="name"
@@ -46,11 +57,14 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
-const { generateDefaultLogoIndex } = useWorkspacesAvatar()
+const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
 const { handleSubmit } = useForm<FormValues>()
 
 const workspaceName = ref<string>('')
 const workspaceDescription = ref<string>('')
+const editAvatarMode = ref(false)
+const workspaceLogo = ref<string | null>(null)
+const defaultLogoIndex = ref<number>()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -69,13 +83,15 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: handleCreateWorkspace
   }
 ])
+const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
 
 const handleCreateWorkspace = handleSubmit(async () => {
   const newWorkspace = await createWorkspace(
     {
       name: workspaceName.value,
       description: workspaceDescription.value,
-      defaultLogoIndex: generateDefaultLogoIndex()
+      defaultLogoIndex: defaultLogoIndex.value,
+      logo: workspaceLogo.value
     },
     {
       navigateOnSuccess: props.navigateOnSuccess === true
@@ -84,6 +100,12 @@ const handleCreateWorkspace = handleSubmit(async () => {
 
   if (newWorkspace) {
     isOpen.value = false
+  }
+})
+
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    defaultLogoIndex.value = generateDefaultLogoIndex()
   }
 })
 </script>

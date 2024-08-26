@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserAvatarSize } from '@speckle/ui-components'
+import type { UserAvatarSize } from '@speckle/ui-component'
 import { useAvatarSizeClasses } from '@speckle/ui-components'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 
@@ -39,7 +39,9 @@ const props = withDefaults(
 )
 
 const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
-const { defaultAvatar } = useWorkspacesAvatar(props.defaultLogoIndex)
+const { getDefaultAvatar } = useWorkspacesAvatar()
 
-const avatar = computed(() => (props.logo ? props.logo : defaultAvatar.value))
+const avatar = computed(() =>
+  props.logo ? props.logo : getDefaultAvatar(props.defaultLogoIndex)
+)
 </script>

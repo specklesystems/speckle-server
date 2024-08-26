@@ -1,22 +1,22 @@
-export const useWorkspacesAvatar = (avatarIndex?: number) => {
+export const useWorkspacesAvatar = () => {
   const count = ref(6)
 
   const generateDefaultLogoIndex = () => {
     return Math.floor(Math.random() * count.value)
   }
 
-  const defaultAvatar = computed(() => {
+  const getDefaultAvatar = (avatarIndex?: number) => {
     const index = avatarIndex
       ? avatarIndex >= 0 && avatarIndex <= count.value
         ? avatarIndex
-        : 0
+        : generateDefaultLogoIndex()
       : 0
     return `/images/workspace/avatars/avatar_${index}.svg`
-  })
+  }
 
   return {
     count,
-    defaultAvatar,
+    getDefaultAvatar,
     generateDefaultLogoIndex
   }
 }

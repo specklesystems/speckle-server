@@ -23,6 +23,7 @@ graphql(`
     id
     logo
     name
+    defaultLogoIndex
   }
 `)
 
@@ -32,9 +33,11 @@ const props = defineProps<{
 }>()
 
 const { mutate, loading } = useUpdateWorkspace()
-const { defaultAvatar } = useWorkspacesAvatar()
+const { getDefaultAvatar } = useWorkspacesAvatar()
 
 const editMode = ref(false)
+
+const defaultAvatar = computed(() => getDefaultAvatar(props.workspace.defaultLogoIndex))
 
 const onSave = async (newVal: MaybeNullOrUndefined<string>) => {
   if (props.workspace.logo === newVal) return
