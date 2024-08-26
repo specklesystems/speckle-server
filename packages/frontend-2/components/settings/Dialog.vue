@@ -47,7 +47,7 @@
               :key="key"
               :title="workspaceItem.name"
               collapsible
-              :collapsed="true"
+              :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -130,7 +130,6 @@ graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
-        ...SettingsWorkspacesGeneralEditAvatar_Workspace
         ...WorkspaceAvatar_Workspace
         id
         name
@@ -141,6 +140,7 @@ graphql(`
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
+const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 
 const { activeUser: user } = useActiveUser()
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
@@ -152,7 +152,6 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 })
 
 const isMobile = breakpoints.smaller('md')
-const targetWorkspaceId = ref<string | null>(null)
 const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(

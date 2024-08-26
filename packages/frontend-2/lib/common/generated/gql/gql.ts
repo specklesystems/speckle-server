@@ -89,7 +89,7 @@ const documents = {
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
-    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
+    "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  fragment SettingsSharedProjects_Project on Project {\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models {\n      totalCount\n    }\n    versions {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
     "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n": types.SettingsUserEmails_UserFragmentDoc,
@@ -100,7 +100,7 @@ const documents = {
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
-    "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n    role\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
@@ -257,6 +257,7 @@ const documents = {
     "\n  mutation SettingsCancelWorkspaceInvite($workspaceId: String!, $inviteId: String!) {\n    workspaceMutations {\n      invites {\n        cancel(workspaceId: $workspaceId, inviteId: $inviteId) {\n          id\n        }\n      }\n    }\n  }\n": types.SettingsCancelWorkspaceInviteDocument,
     "\n  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {\n    workspaceMutations {\n      addDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainAddDialog_Workspace\n      }\n    }\n  }\n": types.AddWorkspaceDomainDocument,
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": types.DeleteWorkspaceDomainDocument,
+    "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": types.SettingsLeaveWorkspaceDocument,
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
@@ -632,7 +633,7 @@ export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsWorkspacesGeneralEditAvatar_Workspace\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...WorkspaceAvatar_Workspace\n        id\n        name\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -676,7 +677,7 @@ export function graphql(source: "\n  fragment UserProfileEditDialogAvatar_User o
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n    role\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    id\n    name\n    description\n    logo\n    role\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1301,6 +1302,10 @@ export function graphql(source: "\n  mutation AddWorkspaceDomain($input: AddDoma
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
