@@ -39,6 +39,10 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
 type FormValues = { name: string; description: string }
 
+const props = defineProps<{
+  navigateOnSuccess?: boolean
+}>()
+
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
@@ -67,11 +71,16 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const handleCreateWorkspace = handleSubmit(async () => {
-  const newWorkspace = await createWorkspace({
-    name: workspaceName.value,
-    description: workspaceDescription.value,
-    defaultLogoIndex: generateDefaultLogoIndex()
-  })
+  const newWorkspace = await createWorkspace(
+    {
+      name: workspaceName.value,
+      description: workspaceDescription.value,
+      defaultLogoIndex: generateDefaultLogoIndex()
+    },
+    {
+      navigateOnSuccess: props.navigateOnSuccess === true
+    }
+  )
 
   if (newWorkspace) {
     isOpen.value = false

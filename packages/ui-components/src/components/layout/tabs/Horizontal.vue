@@ -120,7 +120,6 @@ const buttonClass = computed(() => {
       'items-center',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
       'text-body-sm',
-      'space-x-1.5',
       'hover:sm:border-outline-2',
       'pb-2',
       'border-b-[2px]',

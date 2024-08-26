@@ -1,7 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink disable-link name="Workspaces" :separator="false" />
+      <HeaderNavLink :to="workspacesRoute" name="Workspaces" :separator="false" />
       <HeaderNavLink :to="workspaceRoute(workspaceId)" :name="workspace?.name" />
     </Portal>
     <WorkspaceHeader
@@ -22,7 +22,7 @@
           v-bind="bind"
           v-on="on"
         />
-        <FormButton v-if="!isGuest" @click="openNewProject = true">
+        <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
           New project
         </FormButton>
       </div>
@@ -32,6 +32,7 @@
 
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
+      :is-guest="isWorkspaceGuest"
       @create-project="openNewProject = true"
     />
 
@@ -49,7 +50,6 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
@@ -63,7 +63,8 @@ import type {
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { workspaceRoute, workspacesRoute } from '~/lib/common/helpers/route'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -78,7 +79,6 @@ graphql(`
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 
-const { isGuest } = useActiveUser()
 const areQueriesLoading = useQueryLoading()
 
 const props = defineProps<{
@@ -147,6 +147,8 @@ const showEmptyState = computed(() => {
 const showLoadingBar = computed(() => {
   return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
 })
+
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 
 const clearSearch = () => {
   search.value = ''
