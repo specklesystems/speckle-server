@@ -1,11 +1,15 @@
 <template>
   <div class="space-y-2">
     <FilterListSelect @update:filter="updateFilter" />
-    <SendSettings @update:settings="updateSettings"></SendSettings>
+    <SendSettings
+      v-if="hasSendSettings"
+      @update:settings="updateSettings"
+    ></SendSettings>
   </div>
 </template>
 <script setup lang="ts">
-import type { ISendFilter } from 'lib/models/card/send'
+import type { ISendFilter } from '~/lib/models/card/send'
+import { useHostAppStore } from '~/store/hostApp'
 import type { CardSetting } from '~/lib/models/card/setting'
 
 const emit = defineEmits<{
@@ -22,4 +26,9 @@ const updateFilter = (filter: ISendFilter) => {
 const updateSettings = (settings: CardSetting[]) => {
   emit('update:settings', settings)
 }
+
+const store = useHostAppStore()
+const hasSendSettings = computed(
+  () => store.sendSettings && store.sendSettings?.length > 0
+)
 </script>

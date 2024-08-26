@@ -1,15 +1,29 @@
 <template>
   <div class="p-0">
-    <FormJsonForm
-      :schema="settingsJsonForms"
-      :data="data"
-      @change="onParamsFormChange"
-    ></FormJsonForm>
+    <button
+      class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
+      @click="showSettings = !showSettings"
+    >
+      <div class="flex items-center transition group-hover:text-primary h-8 min-w-0">
+        <ChevronDownIcon
+          :class="`w-4 ${showSettings ? '' : '-rotate-90'} transition mt-0`"
+        />
+        <div class="text-sm text-left truncate select-none">Settings</div>
+      </div>
+    </button>
+    <div v-show="showSettings" class="px-2">
+      <FormJsonForm
+        :schema="settingsJsonForms"
+        :data="data"
+        @change="onParamsFormChange"
+      ></FormJsonForm>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CardSetting, CardSettingValue } from '~/lib/models/card/setting'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 import { cloneDeep, omit } from 'lodash-es'
 import type { JsonSchema } from '@jsonforms/core'
@@ -27,6 +41,8 @@ const defaultSendSettings = computed(() => store.sendSettings)
 const sendSettings = ref<CardSetting[] | undefined>(
   cloneDeep(props.settings ?? defaultSendSettings.value) // need to prevent mutation!
 )
+
+const showSettings = ref(false)
 
 const settingsJsonForms = computed(() => {
   if (sendSettings.value === undefined) return {}
