@@ -434,17 +434,22 @@ describe('Workspaces GQL CRUD', () => {
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
             input: { name }
           })
+          expect(workspaceCreateResult).to.not.haveGraphQLErrors()
 
           const id = workspaceCreateResult.data?.workspaceMutations.create.id
           if (!id) throw new Error('This should have succeeded')
 
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: testMemberUser.id,
-              workspaceId: id,
-              role: Roles.Workspace.Admin
+          const updateWorkspaceRole = await apollo.execute(
+            UpdateWorkspaceRoleDocument,
+            {
+              input: {
+                userId: testMemberUser.id,
+                workspaceId: id,
+                role: Roles.Workspace.Admin
+              }
             }
-          })
+          )
+          expect(updateWorkspaceRole).to.not.haveGraphQLErrors()
 
           let userWorkspaces = await apollo.execute(GetActiveUserWorkspacesDocument, {})
 

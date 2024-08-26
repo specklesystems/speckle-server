@@ -56,6 +56,18 @@ export const settingsNewEmailVerificationMutation = graphql(`
   }
 `)
 
+export const settingsUpdateWorkspaceSecurity = graphql(`
+  mutation SettingsUpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        domainBasedMembershipProtectionEnabled
+        discoverabilityEnabled
+      }
+    }
+  }
+`)
+
 export const deleteWorkspaceMutation = graphql(`
   mutation SettingsDeleteWorkspace($workspaceId: String!) {
     workspaceMutations {
@@ -86,6 +98,25 @@ export const settingsCancelWorkspaceInviteMutation = graphql(`
   }
 `)
 
+export const settingsAddWorkspaceDomainMutation = graphql(`
+  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
+    workspaceMutations {
+      addDomain(input: $input) {
+        ...SettingsWorkspacesSecurityDomainAddDialog_Workspace
+      }
+    }
+  }
+`)
+
+export const settingsDeleteWorkspaceDomainMutation = graphql(`
+  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
+    workspaceMutations {
+      deleteDomain(input: $input) {
+        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace
+      }
+    }
+  }
+`)
 export const settingsLeaveWorkspaceMutation = graphql(`
   mutation SettingsLeaveWorkspace($leaveId: ID!) {
     workspaceMutations {
