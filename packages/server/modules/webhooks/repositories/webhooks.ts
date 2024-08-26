@@ -3,7 +3,8 @@ import { Webhook } from '@/modules/webhooks/domain/types'
 import {
   CountWebhooksByStreamId,
   CreateWebhook,
-  GetWebhookById
+  GetWebhookById,
+  UpdateWebhook
 } from '@/modules/webhooks/domain/operations'
 
 type WebhookConfig = Omit<Webhook, 'triggers'> & { triggers: Record<string, true> }
@@ -54,4 +55,20 @@ export const getWebhookByIdFactory =
     }
 
     return { ...webhook, triggers: toTriggersArray(webhook.triggers) }
+  }
+
+export const updateWebhookFactory =
+  ({ db }: { db: Knex }): UpdateWebhook =>
+  async ({ webhookId, webhookInput }) => {
+    const { triggers, ...update } = webhookInput
+    let triggersObj: Record<string, true> | undefined
+    if (triggers) {
+      triggersObj = toTriggersObj(triggers)
+    }
+
+    await tables(db)
+      .webhooksConfigs.where({ id: webhookId })
+      .update({ ...update, triggers: triggersObj })
+
+    return webhookId
   }

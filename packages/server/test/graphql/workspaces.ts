@@ -70,6 +70,18 @@ export const getWorkspaceQuery = gql`
   ${workspaceTeamFragment}
 `
 
+export const getActiveUserDiscoverableWorkspacesQuery = gql`
+  query getActiveUserDiscoverableWorkspaces {
+    activeUser {
+      discoverableWorkspaces {
+        id
+        name
+        description
+      }
+    }
+  }
+`
+
 export const updateWorkspaceQuery = gql`
   mutation UpdateWorkspace($input: WorkspaceUpdateInput!) {
     workspaceMutations {

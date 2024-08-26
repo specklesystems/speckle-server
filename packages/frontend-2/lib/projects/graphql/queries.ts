@@ -28,13 +28,14 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
+      ...ProjectsInviteBanners
       ...ProjectsDashboardHeaderProjects_User
     }
   }
 `)
 
-export const projectsDashboardWorkspaceInvitesQuery = graphql(`
-  query ProjectsDashboardWorkspaceInvitesQuery {
+export const projectsDashboardWorkspaceQuery = graphql(`
+  query ProjectsDashboardWorkspaceQuery {
     activeUser {
       id
       ...ProjectsDashboardHeaderWorkspaces_User
