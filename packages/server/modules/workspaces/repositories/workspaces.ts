@@ -5,6 +5,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
+  CountProjectsVersionsByWorkspaceId,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
@@ -30,7 +31,14 @@ import {
   WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
-import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
+import {
+  knex,
+  ServerAcl,
+  ServerInvites,
+  StreamCommits,
+  Streams,
+  Users
+} from '@/modules/core/dbSchema'
 import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
@@ -301,4 +309,16 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const countProjectsVersionsByWorkspaceIdFactory =
+  ({ db }: { db: Knex }): CountProjectsVersionsByWorkspaceId =>
+  async ({ workspaceId }) => {
+    const [res] = await tables
+      .streams(db)
+      .join(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
+      .where({ workspaceId })
+      .count(StreamCommits.col.commitId)
+
+    return parseInt(res.count.toString())
   }

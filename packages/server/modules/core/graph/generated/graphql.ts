@@ -3854,6 +3854,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Billing data for Workspaces beta */
+  billing: WorkspaceBilling;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -3892,6 +3894,11 @@ export type WorkspaceProjectsArgs = {
 
 export type WorkspaceTeamArgs = {
   filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
+export type WorkspaceBilling = {
+  __typename?: 'WorkspaceBilling';
+  versionsCount?: Maybe<WorkspaceVersionsCount>;
 };
 
 export type WorkspaceCollaborator = {
@@ -4095,6 +4102,14 @@ export type WorkspaceUpdateInput = {
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceVersionsCount = {
+  __typename?: 'WorkspaceVersionsCount';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 
@@ -4400,6 +4415,7 @@ export type ResolversTypes = {
   WebhookEventCollection: ResolverTypeWrapper<WebhookEventCollection>;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: ResolverTypeWrapper<WorkspaceGraphQLReturn>;
+  WorkspaceBilling: ResolverTypeWrapper<WorkspaceBilling>;
   WorkspaceCollaborator: ResolverTypeWrapper<WorkspaceCollaboratorGraphQLReturn>;
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCreateInput: WorkspaceCreateInput;
@@ -4417,6 +4433,7 @@ export type ResolversTypes = {
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceVersionsCount: ResolverTypeWrapper<WorkspaceVersionsCount>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -4632,6 +4649,7 @@ export type ResolversParentTypes = {
   WebhookEventCollection: WebhookEventCollection;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: WorkspaceGraphQLReturn;
+  WorkspaceBilling: WorkspaceBilling;
   WorkspaceCollaborator: WorkspaceCollaboratorGraphQLReturn;
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCreateInput: WorkspaceCreateInput;
@@ -4648,6 +4666,7 @@ export type ResolversParentTypes = {
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceVersionsCount: WorkspaceVersionsCount;
 };
 
 export type HasScopeDirectiveArgs = {
@@ -5985,6 +6004,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
+  billing?: Resolver<ResolversTypes['WorkspaceBilling'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   defaultLogoIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5999,6 +6019,11 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType, Partial<WorkspaceTeamArgs>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceBillingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceBilling'] = ResolversParentTypes['WorkspaceBilling']> = {
+  versionsCount?: Resolver<Maybe<ResolversTypes['WorkspaceVersionsCount']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6041,6 +6066,12 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceVersionsCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceVersionsCount'] = ResolversParentTypes['WorkspaceVersionsCount']> = {
+  current?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  max?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6173,11 +6204,13 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WebhookEvent?: WebhookEventResolvers<ContextType>;
   WebhookEventCollection?: WebhookEventCollectionResolvers<ContextType>;
   Workspace?: WorkspaceResolvers<ContextType>;
+  WorkspaceBilling?: WorkspaceBillingResolvers<ContextType>;
   WorkspaceCollaborator?: WorkspaceCollaboratorResolvers<ContextType>;
   WorkspaceCollection?: WorkspaceCollectionResolvers<ContextType>;
   WorkspaceDomain?: WorkspaceDomainResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
+  WorkspaceVersionsCount?: WorkspaceVersionsCountResolvers<ContextType>;
 };
 
 export type DirectiveResolvers<ContextType = GraphQLContext> = {

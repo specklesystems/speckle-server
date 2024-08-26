@@ -3843,6 +3843,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Billing data for Workspaces beta */
+  billing: WorkspaceBilling;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -3881,6 +3883,11 @@ export type WorkspaceProjectsArgs = {
 
 export type WorkspaceTeamArgs = {
   filter?: InputMaybe<WorkspaceTeamFilter>;
+};
+
+export type WorkspaceBilling = {
+  __typename?: 'WorkspaceBilling';
+  versionsCount?: Maybe<WorkspaceVersionsCount>;
 };
 
 export type WorkspaceCollaborator = {
@@ -4084,6 +4091,14 @@ export type WorkspaceUpdateInput = {
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceVersionsCount = {
+  __typename?: 'WorkspaceVersionsCount';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{

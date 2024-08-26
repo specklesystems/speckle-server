@@ -61,7 +61,8 @@ import {
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
-  getWorkspaceWithDomainsFactory
+  getWorkspaceWithDomainsFactory,
+  countProjectsVersionsByWorkspaceIdFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -102,6 +103,8 @@ import {
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -611,6 +614,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
+        },
+        billing: (parent) => ({ parent })
+      },
+      WorkspaceBilling: {
+        versionsCount: async (parent) => {
+          return {
+            current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
+              workspaceId: (parent as { parent: Workspace }).parent.id
+            }),
+            max: WORKSPACE_MAX_PROJECTS_VERSIONS
+          }
         }
       },
       WorkspaceCollaborator: {

@@ -182,6 +182,21 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+type WorkspaceVersionsCount {
+  """
+  Total number of versions of all projects in the workspace
+  """
+  current: Int!
+  """
+  Maximum number of version of all projects in the workspace with no additional cost
+  """
+  max: Int!
+}
+
+type WorkspaceBilling {
+  versionsCount: WorkspaceVersionsCount
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -216,6 +231,10 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  """
+  Billing data for Workspaces beta
+  """
+  billing: WorkspaceBilling! @hasWorkspaceRole(role: MEMBER)
   """
   Enable/Disable restriction to invite users to workspace as Guests only
   """
