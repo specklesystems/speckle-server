@@ -51,12 +51,17 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
-import { GetWorkspace } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspace,
+  GetWorkspaceDomains
+} from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -107,6 +112,8 @@ export const createWorkspaceInviteFactory =
 type CollectAndValidateWorkspaceTargetsFactoryDeps =
   CollectAndValidateCoreTargetsFactoryDeps & {
     getWorkspace: GetWorkspace
+    getWorkspaceDomains: GetWorkspaceDomains
+    findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
   }
 
 export const collectAndValidateWorkspaceTargetsFactory =
@@ -169,6 +176,27 @@ export const collectAndValidateWorkspaceTargetsFactory =
       throw new InviteCreateValidationError(
         'Guest users cannot be admins of workspaces'
       )
+    }
+    if (role !== Roles.Workspace.Guest && targetUser) {
+      const domains = await deps.getWorkspaceDomains({ workspaceIds: [resourceId] })
+      const verifiedDomains = domains.filter((domain) => domain?.verified)
+      if (
+        workspace &&
+        verifiedDomains &&
+        workspace?.domainBasedMembershipProtectionEnabled &&
+        verifiedDomains.length > 0
+      ) {
+        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
+        const verifiedUserEmails = await deps.findVerifiedEmailsByUserId({
+          userId: targetUser.id
+        })
+        const domainMatching = verifiedUserEmails.find((userEmail) =>
+          domains.has(userEmail.email.split('@')[1])
+        )
+        if (!domainMatching) {
+          throw new WorkspaceProtectedError()
+        }
+      }
     }
 
     return [...baseTargets, { ...primaryWorkspaceResourceTarget, primary: true }]

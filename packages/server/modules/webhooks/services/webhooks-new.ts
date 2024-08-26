@@ -1,6 +1,7 @@
 import {
   CountWebhooksByStreamId,
-  CreateWebhook
+  CreateWebhook,
+  UpdateWebhook
 } from '@/modules/webhooks/domain/operations'
 import { Webhook } from '@/modules/webhooks/domain/types'
 import { SetValuesNullable } from '@speckle/shared'
@@ -40,5 +41,26 @@ export const createWebhook =
       secret: secret ?? undefined,
       enabled,
       triggers
+    })
+  }
+
+export const updateWebhook =
+  ({ updateWebhookConfig }: { updateWebhookConfig: UpdateWebhook }) =>
+  async (
+    webhook: Pick<Webhook, 'id'> &
+      Partial<SetValuesNullable<Omit<Webhook, 'id' | 'updatedAt'>>>
+  ) => {
+    const { id, streamId, url, description, secret, enabled, triggers } = webhook
+    return await updateWebhookConfig({
+      webhookId: id,
+      webhookInput: {
+        streamId: streamId ?? undefined,
+        url: url ?? undefined,
+        description: description ?? undefined,
+        secret: secret ?? undefined,
+        enabled: enabled ?? undefined,
+        triggers: triggers ?? undefined,
+        updatedAt: new Date()
+      }
     })
   }

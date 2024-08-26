@@ -62,7 +62,7 @@
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
-                  tag="NEW"
+                  tag="BETA"
                 >
                   <template #icon>
                     <IconWorkspaces class="h-4 w-4 text-foreground-2" />

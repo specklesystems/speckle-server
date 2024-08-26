@@ -6,7 +6,10 @@
         :invites="projectsInvites"
       />
       <WorkspaceInviteBanners
-        v-if="workspacesInvites?.workspaceInvites?.length"
+        v-if="
+          workspacesInvites?.workspaceInvites?.length ||
+          workspacesInvites?.discoverableWorkspaces?.length
+        "
         :invites="workspacesInvites"
       />
     </div>
