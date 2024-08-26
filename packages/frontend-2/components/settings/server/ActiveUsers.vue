@@ -17,9 +17,7 @@
             v-on="on"
           />
         </div>
-        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-          Invite
-        </FormButton>
+        <FormButton @click="toggleInviteDialog">Invite</FormButton>
       </div>
 
       <LayoutTable
@@ -113,8 +111,7 @@ import {
   MagnifyingGlassIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
-  TrashIcon,
-  UserPlusIcon
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { useDebouncedTextInput } from '@speckle/ui-components'

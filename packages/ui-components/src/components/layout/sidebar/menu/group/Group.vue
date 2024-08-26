@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const props = defineProps<{
   title?: string
@@ -50,11 +50,7 @@ const props = defineProps<{
 
 const isCollapsed = ref(true)
 
-watch(
-  () => props.collapsed,
-  (newVal) => {
-    isCollapsed.value = newVal
-  },
-  { immediate: true }
-)
+onMounted(() => {
+  isCollapsed.value = props.collapsed
+})
 </script>

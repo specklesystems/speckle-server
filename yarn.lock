@@ -9874,13 +9874,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/accept-negotiator@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@fastify/accept-negotiator@npm:1.1.0"
-  checksum: 10/5c8f263680af0aece8c1fdea4d4c094a7f82cc5ed90b709357eb52a01e3388d1ac74a17e5a1d5d53f2d3ca93ae50d283ee451a6435b2cbe1b9847fff4d7d0732
-  languageName: node
-  linkType: hard
-
 "@fastify/busboy@npm:^2.0.0":
   version: 2.1.1
   resolution: "@fastify/busboy@npm:2.1.1"
@@ -12069,28 +12062,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nuxt/image@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "@nuxt/image@npm:1.7.0"
-  dependencies:
-    "@nuxt/kit": "npm:^3.11.2"
-    consola: "npm:^3.2.3"
-    defu: "npm:^6.1.4"
-    h3: "npm:^1.11.1"
-    image-meta: "npm:^0.2.0"
-    ipx: "npm:^2.1.0"
-    node-fetch-native: "npm:^1.6.4"
-    ohash: "npm:^1.1.3"
-    pathe: "npm:^1.1.2"
-    std-env: "npm:^3.7.0"
-    ufo: "npm:^1.5.3"
-  dependenciesMeta:
-    ipx:
-      optional: true
-  checksum: 10/1cce0f672b2e104da256d3f25fa4e5ae2faef45dacd13b4be508d4d8f26b251af2a8b8b4add34860495520c467755601da8a9cb35f713b699f78142990470c06
-  languageName: node
-  linkType: hard
-
 "@nuxt/kit@npm:3.12.2":
   version: 3.12.2
   resolution: "@nuxt/kit@npm:3.12.2"
@@ -14167,87 +14138,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:6.19.7":
-  version: 6.19.7
-  resolution: "@sentry/core@npm:6.19.7"
-  dependencies:
-    "@sentry/hub": "npm:6.19.7"
-    "@sentry/minimal": "npm:6.19.7"
-    "@sentry/types": "npm:6.19.7"
-    "@sentry/utils": "npm:6.19.7"
-    tslib: "npm:^1.9.3"
-  checksum: 10/75f98ae1ad2d27deda35f88f07cf6a29f1f2eaa956ba5e2292d4d8ea2cd087a6c4a9303856ac09e6cab5cea0a1579128f35f7add14524c6e72292e65ebeab6ab
-  languageName: node
-  linkType: hard
-
-"@sentry/hub@npm:6.19.7":
-  version: 6.19.7
-  resolution: "@sentry/hub@npm:6.19.7"
-  dependencies:
-    "@sentry/types": "npm:6.19.7"
-    "@sentry/utils": "npm:6.19.7"
-    tslib: "npm:^1.9.3"
-  checksum: 10/ef2381ec399305ee56f7cff990c5bf0f221119193ac1b0862d237c42c9e214a8a3dcabe55085e197710c9667f1c541fffc3fe37e89d7562f3c86432c22d7f09a
-  languageName: node
-  linkType: hard
-
-"@sentry/minimal@npm:6.19.7":
-  version: 6.19.7
-  resolution: "@sentry/minimal@npm:6.19.7"
-  dependencies:
-    "@sentry/hub": "npm:6.19.7"
-    "@sentry/types": "npm:6.19.7"
-    tslib: "npm:^1.9.3"
-  checksum: 10/eac4f79f7116dee90bfd8ea284c777c267e70c0b51883bc419f176dd5283b2b1955ede0bc471759f26a8c686f78f7a664560684a8998fc4c6f85d9e1539d39f9
-  languageName: node
-  linkType: hard
-
-"@sentry/node@npm:^6.17.9":
-  version: 6.19.7
-  resolution: "@sentry/node@npm:6.19.7"
-  dependencies:
-    "@sentry/core": "npm:6.19.7"
-    "@sentry/hub": "npm:6.19.7"
-    "@sentry/types": "npm:6.19.7"
-    "@sentry/utils": "npm:6.19.7"
-    cookie: "npm:^0.4.1"
-    https-proxy-agent: "npm:^5.0.0"
-    lru_map: "npm:^0.3.3"
-    tslib: "npm:^1.9.3"
-  checksum: 10/8769b31f579688d073a357b767b45c2128f189500a5f38c7c130f73e7dd735f968ff89583d4ab8fdbddfcd3dad23467b11ad483355b8d06dd984d94b2a2eb134
-  languageName: node
-  linkType: hard
-
-"@sentry/tracing@npm:^6.17.9":
-  version: 6.19.7
-  resolution: "@sentry/tracing@npm:6.19.7"
-  dependencies:
-    "@sentry/hub": "npm:6.19.7"
-    "@sentry/minimal": "npm:6.19.7"
-    "@sentry/types": "npm:6.19.7"
-    "@sentry/utils": "npm:6.19.7"
-    tslib: "npm:^1.9.3"
-  checksum: 10/4ac6c66c39ea39fe5b2fff0b74039e0c4475c2ea0667c9ec4a6414a56ddb20b9996e7dae8bc1292882745bd0800a3c6d8f4853fba32552d9cdb1cb6f7be9105c
-  languageName: node
-  linkType: hard
-
-"@sentry/types@npm:6.19.7":
-  version: 6.19.7
-  resolution: "@sentry/types@npm:6.19.7"
-  checksum: 10/f9f70e94c4a3876f6119f7e3979051ea2a054adce6f5583de9f70a08642c7d2c2f80a70a1f9fe5f9fad4e99315f4483340ded1110ae2e7c825c4c1f210fc2507
-  languageName: node
-  linkType: hard
-
-"@sentry/utils@npm:6.19.7":
-  version: 6.19.7
-  resolution: "@sentry/utils@npm:6.19.7"
-  dependencies:
-    "@sentry/types": "npm:6.19.7"
-    tslib: "npm:^1.9.3"
-  checksum: 10/0ea94d32940705d77b019ca821e45a5866bb3d443e0f19b9bf5edf3d7ffed68c451803f3388913fec4da875e4b7df46b5f8a8681c4d69972fb3d775d864997b2
-  languageName: node
-  linkType: hard
-
 "@shikijs/core@npm:1.3.0":
   version: 1.3.0
   resolution: "@shikijs/core@npm:1.3.0"
@@ -15108,7 +14998,6 @@ __metadata:
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
     "@nuxt/devtools": "npm:^1.3.9"
     "@nuxt/eslint": "npm:^0.3.13"
-    "@nuxt/image": "npm:^1.7.0"
     "@nuxtjs/tailwindcss": "npm:^6.3.0"
     "@parcel/watcher": "npm:^2.4.1"
     "@speckle/shared": "workspace:^"
@@ -15436,8 +15325,6 @@ __metadata:
     "@graphql-tools/schema": "npm:^10.0.4"
     "@mailchimp/mailchimp_marketing": "npm:^3.0.80"
     "@parcel/watcher": "npm:^2.4.1"
-    "@sentry/node": "npm:^6.17.9"
-    "@sentry/tracing": "npm:^6.17.9"
     "@speckle/objectloader": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@swc/core": "npm:^1.2.222"
@@ -26153,13 +26040,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:^0.4.1":
-  version: 0.4.2
-  resolution: "cookie@npm:0.4.2"
-  checksum: 10/2e1de9fdedca54881eab3c0477aeb067f281f3155d9cfee9d28dfb252210d09e85e9d175c0a60689661feb9e35e588515352f2456bc1f8e8db4267e05fd70137
-  languageName: node
-  linkType: hard
-
 "cookie@npm:^0.5.0":
   version: 0.5.0
   resolution: "cookie@npm:0.5.0"
@@ -27748,7 +27628,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"destr@npm:^2.0.2, destr@npm:^2.0.3":
+"destr@npm:^2.0.3":
   version: 2.0.3
   resolution: "destr@npm:2.0.3"
   checksum: 10/dbb756baa876810ec0ca4bcb702d86cc3b480ed14f36bf5747718ed211f96bca5520b63a4109eb181ad940ee2a645677d9a63d4a0ed11a7510619dae97317201
@@ -32112,24 +31992,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"h3@npm:^1.10.0":
-  version: 1.12.0
-  resolution: "h3@npm:1.12.0"
-  dependencies:
-    cookie-es: "npm:^1.1.0"
-    crossws: "npm:^0.2.4"
-    defu: "npm:^6.1.4"
-    destr: "npm:^2.0.3"
-    iron-webcrypto: "npm:^1.1.1"
-    ohash: "npm:^1.1.3"
-    radix3: "npm:^1.1.2"
-    ufo: "npm:^1.5.3"
-    uncrypto: "npm:^0.1.3"
-    unenv: "npm:^1.9.0"
-  checksum: 10/59c7a3818e863c84a32110cf4ee26ac6deb39b99527c483e56c4334b1cadb77ffca2895472b7af227a205757a5b27da43b73a057cb113b7769547062ace89cc7
-  languageName: node
-  linkType: hard
-
 "h3@npm:^1.10.2, h3@npm:^1.11.1":
   version: 1.11.1
   resolution: "h3@npm:1.11.1"
@@ -33376,32 +33238,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ipx@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "ipx@npm:2.1.0"
-  dependencies:
-    "@fastify/accept-negotiator": "npm:^1.1.0"
-    citty: "npm:^0.1.5"
-    consola: "npm:^3.2.3"
-    defu: "npm:^6.1.4"
-    destr: "npm:^2.0.2"
-    etag: "npm:^1.8.1"
-    h3: "npm:^1.10.0"
-    image-meta: "npm:^0.2.0"
-    listhen: "npm:^1.5.6"
-    ofetch: "npm:^1.3.3"
-    pathe: "npm:^1.1.2"
-    sharp: "npm:^0.32.6"
-    svgo: "npm:^3.2.0"
-    ufo: "npm:^1.3.2"
-    unstorage: "npm:^1.10.1"
-    xss: "npm:^1.0.14"
-  bin:
-    ipx: bin/ipx.mjs
-  checksum: 10/e91e5bb702fabf9f7e3bf866028e1b356be1f1d425bb2544d0ad60b6d8925c866259fb717a7d2ab4e805d338fc352ddcfb834582f50b1974428719c754660259
-  languageName: node
-  linkType: hard
-
 "iron-webcrypto@npm:^0.7.0":
   version: 0.7.0
   resolution: "iron-webcrypto@npm:0.7.0"
@@ -33413,13 +33249,6 @@ __metadata:
   version: 1.0.0
   resolution: "iron-webcrypto@npm:1.0.0"
   checksum: 10/1af9fc319c21d44023e08b7019b4c5d0b58f32c6fccab6e4885522b3efa2f6c17491f9caccba74d816f04b4af3148f5bd91a9b506b6d84c2db6ac0a678fbd88a
-  languageName: node
-  linkType: hard
-
-"iron-webcrypto@npm:^1.1.1":
-  version: 1.2.1
-  resolution: "iron-webcrypto@npm:1.2.1"
-  checksum: 10/c1f52ccfe2780efa5438c134538ee4b26c96a87d22f351d896781219efbce25b4fe716d1cb7f248e02da96881760541135acbcc7c0622ffedf71cb0e227bebf9
   languageName: node
   linkType: hard
 
@@ -36127,7 +35956,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"listhen@npm:^1.5.6, listhen@npm:^1.7.2":
+"listhen@npm:^1.7.2":
   version: 1.7.2
   resolution: "listhen@npm:1.7.2"
   dependencies:
@@ -36784,13 +36613,6 @@ __metadata:
   version: 9.1.1
   resolution: "lru-cache@npm:9.1.1"
   checksum: 10/bf0b62d5fd7b769f40a73f7dc41f12f0f24bc543277f78681bd36d9a684a09233b0c8a188d8c996b319f803410808a1e57ab99cd60e33b9b7b2728b08e31c7ff
-  languageName: node
-  linkType: hard
-
-"lru_map@npm:^0.3.3":
-  version: 0.3.3
-  resolution: "lru_map@npm:0.3.3"
-  checksum: 10/50f6597924a7763ab0b31192e5e9965f08ca64a0044254138e74a65aecab95047d540f73739cff489866f4310e0202c11c10fdf18b10b236472160baaa68bbb1
   languageName: node
   linkType: hard
 
@@ -47615,7 +47437,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"svgo@npm:^3.2.0, svgo@npm:^3.3.2":
+"svgo@npm:^3.3.2":
   version: 3.3.2
   resolution: "svgo@npm:3.3.2"
   dependencies:
@@ -49712,7 +49534,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unstorage@npm:^1.10.1, unstorage@npm:^1.10.2":
+"unstorage@npm:^1.10.2":
   version: 1.10.2
   resolution: "unstorage@npm:1.10.2"
   dependencies:
@@ -52249,18 +52071,6 @@ __metadata:
   version: 2.2.0
   resolution: "xmlchars@npm:2.2.0"
   checksum: 10/4ad5924974efd004a47cce6acf5c0269aee0e62f9a805a426db3337af7bcbd331099df174b024ace4fb18971b8a56de386d2e73a1c4b020e3abd63a4a9b917f1
-  languageName: node
-  linkType: hard
-
-"xss@npm:^1.0.14":
-  version: 1.0.15
-  resolution: "xss@npm:1.0.15"
-  dependencies:
-    commander: "npm:^2.20.3"
-    cssfilter: "npm:0.0.10"
-  bin:
-    xss: bin/xss
-  checksum: 10/074ad54babac9dd5107466dbf30d3b871dbedae1f8e7b8f4e3b76d60da8b92bd0f66f18ccd26b8524545444ef784b78c526cee089a907aa904f83c8b8d7958f6
   languageName: node
   linkType: hard
 

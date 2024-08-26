@@ -1,4 +1,4 @@
-import { getPostgresConnectionString } from '@/utils/env.js'
+import { getPostgresConnectionString, getPostgresMaxConnections } from '@/utils/env.js'
 import * as knex from 'knex'
 import { get } from 'lodash-es'
 
@@ -13,6 +13,11 @@ export const db = knexBuilder({
     application_name: 'speckle_preview_service',
     connectionString: getPostgresConnectionString()
   },
-  pool: { min: 0, max: 2 }
+  pool: {
+    min: 0,
+    max: getPostgresMaxConnections(),
+    acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
+    createTimeoutMillis: 5000
+  }
   // migrations are managed in the server package
 })

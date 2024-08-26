@@ -21,7 +21,11 @@
         class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover:opacity-100"
       />
     </div>
-    <CommonBadge v-if="tag" rounded>
+    <CommonBadge
+      v-if="tag"
+      rounded
+      :color-classes="disabled ? 'text-foreground-2 bg-primary-muted' : undefined"
+    >
       {{ tag }}
     </CommonBadge>
   </div>

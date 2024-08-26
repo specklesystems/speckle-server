@@ -1223,11 +1223,6 @@
             }
           }
         },
-        "sentry_dns": {
-          "type": "string",
-          "description": "(Optional) The Data Source Name that was provided by Sentry.io",
-          "default": ""
-        },
         "disable_tracking": {
           "type": "boolean",
           "description": "If set to true, will prevent tracking metrics from being collected",
