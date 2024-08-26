@@ -1,4 +1,4 @@
-import { databaseIntegrationTest } from '#/helpers/testExtensions.js'
+import { acceptanceTest } from '#/helpers/testExtensions.js'
 import { ObjectPreview, type ObjectPreviewRow } from '@/repositories/objectPreview.js'
 import { Previews } from '@/repositories/previews.js'
 import cryptoRandomString from 'crypto-random-string'
@@ -28,8 +28,11 @@ describe.sequential('Acceptance', () => {
     })
 
     // we use integration test and not e2e test because we don't need the server
-    databaseIntegrationTest(
+    acceptanceTest(
       'loads data, runs docker image, extracts rendered image',
+      {
+        timeout: 300000 //5 minutes
+      },
       async ({ context }) => {
         const { db } = context
         const dbName = inject('dbName')
@@ -88,8 +91,7 @@ describe.sequential('Acceptance', () => {
         const outputFilePath =
           process.env.OUTPUT_FILE_PATH || '/tmp/preview-service-output.png'
         await fs.writeFile(outputFilePath, previewData.data)
-      },
-      { timeout: 60000 }
+      }
     )
   })
 })

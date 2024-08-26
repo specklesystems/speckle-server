@@ -5,6 +5,34 @@ import { startAndWaitOnServers } from '#/helpers/helpers.js'
 import type { Knex } from 'knex'
 import { Server } from 'http'
 
+export interface AcceptanceTestContext {
+  context: {
+    db: Knex
+  }
+}
+
+// vitest reference: https://vitest.dev/guide/test-context#fixture-initialization
+export const acceptanceTest = test.extend<AcceptanceTestContext>({
+  // this key has to match the top level key in the interface (i.e. `context`). Some vitest typing magic at work here.
+  context: [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async ({ task, onTestFinished }, use) => {
+      const dbName = inject('dbName')
+      // equivalent of beforeEach
+      const db = getTestDb(dbName)
+
+      // schedule the cleanup. Runs regardless of test status, and runs after afterEach.
+      onTestFinished(async () => {
+        //no-op
+      })
+
+      // now run the test
+      await use({ db })
+    },
+    { auto: true } // we want to run this for each databaseIntegrationTest, even if the context is not explicitly requested by the test
+  ]
+})
+
 export interface DatabaseIntegrationTestContext {
   context: {
     db: Knex.Transaction
