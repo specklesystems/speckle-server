@@ -54,6 +54,11 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
+// const tables = {
+//   streams: (db: Knex) => db<StreamRecord>('streams'),
+//   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl')
+// }
+
 export type StreamWithOptionalRole = StreamRecord & {
   /**
    * Available, if query joined this data StreamAcl
@@ -957,16 +962,11 @@ export async function markCommitStreamUpdated(commitId: string) {
 /**
  * (Moved from services/streams.js, could be refactored into something better)
  */
-export async function grantStreamPermissions(
-  params: {
-    streamId: string
-    userId: string
-    role: StreamRoles
-  },
-  opts?: {
-    trx?: Knex.Transaction
-  }
-) {
+export async function grantStreamPermissions(params: {
+  streamId: string
+  userId: string
+  role: StreamRoles
+}) {
   const { streamId, userId, role } = params
 
   // assert we are not removing last admin from project
@@ -995,24 +995,12 @@ export async function grantStreamPermissions(
     StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
     ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
-  const q = knex.raw(query)
-
-  if (opts?.trx) {
-    q.transacting(opts.trx)
-  }
-
-  await q
+  await knex.raw(query)
 
   // update stream updated at
-  const streamUpdateQuery = Streams.knex()
+  const streams = await Streams.knex()
     .where({ id: streamId })
     .update({ updatedAt: knex.fn.now() }, '*')
-
-  if (opts?.trx) {
-    streamUpdateQuery.transacting(opts.trx)
-  }
-
-  const streams = await streamUpdateQuery
 
   return streams[0] as StreamRecord
 }
@@ -1020,13 +1008,10 @@ export async function grantStreamPermissions(
 /**
  * (Moved from services/streams.js, could be refactored into something better)
  */
-export async function revokeStreamPermissions(
-  params: {
-    streamId: string
-    userId: string
-  },
-  opts?: { trx?: Knex.Transaction }
-) {
+export async function revokeStreamPermissions(params: {
+  streamId: string
+  userId: string
+}) {
   const { streamId, userId } = params
 
   const existingPermission = await StreamAcl.knex()
@@ -1065,22 +1050,12 @@ export async function revokeStreamPermissions(
         info: { streamId, userId }
       })
     else {
-      const deleteQuery = StreamAcl.knex().where({ resourceId: streamId, userId }).del()
-
-      if (opts?.trx) {
-        deleteQuery.transacting(opts.trx)
-      }
-
-      await deleteQuery
+      await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
     }
   } else {
-    const deleteQuery = StreamAcl.knex().where({ resourceId: streamId, userId }).del()
-
-    if (opts?.trx) {
-      deleteQuery.transacting(opts.trx)
-    }
-
-    const delCount = await deleteQuery
+    const delCount = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId })
+      .del()
 
     if (delCount === 0)
       throw new StreamAccessUpdateError('Could not revoke permissions for user', {
@@ -1089,15 +1064,9 @@ export async function revokeStreamPermissions(
   }
 
   // update stream updated at
-  const streamUpdateQuery = Streams.knex()
+  const [stream] = await Streams.knex()
     .where({ id: streamId })
     .update({ updatedAt: knex.fn.now() }, '*')
-
-  if (opts?.trx) {
-    streamUpdateQuery.transacting(opts.trx)
-  }
-
-  const [stream] = await streamUpdateQuery
 
   return stream as StreamRecord
 }

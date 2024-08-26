@@ -59,7 +59,6 @@ import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operati
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty } from 'lodash'
-import { db } from '@/db/knex'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -247,45 +246,34 @@ export const deleteWorkspaceRoleFactory =
       throw new WorkspaceAdminRequiredError()
     }
 
-    const trx = await db.transaction()
-
-    try {
-      // Perform delete
-      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId }, { trx })
-      if (!deletedRole) {
-        // await trx.commit()
-        return null
-      }
-
-      // Delete workspace project roles
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-        getStreams
-      })
-      for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
-        workspaceId
-      })) {
-        await Promise.all(
-          projectsPage.map(({ id: streamId }) =>
-            revokeStreamPermissions({ streamId, userId }, { trx })
-          )
-        )
-      }
-
-      // Emit deleted role
-      await emitWorkspaceEvent({
-        eventName: WorkspaceEvents.RoleDeleted,
-        payload: deletedRole
-      })
-
-      return deletedRole
-    } catch (e) {
-      await trx.rollback()
-      throw e
-    } finally {
-      if (!trx.isCompleted()) {
-        await trx.commit()
-      }
+    // Perform delete
+    const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+    if (!deletedRole) {
+      // await trx.commit()
+      return null
     }
+
+    // Delete workspace project roles
+    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      getStreams
+    })
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
+      await Promise.all(
+        projectsPage.map(({ id: streamId }) =>
+          revokeStreamPermissions({ streamId, userId })
+        )
+      )
+    }
+
+    // Emit deleted role
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleDeleted,
+      payload: deletedRole
+    })
+
+    return deletedRole
   }
 
 type WorkspaceRoleGetArgs = {
@@ -341,7 +329,6 @@ export const updateWorkspaceRoleFactory =
       throw new WorkspaceAdminRequiredError()
     }
 
-    const trx = await db.transaction()
     if (role !== Roles.Workspace.Guest) {
       const workspace = await getWorkspaceWithDomains({ id: workspaceId })
       const verifiedDomains = workspace?.domains.filter((domain) => domain?.verified)
@@ -365,53 +352,36 @@ export const updateWorkspaceRoleFactory =
     // Perform upsert
     await upsertWorkspaceRole({ userId, workspaceId, role })
 
-    try {
-      // Perform upsert
-      await upsertWorkspaceRole({ userId, workspaceId, role }, { trx })
+    // Emit new role
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: { userId, workspaceId, role }
+    })
 
-      // Emit new role
-      await emitWorkspaceEvent({
-        eventName: WorkspaceEvents.RoleUpdated,
-        payload: { userId, workspaceId, role }
-      })
+    // Apply initial project role to existing workspace projects
+    const isFirstWorkspaceRole = !workspaceRoles.some((role) => role.userId === userId)
 
-      // Apply initial project role to existing workspace projects
-      const isFirstWorkspaceRole = !workspaceRoles.some(
-        (role) => role.userId === userId
+    if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
+      // Guests do not get roles for existing workspace projects
+      return
+    }
+
+    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      getStreams
+    })
+    const projectRole = mapWorkspaceRoleToProjectRole(role)
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+      workspaceId
+    })) {
+      await Promise.all(
+        projectsPage.map(({ id: streamId }) => {
+          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+            return
+          }
+
+          return grantStreamPermissions({ streamId, userId, role: projectRole })
+        })
       )
-
-      if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
-        // Guests do not get roles for existing workspace projects
-        return
-      }
-
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-        getStreams
-      })
-      const projectRole = mapWorkspaceRoleToProjectRole(role)
-      for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
-        workspaceId
-      })) {
-        await Promise.all(
-          projectsPage.map(({ id: streamId }) => {
-            if (skipProjectRoleUpdatesFor?.includes(streamId)) {
-              return
-            }
-
-            return grantStreamPermissions(
-              { streamId, userId, role: projectRole },
-              { trx }
-            )
-          })
-        )
-      }
-    } catch (e) {
-      await trx.rollback()
-      throw e
-    } finally {
-      if (!trx.isCompleted()) {
-        await trx.commit()
-      }
     }
   }
 

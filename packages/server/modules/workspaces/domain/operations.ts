@@ -10,7 +10,6 @@ import {
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import { WorkspaceRoles } from '@speckle/shared'
 import { UserWithRole } from '@/modules/core/repositories/users'
-import { Knex } from 'knex'
 
 /** Workspace */
 
@@ -83,8 +82,7 @@ type DeleteWorkspaceRoleArgs = {
 }
 
 export type DeleteWorkspaceRole = (
-  args: DeleteWorkspaceRoleArgs,
-  opts?: { trx?: Knex.Transaction }
+  args: DeleteWorkspaceRoleArgs
 ) => Promise<WorkspaceAcl | null>
 
 type GetWorkspaceRolesArgs = {
@@ -119,10 +117,7 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
-export type UpsertWorkspaceRole = (
-  args: WorkspaceAcl,
-  opts?: { trx?: Knex.Transaction }
-) => Promise<void>
+export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Workspace Projects */
 
