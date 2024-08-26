@@ -17,6 +17,10 @@ input WorkspaceCreateInput {
   name: String!
   description: String
   defaultLogoIndex: Int
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
 }
 
 input WorkspaceUpdateInput {
