@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`${containerClassColor} flex justify-between items-center py-2 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 min-w-0`"
+    :class="`${containerClassColor} flex justify-between items-center py-1 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 min-w-0`"
   >
     <div class="grow min-w-0">
       <div
