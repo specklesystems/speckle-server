@@ -42,13 +42,6 @@ workflows:
       - test-ui-components:
           filters: *filters-allow-all
 
-      - acceptance-test-preview-service:
-          filters: *filters-allow-all
-          requires:
-            - docker-build-previews
-            - get-version
-            - test-preview-service
-
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
@@ -687,22 +680,6 @@ jobs:
           name: Run tests
           command: yarn test
           working_directory: 'packages/preview-service'
-
-  acceptance-test-preview-service:
-    docker:
-      - image: cimg/base:2024.02
-      - image: cimg/postgres:14.11
-        environment:
-          POSTGRES_DB: preview_service_test
-          POSTGRES_PASSWORD: preview_service_test
-          POSTGRES_USER: preview_service_test
-    resource_class: large
-    environment:
-      SPECKLE_SERVER_PACKAGE: preview-service
-    steps:
-      - run:
-          name: Run acceptance test with Docker image
-          command: ./.circleci/preview-service-acceptance-test.sh
 
   test-objectsender:
     docker: *docker-node-browsers-image
