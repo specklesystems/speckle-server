@@ -23,7 +23,7 @@
           >
             <div v-if="app.$sendBinding" class="grow">
               <FormButton
-                :icon-left="CloudArrowUpIcon"
+                :icon-left="ArrowUpCircleIcon"
                 full-width
                 @click="handleSendClick"
               >
@@ -32,7 +32,7 @@
             </div>
             <div v-if="app.$receiveBinding" class="grow">
               <FormButton
-                :icon-left="CloudArrowDownIcon"
+                :icon-left="ArrowDownCircleIcon"
                 full-width
                 @click="handleReceiveClick"
               >
@@ -61,13 +61,13 @@
       class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
     >
       <div v-if="app.$sendBinding" class="grow">
-        <FormButton :icon-left="CloudArrowUpIcon" full-width @click="handleSendClick">
+        <FormButton :icon-left="ArrowUpCircleIcon" full-width @click="handleSendClick">
           Publish
         </FormButton>
       </div>
       <div v-if="app.$receiveBinding" class="grow">
         <FormButton
-          :icon-left="CloudArrowDownIcon"
+          :icon-left="ArrowDownCircleIcon"
           full-width
           @click="handleReceiveClick"
         >
@@ -121,7 +121,7 @@
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
+import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
