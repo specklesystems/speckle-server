@@ -65,3 +65,14 @@ export const settingsWorkspacesProjectsQuery = graphql(`
     }
   }
 `)
+
+export const settingsWorkspacesSecurityQuery = graphql(`
+  query SettingsWorkspaceSecurity($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...SettingsWorkspacesSecurity_Workspace
+    }
+    activeUser {
+      ...SettingsWorkspacesSecurity_User
+    }
+  }
+`)
