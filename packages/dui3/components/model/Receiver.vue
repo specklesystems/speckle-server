@@ -186,14 +186,14 @@ const failRate = computed(() => {
   )
 })
 
-const sendResultNotificationText = computed(() => {
+const receiveResultNotificationText = computed(() => {
   if (failRate.value > 80) {
     return 'Model loaded. Some objects have failed to convert!'
   }
   return 'Model loaded!'
 })
 
-const sendResultNotificationLevel = computed(() => {
+const receiveResultNotificationLevel = computed(() => {
   if (failRate.value > 80) {
     return 'warning'
   }
@@ -209,8 +209,8 @@ const receiveResultNotification = computed(() => {
 
   const notification = {} as ModelCardNotification
   notification.dismissible = true
-  notification.level = sendResultNotificationLevel.value
-  notification.text = sendResultNotificationText.value
+  notification.level = receiveResultNotificationLevel.value
+  notification.text = receiveResultNotificationText.value
   notification.report = props.modelCard.report
   notification.cta = {
     name: 'Highlight',
