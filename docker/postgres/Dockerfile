@@ -1,4 +1,4 @@
-FROM postgres:14.5-alpine as builder
+FROM postgres:14.5-alpine AS builder
 
 RUN apk add --no-cache 'git=~2.36' \
     'build-base=~0.5' \

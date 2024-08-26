@@ -2,7 +2,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 # build stage
-FROM node:18-bullseye-slim@sha256:8cc7dcd5aa06715247f8f2f258332f188d4221e2685b1a0159e4e6c3382e4918 as build-stage
+FROM node:18-bullseye-slim@sha256:8cc7dcd5aa06715247f8f2f258332f188d4221e2685b1a0159e4e6c3382e4918 AS build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -39,7 +39,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
     && rm -rf /var/lib/apt/lists/*
 
 # production stage
-FROM bitnami/openresty:1.21.4-3-debian-11-r3@sha256:456f29ba40fb4b5591ded0666c50c5026e3e0f97397440b9c5f2246813de9ec8 as production-stage
+FROM bitnami/openresty:1.21.4-3-debian-11-r3@sha256:456f29ba40fb4b5591ded0666c50c5026e3e0f97397440b9c5f2246813de9ec8 AS production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
