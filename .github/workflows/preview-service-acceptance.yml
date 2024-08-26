@@ -1,4 +1,4 @@
-name: Image digest update
+name: Preview service acceptance test
 
 on:
   workflow_dispatch:
