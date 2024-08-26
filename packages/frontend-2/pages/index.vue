@@ -5,7 +5,7 @@
     </Portal>
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
-      :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
+      :workspaces-invites="workspacesResult?.activeUser || undefined"
     />
     <div class="flex flex-col gap-y-12">
       <div class="flex flex-col-reverse lg:flex-col gap-y-12">
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import {
   dashboardProjectsPageQuery,
-  dashboardProjectsPageWorkspaceInvitesQuery
+  dashboardProjectsPageWorkspacesQuery
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
@@ -80,8 +80,8 @@ const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
-const { result: workspaceInvitesResult } = useQuery(
-  dashboardProjectsPageWorkspaceInvitesQuery,
+const { result: workspacesResult } = useQuery(
+  dashboardProjectsPageWorkspacesQuery,
   undefined,
   () => ({
     enabled: isWorkspacesEnabled.value
