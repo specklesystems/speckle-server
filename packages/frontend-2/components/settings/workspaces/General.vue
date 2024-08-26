@@ -19,6 +19,7 @@
             name="name"
             placeholder="Workspace name"
             show-label
+            :disabled="!isAdmin"
             :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
             validate-on-value-update
             @change="save()"
@@ -31,6 +32,7 @@
             name="description"
             placeholder="Workspace description"
             show-label
+            :disabled="!isAdmin"
             :rules="[isStringOfLength({ maxLength: 512 })]"
             @change="save()"
           />
@@ -38,22 +40,41 @@
       </div>
       <hr class="my-6 md:my-10" />
       <div class="flex flex-col space-y-6">
-        <SettingsSectionHeader title="Delete workspace" subheading />
-        <div
-          class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-        >
-          We will delete all content of this workspace, and any associated data. We will
-          ask you to type in your workspace name and press the delete button.
-        </div>
+        <SettingsSectionHeader title="Leave workspace" subheading />
+        <CommonCard class="bg-foundation">
+          By clicking the button below you will leave this workspace.
+        </CommonCard>
         <div>
-          <FormButton color="danger" @click="openDeleteDialog">
-            Delete workspace
+          <FormButton color="danger" @click="showLeaveDialog = true">
+            Leave workspace
           </FormButton>
         </div>
       </div>
+      <template v-if="isAdmin">
+        <hr class="my-6 md:my-10" />
+        <div class="flex flex-col space-y-6">
+          <SettingsSectionHeader title="Delete workspace" subheading />
+          <CommonCard class="bg-foundation">
+            We will delete all content of this workspace, and any associated data. We
+            will ask you to type in your workspace name and press the delete button.
+          </CommonCard>
+          <div>
+            <FormButton color="danger" @click="showDeleteDialog = true">
+              Delete workspace
+            </FormButton>
+          </div>
+        </div>
+      </template>
     </div>
-    <SettingsWorkspacesGeneralDeleteDialog
+
+    <SettingsWorkspacesGeneralLeaveDialog
       v-if="workspaceResult"
+      v-model:open="showLeaveDialog"
+      :workspace="workspaceResult.workspace"
+    />
+
+    <SettingsWorkspacesGeneralDeleteDialog
+      v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
     />
@@ -61,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
@@ -82,6 +104,7 @@ graphql(`
     name
     description
     logo
+    role
   }
 `)
 
@@ -101,6 +124,11 @@ const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () =
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
+const showLeaveDialog = ref(false)
+
+const isAdmin = computed(
+  () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
+)
 
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
@@ -128,10 +156,6 @@ const save = handleSubmit(async () => {
     })
   }
 })
-
-function openDeleteDialog() {
-  showDeleteDialog.value = true
-}
 
 watch(
   () => workspaceResult,

@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
-const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
 const { graphqlLogger } = require('@/logging/logging')
@@ -39,21 +38,23 @@ module.exports = {
           userId
         })
 
-        const transaction = Sentry.startTransaction({
+        const transaction = {
+          start: apolloRequestStart,
           op,
-          name
-        })
+          name,
+          finish: () => {
+            //TODO add tracing with opentelemetry
+          }
+        }
 
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           logger = logger.child({ actionName })
           metricCallCount.labels(actionName).inc()
-          // logger.debug(actionName)
         } catch (e) {
-          Sentry.captureException(e)
+          logger.error({ err: e, transaction }, 'Error while defining action name')
         }
 
-        Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
         ctx.context.log = logger
       },
@@ -66,10 +67,15 @@ module.exports = {
         for (const err of ctx.errors) {
           const operationName = ctx.request.operationName || null
           const query = ctx.request.query
-          const variables = ctx.request.variables
+          const variables = redactSensitiveVariables(ctx.request.variables)
 
           if (err.path) {
-            logger = logger.child({ 'query-path': err.path.join(' > ') })
+            logger = logger.child({
+              'query-path': err.path.join(' > '),
+              graphql_operation_name: operationName,
+              graphql_query: query,
+              graphql_variables: variables
+            })
           }
           if (
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
@@ -85,21 +91,6 @@ module.exports = {
               '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
             )
           }
-
-          Sentry.withScope((scope) => {
-            scope.setTag('operationName', operationName)
-            scope.setExtra('query', query)
-            scope.setExtra('variables', variables)
-            if (err.path) {
-              // We can also add the path as breadcrumb
-              scope.addBreadcrumb({
-                category: 'query-path',
-                message: err.path.join(' > '),
-                level: Sentry.Severity.Debug
-              })
-            }
-            Sentry.captureException(err)
-          })
         }
       },
       willSendResponse(ctx) {

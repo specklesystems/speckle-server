@@ -11,7 +11,6 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
 import { startupLogger, shutdownLogger } from '@/logging/logging'
 import {
@@ -45,7 +44,8 @@ import {
   isDevEnv,
   isTestEnv,
   useNewFrontend,
-  isApolloMonitoringEnabled
+  isApolloMonitoringEnabled,
+  enableMixpanel
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -345,9 +345,7 @@ export async function init() {
       next()
     }
   )
-  app.use(mixpanelTrackerHelperMiddleware)
-
-  app.use(Sentry.Handlers.errorHandler())
+  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddleware)
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)

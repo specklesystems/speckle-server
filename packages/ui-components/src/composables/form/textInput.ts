@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid'
 import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
+export type LabelPosition = 'top' | 'left'
 
 /**
  * Common setup for text input & textarea fields
@@ -27,6 +28,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     useLabelInErrors?: boolean
     hideErrorMessage?: boolean
     color?: InputColor
+    labelPosition?: LabelPosition
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: V }): void
@@ -48,7 +50,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   const labelClasses = computed(() => {
     const classParts = [
       'flex text-body-xs font-medium',
-      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2',
+      unref(props.labelPosition) !== 'left' ? 'pb-1' : null
     ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')

@@ -14,9 +14,7 @@
         { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"
       :items="members"
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }
-      ]"
+      :buttons="tableButtons"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -36,6 +34,7 @@
       </template>
       <template #role="{ item }">
         <FormSelectWorkspaceRoles
+          :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
           @update:model-value="
@@ -62,12 +61,12 @@
 </template>
 
 <script setup lang="ts">
-// Todo: Enable searching once supported
 import type { WorkspaceRoles } from '@speckle/shared'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
+import { Roles } from '@speckle/shared'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -101,7 +100,6 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-// const { on, bind, value: search } = useDebouncedTextInput()
 const updateUserRole = useWorkspaceUpdateRole()
 
 const showChangeUserRoleDialog = ref(false)
@@ -117,6 +115,12 @@ const members = computed(() =>
 )
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const tableButtons = computed(() =>
+  isWorkspaceAdmin.value
+    ? [{ icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }]
+    : []
+)
 
 const openChangeUserRoleDialog = (
   user: UserItem,

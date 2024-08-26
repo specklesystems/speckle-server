@@ -58,11 +58,11 @@
               collapsible
               title="Workspaces"
             >
-              <NuxtLink to="/workspaces/">
+              <NuxtLink :to="workspacesRoute">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
-                  :active="isActive('/workspaces/')"
-                  tag="NEW"
+                  :active="isActive(workspacesRoute)"
+                  tag="BETA"
                 >
                   <template #icon>
                     <IconWorkspaces class="h-4 w-4 text-foreground-2" />
@@ -181,6 +181,7 @@ import {
   homeRoute,
   projectsRoute,
   workspaceRoute,
+  workspacesRoute,
   connectorsPageUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'

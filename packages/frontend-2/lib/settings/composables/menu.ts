@@ -60,11 +60,12 @@ export const useSettingsMenu = () => {
   }
 
   const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
-  if (multipleEmailsEnabled)
+  if (multipleEmailsEnabled) {
     userMenuItemValues[settingsQueries.user.emails] = {
       title: 'Email addresses',
       component: SettingsUserEmails
     }
+  }
 
   const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 

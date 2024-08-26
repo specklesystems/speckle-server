@@ -107,7 +107,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'flex px-2 py-1 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                  'flex px-2 py-1 text-body-xs text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >
