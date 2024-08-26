@@ -25,8 +25,9 @@ export default class SpeckleConverter {
   private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
   private instanceProxies: { [id: string]: TreeNode } = {}
+  private consumedObjects: { [id: string]: TreeNode } = {}
   private renderMaterialMap: { [id: string]: SpeckleObject } = {}
-  private colorMap: { [id: string]: number } = {}
+  private colorMap: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -574,13 +575,12 @@ export default class SpeckleConverter {
       Logger.warn(`Color Proxy ${obj.id} has no target objects!`)
       return
     }
-    const colorValue = obj.value
     const targetObjects = obj.objects as []
     for (let k = 0; k < targetObjects.length; k++) {
       if (this.colorMap[targetObjects[k]]) {
         Logger.error(`Overwritting color ${targetObjects[k]}`)
       }
-      this.colorMap[targetObjects[k]] = colorValue
+      this.colorMap[targetObjects[k]] = obj
     }
   }
 
@@ -686,17 +686,24 @@ export default class SpeckleConverter {
 
       /** Store the speckle object data */
       this.instancedObjectsLookupTable[k] = objectNode.model.raw
+      if (!this.instanceProxies[k]) {
+        this.instancedObjectsLookupTable[k].parentLayerApplicationId =
+          objectNode.parent.model.raw.applicationId
+      }
       /** Remove the instance from the list (if needed) */
       delete this.instanceProxies[k]
       /** Remove the node from the world tree */
       this.tree.removeNode(objectNode, true)
     }
 
+    let count = 0
     /** Remaining instance proxies should all be valid */
     for (const k in this.instanceProxies) {
       const node = this.instanceProxies[k]
       /** Create the final instances */
       await this.convertToNode(node.model.raw, node)
+      count++
+      // if (count === 3) break
     }
   }
 
@@ -713,14 +720,65 @@ export default class SpeckleConverter {
         node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
         renderMaterialCount--
       }
-      if (this.colorMap[applicationId] !== undefined) {
-        node.model.raw.color = this.colorMap[applicationId]
+
+      if (this.colorMap[applicationId] !== undefined && !node.model.instanced) {
+        node.model.color = this.colorMap[applicationId].value
         colorCount--
       }
       /** Break out when all applicationIds are accounted for*/
       if (renderMaterialCount === 0 && colorCount === 0) return false
       return true
     })
+
+    let count = 0
+    for (const k in this.instanceProxies) {
+      const instanceProxyNode = this.instanceProxies[k]
+      if (instanceProxyNode.model.raw.maxDepth === 0) {
+        const instanceProxyColor =
+          this.colorMap[instanceProxyNode.model.raw.applicationId]
+        const instanceNodes = instanceProxyNode.children[0].children
+        for (let i = 0; i < instanceNodes.length; i++) {
+          const instanceNode = instanceNodes[i]
+          const instanceColor = this.colorMap[instanceNode.model.raw.applicationId]
+          let parentColor =
+            this.colorMap[instanceNode.model.raw.parentLayerApplicationId]
+          if (instanceNode.model.raw.maxDepth > 0) {
+            parentColor =
+              this.colorMap[instanceProxyNode.parent.model.raw.applicationId]
+          }
+          console.warn('Parent -> ', parentColor)
+          console.warn(instanceColor)
+          if (
+            instanceColor &&
+            instanceColor.source &&
+            instanceColor.source === 'object'
+          ) {
+            instanceNode.model.color = instanceColor.value
+          } else if (
+            instanceColor &&
+            instanceColor.source &&
+            instanceColor.source === 'block'
+          ) {
+            if (
+              instanceProxyColor &&
+              instanceProxyColor.source &&
+              (instanceProxyColor.source === 'block' ||
+                instanceProxyColor.source === 'object')
+            ) {
+              instanceNode.model.color = instanceProxyColor.value
+            } else if (!instanceProxyColor) {
+              instanceNode.model.color = undefined
+            }
+          } else if (!instanceColor) {
+            if (parentColor) instanceNode.model.color = parentColor.value
+          }
+        }
+
+        console.warn('Instance -> ', instanceProxyColor)
+        count++
+        // if (count === 3) break
+      }
+    }
   }
 
   private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {

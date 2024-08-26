@@ -170,9 +170,9 @@ export default class Materials {
     if (!node) return null
 
     let colorMaterial: MinimalMaterial | null = null
-    if (node.model.raw.color) {
+    if (node.model.color) {
       colorMaterial = {
-        color: node.model.raw.color
+        color: node.model.color
       }
     }
     return colorMaterial
