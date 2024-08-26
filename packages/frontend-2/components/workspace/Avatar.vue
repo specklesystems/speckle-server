@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserAvatarSize } from '@speckle/ui-component'
+import type { UserAvatarSize } from '@speckle/ui-components'
 import { useAvatarSizeClasses } from '@speckle/ui-components'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 
