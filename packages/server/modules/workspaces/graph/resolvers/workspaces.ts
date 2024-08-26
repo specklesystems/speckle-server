@@ -5,7 +5,6 @@ import {
   getStream,
   grantStreamPermissions,
   grantStreamPermissionsFactory,
-  revokeStreamPermissions,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
@@ -410,21 +409,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId
           })
         },
-        leave: async (_parent, args, ctx) => {
-          const userId = ctx.userId!
-
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
+        leave: async (_parent, args, context) => {
+          const trx = await db.transaction()
 
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-            getWorkspaceRoles,
-            emitWorkspaceEvent,
-            getStreams,
-            revokeStreamPermissions
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+            emitWorkspaceEvent: getEventBus().emit,
+            getStreams
           })
 
-          await deleteWorkspaceRole({ workspaceId: args.id, userId })
+          await withTransaction(
+            deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! }),
+            trx
+          )
 
           return true
         },
