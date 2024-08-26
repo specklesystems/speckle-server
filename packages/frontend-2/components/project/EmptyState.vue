@@ -1,23 +1,18 @@
 <template>
-  <div class="flex flex-col items-center max-w-[180px] mx-auto">
-    <div
-      class="relative text-foreground-2 h-32 w-full"
-      :class="small ? 'scale-75 -mb-2' : 'mb-1'"
-    >
-      <slot name="image"></slot>
+  <div class="flex justify-center flex-col text-center my-12">
+    <h3 class="text-heading mt-2 text-foreground">
+      {{ title }}
+    </h3>
+    <h4 v-if="text" class="text-body-xs mb-4 mt-2 max-w-xs mx-auto text-foreground-2">
+      {{ text }}
+    </h4>
+    <div class="flex flex-col items-center gap-2">
+      <slot name="cta"></slot>
     </div>
-    <div class="flex flex-col gap-1 items-center text-center">
-      <span class="text-foreground text-heading">{{ title }}</span>
-      <span v-if="text" class="text-xs text-foreground-2">
-        {{ text }}
-      </span>
-    </div>
-    <slot name="cta"></slot>
   </div>
 </template>
 <script setup lang="ts">
 defineProps<{
-  small?: boolean
   title: string
   text?: string
 }>()

@@ -6,9 +6,7 @@
       </p>
     </template>
     <template #top-buttons>
-      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-        Invite
-      </FormButton>
+      <FormButton @click="toggleInviteDialog">Invite</FormButton>
     </template>
 
     <div class="flex flex-col mt-6">
@@ -85,7 +83,6 @@ import {
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
 

@@ -94,11 +94,10 @@ import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { LabelPosition, InputColor } from '~~/src/composables/form/textInput'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
-type InputColor = 'page' | 'foundation' | 'transparent'
-type LabelPosition = 'top' | 'left'
 
 defineOptions({
   inheritAttrs: false

@@ -41,11 +41,9 @@
       <hr class="my-6 md:my-10" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
-        <div
-          class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-        >
+        <CommonCard class="bg-foundation">
           By clicking the button below you will leave this workspace.
-        </div>
+        </CommonCard>
         <div>
           <FormButton color="danger" @click="showLeaveDialog = true">
             Leave workspace
@@ -56,12 +54,10 @@
         <hr class="my-6 md:my-10" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
-          <div
-            class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-          >
+          <CommonCard class="bg-foundation">
             We will delete all content of this workspace, and any associated data. We
             will ask you to type in your workspace name and press the delete button.
-          </div>
+          </CommonCard>
           <div>
             <FormButton color="danger" @click="showDeleteDialog = true">
               Delete workspace

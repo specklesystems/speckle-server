@@ -5,14 +5,14 @@
     hide-closer
     :buttons="dialogButtons"
   >
-    <template #header>Create New Model</template>
+    <template #header>Create new model</template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-6 mb-4">
         <FormTextInput
           v-model="newModelName"
           color="foundation"
           name="name"
-          label="Model Name"
+          label="Model name"
           show-label
           placeholder="model/name/here"
           :custom-icon="CubeIcon"
@@ -26,8 +26,8 @@
           color="foundation"
           name="description"
           show-label
-          label="Model Description"
-          placeholder="Description (Optional)"
+          label="Model description"
+          placeholder="Description (optional)"
           size="lg"
           :disabled="anyMutationsLoading"
         />
