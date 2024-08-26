@@ -25,7 +25,6 @@ export default class SpeckleConverter {
   private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
   private instanceProxies: { [id: string]: TreeNode } = {}
-  private consumedObjects: { [id: string]: TreeNode } = {}
   private renderMaterialMap: { [id: string]: SpeckleObject } = {}
   private colorMap: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
@@ -733,51 +732,47 @@ export default class SpeckleConverter {
     let count = 0
     for (const k in this.instanceProxies) {
       const instanceProxyNode = this.instanceProxies[k]
-      if (instanceProxyNode.model.raw.maxDepth === 0) {
-        const instanceProxyColor =
-          this.colorMap[instanceProxyNode.model.raw.applicationId]
-        const instanceNodes = instanceProxyNode.children[0].children
-        for (let i = 0; i < instanceNodes.length; i++) {
-          const instanceNode = instanceNodes[i]
-          const instanceColor = this.colorMap[instanceNode.model.raw.applicationId]
-          let parentColor =
-            this.colorMap[instanceNode.model.raw.parentLayerApplicationId]
-          if (instanceNode.model.raw.maxDepth > 0) {
-            parentColor =
-              this.colorMap[instanceProxyNode.parent.model.raw.applicationId]
-          }
-          console.warn('Parent -> ', parentColor)
-          console.warn(instanceColor)
-          if (
-            instanceColor &&
-            instanceColor.source &&
-            instanceColor.source === 'object'
-          ) {
-            instanceNode.model.color = instanceColor.value
-          } else if (
-            instanceColor &&
-            instanceColor.source &&
-            instanceColor.source === 'block'
-          ) {
-            if (
-              instanceProxyColor &&
-              instanceProxyColor.source &&
-              (instanceProxyColor.source === 'block' ||
-                instanceProxyColor.source === 'object')
-            ) {
-              instanceNode.model.color = instanceProxyColor.value
-            } else if (!instanceProxyColor) {
-              instanceNode.model.color = undefined
-            }
-          } else if (!instanceColor) {
-            if (parentColor) instanceNode.model.color = parentColor.value
-          }
+      const instanceProxyColor =
+        this.colorMap[instanceProxyNode.model.raw.applicationId]
+      const instanceNodes = instanceProxyNode.children[0].children
+      for (let i = 0; i < instanceNodes.length; i++) {
+        const instanceNode = instanceNodes[i]
+        const instanceColor = this.colorMap[instanceNode.model.raw.applicationId]
+        let parentColor = this.colorMap[instanceNode.model.raw.parentLayerApplicationId]
+        if (instanceNode.model.raw.maxDepth > 0) {
+          parentColor = this.colorMap[instanceProxyNode.parent.model.raw.applicationId]
         }
-
-        console.warn('Instance -> ', instanceProxyColor)
-        count++
-        // if (count === 3) break
+        console.warn('Parent -> ', parentColor)
+        console.warn(instanceColor)
+        if (
+          instanceColor &&
+          instanceColor.source &&
+          instanceColor.source === 'object'
+        ) {
+          instanceNode.model.color = instanceColor.value
+        } else if (
+          instanceColor &&
+          instanceColor.source &&
+          instanceColor.source === 'block'
+        ) {
+          if (
+            instanceProxyColor &&
+            instanceProxyColor.source &&
+            (instanceProxyColor.source === 'block' ||
+              instanceProxyColor.source === 'object')
+          ) {
+            instanceNode.model.color = instanceProxyColor.value
+          } else if (!instanceProxyColor) {
+            instanceNode.model.color = undefined
+          }
+        } else if (!instanceColor) {
+          if (parentColor) instanceNode.model.color = parentColor.value
+        }
       }
+
+      console.warn('Instance -> ', instanceProxyColor)
+      count++
+      // if (count === 3) break
     }
   }
 
