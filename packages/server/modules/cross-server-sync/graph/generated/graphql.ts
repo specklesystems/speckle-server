@@ -3861,15 +3861,7 @@ export type WorkspaceTeamArgs = {
 
 export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
-  version?: Maybe<WorkspaceBillingVersion>;
-};
-
-export type WorkspaceBillingVersion = {
-  __typename?: 'WorkspaceBillingVersion';
-  /** Total number of versions of all projects in the workspace */
-  current: Scalars['Int']['output'];
-  /** Maximum number of version of all projects in the workspace with no additional cost */
-  max: Scalars['Int']['output'];
+  versionsCount?: Maybe<WorkspaceVersionsCount>;
 };
 
 export type WorkspaceCollaborator = {
@@ -4040,6 +4032,14 @@ export type WorkspaceUpdateInput = {
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceVersionsCount = {
+  __typename?: 'WorkspaceVersionsCount';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{

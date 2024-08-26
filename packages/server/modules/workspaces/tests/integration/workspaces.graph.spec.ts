@@ -220,7 +220,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.billing.version).to.deep.equal({
+        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
           current: 5,
           max: 500
         })

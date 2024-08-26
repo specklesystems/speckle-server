@@ -33,7 +33,7 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
 export const workspaceBillingFragment = gql`
   fragment WorkspaceBilling on Workspace {
     billing {
-      version {
+      versionsCount {
         current
         max
       }

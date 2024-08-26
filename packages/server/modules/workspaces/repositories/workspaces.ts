@@ -233,11 +233,10 @@ export const countProjectsVersionsByWorkspaceIdFactory =
   ({ db }: { db: Knex }): CountProjectsVersionsByWorkspaceId =>
   async ({ workspaceId }) => {
     const [res] = await tables
-      .workspaces(db)
-      .join(Streams.name, Streams.col.workspaceId, Workspaces.col.id)
+      .streams(db)
       .join(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
       .where({ workspaceId })
       .count(StreamCommits.col.commitId)
 
-    return Number(res.count)
+    return parseInt(res.count.toString())
   }

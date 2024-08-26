@@ -153,7 +153,7 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
-type WorkspaceBillingVersion {
+type WorkspaceVersionsCount {
   """
   Total number of versions of all projects in the workspace
   """
@@ -165,7 +165,7 @@ type WorkspaceBillingVersion {
 }
 
 type WorkspaceBilling {
-  version: WorkspaceBillingVersion
+  versionsCount: WorkspaceVersionsCount
 }
 
 type Workspace {
