@@ -42,3 +42,39 @@ export class WorkspaceNotFoundError extends BaseError {
   static code = 'WORKSPACE_NOT_FOUND_ERROR'
   static statusCode = 404
 }
+
+export class WorkspaceNotDiscoverableError extends BaseError {
+  static defaultMessage = 'Workspace is not discoverable'
+  static code = 'WORKSPACE_NOT_DISCOVERABLE'
+  static statusCode = 400
+}
+
+export class WorkspaceNotJoinableError extends BaseError {
+  static defaultMessage = 'Workspace is not joinable'
+  static code = 'WORKSPACE_NOT_JOINABLE'
+  static statusCode = 400
+}
+
+export class WorkspaceJoinNotAllowedError extends BaseError {
+  static defaultMessage = 'You do not have permissions to join this workspace'
+  static code = 'WORKSPACE_JOIN_NOT_ALLOWED'
+  static statusCode = 403
+}
+
+export class WorkspaceUnverifiedDomainError extends BaseError {
+  static defaultMessage = 'Cannot add unverified domain to workspace'
+  static code = 'WORKSPACE_UNVERIFIED_DOMAIN_ERROR'
+  static statusCode = 403
+}
+
+export class WorkspaceDomainBlockedError extends BaseError {
+  static defaultMessage = 'Cannot add blocked domain to workspace'
+  static code = 'WORKSPACE_DOMAIN_BLOCKED_ERROR'
+  static statusCode = 400
+}
+
+export class WorkspaceProtectedError extends BaseError {
+  static defaultMessage = 'Workspace protected'
+  static code = 'WORKSPACE_PROTECTED'
+  static statusCode = 400
+}

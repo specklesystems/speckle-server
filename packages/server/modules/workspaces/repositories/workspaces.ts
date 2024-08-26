@@ -1,17 +1,23 @@
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
   DeleteWorkspace,
+  DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetUserDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceCollaborators,
+  GetWorkspaceDomains,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceWithDomains,
   GetWorkspaces,
+  StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -21,6 +27,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
@@ -35,8 +42,34 @@ import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constan
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
+  workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
+
+export const getUserDiscoverableWorkspacesFactory =
+  ({ db }: { db: Knex }): GetUserDiscoverableWorkspaces =>
+  async ({ domains, userId }) => {
+    if (domains.length === 0) {
+      return []
+    }
+    return (await tables
+      .workspaces(db)
+      .select('workspaces.id as id', 'name', 'description', 'logo', 'defaultLogoIndex')
+      .distinctOn('workspaces.id')
+      .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
+      .leftJoin(
+        tables.workspacesAcl(db).select('*').where({ userId }).as('acl'),
+        'acl.workspaceId',
+        'workspaces.id'
+      )
+      .whereIn('domain', domains)
+      .where('discoverabilityEnabled', true)
+      .where('verified', true)
+      .where('role', null)) as Pick<
+      Workspace,
+      'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+    >[]
+  }
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
@@ -92,7 +125,15 @@ export const upsertWorkspaceFactory =
       .workspaces(db)
       .insert(workspace)
       .onConflict('id')
-      .merge(['description', 'logo', 'defaultLogoIndex', 'name', 'updatedAt'])
+      .merge([
+        'description',
+        'logo',
+        'defaultLogoIndex',
+        'name',
+        'updatedAt',
+        'domainBasedMembershipProtectionEnabled',
+        'discoverabilityEnabled'
+      ])
   }
 
 export const deleteWorkspaceFactory =
@@ -220,3 +261,44 @@ export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q)
       ).orWhereNotNull(Workspaces.col.id)
     })
 }
+
+export const storeWorkspaceDomainFactory =
+  ({ db }: { db: Knex }): StoreWorkspaceDomain =>
+  async ({ workspaceDomain }): Promise<void> => {
+    await tables.workspaceDomains(db).insert(workspaceDomain)
+  }
+
+export const getWorkspaceDomainsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceDomains =>
+  ({ workspaceIds }) => {
+    return tables.workspaceDomains(db).whereIn('workspaceId', workspaceIds)
+  }
+
+export const deleteWorkspaceDomainFactory =
+  ({ db }: { db: Knex }): DeleteWorkspaceDomain =>
+  async ({ id }) => {
+    await tables.workspaceDomains(db).where({ id }).delete()
+  }
+
+export const getWorkspaceWithDomainsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceWithDomains =>
+  async ({ id }) => {
+    const workspace = await tables
+      .workspaces(db)
+      .select([...Workspaces.cols, WorkspaceDomains.groupArray('domains')])
+      .where({ [Workspaces.col.id]: id })
+      .leftJoin(
+        WorkspaceDomains.name,
+        WorkspaceDomains.col.workspaceId,
+        Workspaces.col.id
+      )
+      .groupBy(Workspaces.col.id)
+      .first()
+    if (!workspace) return null
+    return {
+      ...workspace,
+      domains: workspace.domains.filter(
+        (domain: WorkspaceDomain | null) => domain !== null
+      )
+    } as Workspace & { domains: WorkspaceDomain[] }
+  }
