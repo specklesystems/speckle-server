@@ -204,25 +204,17 @@ const failRate = computed(() => {
 })
 
 const sendResultNotificationText = computed(() => {
-  if (failRate.value === 100) {
-    return 'All of the object conversions are failed!'
-  } else if (failRate.value > 80) {
-    return 'Most of the object conversions are failed!'
-  } else if (failRate.value > 50) {
-    return 'Some of the object conversions are failed!'
+  if (failRate.value > 80) {
+    return 'Version created. Some objects have failed to convert!'
   }
   return 'Version created!'
 })
 
 const sendResultNotificationLevel = computed(() => {
-  if (failRate.value === 100) {
-    return 'danger'
-  } else if (failRate.value > 80) {
-    return 'warning'
-  } else if (failRate.value > 50) {
+  if (failRate.value > 80) {
     return 'warning'
   }
-  return 'success'
+  return 'info'
 })
 
 const latestVersionNotification = computed(() => {
