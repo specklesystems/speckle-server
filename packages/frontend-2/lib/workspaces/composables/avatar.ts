@@ -6,11 +6,8 @@ export const useWorkspacesAvatar = () => {
   }
 
   const getDefaultAvatar = (avatarIndex?: number) => {
-    const index = avatarIndex
-      ? avatarIndex >= 0 && avatarIndex <= count.value
-        ? avatarIndex
-        : generateDefaultLogoIndex()
-      : 0
+    const index =
+      avatarIndex && avatarIndex >= 0 && avatarIndex <= count.value ? avatarIndex : 0
     return `/images/workspace/avatars/avatar_${index}.svg`
   }
 

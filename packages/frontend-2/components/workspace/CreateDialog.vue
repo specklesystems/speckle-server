@@ -33,7 +33,7 @@
         :default-img="defaultAvatar"
         name="edit-avatar"
         size="xxl"
-        @save="editAvatarMode = false"
+        @save="onLogoSave"
       />
     </div>
   </LayoutDialog>
@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
@@ -61,7 +62,7 @@ const { handleSubmit } = useForm<FormValues>()
 const workspaceName = ref<string>('')
 const workspaceDescription = ref<string>('')
 const editAvatarMode = ref(false)
-const workspaceLogo = ref<string | null>(null)
+const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
 const defaultLogoIndex = ref<number>()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -101,9 +102,17 @@ const handleCreateWorkspace = handleSubmit(async () => {
   }
 })
 
+const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
+  workspaceLogo.value = newVal
+  editAvatarMode.value = false
+}
+
 watch(isOpen, (newVal) => {
   if (newVal) {
     defaultLogoIndex.value = generateDefaultLogoIndex()
+    workspaceName.value = ''
+    workspaceDescription.value = ''
+    workspaceLogo.value = null
   }
 })
 </script>
