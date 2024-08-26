@@ -94,7 +94,9 @@ function logSubscriptionOperation(params: {
   if (errors.length) {
     for (const error of errors) {
       if (
-        (error instanceof GraphQLError && error.extensions?.code === 'FORBIDDEN') ||
+        (error instanceof GraphQLError &&
+          (error.extensions?.code === 'FORBIDDEN' ||
+            error.extensions?.code === 'STREAM_NOT_FOUND')) ||
         error instanceof ApolloError
       ) {
         logger.info(error, errMsg)

@@ -78,7 +78,8 @@ module.exports = {
             })
           }
           if (
-            (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
+            (err instanceof GraphQLError &&
+              ['FORBIDDEN', 'STREAM_NOT_FOUND'].includes(err.extensions?.code)) ||
             err instanceof ApolloError
           ) {
             logger.info(
