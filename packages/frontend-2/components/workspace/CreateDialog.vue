@@ -6,17 +6,6 @@
     :buttons="dialogButtons"
     title="Create workspace"
   >
-    <div class="flex items-center justify-center px-6">
-      <UserAvatarEditable
-        v-model:edit-mode="editAvatarMode"
-        :model-value="workspaceLogo"
-        :placeholder="workspaceName"
-        :default-img="defaultAvatar"
-        name="edit-avatar"
-        size="xxl"
-        @save="editAvatarMode = false"
-      />
-    </div>
     <div class="flex flex-col gap-4 w-full">
       <FormTextInput
         v-model:model-value="workspaceName"
@@ -36,6 +25,15 @@
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
         show-label
+      />
+      <UserAvatarEditable
+        v-model:edit-mode="editAvatarMode"
+        :model-value="workspaceLogo"
+        :placeholder="workspaceName"
+        :default-img="defaultAvatar"
+        name="edit-avatar"
+        size="xxl"
+        @save="editAvatarMode = false"
       />
     </div>
   </LayoutDialog>
