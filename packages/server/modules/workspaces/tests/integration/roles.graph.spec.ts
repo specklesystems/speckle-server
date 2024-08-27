@@ -30,12 +30,6 @@ import { expect } from 'chai'
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
 
-  const workspace: BasicTestWorkspace = {
-    id: '',
-    ownerId: '',
-    name: 'My Test Workspace'
-  }
-
   const serverAdminUser: BasicTestUser = {
     id: '',
     name: 'John Speckle',
@@ -63,10 +57,19 @@ describe('Workspaces Roles GQL', () => {
         scopes: AllScopes
       })
     })
-    await createTestWorkspace(workspace, serverAdminUser)
   })
 
   describe('single role changes in a workspace without projects', () => {
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'My Test Workspace'
+    }
+
+    before(async () => {
+      await createTestWorkspace(workspace, serverAdminUser)
+    })
+
     describe('update workspace role', () => {
       after(async () => {
         await apollo.execute(UpdateWorkspaceRoleDocument, {
@@ -180,13 +183,48 @@ describe('Workspaces Roles GQL', () => {
   })
 
   // describe('single role changes in a workspace with projects', () => {
+  //   const workspace: BasicTestWorkspace = {
+  //     id: '',
+  //     ownerId: '',
+  //     name: "Test Workspace"
+  //   }
+
+  //   const workspaceAdminUser: BasicTestUser = {
+  //     id: '',
+  //     name: 'John "Owner" Specke',
+  //     email: 'john-owner-speckle@example.org'
+  //   }
+
+  //   const workspaceMemberUser: BasicTestUser = {
+  //     id: '',
+  //     name: 'John "Member" Speckel',
+  //     email: 'john-member-speckle@example.org'
+  //   }
+
+  //   const workspaceGuestUser: BasicTestUser = {
+  //     id: '',
+  //     name: 'John "Middle Child" Spreckle',
+  //     email: 'john-guest-speckle@example.org'
+  //   }
+
+  //   before(async () => {
+  //     await createTestUsers([
+  //       workspaceAdminUser,
+  //       workspaceMemberUser,
+  //       workspaceGuestUser
+  //     ])
+  //   })
+
+  //   beforeEach(async () => {
+  //     await createTestWorkspace(workspace, serverAdminUser)
+  //   })
 
   // })
 
   describe('composite role changes in a workspace with projects', () => {
     let workspaceMemberApollo: TestApolloServer
 
-    const workspaceWithProjects: BasicTestWorkspace = {
+    const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
       name: 'Test Workspace w/ Projects'
@@ -213,8 +251,8 @@ describe('Workspaces Roles GQL', () => {
     })
 
     beforeEach(async () => {
-      await createTestWorkspace(workspaceWithProjects, serverAdminUser)
-      workspaceProject.workspaceId = workspaceWithProjects.id
+      await createTestWorkspace(workspace, serverAdminUser)
+      workspaceProject.workspaceId = workspace.id
       await createTestStream(workspaceProject, serverAdminUser)
     })
 
@@ -231,7 +269,7 @@ describe('Workspaces Roles GQL', () => {
 
       beforeEach(async () => {
         await assignToWorkspace(
-          workspaceWithProjects,
+          workspace,
           serverMemberUser,
           Roles.Workspace.Admin
         )
@@ -245,16 +283,16 @@ describe('Workspaces Roles GQL', () => {
       it('should throw and preserve all roles', async () => {
         const res = await workspaceMemberApollo.execute(
           ActiveUserLeaveWorkspaceDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const { data: workspaceTeamData } = await apollo.execute(
           GetWorkspaceTeamDocument,
-          { workspaceId: workspaceWithProjects.id }
+          { workspaceId: workspace.id }
         )
         const { data: workspaceProjectsData } = await apollo.execute(
           GetWorkspaceProjectsDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const teamRoles = workspaceTeamData?.workspace.team
@@ -277,7 +315,7 @@ describe('Workspaces Roles GQL', () => {
 
       beforeEach(async () => {
         await assignToWorkspace(
-          workspaceWithProjects,
+          workspace,
           serverMemberUser,
           Roles.Workspace.Admin
         )
@@ -293,17 +331,17 @@ describe('Workspaces Roles GQL', () => {
           input: {
             userId: serverMemberUser.id,
             role: null,
-            workspaceId: workspaceWithProjects.id
+            workspaceId: workspace.id
           }
         })
 
         const { data: workspaceTeamData } = await apollo.execute(
           GetWorkspaceTeamDocument,
-          { workspaceId: workspaceWithProjects.id }
+          { workspaceId: workspace.id }
         )
         const { data: workspaceProjectsData } = await apollo.execute(
           GetWorkspaceProjectsDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const teamRoles = workspaceTeamData?.workspace.team
@@ -326,7 +364,7 @@ describe('Workspaces Roles GQL', () => {
 
       beforeEach(async () => {
         await assignToWorkspace(
-          workspaceWithProjects,
+          workspace,
           serverMemberUser,
           Roles.Workspace.Member
         )
@@ -340,16 +378,16 @@ describe('Workspaces Roles GQL', () => {
       it('should remove all workspace and project roles for user', async () => {
         const res = await workspaceMemberApollo.execute(
           ActiveUserLeaveWorkspaceDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const { data: workspaceTeamData } = await apollo.execute(
           GetWorkspaceTeamDocument,
-          { workspaceId: workspaceWithProjects.id }
+          { workspaceId: workspace.id }
         )
         const { data: workspaceProjectsData } = await apollo.execute(
           GetWorkspaceProjectsDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const teamRoles = workspaceTeamData?.workspace.team
@@ -373,7 +411,7 @@ describe('Workspaces Roles GQL', () => {
 
       beforeEach(async () => {
         await assignToWorkspace(
-          workspaceWithProjects,
+          workspace,
           serverMemberUser,
           Roles.Workspace.Member
         )
@@ -389,17 +427,17 @@ describe('Workspaces Roles GQL', () => {
           input: {
             userId: serverMemberUser.id,
             role: null,
-            workspaceId: workspaceWithProjects.id
+            workspaceId: workspace.id
           }
         })
 
         const { data: workspaceTeamData } = await apollo.execute(
           GetWorkspaceTeamDocument,
-          { workspaceId: workspaceWithProjects.id }
+          { workspaceId: workspace.id }
         )
         const { data: workspaceProjectsData } = await apollo.execute(
           GetWorkspaceProjectsDocument,
-          { id: workspaceWithProjects.id }
+          { id: workspace.id }
         )
 
         const teamRoles = workspaceTeamData?.workspace.team
