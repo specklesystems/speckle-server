@@ -26,11 +26,7 @@
       </section>
       <hr class="my-6 md:my-8" />
       <section>
-        <SettingsSectionHeader
-          title="Add new domain "
-          subheading
-          class="pb-4 md:pb-6"
-        />
+        <SettingsSectionHeader title="Add new domain" subheading class="pb-4 md:pb-6" />
         <div class="grid grid-cols-2 gap-x-6 items-center">
           <div class="flex flex-col gap-y-1">
             <p class="text-body-xs font-medium text-foreground">New domain</p>
