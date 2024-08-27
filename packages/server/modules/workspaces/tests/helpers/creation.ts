@@ -114,7 +114,7 @@ export const assignToWorkspace = async (
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
     revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams,
+    getStreams
   })
 
   await updateWorkspaceRole({
@@ -133,7 +133,7 @@ export const unassignFromWorkspace = async (
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
     revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams,
+    getStreams
   })
 
   await deleteWorkspaceRole({

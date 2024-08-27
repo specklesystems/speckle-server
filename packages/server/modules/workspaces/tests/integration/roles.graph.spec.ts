@@ -187,7 +187,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      name: "Test Workspace"
+      name: 'Test Workspace'
     }
 
     const workspaceAdminUser: BasicTestUser = {
@@ -211,28 +211,28 @@ describe('Workspaces Roles GQL', () => {
     const workspaceProjectA: BasicTestStream = {
       id: '',
       ownerId: '',
-      name: "Project A",
+      name: 'Project A',
       isPublic: false
     }
 
     const workspaceProjectB: BasicTestStream = {
       id: '',
       ownerId: '',
-      name: "Project B",
+      name: 'Project B',
       isPublic: false
     }
 
     const workspaceProjectC: BasicTestStream = {
       id: '',
       ownerId: '',
-      name: "Project C",
+      name: 'Project C',
       isPublic: false
     }
 
     const workspaceProjectD: BasicTestStream = {
       id: '',
       ownerId: '',
-      name: "Project D",
+      name: 'Project D',
       isPublic: false
     }
 
@@ -249,19 +249,20 @@ describe('Workspaces Roles GQL', () => {
         workspaceMemberUser,
         workspaceGuestUser
       ])
+    })
+
+    beforeEach(async () => {
       await createTestWorkspace(workspace, serverAdminUser)
       await Promise.all([
         assignToWorkspace(workspace, workspaceAdminUser, Roles.Workspace.Admin),
         assignToWorkspace(workspace, workspaceMemberUser, Roles.Workspace.Member),
-        assignToWorkspace(workspace, workspaceGuestUser, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, workspaceGuestUser, Roles.Workspace.Guest)
       ])
       for (const project of workspaceProjects) {
         project.workspaceId = workspace.id
         await createTestStream(project, serverAdminUser)
       }
-    })
 
-    beforeEach(async () => {
       /**
        * Initial workspace roles:
        *
@@ -331,14 +332,12 @@ describe('Workspaces Roles GQL', () => {
       ])
     })
 
-    // afterEach(async () => {
-    //   await truncateTables(['workspaces', 'streams'])
-    // })
+    afterEach(async () => {
+      await truncateTables(['workspaces', 'streams'])
+    })
 
     describe('when changing workspace admin', () => {
-
       describe('to workspace member', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
@@ -350,23 +349,25 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should preserve project owner roles', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-            return role?.role === Roles.Stream.Owner
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceAdminUser.id)
+              return role?.role === Roles.Stream.Owner
+            })
+          ).to.be.true
         })
-
       })
 
       describe('to workspace guest', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
@@ -378,33 +379,31 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should drop all workspace project roles', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-            return isUndefined(role)
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceAdminUser.id)
+              return isUndefined(role)
+            })
+          ).to.be.true
         })
-
       })
-
     })
 
     describe('when changing workspace member', () => {
-
-      const userId = workspaceMemberUser.id
-
       describe('to workspace admin', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
-              userId,
+              userId: workspaceMemberUser.id,
               workspaceId: workspace.id,
               role: Roles.Workspace.Admin
             }
@@ -412,27 +411,29 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should grant project owner role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === userId)
-            return role?.role === Roles.Stream.Owner
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceMemberUser.id)
+              return role?.role === Roles.Stream.Owner
+            })
+          ).to.be.true
         })
-
       })
 
       describe('to workspace guest', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
-              userId,
+              userId: workspaceMemberUser.id,
               workspaceId: workspace.id,
               role: Roles.Workspace.Guest
             }
@@ -440,34 +441,31 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should drop all workspace project roles', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === userId)
-            return isUndefined(role)
-
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceMemberUser.id)
+              return isUndefined(role)
+            })
+          ).to.be.true
         })
-
       })
-
     })
 
     describe('when changing workspace guest', () => {
-
-      const userId = workspaceGuestUser.id
-
       describe('to workspace admin', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
-              userId,
+              userId: workspaceGuestUser.id,
               workspaceId: workspace.id,
               role: Roles.Workspace.Admin
             }
@@ -475,27 +473,29 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should grant project owner role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === userId)
-            return role?.role === Roles.Stream.Owner
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceGuestUser.id)
+              return role?.role === Roles.Stream.Owner
+            })
+          ).to.be.true
         })
-
       })
 
       describe('to workspace member', () => {
-
         beforeEach(async () => {
           await apollo.execute(UpdateWorkspaceRoleDocument, {
             input: {
-              userId,
+              userId: workspaceGuestUser.id,
               workspaceId: workspace.id,
               role: Roles.Workspace.Member
             }
@@ -503,23 +503,24 @@ describe('Workspaces Roles GQL', () => {
         })
 
         it('should grant default project role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: workspace.id
+          })
 
-          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+          const projects = res.data?.workspace.projects.items
 
           expect(res).to.not.haveGraphQLErrors()
           expect(projects).to.exist
-          expect(projects?.every((project) => {
-            const team = project.team
-            const role = team.find((acl) => acl.id === userId)
-            return role?.role === Roles.Stream.Contributor
-          })).to.be.true
+          expect(
+            projects?.every((project) => {
+              const team = project.team
+              const role = team.find((acl) => acl.id === workspaceGuestUser.id)
+              return role?.role === Roles.Stream.Contributor
+            })
+          ).to.be.true
         })
-
       })
-
     })
-
   })
 
   describe('composite role changes in a workspace with projects', () => {
@@ -569,11 +570,7 @@ describe('Workspaces Roles GQL', () => {
       // Action: `serverMemberUser` leaves workspace
 
       beforeEach(async () => {
-        await assignToWorkspace(
-          workspace,
-          serverMemberUser,
-          Roles.Workspace.Admin
-        )
+        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Admin)
         await grantStreamPermissions({
           streamId: workspaceProject.id,
           userId: serverAdminUser.id,
@@ -615,11 +612,7 @@ describe('Workspaces Roles GQL', () => {
       // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
 
       beforeEach(async () => {
-        await assignToWorkspace(
-          workspace,
-          serverMemberUser,
-          Roles.Workspace.Admin
-        )
+        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Admin)
         await grantStreamPermissions({
           streamId: workspaceProject.id,
           userId: serverAdminUser.id,
@@ -664,11 +657,7 @@ describe('Workspaces Roles GQL', () => {
       // Action: `serverMemberUser` leaves workspace
 
       beforeEach(async () => {
-        await assignToWorkspace(
-          workspace,
-          serverMemberUser,
-          Roles.Workspace.Member
-        )
+        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Member)
         await grantStreamPermissions({
           streamId: workspaceProject.id,
           userId: serverMemberUser.id,
@@ -711,11 +700,7 @@ describe('Workspaces Roles GQL', () => {
       // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
 
       beforeEach(async () => {
-        await assignToWorkspace(
-          workspace,
-          serverMemberUser,
-          Roles.Workspace.Member
-        )
+        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Member)
         await grantStreamPermissions({
           streamId: workspaceProject.id,
           userId: serverMemberUser.id,

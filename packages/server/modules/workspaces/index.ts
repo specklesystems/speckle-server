@@ -12,7 +12,12 @@ import {
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { getStream, grantStreamPermissions, grantStreamPermissionsFactory, revokeStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStream,
+  grantStreamPermissions,
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
@@ -58,7 +63,7 @@ const workspacesModule: SpeckleModule = {
           grantStreamPermissions: grantStreamPermissionsFactory({ db }),
           revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
           emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-          getStreams,
+          getStreams
         })
       })()
     }
