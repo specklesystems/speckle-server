@@ -64,7 +64,7 @@
                     }
                   : undefined
               "
-              plus-text="Add workspace"
+              plus-text="Create workspace"
             >
               <NuxtLink :to="workspacesRoute">
                 <LayoutSidebarMenuGroupItem
