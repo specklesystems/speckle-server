@@ -91,7 +91,8 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       Project: {
         workspace: async () => {
-          throw new WorkspacesModuleDisabledError()
+          // Return type is always workspace or null, to make the FE implementation easier we force return null in this case
+          return null
         }
       },
       AdminQueries: {
