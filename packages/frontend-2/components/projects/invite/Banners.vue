@@ -1,6 +1,6 @@
 <template>
   <!-- Breakout div from main container -->
-  <div class="flex flex-col divide-y divide-outline-3">
+  <div class="flex flex-col">
     <ProjectsInviteBanner v-for="item in items" :key="item.id" :invite="item" />
   </div>
 </template>
