@@ -20,7 +20,7 @@
       </p>
       <UserAvatarGroup :users="teamUsers" :max-count="4" class="pt-3 -ml-0.5" />
     </div>
-    <div class="flex flex-col gap-y-3 pt-2">
+    <div class="flex flex-col gap-y-3 pt-1">
       <NuxtLink
         v-if="project.workspace && isWorkspacesEnabled"
         :to="workspaceRoute(project.workspace.id)"
