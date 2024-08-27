@@ -263,17 +263,18 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.workspace?.projects.items?.length).to.equal(1)
         expect(res.data?.workspace?.projects.totalCount).to.equal(1)
 
+        // Test Guest user
         await createTestUser(user)
-        const session2 = await testApolloServer({
+        const sessionGuest = await testApolloServer({
           authUserId: user.id
         })
         await assignToWorkspace(workspace, user, Roles.Workspace.Guest)
-        const res2 = await session2.execute(GetWorkspaceWithProjectsDocument, {
+        const res2 = await sessionGuest.execute(GetWorkspaceWithProjectsDocument, {
           workspaceId: workspace.id
         })
         expect(res2).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace?.projects.items?.length).to.equal(0)
-        // expect(res.data?.workspace?.projects.totalCount).to.equal(0)
+        expect(res2.data?.workspace?.projects.items?.length).to.equal(0)
+        expect(res2.data?.workspace?.projects.totalCount).to.equal(0)
       })
     })
   })
