@@ -20,6 +20,20 @@
       </p>
     </div>
     <UserAvatarGroup :users="teamUsers" :max-count="4" />
+    <NuxtLink
+      v-if="project.workspace && isWorkspacesEnabled"
+      :to="workspaceRoute(project.workspace.id)"
+      class="mt-2 flex items-center"
+    >
+      <WorkspaceAvatar
+        :logo="project.workspace.logo"
+        :default-logo-index="project.workspace.defaultLogoIndex"
+        size="sm"
+      />
+      <p class="text-body-2xs text-foreground ml-2">
+        {{ project.workspace.name }}
+      </p>
+    </NuxtLink>
     <div>
       <FormButton
         :to="allProjectModelsRoute(project.id)"
@@ -43,6 +57,7 @@ import type { DashboardProjectCard_ProjectFragment } from '~~/lib/common/generat
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment DashboardProjectCard_Project on Project {
@@ -58,12 +73,19 @@ graphql(`
         ...LimitedUserAvatar
       }
     }
+    workspace {
+      id
+      name
+      ...WorkspaceAvatar_Workspace
+    }
   }
 `)
 
 const props = defineProps<{
   project: DashboardProjectCard_ProjectFragment
 }>()
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const projectId = computed(() => props.project.id)
 
