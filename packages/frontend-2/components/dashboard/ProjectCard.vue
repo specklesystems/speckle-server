@@ -8,7 +8,7 @@
     >
       {{ project.name }}
     </NuxtLink>
-    <div class="flex-1">
+    <div class="flex-1 gap-y-3">
       <p class="text-body-3xs text-foreground-2">
         <span class="capitalize">
           {{ project.role?.split(':').reverse()[0] }}
@@ -18,23 +18,23 @@
           {{ updatedAt.relative }}
         </span>
       </p>
+      <UserAvatarGroup :users="teamUsers" :max-count="4" class="pt-3 -ml-0.5" />
     </div>
-    <UserAvatarGroup :users="teamUsers" :max-count="4" />
-    <NuxtLink
-      v-if="project.workspace && isWorkspacesEnabled"
-      :to="workspaceRoute(project.workspace.id)"
-      class="mt-2 flex items-center"
-    >
-      <WorkspaceAvatar
-        :logo="project.workspace.logo"
-        :default-logo-index="project.workspace.defaultLogoIndex"
-        size="sm"
-      />
-      <p class="text-body-2xs text-foreground ml-2">
-        {{ project.workspace.name }}
-      </p>
-    </NuxtLink>
-    <div>
+    <div class="flex flex-col gap-y-3 pt-1">
+      <NuxtLink
+        v-if="project.workspace && isWorkspacesEnabled"
+        :to="workspaceRoute(project.workspace.id)"
+        class="flex items-center"
+      >
+        <WorkspaceAvatar
+          :logo="project.workspace.logo"
+          :default-logo-index="project.workspace.defaultLogoIndex"
+          size="sm"
+        />
+        <p class="text-body-2xs text-foreground ml-2">
+          {{ project.workspace.name }}
+        </p>
+      </NuxtLink>
       <FormButton
         :to="allProjectModelsRoute(project.id)"
         size="sm"
