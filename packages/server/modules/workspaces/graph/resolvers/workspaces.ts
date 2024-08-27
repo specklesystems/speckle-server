@@ -734,9 +734,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Project: {
-        workspace: async () => {
-          // Get workspaceId from project, get and return workspace data
-          throw new WorkspacesNotYetImplementedError()
+        workspace: async (parent, _args, context) => {
+          if (!parent.workspaceId) {
+            return null
+          }
+
+          const workspace = await context.loaders.workspaces!.getWorkspace.load(
+            parent.workspaceId
+          )
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+
+          await authorizeResolver(
+            context.userId,
+            parent.workspaceId,
+            Roles.Workspace.Guest,
+            context.resourceAccessRules
+          )
+
+          return workspace
         }
       },
       AdminQueries: {
