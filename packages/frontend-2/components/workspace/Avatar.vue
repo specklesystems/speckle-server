@@ -39,7 +39,9 @@ const props = withDefaults(
 )
 
 const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
-const { defaultAvatar } = useWorkspacesAvatar(props.defaultLogoIndex)
+const { getDefaultAvatar } = useWorkspacesAvatar()
 
-const avatar = computed(() => (props.logo ? props.logo : defaultAvatar.value))
+const avatar = computed(() =>
+  props.logo ? props.logo : getDefaultAvatar(props.defaultLogoIndex)
+)
 </script>

@@ -20,7 +20,11 @@ import {
   GetWorkspaceTeamDocument,
   UpdateWorkspaceDocument,
   UpdateWorkspaceRoleDocument,
-  ActiveUserLeaveWorkspaceDocument
+  ActiveUserLeaveWorkspaceDocument,
+  GetWorkspaceWithBillingDocument,
+  CreateProjectDocument,
+  CreateObjectDocument,
+  CreateProjectVersionDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -33,7 +37,57 @@ import {
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import knex from '@/db/knex'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
+import { getBranchesByStreamId } from '@/modules/core/services/branches'
 
+const createProjectWithVersions =
+  ({ apollo }: { apollo: TestApolloServer }) =>
+  async ({
+    workspaceId,
+    versionsCount
+  }: {
+    workspaceId?: string
+    versionsCount: number
+  }) => {
+    const resProject1 = await apollo.execute(CreateProjectDocument, {
+      input: {
+        name: createRandomPassword(),
+        workspaceId
+      }
+    })
+    expect(resProject1).to.not.haveGraphQLErrors()
+    const project1Id = resProject1.data!.projectMutations.create.id
+
+    const {
+      items: [model1]
+    } = await getBranchesByStreamId({
+      streamId: project1Id,
+      limit: 1,
+      cursor: null
+    })
+    expect(model1).to.exist
+
+    const resObj1 = await apollo.execute(CreateObjectDocument, {
+      input: {
+        streamId: project1Id,
+        objects: [{ some: 'obj' }]
+      }
+    })
+    expect(resObj1).to.not.haveGraphQLErrors()
+
+    await Promise.all(
+      new Array(versionsCount).fill(0).map(async () => {
+        const res = await apollo.execute(CreateProjectVersionDocument, {
+          input: {
+            projectId: project1Id,
+            modelId: model1.id,
+            objectId: resObj1.data!.objectCreate[0]
+          }
+        })
+        expect(res).to.not.haveGraphQLErrors()
+      })
+    )
+  }
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
 
@@ -147,6 +201,29 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace.team.length).to.equal(1)
+      })
+    })
+
+    describe('query workspace.billing', () => {
+      it('should return workspace version limits', async () => {
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 3
+        })
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 2
+        })
+
+        const res = await apollo.execute(GetWorkspaceWithBillingDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
+          current: 5,
+          max: 500
+        })
       })
     })
 
@@ -357,17 +434,22 @@ describe('Workspaces GQL CRUD', () => {
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
             input: { name }
           })
+          expect(workspaceCreateResult).to.not.haveGraphQLErrors()
 
           const id = workspaceCreateResult.data?.workspaceMutations.create.id
           if (!id) throw new Error('This should have succeeded')
 
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: testMemberUser.id,
-              workspaceId: id,
-              role: Roles.Workspace.Admin
+          const updateWorkspaceRole = await apollo.execute(
+            UpdateWorkspaceRoleDocument,
+            {
+              input: {
+                userId: testMemberUser.id,
+                workspaceId: id,
+                role: Roles.Workspace.Admin
+              }
             }
-          })
+          )
+          expect(updateWorkspaceRole).to.not.haveGraphQLErrors()
 
           let userWorkspaces = await apollo.execute(GetActiveUserWorkspacesDocument, {})
 

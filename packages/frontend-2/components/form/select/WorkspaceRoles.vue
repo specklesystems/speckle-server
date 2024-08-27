@@ -10,6 +10,7 @@
     :button-id="buttonId"
     mount-menu-on-body
     :fully-control-value="fullyControlValue"
+    :disabled="disabled"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -67,7 +68,8 @@ const props = defineProps({
   label: {
     type: String,
     default: 'Workspace Roles'
-  }
+  },
+  disabled: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

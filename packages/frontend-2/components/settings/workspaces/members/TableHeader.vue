@@ -15,7 +15,7 @@
       />
     </div>
     <FormButton
-      :disabled="!isWorkspaceAdmin"
+      v-if="isWorkspaceAdmin"
       @click="() => (isInviteDialogOpen = !isInviteDialogOpen)"
     >
       Invite

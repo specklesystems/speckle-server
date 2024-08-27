@@ -17,6 +17,10 @@ input WorkspaceCreateInput {
   name: String!
   description: String
   defaultLogoIndex: Int
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
 }
 
 input WorkspaceUpdateInput {
@@ -28,6 +32,8 @@ input WorkspaceUpdateInput {
   """
   logo: String
   defaultLogoIndex: Int
+  domainBasedMembershipProtectionEnabled: Boolean
+  discoverabilityEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -67,6 +73,15 @@ input WorkspaceProjectInviteCreateInput {
   workspaceRole: String
 }
 
+input AddDomainToWorkspaceInput {
+  domain: String!
+  workspaceId: ID!
+}
+
+input JoinWorkspaceInput {
+  workspaceId: ID!
+}
+
 extend type ProjectInviteMutations {
   """
   Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
@@ -97,6 +112,20 @@ type WorkspaceMutations {
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
   invites: WorkspaceInviteMutations!
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  addDomain(input: AddDomainToWorkspaceInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
+}
+
+input WorkspaceDomainDeleteInput {
+  workspaceId: ID!
+  id: ID!
 }
 
 input WorkspaceInviteCreateInput {
@@ -153,6 +182,21 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+type WorkspaceVersionsCount {
+  """
+  Total number of versions of all projects in the workspace
+  """
+  current: Int!
+  """
+  Maximum number of version of all projects in the workspace with no additional cost
+  """
+  max: Int!
+}
+
+type WorkspaceBilling {
+  versionsCount: WorkspaceVersionsCount
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -167,6 +211,10 @@ type Workspace {
   Selected fallback when `logo` not set
   """
   defaultLogoIndex: Int!
+  """
+  Verified workspace domains
+  """
+  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: ADMIN)
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
@@ -183,6 +231,31 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  """
+  Billing data for Workspaces beta
+  """
+  billing: WorkspaceBilling! @hasWorkspaceRole(role: MEMBER)
+  """
+  Enable/Disable restriction to invite users to workspace as Guests only
+  """
+  domainBasedMembershipProtectionEnabled: Boolean!
+  """
+  Enable/Disable discovery of the workspace
+  """
+  discoverabilityEnabled: Boolean!
+}
+
+type DiscoverableWorkspace {
+  id: ID!
+  name: String!
+  description: String
+  logo: String
+  defaultLogoIndex: Int!
+}
+
+type WorkspaceDomain {
+  id: ID!
+  domain: String!
 }
 
 input WorkspaceProjectsFilter {
@@ -247,6 +320,11 @@ type WorkspaceCollection {
 }
 
 extend type User {
+  """
+  Get discoverable workspaces with verified domains that match the active user's
+  """
+  discoverableWorkspaces: [DiscoverableWorkspace!]!
+
   """
   Get the workspaces for the user
   """

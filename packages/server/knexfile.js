@@ -92,7 +92,12 @@ const commonConfig = {
   },
   // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
   compileSqlOnError: false,
-  pool: { min: 0, max: postgresMaxConnections() }
+  pool: {
+    min: 0,
+    max: postgresMaxConnections(),
+    acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
+    createTimeoutMillis: 5000
+  }
 }
 
 /** @type {Object<string, import('knex').Knex.Config>} */

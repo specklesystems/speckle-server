@@ -38,6 +38,7 @@
       </template>
       <template #role="{ item }">
         <FormSelectWorkspaceRoles
+          :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
           @update:model-value="
@@ -87,6 +88,7 @@ import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { Roles } from '@speckle/shared'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -124,7 +126,6 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-// const { on, bind, value: search } = useDebouncedTextInput()
 const updateUserRole = useWorkspaceUpdateRole()
 
 const showChangeUserRoleDialog = ref(false)
@@ -141,6 +142,7 @@ const members = computed(() =>
 )
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
 const actionsItems: LayoutMenuItem[][] = [
   [{ title: 'Remove member...', id: ActionTypes.RemoveMember }]
