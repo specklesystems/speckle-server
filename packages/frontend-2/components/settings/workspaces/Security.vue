@@ -24,9 +24,7 @@
           No verified domains yet
         </p>
       </section>
-
-      <hr class="my-6 md:my-10" />
-
+      <hr class="my-6 md:my-8" />
       <section>
         <SettingsSectionHeader
           title="Add new domain "
@@ -58,12 +56,9 @@
           </div>
         </div>
       </section>
-
-      <hr class="my-6 md:my-10" />
-
+      <hr class="my-6 md:my-8" />
       <section class="flex flex-col space-y-3">
         <SettingsSectionHeader title="Domain features" subheading class="mb-3" />
-
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
@@ -124,13 +119,21 @@ graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
     id
     domains {
+      id
+      domain
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
   }
+
   fragment SettingsWorkspacesSecurity_User on User {
-    ...SettingsWorkspacesSecurityDomainAddDialog_User
+    id
+    emails {
+      id
+      email
+      verified
+    }
   }
 `)
 

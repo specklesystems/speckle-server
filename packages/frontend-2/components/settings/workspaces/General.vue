@@ -38,7 +38,7 @@
           />
         </div>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
         <CommonCard class="bg-foundation">
@@ -51,7 +51,7 @@
         </div>
       </div>
       <template v-if="isAdmin">
-        <hr class="my-6 md:my-10" />
+        <hr class="my-6 md:my-8" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
           <CommonCard class="bg-foundation">
