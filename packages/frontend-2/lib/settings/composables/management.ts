@@ -13,10 +13,7 @@ import type {
   WorkspaceUpdateInput,
   AddDomainToWorkspaceInput
 } from '~~/lib/common/generated/gql/graphql'
-import type {
-  SettingsDomainAdd_WorkspaceFragment,
-  Workspace
-} from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceDomain, Workspace } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 
 graphql(`
@@ -65,7 +62,9 @@ export function useAddWorkspaceDomain() {
   return {
     mutate: async (
       input: AddDomainToWorkspaceInput,
-      workspace: SettingsDomainAdd_WorkspaceFragment
+      domains: WorkspaceDomain[],
+      discoverabilityEnabled: boolean,
+      domainBasedMembershipProtectionEnabled: boolean
     ) => {
       const result = await apollo
         .mutate({
@@ -82,7 +81,7 @@ export function useAddWorkspaceDomain() {
                 __typename: 'Workspace',
                 id: input.workspaceId,
                 domains: [
-                  ...workspace.domains,
+                  ...domains,
                   {
                     __typename: 'WorkspaceDomain',
                     id: '',
@@ -90,9 +89,8 @@ export function useAddWorkspaceDomain() {
                   }
                 ],
                 discoverabilityEnabled:
-                  workspace.domains.length === 0
-                    ? true
-                    : workspace.discoverabilityEnabled
+                  domains.length === 0 ? true : discoverabilityEnabled,
+                domainBasedMembershipProtectionEnabled
               }
             }
           },

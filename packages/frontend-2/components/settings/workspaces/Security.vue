@@ -163,7 +163,7 @@ const verifiedUserDomains = computed(() => {
 
   return [
     ...new Set(
-      (result.value?.activeUser.emails ?? [])
+      (result.value?.activeUser?.emails ?? [])
         .filter((email) => email.verified)
         .map((email) => email.email.split('@')[1])
         .filter((domain) => !workspaceDomainSet.has(domain))
@@ -267,13 +267,15 @@ const isDomainDiscoverabilityEnabled = computed({
 })
 
 const addDomain = async () => {
-  if (!selectedDomain.value) return
+  if (!selectedDomain.value || !result.value?.workspace) return
   await addWorkspaceDomain.mutate(
     {
       domain: selectedDomain.value,
       workspaceId: props.workspaceId
     },
-    result.value?.workspace
+    result.value?.workspace.domains,
+    result.value?.workspace.discoverabilityEnabled,
+    result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
 
   selectedDomain.value = undefined
