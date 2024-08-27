@@ -190,9 +190,6 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
     case ActionTypes.RemoveMember:
       openDeleteUserRoleDialog(user)
       break
-    // case ActionTypes.LeaveWorkspace:
-    //   console.log('leave', user)
-    //   break
   }
 }
 </script>

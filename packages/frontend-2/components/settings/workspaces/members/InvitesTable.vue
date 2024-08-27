@@ -12,9 +12,13 @@
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
         { id: 'role', header: 'Role', classes: 'col-span-2' },
-        { id: 'lastRemindedOn', header: 'Last reminded on', classes: 'col-span-3' }
+        { id: 'lastRemindedOn', header: 'Last reminded on', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
-      :buttons="buttons"
       :items="invites"
       :loading="searchResultLoading"
       :empty-message="
@@ -47,11 +51,28 @@
           {{ formattedFullDate(item.updatedAt) }}
         </span>
       </template>
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu"
+          :items="actionsItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="showActionsMenu = !showActionsMenu"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
   </div>
 </template>
+
 <script setup lang="ts">
-import { EnvelopeIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { useQuery } from '@vue/apollo-composable'
 import { capitalize } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
@@ -61,6 +82,8 @@ import {
   useResendWorkspaceInvite
 } from '~/lib/settings/composables/workspaces'
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -96,6 +119,7 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+const showActionsMenu = ref(false)
 
 const cancelInvite = useCancelWorkspaceInvite()
 const resendInvite = useResendWorkspaceInvite()
@@ -115,31 +139,33 @@ const invites = computed(() =>
     ? searchResult.value?.workspace.invitedTeam || props.workspace?.invitedTeam
     : props.workspace?.invitedTeam
 )
-const buttons = computed(() => [
-  {
-    label: 'Resend invite',
-    tooltip: 'Resend invite',
-    icon: EnvelopeIcon,
-    action: async (item: NonNullable<typeof invites.value>[0]) => {
+
+const actionsItems: LayoutMenuItem[][] = [
+  [{ title: 'Resend invite', id: 'resend-invite' }],
+  [{ title: 'Delete invite', id: 'delete-invite' }]
+]
+
+const onActionChosen = async (
+  actionItem: LayoutMenuItem,
+  item: NonNullable<typeof invites.value>[0]
+) => {
+  switch (actionItem.id) {
+    case 'resend-invite':
       await resendInvite({
         input: {
           workspaceId: props.workspaceId,
           inviteId: item.inviteId
         }
       })
-    }
-  },
-  {
-    label: 'Delete invite',
-    tooltip: 'Delete invite',
-    icon: XMarkIcon,
-    action: async (item: NonNullable<typeof invites.value>[0]) => {
+      break
+    case 'delete-invite':
       await cancelInvite({
         workspaceId: props.workspaceId,
         inviteId: item.inviteId
       })
-    }
+      break
   }
-])
+}
+
 const roleDisplayName = (role: string) => capitalize(role.split(':')[1])
 </script>
