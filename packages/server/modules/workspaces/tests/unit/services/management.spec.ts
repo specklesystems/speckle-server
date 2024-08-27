@@ -272,6 +272,13 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       return {} as StreamRecord
     },
+    revokeStreamPermissions: async ({ userId }) => {
+      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+        (acl) => acl.userId !== userId
+      )
+
+      return {} as StreamRecord
+    },
     ...dependencyOverrides
   }
 

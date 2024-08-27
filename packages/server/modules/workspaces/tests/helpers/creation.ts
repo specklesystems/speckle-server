@@ -1,8 +1,8 @@
 import { db } from '@/db/knex'
 import {
   getStream,
-  grantStreamPermissions,
-  revokeStreamPermissions
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
@@ -111,9 +111,10 @@ export const assignToWorkspace = async (
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     getStreams,
-    grantStreamPermissions
   })
 
   await updateWorkspaceRole({
@@ -130,9 +131,9 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
+    revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     getStreams,
-    revokeStreamPermissions
   })
 
   await deleteWorkspaceRole({

@@ -15,14 +15,14 @@ export const isUserLastWorkspaceAdmin = (
 }
 
 /**
- * Given a user's workspace role, return the role they should have for workspace projects.
+ * Given a user's workspace role, return the initial role they should have for workspace projects.
  */
-export const mapWorkspaceRoleToProjectRole = (
+export const mapWorkspaceRoleToInitialProjectRole = (
   workspaceRole: WorkspaceRoles
-): StreamRoles => {
+): StreamRoles | null => {
   switch (workspaceRole) {
     case Roles.Workspace.Guest:
-      return Roles.Stream.Reviewer
+      return null
     case Roles.Workspace.Member:
       return Roles.Stream.Contributor
     case Roles.Workspace.Admin:
