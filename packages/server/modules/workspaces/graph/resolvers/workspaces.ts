@@ -3,6 +3,8 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
+  getUserStreams,
+  getUserStreamsCount,
   grantStreamPermissions,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
@@ -599,18 +601,31 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getPendingTeam({ workspaceId: parent.id, filter: args.filter })
         },
-        projects: async (parent, args) => {
-          const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })
-          return await getWorkspaceProjects(
+        projects: async (parent, args, ctx) => {
+          if (!ctx.userId) return []
+          const getWorkspaceProjects = getWorkspaceProjectsFactory({
+            getStreams: getUserStreams
+          })
+          const filter = {
+            ...(args.filter || {}),
+            userId: ctx.userId,
+            workspaceId: parent.id
+          }
+          const { items, cursor } = await getWorkspaceProjects(
             {
               workspaceId: parent.id
             },
             {
               limit: args.limit || 25,
               cursor: args.cursor || null,
-              filter: { ...(args.filter || {}) }
+              filter
             }
           )
+          return {
+            items,
+            cursor,
+            totalCount: await getUserStreamsCount(filter)
+          }
         },
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
