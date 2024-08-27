@@ -164,3 +164,19 @@ export const leaveWorkspaceMutation = gql`
     }
   }
 `
+
+export const getProjectWorkspaceQuery = gql`
+  query ActiveUserProjectsWorkspace {
+    activeUser {
+      projects {
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`

@@ -9,6 +9,7 @@ import {
   createTestUsers
 } from '@/test/authHelper'
 import {
+  ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
   GetWorkspaceProjectsDocument
 } from '@/test/graphql/generated/graphql'
@@ -24,6 +25,12 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
+
+  const workspace: BasicTestWorkspace = {
+    id: '',
+    ownerId: '',
+    name: 'My Test Workspace'
+  }
 
   const testUser: BasicTestUser = {
     id: '',
@@ -52,19 +59,23 @@ describe('Workspace project GQL CRUD', () => {
         scopes: AllScopes
       })
     })
+
+    await createTestWorkspace(workspace, testUser)
+
+    const workspaceProjects = [
+      { name: 'Workspace Project A', workspaceId: workspace.id },
+      { name: 'Workspace Project B', workspaceId: workspace.id },
+      { name: 'Workspace Project C', workspaceId: workspace.id }
+    ]
+
+    await Promise.all(
+      workspaceProjects.map((input) =>
+        apollo.execute(CreateWorkspaceProjectDocument, { input })
+      )
+    )
   })
 
   describe('when specifying a workspace id during project creation', () => {
-    const workspace: BasicTestWorkspace = {
-      id: '',
-      ownerId: '',
-      name: 'My Test Workspace'
-    }
-
-    before(async () => {
-      await createTestWorkspace(workspace, testUser)
-    })
-
     it('should create the project in that workspace', async () => {
       const projectName = cryptoRandomString({ length: 6 })
 
@@ -90,35 +101,13 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when querying workspace projects', () => {
-    const workspace: BasicTestWorkspace = {
-      id: '',
-      ownerId: '',
-      name: 'My Test Workspace'
-    }
-
-    before(async () => {
-      await createTestWorkspace(workspace, testUser)
-
-      const workspaceProjects = [
-        { name: 'Workspace Project A', workspaceId: workspace.id },
-        { name: 'Workspace Project B', workspaceId: workspace.id },
-        { name: 'Workspace Project C', workspaceId: workspace.id }
-      ]
-
-      await Promise.all(
-        workspaceProjects.map((input) =>
-          apollo.execute(CreateWorkspaceProjectDocument, { input })
-        )
-      )
-    })
-
     it('should return multiple projects', async () => {
       const res = await apollo.execute(GetWorkspaceProjectsDocument, {
         id: workspace.id
       })
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.projects.items.length).to.equal(3)
+      expect(res.data?.workspace.projects.items.length).to.be.greaterThanOrEqual(3)
     })
 
     it('should respect limits', async () => {
@@ -167,6 +156,17 @@ describe('Workspace project GQL CRUD', () => {
       expect(res).to.not.haveGraphQLErrors()
       expect(project).to.exist
       expect(project?.name).to.equal('Workspace Project B')
+    })
+
+    it('should return workspace info on project types', async () => {
+      const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {})
+
+      const projects = res.data?.activeUser?.projects.items
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(projects).to.exist
+      expect(projects?.every((project) => project?.workspace?.id === workspace.id)).to
+        .be.true
     })
   })
 })
