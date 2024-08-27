@@ -14,18 +14,6 @@ import type {
   AddDomainToWorkspaceInput
 } from '~~/lib/common/generated/gql/graphql'
 import type { WorkspaceDomain, Workspace } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
-
-graphql(`
-  fragment SettingsDomainAdd_Workspace on Workspace {
-    id
-    domains {
-      id
-      domain
-    }
-    discoverabilityEnabled
-  }
-`)
 
 export function useUpdateWorkspace() {
   const { mutate, loading } = useMutation(settingsUpdateWorkspaceMutation)
