@@ -38,7 +38,11 @@
       </div>
     </div>
 
-    <div v-show="!isCollapsed" class="flex flex-col">
+    <div
+      v-show="!isCollapsed"
+      class="flex flex-col"
+      :class="collapsible && $slots['title-icon'] ? 'ml-6' : ''"
+    >
       <slot></slot>
     </div>
   </div>
