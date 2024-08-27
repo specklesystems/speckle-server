@@ -26,6 +26,7 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import { isUndefined } from 'lodash'
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
@@ -182,44 +183,325 @@ describe('Workspaces Roles GQL', () => {
     })
   })
 
-  // describe('single role changes in a workspace with projects', () => {
-  //   const workspace: BasicTestWorkspace = {
-  //     id: '',
-  //     ownerId: '',
-  //     name: "Test Workspace"
-  //   }
+  describe('single role changes in a workspace with projects', () => {
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: "Test Workspace"
+    }
 
-  //   const workspaceAdminUser: BasicTestUser = {
-  //     id: '',
-  //     name: 'John "Owner" Specke',
-  //     email: 'john-owner-speckle@example.org'
-  //   }
+    const workspaceAdminUser: BasicTestUser = {
+      id: '',
+      name: 'John "Owner" Specke',
+      email: 'john-owner-speckle@example.org'
+    }
 
-  //   const workspaceMemberUser: BasicTestUser = {
-  //     id: '',
-  //     name: 'John "Member" Speckel',
-  //     email: 'john-member-speckle@example.org'
-  //   }
+    const workspaceMemberUser: BasicTestUser = {
+      id: '',
+      name: 'John "Member" Speckel',
+      email: 'john-member-speckle@example.org'
+    }
 
-  //   const workspaceGuestUser: BasicTestUser = {
-  //     id: '',
-  //     name: 'John "Middle Child" Spreckle',
-  //     email: 'john-guest-speckle@example.org'
-  //   }
+    const workspaceGuestUser: BasicTestUser = {
+      id: '',
+      name: 'John "Middle Child" Speckle',
+      email: 'john-guest-speckle@example.org'
+    }
 
-  //   before(async () => {
-  //     await createTestUsers([
-  //       workspaceAdminUser,
-  //       workspaceMemberUser,
-  //       workspaceGuestUser
-  //     ])
-  //   })
+    const workspaceProjectA: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: "Project A",
+      isPublic: false
+    }
 
-  //   beforeEach(async () => {
-  //     await createTestWorkspace(workspace, serverAdminUser)
-  //   })
+    const workspaceProjectB: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: "Project B",
+      isPublic: false
+    }
 
-  // })
+    const workspaceProjectC: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: "Project C",
+      isPublic: false
+    }
+
+    const workspaceProjectD: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: "Project D",
+      isPublic: false
+    }
+
+    const workspaceProjects = [
+      workspaceProjectA,
+      workspaceProjectB,
+      workspaceProjectC,
+      workspaceProjectD
+    ]
+
+    before(async () => {
+      await createTestUsers([
+        workspaceAdminUser,
+        workspaceMemberUser,
+        workspaceGuestUser
+      ])
+    })
+
+    beforeEach(async () => {
+      /**
+       * Initial workspace roles:
+       *
+       * workspaceAdminUser   Admin
+       * workspaceMemberUser  Member
+       * workspaceGuestUser   Guest
+       *
+       * Initial workspace project roles:
+       *
+       * |                     | Project A   | Project B   | Project C | Project D |
+       * |---------------------|-------------|-------------|-----------|-----------|
+       * | workspaceAdminUser  | Owner       | Owner       | Owner     | Owner     |
+       * | workspaceMemberUser | Owner       | Contributor | Reviewer  | None      |
+       * | workspaceGuestUser  | Contributor | Reviewer    | None      | None      |
+       */
+
+      await createTestWorkspace(workspace, serverAdminUser)
+      await Promise.all([
+        assignToWorkspace(workspace, workspaceAdminUser, Roles.Workspace.Admin),
+        assignToWorkspace(workspace, workspaceMemberUser, Roles.Workspace.Member),
+        assignToWorkspace(workspace, workspaceGuestUser, Roles.Workspace.Guest),
+      ])
+      for (const project of workspaceProjects) {
+        project.workspaceId = workspace.id
+        await createTestStream(project, serverAdminUser)
+      }
+      await Promise.all([
+        // A
+        grantStreamPermissions({
+          streamId: workspaceProjectA.id,
+          userId: workspaceMemberUser.id,
+          role: Roles.Stream.Owner
+        }),
+        grantStreamPermissions({
+          streamId: workspaceProjectA.id,
+          userId: workspaceGuestUser.id,
+          role: Roles.Stream.Contributor
+        }),
+        // B
+        grantStreamPermissions({
+          streamId: workspaceProjectA.id,
+          userId: workspaceMemberUser.id,
+          role: Roles.Stream.Contributor
+        }),
+        grantStreamPermissions({
+          streamId: workspaceProjectA.id,
+          userId: workspaceGuestUser.id,
+          role: Roles.Stream.Reviewer
+        }),
+        // C
+        grantStreamPermissions({
+          streamId: workspaceProjectA.id,
+          userId: workspaceMemberUser.id,
+          role: Roles.Stream.Reviewer
+        }),
+      ])
+    })
+
+    afterEach(async () => {
+      await truncateTables(['workspaces', 'streams'])
+    })
+
+    describe('when changing workspace admin', () => {
+
+      const userId = workspaceAdminUser.id
+
+      describe('to workspace member', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Member
+            }
+          })
+        })
+
+        it('should preserve project owner roles', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return role?.role === Roles.Stream.Owner
+          })).to.be.true
+        })
+
+      })
+
+      describe('to workspace guest', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Guest
+            }
+          })
+        })
+
+        it('should drop all workspace project roles', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return isUndefined(role)
+          })).to.be.true
+        })
+
+      })
+
+    })
+
+    describe('when changing workspace member', () => {
+
+      const userId = workspaceMemberUser.id
+
+      describe('to workspace admin', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Admin
+            }
+          })
+        })
+
+        it('should grant project owner role for all workspace projects', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return role?.role === Roles.Stream.Owner
+          })).to.be.true
+        })
+
+      })
+
+      describe('to workspace guest', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Guest
+            }
+          })
+        })
+
+        it('should drop all workspace project roles', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return isUndefined(role)
+
+          })).to.be.true
+        })
+
+      })
+
+    })
+
+    describe('when changing workspace guest', () => {
+
+      const userId = workspaceGuestUser.id
+
+      describe('to workspace admin', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Admin
+            }
+          })
+        })
+
+        it('should grant project owner role for all workspace projects', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return role?.role === Roles.Stream.Owner
+          })).to.be.true
+        })
+
+      })
+
+      describe('to workspace member', () => {
+
+        beforeEach(async () => {
+          await apollo.execute(UpdateWorkspaceRoleDocument, {
+            input: {
+              userId,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Member
+            }
+          })
+        })
+
+        it('should grant default project role for all workspace projects', async () => {
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, { id: workspace.id })
+
+          const projects = res.data?.workspace.projects.items?.toSorted((a, b) => a.name.localeCompare(b.name))
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(projects).to.exist
+          expect(projects?.every((project) => {
+            const team = project.team
+            const role = team.find((acl) => acl.id === userId)
+            return role?.role === Roles.Stream.Contributor
+          })).to.be.true
+        })
+
+      })
+
+    })
+
+  })
 
   describe('composite role changes in a workspace with projects', () => {
     let workspaceMemberApollo: TestApolloServer
