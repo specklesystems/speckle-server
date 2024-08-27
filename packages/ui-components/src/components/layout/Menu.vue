@@ -43,7 +43,6 @@
 </template>
 
 <script setup lang="ts">
-// Todo: Enable searching once supported
 import { directive as vTippy } from 'vue-tippy'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import type { Nullable } from '@speckle/shared'
