@@ -309,9 +309,7 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT && materialData
-        ? renderView.renderData.id
-        : '') +
+      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
       (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }
@@ -774,6 +772,12 @@ export default class Materials {
   }
 
   private makeTextMaterial(materialData: DisplayStyle): Material {
+    /** !This should not be neccessary anymore once we implement proper text batching!
+     *  If the text had no render material or display style, we simply use the default
+     *  null text material
+     */
+    if (!materialData) return this.materialMap[Materials.NullTextDisplayStyle]
+
     const mat = new SpeckleTextMaterial(
       {
         color: materialData.color,
