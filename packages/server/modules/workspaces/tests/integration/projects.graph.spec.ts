@@ -9,6 +9,7 @@ import {
   createTestUsers
 } from '@/test/authHelper'
 import {
+  ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
   GetWorkspaceProjectsDocument
 } from '@/test/graphql/generated/graphql'
@@ -167,6 +168,17 @@ describe('Workspace project GQL CRUD', () => {
       expect(res).to.not.haveGraphQLErrors()
       expect(project).to.exist
       expect(project?.name).to.equal('Workspace Project B')
+    })
+
+    it('should return workspace info on project types', async () => {
+      const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {})
+
+      const projects = res.data?.activeUser?.projects.items
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(projects).to.exist
+      expect(projects?.every((project) => project?.workspace?.id === workspace.id)).to
+        .be.true
     })
   })
 })
