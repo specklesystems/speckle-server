@@ -6,7 +6,7 @@
       :workspace="workspace"
     />
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
