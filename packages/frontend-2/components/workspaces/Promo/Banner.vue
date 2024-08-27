@@ -19,7 +19,7 @@
     <div class="relative z-10 text-foreground max-w-lg">
       <div class="flex gap-2 items-center">
         <h3 class="text-heading-lg">Introducing workspaces</h3>
-        <CommonBadge rounded class="">NEW</CommonBadge>
+        <CommonBadge rounded class="">BETA</CommonBadge>
       </div>
       <p class="text-body-sm mt-4">
         Talented teams around the world use Workspaces for seamless project delivery.
