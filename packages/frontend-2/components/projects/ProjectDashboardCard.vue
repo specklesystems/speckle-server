@@ -27,7 +27,7 @@
         </div>
         <div class="pt-3">
           <NuxtLink
-            v-if="project.workspace && isWorkspacesEnabled"
+            v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
             :to="workspaceRoute(project.workspace.id)"
             class="my-3 flex items-center"
           >
@@ -99,6 +99,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
+  showWorkspaceLink?: boolean
 }>()
 
 const router = useRouter()
