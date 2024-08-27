@@ -1,10 +1,9 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
-const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
 const { graphqlLogger } = require('@/logging/logging')
 const { redactSensitiveVariables } = require('@/logging/loggingHelper')
-const { GraphQLError } = require('graphql')
+const { shouldLogAsInfoLevel } = require('@/logging/graphqlError')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -77,11 +76,7 @@ module.exports = {
               graphql_variables: variables
             })
           }
-          if (
-            (err instanceof GraphQLError &&
-              ['FORBIDDEN', 'STREAM_NOT_FOUND'].includes(err.extensions?.code)) ||
-            err instanceof ApolloError
-          ) {
+          if (shouldLogAsInfoLevel(err)) {
             logger.info(
               { err },
               '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'

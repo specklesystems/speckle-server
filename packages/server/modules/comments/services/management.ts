@@ -2,7 +2,10 @@ import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamNotFoundError
+} from '@/modules/core/errors/stream'
 import {
   InsertCommentPayload,
   getComment,
@@ -53,7 +56,7 @@ export async function authorizeProjectCommentsAccess(params: {
 
   const project = await getStream({ streamId: projectId, userId: authCtx.userId })
   if (!project) {
-    throw new StreamInvalidAccessError('Stream not found')
+    throw new StreamNotFoundError('Stream not found')
   }
 
   let success = true

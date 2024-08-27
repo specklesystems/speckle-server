@@ -38,7 +38,7 @@ const {
 const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
-const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
 
@@ -84,7 +84,7 @@ module.exports = {
 
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       if (!stream) {
-        throw new StreamInvalidAccessError('Commit stream not found')
+        throw new StreamNotFoundError('Commit stream not found')
       }
 
       await validateStreamAccess(

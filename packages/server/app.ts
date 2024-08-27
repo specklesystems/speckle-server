@@ -24,8 +24,7 @@ import prometheusClient from 'prom-client'
 import {
   ApolloServer,
   ForbiddenError,
-  ApolloServerExpressConfig,
-  ApolloError
+  ApolloServerExpressConfig
 } from 'apollo-server-express'
 import {
   ApolloServerPluginLandingPageLocalDefault,
@@ -65,6 +64,7 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
+import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 
 let graphqlServer: ApolloServer
 
@@ -93,12 +93,7 @@ function logSubscriptionOperation(params: {
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
-      if (
-        (error instanceof GraphQLError &&
-          (error.extensions?.code === 'FORBIDDEN' ||
-            error.extensions?.code === 'STREAM_NOT_FOUND')) ||
-        error instanceof ApolloError
-      ) {
+      if (shouldLogAsInfoLevel(error)) {
         logger.info(error, errMsg)
       } else {
         logger.error(error, errMsg)
