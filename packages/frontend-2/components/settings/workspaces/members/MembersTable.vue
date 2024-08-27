@@ -116,8 +116,7 @@ graphql(`
 `)
 
 enum ActionTypes {
-  RemoveMember = 'remove-member',
-  LeaveWorkspace = 'leave-workspace'
+  RemoveMember = 'remove-member'
 }
 
 const props = defineProps<{
@@ -144,8 +143,7 @@ const members = computed(() =>
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 
 const actionsItems: LayoutMenuItem[][] = [
-  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }],
-  [{ title: 'Leave workspace', id: ActionTypes.LeaveWorkspace }]
+  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }]
 ]
 
 const openChangeUserRoleDialog = (
