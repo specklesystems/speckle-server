@@ -242,6 +242,12 @@ describe('Workspaces GQL CRUD', () => {
 
     describe('query workspace.projects', () => {
       it('should return all projects for a user in the workspace', async () => {
+        const workspace = {
+          id: '',
+          name: 'test ws',
+          ownerId: ''
+        }
+        await createTestWorkspace(workspace, testMemberUser)
         const user = {
           id: createRandomPassword(),
           email: createRandomEmail(),
