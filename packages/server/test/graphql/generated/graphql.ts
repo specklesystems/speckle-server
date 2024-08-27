@@ -829,6 +829,12 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum Currency {
+  Eur = 'EUR',
+  Gbp = 'GBP',
+  Usd = 'USD'
+}
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -3888,7 +3894,8 @@ export type WorkspaceTeamArgs = {
 
 export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
-  versionsCount?: Maybe<WorkspaceVersionsCount>;
+  cost: WorkspaceCost;
+  versionsCount: WorkspaceVersionsCount;
 };
 
 export type WorkspaceCollaborator = {
@@ -3903,6 +3910,22 @@ export type WorkspaceCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Workspace>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceCost = {
+  __typename?: 'WorkspaceCost';
+  /** Currency of the price */
+  currency: Currency;
+  items: Array<WorkspaceCostItem>;
+  /** Estimated cost of the workspace with no discount applied */
+  subTotal: Scalars['Float']['output'];
+};
+
+export type WorkspaceCostItem = {
+  __typename?: 'WorkspaceCostItem';
+  cost: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type WorkspaceCreateInput = {
@@ -4113,7 +4136,7 @@ export type BasicWorkspaceFragment = { __typename?: 'Workspace', id: string, nam
 
 export type BasicPendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, inviteId: string, workspaceId: string, workspaceName: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string }, user?: { __typename?: 'LimitedUser', id: string, name: string } | null };
 
-export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing: { __typename?: 'WorkspaceBilling', versionsCount?: { __typename?: 'WorkspaceVersionsCount', current: number, max: number } | null } };
+export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number } } };
 
 export type CreateWorkspaceInviteMutationVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -4143,7 +4166,7 @@ export type GetWorkspaceWithBillingQueryVariables = Exact<{
 }>;
 
 
-export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing: { __typename?: 'WorkspaceBilling', versionsCount?: { __typename?: 'WorkspaceVersionsCount', current: number, max: number } | null } } };
+export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number } } } };
 
 export type CancelWorkspaceInviteMutationVariables = Exact<{
   workspaceId: Scalars['String']['input'];
