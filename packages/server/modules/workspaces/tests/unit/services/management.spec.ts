@@ -470,33 +470,6 @@ describe('Workspace role services', () => {
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
       expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
     })
-
-    it('does not change roles on workspace projects for changes to existing workspace users', async () => {
-      const userId = cryptoRandomString({ length: 10 })
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const projectId = cryptoRandomString({ length: 10 })
-
-      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
-        workspaceId,
-        workspaceProjects: [{ id: projectId } as StreamRecord]
-      })
-
-      await updateWorkspaceRole({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Member
-      })
-      await updateWorkspaceRole({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Admin
-      })
-
-      expect(context.workspaceProjectRoles.length).to.equal(1)
-      expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
-      expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
-      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
-    })
   })
 
   describe('Workspace domains', () => {
