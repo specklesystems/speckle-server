@@ -48,17 +48,17 @@
       </template>
       <template #actions="{ item }">
         <LayoutMenu
-          v-model:open="showActionsMenu"
+          v-model:open="showActionsMenu[item.id]"
           :items="actionsItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
-            :color="showActionsMenu ? 'outline' : 'subtle'"
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="showActionsMenu = !showActionsMenu"
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
       </template>
@@ -132,7 +132,8 @@ const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
-const showActionsMenu = ref(false)
+
+const showActionsMenu = ref<Record<string, boolean>>({})
 
 const members = computed(() =>
   (props.workspace?.team || []).map(({ user, ...rest }) => ({
@@ -191,5 +192,9 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
       openDeleteUserRoleDialog(user)
       break
   }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 </script>

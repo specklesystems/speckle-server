@@ -53,17 +53,17 @@
       </template>
       <template #actions="{ item }">
         <LayoutMenu
-          v-model:open="showActionsMenu"
+          v-model:open="showActionsMenu[item.id]"
           :items="actionsItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
-            :color="showActionsMenu ? 'outline' : 'subtle'"
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="showActionsMenu = !showActionsMenu"
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
       </template>
@@ -119,7 +119,7 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
-const showActionsMenu = ref(false)
+const showActionsMenu = ref<Record<string, boolean>>({})
 
 const cancelInvite = useCancelWorkspaceInvite()
 const resendInvite = useResendWorkspaceInvite()
@@ -165,6 +165,10 @@ const onActionChosen = async (
       })
       break
   }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 
 const roleDisplayName = (role: string) => capitalize(role.split(':')[1])
