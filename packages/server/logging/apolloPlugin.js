@@ -11,6 +11,11 @@ const metricCallCount = new prometheusClient.Counter({
   labelNames: ['actionName']
 })
 
+const getOperationName = (ctx) =>
+  ctx.operation.operationName ||
+  ctx.operation.selectionSet.selections[0].name.value ||
+  'un-named graphql operation'
+
 /** @type {import('apollo-server-core').PluginDefinition} */
 module.exports = {
   // eslint-disable-next-line no-unused-vars
@@ -22,8 +27,8 @@ module.exports = {
         const auth = ctx.context
         const userId = auth?.userId
 
-        const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
-        const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
+        const op = ctx.operation.operation
+        const name = getOperationName(ctx)
         const kind = ctx.operation.operation
         const query = ctx.request.query
         const variables = ctx.request.variables
@@ -64,7 +69,7 @@ module.exports = {
         })
 
         for (const err of ctx.errors) {
-          const operationName = ctx.request.operationName || null
+          const operationName = getOperationName(ctx)
           const query = ctx.request.query
           const variables = redactSensitiveVariables(ctx.request.variables)
 
@@ -79,27 +84,29 @@ module.exports = {
           if (shouldLogAsInfoLevel(err)) {
             logger.info(
               { err },
-              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+              '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
             )
           } else {
             logger.error(
               err,
-              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+              '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
             )
           }
         }
       },
       willSendResponse(ctx) {
         const logger = ctx.context.log || graphqlLogger
+        const name = getOperationName(ctx)
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
         logger.info(
           {
+            graphql_operation_name: name,
             apollo_query_duration_ms: Date.now() - apolloRequestStart
           },
-          '{graphql_operation_value} finished after {apollo_query_duration_ms} ms'
+          '{graphql_operation_name} finished after {apollo_query_duration_ms} ms'
         )
       }
     }

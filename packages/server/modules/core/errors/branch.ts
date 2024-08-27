@@ -23,4 +23,5 @@ export class BranchDeleteError extends BaseError {
 export class BranchNotFoundError extends BaseError {
   static defaultMessage = 'Attempting to work with a non-existant branch'
   static code = 'BRANCH_NOT_FOUND'
+  static statusCode = 404
 }

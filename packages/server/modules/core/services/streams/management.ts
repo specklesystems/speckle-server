@@ -24,6 +24,7 @@ import { createBranch } from '@/modules/core/services/branches'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   StreamInvalidAccessError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
@@ -185,7 +186,7 @@ export async function updateStreamAndNotify(
 
   const oldStream = await getStream({ streamId: update.id, userId: updaterId })
   if (!oldStream) {
-    throw new StreamUpdateError('Stream not found', {
+    throw new StreamNotFoundError('Stream not found', {
       info: { updaterId, streamId: update.id }
     })
   }

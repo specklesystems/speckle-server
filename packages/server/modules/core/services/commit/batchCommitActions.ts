@@ -4,7 +4,8 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import {
   CommitInvalidAccessError,
-  CommitBatchUpdateError
+  CommitBatchUpdateError,
+  CommitNotFoundError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,
@@ -53,7 +54,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
     commitIds.length !== foundCommitIds.length ||
     difference(commitIds, foundCommitIds).length > 0
   ) {
-    throw new CommitBatchUpdateError('At least one of the commits does not exist')
+    throw new CommitNotFoundError('At least one of the commits does not exist')
   }
 
   const streamGroups = groupBy(commits, (c) => c.streamId)

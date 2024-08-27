@@ -94,7 +94,7 @@ function logSubscriptionOperation(params: {
   if (errors.length) {
     for (const error of errors) {
       if (shouldLogAsInfoLevel(error)) {
-        logger.info(error, errMsg)
+        logger.info({ err: error }, errMsg)
       } else {
         logger.error(error, errMsg)
       }
