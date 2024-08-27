@@ -37,6 +37,15 @@ export const workspaceBillingFragment = gql`
         current
         max
       }
+      cost {
+        subTotal
+        currency
+        items {
+          count
+          name
+          cost
+        }
+      }
     }
   }
 `
