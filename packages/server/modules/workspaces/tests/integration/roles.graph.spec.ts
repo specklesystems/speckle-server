@@ -36,14 +36,14 @@ describe('Workspaces Roles GQL', () => {
     name: 'My Test Workspace'
   }
 
-  const testAdminUser: BasicTestUser = {
+  const serverAdminUser: BasicTestUser = {
     id: '',
     name: 'John Speckle',
     email: 'john-speckle-workspace-admin@example.org',
     role: Roles.Server.Admin
   }
 
-  const testMemberUser: BasicTestUser = {
+  const serverMemberUser: BasicTestUser = {
     id: '',
     name: 'James Speckle',
     email: 'james-speckle-workspace-member@example.org',
@@ -52,132 +52,138 @@ describe('Workspaces Roles GQL', () => {
 
   before(async () => {
     await beforeEachContext()
-    await createTestUsers([testAdminUser, testMemberUser])
-    const token = await createAuthTokenForUser(testAdminUser.id, AllScopes)
+    await createTestUsers([serverAdminUser, serverMemberUser])
+    const token = await createAuthTokenForUser(serverAdminUser.id, AllScopes)
     apollo = await testApolloServer({
       context: createTestContext({
         auth: true,
-        userId: testAdminUser.id,
+        userId: serverAdminUser.id,
         token,
-        role: testAdminUser.role,
+        role: serverAdminUser.role,
         scopes: AllScopes
       })
     })
-    await createTestWorkspace(workspace, testAdminUser)
+    await createTestWorkspace(workspace, serverAdminUser)
   })
 
-  describe('update workspace role', () => {
-    after(async () => {
-      await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: null
-        }
+  describe('single role changes in a workspace without projects', () => {
+    describe('update workspace role', () => {
+      after(async () => {
+        await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: null
+          }
+        })
+      })
+
+      it('should create a role if none exists', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: Roles.Workspace.Admin
+          }
+        })
+
+        const { data } = await apollo.execute(GetWorkspaceDocument, {
+          workspaceId: workspace.id
+        })
+        const userRole = data?.workspace.team.find(
+          (user) => user.id === serverMemberUser.id
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(userRole).to.exist
+        expect(userRole?.role).to.equal(Roles.Workspace.Admin)
+      })
+
+      it('should update a role that exists', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: Roles.Workspace.Member
+          }
+        })
+
+        const roles = res.data?.workspaceMutations.updateRole.team
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(roles?.some((role) => role.id === serverMemberUser.id)).to.be.true
+      })
+
+      it('should throw if setting an invalid role', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: 'not-a-role'
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('Invalid workspace role')
+      })
+
+      it('should throw if attempting to remove last admin', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverAdminUser.id,
+            workspaceId: workspace.id,
+            role: Roles.Workspace.Member
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('last admin')
       })
     })
 
-    it('should create a role if none exists', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: Roles.Workspace.Admin
-        }
+    describe('delete workspace role', () => {
+      before(async () => {
+        await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: Roles.Workspace.Member
+          }
+        })
       })
 
-      const { data } = await apollo.execute(GetWorkspaceDocument, {
-        workspaceId: workspace.id
-      })
-      const userRole = data?.workspace.team.find(
-        (user) => user.id === testMemberUser.id
-      )
+      it('should delete the specified role', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverMemberUser.id,
+            workspaceId: workspace.id,
+            role: null
+          }
+        })
 
-      expect(res).to.not.haveGraphQLErrors()
-      expect(userRole).to.exist
-      expect(userRole?.role).to.equal(Roles.Workspace.Admin)
-    })
+        const roles = res.data?.workspaceMutations.updateRole.team
 
-    it('should update a role that exists', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: Roles.Workspace.Member
-        }
+        expect(res).to.not.haveGraphQLErrors()
+        expect(roles?.some((role) => role.id === serverMemberUser.id)).to.be.false
       })
 
-      const roles = res.data?.workspaceMutations.updateRole.team
+      it('should throw if attempting to remove last admin', async () => {
+        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+          input: {
+            userId: serverAdminUser.id,
+            workspaceId: workspace.id,
+            role: null
+          }
+        })
 
-      expect(res).to.not.haveGraphQLErrors()
-      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.true
-    })
-
-    it('should throw if setting an invalid role', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: 'not-a-role'
-        }
+        expect(res).to.haveGraphQLErrors('last admin')
       })
-
-      expect(res).to.haveGraphQLErrors('Invalid workspace role')
-    })
-
-    it('should throw if attempting to remove last admin', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testAdminUser.id,
-          workspaceId: workspace.id,
-          role: Roles.Workspace.Member
-        }
-      })
-
-      expect(res).to.haveGraphQLErrors('last admin')
     })
   })
 
-  describe('delete workspace role', () => {
-    before(async () => {
-      await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: Roles.Workspace.Member
-        }
-      })
-    })
+  // describe('single role changes in a workspace with projects', () => {
 
-    it('should delete the specified role', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testMemberUser.id,
-          workspaceId: workspace.id,
-          role: null
-        }
-      })
+  // })
 
-      const roles = res.data?.workspaceMutations.updateRole.team
-
-      expect(res).to.not.haveGraphQLErrors()
-      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.false
-    })
-
-    it('should throw if attempting to remove last admin', async () => {
-      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-        input: {
-          userId: testAdminUser.id,
-          workspaceId: workspace.id,
-          role: null
-        }
-      })
-
-      expect(res).to.haveGraphQLErrors('last admin')
-    })
-  })
-
-  describe('in a workspace with projects', () => {
+  describe('composite role changes in a workspace with projects', () => {
     let workspaceMemberApollo: TestApolloServer
 
     const workspaceWithProjects: BasicTestWorkspace = {
@@ -194,22 +200,22 @@ describe('Workspaces Roles GQL', () => {
     }
 
     before(async () => {
-      const token = await createAuthTokenForUser(testMemberUser.id, AllScopes)
+      const token = await createAuthTokenForUser(serverMemberUser.id, AllScopes)
       workspaceMemberApollo = await testApolloServer({
         context: createTestContext({
           auth: true,
-          userId: testMemberUser.id,
+          userId: serverMemberUser.id,
           token,
-          role: testMemberUser.role,
+          role: serverMemberUser.role,
           scopes: AllScopes
         })
       })
     })
 
     beforeEach(async () => {
-      await createTestWorkspace(workspaceWithProjects, testAdminUser)
+      await createTestWorkspace(workspaceWithProjects, serverAdminUser)
       workspaceProject.workspaceId = workspaceWithProjects.id
-      await createTestStream(workspaceProject, testAdminUser)
+      await createTestStream(workspaceProject, serverAdminUser)
     })
 
     afterEach(async () => {
@@ -218,20 +224,20 @@ describe('Workspaces Roles GQL', () => {
 
     describe('when leaving the workspace as the last owner of a workspace project', () => {
       // User             Workspace Role    Project Role
-      // testAdminUser    Admin             Reviewer
-      // testMemberUser   Admin             Owner
+      // serverAdminUser    Admin             Reviewer
+      // serverMemberUser   Admin             Owner
       //
-      // Action: `testMemberUser` leaves workspace
+      // Action: `serverMemberUser` leaves workspace
 
       beforeEach(async () => {
         await assignToWorkspace(
           workspaceWithProjects,
-          testMemberUser,
+          serverMemberUser,
           Roles.Workspace.Admin
         )
         await grantStreamPermissions({
           streamId: workspaceProject.id,
-          userId: testAdminUser.id,
+          userId: serverAdminUser.id,
           role: Roles.Stream.Reviewer
         })
       })
@@ -256,28 +262,28 @@ describe('Workspaces Roles GQL', () => {
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
         expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === testMemberUser.id)).to.be.true
+        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
         expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === testMemberUser.id)).to.be.true
+        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
       })
     })
 
     describe('when removing a workspace member that is the last owner of a workspace project', () => {
       // User             Workspace Role    Project Role
-      // testAdminUser    Admin             Reviewer
-      // testMemberUser   Admin             Owner
+      // serverAdminUser    Admin             Reviewer
+      // serverMemberUser   Admin             Owner
       //
-      // Action: `testAdminUser` removes `testMemberUser` from the workspace
+      // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
 
       beforeEach(async () => {
         await assignToWorkspace(
           workspaceWithProjects,
-          testMemberUser,
+          serverMemberUser,
           Roles.Workspace.Admin
         )
         await grantStreamPermissions({
           streamId: workspaceProject.id,
-          userId: testAdminUser.id,
+          userId: serverAdminUser.id,
           role: Roles.Stream.Reviewer
         })
       })
@@ -285,7 +291,7 @@ describe('Workspaces Roles GQL', () => {
       it('should throw and preserve all roles', async () => {
         const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
           input: {
-            userId: testMemberUser.id,
+            userId: serverMemberUser.id,
             role: null,
             workspaceId: workspaceWithProjects.id
           }
@@ -305,28 +311,28 @@ describe('Workspaces Roles GQL', () => {
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
         expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === testMemberUser.id)).to.be.true
+        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
         expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === testMemberUser.id)).to.be.true
+        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
       })
     })
 
     describe('when leaving a workspace without any project owner roles', () => {
       // User             Workspace Role    Project Role
-      // testAdminUser    Admin             Owner
-      // testMemberUser   Member            Reviewer
+      // serverAdminUser    Admin             Owner
+      // serverMemberUser   Member            Reviewer
       //
-      // Action: `testMemberUser` leaves workspace
+      // Action: `serverMemberUser` leaves workspace
 
       beforeEach(async () => {
         await assignToWorkspace(
           workspaceWithProjects,
-          testMemberUser,
+          serverMemberUser,
           Roles.Workspace.Member
         )
         await grantStreamPermissions({
           streamId: workspaceProject.id,
-          userId: testMemberUser.id,
+          userId: serverMemberUser.id,
           role: Roles.Stream.Reviewer
         })
       })
@@ -351,28 +357,29 @@ describe('Workspaces Roles GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === testMemberUser.id)).to.be.false
+        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.false
         expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === testMemberUser.id)).to.be.false
+        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be
+          .false
       })
     })
 
     describe('when removing a workspace member that has no workspace project owner roles', () => {
       // User             Workspace Role    Project Role
-      // testAdminUser    Admin             Owner
-      // testMemberUser   Member            Reviewer
+      // serverAdminUser    Admin             Owner
+      // serverMemberUser   Member            Reviewer
       //
-      // Action: `testAdminUser` removes `testMemberUser` from the workspace
+      // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
 
       beforeEach(async () => {
         await assignToWorkspace(
           workspaceWithProjects,
-          testMemberUser,
+          serverMemberUser,
           Roles.Workspace.Member
         )
         await grantStreamPermissions({
           streamId: workspaceProject.id,
-          userId: testMemberUser.id,
+          userId: serverMemberUser.id,
           role: Roles.Stream.Reviewer
         })
       })
@@ -380,7 +387,7 @@ describe('Workspaces Roles GQL', () => {
       it('should remove all workspace and project roles for removed member', async () => {
         const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
           input: {
-            userId: testMemberUser.id,
+            userId: serverMemberUser.id,
             role: null,
             workspaceId: workspaceWithProjects.id
           }
@@ -400,9 +407,10 @@ describe('Workspaces Roles GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === testMemberUser.id)).to.be.false
+        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.false
         expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === testMemberUser.id)).to.be.false
+        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be
+          .false
       })
     })
   })
