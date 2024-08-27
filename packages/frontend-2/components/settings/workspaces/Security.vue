@@ -6,51 +6,99 @@
         text="Manage verified workspace domains and associated features."
       />
       <section>
-        <SettingsSectionHeader title="Workspace domains" subheading />
-        <div class="pt-4">
-          <FormButton @click="showAddDomainDialog = true">Add domain</FormButton>
-          <LayoutTable
-            class="mt-2 md:mt-4 w-full"
-            :columns="[
-              { id: 'domain', header: 'Domain', classes: 'col-span-6' },
-              { id: 'delete', header: 'Delete', classes: 'col-span-6' }
-            ]"
-            :items="workspaceDomains"
+        <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
+        <ul v-if="workspaceDomains.length > 0">
+          <li
+            v-for="domain in workspaceDomains"
+            :key="domain.id"
+            class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 py-4 flex items-center"
           >
-            <template #domain="{ item }">
-              <span class="text-body-xs text-foreground">
-                {{ `@${item.domain}` }}
-              </span>
-            </template>
-            <template #delete="{ item }">
-              <FormButton color="danger" @click="() => openRemoveDialog(item)">
-                Delete
-              </FormButton>
-            </template>
-          </LayoutTable>
+            <p class="font-body-xs font-medium flex-1">@{{ domain.domain }}</p>
+            <FormButton color="outline" @click="openRemoveDialog(domain)">
+              Delete
+            </FormButton>
+          </li>
+        </ul>
+
+        <p v-else class="text-body-xs text-foreground-2 border p-6 rounded-lg">
+          No verified domains yet
+        </p>
+      </section>
+
+      <hr class="my-6 md:my-10" />
+
+      <section>
+        <SettingsSectionHeader
+          title="Add new domain "
+          subheading
+          class="pb-4 md:pb-6"
+        />
+        <div class="grid grid-cols-2 gap-x-6 items-center">
+          <div class="flex flex-col gap-y-1">
+            <p class="text-body-xs font-medium text-foreground">New domain</p>
+            <p class="text-body-xs text-foreground-2 leading-5">
+              Add a domain from a list of email domains for your active account.
+            </p>
+          </div>
+          <div class="flex gap-x-3">
+            <FormSelectBase
+              v-model="selectedDomain"
+              :items="verifiedUserDomains"
+              name="workspaceDomains"
+              label="Verified domains"
+              class="w-full"
+            >
+              <template #nothing-selected>Select domain</template>
+              <template #something-selected="{ value }">@{{ value }}</template>
+              <template #option="{ item }">
+                <div class="flex items-center">@{{ item }}</div>
+              </template>
+            </FormSelectBase>
+            <FormButton :disabled="!selectedDomain" @click="addDomain">Add</FormButton>
+          </div>
         </div>
       </section>
+
       <hr class="my-6 md:my-10" />
-      <div class="flex flex-col space-y-3">
+
+      <section class="flex flex-col space-y-3">
         <SettingsSectionHeader title="Domain features" subheading class="mb-3" />
-        <FormSwitch
-          v-model="isDomainProtectionEnabled"
-          name="domain-protection"
-          label="Enable domain protection"
-        />
-        <FormSwitch
-          v-model="isDomainDiscoverabilityEnabled"
-          name="domain-discoverability"
-          label="Enable domain discoverability"
-        />
-      </div>
+
+        <div class="flex flex-col space-y-8">
+          <div class="flex items-center">
+            <div class="flex-1 flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">Domain protection</p>
+              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+                Members won't be able to add users as members (or admins) to a workspace
+                unless they are part of a workspace's email domain.
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isDomainProtectionEnabled"
+              :show-label="false"
+              name="domain-protection"
+            />
+          </div>
+          <div class="flex items-center">
+            <div class="flex-1 flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">
+                Domain discoverability
+              </p>
+              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+                Makes your workspace discoverable by employees who sign up with your
+                company's specified email domain.
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isDomainDiscoverabilityEnabled"
+              name="domain-discoverability"
+              :show-label="false"
+            />
+          </div>
+        </div>
+      </section>
     </div>
-    <SettingsWorkspacesSecurityDomainAddDialog
-      v-if="verifiedUser && workspace"
-      v-model:open="showAddDomainDialog"
-      :workspace="workspace"
-      :verified-user="verifiedUser"
-    />
+
     <SettingsWorkspacesSecurityDomainRemoveDialog
       v-if="removeDialogDomain"
       v-model:open="showRemoveDomainDialog"
@@ -70,6 +118,7 @@ import type {
 import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/gql/graphql'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
+import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -89,39 +138,40 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
 const apollo = useApolloClient().client
 
-const showAddDomainDialog = ref(false)
-
+const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
 
-const { result: workspaceSecuritySettings } = useQuery(
-  settingsWorkspacesSecurityQuery,
-  {
-    workspaceId: props.workspaceId
-  }
-)
-
-const workspace = computed(() => {
-  return workspaceSecuritySettings.value?.workspace
-})
-const verifiedUser = computed(() => {
-  return workspaceSecuritySettings.value?.activeUser
+const { result } = useQuery(settingsWorkspacesSecurityQuery, {
+  workspaceId: props.workspaceId
 })
 
 const workspaceDomains = computed(() => {
-  return workspaceSecuritySettings.value?.workspace.domains || []
+  return result.value?.workspace.domains || []
+})
+
+const verifiedUserDomains = computed(() => {
+  const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
+
+  return [
+    ...new Set(
+      (result.value?.activeUser.emails ?? [])
+        .filter((email) => email.verified)
+        .map((email) => email.email.split('@')[1])
+        .filter((domain) => !workspaceDomainSet.has(domain))
+    )
+  ]
 })
 
 const isDomainProtectionEnabled = computed({
-  get: () =>
-    workspaceSecuritySettings.value?.workspace.domainBasedMembershipProtectionEnabled ||
-    false,
+  get: () => result.value?.workspace.domainBasedMembershipProtectionEnabled || false,
   set: async (newVal) => {
-    const result = await apollo
+    const mutationResult = await apollo
       .mutate({
         mutation: SettingsUpdateWorkspaceSecurityDocument,
         variables: {
@@ -137,8 +187,7 @@ const isDomainProtectionEnabled = computed({
               id: props.workspaceId,
               domainBasedMembershipProtectionEnabled: newVal,
               discoverabilityEnabled:
-                workspaceSecuritySettings.value?.workspace.discoverabilityEnabled ||
-                false
+                result.value?.workspace.discoverabilityEnabled || false
             }
           }
         },
@@ -158,20 +207,20 @@ const isDomainProtectionEnabled = computed({
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!result?.data) {
+    if (!mutationResult?.data) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: getFirstErrorMessage(result?.errors)
+        description: getFirstErrorMessage(mutationResult?.errors)
       })
     }
   }
 })
 
 const isDomainDiscoverabilityEnabled = computed({
-  get: () => workspaceSecuritySettings.value?.workspace.discoverabilityEnabled || false,
+  get: () => result.value?.workspace.discoverabilityEnabled || false,
   set: async (newVal) => {
-    const result = await apollo.mutate({
+    const mutationResult = await apollo.mutate({
       mutation: SettingsUpdateWorkspaceSecurityDocument,
       variables: {
         input: {
@@ -185,8 +234,7 @@ const isDomainDiscoverabilityEnabled = computed({
             __typename: 'Workspace',
             id: props.workspaceId,
             domainBasedMembershipProtectionEnabled:
-              workspaceSecuritySettings.value?.workspace
-                .domainBasedMembershipProtectionEnabled || false,
+              result.value?.workspace.domainBasedMembershipProtectionEnabled || false,
             discoverabilityEnabled: newVal
           }
         }
@@ -205,15 +253,28 @@ const isDomainDiscoverabilityEnabled = computed({
       }
     })
 
-    if (!result?.data) {
+    if (!mutationResult?.data) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: getFirstErrorMessage(result?.errors)
+        description: getFirstErrorMessage(mutationResult?.errors)
       })
     }
   }
 })
+
+const addDomain = async () => {
+  if (!selectedDomain.value) return
+  await addWorkspaceDomain.mutate(
+    {
+      domain: selectedDomain.value,
+      workspaceId: props.workspaceId
+    },
+    result.value?.workspace
+  )
+
+  selectedDomain.value = undefined
+}
 
 const openRemoveDialog = (
   domain: SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment

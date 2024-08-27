@@ -1,11 +1,34 @@
-import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
+import {
+  settingsUpdateWorkspaceMutation,
+  settingsAddWorkspaceDomainMutation
+} from '~/lib/settings/graphql/mutations'
+import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  getCacheId
 } from '~~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import type {
+  WorkspaceUpdateInput,
+  AddDomainToWorkspaceInput
+} from '~~/lib/common/generated/gql/graphql'
+import type {
+  SettingsDomainAdd_WorkspaceFragment,
+  Workspace
+} from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsDomainAdd_Workspace on Workspace {
+    id
+    domains {
+      id
+      domain
+    }
+    discoverabilityEnabled
+  }
+`)
 
 export function useUpdateWorkspace() {
   const { mutate, loading } = useMutation(settingsUpdateWorkspaceMutation)
@@ -32,5 +55,81 @@ export function useUpdateWorkspace() {
       return result
     },
     loading
+  }
+}
+
+export function useAddWorkspaceDomain() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+
+  return {
+    mutate: async (
+      input: AddDomainToWorkspaceInput,
+      workspace: SettingsDomainAdd_WorkspaceFragment
+    ) => {
+      const result = await apollo
+        .mutate({
+          mutation: settingsAddWorkspaceDomainMutation,
+          variables: {
+            input: {
+              domain: input.domain,
+              workspaceId: input.workspaceId
+            }
+          },
+          optimisticResponse: {
+            workspaceMutations: {
+              addDomain: {
+                __typename: 'Workspace',
+                id: input.workspaceId,
+                domains: [
+                  ...workspace.domains,
+                  {
+                    __typename: 'WorkspaceDomain',
+                    id: '',
+                    domain: input.domain
+                  }
+                ],
+                discoverabilityEnabled:
+                  workspace.domains.length === 0
+                    ? true
+                    : workspace.discoverabilityEnabled
+              }
+            }
+          },
+          update: (cache, res) => {
+            const { data } = res
+            if (!data?.workspaceMutations) return
+
+            cache.modify<Workspace>({
+              id: getCacheId('Workspace', input.workspaceId),
+              fields: {
+                discoverabilityEnabled() {
+                  return (
+                    data?.workspaceMutations.addDomain.discoverabilityEnabled || false
+                  )
+                },
+                domains() {
+                  return [...(data?.workspaceMutations.addDomain.domains || [])]
+                }
+              }
+            })
+          }
+        })
+        .catch(convertThrowIntoFetchResult)
+
+      if (result?.data) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Domain added',
+          description: `The verified domain ${input.domain} has been added to your workspace`
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Failed to add verified domain',
+          description: getFirstErrorMessage(result?.errors)
+        })
+      }
+    }
   }
 }

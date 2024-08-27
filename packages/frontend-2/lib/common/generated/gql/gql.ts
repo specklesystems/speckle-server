@@ -114,7 +114,8 @@ const documents = {
     "\n  fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      id\n      ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersMembersTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {\n    id\n    role\n    ...WorkspaceInviteDialog_Workspace\n  }\n": types.SettingsWorkspacesMembersTableHeader_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainAddDialog_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n    discoverabilityEnabled\n  }\n  fragment SettingsWorkspacesSecurityDomainAddDialog_User on User {\n    id\n    emails {\n      id\n      email\n      verified\n    }\n  }\n": types.SettingsWorkspacesSecurityDomainAddDialog_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragmentDoc,
+    "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n  }\n": types.ModelPageProjectFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
@@ -246,6 +247,7 @@ const documents = {
     "\n  query AdminPanelProjectsList(\n    $query: String\n    $orderBy: String\n    $limit: Int!\n    $visibility: String\n    $cursor: String\n  ) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n        cursor: $cursor\n      ) {\n        cursor\n        ...SettingsServerProjects_ProjectCollection\n      }\n    }\n  }\n": types.AdminPanelProjectsListDocument,
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
+    "\n  fragment SettingsDomainAdd_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n    discoverabilityEnabled\n  }\n": types.SettingsDomainAdd_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsCreateUserEmailDocument,
     "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsDeleteUserEmailDocument,
@@ -733,7 +735,11 @@ export function graphql(source: "\n  fragment SettingsWorkspacesSecurityDomainAd
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1258,6 +1264,10 @@ export function graphql(source: "\n  query AdminPanelInvitesList($limit: Int!, $
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsDomainAdd_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n    discoverabilityEnabled\n  }\n"): (typeof documents)["\n  fragment SettingsDomainAdd_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n    discoverabilityEnabled\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
