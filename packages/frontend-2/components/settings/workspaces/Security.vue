@@ -13,7 +13,7 @@
             :key="domain.id"
             class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 py-4 flex items-center"
           >
-            <p class="font-body-xs font-medium flex-1">@{{ domain.domain }}</p>
+            <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
             <FormButton color="outline" size="sm" @click="openRemoveDialog(domain)">
               Delete
             </FormButton>
