@@ -2,7 +2,8 @@
   <div class="flex flex-col">
     <div
       v-if="title"
-      class="h-8 flex items-center justify-between select-none hover:bg-highlight-1 rounded-md"
+      class="h-8 flex items-center justify-between select-none rounded-md"
+      :class="collapsible && 'hover:bg-highlight-1'"
     >
       <button
         v-if="collapsible"
