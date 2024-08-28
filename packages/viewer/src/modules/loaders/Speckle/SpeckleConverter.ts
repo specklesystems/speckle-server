@@ -738,7 +738,6 @@ export default class SpeckleConverter {
       return true
     })
 
-    const key = '4823a9e8-6b32-4133-9214-ae6e2df9a4be'
     for (const k in this.instanceProxies) {
       const maxDepth = this.tree
         .findAll(
@@ -771,14 +770,20 @@ export default class SpeckleConverter {
             instancedNodes[j].model.color = geometryColor.value
           } else if (geometryColor.source === 'block') {
             if (instanceColor) {
-              if (
-                instanceColor.source === 'object' ||
-                instanceColor.source === 'block'
-              ) {
+              if (instanceColor.source === 'object') {
                 instancedNodes[j].model.color = instanceColor.value
+              } else if (instanceColor.source === 'block') {
+                const parentInstance =
+                  this.tree
+                    .getAncestors(instanceProxyNodes[i])
+                    .find(
+                      (value: TreeNode) =>
+                        this.getSpeckleType(value.model.raw) ===
+                        SpeckleType.InstanceProxy
+                    ) || instanceProxyNodes[i]
+                const color = this.colorMap[parentInstance.model.raw.applicationId]
+                instancedNodes[j].model.color = color?.value
               }
-            } else {
-              instancedNodes[j].model.color = instanceColor.value
             }
           }
         }
