@@ -515,7 +515,8 @@ describe('Workspaces Roles GQL', () => {
             projects?.every((project) => {
               const team = project.team
               const role = team.find((acl) => acl.id === workspaceGuestUser.id)
-              return role?.role === Roles.Stream.Contributor
+              // TODO: This is a workspace setting
+              return role?.role === Roles.Stream.Reviewer
             })
           ).to.be.true
         })
