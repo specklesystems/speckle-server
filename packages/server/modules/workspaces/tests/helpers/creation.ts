@@ -1,8 +1,8 @@
 import { db } from '@/db/knex'
 import {
+  deleteProjectRoleFactory,
   getStream,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
+  upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
@@ -19,7 +19,8 @@ import {
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
-  getWorkspaceDomainsFactory
+  getWorkspaceDomainsFactory,
+  getDefaultWorkspaceProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -113,8 +114,9 @@ export const assignToWorkspace = async (
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+    getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
+    upsertProjectRole: upsertProjectRoleFactory({ db }),
+    deleteProjectRole: deleteProjectRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     getStreams
   })
@@ -133,7 +135,7 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
-    revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+    deleteProjectRole: deleteProjectRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     getStreams
   })

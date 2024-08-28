@@ -9,6 +9,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetDefaultWorkspaceProjectRole,
   GetUserDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceCollaborators,
@@ -142,6 +143,18 @@ export const upsertWorkspaceFactory =
         'domainBasedMembershipProtectionEnabled',
         'discoverabilityEnabled'
       ])
+  }
+
+export const getDefaultWorkspaceProjectRoleFactory =
+  ({
+    // eslint-disable-next-line
+    db
+  }: {
+    db: Knex
+  }): GetDefaultWorkspaceProjectRole =>
+  async () => {
+    // TODO: This is a workspace setting
+    return Roles.Stream.Reviewer
   }
 
 export const deleteWorkspaceFactory =

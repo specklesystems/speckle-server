@@ -212,9 +212,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       totalCount: context.workspaceProjects.length,
       cursorDate: null
     }),
-    revokeStreamPermissions: async ({ streamId, userId }) => {
+    deleteProjectRole: async ({ projectId, userId }) => {
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-        (role) => role.resourceId !== streamId && role.userId !== userId
+        (role) => role.resourceId !== projectId && role.userId !== userId
       )
       return {} as StreamRecord
     },
@@ -258,11 +258,14 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       totalCount: context.workspaceProjects.length,
       cursorDate: null
     }),
-    grantStreamPermissions: async (role) => {
+    getDefaultWorkspaceProjectRole: async () => {
+      return Roles.Stream.Reviewer
+    },
+    upsertProjectRole: async (role) => {
       const streamAcl: StreamAclRecord = {
         userId: role.userId,
         role: role.role,
-        resourceId: role.streamId
+        resourceId: role.projectId
       }
 
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
@@ -272,7 +275,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       return {} as StreamRecord
     },
-    revokeStreamPermissions: async ({ userId }) => {
+    deleteProjectRole: async ({ userId }) => {
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
         (acl) => acl.userId !== userId
       )

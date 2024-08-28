@@ -8,7 +8,8 @@ import {
   UpsertWorkspace,
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
-  GetWorkspaceDomains
+  GetWorkspaceDomains,
+  GetDefaultWorkspaceProjectRole
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -17,11 +18,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  deleteStream,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
-} from '@/modules/core/repositories/streams'
+import { deleteStream } from '@/modules/core/repositories/streams'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import {
   DeleteWorkspaceRole,
@@ -59,6 +56,10 @@ import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operati
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty } from 'lodash'
+import {
+  DeleteProjectRole,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -228,13 +229,13 @@ export const deleteWorkspaceRoleFactory =
     deleteWorkspaceRole,
     emitWorkspaceEvent,
     getStreams,
-    revokeStreamPermissions
+    deleteProjectRole
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     getStreams: typeof serviceGetStreams
-    revokeStreamPermissions: ReturnType<typeof revokeStreamPermissionsFactory>
+    deleteProjectRole: DeleteProjectRole
   }) =>
   async ({
     workspaceId,
@@ -260,8 +261,8 @@ export const deleteWorkspaceRoleFactory =
       workspaceId
     })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          revokeStreamPermissions({ streamId, userId })
+        projectsPage.map(({ id: projectId }) =>
+          deleteProjectRole({ projectId, userId })
         )
       )
     }
@@ -295,20 +296,22 @@ export const updateWorkspaceRoleFactory =
     getWorkspaceWithDomains,
     findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
+    upsertProjectRole,
+    deleteProjectRole,
+    getDefaultWorkspaceProjectRole,
     emitWorkspaceEvent,
-    getStreams,
-    grantStreamPermissions,
-    revokeStreamPermissions
+    getStreams
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
+    upsertProjectRole: UpsertProjectRole
+    deleteProjectRole: DeleteProjectRole
+    getDefaultWorkspaceProjectRole: GetDefaultWorkspaceProjectRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     // TODO: Create `core` domain and import type from there
     getStreams: typeof serviceGetStreams
-    grantStreamPermissions: ReturnType<typeof grantStreamPermissionsFactory>
-    revokeStreamPermissions: ReturnType<typeof revokeStreamPermissionsFactory>
   }) =>
   async ({
     workspaceId,
@@ -361,9 +364,7 @@ export const updateWorkspaceRoleFactory =
 
     // Update project roles
     const currentRole = workspaceRoles.find((acl) => acl.userId === userId)?.role
-
-    // TODO: This is a workspace setting
-    const defaultProjectRole = Roles.Stream.Contributor
+    const defaultProjectRole = await getDefaultWorkspaceProjectRole({ workspaceId })
 
     const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
       getStreams
@@ -373,8 +374,8 @@ export const updateWorkspaceRoleFactory =
       workspaceId
     })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) => {
-          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+        projectsPage.map(({ id: projectId }) => {
+          if (skipProjectRoleUpdatesFor?.includes(projectId)) {
             // Project role handled explicitly elsewhere
             return
           }
@@ -388,12 +389,12 @@ export const updateWorkspaceRoleFactory =
               return
             }
 
-            return grantStreamPermissions({ streamId, userId, role: initialRole })
+            return upsertProjectRole({ projectId, userId, role: initialRole })
           }
 
           if (!nextRole) {
             // User is being removed from workspace
-            return revokeStreamPermissions({ streamId, userId })
+            return deleteProjectRole({ projectId, userId })
           }
 
           switch (currentRole) {
@@ -409,15 +410,15 @@ export const updateWorkspaceRoleFactory =
                     return
                   }
 
-                  return grantStreamPermissions({
-                    streamId,
+                  return upsertProjectRole({
+                    projectId,
                     userId,
                     role: defaultProjectRole
                   })
                 }
                 case Roles.Workspace.Guest: {
                   // Drop project roles
-                  return revokeStreamPermissions({ streamId, userId })
+                  return deleteProjectRole({ projectId, userId })
                 }
               }
             }
@@ -425,8 +426,8 @@ export const updateWorkspaceRoleFactory =
               switch (nextRole) {
                 case Roles.Workspace.Admin: {
                   // Promote to project owner
-                  return grantStreamPermissions({
-                    streamId,
+                  return upsertProjectRole({
+                    projectId,
                     userId,
                     role: Roles.Stream.Owner
                   })
@@ -437,7 +438,7 @@ export const updateWorkspaceRoleFactory =
                 }
                 case Roles.Workspace.Guest: {
                   // Drop project roles
-                  return revokeStreamPermissions({ streamId, userId })
+                  return deleteProjectRole({ projectId, userId })
                 }
               }
             }
@@ -445,16 +446,16 @@ export const updateWorkspaceRoleFactory =
               switch (nextRole) {
                 case Roles.Workspace.Admin: {
                   // Very impressive!
-                  return grantStreamPermissions({
-                    streamId,
+                  return upsertProjectRole({
+                    projectId,
                     userId,
                     role: Roles.Stream.Owner
                   })
                 }
                 case Roles.Workspace.Member: {
                   // Grant default role
-                  return grantStreamPermissions({
-                    streamId,
+                  return upsertProjectRole({
+                    projectId,
                     userId,
                     role: defaultProjectRole
                   })

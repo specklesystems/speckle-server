@@ -8,15 +8,16 @@ import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 import {
+  getDefaultWorkspaceProjectRoleFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
+  deleteProjectRoleFactory,
   getStream,
   grantStreamPermissions,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
+  upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -60,8 +61,9 @@ const workspacesModule: SpeckleModule = {
           findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
           upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-          grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-          revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+          getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
+          upsertProjectRole: upsertProjectRoleFactory({ db }),
+          deleteProjectRole: deleteProjectRoleFactory({ db }),
           emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
           getStreams
         })
