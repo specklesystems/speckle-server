@@ -347,7 +347,7 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
-      it('should throw an error when trying to invite a user as a memeber without email matching domain and domain protection is enabled', async () => {
+      it('should throw an error when trying to invite a user as a member without email matching domain and domain protection is enabled', async () => {
         await addDomainToWorkspaceFactory({
           findEmailsByUserId: findEmailsByUserIdFactory({ db }),
           storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
