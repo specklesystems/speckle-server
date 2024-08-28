@@ -56,28 +56,35 @@
                   size="sm"
                 />
               </template>
-              <LayoutSidebarMenuGroupItem
+              <template
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
-                :label="workspaceMenuItem.title"
-                :active="
-                  workspaceMenuItemClasses(
-                    itemKey,
-                    workspaceItem.id,
-                    workspaceMenuItem.disabled
-                  )
-                "
-                :tooltip-text="workspaceMenuItem.tooltipText"
-                :disabled="workspaceMenuItem.disabled"
-                :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
-                @click="
-                  onWorkspaceMenuItemClick(
-                    workspaceItem.id,
-                    `${itemKey}`,
-                    workspaceMenuItem.disabled
-                  )
-                "
-              />
+              >
+                <LayoutSidebarMenuGroupItem
+                  v-if="
+                    workspaceItem.role !== Roles.Workspace.Guest ||
+                    itemKey === 'general'
+                  "
+                  :label="workspaceMenuItem.title"
+                  :active="
+                    workspaceMenuItemClasses(
+                      itemKey,
+                      workspaceItem.id,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                  :tooltip-text="workspaceMenuItem.tooltipText"
+                  :disabled="workspaceMenuItem.disabled"
+                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
+                  @click="
+                    onWorkspaceMenuItemClick(
+                      workspaceItem.id,
+                      `${itemKey}`,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                />
+              </template>
             </LayoutSidebarMenuGroup>
             <LayoutSidebarMenuGroupItem
               v-if="isAdmin"
@@ -109,6 +116,7 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
@@ -123,7 +131,6 @@ import {
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
-import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
@@ -132,6 +139,7 @@ graphql(`
       items {
         ...WorkspaceAvatar_Workspace
         id
+        role
         name
       }
     }
