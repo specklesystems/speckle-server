@@ -12,7 +12,7 @@
             @click="isOpenMobile = !isOpenMobile"
           >
             <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
-            <XMarkIcon v-else class="h-4 w-4 -ml-1 -mr-1" />
+            <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
           </FormButton>
         </div>
       </Portal>
@@ -157,7 +157,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import {
   FormButton,
   LayoutSidebar,
