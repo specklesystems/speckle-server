@@ -51,6 +51,8 @@ type FormValues = { name: string; description: string }
 
 const props = defineProps<{
   navigateOnSuccess?: boolean
+  // Used to send to Mixpanel to know where the modal was triggered from
+  eventSource: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -94,6 +96,9 @@ const handleCreateWorkspace = handleSubmit(async () => {
     },
     {
       navigateOnSuccess: props.navigateOnSuccess === true
+    },
+    {
+      source: props.eventSource
     }
   )
 
