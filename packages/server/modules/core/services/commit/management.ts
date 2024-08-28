@@ -38,7 +38,7 @@ import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/sha
 import { has } from 'lodash'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { ObjectNotFoundError } from '@/modules/core/errors/object'
-import { ForbiddenError } from 'apollo-server-express'
+import { ForbiddenError } from '@/modules/shared/errors'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserInputError } from '@/modules/core/errors/userinput'
 

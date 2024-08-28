@@ -1,4 +1,4 @@
-import { UserInputError } from 'apollo-server-express'
+import { UserInputError } from '@/modules/core/errors/userinput'
 import {
   getStream,
   getStreams,
