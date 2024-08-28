@@ -85,6 +85,7 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  class="!pl-1"
                 >
                   <template #icon>
                     <WorkspaceAvatar

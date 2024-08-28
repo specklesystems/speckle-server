@@ -7,7 +7,7 @@
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
       active && 'bg-highlight-3 hover:!bg-highlight-3',
-      $slots.icon ? 'pr-2 pl-1' : 'pr-2 pl-6',
+      $slots.icon ? 'px-2' : 'pr-2 pl-6',
       extraPadding && '!pl-14'
     ]"
   >

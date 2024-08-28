@@ -3,7 +3,7 @@
     <div
       v-if="title"
       class="h-8 flex items-center justify-between select-none rounded-md"
-      :class="collapsible && 'hover:bg-highlight-1'"
+      :class="[collapsible && 'hover:bg-highlight-1', plusClick && 'pr-1']"
     >
       <button
         v-if="collapsible"
@@ -29,16 +29,16 @@
           {{ title }}
         </h6>
       </div>
-      <FormButton
+      <button
         v-if="plusClick"
         v-tippy="plusText ? plusText : undefined"
         color="subtle"
         size="sm"
-        class="hidden group-hover:block mr-1"
+        class="hidden group-hover:flex items-center justify-center w-6 h-6 shrink-0 hover:bg-primary-muted rounded"
         @click="plusClick"
       >
-        <Plus class="h-3 w-3" />
-      </FormButton>
+        <Plus class="h-4 w-4" />
+      </button>
     </div>
 
     <div v-show="!isCollapsed" class="flex flex-col">
@@ -50,7 +50,6 @@
 <script setup lang="ts">
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import { ref, onMounted } from 'vue'
-import FormButton from '~~/src/components/form/Button.vue'
 import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
 
 const props = defineProps<{
