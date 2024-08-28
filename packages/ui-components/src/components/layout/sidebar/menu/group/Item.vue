@@ -3,22 +3,25 @@
     v-if="!hasChildren"
     v-tippy="tooltipText"
     :to="to"
-    class="group flex items-center justify-between space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 pl-5 pr-2"
+    class="group/item flex items-center justify-between space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1 px-2"
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
       active && 'bg-highlight-3 hover:!bg-highlight-3'
     ]"
   >
-    <div class="flex items-center space-x-2" :class="[disabled && 'opacity-60']">
+    <div
+      class="flex items-center space-x-3 truncate"
+      :class="[disabled && 'opacity-60']"
+    >
       <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
         <slot name="icon" />
       </div>
-      <span :class="$slots.icon ? '' : 'pl-2'">
+      <span class="truncate" :class="$slots.icon ? '' : 'pl-2'">
         {{ label }}
       </span>
       <ArrowUpRightIcon
         v-if="external"
-        class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover:opacity-100"
+        class="h-2.5 w-2.5 !stroke-[3px] -ml-1 -mt-1.5 opacity-0 group-hover/item:opacity-100"
       />
     </div>
     <CommonBadge
@@ -32,7 +35,7 @@
   <div v-else class="flex flex-col">
     <button
       v-tippy="tooltipText"
-      class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
+      class="flex space-x-1.5 items-center w-full rounded-md p-0.5"
       :class="[
         !disabled && 'cursor-pointer text-foreground-2 hover:text-foreground',
         disabled && 'opacity-60'

@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col">
-    <div v-if="title" class="flex items-center justify-between select-none mb-1">
+    <div v-if="title" class="h-8 flex items-center justify-between select-none">
       <button
         v-if="collapsible"
-        class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
+        class="group flex space-x-1 items-center w-full rounded-md py-0.5 px-3"
         @click="isCollapsed = !isCollapsed"
       >
         <ChevronRightIcon
@@ -19,9 +19,7 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <h6
-          class="font-semibold text-foreground-2 text-xs flex items-center space-x-1.5 truncate"
-        >
+        <h6 class="font-semibold text-foreground-2 text-xs truncate">
           {{ title }}
         </h6>
       </button>
@@ -41,11 +39,10 @@
         v-tippy="plusText ? plusText : undefined"
         color="subtle"
         size="sm"
-        hide-text
-        :icon-left="PlusIcon"
+        class="hidden group-hover:block"
         @click="plusClick"
       >
-        {{ plusText }}
+        <Plus class="h-3 w-3" />
       </FormButton>
     </div>
 
@@ -60,9 +57,10 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { ref, onMounted } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
+import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
 
 const props = defineProps<{
   title?: string

@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
+  <div class="group">
     <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
@@ -35,7 +35,7 @@
                   :active="isActive(homeRoute)"
                 >
                   <template #icon>
-                    <HomeIcon class="h-5 w-5 text-foreground-2" />
+                    <div class="size-4 border border-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -46,7 +46,7 @@
                   :active="isActive(projectsRoute)"
                 >
                   <template #icon>
-                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                    <IconProjects class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -73,7 +73,7 @@
                   tag="BETA"
                 >
                   <template #icon>
-                    <IconWorkspaces class="h-4 w-4 text-foreground-2" />
+                    <IconWorkspaces class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -98,11 +98,11 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
 
-            <LayoutSidebarMenuGroup title="Resources">
+            <LayoutSidebarMenuGroup title="Resources" collapsible>
               <NuxtLink :to="connectorsPageUrl" target="_blank">
                 <LayoutSidebarMenuGroupItem label="Connectors" external>
                   <template #icon>
-                    <IconConnectors class="h-4 w-4 ml-px text-foreground-2" />
+                    <IconConnectors class="size-4 ml-px text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -110,7 +110,7 @@
               <NuxtLink to="https://speckle.community/" target="_blank">
                 <LayoutSidebarMenuGroupItem label="Community forum" external>
                   <template #icon>
-                    <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                    <IconCommunity class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -121,7 +121,7 @@
               >
                 <LayoutSidebarMenuGroupItem label="Give us feedback" external>
                   <template #icon>
-                    <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                    <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -129,7 +129,7 @@
               <NuxtLink to="https://speckle.guide/" target="_blank">
                 <LayoutSidebarMenuGroupItem label="Documentation" external>
                   <template #icon>
-                    <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                    <IconDocumentation class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -140,7 +140,7 @@
               >
                 <LayoutSidebarMenuGroupItem label="Changelog" external>
                   <template #icon>
-                    <ClockIcon class="h-5 w-5 text-foreground-2" />
+                    <IconChangelog class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -157,15 +157,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  BriefcaseIcon,
-  XMarkIcon,
-  ChatBubbleLeftIcon,
-  GlobeAltIcon,
-  ClockIcon,
-  Squares2X2Icon,
-  HomeIcon
-} from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import {
   FormButton,
   LayoutSidebar,
