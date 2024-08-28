@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col">
-    <div v-if="title" class="h-8 flex items-center justify-between select-none">
+    <div
+      v-if="title"
+      class="h-8 flex items-center justify-between select-none hover:bg-highlight-1 rounded-md"
+    >
       <button
         v-if="collapsible"
         class="group flex space-x-2 items-center w-full rounded-md py-0.5 px-3"

@@ -35,7 +35,7 @@
                   :active="isActive(homeRoute)"
                 >
                   <template #icon>
-                    <div class="size-4 border border-foreground-2" />
+                    <HomeIcon class="size-4 stroke-[1.5px]" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -175,6 +175,7 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { HomeIcon } from '@heroicons/vue/24/outline'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
