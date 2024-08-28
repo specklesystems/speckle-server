@@ -39,7 +39,7 @@
         v-tippy="plusText ? plusText : undefined"
         color="subtle"
         size="sm"
-        class="hidden group-hover:block"
+        class="hidden group-hover:block mr-1"
         @click="plusClick"
       >
         <Plus class="h-3 w-3" />
