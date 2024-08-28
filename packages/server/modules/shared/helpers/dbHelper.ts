@@ -99,3 +99,19 @@ export const numberOfFreeConnections = (knex: Knex) => {
 
   return Math.max(pgMaxConnections - demand, 0)
 }
+
+export const withTransaction = async <T>(
+  callback: Promise<T>,
+  trx: Knex.Transaction
+): Promise<T> => {
+  try {
+    return await callback
+  } catch (e) {
+    await trx.rollback()
+    throw e
+  } finally {
+    if (trx.isTransaction && !trx.isCompleted()) {
+      await trx.commit()
+    }
+  }
+}

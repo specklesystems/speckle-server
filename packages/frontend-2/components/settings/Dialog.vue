@@ -61,10 +61,7 @@
                 :key="`${key}-${itemKey}`"
               >
                 <LayoutSidebarMenuGroupItem
-                  v-if="
-                    workspaceItem.role !== Roles.Workspace.Guest ||
-                    itemKey === 'general'
-                  "
+                  v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
                   :active="
                     workspaceMenuItemClasses(
@@ -133,6 +130,7 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsDialog_User on User {
