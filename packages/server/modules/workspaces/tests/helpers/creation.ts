@@ -89,14 +89,16 @@ export const createTestWorkspace = async (
     })
   }
 
-  await updateWorkspaceFactory({
-    getWorkspace: getWorkspaceFactory({ db }),
-    upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: getEventBus().emit
-  })({
-    workspaceId: newWorkspace.id,
-    workspaceInput: { domainBasedMembershipProtectionEnabled: true }
-  })
+  if (workspace.domainBasedMembershipProtectionEnabled) {
+    await updateWorkspaceFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit
+    })({
+      workspaceId: newWorkspace.id,
+      workspaceInput: { domainBasedMembershipProtectionEnabled: true }
+    })
+  }
 
   workspace.ownerId = owner.id
 }

@@ -102,7 +102,7 @@ export const settingsAddWorkspaceDomainMutation = graphql(`
   mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
     workspaceMutations {
       addDomain(input: $input) {
-        ...SettingsWorkspacesSecurityDomainAddDialog_Workspace
+        ...SettingsWorkspacesSecurity_Workspace
       }
     }
   }

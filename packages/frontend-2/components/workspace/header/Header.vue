@@ -37,6 +37,7 @@
       <LayoutMenu
         v-model:open="showActionsMenu"
         :items="actionsItems"
+        :menu-position="HorizontalDirection.Left"
         @click.stop.prevent
         @chosen="onActionChosen"
       >
@@ -68,6 +69,7 @@ import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
