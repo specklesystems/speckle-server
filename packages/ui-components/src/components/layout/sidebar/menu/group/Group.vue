@@ -3,15 +3,12 @@
     <div v-if="title" class="h-8 flex items-center justify-between select-none">
       <button
         v-if="collapsible"
-        class="group flex space-x-1 items-center w-full rounded-md py-0.5 px-3"
+        class="group flex space-x-2 items-center w-full rounded-md py-0.5 px-3"
         @click="isCollapsed = !isCollapsed"
       >
-        <ChevronRightIcon
-          :class="[
-            isCollapsed ? '' : 'rotate-90',
-            collapsible && $slots['title-icon'] ? 'ml-6' : ''
-          ]"
-          class="h-2.5 w-2.5"
+        <ArrowFilled
+          :class="[isCollapsed ? '-rotate-90' : '']"
+          class="h-2.5 w-2.5 text-foreground-2 shrink-0"
         />
         <div
           v-if="$slots['title-icon']"
@@ -19,11 +16,16 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <h6 class="font-semibold text-foreground-2 text-xs truncate">
+        <h6
+          class="font-semibold text-foreground-2 text-xs truncate"
+          :class="
+            $slots['title-icon'] && collapsible ? 'text-body-2xs' : 'text-body-xs'
+          "
+        >
           {{ title }}
         </h6>
       </button>
-      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-4">
+      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-2">
         <div
           v-if="$slots['title-icon']"
           class="h-5 w-5 flex items-center justify-center"
@@ -46,18 +48,14 @@
       </FormButton>
     </div>
 
-    <div
-      v-show="!isCollapsed"
-      class="flex flex-col"
-      :class="collapsible && $slots['title-icon'] ? 'ml-6' : ''"
-    >
+    <div v-show="!isCollapsed" class="flex flex-col">
       <slot></slot>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import { ref, onMounted } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
