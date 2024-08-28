@@ -146,7 +146,7 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
-    mixpanel.track('Workspace Domain Protection Toggled', {
+    mixpanel.track('Workspace General Settings Updated', {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
