@@ -8,6 +8,7 @@
           <SettingsWorkspacesGeneralEditAvatar
             v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
+            :disabled="!isAdmin"
             size="xxl"
           />
         </div>
