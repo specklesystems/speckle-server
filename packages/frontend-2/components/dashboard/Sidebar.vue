@@ -59,7 +59,7 @@
               :plus-click="
                 isUserAdmin
                   ? () => {
-                      showWorkspaceCreateDialog = true
+                      openWorkspaceCreateDialog
                     }
                   : undefined
               "
@@ -152,6 +152,7 @@
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success
+      event-source="sidebar"
     />
   </div>
 </template>
@@ -175,11 +176,13 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
@@ -205,4 +208,11 @@ const workspacesItems = computed(() =>
       }))
     : []
 )
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
 </script>

@@ -87,7 +87,7 @@
             <LayoutSidebarMenuGroupItem
               v-if="isAdmin"
               label="Add workspace"
-              @click="showWorkspaceCreateDialog = true"
+              @click="openWorkspaceCreateDialog"
             >
               <template #icon>
                 <PlusIcon class="h-4 w-4 text-foreground-2" />
@@ -109,7 +109,10 @@
       />
     </div>
 
-    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
+    <WorkspaceCreateDialog
+      v-model:open="showWorkspaceCreateDialog"
+      event-source="settings"
+    />
   </LayoutDialog>
 </template>
 
@@ -131,6 +134,7 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsDialog_User on User {
@@ -152,7 +156,7 @@ const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 const { activeUser: user } = useActiveUser()
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-
+const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
@@ -184,6 +188,13 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
   if (disabled) return
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+}
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'settings'
+  })
 }
 
 const workspaceMenuItemClasses = (

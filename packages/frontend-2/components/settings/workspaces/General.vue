@@ -96,6 +96,7 @@ import {
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -115,6 +116,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -144,6 +146,14 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    mixpanel.track('Workspace Domain Protection Toggled', {
+      fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
+        (key) => key !== 'id'
+      ),
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace updated'
