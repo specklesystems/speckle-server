@@ -110,6 +110,10 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
+import {
+  decodeCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/graphqlHelper'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -595,7 +599,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: parent.id,
             filter: removeNullOrUndefinedKeys(args?.filter || {}),
             limit: args.limit,
-            cursor: args.cursor || undefined
+            cursor: args.cursor ? new Date(decodeCursor(args.cursor)) : undefined
           })
 
           const totalCount = await getWorkspaceCollaboratorsTotalCountFactory({ db })({
@@ -604,7 +608,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return {
             items,
-            cursor,
+            cursor: cursor ? encodeIsoDateCursor(cursor) : undefined,
             totalCount
           }
         },

@@ -47,10 +47,6 @@ import {
   InvitesRetrievalValidityFilter
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
-import {
-  decodeIsoDateCursor,
-  encodeIsoDateCursor
-} from '@/modules/shared/helpers/graphqlHelper'
 import { clamp } from 'lodash'
 
 const tables = {
@@ -268,7 +264,7 @@ export const getWorkspaceCollaboratorsFactory =
     }
 
     if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', decodeIsoDateCursor(cursor))
+      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor.toISOString())
     }
 
     if (limit) {
@@ -284,9 +280,7 @@ export const getWorkspaceCollaboratorsFactory =
 
     return {
       items,
-      cursor: items.length
-        ? encodeIsoDateCursor(items[items.length - 1].createdAt)
-        : null
+      cursor: items.length ? items[items.length - 1].createdAt : null
     }
   }
 
