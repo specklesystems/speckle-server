@@ -33,6 +33,7 @@ import {
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory
 } from '@/modules/workspaces/services/management'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
@@ -117,8 +118,8 @@ export const assignToWorkspace = async (
     getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
     upsertProjectRole: upsertProjectRoleFactory({ db }),
     deleteProjectRole: deleteProjectRoleFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams
+    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
   await updateWorkspaceRole({
@@ -136,8 +137,8 @@ export const unassignFromWorkspace = async (
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
     deleteProjectRole: deleteProjectRoleFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams
+    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
   await deleteWorkspaceRole({

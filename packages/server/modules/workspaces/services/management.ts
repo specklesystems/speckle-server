@@ -19,7 +19,6 @@ import {
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { deleteStream } from '@/modules/core/repositories/streams'
-import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -37,7 +36,6 @@ import {
   isUserLastWorkspaceAdmin,
   mapWorkspaceRoleToInitialProjectRole
 } from '@/modules/workspaces/helpers/roles'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
@@ -228,13 +226,13 @@ export const deleteWorkspaceRoleFactory =
     getWorkspaceRoles,
     deleteWorkspaceRole,
     emitWorkspaceEvent,
-    getStreams,
+    queryAllWorkspaceProjects,
     deleteProjectRole
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    getStreams: typeof serviceGetStreams
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteProjectRole: DeleteProjectRole
   }) =>
   async ({
@@ -254,10 +252,7 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Delete workspace project roles
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
-    })
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+    for await (const projectsPage of queryAllWorkspaceProjects({
       workspaceId
     })) {
       await Promise.all(
@@ -299,8 +294,8 @@ export const updateWorkspaceRoleFactory =
     upsertProjectRole,
     deleteProjectRole,
     getDefaultWorkspaceProjectRole,
-    emitWorkspaceEvent,
-    getStreams
+    queryAllWorkspaceProjects,
+    emitWorkspaceEvent
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
@@ -309,9 +304,8 @@ export const updateWorkspaceRoleFactory =
     upsertProjectRole: UpsertProjectRole
     deleteProjectRole: DeleteProjectRole
     getDefaultWorkspaceProjectRole: GetDefaultWorkspaceProjectRole
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     emitWorkspaceEvent: EmitWorkspaceEvent
-    // TODO: Create `core` domain and import type from there
-    getStreams: typeof serviceGetStreams
   }) =>
   async ({
     workspaceId,
@@ -366,11 +360,7 @@ export const updateWorkspaceRoleFactory =
     const currentRole = workspaceRoles.find((acl) => acl.userId === userId)?.role
     const defaultProjectRole = await getDefaultWorkspaceProjectRole({ workspaceId })
 
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
-    })
-
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+    for await (const projectsPage of queryAllWorkspaceProjects({
       workspaceId
     })) {
       await Promise.all(

@@ -207,11 +207,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
       return []
     },
-    getStreams: async () => ({
-      streams: context.workspaceProjects,
-      totalCount: context.workspaceProjects.length,
-      cursorDate: null
-    }),
+    async *queryAllWorkspaceProjects() {
+      yield context.workspaceProjects
+    },
     deleteProjectRole: async ({ projectId, userId }) => {
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
         (role) => role.resourceId !== projectId && role.userId !== userId
@@ -253,11 +251,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       return []
     },
-    getStreams: async () => ({
-      streams: context.workspaceProjects,
-      totalCount: context.workspaceProjects.length,
-      cursorDate: null
-    }),
+    async *queryAllWorkspaceProjects() {
+      yield context.workspaceProjects
+    },
     getDefaultWorkspaceProjectRole: async () => {
       return Roles.Stream.Reviewer
     },

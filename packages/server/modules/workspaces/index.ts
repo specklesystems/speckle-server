@@ -24,6 +24,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -64,8 +65,8 @@ const workspacesModule: SpeckleModule = {
           getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           deleteProjectRole: deleteProjectRoleFactory({ db }),
-          emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-          getStreams
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
         })
       })()
     }
