@@ -210,7 +210,7 @@ export const deleteWorkspaceFactory =
       )
     ])
 
-    // Workspace delete cascades project delete, but some manual cleanup is required
+    // Workspace delete cascades-deletes stream table rows, but some manual cleanup is required
     // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))

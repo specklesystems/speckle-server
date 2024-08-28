@@ -397,6 +397,29 @@ describe('Workspaces GQL CRUD', () => {
       })
     })
 
+    describe('query workspace.billing', () => {
+      it('should return workspace version limits', async () => {
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 3
+        })
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 2
+        })
+
+        const res = await apollo.execute(GetWorkspaceWithBillingDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
+          current: 5,
+          max: 500
+        })
+      })
+    })
+
     describe('query activeUser.workspaces', () => {
       it('should return all workspaces for a user', async () => {
         const res = await apollo.execute(GetActiveUserWorkspacesDocument, {})

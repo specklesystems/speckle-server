@@ -13,24 +13,29 @@ import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.
 import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
+import { Roles } from '@speckle/shared'
 
 export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
     general: {
       title: 'General',
-      component: SettingsWorkspaceGeneral
+      component: SettingsWorkspaceGeneral,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     members: {
       title: 'Members',
-      component: SettingsWorkspacesMembers
+      component: SettingsWorkspacesMembers,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     projects: {
       title: 'Projects',
-      component: SettingsWorkspacesProjects
+      component: SettingsWorkspacesProjects,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     security: {
       title: 'Security',
-      component: SettingsWorkspacesSecurity
+      component: SettingsWorkspacesSecurity,
+      permission: [Roles.Workspace.Admin]
     },
     billing: {
       title: 'Billing',
@@ -40,7 +45,8 @@ export const useSettingsMenu = () => {
     regions: {
       title: 'Regions',
       disabled: true,
-      tooltipText: 'Set up regions for custom data residency'
+      tooltipText: 'Set up regions for custom data residency',
+      permission: [Roles.Workspace.Admin]
     }
   })
 
