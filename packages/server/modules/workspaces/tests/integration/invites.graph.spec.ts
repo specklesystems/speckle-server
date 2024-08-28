@@ -80,7 +80,6 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
-import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 
 enum InviteByTarget {
@@ -238,6 +237,13 @@ describe('Workspaces Invites GQL', () => {
     name: 'My First Workspace',
     id: '',
     ownerId: '',
+    domainBasedMembershipProtectionEnabled: false
+  }
+
+  const domainProtectedWorkspace: BasicTestWorkspace = {
+    name: 'My Domain protected workspace',
+    id: '',
+    ownerId: '',
     domainBasedMembershipProtectionEnabled: true
   }
 
@@ -246,6 +252,8 @@ describe('Workspaces Invites GQL', () => {
     id: '',
     ownerId: ''
   }
+
+  const workspaceDomain = 'example.org'
 
   before(async () => {
     const ctx = await beforeEachContext()
@@ -266,12 +274,26 @@ describe('Workspaces Invites GQL', () => {
     })({ email })
     await createTestWorkspaces([
       [myFirstWorkspace, me],
+      [domainProtectedWorkspace, me],
       [otherGuysWorkspace, otherGuy]
     ])
     await assignToWorkspaces([
       [otherGuysWorkspace, me, Roles.Workspace.Member],
       [myFirstWorkspace, myWorkspaceFriend, Roles.Workspace.Member]
     ])
+
+    await addDomainToWorkspaceFactory({
+      findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+      storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit,
+      getDomains: getWorkspaceDomainsFactory({ db })
+    })({
+      userId: me.id,
+      workspaceId: domainProtectedWorkspace.id,
+      domain: workspaceDomain
+    })
   })
 
   afterEach(() => {
@@ -347,25 +369,18 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
-      it('should throw an error when trying to invite a user as a memeber without email matching domain and domain protection is enabled', async () => {
-        await addDomainToWorkspaceFactory({
-          findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-          storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-          getWorkspace: getWorkspaceFactory({ db }),
-          upsertWorkspace: upsertWorkspaceFactory({ db }),
-          emitWorkspaceEvent: getEventBus().emit,
-          getDomains: getWorkspaceDomainsFactory({ db })
-        })({ userId: me.id, workspaceId: myFirstWorkspace.id, domain: 'example.org' })
-
+      it('should throw an error when trying to invite a user as a member without email matching domain and domain protection is enabled', async () => {
         const res = await gqlHelpers.createInvite({
-          workspaceId: myFirstWorkspace.id,
+          workspaceId: domainProtectedWorkspace.id,
           input: {
             userId: otherGuy.id,
             role: WorkspaceRole.Member
           }
         })
 
-        expect(res).to.haveGraphQLErrors(new WorkspaceProtectedError().message)
+        expect(res).to.haveGraphQLErrors(
+          'The target user has no verified emails matching the domain policies'
+        )
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -402,7 +417,7 @@ describe('Workspaces Invites GQL', () => {
           {
             workspaceId: myFirstWorkspace.id,
             input: times(10, () => ({
-              email: `asdasasd${Math.random()}@gmail.com`,
+              email: `asdasasd${Math.random()}@${workspaceDomain}`,
               role: WorkspaceRole.Member
             }))
           },
