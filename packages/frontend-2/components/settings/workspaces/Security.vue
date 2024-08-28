@@ -305,4 +305,13 @@ const openRemoveDialog = (
   removeDialogDomain.value = domain
   showRemoveDomainDialog.value = true
 }
+
+watch(
+  () => workspaceDomains.value,
+  () => {
+    if (!hasWorkspaceDomains.value) {
+      isDomainDiscoverabilityEnabled.value = false
+    }
+  }
+)
 </script>
