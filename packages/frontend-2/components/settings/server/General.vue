@@ -69,7 +69,7 @@
           </div>
         </form>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8" />
       <SettingsServerGeneralVersion />
     </div>
   </section>

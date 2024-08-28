@@ -16,6 +16,7 @@ import {
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { Optional, ServerRoles } from '@speckle/shared'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 /*
   Tokens
@@ -162,8 +163,7 @@ export async function validateToken(
 export async function revokeToken(tokenId: string, userId: string) {
   tokenId = tokenId.slice(0, 10)
   const delCount = await ApiTokens.knex().where({ id: tokenId, owner: userId }).del()
-
-  if (delCount === 0) throw new Error('Did not revoke token')
+  if (delCount === 0) throw new UserInputError('Did not revoke token')
   return true
 }
 

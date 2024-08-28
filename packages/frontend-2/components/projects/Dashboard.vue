@@ -3,7 +3,8 @@
     <Portal to="primary-actions"></Portal>
     <ProjectsDashboardHeader
       :projects-invites="projectsPanelResult?.activeUser || undefined"
-      :workspaces-invites="workspacesInvitesResult?.activeUser || undefined"
+      :workspaces-invites="workspacesResult?.activeUser || undefined"
+      class="mb-10"
     />
 
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
@@ -44,7 +45,7 @@
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" />
+      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"
@@ -64,7 +65,7 @@ import {
 } from '@vue/apollo-composable'
 import {
   projectsDashboardQuery,
-  projectsDashboardWorkspaceInvitesQuery
+  projectsDashboardWorkspaceQuery
 } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
@@ -114,8 +115,8 @@ const {
   }
 }))
 
-const { result: workspacesInvitesResult } = useQuery(
-  projectsDashboardWorkspaceInvitesQuery,
+const { result: workspacesResult } = useQuery(
+  projectsDashboardWorkspaceQuery,
   undefined,
   () => ({
     enabled: isWorkspacesEnabled.value

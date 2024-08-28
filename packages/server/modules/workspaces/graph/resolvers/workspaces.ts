@@ -3,8 +3,11 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
+  getUserStreams,
+  getUserStreamsCount,
   grantStreamPermissions,
-  revokeStreamPermissions
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -36,11 +39,13 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceInvalidRoleError,
+  WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
@@ -55,7 +60,13 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  storeWorkspaceDomainFactory,
+  deleteWorkspaceDomainFactory,
+  getWorkspaceDomainsFactory,
+  getUserDiscoverableWorkspacesFactory,
+  getWorkspaceWithDomainsFactory,
+  countProjectsVersionsByWorkspaceIdFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -68,6 +79,7 @@ import {
   validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
 import {
+  addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
@@ -78,17 +90,25 @@ import {
   getWorkspaceProjectsFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
-import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import {
+  getDiscoverableWorkspacesForUserFactory,
+  getWorkspacesForUserFactory
+} from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
+import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -113,7 +133,9 @@ const buildCreateAndSendWorkspaceInvite = () =>
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
-      getWorkspace: getWorkspaceFactory({ db })
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,
@@ -220,7 +242,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex } = args.input
+          const { name, description, defaultLogoIndex, logo } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -232,9 +254,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
-              description: description || null,
-              logo: null,
-              defaultLogoIndex: defaultLogoIndex || 0
+              description: description ?? null,
+              logo: logo ?? null,
+              defaultLogoIndex: defaultLogoIndex ?? 0
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -296,52 +318,114 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
-
           if (!role) {
+            const trx = await db.transaction()
+
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-              getWorkspaceRoles,
-              emitWorkspaceEvent,
-              getStreams,
-              revokeStreamPermissions
+              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit,
+              getStreams
             })
 
-            await deleteWorkspaceRole(args.input)
+            await withTransaction(deleteWorkspaceRole(args.input), trx)
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
             }
 
+            const trx = await db.transaction()
+
             const updateWorkspaceRole = updateWorkspaceRoleFactory({
-              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-              getWorkspaceRoles,
-              emitWorkspaceEvent,
-              getStreams,
-              grantStreamPermissions
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db: trx
+              }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit,
+              getStreams
             })
 
-            await updateWorkspaceRole({ userId, workspaceId, role })
+            await withTransaction(
+              updateWorkspaceRole({ userId, workspaceId, role }),
+              trx
+            )
           }
 
           return await getWorkspaceFactory({ db })({ workspaceId })
         },
-        leave: async (_parent, args, ctx) => {
-          const userId = ctx.userId!
+        addDomain: async (_parent, args, context) => {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
 
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
-
-          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-            getWorkspaceRoles,
-            emitWorkspaceEvent,
-            getStreams,
-            revokeStreamPermissions
+          await addDomainToWorkspaceFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+            storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            getDomains: getWorkspaceDomainsFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
+          })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId!,
+            domain: args.input.domain
           })
 
-          await deleteWorkspaceRole({ workspaceId: args.id, userId })
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        async deleteDomain(_parent, args, context) {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+          await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        async join(_parent, args, context) {
+          if (!context.userId) throw new WorkspaceJoinNotAllowedError()
+
+          await joinWorkspaceFactory({
+            getUserEmails: findEmailsByUserIdFactory({ db }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
+          })({ userId: context.userId, workspaceId: args.input.workspaceId })
+
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
+        },
+        leave: async (_parent, args, context) => {
+          const trx = await db.transaction()
+
+          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+            emitWorkspaceEvent: getEventBus().emit,
+            getStreams
+          })
+
+          await withTransaction(
+            deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! }),
+            trx
+          )
 
           return true
         },
@@ -437,6 +521,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             processInvite: processFinalizedWorkspaceInviteFactory({
               getWorkspace: getWorkspaceFactory({ db }),
               updateWorkspaceRole: updateWorkspaceRoleFactory({
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: ({ eventName, payload }) =>
@@ -523,18 +609,45 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getPendingTeam({ workspaceId: parent.id, filter: args.filter })
         },
-        projects: async (parent, args) => {
-          const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })
-          return await getWorkspaceProjects(
+        projects: async (parent, args, ctx) => {
+          if (!ctx.userId) return []
+          const getWorkspaceProjects = getWorkspaceProjectsFactory({
+            getStreams: getUserStreams
+          })
+          const filter = {
+            ...(args.filter || {}),
+            userId: ctx.userId,
+            workspaceId: parent.id
+          }
+          const { items, cursor } = await getWorkspaceProjects(
             {
               workspaceId: parent.id
             },
             {
               limit: args.limit || 25,
               cursor: args.cursor || null,
-              filter: { ...(args.filter || {}) }
+              filter
             }
           )
+          return {
+            items,
+            cursor,
+            totalCount: await getUserStreamsCount(filter)
+          }
+        },
+        domains: async (parent) => {
+          return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
+        },
+        billing: (parent) => ({ parent })
+      },
+      WorkspaceBilling: {
+        versionsCount: async (parent) => {
+          return {
+            current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
+              workspaceId: (parent as { parent: Workspace }).parent.id
+            }),
+            max: WORKSPACE_MAX_PROJECTS_VERSIONS
+          }
         }
       },
       WorkspaceCollaborator: {
@@ -597,6 +710,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       User: {
+        discoverableWorkspaces: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const getDiscoverableWorkspacesForUser =
+            getDiscoverableWorkspacesForUserFactory({
+              findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+              getDiscoverableWorkspaces: getUserDiscoverableWorkspacesFactory({ db })
+            })
+
+          return await getDiscoverableWorkspacesForUser({ userId: context.userId })
+        },
         workspaces: async (_parent, _args, context) => {
           if (!context.userId) {
             throw new WorkspacesNotAuthorizedError()
@@ -631,9 +757,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Project: {
-        workspace: async () => {
-          // Get workspaceId from project, get and return workspace data
-          throw new WorkspacesNotYetImplementedError()
+        workspace: async (parent, _args, context) => {
+          if (!parent.workspaceId) {
+            return null
+          }
+
+          const workspace = await context.loaders.workspaces!.getWorkspace.load(
+            parent.workspaceId
+          )
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+
+          await authorizeResolver(
+            context.userId,
+            parent.workspaceId,
+            Roles.Workspace.Guest,
+            context.resourceAccessRules
+          )
+
+          return workspace
         }
       },
       AdminQueries: {

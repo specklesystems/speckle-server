@@ -51,12 +51,17 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
-import { GetWorkspace } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspace,
+  GetWorkspaceDomains
+} from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -107,6 +112,8 @@ export const createWorkspaceInviteFactory =
 type CollectAndValidateWorkspaceTargetsFactoryDeps =
   CollectAndValidateCoreTargetsFactoryDeps & {
     getWorkspace: GetWorkspace
+    getWorkspaceDomains: GetWorkspaceDomains
+    findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
   }
 
 export const collectAndValidateWorkspaceTargetsFactory =
@@ -165,10 +172,59 @@ export const collectAndValidateWorkspaceTargetsFactory =
     if (!Object.values(Roles.Workspace).includes(role)) {
       throw new InviteCreateValidationError('Unexpected workspace invite role')
     }
-    if (targetUser?.role === Roles.Server.Guest && role === Roles.Workspace.Admin) {
-      throw new InviteCreateValidationError(
-        'Guest users cannot be admins of workspaces'
+    if (role === Roles.Workspace.Admin) {
+      const serverGuestInvite = baseTargets.find(
+        (target) =>
+          target.resourceType === 'server' && target.role === Roles.Server.Guest
       )
+      if (targetUser?.role === Roles.Server.Guest || serverGuestInvite)
+        throw new InviteCreateValidationError(
+          'Guest users cannot be admins of workspaces'
+        )
+    }
+    if (
+      role !== Roles.Workspace.Guest &&
+      workspace.domainBasedMembershipProtectionEnabled
+    ) {
+      const workspaceDomains = await deps.getWorkspaceDomains({
+        workspaceIds: [resourceId]
+      })
+      const verifiedDomains = workspaceDomains
+        .filter((domain) => domain?.verified)
+        .map((domain) => domain.domain)
+
+      const emailMatchesDomain = ({
+        emails,
+        domains
+      }: {
+        emails: string[]
+        domains: string[]
+      }): boolean => {
+        for (const email of emails) {
+          if (domains.some((domain) => email.endsWith(domain))) return true
+        }
+        return false
+      }
+
+      if (targetUser) {
+        const verifiedUserEmails = (
+          await deps.findVerifiedEmailsByUserId({
+            userId: targetUser.id
+          })
+        ).map((userEmail) => userEmail.email)
+        if (
+          !emailMatchesDomain({ emails: verifiedUserEmails, domains: verifiedDomains })
+        )
+          throw new WorkspaceProtectedError(
+            'The target user has no verified emails matching the domain policies'
+          )
+      } else {
+        // its a new server invite, we need to validate the email here too
+        if (!emailMatchesDomain({ emails: [input.target], domains: verifiedDomains }))
+          throw new WorkspaceProtectedError(
+            'The target email is not matching the domain policies'
+          )
+      }
     }
 
     return [...baseTargets, { ...primaryWorkspaceResourceTarget, primary: true }]

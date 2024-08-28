@@ -10,37 +10,44 @@ import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.
 import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
+import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
+import { Roles } from '@speckle/shared'
 
 export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
     general: {
       title: 'General',
-      component: SettingsWorkspaceGeneral
+      component: SettingsWorkspaceGeneral,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     members: {
       title: 'Members',
-      component: SettingsWorkspacesMembers
+      component: SettingsWorkspacesMembers,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     projects: {
       title: 'Projects',
-      component: SettingsWorkspacesProjects
+      component: SettingsWorkspacesProjects,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+    },
+    security: {
+      title: 'Security',
+      component: SettingsWorkspacesSecurity,
+      permission: [Roles.Workspace.Admin]
     },
     billing: {
       title: 'Billing',
       disabled: true,
-      tooltipText: 'Manage billing for your workspace'
-    },
-    security: {
-      title: 'Security',
-      disabled: true,
-      tooltipText: 'SSO, manage permissions, restrict domain access'
+      tooltipText: 'Manage billing for your workspace',
+      permission: [Roles.Workspace.Admin]
     },
     regions: {
       title: 'Regions',
       disabled: true,
-      tooltipText: 'Set up regions for custom data residency'
+      tooltipText: 'Set up regions for custom data residency',
+      permission: [Roles.Workspace.Admin]
     }
   })
 
