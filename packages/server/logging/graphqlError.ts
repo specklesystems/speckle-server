@@ -1,18 +1,34 @@
+import { BaseError } from '@/modules/shared/errors'
 import { ApolloError } from 'apollo-server-express'
 import { GraphQLError } from 'graphql'
 
-export const shouldLogAsInfoLevel = (err: unknown) =>
-  (err instanceof GraphQLError &&
-    [
-      'FORBIDDEN',
-      'STREAM_NOT_FOUND',
-      'STREAM_INVALID_ACCESS_ERROR',
-      'UNAUTHORIZED_ACCESS_ERROR',
-      'BRANCH_NOT_FOUND',
-      'COMMIT_NOT_FOUND',
-      'NO_INVITE_FOUND',
-      'DUPLICATE_BRANCH_NAME_ERROR',
-      'OBJECT_NOT_FOUND',
-      'USER_INPUT_ERROR'
-    ].includes(err.extensions?.code)) ||
-  err instanceof ApolloError
+export const shouldLogAsInfoLevel = (err: unknown): boolean => {
+  if (err instanceof GraphQLError) {
+    if (!!err.cause && shouldLogAsInfoLevel(err.cause)) return true
+    if (
+      [
+        // https://www.apollographql.com/docs/apollo-server/v2/data/errors#error-codes
+        'GRAPHQL_PARSE_FAILED',
+        'GRAPHQL_VALIDATION_FAILED',
+        'BAD_USER_INPUT',
+        'UNAUTHENTICATED',
+        'FORBIDDEN',
+        'PERSISTED_QUERY_NOT_FOUND',
+        'PERSISTED_QUERY_NOT_SUPPORTED'
+      ].includes(
+        err.extensions?.code //FIXME the extensions are empty at this stage so this doesn't work, though extensions is later present when errorFormat (buildErrorFormatter) is run
+      )
+    )
+      return true
+    //HACK this is nasty, but compensates for the empty extensions in GraphQLError, see comment above
+    if (err.message.startsWith('Syntax Error:')) return true //TODO add further cases for the codes above
+  }
+
+  return (
+    (err instanceof BaseError &&
+      !!err.info().statusCode &&
+      typeof err.info().statusCode === 'number' &&
+      err.info().statusCode < 500) ||
+    err instanceof ApolloError
+  )
+}

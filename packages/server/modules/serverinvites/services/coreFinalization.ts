@@ -1,5 +1,8 @@
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamNotFoundError
+} from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getStream } from '@/modules/core/repositories/streams'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
@@ -82,7 +85,7 @@ export const processFinalizedProjectInviteFactory =
 
     const project = await getProject({ streamId: invite.resource.resourceId })
     if (!project) {
-      throw new InviteFinalizingError(
+      throw new StreamNotFoundError(
         'Attempting to finalize invite to a non-existant project'
       )
     }

@@ -33,8 +33,8 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
   AutomationCreationError,
   AutomationFunctionInputEncryptionError,
+  AutomationNotFoundError,
   AutomationRevisionCreationError,
-  AutomationUpdateError,
   JsonSchemaInputValidationError
 } from '@/modules/automate/errors/management'
 import {
@@ -257,7 +257,7 @@ export const updateAutomation =
       projectId
     })
     if (!existingAutomation) {
-      throw new AutomationUpdateError('Automation not found')
+      throw new AutomationNotFoundError('Automation not found')
     }
 
     await validateStreamAccess(
@@ -403,7 +403,7 @@ export const createAutomationRevision =
       projectId
     })
     if (!existingAutomation) {
-      throw new AutomationUpdateError('Automation not found')
+      throw new AutomationNotFoundError('Automation not found')
     }
 
     await validateStreamAccess(

@@ -1,6 +1,5 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
 import { getUser } from '@/modules/core/repositories/users'
-import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
   GraphQLClient,
@@ -14,6 +13,8 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { UserNotFoundError } from '@/modules/automate/errors/management'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -46,7 +47,9 @@ const getLocalResources = async (params: { authorId: string }) => {
   const { authorId } = params
   const user = await getUser(authorId)
   if (!user) {
-    throw new CrossServerProjectSyncError('Target author not found')
+    throw new UserNotFoundError('Target author not found', {
+      info: { userId: authorId }
+    }) //FIXME use message template referring to options.info.userId
   }
 
   return { user }
@@ -55,7 +58,7 @@ const getLocalResources = async (params: { authorId: string }) => {
 const parseIncomingUrl = (projectUrl: string) => {
   const [, origin, , projectId] = PROJECT_URL_RGX.exec(projectUrl) || []
   if (!origin || !projectId) {
-    throw new CrossServerProjectSyncError('Invalid project URL')
+    throw new UserInputError('Invalid project URL', { info: { url: projectUrl } }) //FIXME use message template referring to options.info.url
   }
 
   return { origin, projectId }

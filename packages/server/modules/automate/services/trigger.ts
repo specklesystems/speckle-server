@@ -29,7 +29,9 @@ import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
 import {
   AutomateInvalidTriggerError,
-  AutomationFunctionInputEncryptionError
+  AutomationFunctionInputEncryptionError,
+  AutomationNotFoundError,
+  AutomationRevisionNotFoundError
 } from '@/modules/automate/errors/management'
 import {
   triggerAutomationRun,
@@ -472,7 +474,7 @@ export const manuallyTriggerAutomation =
       })
     ])
     if (!automation) {
-      throw new TriggerAutomationError('Automation not found')
+      throw new AutomationNotFoundError('Automation not found')
     }
     if (!triggerDefs.length) {
       throw new TriggerAutomationError(
@@ -537,7 +539,7 @@ export const createTestAutomationRun =
     const automationRecord = await getAutomation({ automationId })
 
     if (!automationRecord) {
-      throw new TriggerAutomationError('Automation not found')
+      throw new AutomationNotFoundError('Automation not found')
     }
 
     if (!automationRecord.isTestAutomation) {
@@ -550,7 +552,7 @@ export const createTestAutomationRun =
       (await getLatestAutomationRevision({ automationId })) ?? {}
 
     if (!automationRevisionId) {
-      throw new TriggerAutomationError('Automation revision not found')
+      throw new AutomationRevisionNotFoundError('Automation revision not found')
     }
 
     const automationRevisionRecord = await getFullAutomationRevisionMetadata(

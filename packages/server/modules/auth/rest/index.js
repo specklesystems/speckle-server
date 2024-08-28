@@ -46,6 +46,7 @@ module.exports = (app) => {
         ? res.status(200).json({ redirectUrl })
         : res.redirect(redirectUrl)
     } catch (err) {
+      //FIXME express should be handling thrown errors
       if (
         err instanceof InvalidAccessCodeRequestError ||
         err instanceof ForbiddenError

@@ -101,7 +101,7 @@ export async function createCommitByBranchId(
   if (!totalChildrenCount) {
     const obj = await getObject(objectId, streamId)
     if (!obj)
-      throw new ObjectNotFoundError("Couldn't find commit object", { info: params })
+      throw new ObjectNotFoundError('Could not find commit object', { info: params })
 
     totalChildrenCount = obj.totalChildrenCount || 1
   }

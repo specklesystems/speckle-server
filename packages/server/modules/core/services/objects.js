@@ -695,10 +695,17 @@ function prepInsertionObject(streamId, obj) {
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
   const stringifiedObj = JSON.stringify(obj)
-  const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
-  if (objectByteSize > MAX_OBJECT_SIZE_MB) {
+  const objectMegabyteSize = estimateStringMegabyteSize(stringifiedObj)
+  if (objectMegabyteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
-      `Object too large. Object ID: ${obj.id}. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`
+      `Object too large. Object ID: ${obj.id}. (${objectMegabyteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`, //TODO replace with message template and use variables in options.info
+      {
+        info: {
+          objectId: obj.id,
+          objectMegabyteSize,
+          maxObjectMegabyteSize: MAX_OBJECT_SIZE_MB
+        }
+      }
     )
   }
   return {

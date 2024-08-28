@@ -5,7 +5,8 @@ import {
 import {
   CommitInvalidAccessError,
   CommitBatchUpdateError,
-  CommitNotFoundError
+  CommitNotFoundError,
+  CommitBatchUpdateInternalError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,
@@ -41,7 +42,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
 
   if (!userId) {
     throw new CommitInvalidAccessError(
-      'User must be authenticate to operate with commits'
+      'User must be authenticated to operate with commits'
     )
   }
   if (!commitIds?.length) {
@@ -173,7 +174,7 @@ export async function batchMoveCommits(
     return finalBranch
   } catch (e) {
     const err = ensureError(e)
-    throw new CommitBatchUpdateError('Batch commit move failed', { cause: err })
+    throw new CommitBatchUpdateInternalError('Batch commit move failed', { cause: err })
   }
 }
 
@@ -203,6 +204,8 @@ export async function batchDeleteCommits(
     )
   } catch (e) {
     const err = ensureError(e)
-    throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
+    throw new CommitBatchUpdateInternalError('Batch commit delete failed', {
+      cause: err
+    })
   }
 }

@@ -202,7 +202,8 @@ export const buildCoreInviteEmailContentsFactory =
       })
     } else {
       throw new InviteCreateValidationError(
-        'Unexpected resource target type: ' + primaryResourceTarget.resourceType
+        'Unexpected resource target type: ' + primaryResourceTarget.resourceType, //FIXME use message template referring to options.info.primaryResourceTargetType
+        { info: { primaryResourceTargetType: primaryResourceTarget.resourceType } }
       )
     }
   }

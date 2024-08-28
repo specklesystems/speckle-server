@@ -24,7 +24,7 @@ import {
 import {
   InviteCreateValidationError,
   InviteFinalizingError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -60,7 +60,11 @@ import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/role
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
-import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceNotFoundError,
+  WorkspaceProtectedError,
+  WorkspacesNotAuthorizedError
+} from '@/modules/workspaces/errors/workspace'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 const isWorkspaceResourceTarget = (
@@ -335,7 +339,7 @@ export const getUserPendingWorkspaceInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<
@@ -404,14 +408,14 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
       userId: finalizerUserId
     })
     if (!workspace) {
-      throw new InviteFinalizingError(
+      throw new WorkspaceNotFoundError(
         'Attempting to finalize invite to a non-existant workspace'
       )
     }
 
     if (action === InviteFinalizationAction.CANCEL) {
       if (workspace.role !== Roles.Workspace.Admin) {
-        throw new InviteFinalizingError(
+        throw new WorkspacesNotAuthorizedError(
           'Attempting to cancel invite to a workspace that the user does not own'
         )
       }

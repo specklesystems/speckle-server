@@ -31,6 +31,9 @@ import {
   CrossSyncDownloadableCommitViewerThreadsQuery,
   CrossSyncProjectViewerResourcesQuery
 } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -214,7 +217,7 @@ const parseIncomingUrl = async (url: string, token?: string) => {
     return modelUrl
   }
 
-  throw new CrossServerCommitSyncError(`Couldn't parse commit URL: ${url}`)
+  throw new UserInputError(`Couldn't parse commit URL: ${url}`, { info: { url } }) //FIXME use message template with metadata from info
 }
 
 const getLocalResources = async (
@@ -224,15 +227,16 @@ const getLocalResources = async (
 ) => {
   const targetStream = await getStream({ streamId: targetStreamId })
   if (!targetStream) {
-    throw new CrossServerCommitSyncError(
+    throw new StreamNotFoundError(
       `Couldn't find local stream with id ${targetStreamId}`
     )
   }
 
   const targetBranch = await getStreamBranchByName(targetStreamId, branchName)
   if (!targetBranch) {
-    throw new CrossServerCommitSyncError(
-      `Couldn't find local branch ${branchName} in stream ${targetStreamId}`
+    throw new BranchNotFoundError(
+      `Couldn't find local branch ${branchName} in stream ${targetStreamId}`, //FIXME use message template with metadata from info
+      { info: { branchName, targetStreamId } }
     )
   }
 

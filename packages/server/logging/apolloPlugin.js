@@ -12,9 +12,9 @@ const metricCallCount = new prometheusClient.Counter({
 })
 
 const getOperationName = (ctx) =>
-  ctx.operation.operationName ||
-  ctx.operation.selectionSet.selections[0].name.value ||
-  'un-named graphql operation'
+  ctx.operation?.operationName ||
+  ctx.operation?.selectionSet?.selections[0]?.name?.value ||
+  'unnamed'
 
 /** @type {import('apollo-server-core').PluginDefinition} */
 module.exports = {
@@ -72,24 +72,26 @@ module.exports = {
           const operationName = getOperationName(ctx)
           const query = ctx.request.query
           const variables = redactSensitiveVariables(ctx.request.variables)
+          logger = logger.child({
+            graphql_operation_name: operationName,
+            graphql_query: query,
+            graphql_variables: variables
+          })
 
           if (err.path) {
             logger = logger.child({
-              'query-path': err.path.join(' > '),
-              graphql_operation_name: operationName,
-              graphql_query: query,
-              graphql_variables: variables
+              'query-path': err.path.join(' > ')
             })
           }
           if (shouldLogAsInfoLevel(err)) {
             logger.info(
               { err },
-              '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
+              '{graphql_operation_name} graphql operation failed after {apollo_query_duration_ms} ms'
             )
           } else {
             logger.error(
-              err,
-              '{graphql_operation_name} failed after {apollo_query_duration_ms} ms'
+              { err },
+              '{graphql_operation_name} graphql operation failed after {apollo_query_duration_ms} ms'
             )
           }
         }
@@ -101,12 +103,13 @@ module.exports = {
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
+
         logger.info(
           {
             graphql_operation_name: name,
             apollo_query_duration_ms: Date.now() - apolloRequestStart
           },
-          '{graphql_operation_name} finished after {apollo_query_duration_ms} ms'
+          '{graphql_operation_name} graphql operation will respond after {apollo_query_duration_ms} ms'
         )
       }
     }

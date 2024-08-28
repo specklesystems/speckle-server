@@ -6,8 +6,8 @@ import {
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
-  AutomateFunctionCreationError,
-  AutomateFunctionUpdateError
+  FunctionNotFoundError,
+  UserNotFoundError
 } from '@/modules/automate/errors/management'
 
 import {
@@ -131,7 +131,7 @@ export const createFunctionFromTemplate =
     // Validate user
     const user = await getUser(userId)
     if (!user) {
-      throw new AutomateFunctionCreationError('Speckle user not found')
+      throw new UserNotFoundError('Speckle user not found')
     }
 
     const authCode = await createStoredAuthCode({
@@ -195,7 +195,7 @@ export const updateFunction =
 
     const existingFn = await getFunction({ functionId: input.id })
     if (!existingFn) {
-      throw new AutomateFunctionUpdateError('Function not found')
+      throw new FunctionNotFoundError('Function not found')
     }
 
     // Fix up logo, if any

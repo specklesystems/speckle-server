@@ -1,4 +1,5 @@
 import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
+import { UserNotFoundError } from '@/modules/automate/errors/management'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
@@ -16,7 +17,7 @@ async function initializeState(tokenId: string, password: string) {
 
   const user = await getUserByEmail(token.email)
   if (!user) {
-    throw new PasswordRecoveryFinalizationError('Invalid finalization request')
+    throw new UserNotFoundError('Invalid finalization request')
   }
 
   return { tokenId, password, token, user }

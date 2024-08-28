@@ -21,7 +21,7 @@ import {
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
 import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/viewerResources'
-import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
+import { CommentCreateError, CommentNotFoundError } from '@/modules/comments/errors'
 import {
   buildCommentTextFromInput,
   validateInputAttachments
@@ -178,7 +178,9 @@ export async function createCommentReplyAndNotify(
 ) {
   const thread = await getComment({ id: input.threadId, userId })
   if (!thread) {
-    throw new CommentCreateError('Reply creation failed due to nonexistant thread')
+    throw new CommentNotFoundError(
+      'Reply creation failed due to nonexistant comment thread'
+    )
   }
   await validateInputAttachments(thread.streamId, input.content.blobIds || [])
 
@@ -228,10 +230,10 @@ export async function createCommentReplyAndNotify(
 export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
   const comment = await getComment({ id: input.commentId, userId })
   if (!comment) {
-    throw new CommentUpdateError('Comment update failed due to nonexistant comment')
+    throw new CommentNotFoundError('Comment update failed due to nonexistant comment')
   }
   if (comment.authorId !== userId) {
-    throw new CommentUpdateError("You cannot edit someone else's comments")
+    throw new ForbiddenError("You cannot edit someone else's comments")
   }
 
   await validateInputAttachments(comment.streamId, input.content.blobIds || [])
@@ -259,14 +261,14 @@ export async function archiveCommentAndNotify(
 ) {
   const comment = await getComment({ id: commentId, userId })
   if (!comment) {
-    throw new CommentUpdateError(
+    throw new CommentNotFoundError(
       "Specified comment doesn't exist and thus it's archival status can't be changed"
     )
   }
 
   const stream = await getStream({ streamId: comment.streamId, userId })
   if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
-    throw new CommentUpdateError('You do not have permissions to archive this comment')
+    throw new ForbiddenError('You do not have permissions to archive this comment')
   }
   const updatedComment = await updateComment(comment.id, {
     archived

@@ -1,3 +1,4 @@
+import { UserNotFoundError } from '@/modules/automate/errors/management'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
@@ -28,9 +29,7 @@ async function initializeNewToken(email: string) {
   ])
 
   if (!user) {
-    throw new InvalidPasswordRecoveryRequestError(
-      'No user with that e-mail address found'
-    )
+    throw new UserNotFoundError('No user with that e-mail address found')
   }
 
   if (tokenAlreadyExists) {

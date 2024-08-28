@@ -96,7 +96,7 @@ function logSubscriptionOperation(params: {
       if (shouldLogAsInfoLevel(error)) {
         logger.info({ err: error }, errMsg)
       } else {
-        logger.error(error, errMsg)
+        logger.error({ err: error }, errMsg)
       }
     }
   } else if (response?.data) {

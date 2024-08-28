@@ -18,6 +18,7 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
+import { UserNotFoundError } from '@/modules/automate/errors/management'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
@@ -75,10 +76,7 @@ const createNewEmailVerificationFactory =
       getServerInfo()
     ])
 
-    if (!user)
-      throw new EmailVerificationRequestError(
-        'Unable to resolve verification target user'
-      )
+    if (!user) throw new UserNotFoundError('Unable to resolve verification target user')
 
     const verificationId = await deleteOldAndInsertNewVerification(emailRecord.email)
     return {

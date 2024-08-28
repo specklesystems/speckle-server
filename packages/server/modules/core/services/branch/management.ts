@@ -30,6 +30,7 @@ import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -119,7 +120,7 @@ export async function deleteBranchAndNotify(
     )
   }
   if (existingBranch.authorId !== userId && stream.role !== Roles.Stream.Owner) {
-    throw new BranchUpdateError(
+    throw new ForbiddenError(
       'Only the branch creator or stream owners are allowed to delete branches',
       {
         info: { ...input, userId }
