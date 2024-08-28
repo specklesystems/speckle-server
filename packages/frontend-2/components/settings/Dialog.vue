@@ -47,6 +47,7 @@
               :key="key"
               :title="workspaceItem.name"
               collapsible
+              class="workspace-item"
               :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
@@ -207,3 +208,8 @@ watch(
   { immediate: true }
 )
 </script>
+<style>
+.workspace-item h6 {
+  @apply !font-normal !text-body-xs !text-foreground;
+}
+</style>
