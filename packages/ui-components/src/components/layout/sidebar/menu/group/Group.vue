@@ -19,12 +19,7 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <h6
-          class="font-semibold text-foreground-2 text-xs truncate"
-          :class="
-            $slots['title-icon'] && collapsible ? 'text-body-2xs' : 'text-body-xs'
-          "
-        >
+        <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
           {{ title }}
         </h6>
       </button>
