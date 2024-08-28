@@ -11,12 +11,12 @@
     <div class="w-full h-full flex">
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation md:border-r md:border-outline-3"
+        class="w-full md:w-56 lg:w-60 md:pb-4 md:px-2 md:pt-6 md:bg-foundation md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account settings">
             <template #title-icon>
-              <UserIcon class="h-5 w-5" />
+              <IconAccount class="size-4" />
             </template>
             <LayoutSidebarMenuGroupItem
               v-for="(sidebarMenuItem, key) in userMenuItems"
@@ -28,7 +28,7 @@
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
             <template #title-icon>
-              <ServerStackIcon class="h-5 w-5" />
+              <IconServer class="size-4" />
             </template>
             <LayoutSidebarMenuGroupItem
               v-for="(sidebarMenuItem, key) in serverMenuItems"
@@ -40,7 +40,7 @@
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
             <template #title-icon>
-              <IconWorkspaces class="h-4 w-4 text-foreground-2" />
+              <IconWorkspaces class="size-4 text-foreground-2" />
             </template>
             <LayoutSidebarMenuGroup
               v-for="(workspaceItem, key) in workspaceItems"
@@ -56,28 +56,36 @@
                   size="sm"
                 />
               </template>
-              <LayoutSidebarMenuGroupItem
+              <template
                 v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
                 :key="`${key}-${itemKey}`"
-                :label="workspaceMenuItem.title"
-                :active="
-                  workspaceMenuItemClasses(
-                    itemKey,
-                    workspaceItem.id,
-                    workspaceMenuItem.disabled
-                  )
-                "
-                :tooltip-text="workspaceMenuItem.tooltipText"
-                :disabled="workspaceMenuItem.disabled"
-                :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
-                @click="
-                  onWorkspaceMenuItemClick(
-                    workspaceItem.id,
-                    `${itemKey}`,
-                    workspaceMenuItem.disabled
-                  )
-                "
-              />
+              >
+                <LayoutSidebarMenuGroupItem
+                  v-if="
+                    workspaceItem.role !== Roles.Workspace.Guest ||
+                    itemKey === 'general'
+                  "
+                  :label="workspaceMenuItem.title"
+                  :active="
+                    workspaceMenuItemClasses(
+                      itemKey,
+                      workspaceItem.id,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                  :tooltip-text="workspaceMenuItem.tooltipText"
+                  :disabled="workspaceMenuItem.disabled"
+                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
+                  extra-padding
+                  @click="
+                    onWorkspaceMenuItemClick(
+                      workspaceItem.id,
+                      `${itemKey}`,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                />
+              </template>
             </LayoutSidebarMenuGroup>
             <LayoutSidebarMenuGroupItem
               v-if="isAdmin"
@@ -109,13 +117,14 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { UserIcon, ServerStackIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu } from '~/lib/settings/composables/menu'
 import {
@@ -123,7 +132,6 @@ import {
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
-import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
@@ -132,6 +140,7 @@ graphql(`
       items {
         ...WorkspaceAvatar_Workspace
         id
+        role
         name
       }
     }
