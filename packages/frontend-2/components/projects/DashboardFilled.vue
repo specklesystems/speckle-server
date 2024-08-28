@@ -1,7 +1,11 @@
 <template>
   <div class="flex flex-col space-y-4">
     <div v-for="project in items" :key="project.id">
-      <ProjectsProjectDashboardCard :key="project.id" :project="project" />
+      <ProjectsProjectDashboardCard
+        :key="project.id"
+        :project="project"
+        :show-workspace-link="showWorkspaceLink"
+      />
     </div>
   </div>
 </template>
@@ -11,6 +15,7 @@ import type { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gq
 
 const props = defineProps<{
   projects: ProjectsDashboardFilledFragment
+  showWorkspaceLink?: boolean
 }>()
 
 graphql(`

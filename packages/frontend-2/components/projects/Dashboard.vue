@@ -45,7 +45,7 @@
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" />
+      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"
