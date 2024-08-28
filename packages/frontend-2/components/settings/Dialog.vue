@@ -76,6 +76,7 @@
                   :tooltip-text="workspaceMenuItem.tooltipText"
                   :disabled="workspaceMenuItem.disabled"
                   :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
+                  extra-padding
                   @click="
                     onWorkspaceMenuItemClick(
                       workspaceItem.id,

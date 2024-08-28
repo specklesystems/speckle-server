@@ -7,7 +7,8 @@
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
       active && 'bg-highlight-3 hover:!bg-highlight-3',
-      $slots.icon ? 'px-2' : 'pr-2 pl-6'
+      $slots.icon ? 'px-2' : 'pr-2 pl-6',
+      extraPadding && '!pl-14'
     ]"
   >
     <div
@@ -69,6 +70,7 @@ const props = defineProps<{
   disabled?: boolean
   active?: boolean
   tooltipText?: string
+  extraPadding?: boolean
 }>()
 
 const isOpen = ref(true)
