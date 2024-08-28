@@ -5,10 +5,7 @@ import {
   getFunction,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
-import {
-  FunctionNotFoundError,
-  UserNotFoundError
-} from '@/modules/automate/errors/management'
+import { FunctionNotFoundError } from '@/modules/automate/errors/management'
 
 import {
   BasicGitRepositoryMetadata,
@@ -46,6 +43,9 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
+import { UserNotFoundError } from '@/modules/core/errors/user'
+import { UnknownFunctionTemplateError } from '@/modules/automate/errors/function'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -58,7 +58,7 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
     default:
-      throw new Error('Unknown template id')
+      throw new UnknownFunctionTemplateError('Unknown template id')
   }
 }
 
@@ -68,7 +68,7 @@ const repoUrlToBasicGitRepositoryMetadata = (
   const repoUrl = new URL(url)
   const pathParts = repoUrl.pathname.split('/').filter(Boolean)
   if (pathParts.length < 2) {
-    throw new Error('Invalid GitHub repository URL')
+    throw new UserInputError('Invalid GitHub repository URL')
   }
 
   const [owner, name] = pathParts

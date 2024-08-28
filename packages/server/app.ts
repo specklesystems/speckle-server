@@ -21,11 +21,7 @@ import {
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
-import {
-  ApolloServer,
-  ForbiddenError,
-  ApolloServerExpressConfig
-} from 'apollo-server-express'
+import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express'
 import {
   ApolloServerPluginLandingPageLocalDefault,
   ApolloServerPluginUsageReportingDisabled,
@@ -65,6 +61,11 @@ import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
+import {
+  BadRequestError,
+  ContextError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 
 let graphqlServer: ApolloServer
 
@@ -175,15 +176,15 @@ function buildApolloSubscriptionServer(
           }
 
           if (!header) {
-            throw new Error("Couldn't resolve auth header for subscription")
+            throw new BadRequestError("Couldn't resolve auth header for subscription")
           }
 
           token = header.split(' ')[1]
           if (!token) {
-            throw new Error("Couldn't resolve token from auth header")
+            throw new BadRequestError("Couldn't resolve token from auth header")
           }
         } catch (e) {
-          throw new ForbiddenError('You need a token to subscribe')
+          throw new UnauthorizedError('You need a token to subscribe')
         }
 
         // Build context (Apollo Server v3 no longer triggers context building automatically
@@ -191,7 +192,7 @@ function buildApolloSubscriptionServer(
         try {
           return await buildContext({ req: null, token, cleanLoadersEarly: false })
         } catch (e) {
-          throw new ForbiddenError('Subscription context build failed')
+          throw new ContextError('Subscription context build failed')
         }
       },
       onDisconnect: () => {

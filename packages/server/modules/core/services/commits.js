@@ -17,6 +17,7 @@ const {
   deleteCommitAndNotify
 } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
+const { BranchNotFoundError } = require('@/modules/core/errors/branch')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
   publicOnly = publicOnly !== false
@@ -133,7 +134,8 @@ module.exports = {
       name: branchName
     })
 
-    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    if (!myBranch)
+      throw new BranchNotFoundError(`Failed to find branch with name ${branchName}.`)
 
     return module.exports.getCommitsTotalCountByBranchId({ branchId: myBranch.id })
   },
@@ -152,7 +154,11 @@ module.exports = {
       name: branchName
     })
 
-    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    if (!myBranch)
+      throw new BranchNotFoundError(
+        `Failed to find branch with name ${branchName}.`, //TODO use message template and values from options.info
+        { info: { branch: branchName } }
+      )
 
     return module.exports.getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
   },

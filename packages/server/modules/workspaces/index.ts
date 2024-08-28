@@ -18,6 +18,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
+import { InvalidWorkspaceLicenseError } from '@/modules/workspaces/errors/workspace'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -39,7 +40,7 @@ const workspacesModule: SpeckleModule = {
     })
 
     if (!isWorkspaceLicenseValid)
-      throw new Error(
+      throw new InvalidWorkspaceLicenseError(
         'The workspaces module needs a valid license to run, contact Speckle to get one.'
       )
     moduleLogger.info('⚒️  Init workspaces module')

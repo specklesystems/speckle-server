@@ -1,4 +1,4 @@
-import { UserNotFoundError } from '@/modules/automate/errors/management'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'

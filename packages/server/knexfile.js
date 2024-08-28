@@ -10,7 +10,8 @@ const {
   ignoreMissingMigrations,
   postgresMaxConnections
 } = require('@/modules/shared/helpers/envHelper')
-const { dbLogger: logger } = require('./logging/logging')
+const { dbLogger: logger } = require('@/logging/logging')
+const { EnvironmentResourceError } = require('@/modules/shared/errors')
 
 function walk(dir) {
   let results = []
@@ -36,7 +37,9 @@ const migrationModulesDir = path.resolve(
 )
 const migrationDirsExist = fs.existsSync(migrationModulesDir)
 if (!migrationDirsExist && !ignoreMissingMigrations()) {
-  throw new Error('App must be built into /dist, to enable work with migrations')
+  throw new EnvironmentResourceError(
+    'App must be built into /dist, to enable work with migrations'
+  )
 }
 
 const migrationDirs = migrationDirsExist ? walk(migrationModulesDir) : []

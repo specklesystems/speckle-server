@@ -1,5 +1,5 @@
 import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
-import { UserNotFoundError } from '@/modules/automate/errors/management'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'

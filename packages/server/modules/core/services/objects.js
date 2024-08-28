@@ -11,6 +11,7 @@ const {
   chunkInsertionObjectArray,
   estimateStringMegabyteSize
 } = require('@/modules/core/utils/chunking')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -480,7 +481,7 @@ module.exports = {
               if (typeof statement.value === 'number') castType = 'numeric'
 
               if (operatorsWhitelist.indexOf(statement.operator) === -1)
-                throw new Error('Invalid operator for query')
+                throw new UserInputError('Invalid operator for query')
 
               // Determine the correct where clause (where, and where, or where)
               let whereClause
@@ -536,7 +537,7 @@ module.exports = {
       if (castType === 'text') cursor.value = `"${cursor.value}"`
 
       if (operatorsWhitelist.indexOf(cursor.operator) === -1)
-        throw new Error('Invalid operator for cursor')
+        throw new UserInputError('Invalid operator for cursor')
 
       // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
       if (fullObjectSelect) {

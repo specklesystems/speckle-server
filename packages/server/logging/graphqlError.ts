@@ -19,8 +19,9 @@ export const shouldLogAsInfoLevel = (err: unknown): boolean => {
         err.extensions?.code //FIXME the extensions are empty at this stage so this doesn't work, though extensions is later present when errorFormat (buildErrorFormatter) is run
       )
     )
+      //NOTE while we do care about these types of error if the source of the query is a Speckle component, but we can't determine that context here and it is for that component to handle the error
       return true
-    //HACK this is nasty, but compensates for the empty extensions in GraphQLError, see comment above
+    //HACK the below isn't great, but compensates for the empty extensions in GraphQLError, see comment above
     if (err.message.startsWith('Syntax Error:')) return true //TODO add further cases for the codes above
   }
 

@@ -13,8 +13,8 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
-import { UserNotFoundError } from '@/modules/automate/errors/management'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 

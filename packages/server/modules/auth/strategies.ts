@@ -26,6 +26,8 @@ import {
 } from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
+import { ContextError } from '@/modules/shared/errors'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 const setupStrategies = async (app: Express) => {
   const authStrategies: AuthStrategyMetadata[] = []
@@ -79,7 +81,7 @@ const setupStrategies = async (app: Express) => {
   const finalizeAuthMiddleware: RequestHandler = async (req, res) => {
     try {
       if (!req.user) {
-        throw new Error('Cannot finalize auth - No user attached to session')
+        throw new ContextError('Cannot finalize auth - No user attached to session')
       }
 
       const ac = await createAuthorizationCode({
@@ -113,7 +115,7 @@ const setupStrategies = async (app: Express) => {
           try {
             const user = await getUserById({ userId: req.user.id })
             if (!user)
-              throw new Error(
+              throw new UserNotFoundError(
                 'Could not register user for mailchimp lists - no db user record found.'
               )
             const onboardingIds = getMailchimpOnboardingIds()

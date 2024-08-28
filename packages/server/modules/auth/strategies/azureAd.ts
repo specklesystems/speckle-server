@@ -31,6 +31,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import { ensureError, Optional } from '@speckle/shared'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const azureAdStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -93,7 +94,7 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
         // than to refactor everything
         const profile = req.user as Optional<IProfile>
         if (!profile) {
-          throw new Error('No profile provided by Entra ID')
+          throw new EnvironmentResourceError('No profile provided by Entra ID')
         }
 
         logger = logger.child({ profileId: profile.oid })

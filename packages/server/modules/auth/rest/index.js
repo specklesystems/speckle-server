@@ -12,6 +12,7 @@ const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { ForbiddenError } = require('apollo-server-errors')
 const { Scopes } = require('@speckle/shared')
+const { BadRequestError } = require('@/modules/shared/errors')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -71,7 +72,7 @@ module.exports = (app) => {
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
-          throw new Error('Invalid request - App Id and Secret are required.')
+          throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
         const authResponse = await refreshAppToken({
           refreshToken: req.body.refreshToken,
@@ -88,7 +89,7 @@ module.exports = (app) => {
         !req.body.accessCode ||
         !req.body.challenge
       )
-        throw new Error(
+        throw new BadRequestError(
           `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
         )
 
@@ -113,13 +114,14 @@ module.exports = (app) => {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request. No token provided.')
+      if (!token) throw new BadRequestError('Invalid request. No token provided.')
       await revokeTokenById(token)
 
       if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
 
       return res.status(200).send({ message: 'You have logged out.' })
     } catch (err) {
+      //FIXME express should be handling thrown errors
       req.log.info({ err }, 'Error while trying to logout.')
       return res.status(400).send('Something went wrong while trying to logout.')
     }

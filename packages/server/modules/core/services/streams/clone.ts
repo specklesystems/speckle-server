@@ -39,9 +39,9 @@ import dayjs from 'dayjs'
 import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
 import knex from '@/db/knex'
 import { Knex } from 'knex'
-import { UserNotFoundError } from '@/modules/automate/errors/management'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommentNotFoundError } from '@/modules/comments/errors'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>

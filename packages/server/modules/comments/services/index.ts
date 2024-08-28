@@ -1,6 +1,6 @@
 import crs from 'crypto-random-string'
 import knex from '@/db/knex'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { ForbiddenError, ResourceMismatch } from '@/modules/shared/errors'
 import {
   buildCommentTextFromInput,
   validateInputAttachments
@@ -21,6 +21,10 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { ObjectNotFoundError } from '@/modules/core/errors/object'
+import { CommentNotFoundError } from '@/modules/comments/errors'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const Comments = () => knex<CommentRecord>('comments')
 const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
@@ -36,9 +40,9 @@ const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
         .select()
         .where({ commitId: res.resourceId, streamId })
         .first()
-      if (!linkage) throw new Error('Commit not found')
+      if (!linkage) throw new CommitNotFoundError('Commit not found')
       if (linkage.streamId !== streamId)
-        throw new Error(
+        throw new ResourceMismatch(
           'Stop hacking - that commit id is not part of the specified stream.'
         )
       break
@@ -48,21 +52,22 @@ const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
         .select()
         .where({ id: res.resourceId, streamId })
         .first()
-      if (!obj) throw new Error('Object not found')
+      if (!obj) throw new ObjectNotFoundError('Object not found')
       break
     }
     case 'comment': {
       const comment = await Comments().where({ id: res.resourceId }).first()
-      if (!comment) throw new Error('Comment not found')
+      if (!comment) throw new CommentNotFoundError('Comment not found')
       if (comment.streamId !== streamId)
-        throw new Error(
+        throw new ResourceMismatch(
           'Stop hacking - that comment is not part of the specified stream.'
         )
       break
     }
     default:
-      throw Error(
-        `resource type ${res.resourceType} is not supported as a comment target`
+      throw new ResourceMismatch(
+        `resource type ${res.resourceType} is not supported as a comment target`, //TODO use message template and options.info
+        { info: { commentTargetResourceType: res.resourceType } }
       )
   }
 }
@@ -89,19 +94,22 @@ export async function createComment({
   input: CommentCreateInput
 }) {
   if (input.resources.length < 1)
-    throw Error('Must specify at least one resource as the comment target')
+    throw new UserInputError('Must specify at least one resource as the comment target')
 
   const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
-  if (commentResource) throw new Error('Please use the comment reply mutation.')
+  if (commentResource)
+    throw new UserInputError('Please use the comment reply mutation.')
 
   // Stream checks
   const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
   if (streamResources.length > 1)
-    throw Error('Commenting on multiple streams is not supported')
+    throw new UserInputError('Commenting on multiple streams is not supported')
 
   const [stream] = streamResources
   if (stream && stream.resourceId !== input.streamId)
-    throw Error("Input streamId doesn't match the stream resource.resourceId")
+    throw new ResourceMismatch(
+      "Input streamId doesn't match the stream resource.resourceId"
+    )
 
   const comment: Partial<CommentRecord> = {
     streamId: input.streamId,
@@ -211,7 +219,7 @@ export async function editComment({
   matchUser: boolean
 }) {
   const editedComment = await Comments().where({ id: input.id }).first()
-  if (!editedComment) throw new Error("The comment doesn't exist")
+  if (!editedComment) throw new CommentNotFoundError("The comment doesn't exist")
 
   if (matchUser && editedComment.authorId !== userId)
     throw new ForbiddenError("You cannot edit someone else's comments")
@@ -265,7 +273,9 @@ export async function archiveComment({
 }) {
   const comment = await Comments().where({ id: commentId }).first()
   if (!comment)
-    throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+    throw new CommentNotFoundError(
+      `No comment ${commentId} exists, cannot change its archival status`
+    )
 
   const aclEntry = await knex('stream_acl')
     .select()

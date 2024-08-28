@@ -32,6 +32,7 @@ import {
 import type { Request } from 'express'
 import { get } from 'lodash'
 import { ensureError } from '@speckle/shared'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const githubStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -77,7 +78,7 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
       try {
         const email = profile.emails?.[0].value
         if (!email) {
-          throw new Error('No email provided by Github')
+          throw new EnvironmentResourceError('No email provided by Github')
         }
 
         const name = profile.displayName || profile.username

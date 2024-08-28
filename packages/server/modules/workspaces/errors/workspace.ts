@@ -83,3 +83,9 @@ export class WorkspaceProtectedError extends BaseError {
   static code = 'WORKSPACE_PROTECTED'
   static statusCode = 400
 }
+
+export class InvalidWorkspaceLicenseError extends BaseError {
+  static defaultMessage = 'Invalid workspace license'
+  static code = 'INVALID_WORKSPACE_LICENSE'
+  static statusCode = 400
+}

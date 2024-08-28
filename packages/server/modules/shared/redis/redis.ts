@@ -1,9 +1,6 @@
 import { redisLogger } from '@/logging/logging'
 import Redis, { RedisOptions } from 'ioredis'
-import {
-  EnvironmentResourceError,
-  MisconfiguredEnvironmentError
-} from '@/modules/shared/errors'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 export function createRedisClient(redisUrl: string, redisOptions: RedisOptions): Redis {
   let redisClient: Redis
@@ -19,9 +16,9 @@ export function createRedisClient(redisUrl: string, redisOptions: RedisOptions):
   } catch (err) {
     redisLogger.error(err, 'Could not create Redis client')
     if (err instanceof Error) {
-      throw new MisconfiguredEnvironmentError('Unable to connect to Redis.', err) //FIXME backoff and retry?
+      throw new EnvironmentResourceError('Unable to connect to Redis.', err) //FIXME backoff and retry?
     }
-    throw new MisconfiguredEnvironmentError('Unable to connect to Redis.') //FIXME backoff and retry?
+    throw new EnvironmentResourceError('Unable to connect to Redis.') //FIXME backoff and retry?
   }
 
   return redisClient

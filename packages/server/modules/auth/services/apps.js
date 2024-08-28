@@ -6,6 +6,13 @@ const knex = require(`@/db/knex`)
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { logger } = require('@/logging/logging')
 const { getDefaultApp } = require('@/modules/auth/defaultApps')
+const { BadRequestError, ResourceMismatch } = require('@/modules/shared/errors')
+const {
+  AccessCodeNotFoundError,
+  AppTokenCreateError,
+  RefreshTokenNotFound,
+  RefreshTokenError
+} = require('@/modules/auth/errors')
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
@@ -127,7 +134,7 @@ module.exports = {
     const scopes = (app.scopes || []).filter((s) => !!s?.length)
 
     if (!scopes.length) {
-      throw new Error('Cannot create an app with no scopes.')
+      throw new BadRequestError('Cannot create an app with no scopes.')
     }
 
     delete app.scopes
@@ -204,7 +211,7 @@ module.exports = {
   },
 
   async createAuthorizationCode({ appId, userId, challenge }) {
-    if (!challenge) throw new Error('Please provide a valid challenge.')
+    if (!challenge) throw new BadRequestError('Please provide a valid challenge.')
 
     const ac = {
       id: crs({ length: 42 }),
@@ -220,23 +227,24 @@ module.exports = {
   async createAppTokenFromAccessCode({ appId, appSecret, accessCode, challenge }) {
     const code = await AuthorizationCodes().select().where({ id: accessCode }).first()
 
-    if (!code) throw new Error('Access code not found.')
+    if (!code) throw new AccessCodeNotFoundError('Access code not found.')
     if (code.appId !== appId)
-      throw new Error('Invalid request: application id does not match.')
+      throw new ResourceMismatch('Invalid request: application id does not match.')
 
     await AuthorizationCodes().where({ id: accessCode }).del()
 
     const timeDiff = Math.abs(Date.now() - new Date(code.createdAt))
     if (timeDiff > code.lifespan) {
-      throw new Error('Access code expired')
+      throw new AppTokenCreateError('Access code expired')
     }
 
-    if (code.challenge !== challenge) throw new Error('Invalid request')
+    if (code.challenge !== challenge) throw new AppTokenCreateError('Invalid request')
 
     const app = await ServerApps().select('*').where({ id: appId }).first()
 
-    if (!app) throw new Error('Invalid app')
-    if (app.secret !== appSecret) throw new Error('Invalid app credentials')
+    if (!app) throw new AppTokenCreateError('Invalid app')
+    if (app.secret !== appSecret)
+      throw new AppTokenCreateError('Invalid app credentials')
 
     const scopes = await ServerAppsScopes().select('scopeName').where({ appId })
 
@@ -275,21 +283,21 @@ module.exports = {
       .where({ id: refreshTokenId })
       .first()
 
-    if (!refreshTokenDb) throw new Error('Invalid request')
+    if (!refreshTokenDb) throw new RefreshTokenNotFound('Invalid request')
 
-    if (refreshTokenDb.appId !== appId) throw new Error('Invalid request')
+    if (refreshTokenDb.appId !== appId) throw new ResourceMismatch('Invalid request')
 
     const timeDiff = Math.abs(Date.now() - new Date(refreshTokenDb.createdAt))
     if (timeDiff > refreshTokenDb.lifespan) {
       await RefreshTokens().where({ id: refreshTokenId }).del()
-      throw new Error('Refresh token expired')
+      throw new RefreshTokenError('Refresh token expired')
     }
 
     const valid = await bcrypt.compare(refreshTokenContent, refreshTokenDb.tokenDigest)
-    if (!valid) throw new Error('Invalid token') // sneky hackstors
+    if (!valid) throw new RefreshTokenError('Invalid token') // sneky hackstors
 
     const app = await module.exports.getApp({ id: appId })
-    if (app.secret !== appSecret) throw new Error('Invalid request')
+    if (app.secret !== appSecret) throw new RefreshTokenError('Invalid request')
 
     // Create the new token
     const appToken = await createAppToken({

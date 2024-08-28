@@ -2,6 +2,7 @@ const knex = require('@/db/knex')
 const { appRoot } = require('@/bootstrap')
 const fs = require('fs/promises')
 const { logger } = require('@/logging/logging')
+const { MisconfiguredEnvironmentError } = require('@/modules/shared/errors')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
@@ -26,7 +27,7 @@ const command = {
     try {
       await fs.access(migrationDir)
     } catch {
-      throw new Error(
+      throw new MisconfiguredEnvironmentError(
         `Migration directory '${migrationDir}' is not accessible! Check if it exists.`
       )
     }

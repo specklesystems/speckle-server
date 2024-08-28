@@ -27,6 +27,7 @@ import {
   getGoogleClientSecret
 } from '@/modules/shared/helpers/envHelper'
 import { ensureError } from '@speckle/shared'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const googleStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -62,7 +63,7 @@ const googleStrategyBuilder: AuthStrategyBuilder = async (
       try {
         const email = profile.emails?.[0].value
         if (!email) {
-          throw new Error('No email provided by Google')
+          throw new EnvironmentResourceError('No email provided by Google')
         }
 
         const name = profile.displayName

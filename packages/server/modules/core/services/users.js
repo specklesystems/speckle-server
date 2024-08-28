@@ -52,6 +52,7 @@ const {
 const {
   requestNewEmailVerification
 } = require('@/modules/emails/services/verification/request')
+const { UserCreateError } = require('@/modules/core/errors/user')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -121,7 +122,7 @@ module.exports = {
     if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
-    if (!newUser) throw new Error("Couldn't create user")
+    if (!newUser) throw new UserCreateError("Couldn't create user")
 
     const userRole =
       (await countAdminUsers()) === 0

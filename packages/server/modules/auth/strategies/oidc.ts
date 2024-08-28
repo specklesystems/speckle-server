@@ -29,6 +29,7 @@ import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
 import { Optional } from '@speckle/shared'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const oidcStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -71,7 +72,9 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
         try {
           const email = userinfo['email']
           if (!email) {
-            throw new Error('No email provided by the OIDC provider.')
+            throw new EnvironmentResourceError(
+              'No email provided by the OIDC provider.'
+            )
           }
 
           const name = getNameFromUserInfo(userinfo)
@@ -116,7 +119,9 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
 
           // if the server is invite only and we have no invite id, throw.
           if (serverInfo.inviteOnly && !token) {
-            throw new Error('This server is invite only. Please provide an invite id.')
+            throw new EnvironmentResourceError(
+              'This server is invite only. Please provide an invite id.'
+            )
           }
 
           // validate the invite

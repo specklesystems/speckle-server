@@ -18,12 +18,6 @@ export class AutomationRevisionNotFoundError extends BaseError {
   static statusCode = 404
 }
 
-export class UserNotFoundError extends BaseError {
-  static defaultMessage = 'User not found'
-  static code = 'USER_NOT_FOUND'
-  static statusCode = 404
-}
-
 export class AutomationCreationError extends BaseError {
   static defaultMessage = 'Error creating automation'
   static code = 'AUTOMATION_CREATION_ERROR'

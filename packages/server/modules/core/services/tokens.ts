@@ -16,6 +16,8 @@ import {
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { Optional, ServerRoles } from '@speckle/shared'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
+import { TokenCreateError } from '@/modules/core/errors/user'
+import { UserInputError } from 'apollo-server-express'
 
 /*
   Tokens
@@ -50,7 +52,7 @@ export async function createToken({
 }) {
   const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
-  if (scopes.length === 0) throw new Error('No scopes provided')
+  if (scopes.length === 0) throw new TokenCreateError('No scopes provided')
 
   const token = {
     id: tokenId,
@@ -163,7 +165,7 @@ export async function revokeToken(tokenId: string, userId: string) {
   tokenId = tokenId.slice(0, 10)
   const delCount = await ApiTokens.knex().where({ id: tokenId, owner: userId }).del()
 
-  if (delCount === 0) throw new Error('Did not revoke token')
+  if (delCount === 0) throw new UserInputError('Token revokation failed')
   return true
 }
 
@@ -172,7 +174,7 @@ export async function revokeTokenById(tokenId: string) {
     .where({ id: tokenId.slice(0, 10) })
     .del()
 
-  if (delCount === 0) throw new Error('Token revokation failed')
+  if (delCount === 0) throw new UserInputError('Token revokation failed')
   return true
 }
 

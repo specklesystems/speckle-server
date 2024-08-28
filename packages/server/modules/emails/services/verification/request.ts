@@ -18,7 +18,7 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
-import { UserNotFoundError } from '@/modules/automate/errors/management'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 

@@ -10,16 +10,19 @@ export class ForbiddenError extends BaseError {
 }
 
 /**
- * Use this in logic branches that should never execute, and if they do - it means
- * there's most definitely a bug in the code
+ * Use this in logic branches that should never execute,
+ * and which invalid user input alone should not be able to reach.
+ * If this error is thrown it means there's most definitely a bug in the code
  */
 export class LogicError extends BaseError {
   static code = 'LOGIC_ERROR'
   static defaultMessage = 'An unexpected issue occurred'
+  static statusCode = 500
 }
 
 /**
- * Use this to throw when the request lacks valid authentication credentials
+ * Use this to throw when the request lacks valid authentication credentials.
+ * Aka NonAuthorizedError or NotAuthorizedError
  */
 export class UnauthorizedError extends BaseError {
   static code = 'UNAUTHORIZED_ACCESS_ERROR'
@@ -27,14 +30,22 @@ export class UnauthorizedError extends BaseError {
   static statusCode = 401
 }
 
+/**
+ * Use this to throw when there is not a more specific xNotFoundError to throw instead. e.g. UserNotFoundError or StreamNotFoundError
+ */
 export class NotFoundError extends BaseError {
   static code = 'NOT_FOUND_ERROR'
   static defaultMessage = "These aren't the droids you're looking for."
   static statusCode = 404
 }
 
+/**
+ * Use this to throw when the request contains invalid headers, missing headers,
+ * invalid http request method, or similar issues.
+ * Where possible, use a ZodError or UserInputError - or a more specific xValidationError -
+ * for body schema and content validation issues.
+ */
 export class BadRequestError extends BaseError {
-  //FIXME why would we use this over an UserInputError?
   static code = 'BAD_REQUEST_ERROR'
   static defaultMessage = 'The request contains invalid data'
   static statusCode = 400
@@ -61,12 +72,20 @@ export class RichTextParseError extends BaseError {
   static statusCode = 400
 }
 
+/**
+ * Middleware is expected to generate a context for each request
+ * This error denotes issues in creating the context in the middleware,
+ * or in consumers of the context if it is missing or invalid
+ */
 export class ContextError extends BaseError {
   static code = 'CONTEXT_ERROR'
   static defaultMessage = 'The context is missing from the request'
   static statusCode = 500
 }
 
+/**
+ * Environment variables, files, or other configuration is missing or misconfigured
+ */
 export class MisconfiguredEnvironmentError extends BaseError {
   static code = 'MISCONFIGURED_ENVIRONMENT_ERROR'
   static defaultMessage =
@@ -87,7 +106,7 @@ export class EnvironmentResourceError extends BaseError {
   static statusCode = 502
 }
 
-export class DatabaseError extends BaseError {
+export class DatabaseError extends EnvironmentResourceError {
   static code = 'DATABASE_ERROR'
   static defaultMessage = 'An error occurred while trying to access the database.'
   static statusCode = 502

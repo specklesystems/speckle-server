@@ -103,6 +103,7 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -220,7 +221,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const versionId = parent.id
           const branch = await ctx.loaders.commits.getCommitBranch.load(versionId)
-          if (!branch) throw Error('Invalid version Id')
+          if (!branch) throw new BranchNotFoundError('Invalid version Id')
 
           const projectId = branch.streamId
           const modelId = branch.id
