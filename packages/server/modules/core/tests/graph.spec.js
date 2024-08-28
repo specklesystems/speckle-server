@@ -1044,7 +1044,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res2).to.be.json
         expect(res2.body.errors).to.exist
-        expect(res2.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
+        expect(res2.body.errors[0].extensions.code).to.equal('BRANCH_NOT_FOUND')
         expect(res2.body.errors[0].message).to.equal(
           'The branch ID and stream ID do not match, please check your inputs'
         )
@@ -1269,14 +1269,14 @@ describe('GraphQL API Core @core-api', () => {
         let res = await sendRequest(userB.token, { query: queryLim })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
+        expect(res.body.errors[0].extensions.code).to.equal('USER_INPUT_ERROR')
 
         const queryPagination =
           'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
         res = await sendRequest(userB.token, { query: queryPagination })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
+        expect(res.body.errors[0].extensions.code).to.equal('USER_INPUT_ERROR')
       })
     })
 
