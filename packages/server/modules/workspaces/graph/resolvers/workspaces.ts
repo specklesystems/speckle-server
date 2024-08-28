@@ -1,5 +1,9 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  ResolverTypeWrapper,
+  Resolvers,
+  WorkspaceBilling
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
@@ -64,7 +68,8 @@ import {
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countProjectsVersionsByWorkspaceIdFactory
+  countProjectsVersionsByWorkspaceIdFactory,
+  getWorkspaceRolesCountFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -90,6 +95,7 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
+  getWorkspaceCostItems,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -107,6 +113,7 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
+import { getCostByRole } from '@/modules/workspaces/helpers/getCostByRole'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -630,15 +637,32 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent })
+        billing: (parent) =>
+          ({ parent } as { parent: Workspace } & ResolverTypeWrapper<WorkspaceBilling>)
       },
       WorkspaceBilling: {
         versionsCount: async (parent) => {
           return {
             current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
-              workspaceId: (parent as { parent: Workspace }).parent.id
+              workspaceId: (parent as unknown as { parent: Workspace }).parent.id
             }),
             max: WORKSPACE_MAX_PROJECTS_VERSIONS
+          }
+        },
+        cost: async (parent) => {
+          const getWorkspaceRolesCount = getWorkspaceRolesCountFactory({ db })
+          const items = await getWorkspaceCostItems({
+            getWorkspaceRolesCount,
+            getCostByRole
+          })({ workspaceId: (parent as unknown as { parent: Workspace }).parent.id })
+          const subTotal = items.reduce(
+            (total, { cost, count }) => total + count * cost,
+            0
+          )
+          return {
+            subTotal,
+            currency: 'GBP',
+            items
           }
         }
       },

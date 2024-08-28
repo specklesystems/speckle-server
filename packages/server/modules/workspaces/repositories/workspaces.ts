@@ -29,7 +29,6 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
-  WorkspaceAcl,
   WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
@@ -37,7 +36,6 @@ import {
   knex,
   ServerAcl,
   ServerInvites,
-  StreamAcl,
   StreamCommits,
   Streams,
   Users
@@ -329,16 +327,46 @@ export const countProjectsVersionsByWorkspaceIdFactory =
 export const getWorkspaceRolesCountFactory =
   ({ db }: { db: Knex }): GetWorkspaceRolesCount =>
   async ({ workspaceId }) => {
-    return await tables
-      .workspacesAcl(db)
-      .select(DbWorkspaceAcl.col.role)
-      .where({ [DbWorkspaceAcl.col.workspaceId]: workspaceId })
-      .leftJoin(Streams.name, Streams.col.workspaceId, DbWorkspaceAcl.col.workspaceId)
-      .leftJoin(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
-      .whereNot({
-        [StreamAcl.col.role]: Roles.Stream.Reviewer,
-        [DbWorkspaceAcl.col.role]: Roles.Workspace.Guest
-      })
-      .groupBy(DbWorkspaceAcl.col.role)
-      .countDistinct(DbWorkspaceAcl.col.userId)
+    const result = await db.raw<{
+      rows: [{ admins: string; members: string; guests: string; viewers: string }]
+    }>(
+      `
+  SELECT
+    SUM(CASE WHEN wa.role = 'workspace:admin' THEN 1 ELSE 0 END) AS admins,
+    SUM(CASE WHEN wa.role = 'workspace:member' THEN 1 ELSE 0 END) AS members,
+    SUM(CASE WHEN wa.role = 'workspace:guest' AND sa."userId" IS NOT NULL THEN 1 ELSE 0 END) AS guests,
+    SUM(CASE WHEN wa.role = 'workspace:guest' AND sa."userId" IS NULL THEN 1 ELSE 0 END) AS viewers
+  FROM
+    workspace_acl wa
+  LEFT JOIN
+    (
+      SELECT DISTINCT sa."userId"
+      FROM stream_acl sa
+      WHERE sa.role = 'stream:contributor' OR sa.role = 'stream:owner'
+    ) sa
+  ON
+    wa."userId" = sa."userId"
+  WHERE
+    wa."workspaceId" = ?
+`,
+      [workspaceId]
+    )
+
+    const defaultCounts = {
+      admins: 0,
+      members: 0,
+      guests: 0,
+      viewers: 0
+    }
+
+    if (!result.rows[0]) {
+      return defaultCounts
+    }
+
+    const row = result.rows[0]
+    const counts = (Object.keys(row) as Array<keyof typeof row>)
+      .filter((key) => row[key])
+      .reduce((acc, key) => ({ ...acc, [key]: parseInt(row[key]) }), {})
+
+    return { ...defaultCounts, ...counts }
   }

@@ -28,8 +28,14 @@ import {
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { Roles } from '@speckle/shared'
-import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
+import {
+  createRandomEmail,
+  createRandomPassword,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
 import { truncateTables } from '@/test/hooks'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -643,12 +649,37 @@ describe('Workspace repositories', () => {
     })
   })
 
-  describe.only('getWorkspaceRolesCountFactory  creates a function, that', () => {
-    it('returns users counts by workspace role', async () => {
+  describe('getWorkspaceRolesCountFactory creates a function, that', () => {
+    it('returns counts when only one admin is present', async () => {
       const admin = {
         id: createRandomPassword(),
         name: createRandomPassword(),
-        email: createRandomPassword()
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      const result = await getWorkspaceRolesCountFactory({ db })({
+        workspaceId: workspace.id
+      })
+      expect(result).to.deep.equal({
+        admins: 1,
+        members: 0,
+        guests: 0,
+        viewers: 0
+      })
+    })
+
+    it('returns counts when there are no guests', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
       }
       await createTestUser(admin)
       const workspace = {
@@ -661,36 +692,245 @@ describe('Workspace repositories', () => {
       const member = {
         id: createRandomPassword(),
         name: createRandomPassword(),
-        email: createRandomPassword()
+        email: createRandomEmail()
       }
       await createTestUser(member)
       await assignToWorkspace(workspace, member, Roles.Workspace.Member)
 
-      const guestWritePermission = {
-        id: createRandomPassword(),
-        name: createRandomPassword(),
-        email: createRandomPassword()
-      }
-      await createTestUser(guestWritePermission)
-      await assignToWorkspace(workspace, guestWritePermission, Roles.Workspace.Guest)
+      const result = await getWorkspaceRolesCountFactory({ db })({
+        workspaceId: workspace.id
+      })
+      expect(result).to.deep.equal({
+        admins: 1,
+        members: 1,
+        guests: 0,
+        viewers: 0
+      })
+    })
 
-      const guestReadPermission = {
+    it('returns counts when there are guests but no project', async () => {
+      const admin = {
         id: createRandomPassword(),
         name: createRandomPassword(),
-        email: createRandomPassword()
+        email: createRandomEmail()
       }
-      await createTestUser(guestReadPermission)
-      await assignToWorkspace(workspace, guestReadPermission, Roles.Workspace.Guest)
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      const member1 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const member2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const member3 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      const guest1 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const guest2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      await Promise.all([
+        createTestUser(member1),
+        createTestUser(member2),
+        createTestUser(member3),
+        createTestUser(guest1),
+        createTestUser(guest2)
+      ])
+      await Promise.all([
+        assignToWorkspace(workspace, member1, Roles.Workspace.Member),
+        assignToWorkspace(workspace, member2, Roles.Workspace.Member),
+        assignToWorkspace(workspace, member3, Roles.Workspace.Member),
+        assignToWorkspace(workspace, guest1, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, guest2, Roles.Workspace.Guest)
+      ])
 
       const result = await getWorkspaceRolesCountFactory({ db })({
         workspaceId: workspace.id
       })
+      expect(result).to.deep.equal({
+        admins: 1,
+        members: 3,
+        guests: 0,
+        viewers: 2 // Guests assigned no to project are considered viewers
+      })
+    })
 
-      expect(result).to.deep.equal([
-        { role: Roles.Workspace.Admin, count: '1' },
-        { role: Roles.Workspace.Guest, count: '1' },
-        { role: Roles.Workspace.Member, count: '1' }
+    it('returns roles counts', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      const member1 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const member2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const member3 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      const guestWriterAllProjects = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const guestWriterOneProject = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      const viewerNoProjects = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const viewerAllProjects = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      const viewerOneProject = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      const admin2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+
+      await Promise.all([
+        createTestUser(admin2),
+        createTestUser(member1),
+        createTestUser(member2),
+        createTestUser(member3),
+        createTestUser(guestWriterAllProjects),
+        createTestUser(guestWriterOneProject),
+        createTestUser(viewerOneProject),
+        createTestUser(viewerAllProjects),
+        createTestUser(viewerNoProjects)
       ])
+      await Promise.all([
+        assignToWorkspace(workspace, admin2, Roles.Workspace.Admin),
+        assignToWorkspace(workspace, member1, Roles.Workspace.Member),
+        assignToWorkspace(workspace, member2, Roles.Workspace.Member),
+        assignToWorkspace(workspace, member3, Roles.Workspace.Member),
+        assignToWorkspace(workspace, guestWriterAllProjects, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, guestWriterOneProject, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, viewerOneProject, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, viewerAllProjects, Roles.Workspace.Guest),
+        assignToWorkspace(workspace, viewerNoProjects, Roles.Workspace.Guest)
+      ])
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id
+      }
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: admin2.id
+      }
+
+      await Promise.all([
+        createTestStream(project1, admin),
+        createTestStream(project2, admin)
+      ])
+
+      await Promise.all([
+        grantStreamPermissions({
+          streamId: project2.id,
+          role: Roles.Stream.Contributor,
+          userId: member1.id
+        }), // should not be considered differently
+        grantStreamPermissions({
+          streamId: project1.id,
+          role: Roles.Stream.Contributor,
+          userId: guestWriterAllProjects.id
+        }),
+        grantStreamPermissions({
+          streamId: project2.id,
+          role: Roles.Stream.Contributor,
+          userId: guestWriterAllProjects.id
+        }),
+        grantStreamPermissions({
+          streamId: project1.id,
+          role: Roles.Stream.Contributor,
+          userId: guestWriterOneProject.id
+        }),
+        grantStreamPermissions({
+          streamId: project2.id,
+          role: Roles.Stream.Reviewer,
+          userId: guestWriterOneProject.id
+        }),
+        grantStreamPermissions({
+          streamId: project1.id,
+          role: Roles.Stream.Reviewer,
+          userId: viewerAllProjects.id
+        }),
+        grantStreamPermissions({
+          streamId: project2.id,
+          role: Roles.Stream.Reviewer,
+          userId: viewerAllProjects.id
+        }),
+        grantStreamPermissions({
+          streamId: project1.id,
+          role: Roles.Stream.Reviewer,
+          userId: viewerOneProject.id
+        })
+      ])
+
+      const result = await getWorkspaceRolesCountFactory({ db })({
+        workspaceId: workspace.id
+      })
+      expect(result).to.deep.equal({
+        admins: 2,
+        members: 3,
+        guests: 2,
+        viewers: 3 // Guests assigned no to project are considered viewers
+      })
     })
   })
 })

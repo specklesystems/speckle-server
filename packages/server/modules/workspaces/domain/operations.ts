@@ -157,4 +157,4 @@ export type GetWorkspaceRolesCount = ({
   workspaceId
 }: {
   workspaceId: string
-}) => Promise<{ role: WorkspaceRoles; count: number }[]>
+}) => Promise<{ admins: number; members: number; guests: number; viewers: number }>
