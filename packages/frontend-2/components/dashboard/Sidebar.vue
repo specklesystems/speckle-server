@@ -57,6 +57,14 @@
               v-if="isWorkspacesEnabled && workspacesItems.length"
               collapsible
               title="Workspaces"
+              :plus-click="
+                isUserAdmin
+                  ? () => {
+                      showWorkspaceCreateDialog = true
+                    }
+                  : undefined
+              "
+              plus-text="Create workspace"
             >
               <NuxtLink :to="workspacesRoute">
                 <LayoutSidebarMenuGroupItem
@@ -88,15 +96,6 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <LayoutSidebarMenuGroupItem
-                v-if="isUserAdmin"
-                label="Add workspace"
-                @click="showWorkspaceCreateDialog = true"
-              >
-                <template #icon>
-                  <PlusIcon class="h-4 w-4 text-foreground-2" />
-                </template>
-              </LayoutSidebarMenuGroupItem>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources">
@@ -165,8 +164,7 @@ import {
   GlobeAltIcon,
   ClockIcon,
   Squares2X2Icon,
-  HomeIcon,
-  PlusIcon
+  HomeIcon
 } from '@heroicons/vue/24/outline'
 import {
   FormButton,
@@ -204,6 +202,7 @@ const isActive = (...routes: string[]): boolean => {
 }
 
 const isUserAdmin = computed(() => user.value?.role === 'server:admin')
+
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({

@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col">
-    <div v-if="title" class="select-none mb-1">
+    <div v-if="title" class="flex items-center justify-between select-none mb-1">
       <button
         v-if="collapsible"
-        class="group flex space-x-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5"
+        class="group flex space-x-1.5 items-center w-full rounded-md p-0.5"
         @click="isCollapsed = !isCollapsed"
       >
         <ChevronRightIcon
@@ -36,6 +36,17 @@
           {{ title }}
         </h6>
       </div>
+      <FormButton
+        v-if="plusClick"
+        v-tippy="plusText ? plusText : undefined"
+        color="subtle"
+        size="sm"
+        hide-text
+        :icon-left="PlusIcon"
+        @click="plusClick"
+      >
+        {{ plusText }}
+      </FormButton>
     </div>
 
     <div
@@ -49,13 +60,16 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { ref, onMounted } from 'vue'
+import FormButton from '~~/src/components/form/Button.vue'
 
 const props = defineProps<{
   title?: string
   collapsible?: boolean
   collapsed?: boolean
+  plusText?: string
+  plusClick?: () => void
 }>()
 
 const isCollapsed = ref(true)
