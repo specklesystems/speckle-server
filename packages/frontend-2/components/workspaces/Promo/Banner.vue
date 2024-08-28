@@ -28,14 +28,14 @@
         <CommonBadge rounded class="">BETA</CommonBadge>
       </div>
       <p class="text-body-sm mt-4">
-        Talented teams around the world use Workspaces for seamless project delivery.
-        Control and easier collaboration with a shared space for your team and data.
+        You are one click away from reaching higher data security, more data control,
+        and better project management with your team. Get your workspace today!
       </p>
       <div class="flex mt-6 gap-2">
         <FormButton :disabled="!isAdmin" color="outline" @click="$emit('create')">
           Create workspace
         </FormButton>
-        <FormButton color="subtle">Learn more</FormButton>
+        <!-- <FormButton color="subtle">Learn more</FormButton> -->
       </div>
     </div>
   </div>
