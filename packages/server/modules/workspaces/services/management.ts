@@ -249,7 +249,6 @@ export const deleteWorkspaceRoleFactory =
     // Perform delete
     const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
     if (!deletedRole) {
-      // await trx.commit()
       return null
     }
 
