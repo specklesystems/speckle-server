@@ -2,7 +2,7 @@
 import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
-import { type SpeckleObject } from '../../../index.js'
+import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
 
@@ -688,6 +688,15 @@ export default class SpeckleConverter {
       if (!this.instanceProxies[k]) {
         this.instancedObjectsLookupTable[k].parentLayerApplicationId =
           objectNode.parent.model.raw.applicationId
+      } else {
+        const definitionId = this.instanceProxies[k].model.raw.definitionId
+        const proxies = Object.values(this.instanceProxies)
+        proxies.forEach((value: TreeNode) => {
+          if (value.model.raw.definitionId === definitionId) {
+            value.model.raw.parentLayerApplicationId =
+              value.parent.model.raw.applicationId
+          }
+        })
       }
       /** Remove the instance from the list (if needed) */
       delete this.instanceProxies[k]
@@ -729,50 +738,51 @@ export default class SpeckleConverter {
       return true
     })
 
-    let count = 0
+    const key = '4823a9e8-6b32-4133-9214-ae6e2df9a4be'
     for (const k in this.instanceProxies) {
-      const instanceProxyNode = this.instanceProxies[k]
-      const instanceProxyColor =
-        this.colorMap[instanceProxyNode.model.raw.applicationId]
-      const instanceNodes = instanceProxyNode.children[0].children
-      for (let i = 0; i < instanceNodes.length; i++) {
-        const instanceNode = instanceNodes[i]
-        const instanceColor = this.colorMap[instanceNode.model.raw.applicationId]
-        let parentColor = this.colorMap[instanceNode.model.raw.parentLayerApplicationId]
-        if (instanceNode.model.raw.maxDepth > 0) {
-          parentColor = this.colorMap[instanceProxyNode.parent.model.raw.applicationId]
-        }
-        console.warn('Parent -> ', parentColor)
-        console.warn(instanceColor)
-        if (
-          instanceColor &&
-          instanceColor.source &&
-          instanceColor.source === 'object'
-        ) {
-          instanceNode.model.color = instanceColor.value
-        } else if (
-          instanceColor &&
-          instanceColor.source &&
-          instanceColor.source === 'block'
-        ) {
-          if (
-            instanceProxyColor &&
-            instanceProxyColor.source &&
-            (instanceProxyColor.source === 'block' ||
-              instanceProxyColor.source === 'object')
+      const maxDepth = this.tree
+        .findAll(
+          (node: TreeNode) =>
+            this.getSpeckleType(node.model.raw) === SpeckleType.InstanceProxy,
+          this.instanceProxies[k]
+        )
+        .reduce((prev, current) =>
+          prev && prev.model.raw.maxDepth > current.model.raw.maxDepth ? prev : current
+        ).model.raw.maxDepth
+      const instanceProxyNodes = this.tree.findAll(
+        (node: TreeNode) => node.model.raw.maxDepth === maxDepth,
+        this.instanceProxies[k]
+      )
+      for (let i = 0; i < instanceProxyNodes.length; i++) {
+        const instanceColor =
+          this.colorMap[instanceProxyNodes[i].model.raw.applicationId] ||
+          this.colorMap[instanceProxyNodes[i].model.raw.parentLayerApplicationId]
+        const instancedNodes = instanceProxyNodes[i].children[0].children
+        for (let j = 0; j < instancedNodes.length; j++) {
+          const geometryColor = this.colorMap[instancedNodes[j].model.raw.applicationId]
+          const geometryLayerColor =
+            this.colorMap[instancedNodes[j].model.raw.parentLayerApplicationId]
+          if (!geometryColor) {
+            instancedNodes[j].model.color = geometryLayerColor.value
+          } else if (
+            geometryColor.source === 'object' ||
+            geometryColor.source === 'layer'
           ) {
-            instanceNode.model.color = instanceProxyColor.value
-          } else if (!instanceProxyColor) {
-            instanceNode.model.color = undefined
+            instancedNodes[j].model.color = geometryColor.value
+          } else if (geometryColor.source === 'block') {
+            if (instanceColor) {
+              if (
+                instanceColor.source === 'object' ||
+                instanceColor.source === 'block'
+              ) {
+                instancedNodes[j].model.color = instanceColor.value
+              }
+            } else {
+              instancedNodes[j].model.color = instanceColor.value
+            }
           }
-        } else if (!instanceColor) {
-          if (parentColor) instanceNode.model.color = parentColor.value
         }
       }
-
-      console.warn('Instance -> ', instanceProxyColor)
-      count++
-      // if (count === 3) break
     }
   }
 
