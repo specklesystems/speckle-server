@@ -251,7 +251,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspaceWithProjects.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
@@ -300,7 +300,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspaceWithProjects.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
@@ -346,7 +346,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspaceWithProjects.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.not.haveGraphQLErrors()
@@ -395,7 +395,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspaceWithProjects.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.not.haveGraphQLErrors()

@@ -47,7 +47,7 @@ describe('Workspace join services', () => {
           getWorkspaceWithDomains: async () => {
             return createTestWorkspaceWithDomains()
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -69,7 +69,7 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: false }] as WorkspaceDomain[]
             })
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -92,7 +92,7 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
             })
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -116,7 +116,7 @@ describe('Workspace join services', () => {
             domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
           })
         },
-        insertWorkspaceRole: async (workspaceRole) => {
+        upsertWorkspaceRole: async (workspaceRole) => {
           storedWorkspaceRole = workspaceRole
         },
         emitWorkspaceEvent: async ({ eventName }) => {

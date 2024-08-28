@@ -4,7 +4,7 @@ import { Roles } from '@speckle/shared'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 
 describe('given a workspace with several admins', () => {
-  const workspaceRoles: WorkspaceAcl[] = [
+  const workspaceRoles: Omit<WorkspaceAcl, 'createdAt'>[] = [
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',
@@ -36,7 +36,7 @@ describe('given a workspace with several admins', () => {
 })
 
 describe('given a workspace with one admin', () => {
-  const workspaceRoles: WorkspaceAcl[] = [
+  const workspaceRoles: Omit<WorkspaceAcl, 'createdAt'>[] = [
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',
@@ -63,7 +63,7 @@ describe('given a workspace with one admin', () => {
 })
 
 describe('given a workspace', () => {
-  const workspaceRoles: WorkspaceAcl[] = [
+  const workspaceRoles: Omit<WorkspaceAcl, 'createdAt'>[] = [
     {
       workspaceId: 'workspace-id',
       userId: 'non-admin',

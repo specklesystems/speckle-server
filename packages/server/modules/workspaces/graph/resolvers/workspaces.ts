@@ -403,7 +403,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           await joinWorkspaceFactory({
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 

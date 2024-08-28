@@ -29,10 +29,5 @@ export type WorkspaceAcl = {
   userId: string
   role: WorkspaceRoles
   workspaceId: string
-}
-
-export type WorkspaceAclUpdate = WorkspaceAcl & {
-  // Unique id for this update record
-  id: string
-  updatedAt: Date
+  createdAt: Date
 }

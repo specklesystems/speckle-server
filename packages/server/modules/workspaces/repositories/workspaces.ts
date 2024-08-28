@@ -1,7 +1,6 @@
 import {
   Workspace,
   WorkspaceAcl,
-  WorkspaceAclUpdate,
   WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -30,7 +29,6 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
-  WorkspaceAclUpdates,
   WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
@@ -54,14 +52,12 @@ import {
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { clamp } from 'lodash'
-import cryptoRandomString from 'crypto-random-string'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
-  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
-  workspaceAclUpdates: (db: Knex) => db<WorkspaceAclUpdate>('workspace_acl_updates')
+  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
 
 export const getUserDiscoverableWorkspacesFactory =
@@ -211,7 +207,7 @@ export const deleteWorkspaceRoleFactory =
 
 export const upsertWorkspaceRoleFactory =
   ({ db }: { db: Knex }): UpsertWorkspaceRole =>
-  async ({ userId, workspaceId, role }) => {
+  async ({ userId, workspaceId, role, createdAt }) => {
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
@@ -220,17 +216,9 @@ export const upsertWorkspaceRoleFactory =
 
     await tables
       .workspacesAcl(db)
-      .insert({ userId, workspaceId, role })
+      .insert({ userId, workspaceId, role, createdAt })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
-
-    await tables.workspaceAclUpdates(db).insert({
-      id: cryptoRandomString({ length: 10 }),
-      updatedAt: new Date(),
-      userId,
-      workspaceId,
-      role
-    })
   }
 
 export const getWorkspaceCollaboratorsTotalCountFactory =
@@ -247,7 +235,7 @@ export const getWorkspaceCollaboratorsFactory =
     const query = DbWorkspaceAcl.knex(db)
       .select<
         Array<
-          UserWithRole & { workspaceRole: WorkspaceRoles; workspaceRoleUpdatedAt: Date }
+          UserWithRole & { workspaceRole: WorkspaceRoles; workspaceRoleCreatedAt: Date }
         >
       >([
         ...Users.cols,
@@ -256,17 +244,15 @@ export const getWorkspaceCollaboratorsFactory =
           DbWorkspaceAcl.col.role,
           'workspaceRole'
         ]),
-        knex.raw('(array_agg(?? ORDER BY ?? ASC))[1] as ??', [
-          WorkspaceAclUpdates.col.updatedAt,
-          WorkspaceAclUpdates.col.updatedAt,
-          'workspaceRoleUpdatedAt'
+        knex.raw('(array_agg(??))[1] as ??', [
+          DbWorkspaceAcl.col.createdAt,
+          'workspaceRoleCreatedAt'
         ])
       ])
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
       .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .innerJoin(WorkspaceAclUpdates.name, WorkspaceAclUpdates.col.userId, Users.col.id)
-      .orderBy('workspaceRoleUpdatedAt', 'desc')
+      .orderBy('workspaceRoleCreatedAt', 'desc')
       .groupBy(Users.col.id)
 
     const { search, role } = filter || {}
@@ -282,11 +268,7 @@ export const getWorkspaceCollaboratorsFactory =
     }
 
     if (cursor) {
-      query.andWhere(
-        WorkspaceAclUpdates.col.updatedAt,
-        '<',
-        decodeIsoDateCursor(cursor)
-      )
+      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', decodeIsoDateCursor(cursor))
     }
 
     if (limit) {
@@ -297,13 +279,13 @@ export const getWorkspaceCollaboratorsFactory =
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
       role: i.role,
-      updatedAt: i.workspaceRoleUpdatedAt
+      createdAt: i.workspaceRoleCreatedAt
     }))
 
     return {
       items,
       cursor: items.length
-        ? encodeIsoDateCursor(items[items.length - 1].updatedAt)
+        ? encodeIsoDateCursor(items[items.length - 1].createdAt)
         : null
     }
   }
