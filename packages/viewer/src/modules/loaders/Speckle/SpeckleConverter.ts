@@ -685,6 +685,11 @@ export default class SpeckleConverter {
 
       /** Store the speckle object data */
       this.instancedObjectsLookupTable[k] = objectNode.model.raw
+      /** This part is catering to color proxies source and
+       *  I hate this the most
+       *  We store the definition geometry (which can be an instance if nested) parent layer color
+       *  We do that because these get consumed, so they can no longer be accessed via the WorldTree
+       */
       if (!this.instanceProxies[k]) {
         this.instancedObjectsLookupTable[k].parentLayerApplicationId =
           objectNode.parent.model.raw.applicationId
@@ -729,6 +734,7 @@ export default class SpeckleConverter {
         renderMaterialCount--
       }
 
+      /** For non-instanced objects just use the color if any is present */
       if (this.colorMap[applicationId] !== undefined && !node.model.instanced) {
         node.model.color = this.colorMap[applicationId].value
         colorCount--
@@ -738,7 +744,11 @@ export default class SpeckleConverter {
       return true
     })
 
+    /** For instances, we need some additional parsing */
     for (const k in this.instanceProxies) {
+      /** Find the maxDepth. This is weird because the InstanceProxy's `maxDepth` is more
+       *  like an `inverseMaxDepth`
+       */
       const maxDepth = this.tree
         .findAll(
           (node: TreeNode) =>
@@ -748,31 +758,49 @@ export default class SpeckleConverter {
         .reduce((prev, current) =>
           prev && prev.model.raw.maxDepth > current.model.raw.maxDepth ? prev : current
         ).model.raw.maxDepth
+      /** Get all the leaf InstanceProxy nodes. There might be nested instances
+       *  bu we want the leaf ones
+       */
       const instanceProxyNodes = this.tree.findAll(
         (node: TreeNode) => node.model.raw.maxDepth === maxDepth,
         this.instanceProxies[k]
       )
+      /** Go over them */
       for (let i = 0; i < instanceProxyNodes.length; i++) {
+        /** Get the color of the instance.
+         *  Or it's definition geometry's layer color  */
         const instanceColor =
           this.colorMap[instanceProxyNodes[i].model.raw.applicationId] ||
           this.colorMap[instanceProxyNodes[i].model.raw.parentLayerApplicationId]
+        /** Get the geometry nodes */
         const instancedNodes = instanceProxyNodes[i].children[0].children
         for (let j = 0; j < instancedNodes.length; j++) {
+          /** Get the geometry definition's color
+           *  In the viewer the geometry definition is stored and shared across potential instances
+           *  as the speckle object in `raw`
+           */
           const geometryColor = this.colorMap[instancedNodes[j].model.raw.applicationId]
+          /** Get the definition geometry's layer color */
           const geometryLayerColor =
             this.colorMap[instancedNodes[j].model.raw.parentLayerApplicationId]
+          /** If definition geometry has no color, use it's layer color */
           if (!geometryColor) {
             instancedNodes[j].model.color = geometryLayerColor.value
+            /** If definition geometry color source is object or layer use the definition's color */
           } else if (
             geometryColor.source === 'object' ||
             geometryColor.source === 'layer'
           ) {
             instancedNodes[j].model.color = geometryColor.value
+            /** If definition geometry color source is block, we need some extra stuff */
           } else if (geometryColor.source === 'block') {
+            /** If there is an color for the instance and the source is object just use it */
             if (instanceColor) {
               if (instanceColor.source === 'object') {
                 instancedNodes[j].model.color = instanceColor.value
+                /** If there is a color for the instance and the source is block, search upwards */
               } else if (instanceColor.source === 'block') {
+                /** Get the parent instance, or itself if it's not nested */
                 const parentInstance =
                   this.tree
                     .getAncestors(instanceProxyNodes[i])
@@ -781,6 +809,7 @@ export default class SpeckleConverter {
                         this.getSpeckleType(value.model.raw) ===
                         SpeckleType.InstanceProxy
                     ) || instanceProxyNodes[i]
+                /** Use the parent instance or self instance color */
                 const color = this.colorMap[parentInstance.model.raw.applicationId]
                 instancedNodes[j].model.color = color?.value
               }
