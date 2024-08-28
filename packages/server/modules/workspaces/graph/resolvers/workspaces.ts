@@ -6,7 +6,8 @@ import {
   getUserStreams,
   getUserStreamsCount,
   grantStreamPermissions,
-  revokeStreamPermissions
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -38,6 +39,7 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
@@ -316,35 +318,41 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
-
           if (!role) {
+            const trx = await db.transaction()
+
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-              getWorkspaceRoles,
-              emitWorkspaceEvent,
-              getStreams,
-              revokeStreamPermissions
+              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit,
+              getStreams
             })
 
-            await deleteWorkspaceRole(args.input)
+            await withTransaction(deleteWorkspaceRole(args.input), trx)
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
             }
 
+            const trx = await db.transaction()
+
             const updateWorkspaceRole = updateWorkspaceRoleFactory({
-              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
-              getWorkspaceRoles,
-              emitWorkspaceEvent,
-              getStreams,
-              grantStreamPermissions
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db: trx
+              }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit,
+              getStreams
             })
 
-            await updateWorkspaceRole({ userId, workspaceId, role })
+            await withTransaction(
+              updateWorkspaceRole({ userId, workspaceId, role }),
+              trx
+            )
           }
 
           return await getWorkspaceFactory({ db })({ workspaceId })
@@ -403,21 +411,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId
           })
         },
-        leave: async (_parent, args, ctx) => {
-          const userId = ctx.userId!
-
-          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
-          const emitWorkspaceEvent = getEventBus().emit
+        leave: async (_parent, args, context) => {
+          const trx = await db.transaction()
 
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-            getWorkspaceRoles,
-            emitWorkspaceEvent,
-            getStreams,
-            revokeStreamPermissions
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
+            emitWorkspaceEvent: getEventBus().emit,
+            getStreams
           })
 
-          await deleteWorkspaceRole({ workspaceId: args.id, userId })
+          await withTransaction(
+            deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! }),
+            trx
+          )
 
           return true
         },
