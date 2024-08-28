@@ -3867,7 +3867,7 @@ export type Workspace = {
   /** Verified workspace domains */
   domains: Array<WorkspaceDomain>;
   id: Scalars['ID']['output'];
-  /** Only available to workspace owners */
+  /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
