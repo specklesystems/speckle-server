@@ -13,5 +13,4 @@ export class ObjectHandlingError extends BaseError {
 export class ObjectNotFoundError extends BaseError {
   static defaultMessage = 'Object not found.'
   static code = 'OBJECT_NOT_FOUND'
-  static statusCode = 404
 }

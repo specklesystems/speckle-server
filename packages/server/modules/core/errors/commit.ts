@@ -33,5 +33,4 @@ export class CommitDeleteError extends BaseError {
 export class CommitNotFoundError extends BaseError {
   static defaultMessage = 'Attempting to work with a non-existant commit'
   static code = 'COMMIT_NOT_FOUND'
-  static statusCode = 404
 }
