@@ -6,7 +6,13 @@
       <img
         src="~~/assets/images/workspaces.png"
         alt="Introducing workspaces"
-        class="absolute top-0 right-0 w-8/12 sm:w-7/12 h-full object-cover"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover dark:hidden"
+      />
+
+      <img
+        src="~~/assets/images/workspaces-dark.png"
+        alt="Introducing workspaces"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden dark:block"
       />
 
       <div
