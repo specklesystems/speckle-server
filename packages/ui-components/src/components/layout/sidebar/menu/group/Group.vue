@@ -14,10 +14,7 @@
           :class="[isCollapsed ? '-rotate-90' : '']"
           class="h-2.5 w-2.5 text-foreground-2 shrink-0"
         />
-        <div
-          v-if="$slots['title-icon']"
-          class="h-5 w-5 flex items-center justify-center"
-        >
+        <div v-if="$slots['title-icon']" class="flex items-center justify-center">
           <slot name="title-icon"></slot>
         </div>
         <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
@@ -25,10 +22,7 @@
         </h6>
       </button>
       <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-2">
-        <div
-          v-if="$slots['title-icon']"
-          class="h-5 w-5 flex items-center justify-center"
-        >
+        <div v-if="$slots['title-icon']" class="flex items-center justify-center">
           <slot name="title-icon"></slot>
         </div>
         <h6 class="font-semibold text-xs truncate">
