@@ -60,8 +60,9 @@
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Domain protection</p>
               <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Members won't be able to add users as members (or admins) to a workspace
-                unless they are part of a workspace's email domain.
+                Admins won't be able to add users as members (or admins) to a workspace
+                unless the one of the users email matches one of the workspace's
+                verified email domains.
               </p>
             </div>
             <FormSwitch
@@ -76,8 +77,8 @@
                 Domain discoverability
               </p>
               <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Makes your workspace discoverable by employees who sign up with your
-                company's specified email domain.
+                Makes your workspace discoverable by users who have a verified email
+                address matching one of the workspace's verified domains.
               </p>
             </div>
             <FormSwitch
