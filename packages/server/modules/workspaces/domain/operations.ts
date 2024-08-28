@@ -152,3 +152,9 @@ export type CountProjectsVersionsByWorkspaceId = ({
 }: {
   workspaceId: string
 }) => Promise<number>
+
+export type GetWorkspaceRolesCount = ({
+  workspaceId
+}: {
+  workspaceId: string
+}) => Promise<{ role: WorkspaceRoles; count: number }[]>

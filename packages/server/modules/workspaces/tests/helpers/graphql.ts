@@ -49,6 +49,15 @@ export const workspaceBillingFragment = gql`
     }
   }
 `
+export const workspaceProjectsFragment = gql`
+  fragment WorkspaceProjects on ProjectCollection {
+    items {
+      id
+    }
+    cursor
+    totalCount
+  }
+`
 
 export const createWorkspaceInviteQuery = gql`
   mutation CreateWorkspaceInvite(
@@ -113,9 +122,22 @@ export const getWorkspaceWithBillingQuery = gql`
       ...WorkspaceBilling
     }
   }
-
   ${basicWorkspaceFragment}
   ${workspaceBillingFragment}
+`
+
+export const getWorkspaceWithProjectsQuery = gql`
+  query GetWorkspaceWithProjects($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      projects {
+        ...WorkspaceProjects
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${workspaceProjectsFragment}
 `
 
 export const cancelInviteMutation = gql`

@@ -9,7 +9,8 @@ import {
   deleteWorkspaceFactory,
   storeWorkspaceDomainFactory,
   getUserDiscoverableWorkspacesFactory,
-  getWorkspaceWithDomainsFactory
+  getWorkspaceWithDomainsFactory,
+  getWorkspaceRolesCountFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -19,6 +20,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   BasicTestWorkspace,
+  assignToWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
@@ -638,6 +640,57 @@ describe('Workspace repositories', () => {
         id: workspace.id
       })
       expect(workspaceWithDomains?.domains.length).to.eq(1)
+    })
+  })
+
+  describe.only('getWorkspaceRolesCountFactory  creates a function, that', () => {
+    it('returns users counts by workspace role', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+
+      const guestWritePermission = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(guestWritePermission)
+      await assignToWorkspace(workspace, guestWritePermission, Roles.Workspace.Guest)
+
+      const guestReadPermission = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(guestReadPermission)
+      await assignToWorkspace(workspace, guestReadPermission, Roles.Workspace.Guest)
+
+      const result = await getWorkspaceRolesCountFactory({ db })({
+        workspaceId: workspace.id
+      })
+
+      expect(result).to.deep.equal([
+        { role: Roles.Workspace.Admin, count: '1' },
+        { role: Roles.Workspace.Guest, count: '1' },
+        { role: Roles.Workspace.Member, count: '1' }
+      ])
     })
   })
 })
