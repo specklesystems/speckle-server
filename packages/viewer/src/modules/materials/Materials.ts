@@ -415,6 +415,7 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).vertexColors = true
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).toneMapped = false
 
     this.lineColoredMaterial = new SpeckleLineMaterial(
       {
@@ -433,6 +434,7 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).vertexColors = true
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).toneMapped = false
 
     this.lineHiddenMaterial = new SpeckleLineMaterial(
       {
@@ -737,6 +739,7 @@ export default class Materials {
     mat.vertexColors = true
     mat.pixelThreshold = 0.5
     mat.resolution = new Vector2()
+    mat.toneMapped = false
 
     return mat
   }
