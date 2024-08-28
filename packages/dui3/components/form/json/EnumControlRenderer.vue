@@ -7,6 +7,7 @@
     :items="control.options"
     :multiple="multiple"
     :help="control.description"
+    :allow-unset="false"
     show-label
     by="value"
     button-style="tinted"
