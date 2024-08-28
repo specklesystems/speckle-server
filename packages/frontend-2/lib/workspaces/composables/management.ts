@@ -334,6 +334,7 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
+  const mixpanel = useMixpanel()
 
   return async (
     input: WorkspaceCreateInput,
@@ -343,6 +344,12 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
+    }>,
+    eventProperties?: Partial<{
+      /**
+       * Used for sending the Mixpanel event
+       */
+      source: string
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -357,6 +364,13 @@ export function useCreateWorkspace() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.workspaceMutations.create.id) {
+      mixpanel.track('Workspace Created', {
+        source: eventProperties?.source,
+        fields: Object.keys(input) as Array<keyof WorkspaceCreateInput>,
+        // eslint-disable-next-line camelcase
+        workspace_id: res.data?.workspaceMutations.create.id
+      })
+
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'

@@ -280,6 +280,7 @@ describe('Webhooks @webhooks', () => {
         query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}" } ) }`
       })
       expect(res1.body.errors).to.exist
+      expect(res1.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res1.body.errors[0].message).to.equal(
         'The webhook id and stream id do not match. Please check your inputs.'
       )
@@ -289,6 +290,7 @@ describe('Webhooks @webhooks', () => {
         query: `mutation { webhookUpdate(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}", description: "updated webhook", enabled: false }) }`
       })
       expect(res2.body.errors).to.exist
+      expect(res2.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res2.body.errors[0].message).to.equal(
         'The webhook id and stream id do not match. Please check your inputs.'
       )

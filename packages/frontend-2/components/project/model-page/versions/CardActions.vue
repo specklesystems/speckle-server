@@ -4,6 +4,7 @@
     <LayoutMenu
       v-model:open="showActionsMenu"
       :items="actionsItems"
+      :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -22,6 +23,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void

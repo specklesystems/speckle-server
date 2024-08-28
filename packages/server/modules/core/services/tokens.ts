@@ -17,7 +17,7 @@ import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { Optional, ServerRoles } from '@speckle/shared'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 import { TokenCreateError } from '@/modules/core/errors/user'
-import { UserInputError } from 'apollo-server-express'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 /*
   Tokens

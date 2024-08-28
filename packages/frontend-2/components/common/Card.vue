@@ -1,10 +1,14 @@
 <template>
-  <div class="border border-outline-3 rounded-lg p-5 py-4">
+  <div class="border border-outline-3 rounded-lg p-5">
     <div v-if="$slots.icon" class="mb-4">
       <slot name="icon" />
     </div>
 
-    <p v-if="title" class="text-heading-sm text-foreground">{{ title }}</p>
+    <div v-if="title" class="flex items-center gap-2">
+      <p class="text-heading-sm text-foreground">{{ title }}</p>
+      <CommonBadge v-if="badge" rounded>{{ badge }}</CommonBadge>
+    </div>
+
     <p v-if="description" class="text-body-xs text-foreground-2 pt-1">
       {{ description }}
     </p>
@@ -40,5 +44,6 @@ defineProps<{
   title?: string
   description?: string
   buttons?: LayoutDialogButton[]
+  badge?: string
 }>()
 </script>

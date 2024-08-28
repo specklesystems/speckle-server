@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col divide-y divide-outline-3">
+  <div class="flex flex-col">
     <WorkspaceInviteBanner
       v-for="invite in invites"
       :key="invite.id"
