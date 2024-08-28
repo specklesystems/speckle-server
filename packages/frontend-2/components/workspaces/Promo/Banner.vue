@@ -29,7 +29,7 @@
         <FormButton :disabled="!isAdmin" color="outline" @click="$emit('create')">
           Create workspace
         </FormButton>
-        <FormButton color="subtle">Learn more</FormButton>
+        <!-- <FormButton color="subtle">Learn more</FormButton> -->
       </div>
     </div>
   </div>
