@@ -3,6 +3,8 @@ import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
+  WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
@@ -12,10 +14,17 @@ import { UserWithRole } from '@/modules/core/repositories/users'
 /** Workspace */
 
 type UpsertWorkspaceArgs = {
-  workspace: Workspace
+  workspace: Omit<Workspace, 'domains'>
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+
+export type GetUserDiscoverableWorkspaces = (args: {
+  domains: string[]
+  userId: string
+}) => Promise<
+  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -27,9 +36,23 @@ export type GetWorkspaces = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type StoreWorkspaceDomain = (args: {
+  workspaceDomain: WorkspaceDomain
+}) => Promise<void>
+
+export type GetWorkspaceDomains = (args: {
+  workspaceIds: string[]
+}) => Promise<WorkspaceDomain[]>
+
 type DeleteWorkspaceArgs = {
   workspaceId: string
 }
+
+export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
+
+export type GetWorkspaceWithDomains = (args: {
+  id: string
+}) => Promise<WorkspaceWithDomains | null>
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
@@ -138,3 +161,9 @@ export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
+
+export type CountProjectsVersionsByWorkspaceId = ({
+  workspaceId
+}: {
+  workspaceId: string
+}) => Promise<number>

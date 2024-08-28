@@ -1,7 +1,12 @@
 <template>
   <div :class="mainClasses">
     <div :class="mainInfoBlockClasses">
-      <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
+      <UserAvatar v-if="invite.invitedBy" :user="invite.invitedBy" :size="avatarSize" />
+      <WorkspaceAvatar
+        v-if="invite.workspace"
+        :logo="invite.workspace.logo"
+        :default-logo-index="invite.workspace.defaultLogoIndex"
+      />
       <div class="text-foreground">
         <slot name="message" />
       </div>
@@ -9,6 +14,7 @@
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
+          v-if="!invite.workspace"
           :size="buttonSize"
           color="subtle"
           text
@@ -59,7 +65,12 @@ defineEmits<{
 }>()
 
 type GenericInviteItem = {
-  invitedBy: AvatarUserType
+  invitedBy?: AvatarUserType
+  workspace?: {
+    id: string
+    logo?: string
+    defaultLogoIndex: number
+  }
   user?: MaybeNullOrUndefined<{
     id: string
   }>
@@ -85,7 +96,9 @@ const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
 const mainClasses = computed(() => {
-  const classParts = ['flex flex-col space-y-4 px-4 py-5 transition ']
+  const classParts = [
+    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg'
+  ]
 
   if (props.block) {
     classParts.push('')

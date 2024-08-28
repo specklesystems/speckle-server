@@ -170,7 +170,7 @@ const showActionsMenu = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
   ]
 
   if (versionCount.value > 0) {

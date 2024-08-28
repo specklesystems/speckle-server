@@ -7,12 +7,17 @@
       :workspace="workspace"
     />
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
         { id: 'verified', header: 'Status', classes: 'col-span-3' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' }
+        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
       :items="members"
       :loading="searchResultLoading"
@@ -43,6 +48,7 @@
       </template>
       <template #role="{ item }">
         <FormSelectWorkspaceRoles
+          :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
           @update:model-value="
@@ -50,8 +56,23 @@
           "
         />
       </template>
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionsItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
-
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
@@ -59,7 +80,6 @@
       :new-role="newRole"
       @update-role="onUpdateRole"
     />
-
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
       :name="userToModify?.name ?? ''"
@@ -74,8 +94,11 @@ import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/qu
 import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { Roles } from '@speckle/shared'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -106,6 +129,10 @@ graphql(`
   }
 `)
 
+enum ActionTypes {
+  RemoveMember = 'remove-member'
+}
+
 const props = defineProps<{
   workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
   workspaceId: string
@@ -133,6 +160,8 @@ const showDeleteUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
+const showActionsMenu = ref<Record<string, boolean>>({})
+
 const members = computed(() => {
   const memberArray = search.value.length
     ? searchResult.value?.workspace?.team.items
@@ -144,6 +173,11 @@ const members = computed(() => {
 })
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+
+const actionsItems: LayoutMenuItem[][] = [
+  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }]
+]
 
 const openChangeUserRoleDialog = (
   user: UserItem,
@@ -178,5 +212,19 @@ const onRemoveUser = async () => {
     role: null,
     workspaceId: props.workspaceId
   })
+}
+
+const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
+  userToModify.value = user
+
+  switch (actionItem.id) {
+    case ActionTypes.RemoveMember:
+      openDeleteUserRoleDialog(user)
+      break
+  }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 </script>

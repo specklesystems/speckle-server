@@ -1,6 +1,6 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { convertDateToCursor, parseCursorToDate } from '@/modules/core/services/admin'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
+import { getUserStreams } from '@/modules/core/repositories/streams'
 import { QueryAllWorkspaceProjects } from '@/modules/workspaces/domain/operations'
 import { WorkspaceQueryError } from '@/modules/workspaces/errors/workspace'
 
@@ -45,34 +45,31 @@ type GetWorkspaceProjectsOptions = {
   cursor: string | null
   filter: {
     search?: string | null
-  } | null
+    userId: string
+  }
 }
 
 type GetWorkspaceProjectsReturnValue = {
   items: StreamRecord[]
   cursor: string | null
-  totalCount: number
 }
 
 export const getWorkspaceProjectsFactory =
-  ({ getStreams }: { getStreams: typeof serviceGetStreams }) =>
+  ({ getStreams }: { getStreams: typeof getUserStreams }) =>
   async (
     args: GetWorkspaceProjectsArgs,
     opts: GetWorkspaceProjectsOptions
   ): Promise<GetWorkspaceProjectsReturnValue> => {
-    const { streams, cursorDate, totalCount } = await getStreams({
-      cursor: opts.cursor ? parseCursorToDate(opts.cursor) : null,
-      orderBy: null,
+    const { streams, cursor } = await getStreams({
+      cursor: opts.cursor,
       limit: opts.limit || 25,
-      visibility: null,
-      searchQuery: opts.filter?.search || null,
-      streamIdWhitelist: null,
-      workspaceIdWhitelist: [args.workspaceId]
+      searchQuery: opts.filter?.search || undefined,
+      workspaceId: args.workspaceId,
+      userId: opts.filter.userId
     })
 
     return {
       items: streams,
-      cursor: cursorDate ? convertDateToCursor(cursorDate) : null,
-      totalCount
+      cursor
     }
   }

@@ -29,6 +29,7 @@ export type ActiveUserMutations = {
   finishOnboarding: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
+  workspaceMutations?: Maybe<UserWorkspaceMutations>;
 };
 
 
@@ -54,6 +55,11 @@ export type ActivityCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items?: Maybe<Array<Maybe<Activity>>>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AddDomainToWorkspaceInput = {
+  domain: Scalars['String']['input'];
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type AdminInviteList = {
@@ -841,6 +847,13 @@ export enum DiscoverableStreamsSortType {
 export type DiscoverableStreamsSortingInput = {
   direction: SortDirection;
   type: DiscoverableStreamsSortType;
+};
+
+export type DiscoverableWorkspace = {
+  __typename?: 'DiscoverableWorkspace';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type EditCommentInput = {
@@ -3365,6 +3378,8 @@ export type User = {
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Get discoverable workspaces with verified domains that match the active user's */
+  discoverableWorkspaces: Array<DiscoverableWorkspace>;
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   emails: Array<UserEmail>;
@@ -4030,4 +4045,4 @@ export type AcccountTestQueryQueryVariables = Exact<{ [key: string]: never; }>;
 export type AcccountTestQueryQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', version?: string | null, name: string, company?: string | null } };
 
 
-export const AcccountTestQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AcccountTestQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}}]}}]}}]} as unknown as DocumentNode<AcccountTestQueryQuery, AcccountTestQueryQueryVariables>;
+export const AcccountTestQueryDocument = { "kind": "Document", "definitions": [{ "kind": "OperationDefinition", "operation": "query", "name": { "kind": "Name", "value": "AcccountTestQuery" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "serverInfo" }, "selectionSet": { "kind": "SelectionSet", "selections": [{ "kind": "Field", "name": { "kind": "Name", "value": "version" } }, { "kind": "Field", "name": { "kind": "Name", "value": "name" } }, { "kind": "Field", "name": { "kind": "Name", "value": "company" } }] } }] } }] } as unknown as DocumentNode<AcccountTestQueryQuery, AcccountTestQueryQueryVariables>;

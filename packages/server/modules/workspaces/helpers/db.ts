@@ -7,7 +7,9 @@ export const Workspaces = buildTableHelper('workspaces', [
   'createdAt',
   'updatedAt',
   'logo',
-  'defaultLogoIndex'
+  'defaultLogoIndex',
+  'domainBasedMembershipProtectionEnabled',
+  'discoverabilityEnabled'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
@@ -22,4 +24,14 @@ export const WorkspaceAclUpdates = buildTableHelper('workspace_acl_updates', [
   'role',
   'workspaceId',
   'updatedAt'
+])
+
+export const WorkspaceDomains = buildTableHelper('workspace_domains', [
+  'id',
+  'workspaceId',
+  'domain',
+  'createdAt',
+  'updatedAt',
+  'createdByUserId',
+  'verified'
 ])

@@ -1,5 +1,10 @@
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceDomain
+} from '@/modules/workspacesCore/domain/types'
+import {
+  addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceRoleFactory
@@ -10,9 +15,21 @@ import cryptoRandomString from 'crypto-random-string'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
+import {
+  WorkspaceAdminRequiredError,
+  WorkspaceDomainBlockedError,
+  WorkspaceProtectedError,
+  WorkspaceUnverifiedDomainError
+} from '@/modules/workspaces/errors/workspace'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { omit } from 'lodash'
+import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
+import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { EventNames } from '@/modules/shared/services/eventBus'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Workspace[]
+  storedWorkspaces: Omit<Workspace, 'domains'>[]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -22,7 +39,7 @@ type WorkspaceTestContext = {
 }
 
 const buildCreateWorkspaceWithTestContext = (
-  dependecyOverrides: Partial<Parameters<typeof createWorkspaceFactory>[0]> = {}
+  dependencyOverrides: Partial<Parameters<typeof createWorkspaceFactory>[0]> = {}
 ) => {
   const context: WorkspaceTestContext = {
     storedWorkspaces: [],
@@ -35,7 +52,11 @@ const buildCreateWorkspaceWithTestContext = (
   }
 
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
-    upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
+    upsertWorkspace: async ({
+      workspace
+    }: {
+      workspace: Omit<Workspace, 'domains'>
+    }) => {
       context.storedWorkspaces.push(workspace)
     },
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
@@ -47,7 +68,7 @@ const buildCreateWorkspaceWithTestContext = (
       context.eventData.payload = payload
       return []
     },
-    ...dependecyOverrides
+    ...dependencyOverrides
   }
 
   const createWorkspace = createWorkspaceFactory(deps)
@@ -80,7 +101,7 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal(workspace)
+      expect(context.storedWorkspaces[0]).to.deep.equal(omit(workspace, 'domains'))
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -127,11 +148,13 @@ type WorkspaceRoleTestContext = {
     eventName: string
     payload: unknown
   }
+  workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain[]> }>
 }
 
 const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
+  const workspaceId = cryptoRandomString({ length: 10 })
   return {
-    workspaceId: cryptoRandomString({ length: 10 }),
+    workspaceId,
     workspaceRoles: [],
     workspaceProjects: [],
     workspaceProjectRoles: [],
@@ -139,6 +162,10 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
       isCalled: false,
       eventName: '',
       payload: {}
+    },
+    workspace: {
+      id: workspaceId,
+      domains: []
     }
   }
 }
@@ -208,6 +235,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
   const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
+    getWorkspaceWithDomains: async () =>
+      context.workspace as unknown as Workspace & { domains: WorkspaceDomain[] },
+    findVerifiedEmailsByUserId: async () => [],
     upsertWorkspaceRole: async (role) => {
       context.workspaceRoles = context.workspaceRoles.filter(
         (acl) => acl.userId !== role.userId
@@ -390,6 +420,57 @@ describe('Workspace role services', () => {
         updateWorkspaceRole({ ...role, role: Roles.Workspace.Member })
       )
     })
+    it('throws if attempting to set user role to more than GUEST and workspace domain protection is enabled and user has not an email matching a workspace domain', async () => {
+      const adminId = cryptoRandomString({ length: 10 })
+      const guestId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const roleAdmin: WorkspaceAcl = {
+        userId: adminId,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      }
+      const roleGuest: WorkspaceAcl = {
+        userId: guestId,
+        workspaceId,
+        role: Roles.Workspace.Guest
+      }
+
+      const workspace = {
+        id: workspaceId,
+        domainBasedMembershipProtectionEnabled: true,
+        domains: [
+          {
+            verified: true,
+            domain: 'example.org'
+          }
+        ]
+      }
+
+      const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext(
+        {
+          workspaceId,
+          workspaceRoles: [roleAdmin, roleGuest]
+        },
+        {
+          getWorkspaceWithDomains: (() =>
+            workspace) as unknown as GetWorkspaceWithDomains,
+          findVerifiedEmailsByUserId: (() => [
+            {
+              email: 'notcorrect@nonexample.org'
+            }
+          ]) as unknown as FindVerifiedEmailsByUserId
+        }
+      )
+
+      const err = await expectToThrow(() =>
+        updateWorkspaceRole({
+          workspaceId,
+          userId: guestId,
+          role: Roles.Workspace.Member
+        })
+      )
+      expect(err.message).to.eq(new WorkspaceProtectedError().message)
+    })
     it('sets roles on workspace projects when user added to workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
@@ -439,6 +520,385 @@ describe('Workspace role services', () => {
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
       expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
+    })
+  })
+
+  describe('Workspace domains', () => {
+    describe('addDomainToWorkspaceFactory returns a function that,', () => {
+      it('throws a ForbiddenDomainError if the domain is not allowed to be registered', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'gmail.com'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () => [],
+              getWorkspace: async () => {
+                expect.fail()
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceDomainBlockedError().message)
+      })
+      it('should throw and error if user has no email with specified domain', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () => [],
+              getWorkspace: async () => {
+                expect.fail()
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceUnverifiedDomainError().message)
+      })
+      it('should throw and error if the workspace is not found', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () =>
+                [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
+              getWorkspace: async () => {
+                return null
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceAdminRequiredError().message)
+      })
+      it('throws a WorkspaceUnverifiedDomainError if the users domain matching email is not verified', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () =>
+                [{ email: `foo@${domain}`, verified: false }] as UserEmail[],
+              getWorkspace: async () => {
+                expect.fail()
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceUnverifiedDomainError().message)
+      })
+      it('throws a WorkspaceAdminRequiredError if the user does not have a workspace role', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () =>
+                [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
+              getWorkspace: async () => {
+                return null
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceAdminRequiredError().message)
+      })
+      it('throws a WorkspaceAdminRequiredError if the user is not an admin of the workspace', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const err = await expectToThrow(
+          async () =>
+            await addDomainToWorkspaceFactory({
+              findEmailsByUserId: async () =>
+                [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
+              getWorkspace: async () => {
+                return {
+                  role: Roles.Workspace.Guest,
+                  userId,
+                  id: workspaceId,
+                  name: cryptoRandomString({ length: 10 }),
+                  logo: null,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  description: null,
+                  discoverabilityEnabled: false,
+                  domainBasedMembershipProtectionEnabled: false,
+                  defaultLogoIndex: 0
+                }
+              },
+              getDomains: async () => {
+                expect.fail()
+              },
+              storeWorkspaceDomain: async () => {
+                return
+              },
+              upsertWorkspace: async () => {
+                expect.fail()
+              },
+              emitWorkspaceEvent: async () => {
+                expect.fail()
+              }
+            })({ userId, workspaceId, domain })
+        )
+
+        expect(err.message).to.eq(new WorkspaceAdminRequiredError().message)
+      })
+      it('does NOT store the verified workspace domain if its already stored', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const domainRequest = {
+          userId,
+          workspaceId,
+          domain
+        }
+
+        const storedDomains: WorkspaceDomain | undefined = undefined
+
+        const workspace: Workspace = {
+          id: workspaceId,
+          name: cryptoRandomString({ length: 10 }),
+          logo: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          description: null,
+          discoverabilityEnabled: false,
+          domainBasedMembershipProtectionEnabled: false,
+          defaultLogoIndex: 0
+        }
+
+        await addDomainToWorkspaceFactory({
+          findEmailsByUserId: async () =>
+            [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
+          getWorkspace: async () => {
+            return {
+              role: Roles.Workspace.Admin,
+              userId,
+              ...workspace
+            }
+          },
+
+          getDomains: async () => {
+            return [{ domain }] as WorkspaceDomain[]
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          },
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          storeWorkspaceDomain: async () => {
+            expect.fail()
+          }
+        })(domainRequest)
+
+        expect(storedDomains).to.be.undefined
+      })
+      it('stores the verified workspace domain, toggles workspace discoverability for first domain, emits update event', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+
+        const domainRequest = {
+          userId,
+          workspaceId,
+          domain
+        }
+
+        let storedDomains: WorkspaceDomain | undefined = undefined
+        let storedWorkspace: Omit<Workspace, 'domains'> | undefined = undefined
+        let omittedEventName: EventNames | undefined = undefined
+
+        const workspace: Workspace = {
+          id: workspaceId,
+          name: cryptoRandomString({ length: 10 }),
+          logo: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          description: null,
+          discoverabilityEnabled: false,
+          domainBasedMembershipProtectionEnabled: false,
+          defaultLogoIndex: 0
+        }
+
+        await addDomainToWorkspaceFactory({
+          findEmailsByUserId: async () =>
+            [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
+          getWorkspace: async () => {
+            return {
+              role: Roles.Workspace.Admin,
+              userId,
+              ...workspace
+            }
+          },
+
+          getDomains: async () => {
+            return []
+          },
+          upsertWorkspace: async ({ workspace }) => {
+            storedWorkspace = workspace
+          },
+          emitWorkspaceEvent: async ({ eventName }) => {
+            omittedEventName = eventName
+            return []
+          },
+          storeWorkspaceDomain: async ({ workspaceDomain }) => {
+            storedDomains = workspaceDomain
+          }
+        })(domainRequest)
+
+        expect(storedDomains).to.not.be.undefined
+        expect(storedDomains!.createdByUserId).to.be.equal(userId)
+        expect(storedDomains!.domain).to.be.equal(domain)
+        expect(storedDomains!.workspaceId).to.be.equal(workspaceId)
+        expect(storedDomains!.verified).to.be.true
+
+        expect(storedWorkspace!.discoverabilityEnabled).to.be.true
+
+        expect(omittedEventName).to.be.equal(WorkspaceEvents.Updated)
+      })
+      it('stores the second verified domain, does NOT toggle workspace discoverability for subsequent domains', async () => {
+        const userId = createRandomPassword()
+        const workspaceId = createRandomPassword()
+        const domain = 'example.org'
+        const domain2 = 'example2.org'
+
+        const domainRequest = {
+          userId,
+          workspaceId,
+          domain
+        }
+
+        const workspaceWithoutDomains = {
+          id: workspaceId,
+          name: cryptoRandomString({ length: 10 }),
+          logo: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          description: null,
+          discoverabilityEnabled: false,
+          domainBasedMembershipProtectionEnabled: false,
+          domains: [],
+          defaultLogoIndex: 0
+        }
+
+        let workspaceData: Workspace = {
+          ...workspaceWithoutDomains
+        }
+        const insertedDomains: WorkspaceDomain[] = []
+        let storedDomains: WorkspaceDomain[] = []
+
+        const addDomainToWorkspace = addDomainToWorkspaceFactory({
+          findEmailsByUserId: async () =>
+            [
+              { email: `foo@${domain}`, verified: true },
+              { email: `foo@${domain2}`, verified: true }
+            ] as UserEmail[],
+          getWorkspace: async () => {
+            return {
+              role: Roles.Workspace.Admin,
+              userId,
+              ...workspaceData
+            }
+          },
+          getDomains: async () => storedDomains,
+          upsertWorkspace: async ({ workspace }) => {
+            workspaceData = { ...workspaceData, ...workspace }
+          },
+          emitWorkspaceEvent: async () => {
+            return []
+          },
+          storeWorkspaceDomain: async ({ workspaceDomain }) => {
+            insertedDomains.push(workspaceDomain)
+          }
+        })
+        await addDomainToWorkspace(domainRequest)
+
+        expect(insertedDomains).to.have.lengthOf(1)
+        expect(workspaceData.discoverabilityEnabled).to.be.true
+
+        // dirty hack, im post fact storing the domain on the test object
+        storedDomains = insertedDomains
+
+        //faking user interaction disabling discoverability
+        workspaceData.discoverabilityEnabled = false
+        await addDomainToWorkspace({ ...domainRequest, domain: domain2 })
+
+        expect(workspaceData.discoverabilityEnabled).to.be.false
+      })
     })
   })
 })

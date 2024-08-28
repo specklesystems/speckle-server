@@ -35,6 +35,7 @@ import {
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
+import { useClipboard } from '~~/composables/browser'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -401,4 +402,17 @@ export const useWorkspaceUpdateRole = () => {
       })
     }
   }
+}
+
+export const copyWorkspaceLink = async (id: string) => {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+
+  await copy(url)
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Copied workspace link to clipboard'
+  })
 }

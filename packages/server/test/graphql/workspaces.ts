@@ -64,6 +64,18 @@ export const getWorkspaceQuery = gql`
   ${workspaceCollaboratorFragment}
 `
 
+export const getActiveUserDiscoverableWorkspacesQuery = gql`
+  query getActiveUserDiscoverableWorkspaces {
+    activeUser {
+      discoverableWorkspaces {
+        id
+        name
+        description
+      }
+    }
+  }
+`
+
 export const updateWorkspaceQuery = gql`
   mutation UpdateWorkspace($input: WorkspaceUpdateInput!) {
     workspaceMutations {
@@ -158,6 +170,22 @@ export const leaveWorkspaceMutation = gql`
   mutation ActiveUserLeaveWorkspace($id: ID!) {
     workspaceMutations {
       leave(id: $id)
+    }
+  }
+`
+
+export const getProjectWorkspaceQuery = gql`
+  query ActiveUserProjectsWorkspace {
+    activeUser {
+      projects {
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
     }
   }
 `

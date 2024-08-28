@@ -45,7 +45,7 @@ type EventPayloadsMap = UnionToIntersection<
   EventPayloadsByNamespaceMap[keyof EventPayloadsByNamespaceMap]
 >
 
-type EventNames = keyof EventPayloadsMap
+export type EventNames = keyof EventPayloadsMap
 
 type EventPayloadsByNamespaceMap = {
   // for each event namespace

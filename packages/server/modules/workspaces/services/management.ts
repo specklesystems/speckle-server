@@ -3,11 +3,18 @@ import {
   DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
+  StoreWorkspaceDomain,
   QueryAllWorkspaceProjects,
   UpsertWorkspace,
-  UpsertWorkspaceRole
+  UpsertWorkspaceRole,
+  GetWorkspaceWithDomains,
+  GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceDomain
+} from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -23,8 +30,11 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceAdminRequiredError,
-  WorkspaceInvalidDescriptionError,
-  WorkspaceNotFoundError
+  WorkspaceDomainBlockedError,
+  WorkspaceNotFoundError,
+  WorkspaceProtectedError,
+  WorkspaceUnverifiedDomainError,
+  WorkspaceInvalidDescriptionError
 } from '@/modules/workspaces/errors/workspace'
 import {
   isUserLastWorkspaceAdmin,
@@ -40,6 +50,11 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import {
+  FindEmailsByUserId,
+  FindVerifiedEmailsByUserId
+} from '@/modules/core/domain/userEmails/operations'
+import { blockedDomains } from '@/modules/workspaces/helpers/blockedDomains'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -84,7 +99,9 @@ export const createWorkspaceFactory =
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: false
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
@@ -100,7 +117,7 @@ export const createWorkspaceFactory =
       payload: { ...workspace, createdByUserId: userId }
     })
 
-    return workspace
+    return { ...workspace }
   }
 
 type WorkspaceUpdateArgs = {
@@ -110,6 +127,8 @@ type WorkspaceUpdateArgs = {
     description?: string | null
     logo?: string | null
     defaultLogoIndex?: number | null
+    discoverabilityEnabled?: boolean | null
+    domainBasedMembershipProtectionEnabled?: boolean | null
   }
 }
 
@@ -273,12 +292,16 @@ export const getWorkspaceRoleFactory =
 export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
+    getWorkspaceWithDomains,
+    findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
     emitWorkspaceEvent,
     getStreams,
     grantStreamPermissions
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
+    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     // TODO: Create `core` domain and import type from there
@@ -303,6 +326,26 @@ export const updateWorkspaceRoleFactory =
       role !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
+    }
+
+    if (role !== Roles.Workspace.Guest) {
+      const workspace = await getWorkspaceWithDomains({ id: workspaceId })
+      const verifiedDomains = workspace?.domains.filter((domain) => domain?.verified)
+      if (
+        workspace &&
+        verifiedDomains &&
+        workspace?.domainBasedMembershipProtectionEnabled &&
+        verifiedDomains.length > 0
+      ) {
+        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
+        const verifiedUserEmails = await findVerifiedEmailsByUserId({ userId })
+        const domainMatching = verifiedUserEmails.find((userEmail) =>
+          domains.has(userEmail.email.split('@')[1])
+        )
+        if (!domainMatching) {
+          throw new WorkspaceProtectedError()
+        }
+      }
     }
 
     // Perform upsert
@@ -343,4 +386,87 @@ export const updateWorkspaceRoleFactory =
         })
       )
     }
+  }
+
+export const addDomainToWorkspaceFactory =
+  ({
+    findEmailsByUserId,
+    storeWorkspaceDomain,
+    getWorkspace,
+    upsertWorkspace,
+    emitWorkspaceEvent,
+    getDomains
+  }: {
+    findEmailsByUserId: FindEmailsByUserId
+    storeWorkspaceDomain: StoreWorkspaceDomain
+    getWorkspace: GetWorkspace
+    upsertWorkspace: UpsertWorkspace
+    getDomains: GetWorkspaceDomains
+    emitWorkspaceEvent: EventBus['emit']
+  }) =>
+  async ({
+    userId,
+    domain,
+    workspaceId
+  }: {
+    userId: string
+    domain: string
+    workspaceId: string
+  }) => {
+    // this function makes the assumption, that the user has a workspace admin role
+    const sanitizedDomain = domain.toLowerCase().trim()
+    if (blockedDomains.includes(sanitizedDomain))
+      throw new WorkspaceDomainBlockedError()
+    const userEmails = await findEmailsByUserId({
+      userId
+    })
+
+    const email = userEmails.find(
+      (userEmail) =>
+        userEmail.verified && userEmail.email.split('@')[1] === sanitizedDomain
+    )
+
+    if (!email) {
+      throw new WorkspaceUnverifiedDomainError()
+    }
+    // we're treating all user owned domains as verified, cause they have it in their verified emails list
+    const verified = true
+
+    const workspaceWithRole = await getWorkspace({ workspaceId, userId })
+
+    if (!workspaceWithRole) throw new WorkspaceAdminRequiredError()
+
+    const { role, ...workspace } = workspaceWithRole
+
+    if (role !== Roles.Workspace.Admin) {
+      throw new WorkspaceAdminRequiredError()
+    }
+
+    const domains = await getDomains({ workspaceIds: [workspaceId] })
+
+    // idempotent operation
+    if (domains.find((domain) => domain.domain === sanitizedDomain)) return
+
+    const workspaceDomain: WorkspaceDomain = {
+      workspaceId,
+      id: cryptoRandomString({ length: 10 }),
+      domain: sanitizedDomain,
+      createdByUserId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      verified
+    }
+
+    await storeWorkspaceDomain({ workspaceDomain })
+
+    if (domains.length === 0) {
+      await upsertWorkspace({
+        workspace: { ...workspace, discoverabilityEnabled: true }
+      })
+    }
+
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Updated,
+      payload: workspace
+    })
   }
