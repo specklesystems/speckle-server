@@ -57,7 +57,7 @@
               collapsible
               title="Workspaces"
               :plus-click="
-                isUserAdmin
+                isNotGuest
                   ? () => {
                       openWorkspaceCreateDialog()
                     }
@@ -192,6 +192,7 @@ import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Roles } from '@speckle/shared'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -210,7 +211,9 @@ const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
 
-const isUserAdmin = computed(() => user.value?.role === 'server:admin')
+const isNotGuest = computed(
+  () => Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
 
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
