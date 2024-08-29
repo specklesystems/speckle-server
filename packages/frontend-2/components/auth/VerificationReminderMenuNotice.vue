@@ -1,7 +1,12 @@
 <template>
-  <div v-if="shouldShowBanner" class="flex flex-col px-2 pb-2">
-    <div class="text-body-xs -mb-1">{{ verifyBannerText }}</div>
-    <FormButton size="sm" text :disabled="loading" @click="requestVerification">
+  <div v-if="shouldShowBanner" class="flex flex-col px-3 pb-3">
+    <div class="text-body-2xs text-foreground mb-3">{{ verifyBannerText }}</div>
+    <FormButton
+      size="sm"
+      color="outline"
+      :disabled="loading"
+      @click="requestVerification"
+    >
       {{ verifyBannerCtaText }}
     </FormButton>
   </div>

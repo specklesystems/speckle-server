@@ -70,7 +70,11 @@ const onSubmit = handleSubmit(async (values) => {
     workspaceId: props.workspaceId
   })
   emit('created')
-  mp.track('Stream Action', { type: 'action', name: 'create' })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'create',
+    workspaceId: props.workspaceId
+  })
   open.value = false
 })
 
