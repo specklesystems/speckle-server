@@ -16,6 +16,15 @@ export const settingsWorkspaceGeneralQuery = graphql(`
   }
 `)
 
+export const settingsWorkspaceBillingQuery = graphql(`
+  query SettingsWorkspaceBilling($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      ...SettingsWorkspacesBilling_Workspace
+    }
+  }
+`)
+
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
     $workspaceId: String!
