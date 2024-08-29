@@ -62,6 +62,10 @@ import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesC
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import {
+  anyEmailCompliantWithWorkspaceDomains,
+  userEmailsCompliantWithWorkspaceDomains
+} from '@/modules/workspaces/domain/logic'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -172,30 +176,48 @@ export const collectAndValidateWorkspaceTargetsFactory =
     if (!Object.values(Roles.Workspace).includes(role)) {
       throw new InviteCreateValidationError('Unexpected workspace invite role')
     }
-    if (targetUser?.role === Roles.Server.Guest && role === Roles.Workspace.Admin) {
-      throw new InviteCreateValidationError(
-        'Guest users cannot be admins of workspaces'
+    if (role === Roles.Workspace.Admin) {
+      const serverGuestInvite = baseTargets.find(
+        (target) =>
+          target.resourceType === 'server' && target.role === Roles.Server.Guest
       )
+      if (targetUser?.role === Roles.Server.Guest || serverGuestInvite)
+        throw new InviteCreateValidationError(
+          'Guest users cannot be admins of workspaces'
+        )
     }
-    if (role !== Roles.Workspace.Guest && targetUser) {
-      const domains = await deps.getWorkspaceDomains({ workspaceIds: [resourceId] })
-      const verifiedDomains = domains.filter((domain) => domain?.verified)
-      if (
-        workspace &&
-        verifiedDomains &&
-        workspace?.domainBasedMembershipProtectionEnabled &&
-        verifiedDomains.length > 0
-      ) {
-        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
-        const verifiedUserEmails = await deps.findVerifiedEmailsByUserId({
+    if (
+      role !== Roles.Workspace.Guest &&
+      workspace.domainBasedMembershipProtectionEnabled
+    ) {
+      const workspaceDomains = await deps.getWorkspaceDomains({
+        workspaceIds: [resourceId]
+      })
+
+      if (targetUser) {
+        const userEmails = await deps.findVerifiedEmailsByUserId({
           userId: targetUser.id
         })
-        const domainMatching = verifiedUserEmails.find((userEmail) =>
-          domains.has(userEmail.email.split('@')[1])
+        if (
+          !userEmailsCompliantWithWorkspaceDomains({
+            userEmails,
+            workspaceDomains
+          })
         )
-        if (!domainMatching) {
-          throw new WorkspaceProtectedError()
-        }
+          throw new WorkspaceProtectedError(
+            'The target user has no verified emails matching the domain policies'
+          )
+      } else {
+        // its a new server invite, we need to validate the email here too
+        if (
+          !anyEmailCompliantWithWorkspaceDomains({
+            emails: [input.target],
+            workspaceDomains
+          })
+        )
+          throw new WorkspaceProtectedError(
+            'The target email is not matching the domain policies'
+          )
       }
     }
 

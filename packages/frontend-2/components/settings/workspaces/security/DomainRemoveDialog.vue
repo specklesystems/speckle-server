@@ -23,6 +23,14 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
+import { useMixpanel } from '~/lib/core/composables/mp'
+
+graphql(`
+  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {
+    id
+    domain
+  }
+`)
 
 graphql(`
   fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {
@@ -31,10 +39,6 @@ graphql(`
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }
   }
-  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {
-    id
-    domain
-  }
 `)
 
 const props = defineProps<{
@@ -42,11 +46,11 @@ const props = defineProps<{
   domain: SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
 }>()
 
-const apollo = useApolloClient().client
-
-const { triggerNotification } = useGlobalToast()
-
 const isOpen = defineModel<boolean>('open', { required: true })
+
+const apollo = useApolloClient().client
+const { triggerNotification } = useGlobalToast()
+const mixpanel = useMixpanel()
 
 const handleRemove = async () => {
   const result = await apollo
@@ -82,6 +86,11 @@ const handleRemove = async () => {
       type: ToastNotificationType.Success,
       title: 'Domain removed',
       description: `Removed domain successfully`
+    })
+
+    mixpanel.track('Workspace Domain Removed', {
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
     })
   } else {
     triggerNotification({

@@ -5,7 +5,7 @@
     :placeholder="workspace.name"
     :default-img="defaultAvatar"
     name="edit-avatar"
-    :disabled="loading"
+    :disabled="loading || disabled"
     :size="size"
     @save="onSave"
   />
@@ -30,6 +30,7 @@ graphql(`
 const props = defineProps<{
   workspace: SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment
   size: UserAvatarSize
+  disabled?: boolean
 }>()
 
 const { mutate, loading } = useUpdateWorkspace()

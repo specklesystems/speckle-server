@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
+  <div class="group">
     <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
@@ -12,7 +12,7 @@
             @click="isOpenMobile = !isOpenMobile"
           >
             <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
-            <XMarkIcon v-else class="h-4 w-4 -ml-1 -mr-1" />
+            <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
           </FormButton>
         </div>
       </Portal>
@@ -35,7 +35,7 @@
                   :active="isActive(homeRoute)"
                 >
                   <template #icon>
-                    <HomeIcon class="h-5 w-5 text-foreground-2" />
+                    <HomeIcon class="size-4 stroke-[1.5px]" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -46,26 +46,33 @@
                   :active="isActive(projectsRoute)"
                 >
                   <template #icon>
-                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                    <IconProjects class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
             </LayoutSidebarMenuGroup>
 
-            <!-- Remove workspacesItems.length conditional at launch of Workspaces  -->
             <LayoutSidebarMenuGroup
-              v-if="isWorkspacesEnabled && workspacesItems.length"
+              v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
+              :plus-click="
+                isNotGuest
+                  ? () => {
+                      openWorkspaceCreateDialog()
+                    }
+                  : undefined
+              "
+              plus-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute">
+              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
                   tag="BETA"
                 >
                   <template #icon>
-                    <IconWorkspaces class="h-4 w-4 text-foreground-2" />
+                    <IconWorkspaces class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -78,6 +85,7 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  class="!pl-1"
                 >
                   <template #icon>
                     <WorkspaceAvatar
@@ -88,30 +96,29 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <LayoutSidebarMenuGroupItem
-                v-if="isUserAdmin"
-                label="Add workspace"
-                @click="showWorkspaceCreateDialog = true"
-              >
-                <template #icon>
-                  <PlusIcon class="h-4 w-4 text-foreground-2" />
-                </template>
-              </LayoutSidebarMenuGroupItem>
             </LayoutSidebarMenuGroup>
 
-            <LayoutSidebarMenuGroup title="Resources">
-              <NuxtLink :to="connectorsPageUrl" target="_blank">
+            <LayoutSidebarMenuGroup title="Resources" collapsible>
+              <NuxtLink
+                :to="connectorsPageUrl"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Connectors" external>
                   <template #icon>
-                    <IconConnectors class="h-4 w-4 ml-px text-foreground-2" />
+                    <IconConnectors class="size-4 ml-px text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink to="https://speckle.community/" target="_blank">
+              <NuxtLink
+                to="https://speckle.community/"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Community forum" external>
                   <template #icon>
-                    <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                    <IconCommunity class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -119,18 +126,23 @@
               <NuxtLink
                 to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem label="Give us feedback" external>
                   <template #icon>
-                    <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                    <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink to="https://speckle.guide/" target="_blank">
+              <NuxtLink
+                to="https://speckle.guide/"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Documentation" external>
                   <template #icon>
-                    <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                    <IconDocumentation class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -138,10 +150,11 @@
               <NuxtLink
                 to="https://speckle.community/c/making-speckle/changelog"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem label="Changelog" external>
                   <template #icon>
-                    <ClockIcon class="h-5 w-5 text-foreground-2" />
+                    <IconChangelog class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -154,20 +167,11 @@
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success
+      event-source="sidebar"
     />
   </div>
 </template>
 <script setup lang="ts">
-import {
-  BriefcaseIcon,
-  XMarkIcon,
-  ChatBubbleLeftIcon,
-  GlobeAltIcon,
-  ClockIcon,
-  Squares2X2Icon,
-  HomeIcon,
-  PlusIcon
-} from '@heroicons/vue/24/outline'
 import {
   FormButton,
   LayoutSidebar,
@@ -186,11 +190,15 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { HomeIcon } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Roles } from '@speckle/shared'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
@@ -203,7 +211,10 @@ const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
 
-const isUserAdmin = computed(() => user.value?.role === 'server:admin')
+const isNotGuest = computed(
+  () => Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
+
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
@@ -215,4 +226,11 @@ const workspacesItems = computed(() =>
       }))
     : []
 )
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
 </script>

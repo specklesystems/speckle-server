@@ -6,15 +6,19 @@
       :workspace="workspace"
     />
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
         { id: 'verified', header: 'Status', classes: 'col-span-3' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' }
+        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
       :items="members"
-      :buttons="tableButtons"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -42,6 +46,22 @@
           "
         />
       </template>
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionsItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
 
     <SettingsSharedChangeRoleDialog
@@ -64,9 +84,12 @@
 import type { WorkspaceRoles } from '@speckle/shared'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -95,17 +118,24 @@ graphql(`
   }
 `)
 
+enum ActionTypes {
+  RemoveMember = 'remove-member'
+}
+
 const props = defineProps<{
   workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
   workspaceId: string
 }>()
 
 const updateUserRole = useWorkspaceUpdateRole()
+const mixpanel = useMixpanel()
 
 const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
+
+const showActionsMenu = ref<Record<string, boolean>>({})
 
 const members = computed(() =>
   (props.workspace?.team || []).map(({ user, ...rest }) => ({
@@ -116,11 +146,10 @@ const members = computed(() =>
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
-const tableButtons = computed(() =>
-  isWorkspaceAdmin.value
-    ? [{ icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }]
-    : []
-)
+
+const actionsItems: LayoutMenuItem[][] = [
+  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }]
+]
 
 const openChangeUserRoleDialog = (
   user: UserItem,
@@ -145,6 +174,12 @@ const onUpdateRole = async () => {
     role: newRole.value,
     workspaceId: props.workspaceId
   })
+
+  mixpanel.track('Workspace User Role Updated', {
+    newRole: newRole.value,
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
 }
 
 const onRemoveUser = async () => {
@@ -155,5 +190,24 @@ const onRemoveUser = async () => {
     role: null,
     workspaceId: props.workspaceId
   })
+
+  mixpanel.track('Workspace User Removed', {
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
+}
+
+const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
+  userToModify.value = user
+
+  switch (actionItem.id) {
+    case ActionTypes.RemoveMember:
+      openDeleteUserRoleDialog(user)
+      break
+  }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 </script>

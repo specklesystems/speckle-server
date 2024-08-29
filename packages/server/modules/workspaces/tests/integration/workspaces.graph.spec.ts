@@ -8,6 +8,7 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
+  createTestUser,
   createTestUsers
 } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
@@ -20,7 +21,12 @@ import {
   GetWorkspaceTeamDocument,
   UpdateWorkspaceDocument,
   UpdateWorkspaceRoleDocument,
-  ActiveUserLeaveWorkspaceDocument
+  ActiveUserLeaveWorkspaceDocument,
+  GetWorkspaceWithBillingDocument,
+  CreateObjectDocument,
+  CreateProjectVersionDocument,
+  GetWorkspaceWithProjectsDocument,
+  CreateProjectDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -32,8 +38,65 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
+import {
+  createRandomPassword,
+  createRandomEmail,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
+import { getBranchesByStreamId } from '@/modules/core/services/branches'
+import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { WorkspaceEarlyAdopterDiscount } from '@/modules/workspaces/domain/constants'
 
+const createProjectWithVersions =
+  ({ apollo }: { apollo: TestApolloServer }) =>
+  async ({
+    workspaceId,
+    versionsCount
+  }: {
+    workspaceId?: string
+    versionsCount: number
+  }) => {
+    const resProject1 = await apollo.execute(CreateProjectDocument, {
+      input: {
+        name: createRandomPassword(),
+        workspaceId
+      }
+    })
+    expect(resProject1).to.not.haveGraphQLErrors()
+    const project1Id = resProject1.data!.projectMutations.create.id
+
+    const {
+      items: [model1]
+    } = await getBranchesByStreamId({
+      streamId: project1Id,
+      limit: 1,
+      cursor: null
+    })
+    expect(model1).to.exist
+
+    const resObj1 = await apollo.execute(CreateObjectDocument, {
+      input: {
+        streamId: project1Id,
+        objects: [{ some: 'obj' }]
+      }
+    })
+    expect(resObj1).to.not.haveGraphQLErrors()
+
+    await Promise.all(
+      new Array(versionsCount).fill(0).map(async () => {
+        const res = await apollo.execute(CreateProjectVersionDocument, {
+          input: {
+            projectId: project1Id,
+            modelId: model1.id,
+            objectId: resObj1.data!.objectCreate[0]
+          }
+        })
+        expect(res).to.not.haveGraphQLErrors()
+      })
+    )
+  }
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
 
@@ -150,11 +213,185 @@ describe('Workspaces GQL CRUD', () => {
       })
     })
 
+    describe('query workspace.billing', () => {
+      it('should return workspace version limits', async () => {
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 3
+        })
+        await createProjectWithVersions({ apollo })({
+          workspaceId: workspace.id,
+          versionsCount: 2
+        })
+
+        const res = await apollo.execute(GetWorkspaceWithBillingDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
+          current: 5,
+          max: 500
+        })
+      })
+      it('should return workspace cost', async () => {
+        const createRes = await apollo.execute(CreateWorkspaceDocument, {
+          input: { name: createRandomString() }
+        })
+        expect(createRes).to.not.haveGraphQLErrors()
+        const workspaceId = createRes.data!.workspaceMutations.create.id
+        const workspace = (await getWorkspaceFactory({ db })({
+          workspaceId
+        })) as unknown as BasicTestWorkspace
+
+        const member = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+        const guestWithWritePermission = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+        const viewer = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+        const viewer2 = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+
+        await Promise.all([
+          createTestUser(member),
+          createTestUser(guestWithWritePermission),
+          createTestUser(viewer),
+          createTestUser(viewer2)
+        ])
+
+        await Promise.all([
+          assignToWorkspace(workspace, member, Roles.Workspace.Member),
+          assignToWorkspace(workspace, guestWithWritePermission, Roles.Workspace.Guest),
+          assignToWorkspace(workspace, viewer, Roles.Workspace.Guest),
+          assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
+        ])
+
+        const resProject1 = await apollo.execute(CreateProjectDocument, {
+          input: {
+            name: createRandomPassword(),
+            workspaceId
+          }
+        })
+        expect(resProject1).to.not.haveGraphQLErrors()
+        const project1Id = resProject1.data!.projectMutations.create.id
+
+        await Promise.all([
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: guestWithWritePermission.id,
+            role: Roles.Stream.Contributor
+          }),
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: viewer.id,
+            role: Roles.Stream.Reviewer
+          }),
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: viewer2.id,
+            role: Roles.Stream.Reviewer
+          })
+        ])
+
+        const res = await apollo.execute(GetWorkspaceWithBillingDocument, {
+          workspaceId
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const { subTotal, currency, items, total, discount } =
+          res.data!.workspace.billing.cost
+        expect(subTotal).to.equal(70 + 50 + 10)
+        expect(currency).to.equal('GBP')
+        expect(items).to.deep.equal([
+          {
+            name: 'workspace admin',
+            count: 1,
+            cost: 70
+          },
+          {
+            name: 'workspace member',
+            count: 1,
+            cost: 50
+          },
+          {
+            name: 'read/write guest',
+            count: 1,
+            cost: 10
+          },
+          {
+            name: 'read only guest',
+            count: 2,
+            cost: 0
+          }
+        ])
+        expect(discount).to.deep.equal(WorkspaceEarlyAdopterDiscount)
+        expect(total).to.equal(65)
+      })
+    })
+
     describe('query activeUser.workspaces', () => {
       it('should return all workspaces for a user', async () => {
         const res = await apollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(1)
+        // TODO: this test depends on the previous tests
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(2)
+      })
+    })
+
+    describe('query workspace.projects', () => {
+      it('should return all projects for a user in the workspace', async () => {
+        const workspace = {
+          id: '',
+          name: 'test ws',
+          ownerId: ''
+        }
+        await createTestWorkspace(workspace, testMemberUser)
+        const user = {
+          id: createRandomPassword(),
+          email: createRandomEmail(),
+          name: createRandomPassword()
+        }
+
+        const resProject1 = await apollo.execute(CreateProjectDocument, {
+          input: {
+            name: createRandomPassword(),
+            workspaceId: workspace.id
+          }
+        })
+        expect(resProject1).to.not.haveGraphQLErrors()
+
+        const res = await apollo.execute(GetWorkspaceWithProjectsDocument, {
+          workspaceId: workspace.id
+        })
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace?.projects.items?.length).to.equal(1)
+        expect(res.data?.workspace?.projects.totalCount).to.equal(1)
+
+        // Test Guest user
+        await createTestUser(user)
+        const sessionGuest = await testApolloServer({
+          authUserId: user.id
+        })
+        await assignToWorkspace(workspace, user, Roles.Workspace.Guest)
+        const res2 = await sessionGuest.execute(GetWorkspaceWithProjectsDocument, {
+          workspaceId: workspace.id
+        })
+        expect(res2).to.not.haveGraphQLErrors()
+        expect(res2.data?.workspace?.projects.items?.length).to.equal(0)
+        expect(res2.data?.workspace?.projects.totalCount).to.equal(0)
       })
     })
   })

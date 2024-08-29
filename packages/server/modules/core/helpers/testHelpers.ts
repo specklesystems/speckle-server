@@ -8,6 +8,10 @@ export function createRandomPassword(length?: number) {
   return crs({ length: length ?? 10 })
 }
 
+export function createRandomString(length?: number) {
+  return crs({ length: length ?? 10 })
+}
+
 export const randomizeCase = (str: string) =>
   str
     .split('')

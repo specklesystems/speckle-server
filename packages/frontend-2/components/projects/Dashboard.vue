@@ -4,7 +4,6 @@
     <ProjectsDashboardHeader
       :projects-invites="projectsPanelResult?.activeUser || undefined"
       :workspaces-invites="workspacesResult?.activeUser || undefined"
-      class="mb-10"
     />
 
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
@@ -45,7 +44,7 @@
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" />
+      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"

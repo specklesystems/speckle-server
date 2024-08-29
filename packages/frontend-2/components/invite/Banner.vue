@@ -96,7 +96,9 @@ const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
 const mainClasses = computed(() => {
-  const classParts = ['flex flex-col space-y-4 px-4 py-5 transition ']
+  const classParts = [
+    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg'
+  ]
 
   if (props.block) {
     classParts.push('')

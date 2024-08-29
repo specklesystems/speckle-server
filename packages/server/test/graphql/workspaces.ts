@@ -24,6 +24,10 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    team {
+      id
+      role
+    }
   }
 `
 
@@ -161,6 +165,22 @@ export const leaveWorkspaceMutation = gql`
   mutation ActiveUserLeaveWorkspace($id: ID!) {
     workspaceMutations {
       leave(id: $id)
+    }
+  }
+`
+
+export const getProjectWorkspaceQuery = gql`
+  query ActiveUserProjectsWorkspace {
+    activeUser {
+      projects {
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
     }
   }
 `

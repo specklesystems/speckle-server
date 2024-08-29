@@ -42,6 +42,8 @@ export const onProjectCreatedFactory =
 
     await Promise.all(
       workspaceMembers.map(({ userId, role: workspaceRole }) => {
+        // we do not need to assign new roles to the project owner
+        if (userId === payload.ownerId) return
         // Guests do not get roles on project create
         if (workspaceRole === Roles.Workspace.Guest) return
 
