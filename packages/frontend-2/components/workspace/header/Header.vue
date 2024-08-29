@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-4 sm:flex-row justify-between md:items-center">
-    <div class="flex gap-2 mb-3 mt-2">
+    <div class="flex gap-2 md:mb-3 md:mt-2">
       <div class="flex items-center mr-2">
         <WorkspaceAvatar
           :logo="workspaceInfo.logo"
@@ -15,42 +15,59 @@
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-x-4">
+    <div
+      class="flex md:items-center gap-x-3 md:flex-row"
+      :class="[isWorkspaceAdmin ? 'flex-col' : 'flex-row items-cenetr']"
+    >
       <div
-        class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none whitespace-nowrap"
+        class="flex items-center gap-x-3 md:mb-0"
+        :class="[!isWorkspaceAdmin ? 'flex-1' : ' mb-3']"
       >
-        {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
-          workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
-        }}
+        <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+          {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
+            workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
+          }}
+        </CommonBadge>
+        <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+          <span class="capitalize">
+            {{ workspaceInfo.role?.split(':').reverse()[0] }}
+          </span>
+        </CommonBadge>
       </div>
-      <p class="text-body-2xs text-foreground-2 capitalize">
-        {{ workspaceInfo.role?.split(':').reverse()[0] }}
-      </p>
-      <UserAvatarGroup
-        :users="team.items.map((teamMember) => teamMember.user)"
-        class="max-w-[104px]"
-      />
-      <FormButton
-        v-if="isWorkspaceAdmin"
-        color="outline"
-        @click="showInviteDialog = !showInviteDialog"
-      >
-        Invite
-      </FormButton>
-      <LayoutMenu
-        v-model:open="showActionsMenu"
-        :items="actionsItems"
-        :menu-position="HorizontalDirection.Left"
-        @click.stop.prevent
-        @chosen="onActionChosen"
-      >
-        <FormButton
-          color="subtle"
-          hide-text
-          :icon-right="EllipsisHorizontalIcon"
-          @click="showActionsMenu = !showActionsMenu"
-        />
-      </LayoutMenu>
+      <div class="flex items-center gap-x-3">
+        <div v-if="isWorkspaceAdmin" class="flex-1 md:flex-auto">
+          <WorkspacePageVersionCount
+            :versions-count="workspaceInfo.billing.versionsCount"
+          />
+        </div>
+        <div class="flex items-center gap-x-3">
+          <UserAvatarGroup
+            :users="team.items.map((teamMember) => teamMember.user)"
+            class="max-w-[104px]"
+          />
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            color="outline"
+            @click="showInviteDialog = !showInviteDialog"
+          >
+            Invite
+          </FormButton>
+          <LayoutMenu
+            v-model:open="showActionsMenu"
+            :items="actionsItems"
+            :menu-position="HorizontalDirection.Left"
+            @click.stop.prevent
+            @chosen="onActionChosen"
+          >
+            <FormButton
+              color="subtle"
+              hide-text
+              :icon-right="EllipsisHorizontalIcon"
+              @click="showActionsMenu = !showActionsMenu"
+            />
+          </LayoutMenu>
+        </div>
+      </div>
     </div>
     <WorkspaceInviteDialog
       v-model:open="showInviteDialog"
@@ -84,6 +101,11 @@ graphql(`
     description
     totalProjects: projects {
       totalCount
+    }
+    billing {
+      versionsCount {
+        ...WorkspacePageVersionCount_WorkspaceVersionsCount
+      }
     }
     team {
       items {
