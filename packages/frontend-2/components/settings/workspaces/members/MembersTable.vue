@@ -50,7 +50,7 @@
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
           :disabled-items="
-            !item.workspaceDomainPolicyCompliant
+            item.workspaceDomainPolicyCompliant === false
               ? [Roles.Workspace.Member, Roles.Workspace.Admin]
               : []
           "
