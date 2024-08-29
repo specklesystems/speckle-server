@@ -65,7 +65,7 @@
               "
               plus-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute">
+              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
@@ -85,6 +85,7 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  class="!pl-1"
                 >
                   <template #icon>
                     <WorkspaceAvatar
@@ -98,7 +99,11 @@
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
-              <NuxtLink :to="connectorsPageUrl" target="_blank">
+              <NuxtLink
+                :to="connectorsPageUrl"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Connectors" external>
                   <template #icon>
                     <IconConnectors class="size-4 ml-px text-foreground-2" />
@@ -106,7 +111,11 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink to="https://speckle.community/" target="_blank">
+              <NuxtLink
+                to="https://speckle.community/"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Community forum" external>
                   <template #icon>
                     <IconCommunity class="size-4 text-foreground-2" />
@@ -117,6 +126,7 @@
               <NuxtLink
                 to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem label="Give us feedback" external>
                   <template #icon>
@@ -125,7 +135,11 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink to="https://speckle.guide/" target="_blank">
+              <NuxtLink
+                to="https://speckle.guide/"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Documentation" external>
                   <template #icon>
                     <IconDocumentation class="size-4 text-foreground-2" />
@@ -136,6 +150,7 @@
               <NuxtLink
                 to="https://speckle.community/c/making-speckle/changelog"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem label="Changelog" external>
                   <template #icon>

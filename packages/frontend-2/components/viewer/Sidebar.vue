@@ -54,7 +54,7 @@
             </div>
           </div>
           <div v-if="$slots.actions" class="w-full px-3 h-8">
-            <div class="flex items-center gap-2 h-full">
+            <div class="flex items-center justify-end md:justify-start gap-2 h-full">
               <slot name="actions"></slot>
             </div>
           </div>
