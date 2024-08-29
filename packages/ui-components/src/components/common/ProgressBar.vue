@@ -3,7 +3,7 @@
     <div
       class="aboslute left-0 top-0 bg-success rounded"
       :class="[heightClass]"
-      :style="{ width: `${percentage}%` }"
+      :style="{ width: `${percentage <= 100 ? percentage : 100}%` }"
     />
   </div>
 </template>
@@ -25,5 +25,5 @@ const props = withDefaults(
 )
 
 const heightClass = computed(() => (props.size === 'base' ? 'h-1.5' : 'h-1'))
-const percentage = computed(() => props.maxValue / props.currentValue)
+const percentage = computed(() => (props.currentValue / props.maxValue) * 100)
 </script>
