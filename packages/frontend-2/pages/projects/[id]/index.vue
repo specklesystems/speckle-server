@@ -49,7 +49,6 @@ graphql(`
     }
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectPageTeamBlock_Project
   }
 `)
 
