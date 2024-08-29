@@ -27,6 +27,7 @@ import { omit } from 'lodash'
 import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Omit<Workspace, 'domains'>[]
@@ -254,9 +255,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     async *queryAllWorkspaceProjects() {
       yield context.workspaceProjects
     },
-    getDefaultWorkspaceProjectRole: async () => {
-      return Roles.Stream.Reviewer
-    },
+    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
     upsertProjectRole: async (role) => {
       const streamAcl: StreamAclRecord = {
         userId: role.userId,

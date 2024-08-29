@@ -73,7 +73,6 @@ import {
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
-  getDefaultWorkspaceProjectRoleFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -122,6 +121,7 @@ import {
   getWorkspaceCostItemsFactory
 } from '@/modules/workspaces/services/cost'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -359,9 +359,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({
-                db: trx
-              }),
+              getDefaultWorkspaceProjectRoleMapping:
+                mapWorkspaceRoleToInitialProjectRole,
               upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
               deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
               queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
@@ -546,10 +545,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({
-                  db
-                }),
                 upsertProjectRole: upsertProjectRoleFactory({ db }),
+                getDefaultWorkspaceProjectRoleMapping:
+                  mapWorkspaceRoleToInitialProjectRole,
                 deleteProjectRole: deleteProjectRoleFactory({ db }),
                 queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
                   getStreams

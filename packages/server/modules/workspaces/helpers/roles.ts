@@ -1,4 +1,4 @@
-import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 
@@ -12,22 +12,6 @@ export const isUserLastWorkspaceAdmin = (
   const isUserAdmin = workspaceAdmins.some((role) => role.userId === userId)
 
   return isUserAdmin && workspaceAdmins.length === 1
-}
-
-/**
- * Given a user's workspace role, return the initial role they should have for workspace projects.
- */
-export const mapWorkspaceRoleToInitialProjectRole = (
-  workspaceRole: WorkspaceRoles
-): StreamRoles | null => {
-  switch (workspaceRole) {
-    case Roles.Workspace.Guest:
-      return null
-    case Roles.Workspace.Member:
-      return Roles.Stream.Contributor
-    case Roles.Workspace.Admin:
-      return Roles.Stream.Owner
-  }
 }
 
 export const mapGqlWorkspaceRoleToMainRole = (

@@ -2,13 +2,16 @@ import { moduleLogger } from '@/logging/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { workspaceRoles } from '@/modules/workspaces/roles'
 import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
-import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 import {
-  getDefaultWorkspaceProjectRoleFactory,
+  initializeEventListenersFactory,
+  onInviteFinalizedFactory,
+  onProjectCreatedFactory
+} from '@/modules/workspaces/events/eventListener'
+import {
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -16,7 +19,6 @@ import {
 import {
   deleteProjectRoleFactory,
   getStream,
-  grantStreamPermissions,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
@@ -25,8 +27,11 @@ import { getStreams } from '@/modules/core/services/streams'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
+let quitListeners: Optional<() => void> = undefined
 
 const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
@@ -52,25 +57,34 @@ const workspacesModule: SpeckleModule = {
     moduleLogger.info('⚒️  Init workspaces module')
 
     if (isInitial) {
-      initializeEventListenersFactory({
-        getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-        grantStreamPermissions,
-        getStream,
-        logger: moduleLogger,
-        updateWorkspaceRole: updateWorkspaceRoleFactory({
-          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-          findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
-          getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-          getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
+      quitListeners = initializeEventListenersFactory({
+        onProjectCreated: onProjectCreatedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
           upsertProjectRole: upsertProjectRoleFactory({ db }),
-          deleteProjectRole: deleteProjectRoleFactory({ db }),
-          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
-          emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+          getWorkspaceRoles: getWorkspaceRolesFactory({ db })
+        }),
+        onInviteFinalized: onInviteFinalizedFactory({
+          getStream,
+          logger: moduleLogger,
+          updateWorkspaceRole: updateWorkspaceRoleFactory({
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+            upsertProjectRole: upsertProjectRoleFactory({ db }),
+            deleteProjectRole: deleteProjectRoleFactory({ db }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+            emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+          })
         })
       })()
     }
     await Promise.all([initScopes(), initRoles()])
+  },
+  shutdown() {
+    if (!FF_WORKSPACES_MODULE_ENABLED) return
+    quitListeners?.()
   }
 }
 
