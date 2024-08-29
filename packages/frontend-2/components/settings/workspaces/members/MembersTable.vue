@@ -25,7 +25,7 @@
           <UserAvatar :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <div
-            v-if="!item.workspaceDomainPolicyCompliant"
+            v-if="item.workspaceDomainPolicyCompliant === false"
             v-tippy="
               'This user does not comply with the domain policy set on this workspace'
             "
