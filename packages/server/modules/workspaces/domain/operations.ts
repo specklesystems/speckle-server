@@ -8,7 +8,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { WorkspaceRoles } from '@speckle/shared'
+import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { UserWithRole } from '@/modules/core/repositories/users'
 
 /** Workspace */
@@ -162,8 +162,12 @@ export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
 
-export type CountProjectsVersionsByWorkspaceId = ({
-  workspaceId
-}: {
+export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string
+}) => Promise<number>
+
+export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
+  workspaceId: string
+  workspaceRole: WorkspaceRoles
+  projectRole?: StreamRoles | undefined
 }) => Promise<number>

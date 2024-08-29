@@ -169,7 +169,9 @@ const onInviteUser = async (
     multiple: inputs.length !== 1,
     count: inputs.length,
     hasProject: true,
-    to: isEmail ? 'email' : 'existing user'
+    to: isEmail ? 'email' : 'existing user',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
 
   disabled.value = false

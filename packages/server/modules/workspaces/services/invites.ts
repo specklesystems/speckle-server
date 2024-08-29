@@ -62,6 +62,10 @@ import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesC
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import {
+  anyEmailCompliantWithWorkspaceDomains,
+  userEmailsCompliantWithWorkspaceDomains
+} from '@/modules/workspaces/domain/logic'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -189,38 +193,28 @@ export const collectAndValidateWorkspaceTargetsFactory =
       const workspaceDomains = await deps.getWorkspaceDomains({
         workspaceIds: [resourceId]
       })
-      const verifiedDomains = workspaceDomains
-        .filter((domain) => domain?.verified)
-        .map((domain) => domain.domain)
-
-      const emailMatchesDomain = ({
-        emails,
-        domains
-      }: {
-        emails: string[]
-        domains: string[]
-      }): boolean => {
-        for (const email of emails) {
-          if (domains.some((domain) => email.endsWith(domain))) return true
-        }
-        return false
-      }
 
       if (targetUser) {
-        const verifiedUserEmails = (
-          await deps.findVerifiedEmailsByUserId({
-            userId: targetUser.id
-          })
-        ).map((userEmail) => userEmail.email)
+        const userEmails = await deps.findVerifiedEmailsByUserId({
+          userId: targetUser.id
+        })
         if (
-          !emailMatchesDomain({ emails: verifiedUserEmails, domains: verifiedDomains })
+          !userEmailsCompliantWithWorkspaceDomains({
+            userEmails,
+            workspaceDomains
+          })
         )
           throw new WorkspaceProtectedError(
             'The target user has no verified emails matching the domain policies'
           )
       } else {
         // its a new server invite, we need to validate the email here too
-        if (!emailMatchesDomain({ emails: [input.target], domains: verifiedDomains }))
+        if (
+          !anyEmailCompliantWithWorkspaceDomains({
+            emails: [input.target],
+            workspaceDomains
+          })
+        )
           throw new WorkspaceProtectedError(
             'The target email is not matching the domain policies'
           )

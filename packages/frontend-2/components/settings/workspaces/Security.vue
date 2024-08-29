@@ -7,14 +7,19 @@
       />
       <section>
         <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
-        <ul v-if="workspaceDomains.length > 0">
+        <ul v-if="hasWorkspaceDomains">
           <li
             v-for="domain in workspaceDomains"
             :key="domain.id"
             class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 py-4 flex items-center"
           >
             <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
-            <FormButton color="outline" size="sm" @click="openRemoveDialog(domain)">
+            <FormButton
+              :disabled="workspaceDomains.length === 1 && isDomainProtectionEnabled"
+              color="outline"
+              size="sm"
+              @click="openRemoveDialog(domain)"
+            >
               Delete
             </FormButton>
           </li>
@@ -60,13 +65,15 @@
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Domain protection</p>
               <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Members won't be able to add users as members (or admins) to a workspace
-                unless they are part of a workspace's email domain.
+                Admins won't be able to add users as members (or admins) to a workspace
+                unless the one of the users email matches one of the workspace's
+                verified email domains.
               </p>
             </div>
             <FormSwitch
               v-model="isDomainProtectionEnabled"
               :show-label="false"
+              :disabled="!hasWorkspaceDomains"
               name="domain-protection"
             />
           </div>
@@ -76,13 +83,14 @@
                 Domain discoverability
               </p>
               <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Makes your workspace discoverable by employees who sign up with your
-                company's specified email domain.
+                Makes your workspace discoverable by users who have a verified email
+                address matching one of the workspace's verified domains.
               </p>
             </div>
             <FormSwitch
               v-model="isDomainDiscoverabilityEnabled"
               name="domain-discoverability"
+              :disabled="!hasWorkspaceDomains"
               :show-label="false"
             />
           </div>
@@ -110,6 +118,7 @@ import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -140,6 +149,7 @@ const props = defineProps<{
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
 const apollo = useApolloClient().client
+const mixpanel = useMixpanel()
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
@@ -153,6 +163,7 @@ const { result } = useQuery(settingsWorkspacesSecurityQuery, {
 const workspaceDomains = computed(() => {
   return result.value?.workspace.domains || []
 })
+const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
 
 const verifiedUserDomains = computed(() => {
   const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
@@ -206,7 +217,13 @@ const isDomainProtectionEnabled = computed({
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!mutationResult?.data) {
+    if (mutationResult?.data) {
+      mixpanel.track('Workspace Domain Protection Toggled', {
+        value: newVal,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    } else {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
@@ -252,7 +269,13 @@ const isDomainDiscoverabilityEnabled = computed({
       }
     })
 
-    if (!mutationResult?.data) {
+    if (mutationResult?.data) {
+      mixpanel.track('Workspace Discoverability Toggled', {
+        value: newVal,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    } else {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
@@ -274,6 +297,10 @@ const addDomain = async () => {
     result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
 
+  mixpanel.track('Workspace Domain Added', {
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
   selectedDomain.value = undefined
 }
 
@@ -283,4 +310,13 @@ const openRemoveDialog = (
   removeDialogDomain.value = domain
   showRemoveDomainDialog.value = true
 }
+
+watch(
+  () => workspaceDomains.value,
+  () => {
+    if (!hasWorkspaceDomains.value) {
+      isDomainDiscoverabilityEnabled.value = false
+    }
+  }
+)
 </script>

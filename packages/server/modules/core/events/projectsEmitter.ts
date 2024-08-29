@@ -8,7 +8,7 @@ export const ProjectEvents = {
 export type ProjectEvents = (typeof ProjectEvents)[keyof typeof ProjectEvents]
 
 export type ProjectEventsPayloads = {
-  [ProjectEvents.Created]: { project: StreamRecord }
+  [ProjectEvents.Created]: { project: StreamRecord; ownerId: string }
 }
 
 const { emit, listen } = initializeModuleEventEmitter<ProjectEventsPayloads>({

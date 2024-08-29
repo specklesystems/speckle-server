@@ -53,7 +53,7 @@ const documents = {
     "\n  fragment ProjectModelPageDialogMoveToVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogMoveToVersionFragmentDoc,
     "\n  fragment ProjectsModelPageEmbed_Project on Project {\n    id\n    ...ProjectsPageTeamDialogManagePermissions_Project\n  }\n": types.ProjectsModelPageEmbed_ProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsCardVersion on Version {\n    id\n    message\n    authorUser {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    previewUrl\n    sourceApplication\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n    ...ProjectModelPageDialogDeleteVersion\n    ...ProjectModelPageDialogMoveToVersion\n    automationsStatus {\n      ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus\n    }\n  }\n": types.ProjectModelPageVersionsCardVersionFragmentDoc,
-    "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n  }\n": types.ProjectPageProjectHeaderFragmentDoc,
+    "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n    workspace {\n      id\n      name\n      ...WorkspaceAvatar_Workspace\n    }\n  }\n": types.ProjectPageProjectHeaderFragmentDoc,
     "\n  fragment ProjectPageInviteDialog_Project on Project {\n    id\n    workspaceId\n    ...ProjectPageTeamInternals_Project\n  }\n": types.ProjectPageInviteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction on AutomationRevisionFunction {\n    parameters\n    release {\n      id\n      inputSchema\n      function {\n        id\n      }\n    }\n  }\n": types.ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragmentDoc,
     "\n  fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevision on AutomationRevision {\n    id\n    triggerDefinitions {\n      ... on VersionCreatedTriggerDefinition {\n        type\n        model {\n          id\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFragmentDoc,
@@ -490,7 +490,7 @@ export function graphql(source: "\n  fragment ProjectModelPageVersionsCardVersio
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n  }\n"): (typeof documents)["\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n    workspace {\n      id\n      name\n      ...WorkspaceAvatar_Workspace\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n    workspace {\n      id\n      name\n      ...WorkspaceAvatar_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

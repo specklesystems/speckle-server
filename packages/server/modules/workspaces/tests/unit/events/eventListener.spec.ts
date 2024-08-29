@@ -48,7 +48,8 @@ describe('Event handlers', () => {
       })
 
       await onProjectCreated({
-        project: { workspaceId, id: projectId } as StreamRecord
+        project: { workspaceId, id: projectId } as StreamRecord,
+        ownerId: cryptoRandomString({ length: 10 })
       })
 
       expect(projectRoles.length).to.equal(2)
