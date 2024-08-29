@@ -867,5 +867,77 @@ describe('Workspace repositories', () => {
       // checking that the non workspace project doesn't leak into the counts
       expect(count).to.equal(1)
     })
+    it('does not count roles from other workspaces when filtering by project role too', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace1 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace1, admin)
+
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace 2',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace1, member, Roles.Workspace.Member)
+      // member becomes a guest in the other workspace and it leaks back into the first
+      await assignToWorkspace(workspace2, member, Roles.Workspace.Guest)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace1.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace2.id
+      }
+
+      await createTestStream(project1, admin)
+      await createTestStream(project2, admin)
+
+      await grantStreamPermissions({
+        role: Roles.Stream.Contributor,
+        streamId: project2.id,
+        userId: member.id
+      })
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace1.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(0)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace2.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(1)
+    })
   })
 })
