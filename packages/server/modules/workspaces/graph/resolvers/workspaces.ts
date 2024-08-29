@@ -109,6 +109,7 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
+import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -782,6 +783,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
       AdminQueries: {
         workspaceList: async () => {
           throw new WorkspacesNotYetImplementedError()
+        }
+      },
+      LimitedUser: {
+        workspaceDomainPolicyCompliant: async (parent, args) => {
+          const workspaceId = args.workspaceId
+          if (!workspaceId) return null
+
+          const userId = parent.id
+
+          return await isUserWorkspaceDomainPolicyCompliantFactory({
+            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
+          })({ workspaceId, userId })
         }
       }
     } as Resolvers)
