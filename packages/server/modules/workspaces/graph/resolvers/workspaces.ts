@@ -109,17 +109,21 @@ import { requestNewEmailVerification } from '@/modules/emails/services/verificat
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import { getServerInfo } from '@/modules/core/services/generic'
+
+const buildCollectAndValidateResourceTargets = () =>
+  collectAndValidateWorkspaceTargetsFactory({
+    getStream,
+    getWorkspace: getWorkspaceFactory({ db }),
+    getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
+  })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
-      getStream,
-      getWorkspace: getWorkspaceFactory({ db }),
-      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
-      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
@@ -134,12 +138,7 @@ const buildCreateAndSendWorkspaceInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
-      getStream,
-      getWorkspace: getWorkspaceFactory({ db }),
-      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
-      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,
       getWorkspace: getWorkspaceFactory({ db })
@@ -555,7 +554,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
               }),
               requestNewEmailVerification
-            })
+            }),
+            collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+            getUser,
+            getServerInfo
           })
 
           await finalizeInvite({

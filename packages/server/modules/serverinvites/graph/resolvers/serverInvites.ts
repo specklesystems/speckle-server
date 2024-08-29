@@ -67,14 +67,18 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+
+const buildCollectAndValidateResourceTargets = () =>
+  collectAndValidateCoreTargetsFactory({
+    getStream
+  })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
@@ -287,7 +291,10 @@ export = {
               updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             }),
             requestNewEmailVerification
-          })
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 
@@ -426,7 +433,10 @@ export = {
               updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             }),
             requestNewEmailVerification
-          })
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 

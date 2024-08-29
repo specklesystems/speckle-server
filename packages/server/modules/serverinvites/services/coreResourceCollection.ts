@@ -28,6 +28,15 @@ const collectAndValidateServerTargetFactory =
       return []
     }
 
+    // Validate primary resource target
+    if (primaryServerResourceTarget) {
+      if (targetUser) {
+        throw new InviteCreateValidationError(
+          'This email is already associated with an account on this server'
+        )
+      }
+    }
+
     const targetRole =
       primaryServerResourceTarget?.role ||
       primaryResourceTarget.secondaryResourceRoles?.[ServerInviteResourceType] ||
@@ -44,15 +53,6 @@ const collectAndValidateServerTargetFactory =
     }
     if (targetRole === Roles.Server.Guest && !serverInfo.guestModeEnabled) {
       throw new InviteCreateValidationError('Guest mode is not enabled on this server')
-    }
-
-    // Validate primary resource target
-    if (primaryServerResourceTarget) {
-      if (targetUser) {
-        throw new InviteCreateValidationError(
-          'This email is already associated with an account on this server'
-        )
-      }
     }
 
     // Build server resource target
