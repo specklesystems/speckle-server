@@ -297,6 +297,11 @@ describe('Workspaces GQL CRUD', () => {
             streamId: project1Id,
             userId: viewer.id,
             role: Roles.Stream.Reviewer
+          }),
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: viewer2.id,
+            role: Roles.Stream.Reviewer
           })
         ])
 
@@ -305,27 +310,27 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const { subTotal, currency, items } = res.data?.workspace.billing.cost
+        const { subTotal, currency, items } = res.data!.workspace.billing.cost
         expect(subTotal).to.equal(70 + 50 + 10)
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
           {
-            name: 'admins',
+            name: 'workspace admin',
             count: 1,
             cost: 70
           },
           {
-            name: 'members',
+            name: 'workspace member',
             count: 1,
             cost: 50
           },
           {
-            name: 'guests',
+            name: 'read/write guest',
             count: 1,
             cost: 10
           },
           {
-            name: 'viewers',
+            name: 'read only guest',
             count: 2,
             cost: 0
           }

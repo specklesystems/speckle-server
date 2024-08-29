@@ -2,7 +2,6 @@ import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
   GetUserDiscoverableWorkspaces,
   GetWorkspace,
-  GetWorkspaceRolesCount,
   GetWorkspaceRolesForUser
 } from '@/modules/workspaces/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
@@ -67,27 +66,4 @@ export const getWorkspacesForUserFactory =
     }
 
     return workspaces
-  }
-
-export const getWorkspaceCostItems =
-  ({
-    getWorkspaceRolesCount,
-    getCostByRole
-  }: {
-    getWorkspaceRolesCount: GetWorkspaceRolesCount
-    getCostByRole: (role: 'admins' | 'members' | 'guests' | 'viewers') => number
-  }) =>
-  async ({ workspaceId }: { workspaceId: string }) => {
-    const rolesCounts = await getWorkspaceRolesCount({ workspaceId })
-    return (
-      Object.keys(rolesCounts) as ['admins', 'members', 'guests', 'viewers']
-    ).map<{
-      name: 'admins' | 'members' | 'guests' | 'viewers'
-      cost: number
-      count: number
-    }>((role) => ({
-      name: role,
-      count: rolesCounts[role],
-      cost: getCostByRole(role)
-    }))
   }

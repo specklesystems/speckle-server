@@ -151,10 +151,6 @@ export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string
 }) => Promise<number>
 
-export type GetWorkspaceRolesCount = (args: {
-  workspaceId: string
-}) => Promise<{ admins: number; members: number; guests: number; viewers: number }>
-
 export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   workspaceId: string
   workspaceRole: WorkspaceRoles

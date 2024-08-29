@@ -16,7 +16,6 @@ import {
   GetWorkspaceDomains,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
-  GetWorkspaceRolesCount,
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
@@ -326,69 +325,29 @@ export const countProjectsVersionsByWorkspaceIdFactory =
     return parseInt(res.count.toString())
   }
 
-export const getWorkspaceRolesCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceRolesCount =>
-  async ({ workspaceId }) => {
-    const result = await db.raw<{
-      rows: [{ admins: string; members: string; guests: string; viewers: string }]
-    }>(
-      `
-  SELECT
-    SUM(CASE WHEN wa.role = 'workspace:admin' THEN 1 ELSE 0 END) AS admins,
-    SUM(CASE WHEN wa.role = 'workspace:member' THEN 1 ELSE 0 END) AS members,
-    SUM(CASE WHEN wa.role = 'workspace:guest' AND sa."userId" IS NOT NULL THEN 1 ELSE 0 END) AS guests,
-    SUM(CASE WHEN wa.role = 'workspace:guest' AND sa."userId" IS NULL THEN 1 ELSE 0 END) AS viewers
-  FROM
-    workspace_acl wa
-  LEFT JOIN
-    (
-      SELECT DISTINCT sa."userId"
-      FROM stream_acl sa
-      WHERE sa.role = 'stream:contributor' OR sa.role = 'stream:owner'
-    ) sa
-  ON
-    wa."userId" = sa."userId"
-  WHERE
-    wa."workspaceId" = ?
-`,
-      [workspaceId]
-    )
-
-    const defaultCounts = {
-      admins: 0,
-      members: 0,
-      guests: 0,
-      viewers: 0
-    }
-
-    if (!result.rows[0]) {
-      return defaultCounts
-    }
-
-    const row = result.rows[0]
-    const counts = (Object.keys(row) as Array<keyof typeof row>)
-      .filter((key) => row[key])
-      .reduce((acc, key) => ({ ...acc, [key]: parseInt(row[key]) }), {})
-
-    return { ...defaultCounts, ...counts }
-  }
-
 export const countWorkspaceRoleWithOptionalProjectRoleFactory =
   ({ db }: { db: Knex }): CountWorkspaceRoleWithOptionalProjectRole =>
   async ({ workspaceId, workspaceRole, projectRole }) => {
-    const query = tables
-      .workspacesAcl(db)
-      .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
-      .where(DbWorkspaceAcl.col.role, workspaceRole)
-      .countDistinct(DbWorkspaceAcl.col.userId)
-
-    if (projectRole)
-      query
-        .join(Streams.name, Streams.col.workspaceId, DbWorkspaceAcl.col.workspaceId)
+    if (projectRole) {
+      const query = tables
+        .streams(db)
         .join(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
+        .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, StreamAcl.col.userId)
+        .where(Streams.col.workspaceId, workspaceId)
+        .andWhere(DbWorkspaceAcl.col.role, workspaceRole)
         .andWhere(StreamAcl.col.role, projectRole)
+        .countDistinct(DbWorkspaceAcl.col.userId)
 
-    const [res] = await query
+      const [res] = await query
+      return parseInt(res.count.toString())
+    } else {
+      const query = tables
+        .workspacesAcl(db)
+        .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+        .where(DbWorkspaceAcl.col.role, workspaceRole)
+        .count()
 
-    return parseInt((res as unknown as { count: string | number }).count.toString())
+      const [res] = await query
+      return parseInt(res.count.toString())
+    }
   }
