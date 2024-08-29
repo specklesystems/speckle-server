@@ -47,9 +47,9 @@ const getLocalResources = async (params: { authorId: string }) => {
   const { authorId } = params
   const user = await getUser(authorId)
   if (!user) {
-    throw new UserNotFoundError('Target author not found', {
+    throw new UserNotFoundError('Target author, {userId}, not found', {
       info: { userId: authorId }
-    }) //FIXME use message template referring to options.info.userId
+    })
   }
 
   return { user }
@@ -58,7 +58,9 @@ const getLocalResources = async (params: { authorId: string }) => {
 const parseIncomingUrl = (projectUrl: string) => {
   const [, origin, , projectId] = PROJECT_URL_RGX.exec(projectUrl) || []
   if (!origin || !projectId) {
-    throw new UserInputError('Invalid project URL', { info: { url: projectUrl } }) //FIXME use message template referring to options.info.url
+    throw new UserInputError('Invalid project URL: {url}', {
+      info: { url: projectUrl }
+    })
   }
 
   return { origin, projectId }

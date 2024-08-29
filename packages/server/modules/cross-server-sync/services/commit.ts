@@ -217,7 +217,7 @@ const parseIncomingUrl = async (url: string, token?: string) => {
     return modelUrl
   }
 
-  throw new UserInputError(`Couldn't parse commit URL: ${url}`, { info: { url } }) //FIXME use message template with metadata from info
+  throw new UserInputError("Couldn't parse commit URL: {url}", { info: { url } })
 }
 
 const getLocalResources = async (
@@ -235,7 +235,7 @@ const getLocalResources = async (
   const targetBranch = await getStreamBranchByName(targetStreamId, branchName)
   if (!targetBranch) {
     throw new BranchNotFoundError(
-      `Couldn't find local branch ${branchName} in stream ${targetStreamId}`, //FIXME use message template with metadata from info
+      "Couldn't find local branch {branchName} in stream {targetStreamId}",
       { info: { branchName, targetStreamId } }
     )
   }

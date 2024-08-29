@@ -70,9 +70,9 @@ const getBlobMetadata = async ({ streamId, blobId }, blobRepo = blobLookup) => {
   if (!streamId) throw new BadRequestError('No steamId provided')
   const obj = (await blobRepo({ blobId, streamId }).first()) || null
   if (!obj)
-    throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`, {
+    throw new NotFoundError("The requested asset: {blobId} doesn't exist", {
       info: { blobId }
-    }) //FIXME use message template and refer to info.blobId
+    })
   if (obj.streamId !== streamId)
     throw new ResourceMismatch("The stream doesn't have the given resource", {
       info: { streamId, blobId }
