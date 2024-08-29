@@ -8,10 +8,19 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 mb-6 mt-4 md:my-6"
+        class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 my-2"
       >
         <ProjectPageHeader :project="project" />
-        <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
+        <div class="flex gap-x-4 items-center">
+          <div
+            class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none whitespace-nowrap"
+          >
+            {{ project.modelCount.totalCount || 0 }} Project{{
+              project.modelCount.totalCount === 1 ? '' : 's'
+            }}
+          </div>
+          <ProjectPageTeamBlock :project="project" class="w-full md:w-auto shrink-0" />
+        </div>
       </div>
       <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage :project="project" />
@@ -40,6 +49,7 @@ graphql(`
     }
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
+    ...ProjectPageTeamBlock_Project
   }
 `)
 

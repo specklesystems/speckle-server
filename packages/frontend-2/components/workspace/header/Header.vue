@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col sm:gap-4 sm:flex-row justify-between sm:items-center">
+  <div class="flex flex-col gap-4 sm:flex-row justify-between md:items-center">
     <div class="flex gap-2 mb-3 mt-2">
-      <div class="flex items-center">
+      <div class="flex items-center mr-2">
         <WorkspaceAvatar
           :logo="workspaceInfo.logo"
           :default-logo-index="workspaceInfo.defaultLogoIndex"
@@ -9,13 +9,13 @@
         />
       </div>
       <div class="flex flex-col">
-        <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
+        <h1 class="text-heading">{{ workspaceInfo.name }}</h1>
         <div class="text-body-xs text-foreground-2">
           {{ workspaceInfo.description || 'No workspace description' }}
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-x-4">
       <div
         class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none whitespace-nowrap"
       >
@@ -23,6 +23,9 @@
           workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
         }}
       </div>
+      <p class="text-body-2xs text-foreground-2 capitalize">
+        {{ workspaceInfo.role?.split(':').reverse()[0] }}
+      </p>
       <UserAvatarGroup
         :users="team.items.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
