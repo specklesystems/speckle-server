@@ -86,7 +86,7 @@
               </template>
             </LayoutSidebarMenuGroup>
             <LayoutSidebarMenuGroupItem
-              v-if="isAdmin"
+              v-if="canCreateWorkspace"
               label="Add workspace"
               @click="openWorkspaceCreateDialog"
             >
@@ -170,6 +170,11 @@ const workspaceItems = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+const canCreateWorkspace = computed(
+  () =>
+    user.value?.role === Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
+
 const selectedMenuItem = computed((): SettingsMenuItem | null => {
   const categories = [
     userMenuItems.value,
