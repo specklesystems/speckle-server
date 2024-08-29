@@ -3891,7 +3891,7 @@ export type Workspace = {
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
-  team: Array<WorkspaceCollaborator>;
+  team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -3909,7 +3909,9 @@ export type WorkspaceProjectsArgs = {
 
 
 export type WorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceTeamFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 export type WorkspaceBilling = {
@@ -3918,11 +3920,19 @@ export type WorkspaceBilling = {
   versionsCount: WorkspaceVersionsCount;
 };
 
+/** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
   role: Scalars['String']['output'];
   user: LimitedUser;
+};
+
+export type WorkspaceCollaboratorCollection = {
+  __typename?: 'WorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type WorkspaceCollection = {
@@ -4461,6 +4471,7 @@ export type ResolversTypes = {
   Workspace: ResolverTypeWrapper<WorkspaceGraphQLReturn>;
   WorkspaceBilling: ResolverTypeWrapper<WorkspaceBilling>;
   WorkspaceCollaborator: ResolverTypeWrapper<WorkspaceCollaboratorGraphQLReturn>;
+  WorkspaceCollaboratorCollection: ResolverTypeWrapper<Omit<WorkspaceCollaboratorCollection, 'items'> & { items: Array<ResolversTypes['WorkspaceCollaborator']> }>;
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCost: ResolverTypeWrapper<WorkspaceCost>;
   WorkspaceCostDiscount: ResolverTypeWrapper<WorkspaceCostDiscount>;
@@ -4698,6 +4709,7 @@ export type ResolversParentTypes = {
   Workspace: WorkspaceGraphQLReturn;
   WorkspaceBilling: WorkspaceBilling;
   WorkspaceCollaborator: WorkspaceCollaboratorGraphQLReturn;
+  WorkspaceCollaboratorCollection: Omit<WorkspaceCollaboratorCollection, 'items'> & { items: Array<ResolversParentTypes['WorkspaceCollaborator']> };
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCost: WorkspaceCost;
   WorkspaceCostDiscount: WorkspaceCostDiscount;
@@ -6068,7 +6080,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  team?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType, Partial<WorkspaceTeamArgs>>;
+  team?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<WorkspaceTeamArgs, 'limit'>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -6083,6 +6095,13 @@ export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentT
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceCollaboratorCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceCollaboratorCollection'] = ResolversParentTypes['WorkspaceCollaboratorCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['WorkspaceCollaborator']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6280,6 +6299,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Workspace?: WorkspaceResolvers<ContextType>;
   WorkspaceBilling?: WorkspaceBillingResolvers<ContextType>;
   WorkspaceCollaborator?: WorkspaceCollaboratorResolvers<ContextType>;
+  WorkspaceCollaboratorCollection?: WorkspaceCollaboratorCollectionResolvers<ContextType>;
   WorkspaceCollection?: WorkspaceCollectionResolvers<ContextType>;
   WorkspaceCost?: WorkspaceCostResolvers<ContextType>;
   WorkspaceCostDiscount?: WorkspaceCostDiscountResolvers<ContextType>;

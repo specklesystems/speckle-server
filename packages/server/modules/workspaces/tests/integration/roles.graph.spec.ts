@@ -94,7 +94,7 @@ describe('Workspaces Roles GQL', () => {
         const { data } = await apollo.execute(GetWorkspaceDocument, {
           workspaceId: workspace.id
         })
-        const userRole = data?.workspace.team.find(
+        const userRole = data?.workspace.team.items.find(
           (user) => user.id === serverMemberUser.id
         )
 
@@ -112,7 +112,7 @@ describe('Workspaces Roles GQL', () => {
           }
         })
 
-        const roles = res.data?.workspaceMutations.updateRole.team
+        const roles = res.data?.workspaceMutations.updateRole.team.items
 
         expect(res).to.not.haveGraphQLErrors()
         expect(roles?.some((role) => role.id === serverMemberUser.id)).to.be.true
@@ -163,7 +163,7 @@ describe('Workspaces Roles GQL', () => {
           }
         })
 
-        const roles = res.data?.workspaceMutations.updateRole.team
+        const roles = res.data?.workspaceMutations.updateRole.team.items
 
         expect(res).to.not.haveGraphQLErrors()
         expect(roles?.some((role) => role.id === serverMemberUser.id)).to.be.false
@@ -594,7 +594,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspace.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
@@ -639,7 +639,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspace.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
@@ -681,7 +681,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspace.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.not.haveGraphQLErrors()
@@ -727,7 +727,7 @@ describe('Workspaces Roles GQL', () => {
           { id: workspace.id }
         )
 
-        const teamRoles = workspaceTeamData?.workspace.team
+        const teamRoles = workspaceTeamData?.workspace.team.items
         const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
 
         expect(res).to.not.haveGraphQLErrors()

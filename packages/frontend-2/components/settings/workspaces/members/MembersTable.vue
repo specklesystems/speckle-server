@@ -1,6 +1,7 @@
 <template>
   <div>
     <SettingsWorkspacesMembersTableHeader
+      v-model:search="search"
       search-placeholder="Search members..."
       :workspace-id="workspaceId"
       :workspace="workspace"
@@ -19,6 +20,15 @@
         }
       ]"
       :items="members"
+      :loading="searchResultLoading"
+      :empty-message="
+        search.length
+          ? `No members found for '${search}'`
+          : 'This workspace has no members'
+      "
+      :buttons="[
+        { icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }
+      ]"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -50,7 +60,7 @@
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
           :disabled-items="
-            !item.workspaceDomainPolicyCompliant
+            item.workspaceDomainPolicyCompliant === false
               ? [Roles.Workspace.Member, Roles.Workspace.Admin]
               : []
           "
@@ -76,7 +86,6 @@
         </LayoutMenu>
       </template>
     </LayoutTable>
-
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
@@ -84,7 +93,6 @@
       :new-role="newRole"
       @update-role="onUpdateRole"
     />
-
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
       :name="userToModify?.name ?? ''"
@@ -95,12 +103,15 @@
 
 <script setup lang="ts">
 import type { WorkspaceRoles } from '@speckle/shared'
+import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
+  ExclamationCircleIcon,
   XMarkIcon,
-  ExclamationCircleIcon
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -130,8 +141,10 @@ graphql(`
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
-      id
-      ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+      items {
+        id
+        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+      }
     }
   }
 `)
@@ -145,6 +158,21 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const search = ref('')
+
+const { result: searchResult, loading: searchResultLoading } = useQuery(
+  settingsWorkspacesMembersSearchQuery,
+  () => ({
+    filter: {
+      search: search.value
+    },
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    enabled: !!search.value.length
+  })
+)
+
 const updateUserRole = useWorkspaceUpdateRole()
 const mixpanel = useMixpanel()
 
@@ -155,12 +183,15 @@ const userToModify = ref<UserItem>()
 
 const showActionsMenu = ref<Record<string, boolean>>({})
 
-const members = computed(() =>
-  (props.workspace?.team || []).map(({ user, ...rest }) => ({
+const members = computed(() => {
+  const memberArray = search.value.length
+    ? searchResult.value?.workspace?.team.items
+    : props.workspace?.team.items
+  return (memberArray || []).map(({ user, ...rest }) => ({
     ...user,
     ...rest
   }))
-)
+})
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)

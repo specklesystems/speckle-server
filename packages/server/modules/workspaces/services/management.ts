@@ -105,7 +105,8 @@ export const createWorkspaceFactory =
     await upsertWorkspaceRole({
       userId,
       role: Roles.Workspace.Admin,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      createdAt: new Date()
     })
 
     // emit a workspace created event
@@ -310,7 +311,7 @@ export const updateWorkspaceRoleFactory =
     userId,
     role: nextRole,
     skipProjectRoleUpdatesFor
-  }: WorkspaceAcl & {
+  }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
      * If this gets triggered from a project role update, we don't want to override that project's role to the default one
      */
@@ -343,7 +344,15 @@ export const updateWorkspaceRoleFactory =
     }
 
     // Perform upsert
-    await upsertWorkspaceRole({ userId, workspaceId, role: nextRole })
+    const { role: previousRole, createdAt } =
+      workspaceRoles.find((acl) => acl.userId === userId) ?? {}
+
+    await upsertWorkspaceRole({
+      userId,
+      workspaceId,
+      role: nextRole,
+      createdAt: createdAt ?? new Date()
+    })
 
     // Emit new role
     await emitWorkspaceEvent({
@@ -352,7 +361,6 @@ export const updateWorkspaceRoleFactory =
     })
 
     // Update project roles
-    const previousRole = workspaceRoles.find((acl) => acl.userId === userId)?.role
     const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
       workspaceId
     })

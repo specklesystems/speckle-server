@@ -169,7 +169,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
+      await upsertWorkspaceRole({
+        userId,
+        workspaceId,
+        role: 'workspace:member',
+        createdAt: new Date()
+      })
       await deleteWorkspaceRole({ userId, workspaceId })
 
       const role = await getWorkspaceRoleForUser({ userId, workspaceId })
@@ -183,7 +188,8 @@ describe('Workspace repositories', () => {
       const createdRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: 'workspace:member'
+        role: 'workspace:member',
+        createdAt: new Date()
       }
       await upsertWorkspaceRole(createdRole)
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
@@ -207,12 +213,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdA,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdB,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -228,7 +236,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId,
+        role: 'workspace:admin',
+        createdAt: new Date()
+      })
 
       const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
 
@@ -255,12 +268,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser({ userId })
@@ -280,12 +295,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser(
@@ -524,7 +541,8 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         userId: user.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
@@ -605,7 +623,8 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         userId: user.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
@@ -846,6 +865,78 @@ describe('Workspace repositories', () => {
         projectRole: Roles.Stream.Contributor
       })
       // checking that the non workspace project doesn't leak into the counts
+      expect(count).to.equal(1)
+    })
+    it('does not count roles from other workspaces when filtering by project role too', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace1 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace1, admin)
+
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace 2',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace1, member, Roles.Workspace.Member)
+      // member becomes a guest in the other workspace and it leaks back into the first
+      await assignToWorkspace(workspace2, member, Roles.Workspace.Guest)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace1.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace2.id
+      }
+
+      await createTestStream(project1, admin)
+      await createTestStream(project2, admin)
+
+      await grantStreamPermissions({
+        role: Roles.Stream.Contributor,
+        streamId: project2.id,
+        userId: member.id
+      })
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace1.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(0)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace2.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
       expect(count).to.equal(1)
     })
   })

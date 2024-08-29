@@ -30,6 +30,10 @@ export type LimitedUserRecord = Pick<
   'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
 >
 
+export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
+  role: ServerRoles
+}
+
 export type UsersMetaRecord<V = any> = {
   userId: string
 } & BaseMetaRecord<V>
