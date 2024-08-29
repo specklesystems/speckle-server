@@ -13,7 +13,7 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center">
           <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-            {{ project.modelCount.totalCount || 0 }} Project{{
+            {{ project.modelCount.totalCount || 0 }} Model{{
               project.modelCount.totalCount === 1 ? '' : 's'
             }}
           </CommonBadge>
