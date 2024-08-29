@@ -45,6 +45,11 @@ export const workspaceBillingFragment = gql`
           name
           cost
         }
+        discount {
+          name
+          amount
+        }
+        total
       }
     }
   }

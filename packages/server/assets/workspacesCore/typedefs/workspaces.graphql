@@ -205,6 +205,11 @@ type WorkspaceCostItem {
   cost: Float!
 }
 
+type WorkspaceCostDiscount {
+  name: String!
+  amount: Float!
+}
+
 type WorkspaceCost {
   """
   Estimated cost of the workspace with no discount applied
@@ -215,6 +220,14 @@ type WorkspaceCost {
   """
   currency: Currency!
   items: [WorkspaceCostItem!]!
+  """
+  Discount applied to the total
+  """
+  discount: WorkspaceCostDiscount
+  """
+  Total cost with discount applied
+  """
+  total: Float!
 }
 
 type WorkspaceBilling {
