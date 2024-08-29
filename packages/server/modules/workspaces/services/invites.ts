@@ -470,6 +470,11 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
       )
     }
 
+    // If decline, skip all further validation
+    if (action === InviteFinalizationAction.DECLINE) {
+      return
+    }
+
     const workspace = await deps.getWorkspace({
       workspaceId: invite.resource.resourceId,
       userId: finalizerUserId
@@ -522,6 +527,12 @@ export const processFinalizedWorkspaceInviteFactory =
       )
     }
 
+    if (action === InviteFinalizationAction.DECLINE) {
+      // Skip validation so user can get rid of the invite regardless
+      // TODO: Emit activityStream event?
+      return
+    }
+
     const workspace = await deps.getWorkspace({
       workspaceId: invite.resource.resourceId,
       userId: finalizerUserId
@@ -538,7 +549,5 @@ export const processFinalizedWorkspaceInviteFactory =
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member
       })
-    } else if (action === InviteFinalizationAction.DECLINE) {
-      // TODO: Emit activityStream event?
     }
   }

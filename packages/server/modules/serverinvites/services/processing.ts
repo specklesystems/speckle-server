@@ -210,7 +210,7 @@ export const finalizeResourceInviteFactory =
 
     try {
       // Add email
-      if (isNewEmailTarget) {
+      if (isNewEmailTarget && action === InviteFinalizationAction.ACCEPT) {
         await validateAndCreateUserEmail({
           userEmail: {
             email: inviteTarget.userEmail!,

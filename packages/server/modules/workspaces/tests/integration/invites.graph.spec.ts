@@ -75,7 +75,10 @@ import { getStream } from '@/modules/core/repositories/streams'
 import { addDomainToWorkspaceFactory } from '@/modules/workspaces/services/management'
 import {
   createUserEmailFactory,
+  deleteUserEmailFactory,
+  findEmailFactory,
   findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -890,11 +893,19 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
+      const processableWorkspaceEmailInvite = {
+        workspaceId: '',
+        inviteId: '',
+        token: ''
+      }
+
       const processableProjectInvite = {
         projectId: '',
         inviteId: '',
         token: ''
       }
+
+      const emailInviteEmail = 'imJustSomeRandomNewGuy@aaaaa.com'
 
       const validateResourceAccess = async (params: {
         shouldHaveAccess: boolean
@@ -935,6 +946,23 @@ describe('Workspaces Invites GQL', () => {
         processableWorkspaceInvite.inviteId = workspaceInvite.id
         processableWorkspaceInvite.token = workspaceInvite.token
 
+        const workspaceEmailInvite = await captureCreatedInvite(async () => {
+          await gqlHelpers.createInvite(
+            {
+              workspaceId: myInviteTargetWorkspace.id,
+              input: {
+                email: emailInviteEmail,
+                role: WorkspaceRole.Member
+              }
+            },
+            { assertNoErrors: true }
+          )
+        })
+
+        processableWorkspaceEmailInvite.workspaceId = myInviteTargetWorkspace.id
+        processableWorkspaceEmailInvite.inviteId = workspaceEmailInvite.id
+        processableWorkspaceEmailInvite.token = workspaceEmailInvite.token
+
         const projectInvite = await captureCreatedInvite(
           async () =>
             await gqlHelpers.createWorkspaceProjectInvite(
@@ -960,6 +988,17 @@ describe('Workspaces Invites GQL', () => {
         // Serial execution to avoid race conditions
         await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
         await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
+
+        // Reset otherGuy's newly added verified email
+        const verifiedEmail = await findEmailFactory({ db })({
+          email: emailInviteEmail
+        })
+        if (verifiedEmail) {
+          await deleteUserEmailFactory({ db })({
+            userId: verifiedEmail.userId,
+            id: verifiedEmail.id
+          })
+        }
       })
 
       it("can't retrieve it if not the invitee and no token specified", async () => {
@@ -1161,6 +1200,69 @@ describe('Workspaces Invites GQL', () => {
           expect(invite).to.be.not.ok
 
           await validateResourceAccess({ shouldHaveAccess: accept })
+        }
+      )
+
+      it("can't accept a new email invite, if not explicitly doing so", async () => {
+        const res = await gqlHelpers.useInvite(
+          {
+            input: {
+              accept: true,
+              token: processableWorkspaceEmailInvite.token
+            }
+          },
+          {
+            context: {
+              userId: otherGuy.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          'Attempted to finalize an invite for a mismatched e-mail address'
+        )
+        expect(res.data?.workspaceMutations?.invites?.use).to.not.be.ok
+      })
+
+      itEach(
+        [{ accept: true }, { accept: false }],
+        ({ accept }) =>
+          `can explicitly ${accept ? 'accept' : 'decline'} a new email invite`,
+        async ({ accept }) => {
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept,
+                token: processableWorkspaceEmailInvite.token,
+                addNewEmail: true
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({ shouldHaveAccess: accept })
+
+          const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
+            db
+          })({
+            userId: otherGuy.id
+          })
+          const newVerifiedEmail = verifiedEmails.find(
+            (e) => e.email.toLowerCase() === emailInviteEmail.toLowerCase()
+          )
+
+          if (accept) {
+            expect(newVerifiedEmail).to.be.ok
+          } else {
+            expect(newVerifiedEmail).to.not.be.ok
+          }
         }
       )
 

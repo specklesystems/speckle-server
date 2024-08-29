@@ -455,7 +455,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getWorkspace: getWorkspaceFactory({ db })
             }),
             findUserByTarget: findUserByTargetFactory(),
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             markInviteUpdated: markInviteUpdatedfactory({ db })
           })
 
@@ -512,7 +515,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         use: async (_parent, args, ctx) => {
           const finalizeInvite = finalizeResourceInviteFactory({
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
             insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
             emitEvent: ({ eventName, payload }) =>
@@ -572,7 +578,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const cancelInvite = cancelResourceInviteFactory({
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             deleteInvite: deleteInviteFactory({ db }),
             validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
               getWorkspace: getWorkspaceFactory({ db })
