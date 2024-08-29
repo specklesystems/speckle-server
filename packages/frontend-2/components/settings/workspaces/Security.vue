@@ -296,6 +296,10 @@ const addDomain = async () => {
     result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
 
+  mixpanel.track('Workspace Domain Added', {
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
   selectedDomain.value = undefined
 }
 

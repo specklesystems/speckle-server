@@ -89,6 +89,7 @@ import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -127,6 +128,7 @@ const props = defineProps<{
 }>()
 
 const updateUserRole = useWorkspaceUpdateRole()
+const mixpanel = useMixpanel()
 
 const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
@@ -172,6 +174,12 @@ const onUpdateRole = async () => {
     role: newRole.value,
     workspaceId: props.workspaceId
   })
+
+  mixpanel.track('Workspace User Role Updated', {
+    newRole: newRole.value,
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
 }
 
 const onRemoveUser = async () => {
@@ -181,6 +189,11 @@ const onRemoveUser = async () => {
     userId: userToModify.value.id,
     role: null,
     workspaceId: props.workspaceId
+  })
+
+  mixpanel.track('Workspace User Removed', {
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
 }
 
