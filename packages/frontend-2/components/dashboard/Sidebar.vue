@@ -59,7 +59,7 @@
               :plus-click="
                 isUserAdmin
                   ? () => {
-                      openWorkspaceCreateDialog
+                      openWorkspaceCreateDialog()
                     }
                   : undefined
               "
