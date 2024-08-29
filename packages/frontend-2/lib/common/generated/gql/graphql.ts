@@ -825,6 +825,12 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum Currency {
+  Eur = 'EUR',
+  Gbp = 'GBP',
+  Usd = 'USD'
+}
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -3894,7 +3900,8 @@ export type WorkspaceTeamArgs = {
 
 export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
-  versionsCount?: Maybe<WorkspaceVersionsCount>;
+  cost: WorkspaceCost;
+  versionsCount: WorkspaceVersionsCount;
 };
 
 export type WorkspaceCollaborator = {
@@ -3909,6 +3916,22 @@ export type WorkspaceCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Workspace>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceCost = {
+  __typename?: 'WorkspaceCost';
+  /** Currency of the price */
+  currency: Currency;
+  items: Array<WorkspaceCostItem>;
+  /** Estimated cost of the workspace with no discount applied */
+  subTotal: Scalars['Float']['output'];
+};
+
+export type WorkspaceCostItem = {
+  __typename?: 'WorkspaceCostItem';
+  cost: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type WorkspaceCreateInput = {
