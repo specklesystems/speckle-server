@@ -483,7 +483,30 @@ describe('Workspace role services', () => {
       )
       expect(err.message).to.eq(new WorkspaceProtectedError().message)
     })
-    it('sets roles on workspace projects when user added to workspace', async () => {
+    it('sets roles on workspace projects when user added to workspace as admin', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const projectId = cryptoRandomString({ length: 10 })
+
+      const workspaceRole: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin,
+        createdAt: new Date()
+      }
+
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceProjects: [{ id: projectId } as StreamRecord]
+      })
+
+      await updateWorkspaceRole(workspaceRole)
+
+      expect(context.workspaceProjectRoles.length).to.equal(1)
+      expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
+      expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
+    })
+    it('sets roles on workspace projects when user added to workspace as member', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
@@ -505,7 +528,28 @@ describe('Workspace role services', () => {
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
-      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
+    })
+    it('does not set roles on workspace projects when user added to workspace as guest', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const projectId = cryptoRandomString({ length: 10 })
+
+      const workspaceRole: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Guest,
+        createdAt: new Date()
+      }
+
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceProjects: [{ id: projectId } as StreamRecord]
+      })
+
+      await updateWorkspaceRole(workspaceRole)
+
+      expect(context.workspaceProjectRoles.find((role) => role.userId === userId)).to
+        .not.exist
     })
   })
 

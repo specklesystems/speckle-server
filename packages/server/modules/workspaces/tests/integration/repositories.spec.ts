@@ -35,7 +35,10 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { truncateTables } from '@/test/hooks'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { upsertProjectRoleFactory } from '@/modules/core/repositories/streams'
+import {
+  grantStreamPermissions,
+  upsertProjectRoleFactory
+} from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
