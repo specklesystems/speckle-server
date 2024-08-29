@@ -32,7 +32,7 @@
       <button
         v-if="plusClick"
         v-tippy="plusText ? plusText : undefined"
-        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2"
+        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2 text-foreground-2"
         @click="plusClick"
       >
         <Plus class="h-4 w-4" />
