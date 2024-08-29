@@ -335,6 +335,8 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
         .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, StreamAcl.col.userId)
         .where(Streams.col.workspaceId, workspaceId)
         .andWhere(DbWorkspaceAcl.col.role, workspaceRole)
+        // make sure to also filter on the workspace_acl workspaceId, to not leak roles across
+        .andWhere(DbWorkspaceAcl.col.workspaceId, workspaceId)
         .andWhere(StreamAcl.col.role, projectRole)
         .countDistinct(DbWorkspaceAcl.col.userId)
 
