@@ -144,7 +144,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
 
     const { role, resourceId } = primaryWorkspaceResourceTarget
 
-    // Validate that inviter has access to this project
+    // Validate that inviter has access to this workspace
     try {
       await authorizeResolver(
         inviter.id,

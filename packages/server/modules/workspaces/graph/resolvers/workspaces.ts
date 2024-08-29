@@ -205,7 +205,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }
 
           const createProjectInvite = createProjectInviteFactory({
-            createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+            createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+            getStream
           })
 
           const inputBatches = chunk(args.inputs, 10)

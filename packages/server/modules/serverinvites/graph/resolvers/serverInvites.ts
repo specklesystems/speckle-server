@@ -173,7 +173,8 @@ export = {
 
     async streamInviteCreate(_parent, args, context) {
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       await createProjectInvite({
@@ -240,7 +241,8 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       // Batch calls so that we don't kill the server
@@ -348,7 +350,8 @@ export = {
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       await createProjectInvite({
@@ -377,7 +380,8 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       const inputBatches = chunk(args.input, 10)

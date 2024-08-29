@@ -8,6 +8,7 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { getStream } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
@@ -40,6 +41,7 @@ import {
   FinalizeInvite,
   GetInvitationTargetUsers
 } from '@/modules/serverinvites/services/operations'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   MaybeNullOrUndefined,
   Nullable,
@@ -57,7 +59,7 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createProjectInviteFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: typeof getStream }) =>
   async (params: {
     input: StreamInviteCreateInput | FullProjectInviteCreateInput
     inviterId: string
@@ -85,6 +87,16 @@ export const createProjectInviteFactory =
       : input.projectId
     if (!resourceId?.length) {
       throw new InviteCreateValidationError('Invalid project ID specified')
+    }
+
+    // If workspace project, ensure secondaryResourceRoles are set (channeling users
+    // to the correct gql resolver)
+    const project = await deps.getStream({ streamId: resourceId })
+    const workspaceRole = secondaryResourceRoles?.[WorkspaceInviteResourceType]
+    if (project && project?.workspaceId && !workspaceRole) {
+      throw new InviteCreateValidationError(
+        'Target project belongs to a workspace, you should use the createForWorkspace() resolver instead'
+      )
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!

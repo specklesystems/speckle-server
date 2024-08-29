@@ -1,1 +1,1 @@
-export const WorkspaceInviteResourceType = 'workspace'
+export { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
