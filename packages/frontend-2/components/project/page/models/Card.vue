@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
-    <div class="relative p-2">
+    <div class="relative p-2 h-full flex flex-col">
       <NuxtLink
         v-if="!defaultLinkDisabled"
         :to="modelRoute(projectId, model.id)"
@@ -37,7 +37,7 @@
           @upload-version="triggerVersionUpload"
         />
       </div>
-      <div class="relative flex items-center justify-center my-1">
+      <div class="relative flex items-center justify-center my-1 flex-1">
         <div
           v-if="
             isAutomateModuleEnabled &&
@@ -55,7 +55,7 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full"
+          class="px-4 w-full h-full"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
