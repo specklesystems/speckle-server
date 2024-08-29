@@ -11,6 +11,7 @@ export const useConfigStore = defineStore('configStore', () => {
   const isDarkTheme = computed(() => {
     return config.value?.darkTheme
   })
+  const isDevMode = ref(false)
 
   const toggleTheme = () => {
     config.value.darkTheme = !config.value.darkTheme
@@ -25,11 +26,17 @@ export const useConfigStore = defineStore('configStore', () => {
   }
   init()
 
+  const getIsDevMode = async () =>
+    (isDevMode.value = await $configBinding.getIsDevMode())
+
+  void getIsDevMode()
+
   return {
     isInitialized,
     config,
     hasConfigBindings,
     isDarkTheme,
+    isDevMode,
     toggleTheme
   }
 })

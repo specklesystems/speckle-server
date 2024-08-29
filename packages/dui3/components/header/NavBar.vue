@@ -18,7 +18,7 @@
             <PortalTarget name="navigation"></PortalTarget>
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <div v-if="uiConfigStore.isDevMode" class="flex justify-between items-center">
           <!-- ONLY FOR TESTS FOR NOW-->
           <div v-if="testSettings && hasConfigBindings" class="flex justify-end">
             <FormButton
@@ -36,6 +36,16 @@
           <div>
             <HeaderUserMenu />
           </div>
+        </div>
+        <div v-else>
+          <FormButton
+            v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
+            size="xs"
+            text
+            @click="uiConfigStore.toggleTheme()"
+          >
+            <Component :is="isDarkTheme ? SunIcon : MoonIcon" class="w-4" />
+          </FormButton>
         </div>
       </div>
     </div>

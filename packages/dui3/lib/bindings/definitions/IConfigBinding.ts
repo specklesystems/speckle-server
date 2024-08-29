@@ -13,6 +13,7 @@ export const IConfigBindingKey = 'configBinding'
  * A test binding interface to ensure compatbility. Ideally all host environments would implement and register it.
  */
 export interface IConfigBinding extends IBinding<IConfigBindingEvents> {
+  getIsDevMode: () => Promise<boolean>
   getConfig: () => Promise<ConnectorConfig>
   updateConfig: (config: ConnectorConfig) => void
 }
