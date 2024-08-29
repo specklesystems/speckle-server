@@ -63,6 +63,7 @@ import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import {
   BadRequestError,
+  BaseError,
   ContextError,
   UnauthorizedError
 } from '@/modules/shared/errors'
@@ -94,10 +95,14 @@ function logSubscriptionOperation(params: {
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
+      let errorLogger = logger
+      if (error instanceof BaseError) {
+        errorLogger = errorLogger.child({ ...error.info() })
+      }
       if (shouldLogAsInfoLevel(error)) {
-        logger.info({ err: error }, errMsg)
+        errorLogger.info({ err: error }, errMsg)
       } else {
-        logger.error({ err: error }, errMsg)
+        errorLogger.error({ err: error }, errMsg)
       }
     }
   } else if (response?.data) {
