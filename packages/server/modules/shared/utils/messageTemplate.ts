@@ -4,10 +4,15 @@
  * To template a string, place the property name between curly brackets. e.g. {key}.
  * An improvement over messagetemplates.org is that you can use nested keys e.g. {key.nestedKey.subKey} to deeply access within objects.
  * An improvement over messagetemplates.org is that you can use conditional formatting, e.g. {if key}some text{end}. Note that {else} statements are not supported.
- * Limitation: Brackets cannot yet be escaped.
+ * Limitation: Brackets cannot be escaped.
  * Limitation: Cannot prefix with @ or $ to control how a property is captured
  * Limitation: Property names cannot be suffixed with any optional format, e.g. :000, to control how the property is rendered
- * Original code from https://github.com/pinojs/pino-pretty/blob/master/lib/utils/prettify-message.js
+ *
+ * This code is modified from:
+ * - https://github.com/pinojs/pino-pretty/blob/master/lib/utils/prettify-message.js
+ * - https://github.com/pinojs/pino-pretty/blob/master/lib/utils/get-property-value.js
+ * - https://github.com/pinojs/pino-pretty/blob/master/lib/utils/interpret-conditionals.js
+ * - https://github.com/pinojs/pino-pretty/blob/master/lib/utils/split-property-key.js
  * Originally licensed under an MIT License: https://github.com/pinojs/pino-pretty?tab=MIT-1-ov-file#readme
  */
 export const prettifyMessage = (values: Record<string, unknown>, message: string) => {
@@ -21,6 +26,18 @@ export const prettifyMessage = (values: Record<string, unknown>, message: string
   return msg
 }
 
+/**
+ * Gets a specified property from an object if it exists.
+ *
+ * @param {object} obj The object to be searched.
+ * @param {string|string[]} property A string, or an array of strings, identifying
+ * the property to be retrieved from the object.
+ * Accepts nested properties delimited by a `.`.
+ * Delimiter can be escaped to preserve property names that contain the delimiter.
+ * e.g. `'prop1.prop2'` or `'prop2\.domain\.corp.prop2'`.
+ *
+ * @returns {*}
+ */
 const getPropertyValue = (obj: unknown, property: string | string[]): string => {
   const props = Array.isArray(property) ? property : splitPropertyKey(property)
 
