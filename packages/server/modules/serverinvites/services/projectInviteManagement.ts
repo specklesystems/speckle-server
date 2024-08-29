@@ -41,7 +41,6 @@ import {
   FinalizeInvite,
   GetInvitationTargetUsers
 } from '@/modules/serverinvites/services/operations'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   MaybeNullOrUndefined,
   Nullable,
@@ -68,9 +67,15 @@ export const createProjectInviteFactory =
      * If invite also has secondary resource targets, you can specify the expected roles here
      */
     secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+    allowWorkspacedProjects?: boolean
   }) => {
-    const { input, inviterId, inviterResourceAccessRules, secondaryResourceRoles } =
-      params
+    const {
+      input,
+      inviterId,
+      inviterResourceAccessRules,
+      secondaryResourceRoles,
+      allowWorkspacedProjects
+    } = params
     const { email, userId, role } = input
 
     if (!email && !userId) {
@@ -92,8 +97,7 @@ export const createProjectInviteFactory =
     // If workspace project, ensure secondaryResourceRoles are set (channeling users
     // to the correct gql resolver)
     const project = await deps.getStream({ streamId: resourceId })
-    const workspaceRole = secondaryResourceRoles?.[WorkspaceInviteResourceType]
-    if (project && project?.workspaceId && !workspaceRole) {
+    if (!allowWorkspacedProjects && project && project?.workspaceId) {
       throw new InviteCreateValidationError(
         'Target project belongs to a workspace, you should use the createForWorkspace() resolver instead'
       )

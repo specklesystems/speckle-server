@@ -26,7 +26,6 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import {
   createAndSendInviteFactory,
   resendInviteEmailFactory
@@ -115,8 +114,11 @@ const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
+    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
+      getStream,
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
@@ -234,7 +236,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     ? {
                         [WorkspaceInviteResourceType]: workspaceRole as WorkspaceRoles
                       }
-                    : undefined
+                    : undefined,
+                  allowWorkspacedProjects: true
                 })
               })
             )
