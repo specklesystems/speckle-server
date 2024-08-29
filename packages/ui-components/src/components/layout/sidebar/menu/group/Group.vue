@@ -32,8 +32,6 @@
       <button
         v-if="plusClick"
         v-tippy="plusText ? plusText : undefined"
-        color="subtle"
-        size="sm"
         class="hidden group-hover:flex items-center justify-center w-6 h-6 shrink-0 hover:bg-primary-muted rounded"
         @click="plusClick"
       >
