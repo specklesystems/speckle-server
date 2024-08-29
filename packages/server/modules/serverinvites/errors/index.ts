@@ -22,5 +22,5 @@ export class InviteFinalizedForNewEmail extends BaseError {
 export class InviteNotFoundError extends BaseError {
   static code = 'INVITE_NOT_FOUND'
   static defaultMessage = 'No invitation for the related resources was found'
-  static statusCode = 404
+  static statusCode = 400
 }

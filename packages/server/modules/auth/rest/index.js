@@ -11,7 +11,7 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
-const { BadRequestError } = require('@/modules/shared/errors')
+const { BadRequestError, UnauthorizedError } = require('@/modules/shared/errors')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -51,37 +51,43 @@ module.exports = (app) => {
    */
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
-    // Token refresh
-    if (req.body.refreshToken) {
-      if (!req.body.appId || !req.body.appSecret)
-        throw new BadRequestError('Invalid request - App Id and Secret are required.')
+    try {
+      // Token refresh
+      if (req.body.refreshToken) {
+        if (!req.body.appId || !req.body.appSecret)
+          throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
-      const authResponse = await refreshAppToken({
-        refreshToken: req.body.refreshToken,
+        const authResponse = await refreshAppToken({
+          refreshToken: req.body.refreshToken,
+          appId: req.body.appId,
+          appSecret: req.body.appSecret
+        })
+        return res.send(authResponse)
+      }
+
+      // Access-code - token exchange
+      if (
+        !req.body.appId ||
+        !req.body.appSecret ||
+        !req.body.accessCode ||
+        !req.body.challenge
+      )
+        throw new BadRequestError(
+          `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
+        )
+
+      const authResponse = await createAppTokenFromAccessCode({
         appId: req.body.appId,
-        appSecret: req.body.appSecret
+        appSecret: req.body.appSecret,
+        accessCode: req.body.accessCode,
+        challenge: req.body.challenge
       })
       return res.send(authResponse)
+    } catch (e) {
+      throw new UnauthorizedError('Invalid request. Could not generate token.', {
+        cause: e
+      })
     }
-
-    // Access-code - token exchange
-    if (
-      !req.body.appId ||
-      !req.body.appSecret ||
-      !req.body.accessCode ||
-      !req.body.challenge
-    )
-      throw new BadRequestError(
-        `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
-      )
-
-    const authResponse = await createAppTokenFromAccessCode({
-      appId: req.body.appId,
-      appSecret: req.body.appSecret,
-      accessCode: req.body.accessCode,
-      challenge: req.body.challenge
-    })
-    return res.send(authResponse)
   })
 
   /*

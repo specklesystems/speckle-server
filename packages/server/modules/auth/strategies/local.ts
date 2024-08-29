@@ -27,6 +27,7 @@ import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { Optional } from '@speckle/shared'
+import { UnauthorizedError } from '@/modules/shared/errors'
 
 const localStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -53,10 +54,10 @@ const localStrategyBuilder: AuthStrategyBuilder = async (
         password: req.body.password
       })
 
-      if (!valid) throw new UserInputError('Invalid credentials.')
+      if (!valid) throw new UnauthorizedError('Invalid credentials.')
 
       const user = await getUserByEmail({ email: req.body.email })
-      if (!user) throw new UserInputError('Invalid credentials.')
+      if (!user) throw new UnauthorizedError('Invalid credentials.')
       req.user = { id: user.id, email: user.email }
 
       return next()
@@ -70,8 +71,6 @@ const localStrategyBuilder: AuthStrategyBuilder = async (
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
     async (req, res, next) => {
-      const serverInfo = await getServerInfo()
-
       if (!req.body.password) throw new UserInputError('Password missing')
 
       const user = req.body
@@ -83,6 +82,7 @@ const localStrategyBuilder: AuthStrategyBuilder = async (
         return sendRateLimitResponse(res, rateLimitResult)
       }
 
+      const serverInfo = await getServerInfo()
       // 1. if the server is invite only you must have an invite
       if (serverInfo.inviteOnly && !req.session.token)
         throw new UserInputError(

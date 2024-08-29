@@ -4,7 +4,7 @@ import {
   UserUpdateError,
   UserValidationError
 } from '@/modules/core/errors/user'
-import { PasswordTooShortError } from '@/modules/core/errors/userinput'
+import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { getUser, updateUser } from '@/modules/core/repositories/users'
@@ -81,7 +81,7 @@ export async function changePassword(
     password: oldPassword
   })
   if (!isOldPasswordValid) {
-    throw new UserUpdateError('Old password is incorrect')
+    throw new UserInputError('Old password is incorrect')
   }
 
   if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {
