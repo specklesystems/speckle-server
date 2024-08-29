@@ -87,33 +87,4 @@ const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
 const billing = computed(() => result.value?.workspace.billing)
 const versionCount = computed(() => billing.value?.versionsCount)
 const discount = computed(() => billing.value?.cost?.discount)
-// const cost = {
-//   subTotal: 400,
-//   discount: {
-//     name: '50% early adopter discount',
-//     amount: 0.5
-//   },
-//   items: [
-//     {
-//       count: 2,
-//       name: 'admin',
-//       cost: 70
-//     },
-//     {
-//       count: 5,
-//       name: 'user',
-//       cost: 50
-//     },
-//     {
-//       count: 2,
-//       name: 'read/write guests',
-//       cost: 20
-//     },
-//     {
-//       count: 2,
-//       name: 'read only guests',
-//       cost: 0
-//     }
-//   ]
-// }
 </script>
