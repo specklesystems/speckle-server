@@ -3922,9 +3922,19 @@ export type WorkspaceCost = {
   __typename?: 'WorkspaceCost';
   /** Currency of the price */
   currency: Currency;
+  /** Discount applied to the total */
+  discount?: Maybe<WorkspaceCostDiscount>;
   items: Array<WorkspaceCostItem>;
   /** Estimated cost of the workspace with no discount applied */
   subTotal: Scalars['Float']['output'];
+  /** Total cost with discount applied */
+  total: Scalars['Float']['output'];
+};
+
+export type WorkspaceCostDiscount = {
+  __typename?: 'WorkspaceCostDiscount';
+  amount: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type WorkspaceCostItem = {

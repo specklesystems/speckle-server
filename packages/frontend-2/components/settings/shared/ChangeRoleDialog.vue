@@ -2,17 +2,16 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Change role</template>
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
-      <p>Are you sure you want to change the role of the selected user?</p>
-      <div v-if="newRole && oldRole" class="flex flex-col gap-3">
-        <div class="flex items-center gap-2 font-medium">
-          {{ name }}
-        </div>
-        <div class="flex gap-2 items-center">
-          <span>{{ getRoleLabel(oldRole).title }}</span>
-          <ArrowRightIcon class="h-4 w-4" />
-          <span>{{ getRoleLabel(newRole).title }}</span>
-        </div>
-      </div>
+      <p>
+        Select a new role for
+        <strong>{{ name }}</strong>
+        :
+      </p>
+      <FormSelectWorkspaceRoles
+        :model-value="localOldRole"
+        fully-control-value
+        @update:model-value="(value: ValueType) => handleRoleUpdate(value)"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -20,19 +19,31 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { ArrowRightIcon } from '@heroicons/vue/24/outline'
-import { getRoleLabel } from '~~/lib/settings/helpers/utils'
+
+type ValueType = WorkspaceRoles | WorkspaceRoles[] | undefined
 
 const emit = defineEmits<{
-  (e: 'updateRole'): void
+  (e: 'updateRole', newRole: WorkspaceRoles): void
 }>()
 
-defineProps<{
+const props = defineProps<{
   name: string
-  oldRole?: WorkspaceRoles
-  newRole?: WorkspaceRoles
+  oldRole: WorkspaceRoles
 }>()
+
 const open = defineModel<boolean>('open', { required: true })
+
+const localOldRole = ref(props.oldRole)
+
+const handleRoleUpdate = (value: ValueType) => {
+  if (typeof value === 'string') {
+    localOldRole.value = value
+  } else if (Array.isArray(value) && value.length > 0) {
+    localOldRole.value = value[0]
+  } else {
+    localOldRole.value = 'workspace:member'
+  }
+}
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -45,8 +56,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
       open.value = false
-      emit('updateRole')
+      emit('updateRole', localOldRole.value)
     }
   }
 ])
+
+watch(open, (isOpen) => {
+  if (isOpen) {
+    localOldRole.value = props.oldRole
+  }
+})
 </script>
