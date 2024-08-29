@@ -48,6 +48,7 @@ import {
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { WorkspaceEarlyAdopterDiscount } from '@/modules/workspaces/domain/constants'
 
 const createProjectWithVersions =
   ({ apollo }: { apollo: TestApolloServer }) =>
@@ -490,7 +491,8 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const { subTotal, currency, items } = res.data!.workspace.billing.cost
+        const { subTotal, currency, items, total, discount } =
+          res.data!.workspace.billing.cost
         expect(subTotal).to.equal(70 + 50 + 10)
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
@@ -515,6 +517,8 @@ describe('Workspaces GQL CRUD', () => {
             cost: 0
           }
         ])
+        expect(discount).to.deep.equal(WorkspaceEarlyAdopterDiscount)
+        expect(total).to.equal(65)
       })
     })
 

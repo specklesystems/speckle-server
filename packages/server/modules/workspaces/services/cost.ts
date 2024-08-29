@@ -97,14 +97,37 @@ export const getWorkspaceCostItemsFactory =
     return workspaceCostItems
   }
 
+type WorkspaceDiscount = {
+  name: string
+  amount: number
+}
+
 type WorkspaceCost = {
   subTotal: number
   currency: KnownCurrencies
   items: WorkspaceCostItem[]
+  total: number
+  discount?: WorkspaceDiscount
+}
+
+export const calculateWorkspaceTotalCost = ({
+  subTotal,
+  discount
+}: Pick<WorkspaceCost, 'subTotal' | 'discount'>) => {
+  if (!discount) {
+    return subTotal
+  }
+  return subTotal * discount?.amount
 }
 
 export const getWorkspaceCostFactory =
-  ({ getWorkspaceCostItems }: { getWorkspaceCostItems: GetWorkspaceCostItems }) =>
+  ({
+    getWorkspaceCostItems,
+    discount
+  }: {
+    getWorkspaceCostItems: GetWorkspaceCostItems
+    discount?: WorkspaceDiscount
+  }) =>
   async ({ workspaceId }: { workspaceId: string }): Promise<WorkspaceCost> => {
     const items = await getWorkspaceCostItems({ workspaceId })
 
@@ -113,6 +136,11 @@ export const getWorkspaceCostFactory =
     return {
       currency: 'GBP',
       items,
-      subTotal
+      subTotal,
+      discount,
+      total: calculateWorkspaceTotalCost({
+        subTotal,
+        discount
+      })
     }
   }

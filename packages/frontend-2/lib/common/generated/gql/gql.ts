@@ -110,12 +110,12 @@ const documents = {
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    inviteId\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    invitedTeam(filter: $invitesFilter) {\n      ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n": types.SettingsWorkspacesMembersMembersTable_WorkspaceCollaboratorFragmentDoc,
+    "\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n    }\n  }\n": types.SettingsWorkspacesMembersMembersTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      items {\n        id\n        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersMembersTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {\n    id\n    role\n    ...WorkspaceInviteDialog_Workspace\n  }\n": types.SettingsWorkspacesMembersTableHeader_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
-    "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n  }\n": types.ModelPageProjectFragmentDoc,
+    "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n    workspace {\n      id\n      name\n    }\n  }\n": types.ModelPageProjectFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
@@ -718,7 +718,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesMembersInvitesTa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -738,7 +738,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesSecurityDomainRe
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n  }\n"): (typeof documents)["\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n  }\n"];
+export function graphql(source: "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n    workspace {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n    workspace {\n      id\n      name\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

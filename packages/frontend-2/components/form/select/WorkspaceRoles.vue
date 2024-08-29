@@ -11,6 +11,7 @@
     mount-menu-on-body
     :fully-control-value="fullyControlValue"
     :disabled="disabled"
+    :disabled-item-predicate="disabledItemPredicate"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -69,7 +70,11 @@ const props = defineProps({
     type: String,
     default: 'Workspace Roles'
   },
-  disabled: Boolean
+  disabled: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  }
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
@@ -85,4 +90,7 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
   })
 
 const roles = computed(() => Object.values(Roles.Workspace))
+
+const disabledItemPredicate = (item: WorkspaceRoles) =>
+  props.disabledItems ? props.disabledItems.includes(item) : true
 </script>
