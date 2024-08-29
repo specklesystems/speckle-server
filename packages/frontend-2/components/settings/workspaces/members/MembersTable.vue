@@ -24,6 +24,14 @@
         <div class="flex items-center gap-2">
           <UserAvatar :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
+          <div
+            v-if="!item.workspaceDomainPolicyCompliant"
+            v-tippy="
+              'This user does not comply with the domain policy set on this workspace'
+            "
+          >
+            <ExclamationCircleIcon class="text-danger w-5 w-4" />
+          </div>
         </div>
       </template>
       <template #company="{ item }">
@@ -41,6 +49,11 @@
           :disabled="!isWorkspaceAdmin"
           :model-value="item.role as WorkspaceRoles"
           fully-control-value
+          :disabled-items="
+            !item.workspaceDomainPolicyCompliant
+              ? [Roles.Workspace.Member, Roles.Workspace.Admin]
+              : []
+          "
           @update:model-value="
             (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
           "
@@ -84,7 +97,11 @@
 import type { WorkspaceRoles } from '@speckle/shared'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import {
+  EllipsisHorizontalIcon,
+  XMarkIcon,
+  ExclamationCircleIcon
+} from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -103,6 +120,7 @@ graphql(`
       name
       company
       verified
+      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
     }
   }
 `)
