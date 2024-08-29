@@ -15,7 +15,7 @@
       class="flex items-center space-x-[10px] truncate"
       :class="[disabled && 'opacity-60']"
     >
-      <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
+      <div v-if="$slots.icon" class="flex items-center justify-center">
         <slot name="icon" />
       </div>
       <span class="truncate" :class="$slots.icon ? '' : 'pl-2'">

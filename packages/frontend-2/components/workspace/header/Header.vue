@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+  <div class="flex flex-col sm:gap-4 sm:flex-row justify-between sm:items-center">
     <div class="flex gap-2 mb-3 mt-2">
       <div class="flex items-center">
         <WorkspaceAvatar
@@ -17,7 +17,7 @@
     </div>
     <div class="flex items-center gap-2">
       <div
-        class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none"
+        class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none whitespace-nowrap"
       >
         {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
           workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
