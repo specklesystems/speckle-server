@@ -25,7 +25,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
@@ -42,7 +42,6 @@ import {
   Streams,
   Users
 } from '@/modules/core/dbSchema'
-import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   filterByResource,
@@ -50,6 +49,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { clamp } from 'lodash'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
@@ -230,28 +230,18 @@ export const getWorkspaceCollaboratorsTotalCountFactory =
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
   async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
-    const query = DbWorkspaceAcl.knex(db)
-      .select<
-        Array<
-          UserWithRole & { workspaceRole: WorkspaceRoles; workspaceRoleCreatedAt: Date }
-        >
-      >([
+    const query = db
+      .from(Users.name)
+      .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
-        knex.raw('(array_agg(??))[1] as ??', [ServerAcl.col.role, 'role']),
-        knex.raw('(array_agg(??))[1] as ??', [
-          DbWorkspaceAcl.col.role,
-          'workspaceRole'
-        ]),
-        knex.raw('(array_agg(??))[1] as ??', [
-          DbWorkspaceAcl.col.createdAt,
-          'workspaceRoleCreatedAt'
-        ])
-      ])
+        ServerAcl.col.role,
+        DbWorkspaceAcl.colAs('role', 'workspaceRole'),
+        DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
+      )
+      .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, Users.col.id)
+      .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
-      .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
-      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .orderBy('workspaceRoleCreatedAt', 'desc')
-      .groupBy(Users.col.id)
 
     const { search, role } = filter || {}
 
@@ -266,7 +256,7 @@ export const getWorkspaceCollaboratorsFactory =
     }
 
     if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor.toISOString())
+      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
     }
 
     if (limit) {
@@ -280,10 +270,7 @@ export const getWorkspaceCollaboratorsFactory =
       createdAt: i.workspaceRoleCreatedAt
     }))
 
-    return {
-      items,
-      cursor: items.length ? items[items.length - 1].createdAt : null
-    }
+    return items
   }
 
 export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {

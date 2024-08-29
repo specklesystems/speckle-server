@@ -98,6 +98,7 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
+  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -115,10 +116,6 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
-import {
-  decodeCursor,
-  encodeIsoDateCursor
-} from '@/modules/shared/helpers/graphqlHelper'
 import {
   getWorkspaceCostFactory,
   getWorkspaceCostItemsFactory
@@ -605,22 +602,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const { items, cursor } = await getWorkspaceCollaboratorsFactory({ db })({
+          const team = await getPaginatedWorkspaceTeamFactory({
+            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+            getWorkspaceCollaboratorsTotalCount:
+              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          })({
             workspaceId: parent.id,
             filter: removeNullOrUndefinedKeys(args?.filter || {}),
             limit: args.limit,
-            cursor: args.cursor ? new Date(decodeCursor(args.cursor)) : undefined
+            cursor: args.cursor ?? undefined
           })
-
-          const totalCount = await getWorkspaceCollaboratorsTotalCountFactory({ db })({
-            workspaceId: parent.id
-          })
-
-          return {
-            items,
-            cursor: cursor ? encodeIsoDateCursor(cursor) : undefined,
-            totalCount
-          }
+          return team
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({

@@ -1,5 +1,5 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -9,7 +9,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
-import { UserWithRole } from '@/modules/core/repositories/users'
+import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
 /** Workspace */
 
@@ -58,10 +58,10 @@ export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
 /** Workspace Roles */
 
-type GetWorkspaceCollaboratorsArgs = {
+export type GetWorkspaceCollaboratorsArgs = {
   workspaceId: string
-  limit?: number
-  cursor?: Date
+  limit: number
+  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role
@@ -74,14 +74,9 @@ type GetWorkspaceCollaboratorsArgs = {
   }
 }
 
-type GetWorkspaceCollaboratorsReturnValue = {
-  items: Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>
-  cursor: Date | null
-}
-
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
-) => Promise<GetWorkspaceCollaboratorsReturnValue>
+) => Promise<WorkspaceTeam>
 
 type GetWorkspaceCollaboratorsTotalCountArgs = {
   workspaceId: string

@@ -26,7 +26,8 @@ import {
   LimitedUserRecord,
   StreamAclRecord,
   StreamFavoriteRecord,
-  StreamRecord
+  StreamRecord,
+  UserWithRole
 } from '@/modules/core/helpers/types'
 import {
   DiscoverableStreamsSortingInput,
@@ -51,7 +52,6 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { db as defaultKnexInstance } from '@/db/knex'
 
