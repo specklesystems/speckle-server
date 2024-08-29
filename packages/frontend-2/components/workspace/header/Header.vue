@@ -24,7 +24,7 @@
         }}
       </div>
       <UserAvatarGroup
-        :users="team.map((teamMember) => teamMember.user)"
+        :users="team.items.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
       <FormButton
@@ -83,11 +83,13 @@ graphql(`
       totalCount
     }
     team {
-      id
-      user {
+      items {
         id
-        name
-        ...LimitedUserAvatar
+        user {
+          id
+          name
+          ...LimitedUserAvatar
+        }
       }
     }
     ...WorkspaceInviteDialog_Workspace

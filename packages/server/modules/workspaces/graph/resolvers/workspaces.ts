@@ -68,6 +68,7 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
+  getWorkspaceCollaboratorsTotalCountFactory,
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
@@ -100,6 +101,7 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
+  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -415,7 +417,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           await joinWorkspaceFactory({
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
@@ -603,13 +605,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const getTeam = getWorkspaceCollaboratorsFactory({ db })
-          const collaborators = await getTeam({
+          const team = await getPaginatedWorkspaceTeamFactory({
+            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+            getWorkspaceCollaboratorsTotalCount:
+              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          })({
             workspaceId: parent.id,
-            filter: removeNullOrUndefinedKeys(args?.filter ?? {})
+            filter: removeNullOrUndefinedKeys(args?.filter || {}),
+            limit: args.limit,
+            cursor: args.cursor ?? undefined
           })
-
-          return collaborators
+          return team
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({

@@ -25,4 +25,9 @@ export type WorkspaceDomain = {
 
 export type WorkspaceWithOptionalRole = Workspace & { role?: WorkspaceRoles }
 
-export type WorkspaceAcl = { userId: string; role: WorkspaceRoles; workspaceId: string }
+export type WorkspaceAcl = {
+  userId: string
+  role: WorkspaceRoles
+  workspaceId: string
+  createdAt: Date
+}

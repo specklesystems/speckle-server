@@ -169,7 +169,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
+      await upsertWorkspaceRole({
+        userId,
+        workspaceId,
+        role: 'workspace:member',
+        createdAt: new Date()
+      })
       await deleteWorkspaceRole({ userId, workspaceId })
 
       const role = await getWorkspaceRoleForUser({ userId, workspaceId })
@@ -183,7 +188,8 @@ describe('Workspace repositories', () => {
       const createdRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: 'workspace:member'
+        role: 'workspace:member',
+        createdAt: new Date()
       }
       await upsertWorkspaceRole(createdRole)
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
@@ -207,12 +213,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdA,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdB,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -228,7 +236,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId,
+        role: 'workspace:admin',
+        createdAt: new Date()
+      })
 
       const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
 
@@ -255,12 +268,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser({ userId })
@@ -280,12 +295,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser(
@@ -524,7 +541,8 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         userId: user.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
@@ -605,7 +623,8 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         userId: user.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
       })
 
       const workspaces = await getUserDiscoverableWorkspaces({
