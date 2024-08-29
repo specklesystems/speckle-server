@@ -3,16 +3,16 @@
     <div
       v-if="title"
       class="h-8 flex items-center justify-between select-none rounded-md"
-      :class="[collapsible && 'hover:bg-highlight-1', plusClick && 'pr-1']"
+      :class="[collapsible && 'hover:bg-highlight-1']"
     >
       <button
         v-if="collapsible"
-        class="group flex space-x-2 items-center w-full rounded-md py-0.5 px-3"
+        class="group flex space-x-1 items-center w-full rounded-md py-0.5 px-2"
         @click="isCollapsed = !isCollapsed"
       >
         <ArrowFilled
           :class="[isCollapsed ? '-rotate-90' : '']"
-          class="h-2.5 w-2.5 text-foreground-2 shrink-0"
+          class="text-foreground-2 shrink-0"
         />
         <div v-if="$slots['title-icon']" class="flex items-center justify-center">
           <slot name="title-icon"></slot>
@@ -32,7 +32,7 @@
       <button
         v-if="plusClick"
         v-tippy="plusText ? plusText : undefined"
-        class="hidden group-hover:flex items-center justify-center w-6 h-6 shrink-0 hover:bg-primary-muted rounded"
+        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2 text-foreground-2"
         @click="plusClick"
       >
         <Plus class="h-4 w-4" />
