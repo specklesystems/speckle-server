@@ -12,6 +12,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -19,8 +20,7 @@ import {
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
-  getWorkspaceDomainsFactory,
-  getDefaultWorkspaceProjectRoleFactory
+  getWorkspaceDomainsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -115,7 +115,7 @@ export const assignToWorkspace = async (
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    getDefaultWorkspaceProjectRole: getDefaultWorkspaceProjectRoleFactory({ db }),
+    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
     upsertProjectRole: upsertProjectRoleFactory({ db }),
     deleteProjectRole: deleteProjectRoleFactory({ db }),
     queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),

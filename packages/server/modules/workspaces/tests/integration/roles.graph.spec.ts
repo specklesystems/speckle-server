@@ -348,7 +348,7 @@ describe('Workspaces Roles GQL', () => {
           })
         })
 
-        it('should preserve project owner roles', async () => {
+        it('should grant default project role for all workspace projects', async () => {
           const res = await apollo.execute(GetWorkspaceProjectsDocument, {
             id: workspace.id
           })
@@ -361,7 +361,7 @@ describe('Workspaces Roles GQL', () => {
             projects?.every((project) => {
               const team = project.team
               const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-              return role?.role === Roles.Stream.Owner
+              return role?.role === Roles.Stream.Reviewer
             })
           ).to.be.true
         })
