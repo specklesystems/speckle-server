@@ -10,7 +10,8 @@ import {
   storeWorkspaceDomainFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  getWorkspaceRolesCountFactory
+  getWorkspaceRolesCountFactory,
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -35,7 +36,7 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { truncateTables } from '@/test/hooks'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -49,6 +50,7 @@ const storeWorkspaceDomain = storeWorkspaceDomainFactory({ db })
 const createUserEmail = createUserEmailFactory({ db })
 const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   const testId = cryptoRandomString({ length: 6 })
@@ -646,6 +648,129 @@ describe('Workspace repositories', () => {
         id: workspace.id
       })
       expect(workspaceWithDomains?.domains.length).to.eq(1)
+    })
+  })
+
+  describe('countWorkspaceRoleWithOptionalProjectRoleFactory returns a function, that', () => {
+    it('counts workspace roles by userId', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      // just another workspace, for testing if workspaceId filter works
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const admin2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin2)
+      await assignToWorkspace(workspace, admin2, Roles.Workspace.Admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin
+      })
+      expect(count).to.equal(2)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member
+      })
+      expect(count).to.equal(1)
+    })
+    it('counts workspace roles with a project role filter', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+
+      await createTestWorkspace(workspace, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+
+      const member2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member2)
+      await assignToWorkspace(workspace, member2, Roles.Workspace.Member)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace.id
+      }
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+
+      const project3 = {
+        id: createRandomString(),
+        name: 'test stream 3',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+      await createTestStream(project1, admin)
+      await createTestStream(project2, member)
+      await createTestStream(project3, member2)
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(1)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(2)
     })
   })
 

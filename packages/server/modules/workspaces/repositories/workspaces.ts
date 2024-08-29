@@ -6,6 +6,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import {
   CountProjectsVersionsByWorkspaceId,
+  CountWorkspaceRoleWithOptionalProjectRole,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
@@ -36,6 +37,7 @@ import {
   knex,
   ServerAcl,
   ServerInvites,
+  StreamAcl,
   StreamCommits,
   Streams,
   Users
@@ -369,4 +371,24 @@ export const getWorkspaceRolesCountFactory =
       .reduce((acc, key) => ({ ...acc, [key]: parseInt(row[key]) }), {})
 
     return { ...defaultCounts, ...counts }
+  }
+
+export const countWorkspaceRoleWithOptionalProjectRoleFactory =
+  ({ db }: { db: Knex }): CountWorkspaceRoleWithOptionalProjectRole =>
+  async ({ workspaceId, workspaceRole, projectRole }) => {
+    const query = tables
+      .workspacesAcl(db)
+      .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+      .where(DbWorkspaceAcl.col.role, workspaceRole)
+      .countDistinct(DbWorkspaceAcl.col.userId)
+
+    if (projectRole)
+      query
+        .join(Streams.name, Streams.col.workspaceId, DbWorkspaceAcl.col.workspaceId)
+        .join(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
+        .andWhere(StreamAcl.col.role, projectRole)
+
+    const [res] = await query
+
+    return parseInt((res as unknown as { count: string | number }).count.toString())
   }

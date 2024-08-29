@@ -71,7 +71,7 @@ import {
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
-  getWorkspaceRolesCountFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -97,7 +97,6 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
-  getWorkspaceCostItems,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -115,7 +114,10 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
-import { getCostByRole } from '@/modules/workspaces/helpers/getCostByRole'
+import {
+  getWorkspaceCostFactory,
+  getWorkspaceCostItemsFactory
+} from '@/modules/workspaces/services/cost'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -650,28 +652,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceBilling: {
         versionsCount: async (parent) => {
+          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
           return {
             current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
-              workspaceId: (parent as unknown as { parent: Workspace }).parent.id
+              workspaceId
             }),
             max: WORKSPACE_MAX_PROJECTS_VERSIONS
           }
         },
         cost: async (parent) => {
-          const getWorkspaceRolesCount = getWorkspaceRolesCountFactory({ db })
-          const items = await getWorkspaceCostItems({
-            getWorkspaceRolesCount,
-            getCostByRole
-          })({ workspaceId: (parent as unknown as { parent: Workspace }).parent.id })
-          const subTotal = items.reduce(
-            (total, { cost, count }) => total + count * cost,
-            0
-          )
-          return {
-            subTotal,
-            currency: 'GBP',
-            items
-          }
+          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+          return getWorkspaceCostFactory({
+            getWorkspaceCostItems: getWorkspaceCostItemsFactory({
+              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+            })
+          })({ workspaceId })
         }
       },
       WorkspaceCollaborator: {
