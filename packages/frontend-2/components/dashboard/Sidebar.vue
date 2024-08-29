@@ -211,7 +211,9 @@ const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
 
-const isNotGuest = computed(() => user.value?.role !== Roles.Server.Guest)
+const isNotGuest = computed(
+  () => Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
 
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
