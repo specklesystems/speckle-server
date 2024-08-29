@@ -7,7 +7,7 @@
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
       active && 'bg-highlight-3 hover:!bg-highlight-3',
-      $slots.icon ? 'pl-1 pr-2' : 'pr-2 pl-6',
+      $slots.icon ? 'pl-1 pr-2' : 'pr-2 pl-7',
       extraPadding && '!pl-14'
     ]"
   >
@@ -18,7 +18,7 @@
       <div v-if="$slots.icon" class="h-6 w-6 flex items-center justify-center">
         <slot name="icon" />
       </div>
-      <span class="truncate" :class="$slots.icon ? '' : 'pl-2'">
+      <span class="truncate">
         {{ label }}
       </span>
       <ArrowUpRightIcon

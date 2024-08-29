@@ -7,14 +7,17 @@
     >
       <button
         v-if="collapsible"
-        class="group flex space-x-1 items-center w-full rounded-md py-0.5 px-2"
+        class="group flex items-center w-full rounded-md py-0.5 px-2"
         @click="isCollapsed = !isCollapsed"
       >
         <ArrowFilled
           :class="[isCollapsed ? '-rotate-90' : '']"
           class="text-foreground-2 shrink-0"
         />
-        <div v-if="$slots['title-icon']" class="flex items-center justify-center">
+        <div
+          v-if="$slots['title-icon']"
+          class="flex items-center justify-center ml-1 mr-2"
+        >
           <slot name="title-icon"></slot>
         </div>
         <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
