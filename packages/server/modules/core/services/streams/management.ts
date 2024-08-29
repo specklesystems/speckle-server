@@ -120,7 +120,7 @@ export async function createStreamReturnRecord(
     })
   }
 
-  await ProjectsEmitter.emit(ProjectEvents.Created, { project: stream })
+  await ProjectsEmitter.emit(ProjectEvents.Created, { project: stream, ownerId })
 
   return stream
 }

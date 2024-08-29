@@ -47,6 +47,7 @@
               :key="key"
               :title="workspaceItem.name"
               collapsible
+              class="workspace-item"
               :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
@@ -85,9 +86,9 @@
               </template>
             </LayoutSidebarMenuGroup>
             <LayoutSidebarMenuGroupItem
-              v-if="isAdmin"
+              v-if="canCreateWorkspace"
               label="Add workspace"
-              @click="showWorkspaceCreateDialog = true"
+              @click="openWorkspaceCreateDialog"
             >
               <template #icon>
                 <PlusIcon class="h-4 w-4 text-foreground-2" />
@@ -109,7 +110,10 @@
       />
     </div>
 
-    <WorkspaceCreateDialog v-model:open="showWorkspaceCreateDialog" />
+    <WorkspaceCreateDialog
+      v-model:open="showWorkspaceCreateDialog"
+      event-source="settings"
+    />
   </LayoutDialog>
 </template>
 
@@ -131,6 +135,7 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsDialog_User on User {
@@ -152,7 +157,7 @@ const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 const { activeUser: user } = useActiveUser()
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-
+const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
@@ -165,6 +170,11 @@ const workspaceItems = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+const canCreateWorkspace = computed(
+  () =>
+    user.value?.role === Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
+
 const selectedMenuItem = computed((): SettingsMenuItem | null => {
   const categories = [
     userMenuItems.value,
@@ -186,6 +196,13 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
   targetMenuItem.value = target
 }
 
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'settings'
+  })
+}
+
 const workspaceMenuItemClasses = (
   itemKey: string | number,
   workspaceId: string,
@@ -205,3 +222,8 @@ watch(
   { immediate: true }
 )
 </script>
+<style>
+.workspace-item h6 {
+  @apply !font-normal !text-body-xs !text-foreground;
+}
+</style>

@@ -26,7 +26,7 @@
               ]"
             />
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               title="Access tokens"
@@ -96,7 +96,7 @@
               </template>
             </LayoutTable>
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               subheading
@@ -172,7 +172,7 @@
               </template>
             </LayoutTable>
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               subheading

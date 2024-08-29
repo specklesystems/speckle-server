@@ -24,7 +24,7 @@
     >
       {{ text }}
     </p>
-    <hr v-if="!subheading && !hideDivider" class="my-6 md:my-8" />
+    <hr v-if="!subheading && !hideDivider" class="my-6 md:my-8 border-outline-2" />
     <slot />
   </div>
 </template>

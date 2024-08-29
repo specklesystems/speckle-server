@@ -193,8 +193,46 @@ type WorkspaceVersionsCount {
   max: Int!
 }
 
+enum Currency {
+  GBP
+  USD
+  EUR
+}
+
+type WorkspaceCostItem {
+  count: Int!
+  name: String!
+  cost: Float!
+}
+
+type WorkspaceCostDiscount {
+  name: String!
+  amount: Float!
+}
+
+type WorkspaceCost {
+  """
+  Estimated cost of the workspace with no discount applied
+  """
+  subTotal: Float!
+  """
+  Currency of the price
+  """
+  currency: Currency!
+  items: [WorkspaceCostItem!]!
+  """
+  Discount applied to the total
+  """
+  discount: WorkspaceCostDiscount
+  """
+  Total cost with discount applied
+  """
+  total: Float!
+}
+
 type WorkspaceBilling {
-  versionsCount: WorkspaceVersionsCount
+  versionsCount: WorkspaceVersionsCount!
+  cost: WorkspaceCost!
 }
 
 type Workspace {
@@ -373,4 +411,11 @@ input UserWorkspacesFilter {
 
 extend type Project {
   workspaceId: String
+}
+
+# case of using userSearch, and we alway expose this
+extend type LimitedUser {
+  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  # if workspaceId is undefined | null, just return undefined
+  # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }

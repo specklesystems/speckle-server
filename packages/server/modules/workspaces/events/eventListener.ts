@@ -44,6 +44,8 @@ export const onProjectCreatedFactory =
       workspaceMembers.map(({ userId, role: workspaceRole }) => {
         const projectRole = mapWorkspaceRoleToInitialProjectRole(workspaceRole)
 
+        // we do not need to assign new roles to the project owner
+        if (userId === payload.ownerId) return
         // Guests do not get roles on project create
         if (!projectRole || workspaceRole === Roles.Workspace.Guest) return
 
