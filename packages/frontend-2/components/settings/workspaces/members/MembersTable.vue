@@ -109,8 +109,9 @@ import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
+  ExclamationCircleIcon,
   XMarkIcon,
-  ExclamationCircleIcon
+  TrashIcon
 } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
