@@ -18,6 +18,7 @@ export interface NodeData {
   subtreeId?: number
   renderView?: NodeRenderView | null
   instanced?: boolean
+  color?: number
 }
 
 export class WorldTree {

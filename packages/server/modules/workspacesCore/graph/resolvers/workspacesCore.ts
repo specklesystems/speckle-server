@@ -99,6 +99,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspaceList: async () => {
           throw new WorkspacesModuleDisabledError()
         }
+      },
+      LimitedUser: {
+        workspaceDomainPolicyCompliant: async () => null
       }
     } as Resolvers)
   : {}

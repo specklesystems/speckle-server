@@ -25,7 +25,7 @@
             validate-on-value-update
             @change="save()"
           />
-          <hr class="mt-4 mb-2" />
+          <hr class="mt-4 mb-2 border-outline-3" />
           <FormTextInput
             v-model="description"
             color="foundation"
@@ -39,7 +39,7 @@
           />
         </div>
       </div>
-      <hr class="my-6 md:my-8" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
         <CommonCard class="bg-foundation">
@@ -52,7 +52,7 @@
         </div>
       </div>
       <template v-if="isAdmin">
-        <hr class="my-6 md:my-8" />
+        <hr class="my-6 md:my-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
           <CommonCard class="bg-foundation">
@@ -96,6 +96,7 @@ import {
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -115,6 +116,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -144,6 +146,14 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    mixpanel.track('Workspace General Settings Updated', {
+      fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
+        (key) => key !== 'id'
+      ),
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace updated'

@@ -16,6 +16,15 @@ export const settingsWorkspaceGeneralQuery = graphql(`
   }
 `)
 
+export const settingsWorkspaceBillingQuery = graphql(`
+  query SettingsWorkspaceBilling($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      ...SettingsWorkspacesBilling_Workspace
+    }
+  }
+`)
+
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
     $workspaceId: String!
@@ -26,6 +35,23 @@ export const settingsWorkspacesMembersQuery = graphql(`
       ...SettingsWorkspacesMembersMembersTable_Workspace
       ...SettingsWorkspacesMembersGuestsTable_Workspace
       ...SettingsWorkspacesMembersInvitesTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesMembersSearchQuery = graphql(`
+  query SettingsWorkspacesMembersSearch(
+    $workspaceId: String!
+    $filter: WorkspaceTeamFilter
+  ) {
+    workspace(id: $workspaceId) {
+      id
+      team(filter: $filter) {
+        items {
+          id
+          ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+        }
+      }
     }
   }
 `)

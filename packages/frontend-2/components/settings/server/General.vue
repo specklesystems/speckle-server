@@ -69,7 +69,7 @@
           </div>
         </form>
       </div>
-      <hr class="my-6 md:my-8" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsServerGeneralVersion />
     </div>
   </section>

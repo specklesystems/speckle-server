@@ -15,17 +15,20 @@ describe('Event handlers', () => {
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Admin
+          role: Roles.Workspace.Admin,
+          createdAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Member
+          role: Roles.Workspace.Member,
+          createdAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Guest
+          role: Roles.Workspace.Guest,
+          createdAt: new Date()
         }
       ]
 
@@ -45,7 +48,8 @@ describe('Event handlers', () => {
       })
 
       await onProjectCreated({
-        project: { workspaceId, id: projectId } as StreamRecord
+        project: { workspaceId, id: projectId } as StreamRecord,
+        ownerId: cryptoRandomString({ length: 10 })
       })
 
       expect(projectRoles.length).to.equal(2)

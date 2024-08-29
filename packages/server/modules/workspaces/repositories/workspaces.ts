@@ -6,12 +6,14 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import {
   CountProjectsVersionsByWorkspaceId,
+  CountWorkspaceRoleWithOptionalProjectRole,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
   GetUserDiscoverableWorkspaces,
   GetWorkspace,
   GetWorkspaceCollaborators,
+  GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceDomains,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
@@ -23,7 +25,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
@@ -35,17 +37,19 @@ import {
   knex,
   ServerAcl,
   ServerInvites,
+  StreamAcl,
   StreamCommits,
   Streams,
   Users
 } from '@/modules/core/dbSchema'
-import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   filterByResource,
   InvitesRetrievalValidityFilter
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { clamp } from 'lodash'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
@@ -201,7 +205,7 @@ export const deleteWorkspaceRoleFactory =
 
 export const upsertWorkspaceRoleFactory =
   ({ db }: { db: Knex }): UpsertWorkspaceRole =>
-  async ({ userId, workspaceId, role }) => {
+  async ({ userId, workspaceId, role, createdAt }) => {
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
@@ -210,24 +214,34 @@ export const upsertWorkspaceRoleFactory =
 
     await tables
       .workspacesAcl(db)
-      .insert({ userId, workspaceId, role })
+      .insert({ userId, workspaceId, role, createdAt })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
   }
 
+export const getWorkspaceCollaboratorsTotalCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCollaboratorsTotalCount =>
+  async ({ workspaceId }) => {
+    const [res] = await DbWorkspaceAcl.knex(db).where({ workspaceId }).count()
+    const count = parseInt(res.count)
+    return count || 0
+  }
+
 export const getWorkspaceCollaboratorsFactory =
   ({ db }: { db: Knex }): GetWorkspaceCollaborators =>
-  async ({ workspaceId, filter = {} }) => {
-    const query = DbWorkspaceAcl.knex(db)
-      .select<Array<UserWithRole & { workspaceRole: WorkspaceRoles }>>([
+  async ({ workspaceId, filter = {}, cursor, limit = 25 }) => {
+    const query = db
+      .from(Users.name)
+      .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
-        knex.raw(`${DbWorkspaceAcl.col.role} as "workspaceRole"`),
-        knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
-      ])
+        ServerAcl.col.role,
+        DbWorkspaceAcl.colAs('role', 'workspaceRole'),
+        DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
+      )
+      .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, Users.col.id)
+      .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
-      .innerJoin(Users.name, Users.col.id, DbWorkspaceAcl.col.userId)
-      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-      .groupBy(Users.col.id, DbWorkspaceAcl.col.role)
+      .orderBy('workspaceRoleCreatedAt', 'desc')
 
     const { search, role } = filter || {}
 
@@ -241,10 +255,19 @@ export const getWorkspaceCollaboratorsFactory =
       query.andWhere(DbWorkspaceAcl.col.role, role)
     }
 
+    if (cursor) {
+      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
+    }
+
+    if (limit) {
+      query.limit(clamp(limit, 0, 100))
+    }
+
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
-      role: i.role
+      role: i.role,
+      createdAt: i.workspaceRoleCreatedAt
     }))
 
     return items
@@ -321,4 +344,33 @@ export const countProjectsVersionsByWorkspaceIdFactory =
       .count(StreamCommits.col.commitId)
 
     return parseInt(res.count.toString())
+  }
+
+export const countWorkspaceRoleWithOptionalProjectRoleFactory =
+  ({ db }: { db: Knex }): CountWorkspaceRoleWithOptionalProjectRole =>
+  async ({ workspaceId, workspaceRole, projectRole }) => {
+    if (projectRole) {
+      const query = tables
+        .streams(db)
+        .join(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
+        .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, StreamAcl.col.userId)
+        .where(Streams.col.workspaceId, workspaceId)
+        .andWhere(DbWorkspaceAcl.col.role, workspaceRole)
+        // make sure to also filter on the workspace_acl workspaceId, to not leak roles across
+        .andWhere(DbWorkspaceAcl.col.workspaceId, workspaceId)
+        .andWhere(StreamAcl.col.role, projectRole)
+        .countDistinct(DbWorkspaceAcl.col.userId)
+
+      const [res] = await query
+      return parseInt(res.count.toString())
+    } else {
+      const query = tables
+        .workspacesAcl(db)
+        .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+        .where(DbWorkspaceAcl.col.role, workspaceRole)
+        .count()
+
+      const [res] = await query
+      return parseInt(res.count.toString())
+    }
   }

@@ -22,7 +22,7 @@
           <tr
             v-for="[type, settings] in Object.entries(localPreferences)"
             :key="type"
-            class="border-t"
+            class="border-t border-outline-3"
           >
             <td class="text-body-xs py-4">
               {{ notificationTypeMapping[type] || 'Unknown' }}

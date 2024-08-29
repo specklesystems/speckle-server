@@ -1,6 +1,6 @@
 import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
-import { UserWithRole } from '@/modules/core/repositories/users'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
@@ -24,6 +24,4 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
   token?: string
 }
 
-export type WorkspaceCollaboratorGraphQLReturn = UserWithRole<LimitedUserRecord> & {
-  workspaceRole: WorkspaceRoles
-}
+export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
