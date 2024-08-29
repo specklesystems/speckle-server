@@ -124,11 +124,10 @@ describe('Workspace join services', () => {
           return []
         }
       })({ userId, workspaceId })
-      expect(storedWorkspaceRole).deep.equal({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Member
-      })
+
+      expect(storedWorkspaceRole!.userId).to.equal(userId)
+      expect(storedWorkspaceRole!.workspaceId).to.equal(workspaceId)
+      expect(storedWorkspaceRole!.role).to.equal(Roles.Workspace.Member)
       expect(firedEvents).deep.equal([
         WorkspaceEvents.JoinedFromDiscovery,
         WorkspaceEvents.RoleUpdated
