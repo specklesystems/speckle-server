@@ -1,5 +1,9 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  ResolverTypeWrapper,
+  Resolvers,
+  WorkspaceBilling
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
@@ -66,7 +70,8 @@ import {
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countProjectsVersionsByWorkspaceIdFactory
+  countProjectsVersionsByWorkspaceIdFactory,
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -109,6 +114,10 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
+import {
+  getWorkspaceCostFactory,
+  getWorkspaceCostItemsFactory
+} from '@/modules/workspaces/services/cost'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
@@ -639,16 +648,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent })
+        billing: (parent) =>
+          ({ parent } as { parent: Workspace } & ResolverTypeWrapper<WorkspaceBilling>)
       },
       WorkspaceBilling: {
         versionsCount: async (parent) => {
+          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
           return {
             current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
-              workspaceId: (parent as { parent: Workspace }).parent.id
+              workspaceId
             }),
             max: WORKSPACE_MAX_PROJECTS_VERSIONS
           }
+        },
+        cost: async (parent) => {
+          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+          return getWorkspaceCostFactory({
+            getWorkspaceCostItems: getWorkspaceCostItemsFactory({
+              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+            })
+          })({ workspaceId })
         }
       },
       WorkspaceCollaborator: {
