@@ -25,7 +25,7 @@
             validate-on-value-update
             @change="save()"
           />
-          <hr class="mt-4 mb-2" />
+          <hr class="mt-4 mb-2 border-outline-3" />
           <FormTextInput
             v-model="description"
             color="foundation"
