@@ -30,8 +30,8 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
-import { ensureError, Optional } from '@speckle/shared'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { Optional } from '@speckle/shared'
 
 const azureAdStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -84,96 +84,48 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
     passportAuthenticate('azuread-openidconnect'),
     async (req, _res, next) => {
       const serverInfo = await getServerInfo()
-      let logger = req.log.child({
-        authStrategy: 'entraId',
-        serverVersion: serverInfo.version
-      })
 
-      try {
-        // This is the only strategy that does its own type for req.user - easier to force type cast for now
-        // than to refactor everything
-        const profile = req.user as Optional<IProfile>
-        if (!profile) {
-          throw new EnvironmentResourceError('No profile provided by Entra ID')
-        }
+      // This is the only strategy that does its own type for req.user - easier to force type cast for now
+      // than to refactor everything
+      const profile = req.user as Optional<IProfile>
+      if (!profile) {
+        throw new EnvironmentResourceError('No profile provided by Entra ID')
+      }
 
-        logger = logger.child({ profileId: profile.oid })
+      const user = {
+        email: profile._json.email,
+        name: profile._json.name || profile.displayName
+      }
 
-        const user = {
-          email: profile._json.email,
-          name: profile._json.name || profile.displayName
-        }
+      const existingUser = await getUserByEmail({ email: user.email })
 
-        const existingUser = await getUserByEmail({ email: user.email })
-
-        if (existingUser && !existingUser.verified) {
-          throw new UnverifiedEmailSSOLoginError(undefined, {
-            info: {
-              email: user.email
-            }
-          })
-        }
-
-        // if there is an existing user, go ahead and log them in (regardless of
-        // whether the server is invite only or not).
-        if (existingUser) {
-          const myUser = await findOrCreateUser({
-            user
-          })
-          // ID is used later for verifying access token
-          req.user = {
-            ...profile,
-            id: myUser.id,
-            email: myUser.email
+      if (existingUser && !existingUser.verified) {
+        throw new UnverifiedEmailSSOLoginError(undefined, {
+          info: {
+            email: user.email
           }
-          return next()
-        }
+        })
+      }
 
-        // if the server is not invite only, go ahead and log the user in.
-        if (!serverInfo.inviteOnly) {
-          const myUser = await findOrCreateUser({
-            user
-          })
-
-          // ID is used later for verifying access token
-          req.user = {
-            ...profile,
-            id: myUser.id,
-            email: myUser.email,
-            isNewUser: myUser.isNewUser
-          }
-
-          // process invites
-          if (myUser.isNewUser) {
-            await finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            })(user.email, myUser.id)
-          }
-
-          return next()
-        }
-
-        // if the server is invite only and we have no invite id, throw.
-        if (serverInfo.inviteOnly && !req.session.token) {
-          throw new UserInputError(
-            'This server is invite only. Please authenticate yourself through a valid invite link.'
-          )
-        }
-
-        // validate the invite
-        const validInvite = await validateServerInviteFactory({
-          findServerInvite: findServerInviteFactory({ db })
-        })(user.email, req.session.token)
-
-        // create the user
+      // if there is an existing user, go ahead and log them in (regardless of
+      // whether the server is invite only or not).
+      if (existingUser) {
         const myUser = await findOrCreateUser({
-          user: {
-            ...user,
-            role: validInvite
-              ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
-              : undefined
-          }
+          user
+        })
+        // ID is used later for verifying access token
+        req.user = {
+          ...profile,
+          id: myUser.id,
+          email: myUser.email
+        }
+        return next()
+      }
+
+      // if the server is not invite only, go ahead and log the user in.
+      if (!serverInfo.inviteOnly) {
+        const myUser = await findOrCreateUser({
+          user
         })
 
         // ID is used later for verifying access token
@@ -181,41 +133,64 @@ const azureAdStrategyBuilder: AuthStrategyBuilder = async (
           ...profile,
           id: myUser.id,
           email: myUser.email,
-          isNewUser: myUser.isNewUser,
-          isInvite: !!validInvite
+          isNewUser: myUser.isNewUser
         }
 
-        req.log = req.log.child({ userId: myUser.id })
-
-        // use the invite
-        await finalizeInvitedServerRegistrationFactory({
-          deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-          updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-        })(user.email, myUser.id)
-
-        // Resolve redirect path
-        req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
-
-        // return to the auth flow
-        return next()
-      } catch (err) {
-        const e = ensureError(
-          err,
-          'Unexpected issue occured while authenticating with Entra ID'
-        )
-
-        switch (e.constructor) {
-          case UserInputError:
-            logger.info(
-              { e },
-              'User input error during Entra ID authentication callback.'
-            )
-            break
-          default:
-            logger.error(e, 'Error during Entra ID authentication callback.')
+        // process invites
+        if (myUser.isNewUser) {
+          await finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+          })(user.email, myUser.id)
         }
+
         return next()
       }
+
+      // if the server is invite only and we have no invite id, throw.
+      if (serverInfo.inviteOnly && !req.session.token) {
+        throw new UserInputError(
+          'This server is invite only. Please authenticate yourself through a valid invite link.'
+        )
+      }
+
+      // validate the invite
+      const validInvite = await validateServerInviteFactory({
+        findServerInvite: findServerInviteFactory({ db })
+      })(user.email, req.session.token)
+
+      // create the user
+      const myUser = await findOrCreateUser({
+        user: {
+          ...user,
+          role: validInvite
+            ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
+            : undefined
+        }
+      })
+
+      // ID is used later for verifying access token
+      req.user = {
+        ...profile,
+        id: myUser.id,
+        email: myUser.email,
+        isNewUser: myUser.isNewUser,
+        isInvite: !!validInvite
+      }
+
+      req.log = req.log.child({ userId: myUser.id })
+
+      // use the invite
+      await finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      })(user.email, myUser.id)
+
+      // Resolve redirect path
+      req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
+
+      // return to the auth flow
+      return next()
     },
     finalizeAuthMiddleware
   )

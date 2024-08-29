@@ -49,6 +49,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   }
 
   const e = ensureError(err)
+  if (!req.context.err) req.context.err = e
   res.status(resolveStatusCode(e)).json({
     error: resolveErrorInfo(e)
   })

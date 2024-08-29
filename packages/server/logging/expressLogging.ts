@@ -77,7 +77,8 @@ export const LoggingExpressMiddleware = HttpLogger({
 
   customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
-    const requestStatus = isCompleted ? 'completed' : 'aborted'
+    const isError = !!req.context?.err
+    const requestStatus = isCompleted ? (isError ? 'errored' : 'completed') : 'aborted'
     const requestPath = getRequestPath(req) || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
 
@@ -85,7 +86,8 @@ export const LoggingExpressMiddleware = HttpLogger({
       ...val,
       requestStatus,
       requestPath,
-      country
+      country,
+      err: req.context?.err
     }
   },
 
