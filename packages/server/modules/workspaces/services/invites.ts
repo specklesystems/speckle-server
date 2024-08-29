@@ -220,27 +220,6 @@ export const collectAndValidateWorkspaceTargetsFactory =
           )
       }
     }
-    if (role !== Roles.Workspace.Guest && targetUser) {
-      const domains = await deps.getWorkspaceDomains({ workspaceIds: [resourceId] })
-      const verifiedDomains = domains.filter((domain) => domain?.verified)
-      if (
-        workspace &&
-        verifiedDomains &&
-        workspace?.domainBasedMembershipProtectionEnabled &&
-        verifiedDomains.length > 0
-      ) {
-        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
-        const verifiedUserEmails = await deps.findVerifiedEmailsByUserId({
-          userId: targetUser.id
-        })
-        const domainMatching = verifiedUserEmails.find((userEmail) =>
-          domains.has(userEmail.email.split('@')[1])
-        )
-        if (!domainMatching) {
-          throw new WorkspaceProtectedError()
-        }
-      }
-    }
 
     return [...baseTargets, { ...primaryWorkspaceResourceTarget, primary: true }]
   }
