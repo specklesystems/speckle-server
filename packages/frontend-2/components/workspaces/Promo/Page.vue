@@ -1,14 +1,11 @@
 <template>
   <div class="flex flex-col gap-12">
-    <WorkspacesPromoBanner
-      :is-admin="isAdmin"
-      @create="showWorkspaceCreateDialog = true"
-    />
+    <WorkspacesPromoBanner :is-admin="isAdmin" @create="openWorkspaceCreateDialog" />
 
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
-        <FormButton :disabled="!isAdmin" @click="showWorkspaceCreateDialog = true">
+        <FormButton :disabled="!isAdmin" @click="openWorkspaceCreateDialog">
           Create workspace
         </FormButton>
       </div>
@@ -65,10 +62,12 @@
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success
+      event-source="promo-page"
     />
   </div>
 </template>
 <script setup lang="ts">
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
 import {
   UserGroupIcon,
@@ -81,6 +80,14 @@ import {
 const showWorkspaceCreateDialog = ref(false)
 
 const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'promo-page'
+  })
+}
 </script>

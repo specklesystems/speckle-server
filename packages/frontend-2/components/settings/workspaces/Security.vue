@@ -110,6 +110,7 @@ import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -140,6 +141,7 @@ const props = defineProps<{
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
 const apollo = useApolloClient().client
+const mixpanel = useMixpanel()
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
@@ -206,7 +208,13 @@ const isDomainProtectionEnabled = computed({
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!mutationResult?.data) {
+    if (mutationResult?.data) {
+      mixpanel.track('Workspace Domain Protection Toggled', {
+        value: newVal,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    } else {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
@@ -252,7 +260,13 @@ const isDomainDiscoverabilityEnabled = computed({
       }
     })
 
-    if (!mutationResult?.data) {
+    if (mutationResult?.data) {
+      mixpanel.track('Workspace Discoverability Toggled', {
+        value: newVal,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    } else {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
