@@ -7,7 +7,7 @@ export default {
     currentValue: Number,
     maxValue: Number,
     size: {
-      options: ['base', 'lg'],
+      options: ['base'],
       control: { type: 'select' }
     }
   }
@@ -25,10 +25,3 @@ export const Default: StoryObj = {
     currentValue: 10
   }
 }
-
-// export const Large: StoryObj = {
-//   ...Default,
-//   args: {
-//     size: 'lg'
-//   }
-// }
