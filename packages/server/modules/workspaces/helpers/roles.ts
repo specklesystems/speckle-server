@@ -3,7 +3,7 @@ import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 
 export const isUserLastWorkspaceAdmin = (
-  workspaceRoles: WorkspaceAcl[],
+  workspaceRoles: Pick<WorkspaceAcl, 'userId' | 'role'>[],
   userId: string
 ): boolean => {
   const workspaceAdmins = workspaceRoles.filter(

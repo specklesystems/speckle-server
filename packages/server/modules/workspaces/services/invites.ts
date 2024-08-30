@@ -252,7 +252,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
           })
         )
           throw new WorkspaceProtectedError(
-            'The target email is not matching the domain policies'
+            'The invited email does not match the domain policies'
           )
       }
     }
