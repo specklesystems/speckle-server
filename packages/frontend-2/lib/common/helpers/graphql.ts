@@ -15,7 +15,6 @@ import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
 import {
   flatten,
-  isUndefined,
   has,
   isFunction,
   isString,
@@ -374,7 +373,8 @@ export function modifyObjectFields<
   ) =>
     | Optional<ModifyFnCacheData<FieldData>>
     | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
-    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE']
+    | void,
   options?: Partial<{
     fieldNameWhitelist: string[]
     debug: boolean
@@ -427,7 +427,7 @@ export function modifyObjectFields<
           }
         )
 
-        if (isUndefined(res)) {
+        if (isUndefinedOrVoid(res)) {
           return fieldValue as unknown
         } else {
           log('updater returned', { res })
@@ -648,8 +648,10 @@ export const modifyObjectField = <
     }
   }) =>
     | Optional<ModifyObjectFieldValue<Type, Field>>
+    | ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
     | ModifierDetails['DELETE']
-    | ModifierDetails['INVALIDATE'],
+    | ModifierDetails['INVALIDATE']
+    | void,
   options?: Partial<{
     debug: boolean
   }>

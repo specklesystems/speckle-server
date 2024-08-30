@@ -188,37 +188,6 @@ onUserProjectsUpdate((res) => {
         })
       }
     )
-
-    // // TODO: Remove OLD
-    // modifyObjectFields<UserProjectsArgs, User['projects']>(
-    //   cache,
-    //   getCacheId('User', activeUserId),
-    //   (fieldName, variables, value, { ref }) => {
-    //     if (fieldName !== 'projects') return
-    //     if (variables.filter?.search?.length) return
-    //     if (variables.filter?.onlyWithRoles?.length) {
-    //       const roles = variables.filter.onlyWithRoles
-    //       if (!roles.includes(incomingProject.role || '')) return
-    //     }
-
-    //     return {
-    //       ...value,
-    //       items: [ref('Project', incomingProject.id), ...(value.items || [])],
-    //       totalCount: (value.totalCount || 0) + 1
-    //     }
-    //   }
-    // )
-
-    // evictObjectFields<UserProjectsArgs, User['projects']>(
-    //   cache,
-    //   getCacheId('User', activeUserId),
-    //   (fieldName, variables) => {
-    //     if (fieldName !== 'projects') return false
-    //     if (variables.filter?.search?.length) return true
-
-    //     return false
-    //   }
-    // )
   }
 
   if (!isNewProject) {
