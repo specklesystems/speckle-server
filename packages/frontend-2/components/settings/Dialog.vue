@@ -138,19 +138,13 @@ import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
-  fragment SettingsDialog_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
-    id
-    role
-    name
-  }
-`)
-
-graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
-        ...SettingsDialog_Workspace
+        ...WorkspaceAvatar_Workspace
+        id
+        role
+        name
       }
     }
   }

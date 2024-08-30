@@ -38,7 +38,6 @@ export const createWorkspaceMutation = graphql(`
     workspaceMutations {
       create(input: $input) {
         id
-        ...SettingsDialog_Workspace
       }
     }
   }
