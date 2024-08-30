@@ -8,7 +8,6 @@
         :
       </p>
       <FormSelectWorkspaceRoles
-        :disabled="!isWorkspaceAdmin"
         :model-value="localOldRole"
         fully-control-value
         :disabled-items="disabledItems"
@@ -31,7 +30,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   name: string
   oldRole: WorkspaceRoles
-  isWorkspaceAdmin: boolean
   workspaceDomainPolicyCompliant: boolean
 }>()
 
