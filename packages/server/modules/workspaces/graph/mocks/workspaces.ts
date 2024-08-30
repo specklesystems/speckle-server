@@ -154,7 +154,23 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
           },
           Workspace: {
             role: resolveFromMockParent(),
-            team: resolveFromMockParent(),
+            team: resolveAndCache((_parent, args) => {
+              const id = faker.string.uuid()
+              return getMockRef('WorkspaceCollaboratorCollection', {
+                values: {
+                  items: [...new Array(args.limit)].map(() => ({
+                    id,
+                    role: faker.helpers.arrayElement(Object.values(Roles.Workspace)),
+                    user: {
+                      id,
+                      name: faker.person.fullName()
+                    }
+                  })),
+                  totalCount: args.limit,
+                  cursor: null
+                }
+              })
+            }),
             invitedTeam: resolveFromMockParent({
               mapRefs: (mock, { parent }) =>
                 addMockRefValues(mock, {
@@ -224,7 +240,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
           name: workspaceName(),
           description: faker.lorem.sentence(),
           role: faker.helpers.arrayElement(Object.values(Roles.Workspace)),
-          team: listMock(1, 5),
           invitedTeam: listMock(1, 5)
         }),
         WorkspaceCollaborator: () => ({

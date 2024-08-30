@@ -92,5 +92,7 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
 const roles = computed(() => Object.values(Roles.Workspace))
 
 const disabledItemPredicate = (item: WorkspaceRoles) =>
-  props.disabledItems ? props.disabledItems.includes(item) : true
+  props.disabledItems && props.disabledItems.length > 0
+    ? props.disabledItems.includes(item)
+    : false
 </script>

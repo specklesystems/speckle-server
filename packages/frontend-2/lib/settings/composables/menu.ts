@@ -12,6 +12,7 @@ import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.v
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
 import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
+import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 
@@ -39,8 +40,7 @@ export const useSettingsMenu = () => {
     },
     billing: {
       title: 'Billing',
-      disabled: true,
-      tooltipText: 'Manage billing for your workspace',
+      component: SettingsWorkspacesBilling,
       permission: [Roles.Workspace.Admin]
     },
     regions: {

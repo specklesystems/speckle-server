@@ -4,6 +4,7 @@ import { Roles } from '@speckle/shared'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { onProjectCreatedFactory } from '@/modules/workspaces/events/eventListener'
 import { expect } from 'chai'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 describe('Event handlers', () => {
   describe('onProjectCreatedFactory creates a function, that', () => {
@@ -15,17 +16,20 @@ describe('Event handlers', () => {
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Admin
+          role: Roles.Workspace.Admin,
+          createdAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Member
+          role: Roles.Workspace.Member,
+          createdAt: new Date()
         },
         {
           workspaceId,
           userId: cryptoRandomString({ length: 10 }),
-          role: Roles.Workspace.Guest
+          role: Roles.Workspace.Guest,
+          createdAt: new Date()
         }
       ]
 
@@ -33,9 +37,10 @@ describe('Event handlers', () => {
 
       const onProjectCreated = onProjectCreatedFactory({
         getWorkspaceRoles: async () => workspaceRoles,
-        grantStreamPermissions: async ({ streamId, userId, role }) => {
+        getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+        upsertProjectRole: async ({ projectId, userId, role }) => {
           projectRoles.push({
-            resourceId: streamId,
+            resourceId: projectId,
             userId,
             role
           })

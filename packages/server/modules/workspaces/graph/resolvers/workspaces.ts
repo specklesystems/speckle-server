@@ -9,9 +9,8 @@ import {
   getStream,
   getUserStreams,
   getUserStreamsCount,
-  grantStreamPermissions,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
+  upsertProjectRoleFactory,
+  deleteProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -68,6 +67,7 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
+  getWorkspaceCollaboratorsTotalCountFactory,
   storeWorkspaceDomainFactory,
   deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
@@ -100,6 +100,7 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
+  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -122,6 +123,7 @@ import {
   getWorkspaceCostItemsFactory
 } from '@/modules/workspaces/services/cost'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
@@ -337,9 +339,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(deleteWorkspaceRole(args.input), trx)
@@ -357,9 +361,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              getDefaultWorkspaceProjectRoleMapping:
+                mapWorkspaceRoleToInitialProjectRole,
+              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(
@@ -415,7 +424,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           await joinWorkspaceFactory({
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-            insertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
@@ -430,9 +439,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-            emitWorkspaceEvent: getEventBus().emit,
-            getStreams
+            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+            emitWorkspaceEvent: getEventBus().emit
           })
 
           await withTransaction(
@@ -538,13 +547,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: ({ eventName, payload }) =>
-                  getEventBus().emit({
-                    eventName,
-                    payload
-                  }),
-                getStreams,
-                grantStreamPermissions
+                upsertProjectRole: upsertProjectRoleFactory({ db }),
+                getDefaultWorkspaceProjectRoleMapping:
+                  mapWorkspaceRoleToInitialProjectRole,
+                deleteProjectRole: deleteProjectRoleFactory({ db }),
+                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                  getStreams
+                }),
+                emitWorkspaceEvent: getEventBus().emit
               })
             }),
             findEmail: findEmailFactory({ db }),
@@ -603,13 +613,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const getTeam = getWorkspaceCollaboratorsFactory({ db })
-          const collaborators = await getTeam({
+          const team = await getPaginatedWorkspaceTeamFactory({
+            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+            getWorkspaceCollaboratorsTotalCount:
+              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          })({
             workspaceId: parent.id,
-            filter: removeNullOrUndefinedKeys(args?.filter ?? {})
+            filter: removeNullOrUndefinedKeys(args?.filter || {}),
+            limit: args.limit,
+            cursor: args.cursor ?? undefined
           })
-
-          return collaborators
+          return team
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
