@@ -20,7 +20,12 @@
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
-            v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
+            v-if="
+              canEdit &&
+              activeUser &&
+              collaborator.id !== activeUser.id &&
+              collaborator.workspaceRole !== Roles.Workspace.Admin
+            "
             class="shrink-0"
             :model-value="collaborator.role"
             :disabled="loading"
@@ -28,9 +33,11 @@
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
-          <span v-else class="shrink-0 text-body-2xs">
-            {{ roleSelectItems[collaborator.role].title }}
-          </span>
+          <div v-else class="flex items-center justify-end">
+            <span v-tippy="getRoleTooltip(collaborator)" class="shrink-0 text-body-2xs">
+              {{ roleSelectItems[collaborator.role].title }}
+            </span>
+          </div>
         </template>
         <template v-else-if="canEdit">
           <div class="flex items-end sm:items-center shrink-0 gap-3">
@@ -78,7 +85,8 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import {
   useCancelProjectInvite,
-  useUpdateUserRole
+  useUpdateUserRole,
+  useUpdateWorkspaceProjectRole
 } from '~~/lib/projects/composables/projectManagement'
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
@@ -96,9 +104,19 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
   }
 `)
 
+const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
+  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...ProjectPageTeamInternals_Workspace
+    }
+  }
+`)
+
 const route = useRoute()
 const apollo = useApolloClient().client
 const updateRole = useUpdateUserRole()
+const updateWorkspaceProjectRole = useUpdateWorkspaceProjectRole()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const cancelInvite = useCancelProjectInvite()
 const { activeUser } = useActiveUser()
 const mp = useMixpanel()
@@ -111,10 +129,23 @@ const projectId = computed(() => route.params.id as string)
 const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
+const { result: workspaceResult } = useQuery(
+  projectPageSettingsCollaboratorWorkspaceQuery,
+  () => ({
+    workspaceId: pageResult.value!.project.workspaceId!
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspaceId
+  })
+)
 
 const project = computed(() => pageResult.value?.project)
+const workspace = computed(() => workspaceResult.value?.workspace)
 
-const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(project)
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
+  project,
+  workspace
+)
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
@@ -125,11 +156,20 @@ const onCollaboratorRoleChange = async (
   if (collaborator.inviteId) return
 
   loading.value = true
-  await updateRole({
-    projectId: projectId.value,
-    userId: collaborator.id,
-    role: newRole
-  })
+  if (isWorkspacesEnabled.value && project.value?.workspaceId) {
+    await updateWorkspaceProjectRole({
+      projectId: projectId.value,
+      userId: collaborator.id,
+      role: newRole
+    })
+  } else {
+    await updateRole({
+      projectId: projectId.value,
+      userId: collaborator.id,
+      role: newRole
+    })
+  }
+
   loading.value = false
 
   mp.track('Stream Action', {
@@ -156,6 +196,18 @@ const onCollaboratorRoleChange = async (
       }
     )
   }
+}
+
+const getRoleTooltip = (collaborator: ProjectCollaboratorListItem): string | null => {
+  if (!canEdit.value) {
+    return null
+  }
+
+  if (collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return 'User is workspace admin'
+  }
+
+  return null
 }
 
 const toggleInviteDialog = () => {
