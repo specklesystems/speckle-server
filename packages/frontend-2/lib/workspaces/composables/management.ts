@@ -366,13 +366,14 @@ export function useCreateWorkspace() {
             cache,
             getCacheId('User', userId),
             'workspaces',
-            ({ variables, helpers: { evict, createUpdatedValue, ref } }) => {
-              if (variables.filter?.search?.length) return evict() // evict if filtered search
-
+            ({ helpers: { createUpdatedValue, ref } }) => {
               return createUpdatedValue(({ update }) => {
                 update('totalCount', (totalCount) => totalCount + 1)
                 update('items', (items) => [...items, ref('Workspace', workspaceId)])
               })
+            },
+            {
+              autoEvictFiltered: true
             }
           )
         }
