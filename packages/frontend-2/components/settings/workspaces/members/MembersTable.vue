@@ -222,7 +222,7 @@ const filteredActionsItems = (user: UserItem) => {
 
   // Allow removing a member if the active user is an admin and not the current user
   if (canRemoveMember.value(user)) {
-    baseItems.push([{ title: 'Remove member...', id: ActionTypes.RemoveMember }])
+    baseItems.push([{ title: 'Remove user...', id: ActionTypes.RemoveMember }])
   }
 
   return baseItems
