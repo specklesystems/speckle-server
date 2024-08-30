@@ -942,6 +942,8 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
+      const emailInviteEmail = 'imJustSomeRandomNewGuy@aaaaa.com'
+
       const validateResourceAccess = async (params: {
         shouldHaveAccess: boolean
         expectedWorkspaceRole?: WorkspaceRoles
