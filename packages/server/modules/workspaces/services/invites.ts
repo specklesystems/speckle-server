@@ -133,7 +133,13 @@ export const collectAndValidateWorkspaceTargetsFactory =
     const coreCollector = collectAndValidateCoreTargetsFactory(deps)
     const baseTargets = await coreCollector(params)
 
-    const { input, inviter, targetUser, inviterResourceAccessLimits } = params
+    const {
+      input,
+      inviter,
+      targetUser,
+      inviterResourceAccessLimits,
+      finalizingInvite
+    } = params
     const primaryResourceTarget = input.primaryResourceTarget
     const primaryWorkspaceResourceTarget = isWorkspaceResourceTarget(
       primaryResourceTarget
@@ -216,7 +222,8 @@ export const collectAndValidateWorkspaceTargetsFactory =
       )
     }
 
-    if (workspace.role) {
+    // Only check this on creation, on finalization its fine if the user's already a member
+    if (workspace.role && !finalizingInvite) {
       throw new InviteCreateValidationError(
         'The target user is already a member of the specified workspace'
       )
@@ -492,11 +499,13 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
         )
       }
     } else {
-      if (workspace.role) {
-        throw new InviteFinalizingError(
-          'Attempting to finalize invite to a workspace that the user already has access to'
-        )
-      }
+      // We now allow accepting an invite even if the user is already a member of the workspace
+      // (to get extra emails, for example)
+      // if (workspace.role) {
+      //   throw new InviteFinalizingError(
+      //     'Attempting to finalize invite to a workspace that the user already has access to'
+      //   )
+      // }
     }
 
     if (
@@ -547,7 +556,8 @@ export const processFinalizedWorkspaceInviteFactory =
       await deps.updateWorkspaceRole({
         userId: finalizerUserId,
         workspaceId: workspace.id,
-        role: invite.resource.role || Roles.Workspace.Member
+        role: invite.resource.role || Roles.Workspace.Member,
+        preventRoleDowngrade: true
       })
     }
   }
