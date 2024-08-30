@@ -25,7 +25,7 @@ import {
   cloneDeep
 } from 'lodash-es'
 import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
-import type { Get, PartialDeep, Paths, ReadonlyDeep } from 'type-fest'
+import type { Get, PartialDeep, Paths, ReadonlyDeep, Tagged } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
@@ -36,7 +36,6 @@ import type {
   AllObjectFieldArgTypes,
   AllObjectTypes
 } from '~/lib/common/generated/gql/graphql'
-import type { Tagged } from 'type-fest/source/opaque'
 
 /**
  * Cache key of a specific cached GQL object. Tends to look like `Type:id`.
