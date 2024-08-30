@@ -422,10 +422,14 @@ const measureShortcut = ref(
   `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
 )
 
-const isTyping = computed(() => ui.threads.openThread.isTyping.value)
+const isTypingComment = computed(() => {
+  const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
+  const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
+  return isNewThreadEditorOpen || isExistingThreadEditorOpen
+})
 
 const handleKeyboardAction = (action: ViewerKeyboardActions) => {
-  if (isTyping.value) {
+  if (isTypingComment.value) {
     return
   }
   switch (action) {
