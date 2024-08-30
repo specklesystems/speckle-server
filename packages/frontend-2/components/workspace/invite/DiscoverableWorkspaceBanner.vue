@@ -76,17 +76,20 @@ const processJoin = async (accept: boolean) => {
           workspaceId: props.workspace.id
         }
       },
-      update(cache) {
+      update(cache, { data }) {
+        const workspaceId = data?.workspaceMutations.join.id
+        if (!workspaceId) return
+
         modifyObjectField(
           cache,
           getCacheId('User', userId),
           'workspaces',
-          ({ helpers: { createUpdatedValue, ref } }) => {
+          ({ variables, helpers: { evict, createUpdatedValue, ref } }) => {
+            if (variables.filter?.search?.length) return evict()
+
             return createUpdatedValue(({ update }) => {
-              update('items', (items) => [
-                ...items,
-                ref('Workspace', props.workspace.id)
-              ])
+              update('totalCount', (totalCount) => totalCount + 1)
+              update('items', (items) => [...items, ref('Workspace', workspaceId)])
             })
           }
         )
