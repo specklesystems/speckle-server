@@ -30,6 +30,40 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   }
 `
 
+export const workspaceBillingFragment = gql`
+  fragment WorkspaceBilling on Workspace {
+    billing {
+      versionsCount {
+        current
+        max
+      }
+      cost {
+        subTotal
+        currency
+        items {
+          count
+          name
+          cost
+        }
+        discount {
+          name
+          amount
+        }
+        total
+      }
+    }
+  }
+`
+export const workspaceProjectsFragment = gql`
+  fragment WorkspaceProjects on ProjectCollection {
+    items {
+      id
+    }
+    cursor
+    totalCount
+  }
+`
+
 export const createWorkspaceInviteQuery = gql`
   mutation CreateWorkspaceInvite(
     $workspaceId: String!
@@ -84,6 +118,31 @@ export const getWorkspaceWithTeamQuery = gql`
 
   ${basicWorkspaceFragment}
   ${basicPendingWorkspaceCollaboratorFragment}
+`
+
+export const getWorkspaceWithBillingQuery = gql`
+  query GetWorkspaceWithBilling($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      ...WorkspaceBilling
+    }
+  }
+  ${basicWorkspaceFragment}
+  ${workspaceBillingFragment}
+`
+
+export const getWorkspaceWithProjectsQuery = gql`
+  query GetWorkspaceWithProjects($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      projects {
+        ...WorkspaceProjects
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${workspaceProjectsFragment}
 `
 
 export const cancelInviteMutation = gql`

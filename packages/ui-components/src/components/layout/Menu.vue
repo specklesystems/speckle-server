@@ -3,24 +3,19 @@
     <div>
       <MenuButton :id="menuId" ref="menuButton" class="hidden" @click.stop.prevent />
       <!-- conditional pointer-events-none is necessary to avoid double events when clicking on the button when the menu is already open -->
-      <div :class="isMenuOpen ? 'pointer-events-none' : ''">
+      <div ref="menuButtonWrapper" :class="isMenuOpen ? 'pointer-events-none' : ''">
         <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
       </div>
     </div>
-    <Transition
-      enter-active-class="transition duration-100 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-75 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
-    >
+    <Teleport to="body">
       <MenuItems
+        v-if="isMenuOpen"
         ref="menuItems"
         :class="[
-          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
+        :style="menuItemsStyles"
       >
         <div v-for="(group, i) in items" :key="i" class="p-1">
           <MenuItem
@@ -43,19 +38,21 @@
           </MenuItem>
         </div>
       </MenuItems>
-    </Transition>
+    </Teleport>
   </Menu>
 </template>
+
 <script setup lang="ts">
 import { directive as vTippy } from 'vue-tippy'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import type { Nullable } from '@speckle/shared'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import {
   HorizontalDirection,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/src/composables/common/window'
 import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
+import { useElementBounding, useEventListener } from '@vueuse/core'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -70,21 +67,50 @@ const props = defineProps<{
    */
   items: LayoutMenuItem[][]
   menuId?: string
+  menuPosition?: HorizontalDirection
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
-const { direction: menuDirection } = useResponsiveHorizontalDirectionCalculation({
+const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
+const menuButtonWrapper = ref(null as Nullable<HTMLElement>)
+const isOpenInternally = ref(false)
+const isMounted = ref(false)
+
+const finalOpen = computed({
+  get: () => props.open || false,
+  set: (newVal) => emit('update:open', newVal)
+})
+
+const menuButtonBounding = useElementBounding(menuButtonWrapper, {
+  windowResize: true,
+  windowScroll: true,
+  immediate: true
+})
+
+const menuItemsStyles = computed(() => {
+  if (!menuButtonBounding.width.value) return {}
+  let offsetPosition = menuButtonBounding.left.value
+
+  if (props.menuPosition === HorizontalDirection.Left) {
+    offsetPosition = menuButtonBounding.left.value - 150
+  }
+
+  return {
+    position: 'absolute',
+    top: `${menuButtonBounding.top.value + menuButtonBounding.height.value}px`,
+    left: `${offsetPosition}px`,
+    zIndex: 50
+  }
+})
+
+const { direction: calculatedDirection } = useResponsiveHorizontalDirectionCalculation({
   el: computed(() => menuItems.value?.el || null),
   defaultDirection: HorizontalDirection.Left,
   stopUpdatesBelowWidth: 300
 })
 
-const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
-const isOpenInternally = ref(false)
-
-const finalOpen = computed({
-  get: () => props.open || false,
-  set: (newVal) => emit('update:open', newVal)
+const menuDirection = computed(() => {
+  return props.menuPosition || calculatedDirection.value
 })
 
 const buildButtonClassses = (params: {
@@ -142,5 +168,17 @@ watch(finalOpen, (shouldBeOpen) => {
   } else if (!shouldBeOpen && isOpenInternally.value) {
     toggle()
   }
+})
+
+onMounted(() => {
+  isMounted.value = true
+})
+
+useEventListener(window, 'resize', () => {
+  menuButtonBounding.update()
+})
+
+useEventListener(window, 'scroll', () => {
+  menuButtonBounding.update()
 })
 </script>

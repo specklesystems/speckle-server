@@ -97,6 +97,7 @@ describe('GraphQL @apps-api', () => {
     const res = await sendRequest(null, { query, variables })
     expect(res).to.be.json
     expect(res.body.errors).to.exist
+    expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
   })
 
   it('Should get app info', async () => {
@@ -177,12 +178,14 @@ describe('GraphQL @apps-api', () => {
   })
 
   it('Should not delete app if request is not authenticated/user is app owner', async () => {
-    const query = `mutation del { appDelete( id: "${testAppId}" ) }`
+    const query = `mutation del { appDelete( appId: "${testAppId}" ) }`
     const res = await sendRequest(null, { query })
     expect(res.body.errors).to.exist
+    expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
 
     const res2 = await sendRequest(testToken2, { query })
     expect(res2.body.errors).to.exist
+    expect(res2.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
   })
 
   it('Should get the apps that i have created', async () => {

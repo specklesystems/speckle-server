@@ -8,6 +8,7 @@
           <SettingsWorkspacesGeneralEditAvatar
             v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
+            :disabled="!isAdmin"
             size="xxl"
           />
         </div>
@@ -17,20 +18,20 @@
             color="foundation"
             label="Name"
             name="name"
-            placeholder="Example Ltd."
+            placeholder="Workspace name"
             show-label
             :disabled="!isAdmin"
             :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
             validate-on-value-update
             @change="save()"
           />
-          <hr class="mt-4 mb-2" />
+          <hr class="mt-4 mb-2 border-outline-3" />
           <FormTextInput
             v-model="description"
             color="foundation"
             label="Description"
             name="description"
-            placeholder="This is your workspace"
+            placeholder="Workspace description"
             show-label
             :disabled="!isAdmin"
             :rules="[isStringOfLength({ maxLength: 512 })]"
@@ -38,24 +39,43 @@
           />
         </div>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <div class="flex flex-col space-y-6">
-        <SettingsSectionHeader title="Delete workspace" subheading />
-        <div
-          class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-        >
-          We will delete all content of this workspace, and any associated data. We will
-          ask you to type in your workspace name and press the delete button.
-        </div>
+        <SettingsSectionHeader title="Leave workspace" subheading />
+        <CommonCard class="bg-foundation">
+          By clicking the button below you will leave this workspace.
+        </CommonCard>
         <div>
-          <FormButton :disabled="!isAdmin" color="danger" @click="openDeleteDialog">
-            Delete workspace
+          <FormButton color="danger" @click="showLeaveDialog = true">
+            Leave workspace
           </FormButton>
         </div>
       </div>
+      <template v-if="isAdmin">
+        <hr class="my-6 md:my-8 border-outline-2" />
+        <div class="flex flex-col space-y-6">
+          <SettingsSectionHeader title="Delete workspace" subheading />
+          <CommonCard class="bg-foundation">
+            We will delete all content of this workspace, and any associated data. We
+            will ask you to type in your workspace name and press the delete button.
+          </CommonCard>
+          <div>
+            <FormButton color="danger" @click="showDeleteDialog = true">
+              Delete workspace
+            </FormButton>
+          </div>
+        </div>
+      </template>
     </div>
-    <SettingsWorkspacesGeneralDeleteDialog
+
+    <SettingsWorkspacesGeneralLeaveDialog
       v-if="workspaceResult"
+      v-model:open="showLeaveDialog"
+      :workspace="workspaceResult.workspace"
+    />
+
+    <SettingsWorkspacesGeneralDeleteDialog
+      v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
     />
@@ -63,10 +83,9 @@
 </template>
 
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
-import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { Roles } from '@speckle/shared'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
@@ -77,6 +96,7 @@ import {
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -86,6 +106,7 @@ graphql(`
     name
     description
     logo
+    role
   }
 `)
 
@@ -95,7 +116,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -106,8 +127,11 @@ const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () =
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
+const showLeaveDialog = ref(false)
 
-const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+const isAdmin = computed(
+  () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
+)
 
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
@@ -122,6 +146,14 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    mixpanel.track('Workspace General Settings Updated', {
+      fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
+        (key) => key !== 'id'
+      ),
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace updated'
@@ -135,10 +167,6 @@ const save = handleSubmit(async () => {
     })
   }
 })
-
-function openDeleteDialog() {
-  showDeleteDialog.value = true
-}
 
 watch(
   () => workspaceResult,

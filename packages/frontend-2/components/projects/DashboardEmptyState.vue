@@ -14,9 +14,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+defineProps<{
+  isGuest: boolean
+}>()
 
 defineEmits(['create-project'])
-
-const { isGuest } = useActiveUser()
 </script>

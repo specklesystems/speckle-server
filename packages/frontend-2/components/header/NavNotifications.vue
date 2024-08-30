@@ -33,7 +33,7 @@
         <MenuItems
           class="absolute z-50 right-0 md:right-20 top-10 mt-1.5 w-full sm:w-64 origin-top-right bg-foundation-page outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="p-2 text-heading-sm bg-foundation-page">Notifications</div>
+          <div class="px-3 py-2 text-body-xs font-medium">Notifications</div>
           <!-- <div class="p-2 text-sm">TODO: project invites</div> -->
           <MenuItem>
             <AuthVerificationReminderMenuNotice />

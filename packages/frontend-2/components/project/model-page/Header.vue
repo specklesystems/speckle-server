@@ -4,7 +4,7 @@
       <HeaderNavLink
         :to="projectsRoute"
         name="Projects"
-        :seperator="false"
+        :separator="false"
       ></HeaderNavLink>
       <HeaderNavLink
         :to="projectRoute(project.id)"

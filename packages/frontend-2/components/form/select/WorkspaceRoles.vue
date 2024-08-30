@@ -10,6 +10,8 @@
     :button-id="buttonId"
     mount-menu-on-body
     :fully-control-value="fullyControlValue"
+    :disabled="disabled"
+    :disabled-item-predicate="disabledItemPredicate"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -67,6 +69,11 @@ const props = defineProps({
   label: {
     type: String,
     default: 'Workspace Roles'
+  },
+  disabled: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
   }
 })
 
@@ -83,4 +90,9 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
   })
 
 const roles = computed(() => Object.values(Roles.Workspace))
+
+const disabledItemPredicate = (item: WorkspaceRoles) =>
+  props.disabledItems && props.disabledItems.length > 0
+    ? props.disabledItems.includes(item)
+    : false
 </script>

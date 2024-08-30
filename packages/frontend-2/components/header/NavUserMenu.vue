@@ -24,7 +24,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-primary cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-primary cursor-pointer transition mx-1 rounded'
                 ]"
                 target="_blank"
                 external
@@ -38,7 +38,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.user.profile)"
             >
@@ -49,7 +49,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.server.general)"
             >
@@ -60,7 +60,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
@@ -71,7 +71,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
@@ -82,7 +82,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               target="_blank"
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
@@ -96,7 +96,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 @click="logout"
               >
@@ -107,7 +107,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'flex px-2 py-1.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                  'flex px-2 py-1 text-body-xs text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >

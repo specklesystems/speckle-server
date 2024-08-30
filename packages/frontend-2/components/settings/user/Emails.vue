@@ -7,7 +7,7 @@
       />
       <SettingsSectionHeader title="Your emails" subheading />
       <SettingsUserEmailList class="pt-6" :email-data="emailItems" />
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsSectionHeader title="Add new email" subheading />
       <div class="flex flex-col md:flex-row w-full pt-4 md:pt-6 pb-6">
         <div class="flex flex-col md:flex-row gap-x-2 w-full">

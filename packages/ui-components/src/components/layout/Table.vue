@@ -47,21 +47,22 @@
                 </slot>
               </div>
             </template>
-            <div class="absolute right-1.5 space-x-1 flex items-center p-0 h-full">
-              <template v-if="buttons">
-                <div v-for="button in buttons" :key="button.label">
-                  <FormButton
-                    v-tippy="button.tooltip"
-                    :icon-left="button.icon"
-                    size="sm"
-                    color="outline"
-                    hide-text
-                    :class="button.class"
-                    :to="isString(button.action) ? button.action : undefined"
-                    @click.stop="!isString(button.action) ? button.action(item) : noop"
-                  />
-                </div>
-              </template>
+            <div
+              v-if="buttons"
+              class="absolute right-1.5 space-x-1 flex items-center p-0 h-full"
+            >
+              <div v-for="button in buttons" :key="button.label">
+                <FormButton
+                  v-tippy="button.tooltip"
+                  :icon-left="button.icon"
+                  size="sm"
+                  color="outline"
+                  hide-text
+                  :class="button.class"
+                  :to="isString(button.action) ? button.action : undefined"
+                  @click.stop="!isString(button.action) ? button.action(item) : noop"
+                />
+              </div>
             </div>
           </div>
         </template>

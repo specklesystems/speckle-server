@@ -1,13 +1,15 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
+  WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -21,11 +23,14 @@ import {
 import { useNavigateToHome, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
+  createWorkspaceMutation,
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
-import { isFunction } from 'lodash-es'
+import { isFunction, isUndefined } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
+import { useClipboard } from '~~/composables/browser'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -181,8 +186,11 @@ export const useProcessWorkspaceInvite = () => {
       })
       mp.track('Invite Action', {
         type: 'workspace invite',
-        accepted: input.accept
+        accepted: input.accept,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
+      mp.add_group('workspace_id', workspaceId)
     } else {
       const err = getFirstErrorMessage(errors)
       const preventErrorToasts = isFunction(options?.preventErrorToasts)
@@ -317,4 +325,132 @@ export const useWorkspaceInviteManager = <
     decline: (options?: Parameters<typeof processInvite>[1]) =>
       processInvite(false, options)
   }
+}
+
+export function useCreateWorkspace() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { activeUser } = useActiveUser()
+  const router = useRouter()
+  const mixpanel = useMixpanel()
+
+  return async (
+    input: WorkspaceCreateInput,
+    options?: Partial<{
+      /**
+       * Determines whether to navigate to the new workspace upon creation.
+       * Defaults to false.
+       */
+      navigateOnSuccess: boolean
+    }>,
+    eventProperties?: Partial<{
+      /**
+       * Used for sending the Mixpanel event
+       */
+      source: string
+    }>
+  ) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const res = await apollo
+      .mutate({
+        mutation: createWorkspaceMutation,
+        variables: { input },
+        update: (cache, { data }) => {
+          const workspaceId = data?.workspaceMutations.create.id
+          if (!workspaceId) return
+          // Navigation to workspace is gonna fetch everything needed for the page, so we only
+          // really need to update workspace fields used in sidebar & settings: User.workspaces
+          modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+            cache,
+            getCacheId('User', userId),
+            'workspaces',
+            ({ variables, value, details: { DELETE } }) => {
+              if (variables.filter?.search?.length) return DELETE // evict if filtered search
+
+              const totalCount = isUndefined(value?.totalCount)
+                ? undefined
+                : value.totalCount + 1
+              const items = isUndefined(value?.items)
+                ? undefined
+                : [...value.items, getObjectReference('Workspace', workspaceId)]
+
+              return {
+                ...value,
+                totalCount,
+                items
+              }
+            }
+          )
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (res.data?.workspaceMutations.create.id) {
+      mixpanel.track('Workspace Created', {
+        source: eventProperties?.source,
+        fields: Object.keys(input) as Array<keyof WorkspaceCreateInput>,
+        // eslint-disable-next-line camelcase
+        workspace_id: res.data?.workspaceMutations.create.id
+      })
+
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace successfully created'
+      })
+
+      if (options?.navigateOnSuccess === true) {
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+      }
+    } else {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Workspace creation failed',
+        description: err
+      })
+    }
+
+    return res
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
+  }
+}
+
+export const copyWorkspaceLink = async (id: string) => {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+
+  await copy(url)
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Copied workspace link to clipboard'
+  })
 }

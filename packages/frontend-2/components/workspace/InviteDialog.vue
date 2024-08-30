@@ -84,9 +84,11 @@ graphql(`
   fragment WorkspaceInviteDialog_Workspace on Workspace {
     id
     team {
-      id
-      user {
+      items {
         id
+        user {
+          id
+        }
       }
     }
     invitedTeam(filter: $invitesFilter) {
@@ -111,7 +113,7 @@ const { on, bind, value: search } = useDebouncedTextInput({ debouncedBy: 500 })
 const { users, emails, hasTargets } = useResolveInviteTargets({
   search,
   excludeUserIds: computed(() => [
-    ...(props.workspace?.team.map((c) => c.user.id) || []),
+    ...(props.workspace?.team?.items.map((c) => c.user.id) || []),
     ...(props.workspace?.invitedTeam?.map((c) => c.user?.id).filter(isNonNullable) ||
       [])
   ]),
@@ -167,7 +169,9 @@ const onInviteUser = async (
     multiple: inputs.length !== 1,
     count: inputs.length,
     hasProject: true,
-    to: isEmail ? 'email' : 'existing user'
+    to: isEmail ? 'email' : 'existing user',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
 
   disabled.value = false

@@ -26,7 +26,7 @@
               ]"
             />
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               title="Access tokens"
@@ -56,7 +56,7 @@
                 server; they function like ordinary OAuth access tokens. Use them in
                 your scripts or apps!
                 <br />
-                <span class="font-semibold">
+                <span class="font-medium">
                   Treat them like a password: do not post them anywhere where they could
                   be accessed by others (e.g., public repos).
                 </span>
@@ -96,7 +96,7 @@
               </template>
             </LayoutTable>
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               subheading
@@ -172,7 +172,7 @@
               </template>
             </LayoutTable>
           </div>
-          <hr />
+          <hr class="border-outline-3" />
           <div class="flex flex-col gap-4">
             <SettingsSectionHeader
               subheading

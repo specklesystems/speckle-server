@@ -3,41 +3,44 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
+    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
-      :workspaces-invites="workspaceInvitesResult?.activeUser || undefined"
+      :workspaces-invites="workspacesResult?.activeUser || undefined"
     />
     <div class="flex flex-col gap-y-12">
-      <section>
-        <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
-          <QuickStartCard
-            v-for="quickStartItem in quickStartItems"
-            :key="quickStartItem.title"
-            :title="quickStartItem.title"
-            :description="quickStartItem.description"
-            :buttons="quickStartItem.buttons"
-          />
-        </div>
-      </section>
-      <section>
-        <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
-          <template v-if="hasProjects">
-            <DashboardProjectCard
-              v-for="project in projects"
-              :key="project.id"
-              :project="project"
+      <div class="flex flex-col-reverse lg:flex-col gap-y-12">
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
+            <CommonCard
+              v-for="quickStartItem in quickStartItems"
+              :key="quickStartItem.title"
+              :title="quickStartItem.title"
+              :description="quickStartItem.description"
+              :buttons="quickStartItem.buttons"
             />
-          </template>
-          <QuickStartCard
-            v-else
-            title="Create your first project"
-            description="Projects are the place where your models and their versions live."
-            :buttons="createProjectButton"
-          />
-        </div>
-      </section>
+          </div>
+        </section>
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
+            <template v-if="hasProjects">
+              <DashboardProjectCard
+                v-for="project in projects"
+                :key="project.id"
+                :project="project"
+              />
+            </template>
+            <CommonCard
+              v-else
+              title="Create your first project"
+              description="Projects are the place where your models and their versions live."
+              :buttons="createProjectButton"
+            />
+          </div>
+        </section>
+      </div>
       <section>
         <h2 class="text-heading-sm text-foreground-2">News &amp; tutorials</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
@@ -54,7 +57,7 @@
 <script setup lang="ts">
 import {
   dashboardProjectsPageQuery,
-  dashboardProjectsPageWorkspaceInvitesQuery
+  dashboardProjectsPageWorkspacesQuery
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
@@ -66,6 +69,9 @@ import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import type { PromoBanner } from '~/lib/promo-banners/types'
+import submitImage from '~/assets/images/banners/submit.gif'
+import earlybirdImage from '~/assets/images/banners/earlybird.gif'
 
 useHead({ title: 'Dashboard' })
 
@@ -78,8 +84,8 @@ const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
-const { result: workspaceInvitesResult } = useQuery(
-  dashboardProjectsPageWorkspaceInvitesQuery,
+const { result: workspacesResult } = useQuery(
+  dashboardProjectsPageWorkspacesQuery,
   undefined,
   () => ({
     enabled: isWorkspacesEnabled.value
@@ -179,4 +185,23 @@ const onDownloadManager = (extension: ManagerExtension) => {
     })
   }
 }
+
+const promoBanners = ref<PromoBanner[]>([
+  {
+    primaryText: 'Specklecon - Submit your proposal',
+    url: 'https://conf.speckle.systems/',
+    priority: 1,
+    expiryDate: '2024-09-02',
+    image: submitImage,
+    isBackgroundImage: true
+  },
+  {
+    primaryText: 'Specklecon - Early Bird Tickets',
+    url: 'https://conf.speckle.systems/',
+    priority: 2,
+    expiryDate: '2024-09-15',
+    image: earlybirdImage,
+    isBackgroundImage: true
+  }
+])
 </script>
