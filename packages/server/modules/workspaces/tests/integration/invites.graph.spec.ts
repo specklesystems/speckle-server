@@ -85,6 +85,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 
 enum InviteByTarget {
   Email = 'email',
@@ -746,6 +747,31 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+      })
+
+      it("can't invite invalid domain email to domain protected workspace project", async () => {
+        const project: BasicTestStream = {
+          name: 'My Project Invite Target Workspace Project #2',
+          id: '',
+          ownerId: '',
+          isPublic: false,
+          workspaceId: domainProtectedWorkspace.id
+        }
+        await createTestStreams([[project, me]])
+
+        const invalidEmail = 'johnny123456@test.com'
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: project.id,
+          inputs: [
+            {
+              email: invalidEmail,
+              role: Roles.Stream.Owner,
+              workspaceRole: Roles.Workspace.Member
+            }
+          ]
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceProtectedError.code })
       })
     })
 
