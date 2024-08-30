@@ -194,6 +194,11 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
   if (disabled) return
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+  mixpanel.track('Workspace Settings Menuitem Clicked', {
+    // eslint-disable-next-line camelcase
+    workspace_id: id,
+    item: target
+  })
 }
 
 const openWorkspaceCreateDialog = () => {

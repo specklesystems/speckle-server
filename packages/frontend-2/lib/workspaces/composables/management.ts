@@ -191,8 +191,11 @@ export const useProcessWorkspaceInvite = () => {
       })
       mp.track('Invite Action', {
         type: 'workspace invite',
-        accepted: input.accept
+        accepted: input.accept,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
+      mp.add_group('workspace_id', workspaceId)
     } else {
       const err = getFirstErrorMessage(errors)
       const preventErrorToasts = isFunction(options?.preventErrorToasts)
