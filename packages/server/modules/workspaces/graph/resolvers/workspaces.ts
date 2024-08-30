@@ -9,9 +9,8 @@ import {
   getStream,
   getUserStreams,
   getUserStreamsCount,
-  grantStreamPermissions,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
+  upsertProjectRoleFactory,
+  deleteProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -124,6 +123,7 @@ import {
 } from '@/modules/workspaces/services/cost'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
@@ -342,9 +342,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(deleteWorkspaceRole(args.input), trx)
@@ -362,9 +364,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              getDefaultWorkspaceProjectRoleMapping:
+                mapWorkspaceRoleToInitialProjectRole,
+              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(
@@ -435,9 +442,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-            emitWorkspaceEvent: getEventBus().emit,
-            getStreams
+            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+            emitWorkspaceEvent: getEventBus().emit
           })
 
           await withTransaction(
@@ -549,13 +556,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: ({ eventName, payload }) =>
-                  getEventBus().emit({
-                    eventName,
-                    payload
-                  }),
-                getStreams,
-                grantStreamPermissions
+                upsertProjectRole: upsertProjectRoleFactory({ db }),
+                getDefaultWorkspaceProjectRoleMapping:
+                  mapWorkspaceRoleToInitialProjectRole,
+                deleteProjectRole: deleteProjectRoleFactory({ db }),
+                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                  getStreams
+                }),
+                emitWorkspaceEvent: getEventBus().emit
               })
             }),
             findEmail: findEmailFactory({ db }),

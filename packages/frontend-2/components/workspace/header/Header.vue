@@ -24,7 +24,7 @@
         }}
       </div>
       <UserAvatarGroup
-        :users="team.items.map((teamMember) => teamMember.user)"
+        :users="team.map((teamMember) => teamMember.user)"
         class="max-w-[104px]"
       />
       <FormButton
@@ -109,7 +109,7 @@ const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
 const showSettingsDialog = ref(false)
 
-const team = computed(() => props.workspaceInfo.team || [])
+const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
