@@ -15,7 +15,11 @@ import {
   DashboardJoinWorkspaceDocument,
   type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
-import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import {
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectField
+} from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspace on DiscoverableWorkspace {
@@ -43,6 +47,7 @@ const props = defineProps<{
 }>()
 
 const { client: apollo } = useApolloClient()
+const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const router = useRouter()
 
@@ -60,6 +65,9 @@ const processJoin = async (accept: boolean) => {
     return
   }
 
+  const userId = activeUser.value?.id
+  if (!userId) return
+
   const result = await apollo
     .mutate({
       mutation: DashboardJoinWorkspaceDocument,
@@ -67,6 +75,21 @@ const processJoin = async (accept: boolean) => {
         input: {
           workspaceId: props.workspace.id
         }
+      },
+      update(cache) {
+        modifyObjectField(
+          cache,
+          getCacheId('User', userId),
+          'workspaces',
+          ({ helpers: { createUpdatedValue, ref } }) => {
+            return createUpdatedValue(({ update }) => {
+              update('items', (items) => [
+                ...items,
+                ref('Workspace', props.workspace.id)
+              ])
+            })
+          }
+        )
       }
     })
     .catch(convertThrowIntoFetchResult)
