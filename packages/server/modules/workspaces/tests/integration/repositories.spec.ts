@@ -35,7 +35,10 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { truncateTables } from '@/test/hooks'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  grantStreamPermissions,
+  upsertProjectRoleFactory
+} from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
@@ -49,7 +52,7 @@ const storeWorkspaceDomain = storeWorkspaceDomainFactory({ db })
 const createUserEmail = createUserEmailFactory({ db })
 const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
-const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const upsertProjectRole = upsertProjectRoleFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   const testId = cryptoRandomString({ length: 6 })
@@ -840,22 +843,22 @@ describe('Workspace repositories', () => {
       await createTestStream(project2, guest)
 
       // adding project roles to guests
-      await grantStreamPermissions({
+      await upsertProjectRole({
         role: Roles.Stream.Contributor,
-        streamId: project1.id,
+        projectId: project1.id,
         userId: guest.id
       })
 
-      await grantStreamPermissions({
+      await upsertProjectRole({
         role: Roles.Stream.Reviewer,
-        streamId: project1.id,
+        projectId: project1.id,
         userId: guest2.id
       })
 
       // adding contributor to guest 2 on project 2
-      await grantStreamPermissions({
+      await upsertProjectRole({
         role: Roles.Stream.Contributor,
-        streamId: project2.id,
+        projectId: project2.id,
         userId: guest2.id
       })
 

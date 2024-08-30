@@ -9,6 +9,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
 /** Workspace */
@@ -128,6 +129,10 @@ export type GetWorkspaceRolesForUser = (
 ) => Promise<WorkspaceAcl[]>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+
+export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
 
 /** Workspace Projects */
 
