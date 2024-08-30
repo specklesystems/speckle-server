@@ -33,7 +33,7 @@ import {
   processWorkspaceInviteMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
-import { isFunction } from 'lodash-es'
+import { isFunction, isUndefined } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
 
@@ -191,8 +191,11 @@ export const useProcessWorkspaceInvite = () => {
       })
       mp.track('Invite Action', {
         type: 'workspace invite',
-        accepted: input.accept
+        accepted: input.accept,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
+      mp.add_group('workspace_id', workspaceId)
     } else {
       const err = getFirstErrorMessage(errors)
       const preventErrorToasts = isFunction(options?.preventErrorToasts)
@@ -358,8 +361,34 @@ export function useCreateWorkspace() {
     const res = await apollo
       .mutate({
         mutation: createWorkspaceMutation,
-        variables: { input }
-        // TODO: Fix the cache update
+        variables: { input },
+        update: (cache, { data }) => {
+          const workspaceId = data?.workspaceMutations.create.id
+          if (!workspaceId) return
+          // Navigation to workspace is gonna fetch everything needed for the page, so we only
+          // really need to update workspace fields used in sidebar & settings: User.workspaces
+          modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+            cache,
+            getCacheId('User', userId),
+            'workspaces',
+            ({ variables, value, details: { DELETE } }) => {
+              if (variables.filter?.search?.length) return DELETE // evict if filtered search
+
+              const totalCount = isUndefined(value?.totalCount)
+                ? undefined
+                : value.totalCount + 1
+              const items = isUndefined(value?.items)
+                ? undefined
+                : [...value.items, getObjectReference('Workspace', workspaceId)]
+
+              return {
+                ...value,
+                totalCount,
+                items
+              }
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 

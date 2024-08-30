@@ -138,13 +138,19 @@ import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
+  fragment SettingsDialog_Workspace on Workspace {
+    ...WorkspaceAvatar_Workspace
+    id
+    role
+    name
+  }
+`)
+
+graphql(`
   fragment SettingsDialog_User on User {
     workspaces {
       items {
-        ...WorkspaceAvatar_Workspace
-        id
-        role
-        name
+        ...SettingsDialog_Workspace
       }
     }
   }
@@ -194,6 +200,11 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
   if (disabled) return
   targetWorkspaceId.value = id
   targetMenuItem.value = target
+  mixpanel.track('Workspace Settings Menuitem Clicked', {
+    // eslint-disable-next-line camelcase
+    workspace_id: id,
+    item: target
+  })
 }
 
 const openWorkspaceCreateDialog = () => {
