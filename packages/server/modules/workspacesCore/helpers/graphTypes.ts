@@ -8,6 +8,8 @@ export type WorkspaceGraphQLReturn = Workspace
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 
+export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
+
 export type PendingWorkspaceCollaboratorGraphQLReturn = {
   id: string
   inviteId: string

@@ -386,7 +386,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
+        expect(res.data?.workspace.billing?.versionsCount).to.deep.equal({
           current: 5,
           max: 500
         })
@@ -469,7 +469,7 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         const { subTotal, currency, items, total, discount } =
-          res.data!.workspace.billing.cost
+          res.data!.workspace.billing?.cost ?? {}
         expect(subTotal).to.equal(70 + 50 + 10)
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
