@@ -169,5 +169,14 @@ export type CountProjectsVersionsByWorkspaceId = (args: {
 export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   workspaceId: string
   workspaceRole: WorkspaceRoles
-  projectRole?: StreamRoles | undefined
+  projectRole?: StreamRoles
+  skipUserIds?: string[]
 }) => Promise<number>
+
+export type GetUserIdsWithRoleInWorkspace = (
+  args: {
+    workspaceId: string
+    workspaceRole: WorkspaceRoles
+  },
+  options?: { limit?: number }
+) => Promise<string[]>
