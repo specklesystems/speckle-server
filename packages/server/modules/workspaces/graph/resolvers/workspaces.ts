@@ -9,9 +9,8 @@ import {
   getStream,
   getUserStreams,
   getUserStreamsCount,
-  grantStreamPermissions,
-  grantStreamPermissionsFactory,
-  revokeStreamPermissionsFactory
+  upsertProjectRoleFactory,
+  deleteProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -30,7 +29,6 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import {
   createAndSendInviteFactory,
   resendInviteEmailFactory
@@ -124,14 +122,22 @@ import {
   getWorkspaceCostItemsFactory
 } from '@/modules/workspaces/services/cost'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+
+const buildCollectAndValidateResourceTargets = () =>
+  collectAndValidateWorkspaceTargetsFactory({
+    getStream,
+    getWorkspace: getWorkspaceFactory({ db }),
+    getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
+  })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
@@ -146,12 +152,7 @@ const buildCreateAndSendWorkspaceInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
-      getStream,
-      getWorkspace: getWorkspaceFactory({ db }),
-      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
-      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,
       getWorkspace: getWorkspaceFactory({ db })
@@ -219,7 +220,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }
 
           const createProjectInvite = createProjectInviteFactory({
-            createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+            createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+            getStream
           })
 
           const inputBatches = chunk(args.inputs, 10)
@@ -247,7 +249,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     ? {
                         [WorkspaceInviteResourceType]: workspaceRole as WorkspaceRoles
                       }
-                    : undefined
+                    : undefined,
+                  allowWorkspacedProjects: true
                 })
               })
             )
@@ -339,9 +342,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(deleteWorkspaceRole(args.input), trx)
@@ -359,9 +364,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit,
-              getStreams
+              getDefaultWorkspaceProjectRoleMapping:
+                mapWorkspaceRoleToInitialProjectRole,
+              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
             await withTransaction(
@@ -432,9 +442,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx }),
-            emitWorkspaceEvent: getEventBus().emit,
-            getStreams
+            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+            emitWorkspaceEvent: getEventBus().emit
           })
 
           await withTransaction(
@@ -465,7 +475,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getWorkspace: getWorkspaceFactory({ db })
             }),
             findUserByTarget: findUserByTargetFactory(),
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             markInviteUpdated: markInviteUpdatedfactory({ db })
           })
 
@@ -522,7 +535,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         use: async (_parent, args, ctx) => {
           const finalizeInvite = finalizeResourceInviteFactory({
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
             insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
             emitEvent: ({ eventName, payload }) =>
@@ -540,13 +556,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: ({ eventName, payload }) =>
-                  getEventBus().emit({
-                    eventName,
-                    payload
-                  }),
-                getStreams,
-                grantStreamPermissions
+                upsertProjectRole: upsertProjectRoleFactory({ db }),
+                getDefaultWorkspaceProjectRoleMapping:
+                  mapWorkspaceRoleToInitialProjectRole,
+                deleteProjectRole: deleteProjectRoleFactory({ db }),
+                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                  getStreams
+                }),
+                emitWorkspaceEvent: getEventBus().emit
               })
             }),
             findEmail: findEmailFactory({ db }),
@@ -559,7 +576,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
               }),
               requestNewEmailVerification
-            })
+            }),
+            collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+            getUser,
+            getServerInfo
           })
 
           await finalizeInvite({
@@ -582,7 +602,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const cancelInvite = cancelResourceInviteFactory({
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             deleteInvite: deleteInviteFactory({ db }),
             validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
               getWorkspace: getWorkspaceFactory({ db })

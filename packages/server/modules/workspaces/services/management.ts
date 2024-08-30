@@ -8,7 +8,8 @@ import {
   UpsertWorkspace,
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
-  GetWorkspaceDomains
+  GetWorkspaceDomains,
+  GetWorkspaceRoleToDefaultProjectRoleMapping
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -17,12 +18,7 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  deleteStream,
-  grantStreamPermissions as repoGrantStreamPermissions,
-  revokeStreamPermissions as repoRevokeStreamPermissions
-} from '@/modules/core/repositories/streams'
-import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
+import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -36,11 +32,7 @@ import {
   WorkspaceUnverifiedDomainError,
   WorkspaceInvalidDescriptionError
 } from '@/modules/workspaces/errors/workspace'
-import {
-  isUserLastWorkspaceAdmin,
-  mapWorkspaceRoleToProjectRole
-} from '@/modules/workspaces/helpers/roles'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
@@ -59,6 +51,11 @@ import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operati
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty } from 'lodash'
+import {
+  DeleteProjectRole,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -228,14 +225,14 @@ export const deleteWorkspaceRoleFactory =
     getWorkspaceRoles,
     deleteWorkspaceRole,
     emitWorkspaceEvent,
-    getStreams,
-    revokeStreamPermissions
+    queryAllWorkspaceProjects,
+    deleteProjectRole
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    getStreams: typeof serviceGetStreams
-    revokeStreamPermissions: typeof repoRevokeStreamPermissions
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteProjectRole: DeleteProjectRole
   }) =>
   async ({
     workspaceId,
@@ -254,15 +251,12 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Delete workspace project roles
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
-    })
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+    for await (const projectsPage of queryAllWorkspaceProjects({
       workspaceId
     })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          revokeStreamPermissions({ streamId, userId })
+        projectsPage.map(({ id: projectId }) =>
+          deleteProjectRole({ projectId, userId })
         )
       )
     }
@@ -296,23 +290,26 @@ export const updateWorkspaceRoleFactory =
     getWorkspaceWithDomains,
     findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
-    emitWorkspaceEvent,
-    getStreams,
-    grantStreamPermissions
+    upsertProjectRole,
+    deleteProjectRole,
+    getDefaultWorkspaceProjectRoleMapping,
+    queryAllWorkspaceProjects,
+    emitWorkspaceEvent
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
+    upsertProjectRole: UpsertProjectRole
+    deleteProjectRole: DeleteProjectRole
+    getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     emitWorkspaceEvent: EmitWorkspaceEvent
-    // TODO: Create `core` domain and import type from there
-    getStreams: typeof serviceGetStreams
-    grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
   async ({
     workspaceId,
     userId,
-    role,
+    role: nextRole,
     skipProjectRoleUpdatesFor
   }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
@@ -324,69 +321,88 @@ export const updateWorkspaceRoleFactory =
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
       isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      role !== Roles.Workspace.Admin
+      nextRole !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
     }
 
-    if (role !== Roles.Workspace.Guest) {
+    // ensure domain compliance
+    if (nextRole !== Roles.Workspace.Guest) {
       const workspace = await getWorkspaceWithDomains({ id: workspaceId })
-      const verifiedDomains = workspace?.domains.filter((domain) => domain?.verified)
-      if (
-        workspace &&
-        verifiedDomains &&
-        workspace?.domainBasedMembershipProtectionEnabled &&
-        verifiedDomains.length > 0
-      ) {
-        const domains = new Set<string>(verifiedDomains.map((vd) => vd.domain))
-        const verifiedUserEmails = await findVerifiedEmailsByUserId({ userId })
-        const domainMatching = verifiedUserEmails.find((userEmail) =>
-          domains.has(userEmail.email.split('@')[1])
-        )
-        if (!domainMatching) {
+      if (!workspace) throw new WorkspaceNotFoundError()
+      if (workspace.domainBasedMembershipProtectionEnabled) {
+        const userEmails = await findVerifiedEmailsByUserId({ userId })
+        if (
+          !userEmailsCompliantWithWorkspaceDomains({
+            userEmails,
+            workspaceDomains: workspace.domains
+          })
+        ) {
           throw new WorkspaceProtectedError()
         }
       }
     }
 
     // Perform upsert
-    const currentRole = workspaceRoles.find((role) => role.userId === userId)
+    const { role: previousRole, createdAt } =
+      workspaceRoles.find((acl) => acl.userId === userId) ?? {}
 
     await upsertWorkspaceRole({
       userId,
       workspaceId,
-      role,
-      createdAt: currentRole?.createdAt || new Date()
+      role: nextRole,
+      createdAt: createdAt ?? new Date()
     })
 
     // Emit new role
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
-      payload: { userId, workspaceId, role }
+      payload: { userId, workspaceId, role: nextRole }
     })
 
-    // Apply initial project role to existing workspace projects
-    const isFirstWorkspaceRole = !currentRole
-
-    if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
-      // Guests do not get roles for existing workspace projects
-      return
-    }
-
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
+    // Update project roles
+    const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
+      workspaceId
     })
-    const projectRole = mapWorkspaceRoleToProjectRole(role)
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
+
+    // apply the change to all projects
+    for await (const projectsPage of queryAllWorkspaceProjects({
       workspaceId
     })) {
       await Promise.all(
-        projectsPage.map(({ id: streamId }) => {
-          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
+        projectsPage.map(({ id: projectId }) => {
+          // this is used only for invites
+          if (skipProjectRoleUpdatesFor?.includes(projectId)) {
+            // Project role handled explicitly elsewhere
             return
           }
 
-          return grantStreamPermissions({ streamId, userId, role: projectRole })
+          if (!previousRole) {
+            // User is being added to workspace
+            const initialRole = defaultProjectRoleMapping[nextRole]
+
+            if (!initialRole) {
+              // User is being added as guest
+              return
+            }
+
+            return upsertProjectRole({ projectId, userId, role: initialRole })
+          }
+
+          if (!nextRole) {
+            // User is being removed from workspace
+            return deleteProjectRole({ projectId, userId })
+          }
+
+          if (previousRole === nextRole) return
+
+          const newProjectRole = defaultProjectRoleMapping[nextRole]
+          if (!newProjectRole) return deleteProjectRole({ projectId, userId })
+          return upsertProjectRole({
+            projectId,
+            userId,
+            role: newProjectRole
+          })
         })
       )
     }

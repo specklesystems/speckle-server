@@ -75,12 +75,17 @@ import { getStream } from '@/modules/core/repositories/streams'
 import { addDomainToWorkspaceFactory } from '@/modules/workspaces/services/management'
 import {
   createUserEmailFactory,
+  deleteUserEmailFactory,
+  findEmailFactory,
   findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
+import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 
 enum InviteByTarget {
   Email = 'email',
@@ -326,7 +331,7 @@ describe('Workspaces Invites GQL', () => {
         })
 
         expect(res).to.haveGraphQLErrors(
-          'You are not authorized to access this resource'
+          'Attempting to invite into a non-existant workspace'
         )
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
@@ -598,6 +603,178 @@ describe('Workspaces Invites GQL', () => {
       )
     })
 
+    describe('and inviting to project', () => {
+      const myProjectInviteTargetWorkspace: BasicTestWorkspace = {
+        name: 'My Project Invite Target Workspace #1',
+        id: '',
+        ownerId: ''
+      }
+
+      const myProjectInviteTargetBasicProject: BasicTestStream = {
+        name: 'My Project Invite Target Basic Project #1',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
+      const myProjectInviteTargetWorkspaceProject: BasicTestStream = {
+        name: 'My Project Invite Target Workspace Project #1',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
+      const workspaceMemberWithNoProjectAccess: BasicTestUser = {
+        name: 'Workspace Member With No Project Access #1',
+        email: 'workspaceMemberWithNoProjectAccess1@gmail.com',
+        id: ''
+      }
+
+      before(async () => {
+        await createTestUsers([workspaceMemberWithNoProjectAccess])
+        await createTestWorkspaces([[myProjectInviteTargetWorkspace, me]])
+        await assignToWorkspaces([
+          [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
+          [
+            myProjectInviteTargetWorkspace,
+            workspaceMemberWithNoProjectAccess,
+            Roles.Workspace.Member
+          ]
+        ])
+
+        myProjectInviteTargetWorkspaceProject.workspaceId =
+          myProjectInviteTargetWorkspace.id
+        await createTestStreams([
+          [myProjectInviteTargetWorkspaceProject, me],
+          [myProjectInviteTargetBasicProject, me]
+        ])
+
+        // Make myworkspacefriend a project owner (but not workspace admin!)
+        await addOrUpdateStreamCollaborator(
+          myProjectInviteTargetWorkspaceProject.id,
+          myWorkspaceFriend.id,
+          Roles.Stream.Owner,
+          me.id
+        )
+
+        // Remove all project access from workspaceMemberWithNoProjectAccess
+        await Promise.all([
+          leaveStream(
+            myProjectInviteTargetWorkspaceProject,
+            workspaceMemberWithNoProjectAccess
+          ),
+          leaveStream(
+            myProjectInviteTargetBasicProject,
+            workspaceMemberWithNoProjectAccess
+          )
+        ])
+      })
+
+      afterEach(async () => {
+        await truncateTables([ServerInvites.name])
+      })
+
+      it("can't invite to workspace project through base project invite resolver", async () => {
+        const res = await gqlHelpers.createDefaultProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          input: {
+            userId: otherGuy.id,
+            role: Roles.Stream.Owner
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('Target project belongs to a workspace')
+        expect(res.data?.projectMutations.invites.create.id).to.not.be.ok
+      })
+
+      it('can invite to non-workspace project through workspace project invite resolver', async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetBasicProject.id,
+          inputs: [
+            {
+              userId: otherGuy.id,
+              role: Roles.Stream.Owner,
+              workspaceRole: Roles.Workspace.Admin // should be ignored
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+      })
+
+      it("can't indirectly invite to workspace if not workspace admin", async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: myProjectInviteTargetWorkspaceProject.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Owner
+              }
+            ]
+          },
+          {
+            context: {
+              userId: myWorkspaceFriend.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          "Inviter doesn't have admin access to the workspace"
+        )
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
+      })
+
+      it('can invite to workspace project even if not workspace admin, if target already belongs to workspace', async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: myProjectInviteTargetWorkspaceProject.id,
+            inputs: [
+              {
+                userId: workspaceMemberWithNoProjectAccess.id,
+                role: Roles.Stream.Owner
+              }
+            ]
+          },
+          {
+            context: {
+              userId: myWorkspaceFriend.id
+            }
+          }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+      })
+
+      it("can't invite invalid domain email to domain protected workspace project", async () => {
+        const project: BasicTestStream = {
+          name: 'My Project Invite Target Workspace Project #2',
+          id: '',
+          ownerId: '',
+          isPublic: false,
+          workspaceId: domainProtectedWorkspace.id
+        }
+        await createTestStreams([[project, me]])
+
+        const invalidEmail = 'johnny123456@test.com'
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: project.id,
+          inputs: [
+            {
+              email: invalidEmail,
+              role: Roles.Stream.Owner,
+              workspaceRole: Roles.Workspace.Member
+            }
+          ]
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceProtectedError.code })
+      })
+    })
+
     describe('and administrating invites', () => {
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
@@ -742,11 +919,19 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
+      const processableWorkspaceEmailInvite = {
+        workspaceId: '',
+        inviteId: '',
+        token: ''
+      }
+
       const processableProjectInvite = {
         projectId: '',
         inviteId: '',
         token: ''
       }
+
+      const emailInviteEmail = 'imJustSomeRandomNewGuy@aaaaa.com'
 
       const validateResourceAccess = async (params: {
         shouldHaveAccess: boolean
@@ -787,15 +972,34 @@ describe('Workspaces Invites GQL', () => {
         processableWorkspaceInvite.inviteId = workspaceInvite.id
         processableWorkspaceInvite.token = workspaceInvite.token
 
+        const workspaceEmailInvite = await captureCreatedInvite(async () => {
+          await gqlHelpers.createInvite(
+            {
+              workspaceId: myInviteTargetWorkspace.id,
+              input: {
+                email: emailInviteEmail,
+                role: WorkspaceRole.Member
+              }
+            },
+            { assertNoErrors: true }
+          )
+        })
+
+        processableWorkspaceEmailInvite.workspaceId = myInviteTargetWorkspace.id
+        processableWorkspaceEmailInvite.inviteId = workspaceEmailInvite.id
+        processableWorkspaceEmailInvite.token = workspaceEmailInvite.token
+
         const projectInvite = await captureCreatedInvite(
           async () =>
-            await gqlHelpers.createDefaultProjectInvite(
+            await gqlHelpers.createWorkspaceProjectInvite(
               {
                 projectId: myInviteTargetWorkspaceStream1.id,
-                input: {
-                  userId: otherGuy.id,
-                  role: Roles.Stream.Owner
-                }
+                inputs: [
+                  {
+                    userId: otherGuy.id,
+                    role: Roles.Stream.Owner
+                  }
+                ]
               },
               { assertNoErrors: true }
             )
@@ -810,6 +1014,17 @@ describe('Workspaces Invites GQL', () => {
         // Serial execution to avoid race conditions
         await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
         await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
+
+        // Reset otherGuy's newly added verified email
+        const verifiedEmail = await findEmailFactory({ db })({
+          email: emailInviteEmail
+        })
+        if (verifiedEmail) {
+          await deleteUserEmailFactory({ db })({
+            userId: verifiedEmail.userId,
+            id: verifiedEmail.id
+          })
+        }
       })
 
       it("can't retrieve it if not the invitee and no token specified", async () => {
@@ -1011,6 +1226,69 @@ describe('Workspaces Invites GQL', () => {
           expect(invite).to.be.not.ok
 
           await validateResourceAccess({ shouldHaveAccess: accept })
+        }
+      )
+
+      it("can't accept a new email invite, if not explicitly doing so", async () => {
+        const res = await gqlHelpers.useInvite(
+          {
+            input: {
+              accept: true,
+              token: processableWorkspaceEmailInvite.token
+            }
+          },
+          {
+            context: {
+              userId: otherGuy.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          'Attempted to finalize an invite for a mismatched e-mail address'
+        )
+        expect(res.data?.workspaceMutations?.invites?.use).to.not.be.ok
+      })
+
+      itEach(
+        [{ accept: true }, { accept: false }],
+        ({ accept }) =>
+          `can explicitly ${accept ? 'accept' : 'decline'} a new email invite`,
+        async ({ accept }) => {
+          const res = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept,
+                token: processableWorkspaceEmailInvite.token,
+                addNewEmail: true
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({ shouldHaveAccess: accept })
+
+          const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
+            db
+          })({
+            userId: otherGuy.id
+          })
+          const newVerifiedEmail = verifiedEmails.find(
+            (e) => e.email.toLowerCase() === emailInviteEmail.toLowerCase()
+          )
+
+          if (accept) {
+            expect(newVerifiedEmail).to.be.ok
+          } else {
+            expect(newVerifiedEmail).to.not.be.ok
+          }
         }
       )
 
