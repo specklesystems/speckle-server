@@ -50,10 +50,9 @@
 
 <script setup lang="ts">
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
-import { ref, onMounted } from 'vue'
 import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
 
-const props = defineProps<{
+defineProps<{
   title?: string
   collapsible?: boolean
   collapsed?: boolean
@@ -61,9 +60,5 @@ const props = defineProps<{
   plusClick?: () => void
 }>()
 
-const isCollapsed = ref(true)
-
-onMounted(() => {
-  isCollapsed.value = props.collapsed
-})
+const isCollapsed = defineModel<boolean>('collapsed')
 </script>
