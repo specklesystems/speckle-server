@@ -5988,6 +5988,7 @@ export type AllObjectTypes = {
   Commit: Commit,
   CommitCollection: CommitCollection,
   CountOnlyCollection: CountOnlyCollection,
+  DiscoverableWorkspace: DiscoverableWorkspace,
   FileUpload: FileUpload,
   GendoAIRender: GendoAiRender,
   GendoAIRenderCollection: GendoAiRenderCollection,
@@ -6031,6 +6032,7 @@ export type AllObjectTypes = {
   ServerApp: ServerApp,
   ServerAppListItem: ServerAppListItem,
   ServerAutomateInfo: ServerAutomateInfo,
+  ServerConfiguration: ServerConfiguration,
   ServerInfo: ServerInfo,
   ServerInvite: ServerInvite,
   ServerMigration: ServerMigration,
@@ -6068,10 +6070,17 @@ export type AllObjectTypes = {
   WebhookEvent: WebhookEvent,
   WebhookEventCollection: WebhookEventCollection,
   Workspace: Workspace,
+  WorkspaceBilling: WorkspaceBilling,
   WorkspaceCollaborator: WorkspaceCollaborator,
+  WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollection,
   WorkspaceCollection: WorkspaceCollection,
+  WorkspaceCost: WorkspaceCost,
+  WorkspaceCostDiscount: WorkspaceCostDiscount,
+  WorkspaceCostItem: WorkspaceCostItem,
+  WorkspaceDomain: WorkspaceDomain,
   WorkspaceInviteMutations: WorkspaceInviteMutations,
   WorkspaceMutations: WorkspaceMutations,
+  WorkspaceVersionsCount: WorkspaceVersionsCount,
 }
 export type ActiveUserMutationsFieldArgs = {
   emailMutations: {},
@@ -6369,6 +6378,13 @@ export type CommitCollectionFieldArgs = {
 export type CountOnlyCollectionFieldArgs = {
   totalCount: {},
 }
+export type DiscoverableWorkspaceFieldArgs = {
+  defaultLogoIndex: {},
+  description: {},
+  id: {},
+  logo: {},
+  name: {},
+}
 export type FileUploadFieldArgs = {
   branchName: {},
   convertedCommitId: {},
@@ -6427,6 +6443,7 @@ export type LimitedUserFieldArgs = {
   timeline: LimitedUserTimelineArgs,
   totalOwnedStreamsFavorites: {},
   verified: {},
+  workspaceDomainPolicyCompliant: LimitedUserWorkspaceDomainPolicyCompliantArgs,
 }
 export type ModelFieldArgs = {
   author: {},
@@ -6570,6 +6587,7 @@ export type PendingStreamCollaboratorFieldArgs = {
   user: {},
 }
 export type PendingWorkspaceCollaboratorFieldArgs = {
+  email: {},
   id: {},
   inviteId: {},
   invitedBy: {},
@@ -6612,6 +6630,7 @@ export type ProjectFieldArgs = {
   visibility: {},
   webhooks: ProjectWebhooksArgs,
   workspace: {},
+  workspaceId: {},
 }
 export type ProjectAccessRequestFieldArgs = {
   createdAt: {},
@@ -6794,6 +6813,11 @@ export type ServerAppListItemFieldArgs = {
 export type ServerAutomateInfoFieldArgs = {
   availableFunctionTemplates: {},
 }
+export type ServerConfigurationFieldArgs = {
+  blobSizeLimitBytes: {},
+  objectMultipartUploadSizeLimitBytes: {},
+  objectSizeLimitBytes: {},
+}
 export type ServerInfoFieldArgs = {
   adminContact: {},
   authStrategies: {},
@@ -6802,6 +6826,7 @@ export type ServerInfoFieldArgs = {
   blobSizeLimitBytes: {},
   canonicalUrl: {},
   company: {},
+  configuration: {},
   description: {},
   enableNewWebUiMessaging: {},
   guestModeEnabled: {},
@@ -6966,6 +6991,7 @@ export type UserFieldArgs = {
   company: {},
   createdApps: {},
   createdAt: {},
+  discoverableWorkspaces: {},
   email: {},
   emails: {},
   favoriteStreams: UserFavoriteStreamsArgs,
@@ -7097,8 +7123,13 @@ export type WebhookEventCollectionFieldArgs = {
   totalCount: {},
 }
 export type WorkspaceFieldArgs = {
+  billing: {},
   createdAt: {},
+  defaultLogoIndex: {},
   description: {},
+  discoverabilityEnabled: {},
+  domainBasedMembershipProtectionEnabled: {},
+  domains: {},
   id: {},
   invitedTeam: WorkspaceInvitedTeamArgs,
   logo: {},
@@ -7108,29 +7139,66 @@ export type WorkspaceFieldArgs = {
   team: WorkspaceTeamArgs,
   updatedAt: {},
 }
+export type WorkspaceBillingFieldArgs = {
+  cost: {},
+  versionsCount: {},
+}
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
   role: {},
   user: {},
+}
+export type WorkspaceCollaboratorCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
 }
 export type WorkspaceCollectionFieldArgs = {
   cursor: {},
   items: {},
   totalCount: {},
 }
+export type WorkspaceCostFieldArgs = {
+  currency: {},
+  discount: {},
+  items: {},
+  subTotal: {},
+  total: {},
+}
+export type WorkspaceCostDiscountFieldArgs = {
+  amount: {},
+  name: {},
+}
+export type WorkspaceCostItemFieldArgs = {
+  cost: {},
+  count: {},
+  name: {},
+}
+export type WorkspaceDomainFieldArgs = {
+  domain: {},
+  id: {},
+}
 export type WorkspaceInviteMutationsFieldArgs = {
   batchCreate: WorkspaceInviteMutationsBatchCreateArgs,
   cancel: WorkspaceInviteMutationsCancelArgs,
   create: WorkspaceInviteMutationsCreateArgs,
+  resend: WorkspaceInviteMutationsResendArgs,
   use: WorkspaceInviteMutationsUseArgs,
 }
 export type WorkspaceMutationsFieldArgs = {
+  addDomain: WorkspaceMutationsAddDomainArgs,
   create: WorkspaceMutationsCreateArgs,
   delete: WorkspaceMutationsDeleteArgs,
+  deleteDomain: WorkspaceMutationsDeleteDomainArgs,
   invites: {},
+  join: WorkspaceMutationsJoinArgs,
   leave: WorkspaceMutationsLeaveArgs,
   update: WorkspaceMutationsUpdateArgs,
   updateRole: WorkspaceMutationsUpdateRoleArgs,
+}
+export type WorkspaceVersionsCountFieldArgs = {
+  current: {},
+  max: {},
 }
 export type AllObjectFieldArgTypes = {
   ActiveUserMutations: ActiveUserMutationsFieldArgs,
@@ -7174,6 +7242,7 @@ export type AllObjectFieldArgTypes = {
   Commit: CommitFieldArgs,
   CommitCollection: CommitCollectionFieldArgs,
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
+  DiscoverableWorkspace: DiscoverableWorkspaceFieldArgs,
   FileUpload: FileUploadFieldArgs,
   GendoAIRender: GendoAiRenderFieldArgs,
   GendoAIRenderCollection: GendoAiRenderCollectionFieldArgs,
@@ -7217,6 +7286,7 @@ export type AllObjectFieldArgTypes = {
   ServerApp: ServerAppFieldArgs,
   ServerAppListItem: ServerAppListItemFieldArgs,
   ServerAutomateInfo: ServerAutomateInfoFieldArgs,
+  ServerConfiguration: ServerConfigurationFieldArgs,
   ServerInfo: ServerInfoFieldArgs,
   ServerInvite: ServerInviteFieldArgs,
   ServerMigration: ServerMigrationFieldArgs,
@@ -7254,9 +7324,16 @@ export type AllObjectFieldArgTypes = {
   WebhookEvent: WebhookEventFieldArgs,
   WebhookEventCollection: WebhookEventCollectionFieldArgs,
   Workspace: WorkspaceFieldArgs,
+  WorkspaceBilling: WorkspaceBillingFieldArgs,
   WorkspaceCollaborator: WorkspaceCollaboratorFieldArgs,
+  WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollectionFieldArgs,
   WorkspaceCollection: WorkspaceCollectionFieldArgs,
+  WorkspaceCost: WorkspaceCostFieldArgs,
+  WorkspaceCostDiscount: WorkspaceCostDiscountFieldArgs,
+  WorkspaceCostItem: WorkspaceCostItemFieldArgs,
+  WorkspaceDomain: WorkspaceDomainFieldArgs,
   WorkspaceInviteMutations: WorkspaceInviteMutationsFieldArgs,
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
+  WorkspaceVersionsCount: WorkspaceVersionsCountFieldArgs,
 }
 

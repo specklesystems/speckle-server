@@ -28,7 +28,7 @@ import {
   processWorkspaceInviteMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
-import { isFunction, isUndefined } from 'lodash-es'
+import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
 
@@ -362,25 +362,17 @@ export function useCreateWorkspace() {
           if (!workspaceId) return
           // Navigation to workspace is gonna fetch everything needed for the page, so we only
           // really need to update workspace fields used in sidebar & settings: User.workspaces
-          modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+          modifyObjectField(
             cache,
             getCacheId('User', userId),
             'workspaces',
-            ({ variables, value, details: { DELETE } }) => {
-              if (variables.filter?.search?.length) return DELETE // evict if filtered search
+            ({ variables, helpers: { evict, createUpdatedValue, ref } }) => {
+              if (variables.filter?.search?.length) return evict() // evict if filtered search
 
-              const totalCount = isUndefined(value?.totalCount)
-                ? undefined
-                : value.totalCount + 1
-              const items = isUndefined(value?.items)
-                ? undefined
-                : [...value.items, getObjectReference('Workspace', workspaceId)]
-
-              return {
-                ...value,
-                totalCount,
-                items
-              }
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [...items, ref('Workspace', workspaceId)])
+              })
             }
           )
         }

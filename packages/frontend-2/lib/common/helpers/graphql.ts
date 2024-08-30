@@ -415,22 +415,27 @@ export function modifyObjectFields<
       )
 
       log('invoking updater', { fieldName, variables, fieldValue })
-      const res = updater(
-        fieldName,
-        (variables || {}) as Variables,
-        fieldValue as ModifyFnCacheData<FieldData>,
-        {
-          ...details,
-          ref: getObjectReference,
-          revolveFieldNameAndVariables
-        }
-      )
+      try {
+        const res = updater(
+          fieldName,
+          (variables || {}) as Variables,
+          fieldValue as ModifyFnCacheData<FieldData>,
+          {
+            ...details,
+            ref: getObjectReference,
+            revolveFieldNameAndVariables
+          }
+        )
 
-      if (isUndefined(res)) {
-        return fieldValue as unknown
-      } else {
-        log('updater returned', { res })
-        return res
+        if (isUndefined(res)) {
+          return fieldValue as unknown
+        } else {
+          log('updater returned', { res })
+          return res
+        }
+      } catch (e) {
+        log('updater threw an error', e)
+        throw e
       }
     }
   })
@@ -670,7 +675,7 @@ export const modifyObjectField = <
         let clonedValue = cloneDeep(value) as ModifyObjectFieldValue<Type, Field>
         updateHandler({
           update: (path, pathUpdate) => {
-            clonedValue = updatePathIfExists(value, path, pathUpdate)
+            clonedValue = updatePathIfExists(clonedValue, path, pathUpdate)
             return clonedValue
           }
         })
