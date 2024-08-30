@@ -74,7 +74,8 @@ import {
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getUserIdsWithRoleInWorkspaceFactory
+  getUserIdsWithRoleInWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -125,6 +126,7 @@ import {
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
@@ -455,7 +457,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return true
         },
-        invites: () => ({})
+        invites: () => ({}),
+        projects: () => ({})
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -621,6 +624,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
             cancelerResourceAccessLimits: ctx.resourceAccessRules
           })
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
+        }
+      },
+      WorkspaceProjectMutations: {
+        updateRole: async (_parent, args, context) => {
+          const { projectId, userId, role } = args.input
+
+          const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
+
+          if (!workspaceId) {
+            // Project does not belong to a workspace
+            throw new Error()
+          }
+
+          const currentRole = await getWorkspaceRoleForUserFactory({ db })({
+            workspaceId,
+            userId
+          })
+
+          if (currentRole?.role === Roles.Workspace.Admin) {
+            // User is workspace admin and cannot have their project roles changed
+            throw new Error()
+          }
+
+          return await updateStreamRoleAndNotify(
+            { projectId, userId, role },
+            context.userId!,
+            context.resourceAccessRules
+          )
         }
       },
       Workspace: {

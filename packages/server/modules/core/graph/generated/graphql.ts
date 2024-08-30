@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
-import { WorkspaceGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
+import { WorkspaceGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -4059,6 +4059,7 @@ export type WorkspaceMutations = {
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
+  projects: WorkspaceProjectMutations;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -4114,6 +4115,16 @@ export type WorkspaceProjectInviteCreateInput = {
   userId?: InputMaybe<Scalars['String']['input']>;
   /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
   workspaceRole?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceProjectMutations = {
+  __typename?: 'WorkspaceProjectMutations';
+  updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
 };
 
 export type WorkspaceProjectsFilter = {
@@ -4485,6 +4496,7 @@ export type ResolversTypes = {
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
+  WorkspaceProjectMutations: ResolverTypeWrapper<WorkspaceProjectMutationsGraphQLReturn>;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
@@ -4723,6 +4735,7 @@ export type ResolversParentTypes = {
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
+  WorkspaceProjectMutations: WorkspaceProjectMutationsGraphQLReturn;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -6157,8 +6170,14 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   join?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsJoinArgs, 'input'>>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
+  projects?: Resolver<ResolversTypes['WorkspaceProjectMutations'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectMutations'] = ResolversParentTypes['WorkspaceProjectMutations']> = {
+  updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6307,6 +6326,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceDomain?: WorkspaceDomainResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
+  WorkspaceProjectMutations?: WorkspaceProjectMutationsResolvers<ContextType>;
   WorkspaceVersionsCount?: WorkspaceVersionsCountResolvers<ContextType>;
 };
 

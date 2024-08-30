@@ -7,6 +7,7 @@ import { WorkspaceRoles } from '@speckle/shared'
 export type WorkspaceGraphQLReturn = Workspace
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
+export type WorkspaceProjectMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 
 export type PendingWorkspaceCollaboratorGraphQLReturn = {
   id: string
