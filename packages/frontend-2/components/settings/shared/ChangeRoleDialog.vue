@@ -8,8 +8,10 @@
         :
       </p>
       <FormSelectWorkspaceRoles
+        :disabled="!isWorkspaceAdmin"
         :model-value="localOldRole"
         fully-control-value
+        :disabled-items="disabledItems"
         @update:model-value="(value: ValueType) => handleRoleUpdate(value)"
       />
     </div>
@@ -18,7 +20,7 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 
 type ValueType = WorkspaceRoles | WorkspaceRoles[] | undefined
 
@@ -29,21 +31,19 @@ const emit = defineEmits<{
 const props = defineProps<{
   name: string
   oldRole: WorkspaceRoles
+  isWorkspaceAdmin: boolean
+  workspaceDomainPolicyCompliant: boolean
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
 
 const localOldRole = ref(props.oldRole)
 
-const handleRoleUpdate = (value: ValueType) => {
-  if (typeof value === 'string') {
-    localOldRole.value = value
-  } else if (Array.isArray(value) && value.length > 0) {
-    localOldRole.value = value[0]
-  } else {
-    localOldRole.value = 'workspace:member'
-  }
-}
+const disabledItems = computed<WorkspaceRoles[]>(() =>
+  !props.workspaceDomainPolicyCompliant
+    ? [Roles.Workspace.Member, Roles.Workspace.Admin]
+    : []
+)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -60,6 +60,16 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   }
 ])
+
+const handleRoleUpdate = (value: ValueType) => {
+  if (typeof value === 'string') {
+    localOldRole.value = value
+  } else if (Array.isArray(value) && value.length > 0) {
+    localOldRole.value = value[0]
+  } else {
+    localOldRole.value = 'workspace:member'
+  }
+}
 
 watch(open, (isOpen) => {
   if (isOpen) {

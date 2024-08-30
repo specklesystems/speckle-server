@@ -84,6 +84,10 @@
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
       :old-role="oldRole"
+      :is-workspace-admin="isWorkspaceAdmin"
+      :workspace-domain-policy-compliant="
+        userToModify?.workspaceDomainPolicyCompliant ?? true
+      "
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
@@ -192,22 +196,19 @@ const members = computed(() => {
 
 const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isActiveUserCurrentUser = computed(
+  () => (user: UserItem) => activeUser.value?.id === user.id
+)
+const canRemoveMember = computed(
+  () => (user: UserItem) => activeUser.value?.id !== user.id && isWorkspaceAdmin.value
+)
+
 const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
-  const isActiveUserAdmin = computed(
-    () => props.workspace?.role === Roles.Workspace.Admin
-  )
-  const isActiveUserCurrentUser = computed(
-    () => (user: UserItem) => activeUser.value?.id === user.id
-  )
-  const canRemoveMember = computed(
-    () => (user: UserItem) =>
-      activeUser.value?.id !== user.id && isActiveUserAdmin.value
-  )
-
   // Allow role change if the active user is an admin
-  if (isActiveUserAdmin.value) {
+  if (isWorkspaceAdmin.value) {
     baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
   }
 
