@@ -8,10 +8,27 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 mb-6 mt-4 md:my-6"
+        class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 my-2"
       >
         <ProjectPageHeader :project="project" />
-        <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
+        <div class="flex gap-x-3 items-center">
+          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+            {{ project.modelCount.totalCount || 0 }} Model{{
+              project.modelCount.totalCount === 1 ? '' : 's'
+            }}
+          </CommonBadge>
+          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+            <span class="capitalize">{{ project.role?.split(':').reverse()[0] }}</span>
+          </CommonBadge>
+          <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
+          <FormButton
+            v-if="canEdit"
+            color="outline"
+            :to="projectCollaboratorsRoute(project.id)"
+          >
+            Manage
+          </FormButton>
+        </div>
       </div>
       <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage :project="project" />
@@ -27,6 +44,8 @@ import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
+import { canEditProject } from '~~/lib/projects/helpers/permissions'
+import { projectCollaboratorsRoute } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -38,6 +57,7 @@ graphql(`
     commentThreadCount: commentThreads(limit: 0) {
       totalCount
     }
+    ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
   }
@@ -96,6 +116,8 @@ const projectName = computed(() =>
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 const hasRole = computed(() => project.value?.role)
+const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
+const teamUsers = computed(() => project.value?.team.map((t) => t.user))
 
 useHead({
   title: projectName
