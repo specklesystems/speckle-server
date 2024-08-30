@@ -25,21 +25,23 @@
       ></HeaderNavLink>
     </Portal>
 
-    <CommonTitleDescription :title="project.name" :description="project.description" />
-    <NuxtLink
-      v-if="project.workspace && isWorkspacesEnabled"
-      :to="workspaceRoute(project.workspace.id)"
-      class="pt-4 flex-1 flex items-center"
-    >
-      <WorkspaceAvatar
-        :logo="project.workspace.logo"
-        :default-logo-index="project.workspace.defaultLogoIndex"
-        size="sm"
+    <div class="flex gap-x-3">
+      <NuxtLink
+        v-if="project.workspace && isWorkspacesEnabled"
+        :to="workspaceRoute(project.workspace.id)"
+      >
+        <WorkspaceAvatar
+          :logo="project.workspace.logo"
+          :default-logo-index="project.workspace.defaultLogoIndex"
+          size="sm"
+          class="mt-0.5"
+        />
+      </NuxtLink>
+      <CommonTitleDescription
+        :title="project.name"
+        :description="project.description"
       />
-      <p class="text-body-2xs text-foreground ml-2">
-        {{ project.workspace.name }}
-      </p>
-    </NuxtLink>
+    </div>
   </div>
 </template>
 

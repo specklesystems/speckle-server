@@ -1,4 +1,4 @@
-export const WorkspaceInviteResourceType = 'workspace'
+export { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 
 export const WORKSPACE_COST_ADMIN = 70
 export const WORKSPACE_COST_MEMBER = 50
