@@ -25,11 +25,14 @@
           </li>
         </ul>
 
-        <p v-else class="text-body-xs text-foreground-2 border p-6 rounded-lg">
+        <p
+          v-else
+          class="text-body-xs text-foreground-2 border border-outline-2 p-6 rounded-lg"
+        >
           No verified domains yet
         </p>
       </section>
-      <hr class="my-6 md:my-8" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <section>
         <SettingsSectionHeader title="Add new domain" subheading class="pb-4 md:pb-6" />
         <div class="grid grid-cols-2 gap-x-6 items-center">
@@ -57,7 +60,7 @@
           </div>
         </div>
       </section>
-      <hr class="my-6 md:my-8" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <section class="flex flex-col space-y-3">
         <SettingsSectionHeader title="Domain features" subheading class="mb-3" />
         <div class="flex flex-col space-y-8">
@@ -297,6 +300,10 @@ const addDomain = async () => {
     result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
 
+  mixpanel.track('Workspace Domain Added', {
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
   selectedDomain.value = undefined
 }
 

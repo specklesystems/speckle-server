@@ -1,5 +1,5 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -8,8 +8,9 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { WorkspaceRoles } from '@speckle/shared'
-import { UserWithRole } from '@/modules/core/repositories/users'
+import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
+import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
 /** Workspace */
 
@@ -58,8 +59,10 @@ export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
 /** Workspace Roles */
 
-type GetWorkspaceCollaboratorsArgs = {
+export type GetWorkspaceCollaboratorsArgs = {
   workspaceId: string
+  limit: number
+  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role
@@ -74,7 +77,15 @@ type GetWorkspaceCollaboratorsArgs = {
 
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
-) => Promise<Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>>
+) => Promise<WorkspaceTeam>
+
+type GetWorkspaceCollaboratorsTotalCountArgs = {
+  workspaceId: string
+}
+
+export type GetWorkspaceCollaboratorsTotalCount = (
+  args: GetWorkspaceCollaboratorsTotalCountArgs
+) => Promise<number>
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
@@ -119,6 +130,10 @@ export type GetWorkspaceRolesForUser = (
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
+export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
@@ -147,8 +162,12 @@ export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
 
-export type CountProjectsVersionsByWorkspaceId = ({
-  workspaceId
-}: {
+export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string
+}) => Promise<number>
+
+export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
+  workspaceId: string
+  workspaceRole: WorkspaceRoles
+  projectRole?: StreamRoles | undefined
 }) => Promise<number>

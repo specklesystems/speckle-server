@@ -83,11 +83,13 @@ graphql(`
       totalCount
     }
     team {
-      id
-      user {
+      items {
         id
-        name
-        ...LimitedUserAvatar
+        user {
+          id
+          name
+          ...LimitedUserAvatar
+        }
       }
     }
     ...WorkspaceInviteDialog_Workspace
@@ -107,7 +109,7 @@ const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
 const showSettingsDialog = ref(false)
 
-const team = computed(() => props.workspaceInfo.team || [])
+const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )

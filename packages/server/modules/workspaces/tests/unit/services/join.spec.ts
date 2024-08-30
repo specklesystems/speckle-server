@@ -47,7 +47,7 @@ describe('Workspace join services', () => {
           getWorkspaceWithDomains: async () => {
             return createTestWorkspaceWithDomains()
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -69,7 +69,7 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: false }] as WorkspaceDomain[]
             })
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -92,7 +92,7 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
             })
           },
-          insertWorkspaceRole: async () => {
+          upsertWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
@@ -116,7 +116,7 @@ describe('Workspace join services', () => {
             domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
           })
         },
-        insertWorkspaceRole: async (workspaceRole) => {
+        upsertWorkspaceRole: async (workspaceRole) => {
           storedWorkspaceRole = workspaceRole
         },
         emitWorkspaceEvent: async ({ eventName }) => {
@@ -124,11 +124,10 @@ describe('Workspace join services', () => {
           return []
         }
       })({ userId, workspaceId })
-      expect(storedWorkspaceRole).deep.equal({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Member
-      })
+
+      expect(storedWorkspaceRole!.userId).to.equal(userId)
+      expect(storedWorkspaceRole!.workspaceId).to.equal(workspaceId)
+      expect(storedWorkspaceRole!.role).to.equal(Roles.Workspace.Member)
       expect(firedEvents).deep.equal([
         WorkspaceEvents.JoinedFromDiscovery,
         WorkspaceEvents.RoleUpdated

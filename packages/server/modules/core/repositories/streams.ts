@@ -26,7 +26,8 @@ import {
   LimitedUserRecord,
   StreamAclRecord,
   StreamFavoriteRecord,
-  StreamRecord
+  StreamRecord,
+  UserWithRole
 } from '@/modules/core/helpers/types'
 import {
   DiscoverableStreamsSortingInput,
@@ -54,9 +55,12 @@ import {
   StreamNotFoundError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { db as defaultKnexInstance } from '@/db/knex'
+import {
+  DeleteProjectRole,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
@@ -970,10 +974,17 @@ export async function markCommitStreamUpdated(commitId: string) {
 }
 
 // TODO: Replace all calls to `grantStreamPermissions` with this
-export const grantStreamPermissionsFactory =
-  ({ db }: { db: Knex }) =>
-  async (params: Parameters<typeof grantStreamPermissions>[0]) => {
-    return await grantStreamPermissions(params, db)
+export const upsertProjectRoleFactory =
+  ({ db }: { db: Knex }): UpsertProjectRole =>
+  async ({ projectId, userId, role }) => {
+    return await grantStreamPermissions(
+      {
+        streamId: projectId,
+        userId,
+        role
+      },
+      db
+    )
   }
 
 /**
@@ -1030,10 +1041,16 @@ export async function grantStreamPermissions(
 }
 
 // TODO: Replace all calls of `revokeStreamPermissions` with this
-export const revokeStreamPermissionsFactory =
-  ({ db }: { db: Knex }) =>
-  async (params: Parameters<typeof revokeStreamPermissions>[0]) => {
-    return await revokeStreamPermissions(params, db)
+export const deleteProjectRoleFactory =
+  ({ db }: { db: Knex }): DeleteProjectRole =>
+  async ({ projectId, userId }) => {
+    return await revokeStreamPermissions(
+      {
+        streamId: projectId,
+        userId
+      },
+      db
+    )
   }
 
 /**

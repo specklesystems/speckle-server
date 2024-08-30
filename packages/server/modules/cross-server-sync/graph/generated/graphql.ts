@@ -828,6 +828,12 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum Currency {
+  Eur = 'EUR',
+  Gbp = 'GBP',
+  Usd = 'USD'
+}
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -3874,7 +3880,7 @@ export type Workspace = {
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
-  team: Array<WorkspaceCollaborator>;
+  team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -3892,14 +3898,18 @@ export type WorkspaceProjectsArgs = {
 
 
 export type WorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceTeamFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
-  versionsCount?: Maybe<WorkspaceVersionsCount>;
+  cost: WorkspaceCost;
+  versionsCount: WorkspaceVersionsCount;
 };
 
+/** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
@@ -3907,11 +3917,44 @@ export type WorkspaceCollaborator = {
   user: LimitedUser;
 };
 
+export type WorkspaceCollaboratorCollection = {
+  __typename?: 'WorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type WorkspaceCollection = {
   __typename?: 'WorkspaceCollection';
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Workspace>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceCost = {
+  __typename?: 'WorkspaceCost';
+  /** Currency of the price */
+  currency: Currency;
+  /** Discount applied to the total */
+  discount?: Maybe<WorkspaceCostDiscount>;
+  items: Array<WorkspaceCostItem>;
+  /** Estimated cost of the workspace with no discount applied */
+  subTotal: Scalars['Float']['output'];
+  /** Total cost with discount applied */
+  total: Scalars['Float']['output'];
+};
+
+export type WorkspaceCostDiscount = {
+  __typename?: 'WorkspaceCostDiscount';
+  amount: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type WorkspaceCostItem = {
+  __typename?: 'WorkspaceCostItem';
+  cost: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type WorkspaceCreateInput = {
