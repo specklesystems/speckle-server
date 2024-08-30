@@ -17,7 +17,8 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type {
   SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment,
   UserWorkspacesArgs,
-  User
+  User,
+  SettingsWorkspacesMembersMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
@@ -41,7 +42,9 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
+  workspace:
+    | SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
+    | SettingsWorkspacesMembersMembersTable_WorkspaceFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })

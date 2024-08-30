@@ -26,9 +26,6 @@
           ? `No members found for '${search}'`
           : 'This workspace has no members'
       "
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }
-      ]"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -95,6 +92,11 @@
       :name="userToModify?.name ?? ''"
       @remove-user="onRemoveUser"
     />
+    <SettingsWorkspacesGeneralLeaveDialog
+      v-if="workspace"
+      v-model:open="showLeaveDialog"
+      :workspace="workspace"
+    />
   </div>
 </template>
 
@@ -107,8 +109,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
   ExclamationCircleIcon,
-  XMarkIcon,
-  TrashIcon
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -137,6 +138,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
+    name
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
       items {
@@ -179,6 +181,7 @@ const { activeUser } = useActiveUser()
 
 const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
+const showLeaveDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
@@ -280,6 +283,9 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
       break
     case ActionTypes.ChangeRole:
       openChangeUserRoleDialog(user)
+      break
+    case ActionTypes.LeaveWorkspace:
+      showLeaveDialog.value = true
       break
   }
 }
