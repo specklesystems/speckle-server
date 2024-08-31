@@ -12,6 +12,14 @@
           <ArrowRightIcon class="h-4 w-4" />
           <span>{{ getRoleLabel(newRole).title }}</span>
         </div>
+        <div class="flex flex-col items-start gap-1 text-xs">
+          <div
+            v-for="(message, i) in getWorkspaceProjectRoleMessages(newRole)"
+            :key="`message-${i}`"
+          >
+            {{ message }}
+          </div>
+        </div>
       </div>
     </div>
   </LayoutDialog>
@@ -19,7 +27,7 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { ArrowRightIcon } from '@heroicons/vue/24/outline'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
@@ -49,4 +57,32 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   }
 ])
+
+const getWorkspaceProjectRoleMessages = (workspaceRole: WorkspaceRoles): string[] => {
+  switch (workspaceRole) {
+    case Roles.Workspace.Admin: {
+      return [
+        'They will become a project owner for all existing workspace projects.',
+        'They will become a project owner for new projects created in the workspace.',
+        'Project owners will not be able to change their workspace project role.',
+        'Project owners will not be able to remove them from workspace projects.'
+      ]
+    }
+    case Roles.Workspace.Member: {
+      return [
+        'They will become a project viewer for all existing workspace projects.',
+        'They will become a project viewer for new projects created in the workspace.',
+        'Project owners will be able to grant them any role for workspace projects.',
+        'Project owners will be able to remove them from workspace projects.'
+      ]
+    }
+    case Roles.Workspace.Guest: {
+      return [
+        'They will lose access to all existing workspace projects.',
+        'Project owners will be able to grant them any role for workspace projects.',
+        'Project owners will be able to remove them from workspace projects.'
+      ]
+    }
+  }
+}
 </script>
