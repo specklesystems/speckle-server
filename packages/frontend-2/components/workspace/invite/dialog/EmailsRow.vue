@@ -2,7 +2,7 @@
   <div class="flex px-4 py-3 items-center space-x-2 justify-between">
     <div class="flex items-center space-x-2 flex-1 truncate">
       <div
-        v-if="!matchesDomainPolicy"
+        v-if="unmatchingDomainPolicy"
         v-tippy="
           'Users that do not comply with the domain policy can only be invited as guests'
         "
@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { Roles, type WorkspaceRoles, type ServerRoles } from '@speckle/shared'
+import { Roles, type ServerRoles } from '@speckle/shared'
 
 defineEmits<{
   (e: 'invite-emails', payload: { serverRole: ServerRoles }): void
@@ -51,9 +51,7 @@ const props = defineProps<{
   disabled?: boolean
   isGuestMode: boolean
   isOwnerRole: boolean
-  domainBasedMembershipProtectionEnabled?: boolean
-  allowedDomains?: string[]
-  targetRole: WorkspaceRoles
+  unmatchingDomainPolicy?: boolean
 }>()
 
 const { isAdmin } = useActiveUser()
@@ -68,20 +66,11 @@ const isTryingToSetGuestOwner = computed(() => {
   return false
 })
 
-const matchesDomainPolicy = computed(() =>
-  props.domainBasedMembershipProtectionEnabled
-    ? props.targetRole === Roles.Workspace.Guest ||
-      props.selectedEmails.every((email) =>
-        props.allowedDomains?.includes(email.split('@')[1])
-      )
-    : true
-)
-
 const isButtonDisabled = computed(() => {
   if (props.disabled) return true
   if (isTryingToSetGuestOwner.value) return true
   if (!props.selectedEmails.length) return true
-  if (props.domainBasedMembershipProtectionEnabled) return !matchesDomainPolicy.value
+  if (props.unmatchingDomainPolicy) return true
   return false
 })
 </script>

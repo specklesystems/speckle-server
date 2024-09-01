@@ -49,11 +49,7 @@
           :disabled="disabled"
           :is-owner-role="isOwnerRole"
           :is-guest-mode="isGuestMode"
-          :domain-based-membership-protection-enabled="
-            workspace?.domainBasedMembershipProtectionEnabled
-          "
-          :allowed-domains="allowedDomains"
-          :target-role="role"
+          :unmatching-domain-policy="unmatchingDomainPolicy"
           class="p-2"
           @invite-emails="({ serverRole }) => onInviteUser(emails, serverRole)"
         />
@@ -148,7 +144,17 @@ const buttons = computed((): LayoutDialogButton[] => [
 
 const isOwnerRole = computed(() => role.value === Roles.Workspace.Admin)
 const allowedDomains = computed(() => props.workspace?.domains?.map((c) => c.domain))
+const unmatchingDomainPolicy = computed(() => {
+  if (props.workspace?.domainBasedMembershipProtectionEnabled) {
+    return role.value === Roles.Workspace.Guest
+      ? false
+      : !emails.value?.every((email) =>
+          allowedDomains.value?.includes(email.split('@')[1])
+        )
+  }
 
+  return false
+})
 const onInviteUser = async (
   user: UserSearchItemOrEmail | UserSearchItemOrEmail[],
   serverRole: ServerRoles = Roles.Server.User
