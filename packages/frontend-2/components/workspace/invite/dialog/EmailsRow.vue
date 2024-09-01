@@ -53,7 +53,6 @@ const props = defineProps<{
   isOwnerRole: boolean
   domainBasedMembershipProtectionEnabled?: boolean
   allowedDomains?: string[]
-  query?: string
   targetRole: WorkspaceRoles
 }>()
 

@@ -54,7 +54,6 @@
           "
           :allowed-domains="allowedDomains"
           :target-role="role"
-          :query="search"
           class="p-2"
           @invite-emails="({ serverRole }) => onInviteUser(emails, serverRole)"
         />
