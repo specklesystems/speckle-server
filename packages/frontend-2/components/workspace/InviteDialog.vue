@@ -39,6 +39,7 @@
             :user="user"
             :disabled="disabled"
             :is-owner-role="isOwnerRole"
+            :target-role="role"
             @invite-user="() => onInviteUser(user)"
           />
         </template>
@@ -48,6 +49,12 @@
           :disabled="disabled"
           :is-owner-role="isOwnerRole"
           :is-guest-mode="isGuestMode"
+          :domain-based-membership-protection-enabled="
+            workspace?.domainBasedMembershipProtectionEnabled
+          "
+          :allowed-domains="allowedDomains"
+          :target-role="role"
+          :query="search"
           class="p-2"
           @invite-emails="({ serverRole }) => onInviteUser(emails, serverRole)"
         />
@@ -82,6 +89,11 @@ import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 
 graphql(`
   fragment WorkspaceInviteDialog_Workspace on Workspace {
+    domainBasedMembershipProtectionEnabled
+    domains {
+      domain
+      id
+    }
     id
     team {
       items {
@@ -117,7 +129,8 @@ const { users, emails, hasTargets } = useResolveInviteTargets({
     ...(props.workspace?.invitedTeam?.map((c) => c.user?.id).filter(isNonNullable) ||
       [])
   ]),
-  excludeEmails: computed(() => props.workspace?.invitedTeam?.map((c) => c.title))
+  excludeEmails: computed(() => props.workspace?.invitedTeam?.map((c) => c.title)),
+  workspaceId: props.workspaceId
 })
 const { isGuestMode } = useServerInfo()
 
@@ -135,6 +148,7 @@ const buttons = computed((): LayoutDialogButton[] => [
 ])
 
 const isOwnerRole = computed(() => role.value === Roles.Workspace.Admin)
+const allowedDomains = computed(() => props.workspace?.domains?.map((c) => c.domain))
 
 const onInviteUser = async (
   user: UserSearchItemOrEmail | UserSearchItemOrEmail[],
