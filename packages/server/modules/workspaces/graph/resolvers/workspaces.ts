@@ -112,7 +112,6 @@ import {
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import {
   getWorkspaceCostFactory,
@@ -680,8 +679,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         billing: (parent) => ({ parent })
       },
       WorkspaceBilling: {
-        versionsCount: async (parent) => {
-          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+        versionsCount: async ({ parent }) => {
+          const workspaceId = parent.id
           return {
             current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
               workspaceId
@@ -689,8 +688,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             max: WORKSPACE_MAX_PROJECTS_VERSIONS
           }
         },
-        cost: async (parent) => {
-          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+        cost: async ({ parent }) => {
+          const workspaceId = parent.id
           return getWorkspaceCostFactory({
             getWorkspaceCostItems: getWorkspaceCostItemsFactory({
               countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
