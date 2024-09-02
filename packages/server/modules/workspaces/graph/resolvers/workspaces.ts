@@ -69,7 +69,8 @@ import {
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getUserIdsWithRoleInWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -704,7 +705,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspaceId = parent.parent.id
           return getWorkspaceCostFactory({
             getWorkspaceCostItems: getWorkspaceCostItemsFactory({
-              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
+              getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
+                db
+              })
             }),
             discount: WorkspaceEarlyAdopterDiscount
           })({ workspaceId })

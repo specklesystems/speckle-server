@@ -48,6 +48,11 @@ export type CollectAndValidateResourceTargets = (params: {
   target: ResolvedTargetData
   targetUser: MaybeNullOrUndefined<UserWithOptionalRole>
   serverInfo: ServerInfo
+  /**
+   * Primarily these functions are used to validate on invite creation, but they also get ran on invite finalization.
+   * In those circumstances this flag will be set.
+   */
+  finalizingInvite?: boolean
 }) => MaybeAsync<Array<InviteResourceTarget | PrimaryInviteResourceTarget>>
 
 export type BuildInviteEmailContents = (params: {

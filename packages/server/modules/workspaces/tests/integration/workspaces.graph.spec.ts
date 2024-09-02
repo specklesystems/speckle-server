@@ -391,6 +391,7 @@ describe('Workspaces GQL CRUD', () => {
           max: 500
         })
       })
+
       it('should return workspace cost', async () => {
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
           input: { name: createRandomString() }
@@ -406,6 +407,11 @@ describe('Workspaces GQL CRUD', () => {
           name: createRandomPassword(),
           email: createRandomEmail()
         }
+        const freeGuests = new Array(10).fill(0).map(() => ({
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }))
         const guestWithWritePermission = {
           id: createRandomString(),
           name: createRandomPassword(),
@@ -421,6 +427,14 @@ describe('Workspaces GQL CRUD', () => {
           name: createRandomPassword(),
           email: createRandomEmail()
         }
+
+        // first 10 users
+        await createTestUsers(freeGuests)
+        await Promise.all(
+          freeGuests.map((guest) =>
+            assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
+          )
+        )
 
         await Promise.all([
           createTestUser(member),
@@ -470,32 +484,32 @@ describe('Workspaces GQL CRUD', () => {
         expect(res).to.not.haveGraphQLErrors()
         const { subTotal, currency, items, total, discount } =
           res.data!.workspace.billing?.cost ?? {}
-        expect(subTotal).to.equal(70 + 50 + 10)
+        expect(subTotal).to.equal(49 + 49 + 15 + 2 * 5)
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
           {
-            name: 'workspace admin',
-            count: 1,
-            cost: 70
-          },
-          {
-            name: 'workspace member',
-            count: 1,
-            cost: 50
-          },
-          {
-            name: 'read/write guest',
-            count: 1,
-            cost: 10
-          },
-          {
-            name: 'read only guest',
+            name: 'workspace members',
             count: 2,
+            cost: 49
+          },
+          {
+            name: 'free guests',
+            count: 10,
             cost: 0
+          },
+          {
+            name: 'read/write guests',
+            count: 1,
+            cost: 15
+          },
+          {
+            name: 'read only guests',
+            count: 2,
+            cost: 5
           }
         ])
         expect(discount).to.deep.equal(WorkspaceEarlyAdopterDiscount)
-        expect(total).to.equal(65)
+        expect(total).to.equal(61.5)
       })
     })
 

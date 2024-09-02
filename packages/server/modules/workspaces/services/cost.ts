@@ -1,11 +1,14 @@
-import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
+import {
+  CountWorkspaceRoleWithOptionalProjectRole,
+  GetUserIdsWithRoleInWorkspace
+} from '@/modules/workspaces/domain/operations'
 import { Roles, throwUncoveredError } from '@speckle/shared'
 
 type KnownWorkspaceCostItemNames =
-  | 'workspace admin'
-  | 'workspace member'
-  | 'read/write guest'
-  | 'read only guest'
+  | 'workspace members'
+  | 'free guests'
+  | 'read/write guests'
+  | 'read only guests'
 
 type KnownCurrencies = 'GBP'
 
@@ -23,14 +26,14 @@ const getWorkspaceCostItemCost = ({
   currency?: KnownCurrencies
 }): number => {
   switch (name) {
-    case 'workspace admin':
-      return 70
-    case 'workspace member':
-      return 50
-    case 'read/write guest':
-      return 10
-    case 'read only guest':
+    case 'workspace members':
+      return 49
+    case 'free guests':
       return 0
+    case 'read/write guests':
+      return 15
+    case 'read only guests':
+      return 5
     default:
       throwUncoveredError(name)
   }
@@ -42,11 +45,20 @@ type GetWorkspaceCostItems = (args: {
 
 export const getWorkspaceCostItemsFactory =
   ({
-    countRole
+    countRole,
+    getUserIdsWithRoleInWorkspace
   }: {
     countRole: CountWorkspaceRoleWithOptionalProjectRole
+    getUserIdsWithRoleInWorkspace: GetUserIdsWithRoleInWorkspace
   }): GetWorkspaceCostItems =>
   async ({ workspaceId }) => {
+    const freeGuestsIds = await getUserIdsWithRoleInWorkspace(
+      {
+        workspaceId,
+        workspaceRole: Roles.Workspace.Guest
+      },
+      { limit: 10 }
+    )
     const [adminCount, memberCount, writeGuestCount, readGuestCount] =
       await Promise.all([
         countRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
@@ -54,45 +66,43 @@ export const getWorkspaceCostItemsFactory =
         countRole({
           workspaceId,
           workspaceRole: Roles.Workspace.Guest,
-          projectRole: Roles.Stream.Contributor
+          projectRole: Roles.Stream.Contributor,
+          skipUserIds: freeGuestsIds
         }),
         countRole({
           workspaceId,
           workspaceRole: Roles.Workspace.Guest,
-          projectRole: Roles.Stream.Reviewer
+          projectRole: Roles.Stream.Reviewer,
+          skipUserIds: freeGuestsIds
         })
       ])
 
     const workspaceCostItems: WorkspaceCostItem[] = []
 
-    if (adminCount)
-      workspaceCostItems.push({
-        name: 'workspace admin',
-        description: 'Workspace administrator with all the powers',
-        count: adminCount,
-        cost: getWorkspaceCostItemCost({ name: 'workspace admin' })
-      })
-    if (memberCount)
-      workspaceCostItems.push({
-        name: 'workspace member',
-        description: 'General workspace member',
-        count: memberCount,
-        cost: getWorkspaceCostItemCost({ name: 'workspace member' })
-      })
-    if (writeGuestCount)
-      workspaceCostItems.push({
-        name: 'read/write guest',
-        description: 'Workspace guest with write access to minimum 1 workspace project',
-        count: writeGuestCount,
-        cost: getWorkspaceCostItemCost({ name: 'read/write guest' })
-      })
-    if (readGuestCount)
-      workspaceCostItems.push({
-        name: 'read only guest',
-        description: 'Workspace guest with only read access to some workspace projects',
-        count: readGuestCount,
-        cost: getWorkspaceCostItemCost({ name: 'read only guest' })
-      })
+    workspaceCostItems.push({
+      name: 'workspace members',
+      description: 'General workspace member',
+      count: adminCount + memberCount,
+      cost: getWorkspaceCostItemCost({ name: 'workspace members' })
+    })
+    workspaceCostItems.push({
+      name: 'free guests',
+      description: 'The first 10 workspace guests are free',
+      count: freeGuestsIds.length,
+      cost: getWorkspaceCostItemCost({ name: 'free guests' })
+    })
+    workspaceCostItems.push({
+      name: 'read/write guests',
+      description: 'Workspace guests with write access to minimum 1 workspace project',
+      count: writeGuestCount,
+      cost: getWorkspaceCostItemCost({ name: 'read/write guests' })
+    })
+    workspaceCostItems.push({
+      name: 'read only guests',
+      description: 'Workspace guests with only read access to some workspace projects',
+      count: readGuestCount,
+      cost: getWorkspaceCostItemCost({ name: 'read only guests' })
+    })
 
     return workspaceCostItems
   }
