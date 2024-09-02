@@ -78,7 +78,7 @@ export const createTestWorkspace = async (
   workspace.id = newWorkspace.id
   if (workspace.discoverabilityEnabled) {
     const updateWorkspace = updateWorkspaceFactory({
-      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
     })
@@ -93,7 +93,7 @@ export const createTestWorkspace = async (
 
   if (workspace.domainBasedMembershipProtectionEnabled) {
     await updateWorkspaceFactory({
-      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit
     })({

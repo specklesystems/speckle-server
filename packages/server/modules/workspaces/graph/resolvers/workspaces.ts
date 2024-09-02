@@ -310,7 +310,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const updateWorkspace = updateWorkspaceFactory({
-            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspace: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })
