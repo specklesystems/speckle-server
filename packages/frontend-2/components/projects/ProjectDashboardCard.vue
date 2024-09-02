@@ -36,7 +36,7 @@
               :default-logo-index="project.workspace.defaultLogoIndex"
               size="sm"
             />
-            <p class="text-body-2xs text-foreground ml-2">
+            <p class="text-body-2xs text-foreground ml-2 line-clamp-2">
               {{ project.workspace.name }}
             </p>
           </NuxtLink>
