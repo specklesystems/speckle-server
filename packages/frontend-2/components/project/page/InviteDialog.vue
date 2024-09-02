@@ -11,54 +11,75 @@
         help="If target user does not have a role in the parent workspace, they will be assigned this role."
         :allow-unset="false"
       />
-      <FormTextInput
-        v-model="search"
-        name="search"
-        size="lg"
-        placeholder="Search by email or username..."
-        :disabled="disabled"
-        :help="disabled ? 'You must be the project owner to invite users' : ''"
-        input-classes="pr-[85px] text-sm"
-        color="foundation"
-        label="Add people"
-        show-label
-      >
-        <template #input-right>
-          <div
-            class="absolute inset-y-0 right-0 flex items-center pr-2"
-            :class="disabled ? 'pointer-events-none' : ''"
-          >
-            <ProjectPageTeamPermissionSelect v-model="role" hide-remove />
-          </div>
-        </template>
-      </FormTextInput>
-      <div
-        v-if="hasTargets"
-        class="flex flex-col border bg-foundation border-primary-muted rounded-md"
-      >
-        <template v-if="searchUsers.length">
+      <div v-if="!isWorkspaceMemberAndProjectOwner">
+        <FormTextInput
+          v-model="search"
+          name="search"
+          size="lg"
+          placeholder="Search by email or username..."
+          :disabled="disabled"
+          :help="disabled ? 'You must be the project owner to invite users' : ''"
+          input-classes="pr-[85px] text-sm"
+          color="foundation"
+          label="Add people"
+          show-label
+        >
+          <template #input-right>
+            <div
+              class="absolute inset-y-0 right-0 flex items-center pr-2"
+              :class="disabled ? 'pointer-events-none' : ''"
+            >
+              <ProjectPageTeamPermissionSelect v-model="role" hide-remove />
+            </div>
+          </template>
+        </FormTextInput>
+
+        <div
+          v-if="hasTargets"
+          class="flex flex-col border bg-foundation border-primary-muted rounded-md"
+        >
+          <template v-if="searchUsers.length">
+            <ProjectPageTeamDialogInviteUserServerUserRow
+              v-for="user in searchUsers"
+              :key="user.id"
+              :user="user"
+              :stream-role="role"
+              :disabled="loading"
+              @invite-user="($event) => onInviteUser($event.user)"
+            />
+          </template>
+          <ProjectPageTeamDialogInviteUserEmailsRow
+            v-else-if="selectedEmails?.length"
+            :selected-emails="selectedEmails"
+            :stream-role="role"
+            :disabled="loading"
+            :is-guest-mode="isGuestMode"
+            class="p-2"
+            @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
+          />
+        </div>
+      </div>
+      <div v-else>
+        <div class="text-body-xs font-medium mb-1">Add users from workspace</div>
+        <div
+          v-if="filteredInviteMembers.length"
+          class="flex flex-col border bg-foundation border-primary-muted rounded-md"
+        >
           <ProjectPageTeamDialogInviteUserServerUserRow
-            v-for="user in searchUsers"
+            v-for="user in filteredInviteMembers"
             :key="user.id"
             :user="user"
             :stream-role="role"
             :disabled="loading"
             @invite-user="($event) => onInviteUser($event.user)"
           />
-        </template>
-        <ProjectPageTeamDialogInviteUserEmailsRow
-          v-else-if="selectedEmails?.length"
-          :selected-emails="selectedEmails"
-          :stream-role="role"
-          :disabled="loading"
-          :is-guest-mode="isGuestMode"
-          class="p-2"
-          @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
-        />
+        </div>
+        <p v-else class="text-sm text-gray-500 mt-4">No available users found.</p>
       </div>
     </div>
   </LayoutDialog>
 </template>
+
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
 import type { ServerRoles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
@@ -83,6 +104,22 @@ graphql(`
   fragment ProjectPageInviteDialog_Project on Project {
     id
     workspaceId
+    workspace {
+      team {
+        items {
+          role
+          user {
+            id
+            name
+            bio
+            company
+            avatar
+            verified
+            role
+          }
+        }
+      }
+    }
     ...ProjectPageTeamInternals_Project
   }
 `)
@@ -102,6 +139,23 @@ const projectId = computed(() => props.projectId as string)
 const projectData = computed(() => props.project)
 const { collaboratorListItems } = useTeamInternals(projectData)
 
+const workspaceMembers = computed(() => {
+  return props.project?.workspace?.team?.items || []
+})
+
+const filteredInviteMembers = computed(() => {
+  const currentProjectMemberIds = new Set(
+    collaboratorListItems.value.map((item) => item.user?.id)
+  )
+
+  return workspaceMembers.value
+    .filter(
+      (member) =>
+        member.user && member.user.id && !currentProjectMemberIds.has(member.user.id)
+    )
+    .map((member) => member.user)
+})
+
 const loading = ref(false)
 const search = ref('')
 const role = ref<StreamRoles>(Roles.Stream.Contributor)
@@ -109,6 +163,9 @@ const workspaceRole = ref<WorkspaceRoles>(Roles.Workspace.Guest)
 
 const { isGuestMode } = useServerInfo()
 const createInvite = useInviteUserToProject()
+
+const { activeUser } = useActiveUser()
+
 const {
   users: searchUsers,
   emails: selectedEmails,
@@ -120,6 +177,18 @@ const {
       .filter((i): i is SetFullyRequired<typeof i, 'user'> => !!i.user?.id)
       .map((t) => t.user.id)
   )
+})
+
+const isWorkspaceMemberAndProjectOwner = computed(() => {
+  const userIsWorkspaceMember =
+    workspaceMembers.value.some(
+      (item) =>
+        item.user?.id === activeUser.value?.id && item.role === Roles.Workspace.Member
+    ) ?? false
+
+  const userIsProjectOwner = projectData.value?.role === Roles.Stream.Owner
+
+  return userIsWorkspaceMember && userIsProjectOwner
 })
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
