@@ -228,3 +228,31 @@ export const resendWorkspaceInviteMutation = gql`
     }
   }
 `
+
+export const addWorkspaceDomainMutation = gql`
+  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
+    workspaceMutations {
+      addDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const deleteWorkspaceDomainMutation = gql`
+  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
+    workspaceMutations {
+      deleteDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+        domainBasedMembershipProtectionEnabled
+        discoverabilityEnabled
+      }
+    }
+  }
+`

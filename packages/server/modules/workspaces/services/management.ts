@@ -9,7 +9,8 @@ import {
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
   GetWorkspaceDomains,
-  GetWorkspaceRoleToDefaultProjectRoleMapping
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  UpdateWorkspace
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -120,18 +121,6 @@ export const createWorkspaceFactory =
     return { ...workspace }
   }
 
-type WorkspaceUpdateArgs = {
-  workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
-    discoverabilityEnabled?: boolean | null
-    domainBasedMembershipProtectionEnabled?: boolean | null
-  }
-}
-
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
@@ -141,8 +130,8 @@ export const updateWorkspaceFactory =
     getWorkspace: GetWorkspaceWithDomains
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
-  }) =>
-  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+  }): UpdateWorkspace =>
+  async ({ workspaceId, workspaceInput }) => {
     // Get existing workspace to merge with incoming changes
     const currentWorkspace = await getWorkspace({ id: workspaceId })
     if (!currentWorkspace) {

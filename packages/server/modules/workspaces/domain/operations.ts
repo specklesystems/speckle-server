@@ -49,6 +49,10 @@ type DeleteWorkspaceArgs = {
   workspaceId: string
 }
 
+export type CountDomainsByWorkspaceId = (args: {
+  workspaceId: string
+}) => Promise<number>
+
 export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
 
 export type GetWorkspaceWithDomains = (args: {
@@ -180,3 +184,20 @@ export type GetUserIdsWithRoleInWorkspace = (
   },
   options?: { limit?: number }
 ) => Promise<string[]>
+
+type WorkspaceUpdateArgs = {
+  workspaceId: string
+  workspaceInput: {
+    name?: string | null
+    description?: string | null
+    logo?: string | null
+    defaultLogoIndex?: number | null
+    discoverabilityEnabled?: boolean | null
+    domainBasedMembershipProtectionEnabled?: boolean | null
+  }
+}
+
+export type UpdateWorkspace = ({
+  workspaceId,
+  workspaceInput
+}: WorkspaceUpdateArgs) => Promise<Workspace>
