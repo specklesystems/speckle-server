@@ -52,6 +52,8 @@
         </div>
       </section>
     </div>
+
+    <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
 <script setup lang="ts">

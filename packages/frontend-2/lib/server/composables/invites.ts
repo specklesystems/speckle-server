@@ -82,7 +82,7 @@ export const useResolveInviteTargets = (params: {
   /**
    * Used for searching of users within a workspace context
    */
-  workspaceId?: string
+  workspaceId?: MaybeNullOrUndefined<string>
 }) => {
   const { search, excludeUserIds, excludeEmails, workspaceId } = params
 
