@@ -88,7 +88,10 @@ describe('Server registration', () => {
       const params = generateRegistrationParams()
       params.challenge = challenge
 
-      await restApi.register(params)
+      const user = await restApi.register(params)
+
+      // email remains unverified
+      expect(user.emails.every((e) => !e.verified)).to.be.true
     })
 
     it('fails without challenge', async () => {
@@ -202,7 +205,9 @@ describe('Server registration', () => {
         itEach(
           [{ stream: true }, { stream: false }],
           ({ stream }) =>
-            `works with valid ${stream ? 'stream' : 'server'} invite token`,
+            `works with valid ${
+              stream ? 'stream' : 'server'
+            } invite token and auto-verifies email`,
           async ({ stream }) => {
             const challenge = 'bababooey'
             const params = generateRegistrationParams()
@@ -221,6 +226,7 @@ describe('Server registration', () => {
 
             const newUser = await restApi.register(params)
             expect(newUser.role).to.equal(Roles.Server.Admin)
+            expect(newUser.emails.every((e) => e.verified)).to.be.true
           }
         )
       })

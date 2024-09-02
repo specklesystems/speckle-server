@@ -11,6 +11,7 @@ import {
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
   GetUserDiscoverableWorkspaces,
+  GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
@@ -346,11 +347,33 @@ export const countProjectsVersionsByWorkspaceIdFactory =
     return parseInt(res.count.toString())
   }
 
+export const getUserIdsWithRoleInWorkspaceFactory =
+  ({ db }: { db: Knex }): GetUserIdsWithRoleInWorkspace =>
+  async ({ workspaceId, workspaceRole }, options) => {
+    const query = tables
+      .workspacesAcl(db)
+      .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
+      .where(DbWorkspaceAcl.col.role, workspaceRole)
+      .orderBy(DbWorkspaceAcl.col.createdAt)
+
+    if (options?.limit) {
+      query.limit(options.limit)
+    }
+
+    return (
+      (await query.select([DbWorkspaceAcl.col.userId])) as Pick<
+        WorkspaceAcl,
+        'userId'
+      >[]
+    ).map((wsAcl) => wsAcl.userId)
+  }
+
 export const countWorkspaceRoleWithOptionalProjectRoleFactory =
   ({ db }: { db: Knex }): CountWorkspaceRoleWithOptionalProjectRole =>
-  async ({ workspaceId, workspaceRole, projectRole }) => {
+  async ({ workspaceId, workspaceRole, projectRole, skipUserIds }) => {
+    let query
     if (projectRole) {
-      const query = tables
+      query = tables
         .streams(db)
         .join(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
         .join(DbWorkspaceAcl.name, DbWorkspaceAcl.col.userId, StreamAcl.col.userId)
@@ -360,17 +383,18 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
         .andWhere(DbWorkspaceAcl.col.workspaceId, workspaceId)
         .andWhere(StreamAcl.col.role, projectRole)
         .countDistinct(DbWorkspaceAcl.col.userId)
-
-      const [res] = await query
-      return parseInt(res.count.toString())
     } else {
-      const query = tables
+      query = tables
         .workspacesAcl(db)
         .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
         .where(DbWorkspaceAcl.col.role, workspaceRole)
         .count()
-
-      const [res] = await query
-      return parseInt(res.count.toString())
     }
+
+    if (skipUserIds) {
+      query.whereNotIn(DbWorkspaceAcl.col.userId, skipUserIds)
+    }
+
+    const [res] = await query
+    return parseInt(res.count.toString())
   }
