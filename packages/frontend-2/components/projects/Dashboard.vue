@@ -30,6 +30,7 @@
             v-model="selectedRoles"
             class="md:w-56 grow md:grow-0"
             fixed-height
+            clearable
           />
         </div>
         <FormButton v-if="!isGuest" @click="openNewProject = true">

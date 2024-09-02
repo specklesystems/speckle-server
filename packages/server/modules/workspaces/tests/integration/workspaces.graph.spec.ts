@@ -26,7 +26,9 @@ import {
   CreateObjectDocument,
   CreateProjectVersionDocument,
   GetWorkspaceWithProjectsDocument,
-  CreateProjectDocument
+  CreateProjectDocument,
+  AddWorkspaceDomainDocument,
+  DeleteWorkspaceDomainDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -105,7 +107,8 @@ describe('Workspaces GQL CRUD', () => {
     id: '',
     name: 'John Speckle',
     email: 'john-speckle@example.org',
-    role: Roles.Server.Admin
+    role: Roles.Server.Admin,
+    verified: true
   }
 
   const testMemberUser: BasicTestUser = {
@@ -828,6 +831,52 @@ describe('Workspaces GQL CRUD', () => {
               .includes(name)
           ).to.be.true
         })
+      })
+    })
+
+    describe('mutation workspaceMutations.deleteDomain', () => {
+      it('should disable discoverability and domain protection when deleting last domain', async () => {
+        const workspaceName = cryptoRandomString({ length: 6 })
+
+        const createRes = await apollo.execute(CreateWorkspaceDocument, {
+          input: { name: workspaceName }
+        })
+        expect(createRes).to.not.haveGraphQLErrors()
+        const workspaceId = createRes.data!.workspaceMutations.create.id
+
+        // Enable domain protection and discoverability
+        const getRes = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspaceId,
+            domainBasedMembershipProtectionEnabled: true,
+            discoverabilityEnabled: true
+          }
+        })
+        expect(getRes).to.not.haveGraphQLErrors()
+
+        const addDomainRes = await apollo.execute(AddWorkspaceDomainDocument, {
+          input: {
+            workspaceId,
+            domain: 'example.org'
+          }
+        })
+        expect(addDomainRes).to.not.haveGraphQLErrors()
+
+        const deleteDomainRes = await apollo.execute(DeleteWorkspaceDomainDocument, {
+          input: {
+            workspaceId,
+            id: addDomainRes.data!.workspaceMutations.addDomain.domains[0].id
+          }
+        })
+        expect(deleteDomainRes).to.not.haveGraphQLErrors()
+
+        expect(
+          deleteDomainRes.data?.workspaceMutations.deleteDomain.discoverabilityEnabled
+        ).to.false
+        expect(
+          deleteDomainRes.data?.workspaceMutations.deleteDomain
+            .domainBasedMembershipProtectionEnabled
+        ).to.false
       })
     })
   })

@@ -5,6 +5,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
+  CountDomainsByWorkspaceId,
   CountProjectsVersionsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
   DeleteWorkspace,
@@ -304,6 +305,13 @@ export const getWorkspaceDomainsFactory =
   ({ db }: { db: Knex }): GetWorkspaceDomains =>
   ({ workspaceIds }) => {
     return tables.workspaceDomains(db).whereIn('workspaceId', workspaceIds)
+  }
+
+export const countDomainsByWorkspaceIdFactory =
+  ({ db }: { db: Knex }): CountDomainsByWorkspaceId =>
+  async ({ workspaceId }) => {
+    const [res] = await tables.workspaceDomains(db).where({ workspaceId }).count()
+    return parseInt(res.count.toString())
   }
 
 export const deleteWorkspaceDomainFactory =
