@@ -1,9 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  ResolverTypeWrapper,
-  Resolvers,
-  WorkspaceBilling
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
@@ -681,8 +677,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) =>
-          ({ parent } as { parent: Workspace } & ResolverTypeWrapper<WorkspaceBilling>)
+        billing: (parent) => ({ parent })
       },
       WorkspaceBilling: {
         versionsCount: async (parent) => {

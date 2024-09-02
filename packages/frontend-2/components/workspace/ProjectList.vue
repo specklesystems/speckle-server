@@ -114,7 +114,7 @@ const { result: initialQueryResult } = useQuery(
     // doesn't kill the entire query
     errorPolicy: 'all',
     context: {
-      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
+      skipLoggingErrors: skipLoggingErrorsIfOneFieldError(['invitedTeam', 'billing'])
     }
   })
 )
