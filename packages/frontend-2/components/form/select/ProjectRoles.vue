@@ -3,7 +3,7 @@
     v-model="selectedValue"
     :items="Object.values(Roles.Stream)"
     :multiple="multiple"
-    clearable
+    :clearable="clearable"
     name="projectRoles"
     label="Project roles"
     class="min-w-[150px]"
@@ -57,6 +57,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   multiple?: boolean
   modelValue?: ValueType
+  clearable?: boolean
 }>()
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
