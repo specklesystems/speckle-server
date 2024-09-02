@@ -56,6 +56,7 @@
             v-model:open="showActionsMenu"
             :items="actionsItems"
             :menu-position="HorizontalDirection.Left"
+            :menu-id="menuId"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
@@ -130,6 +131,7 @@ const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
+const menuId = useId()
 const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
 const showSettingsDialog = ref(false)
