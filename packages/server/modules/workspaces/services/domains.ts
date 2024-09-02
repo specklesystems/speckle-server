@@ -42,16 +42,16 @@ export const isUserWorkspaceDomainPolicyCompliantFactory =
 
 export const deleteWorkspaceDomainFactory =
   ({
-    deleteWorkspace,
+    deleteWorkspaceDomain,
     countDomainsByWorkspaceId,
     updateWorkspace
   }: {
-    deleteWorkspace: DeleteWorkspaceDomain
+    deleteWorkspaceDomain: DeleteWorkspaceDomain
     countDomainsByWorkspaceId: CountDomainsByWorkspaceId
     updateWorkspace: UpdateWorkspace
   }) =>
   async ({ workspaceId, domainId }: { workspaceId: string; domainId: string }) => {
-    await deleteWorkspace({ id: domainId })
+    await deleteWorkspaceDomain({ id: domainId })
 
     const domainsCount = await countDomainsByWorkspaceId({ workspaceId })
     if (domainsCount === 0) {

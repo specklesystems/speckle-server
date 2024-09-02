@@ -317,7 +317,7 @@ export const countDomainsByWorkspaceIdFactory =
 export const deleteWorkspaceDomainFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceDomain =>
   async ({ id }) => {
-    await tables.workspaceDomains(db).where({ id }).delete(['workspaceId'])
+    await tables.workspaceDomains(db).where({ id }).delete()
   }
 
 export const getWorkspaceWithDomainsFactory =
