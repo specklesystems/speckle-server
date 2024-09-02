@@ -1,7 +1,7 @@
 import {
   Camera,
+  LinearFilter,
   Matrix4,
-  NearestFilter,
   OrthographicCamera,
   PerspectiveCamera,
   Scene,
@@ -35,8 +35,8 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
     super()
 
     this.renderTarget = new WebGLRenderTarget(256, 256, {
-      minFilter: NearestFilter,
-      magFilter: NearestFilter
+      minFilter: LinearFilter,
+      magFilter: LinearFilter
     })
     this.renderTarget.samples = 8
 
