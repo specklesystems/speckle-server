@@ -124,6 +124,7 @@ graphql(`
     }
     ...ProjectPageTeamInternals_Project
     workspace {
+      id
       domainBasedMembershipProtectionEnabled
       domains {
         domain
