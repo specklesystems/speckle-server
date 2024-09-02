@@ -168,6 +168,13 @@ export const updateWorkspaceFactory =
     )
       throw new WorkspaceNoVerifiedDomainsError()
 
+    if (
+      workspaceInput.domainBasedMembershipProtectionEnabled &&
+      !currentWorkspace.domainBasedMembershipProtectionEnabled &&
+      !currentWorkspace.domains.find((domain) => domain.verified)
+    )
+      throw new WorkspaceNoVerifiedDomainsError()
+
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
       ...removeNullOrUndefinedKeys(workspaceInput),
