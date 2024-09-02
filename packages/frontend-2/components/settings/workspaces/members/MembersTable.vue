@@ -80,7 +80,6 @@
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
-      :old-role="oldRole"
       :is-workspace-admin="isWorkspaceAdmin"
       :workspace-domain-policy-compliant="
         userToModify?.workspaceDomainPolicyCompliant ?? true
@@ -196,8 +195,6 @@ const members = computed(() => {
     ...rest
   }))
 })
-
-const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 const isActiveUserCurrentUser = computed(

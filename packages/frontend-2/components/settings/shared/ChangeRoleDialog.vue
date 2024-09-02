@@ -38,7 +38,7 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
-const newRole = defineModel<WorkspaceRoles | undefined>('newRole', { required: true })
+const newRole = ref<WorkspaceRoles | undefined>()
 
 const disabledItems = computed<WorkspaceRoles[]>(() =>
   !props.workspaceDomainPolicyCompliant
@@ -50,7 +50,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'outline', fullWidth: true },
-    onClick: () => (open.value = false)
+    onClick: () => ((open.value = false), (newRole.value = undefined))
   },
   {
     text: 'Update',
@@ -86,4 +86,11 @@ const getWorkspaceProjectRoleMessages = (workspaceRole: WorkspaceRoles): string[
       ]
   }
 }
+
+watch(
+  () => open.value,
+  () => {
+    newRole.value = undefined
+  }
+)
 </script>
