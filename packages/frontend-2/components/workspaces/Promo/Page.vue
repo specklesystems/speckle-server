@@ -5,9 +5,7 @@
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
-        <FormButton :disabled="!isAdmin" @click="openWorkspaceCreateDialog">
-          Create workspace
-        </FormButton>
+        <FormButton @click="openWorkspaceCreateDialog">Create workspace</FormButton>
       </div>
 
       <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
