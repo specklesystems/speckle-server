@@ -50,7 +50,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'outline', fullWidth: true },
-    onClick: () => ((open.value = false), (newRole.value = undefined))
+    onClick: () => (open.value = false)
   },
   {
     text: 'Update',
@@ -60,7 +60,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       if (newRole.value) {
         emit('updateRole', newRole.value)
       }
-      newRole.value = undefined
     }
   }
 ])
