@@ -26,9 +26,6 @@
           ? `No members found for '${search}'`
           : 'This workspace has no members'
       "
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteUserRoleDialog }
-      ]"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -55,24 +52,17 @@
         </span>
       </template>
       <template #role="{ item }">
-        <FormSelectWorkspaceRoles
-          :disabled="!isWorkspaceAdmin"
-          :model-value="item.role as WorkspaceRoles"
-          fully-control-value
-          :disabled-items="
-            item.workspaceDomainPolicyCompliant === false
-              ? [Roles.Workspace.Member, Roles.Workspace.Admin]
-              : []
-          "
-          @update:model-value="
-            (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
-          "
-        />
+        <span class="text-foreground-2">
+          <span>
+            {{ isWorkspaceRole(item.role) ? getRoleLabel(item.role).title : '' }}
+          </span>
+        </span>
       </template>
       <template #actions="{ item }">
         <LayoutMenu
+          v-if="filteredActionsItems(item).length"
           v-model:open="showActionsMenu[item.id]"
-          :items="actionsItems"
+          :items="filteredActionsItems(item)"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
@@ -84,19 +74,27 @@
             @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
+        <div v-else />
       </template>
     </LayoutTable>
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
-      :old-role="oldRole"
-      :new-role="newRole"
+      :is-workspace-admin="isWorkspaceAdmin"
+      :workspace-domain-policy-compliant="
+        userToModify?.workspaceDomainPolicyCompliant ?? true
+      "
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
       :name="userToModify?.name ?? ''"
       @remove-user="onRemoveUser"
+    />
+    <SettingsWorkspacesGeneralLeaveDialog
+      v-if="workspace"
+      v-model:open="showLeaveDialog"
+      :workspace="workspace"
     />
   </div>
 </template>
@@ -110,14 +108,14 @@ import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
   ExclamationCircleIcon,
-  XMarkIcon,
-  TrashIcon
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -139,6 +137,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
+    name
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
       items {
@@ -150,7 +149,9 @@ graphql(`
 `)
 
 enum ActionTypes {
-  RemoveMember = 'remove-member'
+  RemoveMember = 'remove-member',
+  ChangeRole = 'change-role',
+  LeaveWorkspace = 'leave-workspace'
 }
 
 const props = defineProps<{
@@ -175,9 +176,11 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const updateUserRole = useWorkspaceUpdateRole()
 const mixpanel = useMixpanel()
+const { activeUser } = useActiveUser()
 
 const showChangeUserRoleDialog = ref(false)
 const showDeleteUserRoleDialog = ref(false)
+const showLeaveDialog = ref(false)
 const newRole = ref<WorkspaceRoles>()
 const userToModify = ref<UserItem>()
 
@@ -193,20 +196,42 @@ const members = computed(() => {
   }))
 })
 
-const oldRole = computed(() => userToModify.value?.role as WorkspaceRoles)
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isActiveUserCurrentUser = computed(
+  () => (user: UserItem) => activeUser.value?.id === user.id
+)
+const canRemoveMember = computed(
+  () => (user: UserItem) => activeUser.value?.id !== user.id && isWorkspaceAdmin.value
+)
 
-const actionsItems: LayoutMenuItem[][] = [
-  [{ title: 'Remove member...', id: ActionTypes.RemoveMember }]
-]
+const filteredActionsItems = (user: UserItem) => {
+  const baseItems: LayoutMenuItem[][] = []
 
-const openChangeUserRoleDialog = (
-  user: UserItem,
-  newRoleValue?: WorkspaceRoles | WorkspaceRoles[]
-) => {
-  if (!newRoleValue) return
+  // Allow role change if the active user is an admin
+  if (isWorkspaceAdmin.value) {
+    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
+  }
+
+  // Allow the current user to leave the workspace
+  if (isActiveUserCurrentUser.value(user)) {
+    baseItems.push([{ title: 'Leave workspace...', id: ActionTypes.LeaveWorkspace }])
+  }
+
+  // Allow removing a member if the active user is an admin and not the current user
+  if (canRemoveMember.value(user)) {
+    baseItems.push([{ title: 'Remove user...', id: ActionTypes.RemoveMember }])
+  }
+
+  return baseItems
+}
+
+const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
+  return ['workspace:admin', 'workspace:member', 'workspace:guest'].includes(role)
+}
+
+const openChangeUserRoleDialog = (user: UserItem) => {
   userToModify.value = user
-  newRole.value = Array.isArray(newRoleValue) ? newRoleValue[0] : newRoleValue
+  newRole.value = user.role as WorkspaceRoles
   showChangeUserRoleDialog.value = true
 }
 
@@ -215,17 +240,17 @@ const openDeleteUserRoleDialog = (user: UserItem) => {
   showDeleteUserRoleDialog.value = true
 }
 
-const onUpdateRole = async () => {
-  if (!userToModify.value || !newRole.value) return
+const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
+  if (!userToModify.value || !newRoleValue) return
 
   await updateUserRole({
     userId: userToModify.value.id,
-    role: newRole.value,
+    role: newRoleValue,
     workspaceId: props.workspaceId
   })
 
   mixpanel.track('Workspace User Role Updated', {
-    newRole: newRole.value,
+    newRole: newRoleValue,
     // eslint-disable-next-line camelcase
     workspace_id: props.workspaceId
   })
@@ -252,6 +277,12 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
   switch (actionItem.id) {
     case ActionTypes.RemoveMember:
       openDeleteUserRoleDialog(user)
+      break
+    case ActionTypes.ChangeRole:
+      openChangeUserRoleDialog(user)
+      break
+    case ActionTypes.LeaveWorkspace:
+      showLeaveDialog.value = true
       break
   }
 }
