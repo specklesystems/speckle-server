@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-12">
-    <WorkspacesPromoBanner :is-admin="isAdmin" @create="openWorkspaceCreateDialog" />
+    <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
 
     <section>
       <div class="flex justify-between mb-2">
@@ -66,7 +66,6 @@
 </template>
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { Roles } from '@speckle/shared'
 import {
   UserGroupIcon,
   LockClosedIcon,
@@ -77,10 +76,7 @@ import {
 
 const showWorkspaceCreateDialog = ref(false)
 
-const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
-
-const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 
 const openWorkspaceCreateDialog = () => {
   showWorkspaceCreateDialog.value = true
