@@ -14,7 +14,7 @@
         />
       </div>
       <div class="flex flex-col">
-        <h1 class="text-heading">{{ workspaceInfo.name }}</h1>
+        <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
         <div class="text-body-xs text-foreground-2 line-clamp-2">
           {{ workspaceInfo.description || 'No workspace description' }}
         </div>
