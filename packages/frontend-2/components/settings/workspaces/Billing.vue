@@ -87,8 +87,6 @@ const { result } = useQuery(
     workspaceId: props.workspaceId
   }),
   () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
     errorPolicy: 'all',
     context: {
       skipLoggingErrors: skipLoggingErrorsIfOneFieldError('billing')
