@@ -13,6 +13,14 @@
         :disabled-items="disabledItems"
         @update:model-value="(value: ValueType) => handleRoleUpdate(value)"
       />
+      <div class="flex flex-col items-start gap-1 text-xs">
+        <div
+          v-for="(message, i) in getWorkspaceProjectRoleMessages(localOldRole)"
+          :key="`message-${i}`"
+        >
+          {{ message }}
+        </div>
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -66,6 +74,28 @@ const handleRoleUpdate = (value: ValueType) => {
     localOldRole.value = value[0]
   } else {
     localOldRole.value = 'workspace:member'
+  }
+}
+
+const getWorkspaceProjectRoleMessages = (workspaceRole: WorkspaceRoles): string[] => {
+  switch (workspaceRole) {
+    case Roles.Workspace.Admin:
+      return [
+        'Becomes project owner for all existing and new workspace projects.',
+        'Cannot be removed or have role changed by project owners.'
+      ]
+
+    case Roles.Workspace.Member:
+      return [
+        'Becomes project viewer for all existing and new workspace projects.',
+        'Project owners can change their role or remove them.'
+      ]
+
+    case Roles.Workspace.Guest:
+      return [
+        'Loses access to all existing workspace projects.',
+        'Project owners can assign a role or remove them.'
+      ]
   }
 }
 
