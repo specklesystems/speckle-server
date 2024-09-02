@@ -4,7 +4,10 @@ import {
   getStream,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
-import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
@@ -20,7 +23,8 @@ import {
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
-  getWorkspaceDomainsFactory
+  getWorkspaceDomainsFactory,
+  storeWorkspaceDomainFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -31,7 +35,8 @@ import {
   createWorkspaceFactory,
   updateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
-  updateWorkspaceFactory
+  updateWorkspaceFactory,
+  addDomainToWorkspaceFactory
 } from '@/modules/workspaces/services/management'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
@@ -56,7 +61,8 @@ export type BasicTestWorkspace = {
 
 export const createTestWorkspace = async (
   workspace: BasicTestWorkspace,
-  owner: BasicTestUser
+  owner: BasicTestUser,
+  domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
     upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -76,9 +82,25 @@ export const createTestWorkspace = async (
   })
 
   workspace.id = newWorkspace.id
-  if (workspace.discoverabilityEnabled) {
-    const updateWorkspace = updateWorkspaceFactory({
+  if (domain) {
+    await addDomainToWorkspaceFactory({
+      findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+      storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
       getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit,
+      getDomains: getWorkspaceDomainsFactory({ db })
+    })({
+      userId: owner.id,
+      workspaceId: workspace.id,
+      domain
+    })
+  }
+
+  if (workspace.discoverabilityEnabled) {
+    if (!domain) throw new Error('Domain is needed for discoverability')
+    const updateWorkspace = updateWorkspaceFactory({
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
     })
@@ -92,8 +114,9 @@ export const createTestWorkspace = async (
   }
 
   if (workspace.domainBasedMembershipProtectionEnabled) {
+    if (!domain) throw new Error('Domain is needed for membership protection')
     await updateWorkspaceFactory({
-      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit
     })({
@@ -160,9 +183,9 @@ export const assignToWorkspaces = async (
 }
 
 export const createTestWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser][]
+  pairs: [BasicTestWorkspace, BasicTestUser, string?][]
 ) => {
-  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1])))
+  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1], p[2])))
 }
 
 export const createWorkspaceInviteDirectly = async (

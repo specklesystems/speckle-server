@@ -65,23 +65,15 @@ import {
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import {
-  getWorkspaceDomainsFactory,
-  getWorkspaceFactory,
-  storeWorkspaceDomainFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { getStream } from '@/modules/core/repositories/streams'
-import { addDomainToWorkspaceFactory } from '@/modules/workspaces/services/management'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
   findEmailFactory,
-  findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
@@ -277,28 +269,16 @@ describe('Workspaces Invites GQL', () => {
     await markUserEmailAsVerifiedFactory({
       updateUserEmail: updateUserEmailFactory({ db })
     })({ email })
+
     await createTestWorkspaces([
       [myFirstWorkspace, me],
-      [domainProtectedWorkspace, me],
+      [domainProtectedWorkspace, me, workspaceDomain],
       [otherGuysWorkspace, otherGuy]
     ])
     await assignToWorkspaces([
       [otherGuysWorkspace, me, Roles.Workspace.Member],
       [myFirstWorkspace, myWorkspaceFriend, Roles.Workspace.Member]
     ])
-
-    await addDomainToWorkspaceFactory({
-      findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-      storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-      getWorkspace: getWorkspaceFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit,
-      getDomains: getWorkspaceDomainsFactory({ db })
-    })({
-      userId: me.id,
-      workspaceId: domainProtectedWorkspace.id,
-      domain: workspaceDomain
-    })
   })
 
   afterEach(() => {
@@ -919,10 +899,21 @@ describe('Workspaces Invites GQL', () => {
         token: ''
       }
 
+      const emailInviteEmail = 'imJustSomeRandomNewGuy@aaaaa.com'
+      const adminEmailInviteEmail = 'admin-imJustSomeRandomNewGuy@aaaaa.com'
+
       const processableWorkspaceEmailInvite = {
         workspaceId: '',
         inviteId: '',
-        token: ''
+        token: '',
+        email: emailInviteEmail
+      }
+
+      const processableWorkspaceEmailAdminInvite = {
+        workspaceId: '',
+        inviteId: '',
+        token: '',
+        email: adminEmailInviteEmail
       }
 
       const processableProjectInvite = {
@@ -930,8 +921,6 @@ describe('Workspaces Invites GQL', () => {
         inviteId: '',
         token: ''
       }
-
-      const emailInviteEmail = 'imJustSomeRandomNewGuy@aaaaa.com'
 
       const validateResourceAccess = async (params: {
         shouldHaveAccess: boolean
@@ -977,8 +966,8 @@ describe('Workspaces Invites GQL', () => {
             {
               workspaceId: myInviteTargetWorkspace.id,
               input: {
-                email: emailInviteEmail,
-                role: WorkspaceRole.Member
+                email: processableWorkspaceEmailInvite.email,
+                role: WorkspaceRole.Guest
               }
             },
             { assertNoErrors: true }
@@ -988,6 +977,23 @@ describe('Workspaces Invites GQL', () => {
         processableWorkspaceEmailInvite.workspaceId = myInviteTargetWorkspace.id
         processableWorkspaceEmailInvite.inviteId = workspaceEmailInvite.id
         processableWorkspaceEmailInvite.token = workspaceEmailInvite.token
+
+        const workspaceEmailAdminInvite = await captureCreatedInvite(async () => {
+          await gqlHelpers.createInvite(
+            {
+              workspaceId: myInviteTargetWorkspace.id,
+              input: {
+                email: processableWorkspaceEmailAdminInvite.email,
+                role: WorkspaceRole.Admin
+              }
+            },
+            { assertNoErrors: true }
+          )
+        })
+
+        processableWorkspaceEmailAdminInvite.workspaceId = myInviteTargetWorkspace.id
+        processableWorkspaceEmailAdminInvite.inviteId = workspaceEmailAdminInvite.id
+        processableWorkspaceEmailAdminInvite.token = workspaceEmailAdminInvite.token
 
         const projectInvite = await captureCreatedInvite(
           async () =>
@@ -1010,21 +1016,28 @@ describe('Workspaces Invites GQL', () => {
         processableProjectInvite.token = projectInvite.token
       })
 
+      const deleteEmail = async (email: string) => {
+        const emailEntity = await findEmailFactory({ db })({
+          email
+        })
+        if (emailEntity) {
+          await deleteUserEmailFactory({ db })({
+            userId: emailEntity.userId,
+            id: emailEntity.id
+          })
+        }
+      }
+
       afterEach(async () => {
         // Serial execution to avoid race conditions
         await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
         await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
 
         // Reset otherGuy's newly added verified email
-        const verifiedEmail = await findEmailFactory({ db })({
-          email: emailInviteEmail
-        })
-        if (verifiedEmail) {
-          await deleteUserEmailFactory({ db })({
-            userId: verifiedEmail.userId,
-            id: verifiedEmail.id
-          })
-        }
+        await Promise.all([
+          deleteEmail(emailInviteEmail),
+          deleteEmail(adminEmailInviteEmail)
+        ])
       })
 
       it("can't retrieve it if not the invitee and no token specified", async () => {
@@ -1259,7 +1272,7 @@ describe('Workspaces Invites GQL', () => {
             {
               input: {
                 accept,
-                token: processableWorkspaceEmailInvite.token,
+                token: processableWorkspaceEmailAdminInvite.token,
                 addNewEmail: true
               }
             },
@@ -1281,7 +1294,9 @@ describe('Workspaces Invites GQL', () => {
             userId: otherGuy.id
           })
           const newVerifiedEmail = verifiedEmails.find(
-            (e) => e.email.toLowerCase() === emailInviteEmail.toLowerCase()
+            (e) =>
+              e.email.toLowerCase() ===
+              processableWorkspaceEmailAdminInvite.email.toLowerCase()
           )
 
           if (accept) {
@@ -1289,6 +1304,77 @@ describe('Workspaces Invites GQL', () => {
           } else {
             expect(newVerifiedEmail).to.not.be.ok
           }
+        }
+      )
+
+      itEach(
+        [{ roleChanged: true }, { roleChanged: false }],
+        ({ roleChanged }) =>
+          `can accept an email invite, even if already a workspace member, and role ${
+            roleChanged ? 'upgraded' : 'not downgraded'
+          }`,
+        async ({ roleChanged }) => {
+          const res1 = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: processableWorkspaceInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res1).to.not.haveGraphQLErrors()
+          expect(res1.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            expectedWorkspaceRole: Roles.Workspace.Member
+          })
+
+          const targetInvite = roleChanged
+            ? processableWorkspaceEmailAdminInvite
+            : processableWorkspaceEmailInvite
+
+          const res2 = await gqlHelpers.useInvite(
+            {
+              input: {
+                accept: true,
+                token: targetInvite.token,
+                addNewEmail: true
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res2).to.not.haveGraphQLErrors()
+          expect(res2.data?.workspaceMutations.invites.use).to.be.ok
+
+          await validateResourceAccess({
+            shouldHaveAccess: true,
+            expectedWorkspaceRole: roleChanged
+              ? Roles.Workspace.Admin
+              : Roles.Workspace.Member
+          })
+
+          const email = targetInvite.email
+          const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
+            db
+          })({
+            userId: otherGuy.id
+          })
+          const newVerifiedEmail = verifiedEmails.find(
+            (e) => e.email.toLowerCase() === email.toLowerCase()
+          )
+          expect(newVerifiedEmail).to.be.ok
         }
       )
 

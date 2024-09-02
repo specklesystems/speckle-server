@@ -56,6 +56,7 @@ generates:
         ProjectAutomationsUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectAutomationsUpdatedMessageGraphQLReturn'
         UserAutomateInfo: '@/modules/automate/helpers/graphTypes#UserAutomateInfoGraphQLReturn'
         Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceGraphQLReturn'
+        WorkspaceBilling: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceBillingGraphQLReturn'
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
