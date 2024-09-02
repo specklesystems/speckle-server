@@ -76,7 +76,7 @@ import earlybirdImage from '~/assets/images/banners/earlybird.gif'
 useHead({ title: 'Dashboard' })
 
 definePageMeta({
-  middleware: ['homepage'],
+  middleware: ['auth'],
   alias: ['/profile', '/dashboard']
 })
 
