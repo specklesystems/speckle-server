@@ -238,6 +238,27 @@ describe('Workspace services', () => {
       expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
     })
 
+    it('does not allow turning on domainBasedMembershipProtection if the workspace has no verified domains', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            domainBasedMembershipProtectionEnabled: true
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
+    })
+
     it('does not allow setting the workspace name to an empty string', async () => {
       const workspace = createTestWorkspaceWithDomainsData()
 

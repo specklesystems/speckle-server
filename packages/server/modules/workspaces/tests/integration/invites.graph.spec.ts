@@ -65,23 +65,15 @@ import {
 } from '@/modules/auth/tests/helpers/registration'
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import {
-  getWorkspaceDomainsFactory,
-  getWorkspaceFactory,
-  storeWorkspaceDomainFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { getStream } from '@/modules/core/repositories/streams'
-import { addDomainToWorkspaceFactory } from '@/modules/workspaces/services/management'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
   findEmailFactory,
-  findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
@@ -277,28 +269,16 @@ describe('Workspaces Invites GQL', () => {
     await markUserEmailAsVerifiedFactory({
       updateUserEmail: updateUserEmailFactory({ db })
     })({ email })
+
     await createTestWorkspaces([
       [myFirstWorkspace, me],
-      [domainProtectedWorkspace, me],
+      [domainProtectedWorkspace, me, workspaceDomain],
       [otherGuysWorkspace, otherGuy]
     ])
     await assignToWorkspaces([
       [otherGuysWorkspace, me, Roles.Workspace.Member],
       [myFirstWorkspace, myWorkspaceFriend, Roles.Workspace.Member]
     ])
-
-    await addDomainToWorkspaceFactory({
-      findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-      storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-      getWorkspace: getWorkspaceFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit,
-      getDomains: getWorkspaceDomainsFactory({ db })
-    })({
-      userId: me.id,
-      workspaceId: domainProtectedWorkspace.id,
-      domain: workspaceDomain
-    })
   })
 
   afterEach(() => {
