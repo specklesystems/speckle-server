@@ -32,7 +32,7 @@
         and better project management with your team. Get your workspace today!
       </p>
       <div class="flex mt-6 gap-2">
-        <FormButton :disabled="!isAdmin" color="outline" @click="$emit('create')">
+        <FormButton color="outline" @click="$emit('create')">
           Create workspace
         </FormButton>
         <!-- <FormButton color="subtle">Learn more</FormButton> -->
@@ -41,10 +41,6 @@
   </div>
 </template>
 <script setup lang="ts">
-defineProps<{
-  isAdmin: boolean
-}>()
-
 defineEmits<{
   (e: 'create'): void
 }>()
