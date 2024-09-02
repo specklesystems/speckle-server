@@ -49,6 +49,8 @@ import {
   WorkspaceInviteResourceType
 } from '@/modules/workspaces/domain/constants'
 import {
+  WorkspaceAdminError,
+  WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
@@ -633,8 +635,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
 
           if (!workspaceId) {
-            // Project does not belong to a workspace
-            throw new Error()
+            throw new WorkspaceInvalidProjectError()
           }
 
           const currentRole = await getWorkspaceRoleForUserFactory({ db })({
@@ -644,7 +645,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           if (currentRole?.role === Roles.Workspace.Admin) {
             // User is workspace admin and cannot have their project roles changed
-            throw new Error()
+            throw new WorkspaceAdminError()
           }
 
           return await updateStreamRoleAndNotify(

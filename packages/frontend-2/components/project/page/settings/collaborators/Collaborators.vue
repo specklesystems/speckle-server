@@ -85,8 +85,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import {
   useCancelProjectInvite,
-  useUpdateUserRole,
-  useUpdateWorkspaceProjectRole
+  useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
@@ -114,8 +113,6 @@ const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
 
 const route = useRoute()
 const apollo = useApolloClient().client
-const updateRole = useUpdateUserRole()
-const updateWorkspaceProjectRole = useUpdateWorkspaceProjectRole()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const cancelInvite = useCancelProjectInvite()
 const { activeUser } = useActiveUser()
@@ -142,6 +139,8 @@ const { result: workspaceResult } = useQuery(
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => workspaceResult.value?.workspace)
 
+const updateRole = useUpdateUserRole(project)
+
 const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
   project,
   workspace
@@ -156,20 +155,11 @@ const onCollaboratorRoleChange = async (
   if (collaborator.inviteId) return
 
   loading.value = true
-  if (isWorkspacesEnabled.value && project.value?.workspaceId) {
-    await updateWorkspaceProjectRole({
-      projectId: projectId.value,
-      userId: collaborator.id,
-      role: newRole
-    })
-  } else {
-    await updateRole({
-      projectId: projectId.value,
-      userId: collaborator.id,
-      role: newRole
-    })
-  }
-
+  await updateRole({
+    projectId: projectId.value,
+    userId: collaborator.id,
+    role: newRole
+  })
   loading.value = false
 
   mp.track('Stream Action', {

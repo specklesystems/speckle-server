@@ -20,7 +20,8 @@ import type {
   WorkspaceProjectsArgs,
   Workspace,
   WorkspaceProjectInviteCreateInput,
-  InviteProjectUserMutation
+  InviteProjectUserMutation,
+  Project
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -200,12 +201,15 @@ export function useCreateProject() {
   }
 }
 
-export function useUpdateUserRole() {
+export function useUpdateUserRole(
+  project?: Ref<Pick<Project, 'workspaceId'> | undefined>
+) {
   const apollo = useApolloClient().client
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (input: ProjectUpdateRoleInput) => {
+  const updateProjectRole = async (input: ProjectUpdateRoleInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -232,14 +236,8 @@ export function useUpdateUserRole() {
 
     return data?.projectMutations.updateRole
   }
-}
 
-export function useUpdateWorkspaceProjectRole() {
-  const apollo = useApolloClient().client
-  const { activeUser } = useActiveUser()
-  const { triggerNotification } = useGlobalToast()
-
-  return async (input: ProjectUpdateRoleInput) => {
+  const updateWorkspaceProjectRole = async (input: ProjectUpdateRoleInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -266,6 +264,11 @@ export function useUpdateWorkspaceProjectRole() {
 
     return data?.workspaceMutations.projects
   }
+
+  const isWorkspaceProject =
+    isWorkspacesEnabled.value && !isUndefined(project?.value?.workspaceId)
+
+  return isWorkspaceProject ? updateWorkspaceProjectRole : updateProjectRole
 }
 
 export function useInviteUserToProject() {
