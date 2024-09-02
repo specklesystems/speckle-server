@@ -2,16 +2,16 @@
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Invite to project</template>
     <div class="flex flex-col gap-4 my-2">
-      <FormSelectWorkspaceRoles
-        v-if="project?.workspaceId"
-        v-model="workspaceRole"
-        show-label
-        label="Workspace role"
-        size="lg"
-        help="If target user does not have a role in the parent workspace, they will be assigned this role."
-        :allow-unset="false"
-      />
-      <div v-if="!isWorkspaceMemberAndProjectOwner">
+      <div v-if="!isWorkspaceMemberAndProjectOwner" class="flex flex-col gap-4">
+        <FormSelectWorkspaceRoles
+          v-if="project?.workspaceId"
+          v-model="workspaceRole"
+          show-label
+          label="Workspace role"
+          size="lg"
+          help="If target user does not have a role in the parent workspace, they will be assigned this role."
+          :allow-unset="false"
+        />
         <FormTextInput
           v-model="search"
           name="search"
@@ -60,23 +60,31 @@
           />
         </div>
       </div>
-      <div v-else>
-        <div class="text-body-xs font-medium mb-1">Add users from workspace</div>
-        <div
-          v-if="filteredInviteMembers.length"
-          class="flex flex-col border bg-foundation border-primary-muted rounded-md"
-        >
-          <ProjectPageTeamDialogInviteUserServerUserRow
-            v-for="user in filteredInviteMembers"
-            :key="user.id"
-            :user="user"
-            :stream-role="role"
-            :disabled="loading"
-            :target-workspace-role="workspaceRole"
-            @invite-user="($event) => onInviteUser($event.user)"
-          />
+      <div v-else class="flex flex-col gap-4">
+        <FormSelectProjectRoles
+          v-model="role"
+          show-label
+          label="Project role"
+          size="lg"
+        />
+        <div>
+          <div class="text-body-xs font-medium mb-1">Add users from workspace</div>
+          <div
+            v-if="filteredInviteMembers.length"
+            class="flex flex-col border bg-foundation border-primary-muted rounded-md"
+          >
+            <ProjectPageTeamDialogInviteUserServerUserRow
+              v-for="user in filteredInviteMembers"
+              :key="user.id"
+              :user="user"
+              :stream-role="role"
+              :disabled="loading"
+              :target-workspace-role="workspaceRole"
+              @invite-user="($event) => onInviteUser($event.user)"
+            />
+          </div>
+          <p v-else class="text-sm text-gray-500 mt-4">No available users found.</p>
         </div>
-        <p v-else class="text-sm text-gray-500 mt-4">No available users found.</p>
       </div>
     </div>
   </LayoutDialog>
