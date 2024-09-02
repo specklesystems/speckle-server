@@ -30,7 +30,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
-  WorkspaceInvalidDescriptionError
+  WorkspaceInvalidDescriptionError,
+  WorkspaceNoVerifiedDomainsError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -50,7 +51,7 @@ import { blockedDomains } from '@/modules/workspaces/helpers/blockedDomains'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { chunk, isEmpty } from 'lodash'
+import { chunk, isEmpty, omit } from 'lodash'
 import {
   DeleteProjectRole,
   UpsertProjectRole
@@ -137,13 +138,13 @@ export const updateWorkspaceFactory =
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
-    getWorkspace: GetWorkspace
+    getWorkspace: GetWorkspaceWithDomains
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
     // Get existing workspace to merge with incoming changes
-    const currentWorkspace = await getWorkspace({ workspaceId })
+    const currentWorkspace = await getWorkspace({ id: workspaceId })
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
     }
@@ -160,8 +161,15 @@ export const updateWorkspaceFactory =
       throw new WorkspaceInvalidDescriptionError()
     }
 
+    if (
+      workspaceInput.discoverabilityEnabled &&
+      !currentWorkspace.discoverabilityEnabled &&
+      !currentWorkspace.domains.find((domain) => domain.verified)
+    )
+      throw new WorkspaceNoVerifiedDomainsError()
+
     const workspace = {
-      ...currentWorkspace,
+      ...omit(currentWorkspace, 'domains'),
       ...removeNullOrUndefinedKeys(workspaceInput),
       updatedAt: new Date()
     }

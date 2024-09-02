@@ -9,16 +9,25 @@ export class WorkspaceAdminRequiredError extends BaseError {
 export class WorkspaceInvalidRoleError extends BaseError {
   static defaultMessage = 'Invalid workspace role provided'
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'
+  static statusCode = 400
 }
 
 export class WorkspaceInvalidLogoError extends BaseError {
   static defaultMessage = 'Provided logo is not valid'
   static code = 'WORKSPACE_INVALID_LOGO_ERROR'
+  static statusCode = 400
 }
 
 export class WorkspaceInvalidDescriptionError extends BaseError {
   static defaultMessage = 'Provided description is too long'
   static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
+  static statusCode = 400
+}
+
+export class WorkspaceNoVerifiedDomainsError extends BaseError {
+  static defaultMessage = 'Invalid operation, the workspace has no verified domains'
+  static code = 'WORKSPACE_NO_VERIFIED_DOMAINS'
+  static statusCode = 400
 }
 
 export class WorkspaceQueryError extends BaseError {
