@@ -1,6 +1,11 @@
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
-import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceWithDomains,
+  DeleteWorkspaceDomain,
+  CountDomainsByWorkspaceId,
+  UpdateWorkspace
+} from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 export const isUserWorkspaceDomainPolicyCompliantFactory =
@@ -33,4 +38,29 @@ export const isUserWorkspaceDomainPolicyCompliantFactory =
       userEmails,
       workspaceDomains: workspace.domains
     })
+  }
+
+export const deleteWorkspaceDomainFactory =
+  ({
+    deleteWorkspace,
+    countDomainsByWorkspaceId,
+    updateWorkspace
+  }: {
+    deleteWorkspace: DeleteWorkspaceDomain
+    countDomainsByWorkspaceId: CountDomainsByWorkspaceId
+    updateWorkspace: UpdateWorkspace
+  }) =>
+  async ({ workspaceId, domainId }: { workspaceId: string; domainId: string }) => {
+    await deleteWorkspace({ id: domainId })
+
+    const domainsCount = await countDomainsByWorkspaceId({ workspaceId })
+    if (domainsCount === 0) {
+      await updateWorkspace({
+        workspaceId,
+        workspaceInput: {
+          domainBasedMembershipProtectionEnabled: false,
+          discoverabilityEnabled: false
+        }
+      })
+    }
   }

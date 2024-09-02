@@ -67,8 +67,8 @@ import {
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
   getWorkspaceCollaboratorsTotalCountFactory,
+  deleteWorkspaceDomainFactory as repoDeleteWorkspaceDomainFactory,
   storeWorkspaceDomainFactory,
-  deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
@@ -122,7 +122,10 @@ import {
   getWorkspaceCostFactory,
   getWorkspaceCostItemsFactory
 } from '@/modules/workspaces/services/cost'
-import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import {
+  deleteWorkspaceDomainFactory,
+  isUserWorkspaceDomainPolicyCompliantFactory
+} from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
@@ -416,7 +419,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             Roles.Workspace.Admin,
             context.resourceAccessRules
           )
-          await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
+          await deleteWorkspaceDomainFactory({
+            deleteWorkspace: repoDeleteWorkspaceDomainFactory({ db }),
+            countDomainsByWorkspaceId: countProjectsVersionsByWorkspaceIdFactory({
+              db
+            }),
+            updateWorkspace: updateWorkspaceFactory({
+              getWorkspace: getWorkspaceFactory({ db }),
+              upsertWorkspace: upsertWorkspaceFactory({ db }),
+              emitWorkspaceEvent: getEventBus().emit
+            })
+          })({ workspaceId: args.input.workspaceId, domainId: args.input.id })
+
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
