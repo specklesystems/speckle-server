@@ -266,7 +266,7 @@ export function useUpdateUserRole(
   }
 
   const isWorkspaceProject =
-    isWorkspacesEnabled.value && !isUndefined(project?.value?.workspaceId)
+    isWorkspacesEnabled.value && project?.value?.workspaceId?.length
 
   return isWorkspaceProject ? updateWorkspaceProjectRole : updateProjectRole
 }
