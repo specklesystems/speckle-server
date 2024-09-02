@@ -3861,7 +3861,7 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   /** Billing data for Workspaces beta */
-  billing: WorkspaceBilling;
+  billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -4166,7 +4166,7 @@ export type BasicWorkspaceFragment = { __typename?: 'Workspace', id: string, nam
 
 export type BasicPendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, inviteId: string, workspaceId: string, workspaceName: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string }, user?: { __typename?: 'LimitedUser', id: string, name: string } | null };
 
-export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } };
+export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing?: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } | null };
 
 export type WorkspaceProjectsFragment = { __typename?: 'ProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string }> };
 
@@ -4198,7 +4198,7 @@ export type GetWorkspaceWithBillingQueryVariables = Exact<{
 }>;
 
 
-export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } } };
+export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing?: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } | null } };
 
 export type GetWorkspaceWithProjectsQueryVariables = Exact<{
   workspaceId: Scalars['String']['input'];
