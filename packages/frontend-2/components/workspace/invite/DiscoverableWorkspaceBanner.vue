@@ -1,9 +1,9 @@
 <template>
   <InviteBanner :invite="invite" @processed="processJoin">
     <template #message>
-      You may join the workspace
+      Your team is already using Workspaces! Collaborate with your peers in the
       <span class="font-medium">{{ workspace.name }}</span>
-      because it is part of your organization
+      space!
     </template>
   </InviteBanner>
 </template>
