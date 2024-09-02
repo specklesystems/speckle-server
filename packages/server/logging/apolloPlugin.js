@@ -64,34 +64,34 @@ module.exports = {
       },
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
+
+        const operationName = getOperationName(ctx)
+        const query = ctx.request.query
+        const variables = redactSensitiveVariables(ctx.request.variables)
         logger = logger.child({
-          apollo_query_duration_ms: Date.now() - apolloRequestStart
+          apollo_query_duration_ms: Date.now() - apolloRequestStart,
+          graphql_operation_name: operationName,
+          graphql_query: query,
+          graphql_variables: variables
         })
 
         for (const err of ctx.errors) {
-          const operationName = getOperationName(ctx)
-          const query = ctx.request.query
-          const variables = redactSensitiveVariables(ctx.request.variables)
-          logger = logger.child({
-            graphql_operation_name: operationName,
-            graphql_query: query,
-            graphql_variables: variables
-          })
+          const realError = err.originalError ? err.originalError : err
 
-          if (err.path) {
+          if (realError.path) {
             logger = logger.child({
               'query-path': err.path.join(' > ')
             })
           }
-          if (shouldLogAsInfoLevel(err)) {
+          if (shouldLogAsInfoLevel(realError)) {
             logger.info(
-              { err },
-              '{graphql_operation_name} graphql operation failed after {apollo_query_duration_ms} ms'
+              { err: realError },
+              '{graphql_operation_name} graphql operation encountered an error after {apollo_query_duration_ms} ms'
             )
           } else {
             logger.error(
-              { err },
-              '{graphql_operation_name} graphql operation failed after {apollo_query_duration_ms} ms'
+              { err: realError },
+              '{graphql_operation_name} graphql operation encountered an error after {apollo_query_duration_ms} ms'
             )
           }
         }
