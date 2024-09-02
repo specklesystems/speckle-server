@@ -8,13 +8,13 @@
         :
       </p>
       <FormSelectWorkspaceRoles
-        v-model="oldRole"
+        v-model="newRole"
         fully-control-value
         :disabled-items="disabledItems"
       />
-      <div class="flex flex-col items-start gap-1 text-xs">
+      <div v-if="newRole" class="flex flex-col items-start gap-1 text-xs">
         <div
-          v-for="(message, i) in getWorkspaceProjectRoleMessages(oldRole)"
+          v-for="(message, i) in getWorkspaceProjectRoleMessages(newRole)"
           :key="`message-${i}`"
         >
           {{ message }}
@@ -38,7 +38,7 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
-const oldRole = defineModel<WorkspaceRoles>('oldRole', { required: true })
+const newRole = defineModel<WorkspaceRoles | undefined>('newRole', { required: true })
 
 const disabledItems = computed<WorkspaceRoles[]>(() =>
   !props.workspaceDomainPolicyCompliant
@@ -54,10 +54,13 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: 'Update',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary', fullWidth: true, disabled: !newRole.value },
     onClick: () => {
       open.value = false
-      emit('updateRole', oldRole.value)
+      if (newRole.value) {
+        emit('updateRole', newRole.value)
+      }
+      newRole.value = undefined
     }
   }
 ])
