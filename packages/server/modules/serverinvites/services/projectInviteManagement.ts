@@ -99,7 +99,7 @@ export const createProjectInviteFactory =
     const project = await deps.getStream({ streamId: resourceId })
     if (!allowWorkspacedProjects && project && project?.workspaceId) {
       throw new InviteCreateValidationError(
-        'Target project belongs to a workspace, you should use the createForWorkspace() resolver instead'
+        'Target project belongs to a workspace, you should use a workspace invite instead'
       )
     }
 
