@@ -21,11 +21,7 @@
       <FormButton
         size="sm"
         color="outline"
-        :disabled="
-          (user.workspaceDomainPolicyCompliant === false &&
-            targetRole !== Roles.Workspace.Guest) ||
-          isButtonDisabled
-        "
+        :disabled="isButtonDisabled"
         @click="() => $emit('invite-user')"
       >
         Invite
@@ -61,6 +57,9 @@ const isTryingToSetGuestOwner = computed(
 const isButtonDisabled = computed(() => {
   if (props.disabled) return true
   if (isTryingToSetGuestOwner.value) return true
+  if (props.user.workspaceDomainPolicyCompliant === false)
+    return props.targetRole !== Roles.Workspace.Guest
+
   return false
 })
 </script>

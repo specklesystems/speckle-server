@@ -43,6 +43,7 @@
             :user="user"
             :stream-role="role"
             :disabled="loading"
+            :target-workspace-role="workspaceRole"
             @invite-user="($event) => onInviteUser($event.user)"
           />
         </template>
@@ -52,6 +53,7 @@
           :stream-role="role"
           :disabled="loading"
           :is-guest-mode="isGuestMode"
+          :unmatching-domain-policy="unmatchingDomainPolicy"
           class="p-2"
           @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
         />
@@ -84,6 +86,13 @@ graphql(`
     id
     workspaceId
     ...ProjectPageTeamInternals_Project
+    workspace {
+      domainBasedMembershipProtectionEnabled
+      domains {
+        domain
+        id
+      }
+    }
   }
 `)
 
@@ -119,7 +128,8 @@ const {
     collaboratorListItems.value
       .filter((i): i is SetFullyRequired<typeof i, 'user'> => !!i.user?.id)
       .map((t) => t.user.id)
-  )
+  ),
+  workspaceId: props.project?.workspaceId
 })
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
@@ -133,6 +143,20 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
 ])
 
 const isOwnerSelected = computed(() => role.value === Roles.Stream.Owner)
+const allowedDomains = computed(() =>
+  props.project?.workspace?.domains?.map((c) => c.domain)
+)
+const unmatchingDomainPolicy = computed(() => {
+  if (props.project?.workspace?.domainBasedMembershipProtectionEnabled) {
+    return workspaceRole.value === Roles.Workspace.Guest
+      ? false
+      : !selectedEmails.value?.every((email) =>
+          allowedDomains.value?.includes(email.split('@')[1])
+        )
+  }
+
+  return false
+})
 
 const onInviteUser = async (
   user: InvitableUser | InvitableUser[],
