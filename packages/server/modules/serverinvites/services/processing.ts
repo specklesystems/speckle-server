@@ -94,7 +94,8 @@ export const convertToFinalizationValidation = (params: {
         inviterResourceAccessLimits: null,
         target,
         targetUser: finalizerUser,
-        serverInfo: params.serverInfo
+        serverInfo: params.serverInfo,
+        finalizingInvite: true
       })
     } catch (e) {
       if (!(e instanceof InviteCreateValidationError)) throw e
