@@ -57,7 +57,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   multiple?: boolean
   modelValue?: ValueType
-  clearable?: false
+  clearable?: boolean
 }>()
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
