@@ -3,7 +3,7 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <CommonCard v-if="versionCount" class="text-body-xs bg-foundation">
-        <p class="text-bold font-medium">Workspaces are free while in beta.</p>
+        <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
         <p class="py-6">
           Once the beta period ends, workspaces are still free up to
           {{ versionCount.max }} model versions.
@@ -50,7 +50,7 @@
         <div class="pt-4 md:pt-0 md:pl-4 md:w-40">
           <FormButton
             :external="true"
-            :to="'mailto:hello@speckle.systems'"
+            to="mailto:hello@speckle.systems"
             color="primary"
           >
             Talk to us
