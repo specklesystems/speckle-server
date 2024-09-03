@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>
         Select a new role for
-        <span class="text-bold">{{ name }}</span>
+        <span class="text-medium">{{ name }}</span>
         :
       </p>
       <FormSelectWorkspaceRoles
