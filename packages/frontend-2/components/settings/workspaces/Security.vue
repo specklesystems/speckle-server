@@ -295,7 +295,7 @@ const addDomain = async () => {
       domain: selectedDomain.value,
       workspaceId: props.workspaceId
     },
-    result.value?.workspace.domains,
+    result.value?.workspace.domains ?? [],
     result.value?.workspace.discoverabilityEnabled,
     result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
