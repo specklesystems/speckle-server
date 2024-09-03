@@ -3,11 +3,6 @@ import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  Query,
-  QueryWorkspaceArgs,
-  QueryWorkspaceInviteArgs,
-  User,
-  UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -33,7 +28,7 @@ import {
   processWorkspaceInviteMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
-import { isFunction, isUndefined } from 'lodash-es'
+import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
 
@@ -143,33 +138,33 @@ export const useProcessWorkspaceInvite = () => {
 
             if (accepted) {
               // Evict Query.workspace
-              modifyObjectField<Query['workspace'], QueryWorkspaceArgs>(
+              modifyObjectField(
                 cache,
                 ROOT_QUERY,
                 'workspace',
-                ({ variables, details: { DELETE } }) => {
-                  if (variables.id === workspaceId) return DELETE
+                ({ variables, helpers: { evict } }) => {
+                  if (variables.id === workspaceId) return evict()
                 }
               )
 
               // Evict all User.workspaces
-              modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+              modifyObjectField(
                 cache,
                 getCacheId('User', userId),
                 'workspaces',
-                ({ details: { DELETE } }) => DELETE
+                ({ helpers: { evict } }) => evict()
               )
             }
 
             // Set Query.workspaceInvite(id) = null (no invite)
-            modifyObjectField<Query['workspaceInvite'], QueryWorkspaceInviteArgs>(
+            modifyObjectField(
               cache,
               ROOT_QUERY,
               'workspaceInvite',
-              ({ value, variables, details: { readField } }) => {
+              ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const workspaceId = readField('workspaceId', value)
-                  if (workspaceId === workspaceId) return null
+                  const inviteWorkspaceId = readField(value, 'workspaceId')
+                  if (inviteWorkspaceId === workspaceId) return null
                 } else {
                   if (variables.workspaceId === workspaceId) return null
                 }
@@ -367,25 +362,18 @@ export function useCreateWorkspace() {
           if (!workspaceId) return
           // Navigation to workspace is gonna fetch everything needed for the page, so we only
           // really need to update workspace fields used in sidebar & settings: User.workspaces
-          modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+          modifyObjectField(
             cache,
             getCacheId('User', userId),
             'workspaces',
-            ({ variables, value, details: { DELETE } }) => {
-              if (variables.filter?.search?.length) return DELETE // evict if filtered search
-
-              const totalCount = isUndefined(value?.totalCount)
-                ? undefined
-                : value.totalCount + 1
-              const items = isUndefined(value?.items)
-                ? undefined
-                : [...value.items, getObjectReference('Workspace', workspaceId)]
-
-              return {
-                ...value,
-                totalCount,
-                items
-              }
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [...items, ref('Workspace', workspaceId)])
+              })
+            },
+            {
+              autoEvictFiltered: true
             }
           )
         }

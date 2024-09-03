@@ -68,12 +68,7 @@ import {
   projectsDashboardWorkspaceQuery
 } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  getCacheId,
-  evictObjectFields,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import type { User, UserProjectsArgs } from '~~/lib/common/generated/gql/graphql'
+import { getCacheId, modifyObjectField } from '~~/lib/common/helpers/graphql'
 import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
@@ -171,35 +166,19 @@ onUserProjectsUpdate((res) => {
 
   if (isNewProject && incomingProject) {
     // Add to User.projects where possible
-    modifyObjectFields<UserProjectsArgs, User['projects']>(
+    modifyObjectField(
       cache,
       getCacheId('User', activeUserId),
-      (fieldName, variables, value, { ref }) => {
-        if (fieldName !== 'projects') return
-        if (variables.filter?.search?.length) return
-        if (variables.filter?.onlyWithRoles?.length) {
-          const roles = variables.filter.onlyWithRoles
-          if (!roles.includes(incomingProject.role || '')) return
-        }
-
-        return {
-          ...value,
-          items: [ref('Project', incomingProject.id), ...(value.items || [])],
-          totalCount: (value.totalCount || 0) + 1
-        }
-      }
-    )
-
-    // Elsewhere - just evict fields directly
-    evictObjectFields<UserProjectsArgs, User['projects']>(
-      cache,
-      getCacheId('User', activeUserId),
-      (fieldName, variables) => {
-        if (fieldName !== 'projects') return false
-        if (variables.filter?.search?.length) return true
-
-        return false
-      }
+      'projects',
+      ({ helpers: { ref, createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
+          update('items', (items) => [
+            ref('Project', incomingProject.id),
+            ...(items || [])
+          ])
+          update('totalCount', (count) => count + 1)
+        }),
+      { autoEvictFiltered: true }
     )
   }
 
