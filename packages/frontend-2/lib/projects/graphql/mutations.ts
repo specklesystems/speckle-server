@@ -56,6 +56,22 @@ export const updateProjectRoleMutation = graphql(`
   }
 `)
 
+export const updateWorkspaceProjectRoleMutation = graphql(`
+  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
+    workspaceMutations {
+      projects {
+        updateRole(input: $input) {
+          id
+          team {
+            id
+            role
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const inviteProjectUserMutation = graphql(`
   mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {
     projectMutations {
