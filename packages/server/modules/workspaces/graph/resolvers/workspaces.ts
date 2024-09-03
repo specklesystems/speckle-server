@@ -419,12 +419,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
           await deleteWorkspaceDomainFactory({
-            deleteWorkspace: repoDeleteWorkspaceDomainFactory({ db }),
+            deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db }),
             countDomainsByWorkspaceId: countProjectsVersionsByWorkspaceIdFactory({
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
-              getWorkspace: getWorkspaceFactory({ db }),
+              getWorkspace: getWorkspaceWithDomainsFactory({ db }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit
             })

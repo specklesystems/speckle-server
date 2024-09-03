@@ -6,13 +6,13 @@
       <img
         src="~~/assets/images/workspaces.png"
         alt="Introducing workspaces"
-        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover dark:hidden"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden md:block dark:!hidden"
       />
 
       <img
         src="~~/assets/images/workspaces-dark.png"
         alt="Introducing workspaces"
-        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden dark:block"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden dark:md:block"
       />
 
       <div
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="relative z-10 text-foreground max-w-lg">
+    <div class="relative z-10 text-foreground max-w-sm lg:max-w-md xl:max-w-lg">
       <div class="flex gap-2 items-center">
         <h3 class="text-heading-lg">Introducing workspaces</h3>
         <CommonBadge rounded class="">BETA</CommonBadge>
@@ -32,7 +32,7 @@
         and better project management with your team. Get your workspace today!
       </p>
       <div class="flex mt-6 gap-2">
-        <FormButton :disabled="!isAdmin" color="outline" @click="$emit('create')">
+        <FormButton color="outline" @click="$emit('create')">
           Create workspace
         </FormButton>
         <!-- <FormButton color="subtle">Learn more</FormButton> -->
@@ -41,10 +41,6 @@
   </div>
 </template>
 <script setup lang="ts">
-defineProps<{
-  isAdmin: boolean
-}>()
-
 defineEmits<{
   (e: 'create'): void
 }>()

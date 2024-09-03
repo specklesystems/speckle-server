@@ -844,6 +844,13 @@ describe('Workspaces GQL CRUD', () => {
         expect(createRes).to.not.haveGraphQLErrors()
         const workspaceId = createRes.data!.workspaceMutations.create.id
 
+        const addDomainRes = await apollo.execute(AddWorkspaceDomainDocument, {
+          input: {
+            workspaceId,
+            domain: 'example.org'
+          }
+        })
+        expect(addDomainRes).to.not.haveGraphQLErrors()
         // Enable domain protection and discoverability
         const getRes = await apollo.execute(UpdateWorkspaceDocument, {
           input: {
@@ -853,14 +860,6 @@ describe('Workspaces GQL CRUD', () => {
           }
         })
         expect(getRes).to.not.haveGraphQLErrors()
-
-        const addDomainRes = await apollo.execute(AddWorkspaceDomainDocument, {
-          input: {
-            workspaceId,
-            domain: 'example.org'
-          }
-        })
-        expect(addDomainRes).to.not.haveGraphQLErrors()
 
         const deleteDomainRes = await apollo.execute(DeleteWorkspaceDomainDocument, {
           input: {
