@@ -46,7 +46,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   name: string
-  workspaceDomainPolicyCompliant: boolean | null
+  workspaceDomainPolicyCompliant?: boolean | null
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
