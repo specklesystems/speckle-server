@@ -10,6 +10,8 @@ secret:
       name: '.circleci/deployment/manifests/speckle-server.secret.yaml - test session_secret'
     - match: 9bf360c5ce31170e8e3cb30e275b2c00224dd97b93282491c60fb1665fac3845
       name: local test license
+    - match: 7a4ab6f7bfbcc0a37aa3a0fb00fd5b6edd1d524f393a6054e242eb28f5c06be5
+      name: 'packages/server/modules/core/tests/graph.spec.js - test secret'
     - match: be603148062b367f828a58bdd695149d24f55f7c7f2e2c0bc31abd147cd07e86
       name: packages/server/modules/webhooks/tests/cleanup.spec.ts - test password
     - match: d1c44da2d7d52afaf219ff9789df7c04a79be80977336d7c87652db736b07538

@@ -20,7 +20,7 @@
           text
           :full-width="block"
           :disabled="loading"
-          @click="$emit('processed', false, token)"
+          @click="onDeclineClick(token)"
         >
           Decline
         </FormButton>
@@ -31,7 +31,7 @@
           class="px-4"
           :icon-left="CheckIcon"
           :disabled="loading"
-          @click="$emit('processed', true, token)"
+          @click="onAcceptClick(token)"
         >
           Accept
         </FormButton>
@@ -59,8 +59,9 @@ import {
   useNavigateToLogin,
   useNavigateToRegistration
 } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
-defineEmits<{
+const emit = defineEmits<{
   processed: [accept: boolean, token: Optional<string>]
 }>()
 
@@ -91,12 +92,15 @@ const { isLoggedIn } = useActiveUser()
 const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
 const goToSignUp = useNavigateToRegistration()
+const mixpanel = useMixpanel()
 
 const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
 const mainClasses = computed(() => {
-  const classParts = ['flex flex-col space-y-4 px-4 py-5 transition ']
+  const classParts = [
+    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg'
+  ]
 
   if (props.block) {
     classParts.push('')
@@ -136,6 +140,29 @@ const onLoginSignupClick = async () => {
     })
   } else {
     await goToSignUp({ query })
+  }
+}
+
+const onDeclineClick = (token?: string) => {
+  emit('processed', false, token)
+  if (props.invite.workspace) {
+    mixpanel.track('Invite Action', {
+      accepted: false,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.invite.workspace.id
+    })
+  }
+}
+
+const onAcceptClick = (token?: string) => {
+  emit('processed', true, token)
+  if (props.invite.workspace) {
+    mixpanel.track('Invite Action', {
+      accepted: true,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.invite.workspace.id
+    })
+    mixpanel.add_group('workspace_id', props.invite.workspace.id)
   }
 }
 </script>

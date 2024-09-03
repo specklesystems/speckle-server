@@ -18,8 +18,8 @@ type WorkspaceCreatedPayload = Workspace & {
   createdByUserId: string
 }
 type WorkspaceUpdatedPayload = Workspace
-type WorkspaceRoleDeletedPayload = WorkspaceAcl
-type WorkspaceRoleUpdatedPayload = WorkspaceAcl
+type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+type WorkspaceRoleUpdatedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
 type WorkspaceJoinedFromDiscoveryPayload = { userId: string; workspaceId: string }
 
 export type WorkspaceEventsPayloads = {

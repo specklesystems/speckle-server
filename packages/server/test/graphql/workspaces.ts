@@ -15,6 +15,9 @@ export const workspaceCollaboratorFragment = gql`
   fragment TestWorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
+    user {
+      name
+    }
   }
 `
 
@@ -24,11 +27,6 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
-  }
-`
-
-export const workspaceTeamFragment = gql`
-  fragment TestWorkspaceTeam on Workspace {
     team {
       id
       role
@@ -59,11 +57,15 @@ export const getWorkspaceQuery = gql`
   query GetWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...TestWorkspace
-      ...TestWorkspaceTeam
+      team {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+      }
     }
   }
   ${workspaceFragment}
-  ${workspaceTeamFragment}
+  ${workspaceCollaboratorFragment}
 `
 
 export const getActiveUserDiscoverableWorkspacesQuery = gql`
@@ -107,12 +109,14 @@ export const updateWorkspaceRoleQuery = gql`
     workspaceMutations {
       updateRole(input: $input) {
         team {
-          id
-          role
+          items {
+            ...TestWorkspaceCollaborator
+          }
         }
       }
     }
   }
+  ${workspaceCollaboratorFragment}
 `
 
 export const createWorkspaceProjectQuery = gql`
@@ -147,10 +151,19 @@ export const getWorkspaceProjectsQuery = gql`
 `
 
 export const getWorkspaceTeamQuery = gql`
-  query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
+  query GetWorkspaceTeam(
+    $workspaceId: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
     workspace(id: $workspaceId) {
-      team(filter: $filter) {
-        ...TestWorkspaceCollaborator
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+        cursor
+        totalCount
       }
     }
   }
@@ -161,6 +174,22 @@ export const leaveWorkspaceMutation = gql`
   mutation ActiveUserLeaveWorkspace($id: ID!) {
     workspaceMutations {
       leave(id: $id)
+    }
+  }
+`
+
+export const getProjectWorkspaceQuery = gql`
+  query ActiveUserProjectsWorkspace {
+    activeUser {
+      projects {
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
     }
   }
 `

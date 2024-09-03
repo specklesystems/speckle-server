@@ -11,7 +11,7 @@ import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
@@ -19,7 +19,6 @@ import {
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
-import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { isArray, isBoolean, omit } from 'lodash-es'
@@ -339,9 +338,9 @@ function createLink(params: {
   authToken: CookieRef<Optional<string>>
   nuxtApp: NuxtApp
   reqId: string
+  logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId } = params
-  const goToLogin = useNavigateToLogin()
+  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
@@ -374,14 +373,8 @@ function createLink(params: {
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {
       // Reset auth
-      authToken.value = undefined
-
-      // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
-      if (import.meta.client) {
-        window.location.href = loginRoute
-      } else {
-        goToLogin()
-      }
+      // since this may happen mid-routing, a standard router.push call may not work - do full reload
+      void logout({ skipToast: true, forceFullReload: true })
     }
 
     registerError()
@@ -472,15 +465,18 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
   const reqId = useRequestId()
+  const authToken = useAuthCookie()
+  const { logout } = useAuthManager({
+    deferredApollo: () => nuxtApp.$apollo?.default
+  })
 
   const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const authToken = useAuthCookie()
   const wsClient = import.meta.client
     ? createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
+  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

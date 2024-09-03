@@ -16,12 +16,12 @@ export const joinWorkspaceFactory =
   ({
     getUserEmails,
     getWorkspaceWithDomains,
-    insertWorkspaceRole,
+    upsertWorkspaceRole,
     emitWorkspaceEvent
   }: {
     getUserEmails: FindEmailsByUserId
     getWorkspaceWithDomains: GetWorkspaceWithDomains
-    insertWorkspaceRole: UpsertWorkspaceRole
+    upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
@@ -43,7 +43,7 @@ export const joinWorkspaceFactory =
     if (!matchingEmail) throw new WorkspaceJoinNotAllowedError()
 
     const role = Roles.Workspace.Member
-    await insertWorkspaceRole({ userId, workspaceId, role })
+    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.JoinedFromDiscovery,
       payload: { userId, workspaceId }

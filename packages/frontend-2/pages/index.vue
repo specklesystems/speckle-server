@@ -3,6 +3,7 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
+    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
       :workspaces-invites="workspacesResult?.activeUser || undefined"
@@ -51,6 +52,8 @@
         </div>
       </section>
     </div>
+
+    <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
 <script setup lang="ts">
@@ -68,11 +71,14 @@ import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import type { PromoBanner } from '~/lib/promo-banners/types'
+import submitImage from '~/assets/images/banners/submit.gif'
+import earlybirdImage from '~/assets/images/banners/earlybird.gif'
 
 useHead({ title: 'Dashboard' })
 
 definePageMeta({
-  middleware: ['homepage'],
+  middleware: ['auth'],
   alias: ['/profile', '/dashboard']
 })
 
@@ -181,4 +187,23 @@ const onDownloadManager = (extension: ManagerExtension) => {
     })
   }
 }
+
+const promoBanners = ref<PromoBanner[]>([
+  {
+    primaryText: 'Specklecon - Submit your proposal',
+    url: 'https://conf.speckle.systems/',
+    priority: 1,
+    expiryDate: '2024-09-02',
+    image: submitImage,
+    isBackgroundImage: true
+  },
+  {
+    primaryText: 'Specklecon - Early Bird Tickets',
+    url: 'https://conf.speckle.systems/',
+    priority: 2,
+    expiryDate: '2024-09-15',
+    image: earlybirdImage,
+    isBackgroundImage: true
+  }
+])
 </script>

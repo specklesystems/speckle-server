@@ -558,8 +558,8 @@
         },
         "max_object_upload_file_size_mb": {
           "type": "number",
-          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server",
-          "default": 50
+          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server. It should be greater than or equal to max_object_size_mb.",
+          "default": 100
         },
         "max_project_models_per_page": {
           "type": "number",

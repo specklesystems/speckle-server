@@ -1,12 +1,14 @@
 import {
   Workspace,
   WorkspaceAcl,
-  WorkspaceDomain
+  WorkspaceDomain,
+  WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { Roles } from '@speckle/shared'
@@ -19,14 +21,17 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import {
   WorkspaceAdminRequiredError,
   WorkspaceDomainBlockedError,
+  WorkspaceNotFoundError,
+  WorkspaceNoVerifiedDomainsError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { omit } from 'lodash'
+import { merge, omit } from 'lodash'
 import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Omit<Workspace, 'domains'>[]
@@ -114,11 +119,9 @@ describe('Workspace services', () => {
       })
 
       expect(context.storedRoles.length).to.equal(1)
-      expect(context.storedRoles[0]).to.deep.equal({
-        userId,
-        workspaceId: workspace.id,
-        role: Roles.Workspace.Admin
-      })
+      expect(context.storedRoles[0].userId).to.equal(userId)
+      expect(context.storedRoles[0].workspaceId).to.equal(workspace.id)
+      expect(context.storedRoles[0].role).to.equal(Roles.Workspace.Admin)
     })
     it('emits a workspace created event', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -136,6 +139,184 @@ describe('Workspace services', () => {
         ...workspace,
         createdByUserId: userId
       })
+    })
+  })
+  describe('updateWorkspaceFactory creates a function, that', () => {
+    const createTestWorkspaceWithDomainsData = (
+      input: Partial<WorkspaceWithDomains> = {}
+    ): WorkspaceWithDomains => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspace: WorkspaceWithDomains = {
+        id: workspaceId,
+        name: cryptoRandomString({ length: 10 }),
+        description: cryptoRandomString({ length: 20 }),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        logo: null,
+        defaultLogoIndex: 0,
+        discoverabilityEnabled: false,
+        domainBasedMembershipProtectionEnabled: false,
+        domains: []
+      }
+      return merge(workspace, input)
+    }
+    it('throws WorkspaceNotFoundError if the workspace is not found', async () => {
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => null,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: cryptoRandomString({ length: 10 }),
+          workspaceInput: {}
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNotFoundError().message)
+    })
+    it('throws from image validator if the workspace logo is invalid', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            logo: 'a broken logo'
+          }
+        })
+      })
+      expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('validates description length', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            logo: 'a broken logo'
+          }
+        })
+      })
+      expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('does not allow turning on discoverability if the workspace has no verified domains', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            discoverabilityEnabled: true
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
+    })
+
+    it('does not allow turning on domainBasedMembershipProtection if the workspace has no verified domains', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            domainBasedMembershipProtectionEnabled: true
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
+    })
+
+    it('does not allow setting the workspace name to an empty string', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+
+      let newWorkspaceName
+      await updateWorkspaceFactory({
+        getWorkspace: async () => workspace,
+        emitWorkspaceEvent: async () => {
+          return []
+        },
+        upsertWorkspace: async ({ workspace }) => {
+          newWorkspaceName = workspace.name
+        }
+      })({
+        workspaceId: workspace.id,
+        workspaceInput: { name: '' }
+      })
+      expect(newWorkspaceName).to.be.equal(workspace.name)
+    })
+    it('updates the workspace and emits the correct event payload', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspace = createTestWorkspaceWithDomainsData({
+        id: workspaceId,
+        domains: [
+          {
+            createdAt: new Date(),
+            createdByUserId: cryptoRandomString({ length: 10 }),
+            domain: 'example.com',
+            updatedAt: new Date(),
+            id: cryptoRandomString({ length: 10 }),
+            verified: true,
+            workspaceId
+          }
+        ]
+      })
+
+      let updatedWorkspace
+
+      const workspaceInput = {
+        name: cryptoRandomString({ length: 10 }),
+        discoverabilityEnabled: true
+      }
+
+      await updateWorkspaceFactory({
+        getWorkspace: async () => workspace,
+        emitWorkspaceEvent: async () => {
+          return []
+        },
+        upsertWorkspace: async ({ workspace }) => {
+          updatedWorkspace = workspace
+        }
+      })({
+        workspaceId,
+        workspaceInput
+      })
+      expect(updatedWorkspace!.name).to.be.equal(workspaceInput.name)
+      expect(updatedWorkspace!.discoverabilityEnabled).to.be.equal(
+        workspaceInput.discoverabilityEnabled
+      )
     })
   })
 })
@@ -207,14 +388,12 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
       return []
     },
-    getStreams: async () => ({
-      streams: context.workspaceProjects,
-      totalCount: context.workspaceProjects.length,
-      cursorDate: null
-    }),
-    revokeStreamPermissions: async ({ streamId, userId }) => {
+    async *queryAllWorkspaceProjects() {
+      yield context.workspaceProjects
+    },
+    deleteProjectRole: async ({ projectId, userId }) => {
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-        (role) => role.resourceId !== streamId && role.userId !== userId
+        (role) => role.resourceId !== projectId && role.userId !== userId
       )
       return {} as StreamRecord
     },
@@ -253,22 +432,28 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       return []
     },
-    getStreams: async () => ({
-      streams: context.workspaceProjects,
-      totalCount: context.workspaceProjects.length,
-      cursorDate: null
-    }),
-    grantStreamPermissions: async (role) => {
+    async *queryAllWorkspaceProjects() {
+      yield context.workspaceProjects
+    },
+    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+    upsertProjectRole: async (role) => {
       const streamAcl: StreamAclRecord = {
         userId: role.userId,
         role: role.role,
-        resourceId: role.streamId
+        resourceId: role.projectId
       }
 
       context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
         (acl) => acl.userId !== role.userId
       )
       context.workspaceProjectRoles.push(streamAcl)
+
+      return {} as StreamRecord
+    },
+    deleteProjectRole: async ({ userId }) => {
+      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+        (acl) => acl.userId !== userId
+      )
 
       return {} as StreamRecord
     },
@@ -285,7 +470,12 @@ describe('Workspace role services', () => {
     it('deletes the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
+      }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -300,7 +490,12 @@ describe('Workspace role services', () => {
     it('emits a role-deleted event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
+      }
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -316,7 +511,12 @@ describe('Workspace role services', () => {
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin,
+        createdAt: new Date()
+      }
 
       const { deleteWorkspaceRole } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
@@ -332,7 +532,14 @@ describe('Workspace role services', () => {
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
-        workspaceRoles: [{ userId, workspaceId, role: Roles.Workspace.Member }],
+        workspaceRoles: [
+          {
+            userId,
+            workspaceId,
+            role: Roles.Workspace.Member,
+            createdAt: new Date()
+          }
+        ],
         workspaceProjects: [{ id: projectId } as StreamRecord],
         workspaceProjectRoles: [
           { userId, role: Roles.Stream.Contributor, resourceId: projectId }
@@ -349,7 +556,11 @@ describe('Workspace role services', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member
+      }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
@@ -357,13 +568,20 @@ describe('Workspace role services', () => {
 
       await updateWorkspaceRole(role)
 
+      const updatedRole = context.workspaceRoles[0]
+
       expect(context.workspaceRoles.length).to.equal(1)
-      expect(context.workspaceRoles[0]).to.deep.equal(role)
+      expect(updatedRole.userId).to.equal(role.userId)
+      expect(updatedRole.role).to.equal(role.role)
     })
     it('emits a role-updated event', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
+      const role: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member
+      }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
@@ -378,7 +596,12 @@ describe('Workspace role services', () => {
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-      const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
+      const role: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Admin,
+        createdAt: new Date()
+      }
 
       const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId,
@@ -396,12 +619,14 @@ describe('Workspace role services', () => {
       const roleAdmin: WorkspaceAcl = {
         userId: adminId,
         workspaceId,
-        role: Roles.Workspace.Admin
+        role: Roles.Workspace.Admin,
+        createdAt: new Date()
       }
       const roleGuest: WorkspaceAcl = {
         userId: guestId,
         workspaceId,
-        role: Roles.Workspace.Guest
+        role: Roles.Workspace.Guest,
+        createdAt: new Date()
       }
 
       const workspace = {
@@ -440,7 +665,7 @@ describe('Workspace role services', () => {
       )
       expect(err.message).to.eq(new WorkspaceProtectedError().message)
     })
-    it('sets roles on workspace projects when user added to workspace', async () => {
+    it('sets roles on workspace projects when user added to workspace as admin', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
@@ -448,7 +673,8 @@ describe('Workspace role services', () => {
       const workspaceRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Admin,
+        createdAt: new Date()
       }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
@@ -461,34 +687,51 @@ describe('Workspace role services', () => {
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
-      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
     })
-
-    it('does not change roles on workspace projects for changes to existing workspace users', async () => {
+    it('sets roles on workspace projects when user added to workspace as member', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
+
+      const workspaceRole: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
+      }
 
       const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId,
         workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
-      await updateWorkspaceRole({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Member
-      })
-      await updateWorkspaceRole({
-        userId,
-        workspaceId,
-        role: Roles.Workspace.Admin
-      })
+      await updateWorkspaceRole(workspaceRole)
 
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
       expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
-      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Contributor)
+    })
+    it('does not set roles on workspace projects when user added to workspace as guest', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const projectId = cryptoRandomString({ length: 10 })
+
+      const workspaceRole: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Guest,
+        createdAt: new Date()
+      }
+
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceProjects: [{ id: projectId } as StreamRecord]
+      })
+
+      await updateWorkspaceRole(workspaceRole)
+
+      expect(context.workspaceProjectRoles.find((role) => role.userId === userId)).to
+        .not.exist
     })
   })
 

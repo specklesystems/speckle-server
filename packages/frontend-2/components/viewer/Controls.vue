@@ -264,7 +264,8 @@ import {
 } from '@speckle/ui-components'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerInterfaceState
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -356,6 +357,8 @@ const {
   camera: { isOrthoProjection }
 } = useCameraUtilities()
 
+const { ui } = useInjectedViewerState()
+
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
 
@@ -419,7 +422,16 @@ const measureShortcut = ref(
   `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
 )
 
+const isTypingComment = computed(() => {
+  const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
+  const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
+  return isNewThreadEditorOpen || isExistingThreadEditorOpen
+})
+
 const handleKeyboardAction = (action: ViewerKeyboardActions) => {
+  if (isTypingComment.value) {
+    return
+  }
   switch (action) {
     case ViewerKeyboardActions.ToggleModels:
       toggleActiveControl('models')

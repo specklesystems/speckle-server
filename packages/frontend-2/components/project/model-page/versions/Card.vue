@@ -4,7 +4,6 @@
 <template>
   <div
     class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
-    @mouseleave="showActionsMenu = false"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
