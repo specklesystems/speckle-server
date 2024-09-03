@@ -864,7 +864,7 @@ describe('Workspaces GQL CRUD', () => {
         const deleteDomainRes = await apollo.execute(DeleteWorkspaceDomainDocument, {
           input: {
             workspaceId,
-            id: addDomainRes.data!.workspaceMutations.addDomain.domains[0].id
+            id: addDomainRes.data!.workspaceMutations.addDomain.domains?.[0]?.id ?? ''
           }
         })
         expect(deleteDomainRes).to.not.haveGraphQLErrors()
