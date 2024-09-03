@@ -13,7 +13,7 @@
           :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
           class="w-full"
         >
-          <div class="px-2 select-none w-full max-w-[80%]">
+          <div class="px-2 select-none w-full pr-14">
             <div
               v-if="nameParts[0]"
               class="text-body-2xs text-foreground-2 relative truncate"
@@ -27,15 +27,17 @@
             </div>
           </div>
         </NuxtLink>
-        <ProjectPageModelsActions
-          v-if="project && showActions && !isPendingModelFragment(model)"
-          v-model:open="showActionsMenu"
-          :model="model"
-          :project="project"
-          :can-edit="canEdit"
-          @click.stop.prevent
-          @upload-version="triggerVersionUpload"
-        />
+        <div class="absolute top-1 right-1">
+          <ProjectPageModelsActions
+            v-if="project && showActions && !isPendingModelFragment(model)"
+            v-model:open="showActionsMenu"
+            :model="model"
+            :project="project"
+            :can-edit="canEdit"
+            @click.stop.prevent
+            @upload-version="triggerVersionUpload"
+          />
+        </div>
       </div>
       <div class="relative flex items-center justify-center my-1 flex-1">
         <div
