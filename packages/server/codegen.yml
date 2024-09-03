@@ -59,6 +59,7 @@ generates:
         WorkspaceBilling: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceBillingGraphQLReturn'
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
+        WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:

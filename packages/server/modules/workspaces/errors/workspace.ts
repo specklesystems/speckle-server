@@ -1,8 +1,20 @@
 import { BaseError } from '@/modules/shared/errors/base'
 
+export class WorkspaceAdminError extends BaseError {
+  static defaultMessage = 'Cannot perform this action on workspace admins'
+  static code = 'WORKSPACE_ADMIN_ERROR'
+  static statusCode = 400
+}
+
 export class WorkspaceAdminRequiredError extends BaseError {
   static defaultMessage = 'Cannot remove last admin from a workspace'
   static code = 'WORKSPACE_ADMIN_REQUIRED_ERROR'
+  static statusCode = 400
+}
+
+export class WorkspaceInvalidDescriptionError extends BaseError {
+  static defaultMessage = 'Provided description is too long'
+  static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
   static statusCode = 400
 }
 
@@ -18,9 +30,9 @@ export class WorkspaceInvalidLogoError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspaceInvalidDescriptionError extends BaseError {
-  static defaultMessage = 'Provided description is too long'
-  static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
+export class WorkspaceInvalidProjectError extends BaseError {
+  static defaultMessage = 'Provided project does not belong to a workspace'
+  static code = 'WORKSPACE_INVALID_PROJECT_ERROR'
   static statusCode = 400
 }
 

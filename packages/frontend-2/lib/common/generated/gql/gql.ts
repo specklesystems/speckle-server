@@ -76,6 +76,7 @@ const documents = {
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
     "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...ProjectPageInviteDialog_Project\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsDocument,
+    "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
@@ -175,6 +176,7 @@ const documents = {
     "\n  subscription ProjectVersionGendoAIRenderCreated($id: String!, $versionId: String!) {\n    projectVersionGendoAIRenderCreated(id: $id, versionId: $versionId) {\n      id\n      createdAt\n      updatedAt\n      status\n      gendoGenerationId\n      prompt\n      camera\n    }\n  }\n": types.ProjectVersionGendoAiRenderCreatedDocument,
     "\n  subscription ProjectVersionGendoAIRenderUpdated($id: String!, $versionId: String!) {\n    projectVersionGendoAIRenderUpdated(id: $id, versionId: $versionId) {\n      id\n      projectId\n      modelId\n      versionId\n      createdAt\n      updatedAt\n      gendoGenerationId\n      status\n      prompt\n      camera\n      responseImage\n    }\n  }\n": types.ProjectVersionGendoAiRenderUpdatedDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_ProjectFragmentDoc,
+    "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n    workspace {\n      id\n      name\n      ...WorkspaceAvatar_Workspace\n    }\n    pendingImportedModels(limit: 4) {\n      ...PendingFileUpload\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
     "\n  fragment PendingFileUpload on FileUpload {\n    id\n    projectId\n    modelName\n    convertedStatus\n    convertedMessage\n    uploadDate\n    convertedLastUpdate\n    fileType\n    fileName\n  }\n": types.PendingFileUploadFragmentDoc,
@@ -188,6 +190,7 @@ const documents = {
     "\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.UpdateModelDocument,
     "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteModelDocument,
     "\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n          user {\n            ...LimitedUserAvatar\n          }\n        }\n      }\n    }\n  }\n": types.UpdateProjectRoleDocument,
+    "\n  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {\n    workspaceMutations {\n      projects {\n        updateRole(input: $input) {\n          id\n          team {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateWorkspaceProjectRoleDocument,
     "\n  mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {\n    projectMutations {\n      invites {\n        batchCreate(projectId: $projectId, input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.InviteProjectUserDocument,
     "\n  mutation InviteWorkspaceProjectUser(\n    $projectId: ID!\n    $inputs: [WorkspaceProjectInviteCreateInput!]!\n  ) {\n    projectMutations {\n      invites {\n        createForWorkspace(projectId: $projectId, inputs: $inputs) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.InviteWorkspaceProjectUserDocument,
     "\n  mutation CancelProjectInvite($projectId: ID!, $inviteId: String!) {\n    projectMutations {\n      invites {\n        cancel(projectId: $projectId, inviteId: $inviteId) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.CancelProjectInviteDocument,
@@ -587,6 +590,10 @@ export function graphql(source: "\n  query ProjectPageSettingsCollaborators($pro
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -983,6 +990,10 @@ export function graphql(source: "\n  fragment ProjectPageTeamInternals_Project o
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"): (typeof documents)["\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1032,6 +1043,10 @@ export function graphql(source: "\n  mutation DeleteModel($input: DeleteModelInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n          user {\n            ...LimitedUserAvatar\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          id\n          role\n          user {\n            ...LimitedUserAvatar\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {\n    workspaceMutations {\n      projects {\n        updateRole(input: $input) {\n          id\n          team {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {\n    workspaceMutations {\n      projects {\n        updateRole(input: $input) {\n          id\n          team {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
