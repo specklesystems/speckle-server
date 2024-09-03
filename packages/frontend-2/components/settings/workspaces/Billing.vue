@@ -29,7 +29,7 @@
       </CommonCard>
 
       <SettingsSectionHeader
-        title="What you workspace bill on a team plan will look like"
+        title="What your workspace bill on a team plan will look like"
         class="pt-6 pb-4 md:pt-10 md:pb-6"
         subheading
       />
