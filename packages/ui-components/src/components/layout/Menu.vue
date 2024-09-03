@@ -12,7 +12,7 @@
         v-if="isMenuOpen"
         ref="menuItems"
         :class="[
-          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50',
+          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
         :style="menuItemsStyles"
