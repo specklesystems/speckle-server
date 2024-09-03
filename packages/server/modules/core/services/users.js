@@ -157,7 +157,7 @@ module.exports = {
   },
 
   /**
-   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles}, bio?: string}} param0
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,

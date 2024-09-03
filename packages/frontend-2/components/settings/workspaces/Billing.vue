@@ -59,6 +59,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
+import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -80,9 +81,18 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
-  workspaceId: props.workspaceId
-}))
+const { result } = useQuery(
+  settingsWorkspaceBillingQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('billing')
+    }
+  })
+)
 
 const billing = computed(() => result.value?.workspace.billing)
 const versionCount = computed(() => billing.value?.versionsCount)

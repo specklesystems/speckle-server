@@ -5,7 +5,7 @@
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
-      :menu-position="HorizontalDirection.Right"
+      :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >

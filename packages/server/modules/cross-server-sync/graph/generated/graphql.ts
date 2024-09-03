@@ -3860,7 +3860,7 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   /** Billing data for Workspaces beta */
-  billing: WorkspaceBilling;
+  billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -3872,7 +3872,7 @@ export type Workspace = {
   /** Verified workspace domains */
   domains: Array<WorkspaceDomain>;
   id: Scalars['ID']['output'];
-  /** Only available to workspace owners */
+  /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;

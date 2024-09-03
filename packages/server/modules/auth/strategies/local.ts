@@ -106,7 +106,8 @@ const localStrategyBuilder: AuthStrategyBuilder = async (
         ...user,
         role: invite
           ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
-          : undefined
+          : undefined,
+        verified: !!invite
       })
       req.user = {
         id: userId,

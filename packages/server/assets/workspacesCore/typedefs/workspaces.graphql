@@ -252,7 +252,7 @@ type Workspace {
   """
   Verified workspace domains
   """
-  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: ADMIN)
+  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: MEMBER)
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
@@ -263,11 +263,11 @@ type Workspace {
     filter: WorkspaceTeamFilter
   ): WorkspaceCollaboratorCollection!
   """
-  Only available to workspace owners
+  Only available to workspace owners/members
   """
   invitedTeam(
     filter: PendingWorkspaceCollaboratorsFilter
-  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: ADMIN)
+  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: MEMBER)
   projects(
     limit: Int! = 25
     cursor: String
@@ -276,7 +276,7 @@ type Workspace {
   """
   Billing data for Workspaces beta
   """
-  billing: WorkspaceBilling! @hasWorkspaceRole(role: MEMBER)
+  billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
   """
   Enable/Disable restriction to invite users to workspace as Guests only
   """

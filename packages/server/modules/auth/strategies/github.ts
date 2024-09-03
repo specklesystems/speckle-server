@@ -31,7 +31,8 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import { get } from 'lodash'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const githubStrategyBuilder: AuthStrategyBuilder = async (
@@ -103,21 +104,6 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
           return done(null, myUser)
         }
 
-        // if the server is not invite only, go ahead and log the user in.
-        if (!serverInfo.inviteOnly) {
-          const myUser = await findOrCreateUser({ user })
-
-          // process invites
-          if (myUser.isNewUser) {
-            await finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            })(user.email, myUser.id)
-          }
-
-          return done(null, myUser)
-        }
-
         // if the server is invite only and we have no invite id, throw.
         if (serverInfo.inviteOnly && !req.session.token) {
           throw new UserInputError(
@@ -125,18 +111,22 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
           )
         }
 
-        // validate the invite
-        const validInvite = await validateServerInviteFactory({
-          findServerInvite: findServerInviteFactory({ db })
-        })(user.email, req.session.token)
+        // validate the invite, if any
+        let invite: Optional<ServerInviteRecord> = undefined
+        if (req.session.token) {
+          invite = await validateServerInviteFactory({
+            findServerInvite: findServerInviteFactory({ db })
+          })(user.email, req.session.token)
+        }
 
         // create the user
         const myUser = await findOrCreateUser({
           user: {
             ...user,
-            role: validInvite
-              ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
-              : undefined
+            role: invite
+              ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+              : undefined,
+            verified: !!invite
           }
         })
 
@@ -147,12 +137,12 @@ const githubStrategyBuilder: AuthStrategyBuilder = async (
         })(user.email, myUser.id)
 
         // Resolve redirect path
-        req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
+        req.authRedirectPath = resolveAuthRedirectPathFactory()(invite)
 
         // return to the auth flow
         return done(null, {
           ...myUser,
-          isInvite: !!validInvite
+          isInvite: !!invite
         })
       } catch (err) {
         const e = ensureError(
