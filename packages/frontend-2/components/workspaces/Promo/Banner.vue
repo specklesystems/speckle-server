@@ -6,13 +6,13 @@
       <img
         src="~~/assets/images/workspaces.png"
         alt="Introducing workspaces"
-        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover dark:hidden"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden md:block dark:!hidden"
       />
 
       <img
         src="~~/assets/images/workspaces-dark.png"
         alt="Introducing workspaces"
-        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden dark:block"
+        class="absolute top-0 right-0 w-full sm:w-9/12 h-full object-cover hidden dark:md:block"
       />
 
       <div
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="relative z-10 text-foreground max-w-lg">
+    <div class="relative z-10 text-foreground max-w-sm lg:max-w-md xl:max-w-lg">
       <div class="flex gap-2 items-center">
         <h3 class="text-heading-lg">Introducing workspaces</h3>
         <CommonBadge rounded class="">BETA</CommonBadge>
