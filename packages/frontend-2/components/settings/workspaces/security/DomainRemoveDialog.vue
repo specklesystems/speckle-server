@@ -70,7 +70,7 @@ const handleRemove = async () => {
           id: getCacheId('Workspace', props.workspaceId),
           fields: {
             domains(currentDomains, { isReference }) {
-              return [...currentDomains].filter((domain) =>
+              return [...(currentDomains ?? [])].filter((domain) =>
                 isReference(domain) ? false : domain.id !== props.domain.id
               )
             }
