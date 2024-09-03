@@ -84,9 +84,7 @@
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
       :is-workspace-admin="isWorkspaceAdmin"
-      :workspace-domain-policy-compliant="
-        userToModify?.workspaceDomainPolicyCompliant ?? true
-      "
+      :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog

@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>
         Select a new role for
-        <strong>{{ name }}</strong>
+        <span class="text-bold">{{ name }}</span>
         :
       </p>
       <FormSelectWorkspaceRoles
@@ -12,6 +12,15 @@
         fully-control-value
         :disabled-items="disabledItems"
       />
+      <div
+        v-if="workspaceDomainPolicyCompliant === false"
+        class="flex gap-x-2 items-center"
+      >
+        <ExclamationCircleIcon class="text-danger w-5 w-4" />
+        <p class="text-foreground">
+          This user can only have the guest role due to the workspace policy.
+        </p>
+      </div>
       <div v-if="newRole" class="flex flex-col items-start gap-1 text-xs">
         <div
           v-for="(message, i) in getWorkspaceProjectRoleMessages(newRole)"
@@ -27,6 +36,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits<{
   (e: 'updateRole', newRole: WorkspaceRoles): void
@@ -34,14 +44,14 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   name: string
-  workspaceDomainPolicyCompliant: boolean
+  workspaceDomainPolicyCompliant: boolean | null
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
 const newRole = ref<WorkspaceRoles | undefined>()
 
 const disabledItems = computed<WorkspaceRoles[]>(() =>
-  !props.workspaceDomainPolicyCompliant
+  props.workspaceDomainPolicyCompliant === false
     ? [Roles.Workspace.Member, Roles.Workspace.Admin]
     : []
 )
