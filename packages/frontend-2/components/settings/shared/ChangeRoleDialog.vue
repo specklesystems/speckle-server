@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>
         Select a new role for
-        <span class="text-medium">{{ name }}</span>
+        <span class="font-medium">{{ name }}</span>
         :
       </p>
       <FormSelectWorkspaceRoles
@@ -13,7 +13,9 @@
         :disabled-items="disabledItems"
       />
       <div
-        v-if="workspaceDomainPolicyCompliant === false"
+        v-if="
+          workspaceDomainPolicyCompliant === false && newRole !== Roles.Workspace.Guest
+        "
         class="flex gap-x-2 items-center"
       >
         <ExclamationCircleIcon class="text-danger w-5 w-4" />
