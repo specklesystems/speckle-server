@@ -21,8 +21,8 @@ export const shouldLogAsInfoLevel = (err: unknown): boolean => {
     )
       //NOTE while we do care about these types of error if the source of the query is a Speckle component, but we can't determine that context here and it is for that component to handle the error
       return true
-    //HACK the below isn't great, but compensates for the empty extensions in GraphQLError, see comment above
-    if (err.message.startsWith('Syntax Error:')) return true //TODO add further cases for the codes above
+    //FIXME as we don't have `.extensions.code` here, we can't determine if the error is a `INTERNAL_SERVER_ERROR` or `BAD_GATEWAY` error etc., so we can't determine if we should log it as info or error. To reduce noise, we log it as info
+    return true
   }
 
   return (
