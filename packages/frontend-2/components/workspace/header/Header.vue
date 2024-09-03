@@ -40,10 +40,7 @@
         </CommonBadge>
       </div>
       <div class="flex items-center gap-x-3">
-        <div
-          v-if="isWorkspaceAdmin && workspaceInfo.billing"
-          class="flex-1 md:flex-auto"
-        >
+        <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
           <WorkspacePageVersionCount
             :versions-count="workspaceInfo.billing.versionsCount"
           />
