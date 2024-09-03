@@ -11,7 +11,7 @@
       <div class="relative z-40 flex justify-between items-center h-10">
         <NuxtLink
           :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-          class="flex-1 truncate"
+          class="truncate"
         >
           <div class="px-1 select-none w-full">
             <div
