@@ -213,7 +213,7 @@ export class CameraController extends Extension implements SpeckleCamera {
   public default() {
     if (this._activeControls instanceof SmoothOrbitControls) {
       this._activeControls.up = new Vector3(0, 0, 1)
-      this._activeControls.setOrbit(2.356, 0.955, 0)
+      this._activeControls.setOrbit(2.356, 0.955)
       this._activeControls.jumpToGoal()
     }
   }

@@ -339,10 +339,6 @@ export class SmoothOrbitControls extends SpeckleControls {
       maximumRadius
     } = this._options
 
-    // if (isNaN(minimumRadius) || isNaN(maximumRadius)) {
-
-    // }
-
     const { theta, phi, radius } = this.goalSpherical
 
     const nextTheta = clamp(goalTheta, minimumAzimuthalAngle, maximumAzimuthalAngle)
