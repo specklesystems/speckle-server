@@ -3,13 +3,13 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <CommonCard v-if="versionCount" class="text-body-xs bg-foundation">
-        <p class="text-foreground">
-          Workspaces are free while in beta. Afterwards, we will start charging after
-          you surpass {{ versionCount.max }} model versions across all projects.
-        </p>
-        <p class="text-foreground pt-6">
-          You currently have {{ versionCount.current }} model versions in your
-          workspace.
+        <p class="text-bold font-medium">Workspaces are free while in beta.</p>
+        <p class="py-6">
+          Once the beta period ends, workspaces are still free up to
+          {{ versionCount.max }} model versions.
+          <br />
+          To store more versions across your projects you will need to upgrade to a paid
+          plan.
         </p>
         <CommonProgressBar
           class="my-3"
@@ -29,7 +29,7 @@
       </CommonCard>
 
       <SettingsSectionHeader
-        title="What you workspace bill will look like"
+        title="What you workspace bill on a team plan will look like"
         class="pt-6 pb-4 md:pt-10 md:pb-6"
         subheading
       />
@@ -43,12 +43,18 @@
           £{{ billing.cost.subTotal * discount.amount }} / month
         </p>
       </div>
-      <div v-if="discount" class="p-3 mt-2 flex flex-col md:flex-row md:items-center">
+      <div class="p-3 mt-2 flex flex-col md:flex-row md:items-center">
         <p class="text-body-xs text-foreground flex-1">
-          Want to claim your {{ discount.name }}? Talk to us!
+          To learn more about our pricing plans
         </p>
         <div class="pt-4 md:pt-0 md:pl-4 md:w-40">
-          <FormButton color="primary">Claim discount</FormButton>
+          <FormButton
+            :external="true"
+            :to="'mailto:hello@speckle.systems'"
+            color="primary"
+          >
+            Talk to us
+          </FormButton>
         </div>
       </div>
     </div>

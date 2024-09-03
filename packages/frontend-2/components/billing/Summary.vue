@@ -22,7 +22,7 @@
       </p>
     </li>
     <li class="flex justify-between text-foreground font-medium">
-      <p class="flex-1 p-3">Subtotal</p>
+      <p class="flex-1 p-3">Total</p>
       <p class="w-32 md:w-40 ml-4 p-3">£{{ workspaceCost.subTotal }} / month</p>
     </li>
   </ul>

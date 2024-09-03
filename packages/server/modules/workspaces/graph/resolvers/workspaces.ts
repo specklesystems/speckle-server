@@ -40,10 +40,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  WorkspaceEarlyAdopterDiscount,
-  WorkspaceInviteResourceType
-} from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
@@ -710,8 +707,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
                 db
               })
-            }),
-            discount: WorkspaceEarlyAdopterDiscount
+            })
           })({ workspaceId })
         }
       },
