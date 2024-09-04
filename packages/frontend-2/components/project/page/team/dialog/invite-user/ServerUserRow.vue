@@ -19,7 +19,9 @@
     </div>
     <span
       v-tippy="
-        isTryingToSetGuestOwner ? `Server guests can't be project owners` : undefined
+        isTryingToSetGuestOwner
+          ? `Server guests can't be project owners`
+          : disabledMessage
       "
     >
       <FormButton
@@ -47,6 +49,7 @@ const props = defineProps<{
   streamRole: StreamRoles
   user: UserSearchItem
   disabled?: boolean
+  disabledMessage?: string
   targetWorkspaceRole?: WorkspaceRoles
 }>()
 
