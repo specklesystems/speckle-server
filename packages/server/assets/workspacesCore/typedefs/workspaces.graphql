@@ -260,7 +260,7 @@ type Workspace {
   """
   Verified workspace domains
   """
-  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: MEMBER)
+  domains: [WorkspaceDomain!] @hasWorkspaceRole(role: MEMBER)
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

@@ -9,7 +9,8 @@ import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import {
   initializeEventListenersFactory,
   onInviteFinalizedFactory,
-  onProjectCreatedFactory
+  onProjectCreatedFactory,
+  onWorkspaceJoinedFactory
 } from '@/modules/workspaces/events/eventListener'
 import {
   getWorkspaceRolesFactory,
@@ -63,6 +64,11 @@ const workspacesModule: SpeckleModule = {
           getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db })
+        }),
+        onWorkspaceJoined: onWorkspaceJoinedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          upsertProjectRole: upsertProjectRoleFactory({ db })
         }),
         onInviteFinalized: onInviteFinalizedFactory({
           getStream,
