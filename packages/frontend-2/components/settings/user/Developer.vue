@@ -377,12 +377,15 @@ const goToExplorer = () => {
 }
 
 const getItemScopes = (item: TokenItem | ApplicationItem): string => {
+  if (!item.scopes || item.scopes.length === 0) return 'No scopes available'
+
   return item.scopes
-    ? item.scopes
-        .map(
-          (event, index, array) => `"${event}"${index < array.length - 1 ? ',' : ''}`
-        )
-        .join(' ')
-    : 'No scopes available'
+    .map((scope) => {
+      if (typeof scope === 'string') return `"${scope}"`
+      if (typeof scope === 'object' && scope !== null) {
+        return `"${scope.name}"`
+      }
+    })
+    .join(', ')
 }
 </script>
