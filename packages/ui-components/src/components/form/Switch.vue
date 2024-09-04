@@ -7,18 +7,6 @@
       :name="name"
       :disabled="disabled"
     >
-      <div
-        class="absolute top-0 left-0 right-0 bottom-0 flex items-center space-x-2 px-1 text-white"
-      >
-        <CheckIcon
-          class="h-5 w-5 drop-shadow-md"
-          :class="icons ? 'opacity-100' : 'opacity-0'"
-        />
-        <XMarkIcon
-          class="h-5 w-5 drop-shadow-md"
-          :class="icons ? 'opacity-100' : 'opacity-0'"
-        />
-      </div>
       <span :class="sliderClasses"></span>
     </HeadlessSwitch>
     <label :for="id || name" :class="labelClasses">
@@ -29,12 +17,10 @@
 
 <script setup lang="ts">
 import { Switch as HeadlessSwitch } from '@headlessui/vue'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    icons?: boolean
     showLabel?: boolean
     name: string
     label?: string
@@ -64,7 +50,7 @@ const switchClasses = computed(() => {
   const classParts = [
     'relative inline-flex flex-shrink-0 h-[18px] w-[30px] rounded-full',
     'transition-colors ease-in-out duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
-    'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
+    'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40'
   ]
 
   if (enabled.value) {
