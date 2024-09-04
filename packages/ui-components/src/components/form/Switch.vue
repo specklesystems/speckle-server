@@ -65,7 +65,7 @@ const switchClasses = computed(() => {
 const sliderClasses = computed(() => {
   const classParts = [
     'pointer-events-none inline-block h-3 w-3 rounded-full mt-[3px] ml-[3px]',
-    'ring-0 transition ease-in-out duration-200 bg-white'
+    'ring-0 transition ease-in-out duration-200 bg-foreground-on-primary'
   ]
 
   if (enabled.value) {
