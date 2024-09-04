@@ -10,11 +10,13 @@
 
 <script setup lang="ts">
 import { useApolloClient } from '@vue/apollo-composable'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   DashboardJoinWorkspaceDocument,
   type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import { CookieKeys } from '~/lib/common/helpers/constants'
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 
 graphql(`
@@ -45,6 +47,12 @@ const props = defineProps<{
 const { client: apollo } = useApolloClient()
 const { triggerNotification } = useGlobalToast()
 const router = useRouter()
+const isDismissed = useSynchronizedCookie<string[]>(
+  CookieKeys.DismissedDiscoverableWorkspaces,
+  {
+    default: () => []
+  }
+)
 
 const invite = computed(() => ({
   workspace: {
@@ -56,7 +64,7 @@ const invite = computed(() => ({
 
 const processJoin = async (accept: boolean) => {
   if (!accept) {
-    // TODO: Use cookies to enable dismissing the discoverable workspace invite
+    isDismissed.value = [...isDismissed.value]
     return
   }
 

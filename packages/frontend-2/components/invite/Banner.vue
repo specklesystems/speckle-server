@@ -22,7 +22,7 @@
           :disabled="loading"
           @click="onDeclineClick(token)"
         >
-          Decline
+          {{ declineMessage }}
         </FormButton>
         <FormButton
           :full-width="block"
@@ -33,7 +33,7 @@
           :disabled="loading"
           @click="onAcceptClick(token)"
         >
-          Accept
+          {{ acceptMessage }}
         </FormButton>
       </div>
       <template v-else>
@@ -127,6 +127,8 @@ const mainInfoBlockClasses = computed(() => {
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const isForRegisteredUser = computed(() => !!props.invite.user?.id)
+const acceptMessage = computed(() => (props.invite.workspace ? 'Join' : 'Accept'))
+const declineMessage = computed(() => (props.invite.workspace ? 'Dismiss' : 'Decline'))
 
 const onLoginSignupClick = async () => {
   postAuthRedirect.setCurrentRoute()
