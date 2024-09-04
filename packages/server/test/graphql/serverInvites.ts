@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import gql from 'graphql-tag'
 
 export const createServerInviteMutation = gql`
   mutation CreateServerInvite($input: ServerInviteCreateInput!) {

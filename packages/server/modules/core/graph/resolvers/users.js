@@ -1,5 +1,3 @@
-'use strict'
-const { UserInputError } = require('apollo-server-express')
 const {
   getUser,
   getUserByEmail,
@@ -28,6 +26,7 @@ const {
   findServerInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
+const { BadRequestError } = require('@/modules/shared/errors')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -60,7 +59,7 @@ module.exports = {
       else await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (!args.id && !context.userId) {
-        throw new UserInputError('You must provide an user id.')
+        throw new BadRequestError('You must provide an user id.')
       }
 
       return await getUser(args.id || context.userId)
@@ -81,10 +80,10 @@ module.exports = {
       await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (args.query.length < 3)
-        throw new UserInputError('Search query must be at least 3 carachters.')
+        throw new BadRequestError('Search query must be at least 3 carachters.')
 
       if (args.limit && args.limit > 100)
-        throw new UserInputError(
+        throw new BadRequestError(
           'Cannot return more than 100 items, please use pagination.'
         )
 
@@ -173,7 +172,7 @@ module.exports = {
       const user = await getUser(context.userId)
 
       if (args.userConfirmation.email !== user.email) {
-        throw new UserInputError('Malformed input: emails do not match.')
+        throw new BadRequestError('Malformed input: emails do not match.')
       }
 
       // The below are not really needed anymore as we've added the hasRole and hasScope

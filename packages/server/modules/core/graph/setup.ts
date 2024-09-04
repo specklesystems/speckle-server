@@ -1,7 +1,9 @@
-const _ = require('lodash')
-const VError = require('verror')
-const { ZodError } = require('zod')
-const { fromZodError } = require('zod-validation-error')
+import { ApolloServerOptions, BaseContext } from '@apollo/server'
+import { GraphQLError } from 'graphql'
+import _ from 'lodash'
+import { VError } from 'verror'
+import { ZodError } from 'zod'
+import { fromZodError } from 'zod-validation-error'
 
 /**
  * Some VError implementation details that we want to remove from object representations
@@ -11,32 +13,36 @@ const VERROR_TRASH_PROPS = ['jse_shortmsg', 'jse_cause', 'jse_info']
 
 /**
  * Builds apollo server error formatter
- * @param {boolean} debug
- * @returns {(e: import('graphql').GraphQLError) => import('graphql').GraphQLFormattedError}
  */
-function buildErrorFormatter(debug) {
+export function buildErrorFormatter(params: {
+  includeStacktraceInErrorResponses: boolean
+}): ApolloServerOptions<BaseContext>['formatError'] {
+  const { includeStacktraceInErrorResponses } = params
+
   // TODO: Add support for client-aware errors and obfuscate everything else
-  return function (error) {
-    const debugMode = debug
-    const realError = error.originalError ? error.originalError : error
+  return function (formattedError, error) {
+    let realError = error || formattedError
+    if (realError instanceof GraphQLError && realError.originalError) {
+      realError = realError.originalError
+    }
 
     // If error is a ZodError, convert its message to something more readable
     if (realError instanceof ZodError) {
       return {
-        ...error,
+        ...formattedError,
         message: fromZodError(realError).message,
-        extensions: { ...error.extensions, code: 'BAD_REQUEST' }
+        extensions: { ...formattedError.extensions, code: 'BAD_REQUEST' }
       }
     }
 
     // If error isn't a VError child, don't do anything extra
     if (!(realError instanceof VError)) {
-      return error
+      return formattedError
     }
 
     // Converting VError based error to Apollo's format
     const extensions = {
-      ...(error.extensions || {}),
+      ...(formattedError.extensions || {}),
       ...(VError.info(realError) || {})
     }
 
@@ -47,7 +53,7 @@ function buildErrorFormatter(debug) {
     if (extensions.exception) {
       extensions.exception = _.omit(extensions.exception, VERROR_TRASH_PROPS)
 
-      if (debugMode) {
+      if (includeStacktraceInErrorResponses) {
         extensions.exception.stacktrace = VError.fullStack(realError)
       } else {
         delete extensions.exception.stacktrace
@@ -55,14 +61,10 @@ function buildErrorFormatter(debug) {
     }
 
     return {
-      message: error.message,
-      locations: error.locations,
-      path: error.path,
+      message: formattedError.message,
+      locations: formattedError.locations,
+      path: formattedError.path,
       extensions
     }
   }
-}
-
-module.exports = {
-  buildErrorFormatter
 }
