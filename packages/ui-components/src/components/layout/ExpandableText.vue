@@ -13,7 +13,7 @@
       <span class="text-body-xs font-medium">{{ title }}</span>
       <div v-if="isExpandable" class="flex items-center gap-1">
         <span class="sr-only">{{ isExpanded ? 'Collapse' : 'Expand' }}</span>
-        <ArrowFilled class="transition-all" :class="{ '-rotate-90': !isExpanded }" />
+        <ArrowFilled :class="{ '-rotate-90': !isExpanded }" />
       </div>
     </div>
     <div
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import { vKeyboardClickable } from '~~/src/directives/accessibility'
 
@@ -55,6 +55,4 @@ const updateIsExpandable = () => {
 }
 
 onMounted(updateIsExpandable)
-
-watch(() => textElement.value?.scrollHeight, updateIsExpandable)
 </script>
