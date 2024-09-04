@@ -568,8 +568,8 @@ export default class Sandbox {
       .addInput(edgesParams, 'depthMultiplier', {
         label: 'depthMultiplier',
         min: 0,
-        max: 5,
-        step: 0.1
+        max: 1,
+        step: 0.01
       })
       .on('change', (value) => {
         this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
@@ -582,8 +582,8 @@ export default class Sandbox {
       .addInput(edgesParams, 'depthBias', {
         label: 'depthBias',
         min: 0,
-        max: 5,
-        step: 0.1
+        max: 1,
+        step: 0.01
       })
       .on('change', (value) => {
         this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
@@ -596,8 +596,8 @@ export default class Sandbox {
       .addInput(edgesParams, 'normalMultiplier', {
         label: 'normalMultiplier',
         min: 0,
-        max: 5,
-        step: 0.1
+        max: 1,
+        step: 0.01
       })
       .on('change', (value) => {
         this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[

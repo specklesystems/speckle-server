@@ -294,14 +294,208 @@ float DetectSilho(ivec2 fragCoord, float tolerance)
         );
 }
 
+float NormalEdge(float scale)
+{
+	float halfScaleFloor = floor(scale * 0.5);
+	float halfScaleCeil = ceil(scale * 0.5);
+
+	vec2 pixelSize = vec2(1.0 / size.x, 1.0 / size.y);
+
+	vec2 bottomLeftUV = vUv - pixelSize * halfScaleFloor;
+	vec2 topRightUV = vUv + pixelSize * halfScaleCeil;  
+	vec2 bottomRightUV = vUv + vec2(pixelSize.x * halfScaleCeil, -pixelSize.y * halfScaleFloor);
+	vec2 topLeftUV = vUv + vec2(-pixelSize.x * halfScaleFloor, pixelSize.y * halfScaleCeil);
+
+	vec3 centerNormal = unpackRGBToNormal(texture2D(tNormal, vUv).rgb);
+	vec3 normal0 = unpackRGBToNormal(texture2D(tNormal, bottomLeftUV).rgb);
+	vec3 normal1 = unpackRGBToNormal(texture2D(tNormal, topRightUV).rgb);
+	vec3 normal2 = unpackRGBToNormal(texture2D(tNormal, bottomRightUV).rgb);
+	vec3 normal3 = unpackRGBToNormal(texture2D(tNormal, topLeftUV).rgb);
+
+	vec3 normalFiniteDifference0 = normal1 - normal0;
+	vec3 normalFiniteDifference1 = normal3 - normal2;
+
+	return sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
+}
+
+vec2 rotate2D(vec2 v, float rad) {
+  float s = sin(rad);
+  float c = cos(rad);
+  return mat2(c, s, -s, c) * v;
+}
+
+
+/**
+ * Return a vector with the same length as v
+ * but its direction is rounded to the nearest
+ * of 8 cardinal directions
+ */
+vec2 round2DVectorAngle(vec2 v) {
+  float len = length(v);
+  vec2 n = normalize(v);
+  float maximum = -1.;
+  float bestAngle;
+  for (int i = 0; i < 8; i++) {
+    float theta = (float(i) * 2. * PI) / 8.;
+    vec2 u = rotate2D(vec2(1., 0.), theta);
+    float scalarProduct = dot(u, n);
+    if (scalarProduct > maximum) {
+      bestAngle = theta;
+      maximum = scalarProduct;
+    }
+  }
+  return len * rotate2D(vec2(1., 0.), bestAngle);
+}
+
+/**
+ * Apply a double threshold to each edge to classify each edge
+ * as a weak edge or a strong edge
+ */
+float applyDoubleThreshold(
+  vec2 gradient,
+  float weakThreshold,
+  float strongThreshold
+) {
+  float gradientLength = gradient.x;//length(gradient);
+  if (gradientLength < weakThreshold) return 0.;
+  if (gradientLength < strongThreshold) return .5;
+  return 1.;
+}
+
+const mat3 X_COMPONENT_MATRIX = mat3(
+  1., 0., -1.,
+  2., 0., -2.,
+  1., 0., -1.
+);
+const mat3 Y_COMPONENT_MATRIX = mat3(
+  1., 2., 1.,
+  0., 0., 0.,
+  -1., -2., -1.
+);
+
+/**
+ * 3x3 Matrix convolution
+ */
+float convoluteMatrices(mat3 A, mat3 B) {
+  return dot(A[0], B[0]) + dot(A[1], B[1]) + dot(A[2], B[2]);
+}
+
+
+/**
+ * Get the intensity of the color on a
+ * texture after a guassian blur is applied
+ */
+float getTextureIntensity(
+  sampler2D textureSampler,
+  vec2 textureCoord,
+  vec2 resolution
+) {
+  vec3 color = unpackRGBToNormal(texture2D(textureSampler, textureCoord).rgb);
+  return pow(length(clamp(color, vec3(0.), vec3(1.))), 2.) / 3.;
+}
+
+/**
+ * Get the gradient of the textures intensity
+ * as a function of the texture coordinate
+ */
+vec2 getTextureIntensityGradient(
+  sampler2D textureSampler,
+  vec2 textureCoord,
+  vec2 resolution
+) {
+//   vec2 gradientStep = vec2(1.) / resolution;
+
+//   mat3 imgMat = mat3(0.);
+
+//   for (int i = 0; i < 3; i++) {
+//     for (int j = 0; j < 3; j++) {
+//       vec2 ds = vec2(
+//         -gradientStep.x + (float(i) * gradientStep.x),
+//         -gradientStep.y + (float(j) * gradientStep.y));
+//       imgMat[i][j] = getTextureIntensity(
+//         textureSampler, clamp(textureCoord + ds, vec2(0.), vec2(1.)), resolution);
+//     }
+//   }
+
+//   float gradX = convoluteMatrices(X_COMPONENT_MATRIX, imgMat);
+//   float gradY = convoluteMatrices(Y_COMPONENT_MATRIX, imgMat);
+
+//   return vec2(gradX, gradY);
+	float edge = NormalEdge(uOutlineThickness);
+	return vec2(edge, edge);
+}
+
+/**
+ * Get the texture intensity gradient of an image
+ * where the angle of the direction is rounded to
+ * one of the 8 cardinal directions and gradients
+ * that are not local extrema are zeroed out
+ */
+vec2 getSuppressedTextureIntensityGradient(
+  sampler2D textureSampler,
+  vec2 textureCoord,
+  vec2 resolution
+) {
+  vec2 gradient = getTextureIntensityGradient(textureSampler, textureCoord, resolution);
+//   gradient = round2DVectorAngle(gradient);
+//   vec2 gradientStep = normalize(gradient) / resolution;
+//   float gradientLength = length(gradient);
+//   vec2 gradientPlusStep = getTextureIntensityGradient(
+//     textureSampler, textureCoord + gradientStep, resolution);
+//   if (length(gradientPlusStep) >= gradientLength) return vec2(0.);
+//   vec2 gradientMinusStep = getTextureIntensityGradient(
+//     textureSampler, textureCoord - gradientStep, resolution);
+//   if (length(gradientMinusStep) >= gradientLength) return vec2(0.);
+  return gradient;
+}
+
+float applyHysteresis(
+  sampler2D textureSampler,
+  vec2 textureCoord,
+  vec2 resolution,
+  float weakThreshold,
+  float strongThreshold
+) {
+  float dx = 1. / resolution.x;
+  float dy = 1. / resolution.y;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      vec2 ds = vec2(
+        -dx + (float(i) * dx),
+        -dy + (float(j) * dy));
+      vec2 gradient = getSuppressedTextureIntensityGradient(
+        textureSampler, clamp(textureCoord + ds, vec2(0.), vec2(1.)), resolution);
+      float edge = applyDoubleThreshold(gradient, weakThreshold, strongThreshold);
+      if (edge == 1.) return 1.;
+    }
+  }
+  return 0.;
+}
+
+float cannyEdgeDetection(
+  sampler2D textureSampler,
+  vec2 textureCoord,
+  vec2 resolution,
+  float weakThreshold,
+  float strongThreshold
+) {
+  vec2 gradient = getSuppressedTextureIntensityGradient(textureSampler, textureCoord, resolution);
+  float edge = applyDoubleThreshold(gradient, weakThreshold, strongThreshold);
+  if (edge == .5) {
+    edge = applyHysteresis(
+      textureSampler, textureCoord, resolution, weakThreshold, strongThreshold);
+  }
+  return edge;
+}
+
 
 void main() {
 	// Silhouette-edge value
-  	float s = DetectSilho(ivec2(gl_FragCoord), 0.001) * uNormalMultiplier; 
-	
+  	float depthEdge = DetectSilho(ivec2(gl_FragCoord), 0.001) * uDepthMultiplier; 
+	float normalEdge = pow(NormalEdge(uOutlineThickness) * uNormalMultiplier, uNormalBias);
 	vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
-	float sobel = SobelSampleDepth(vUv, offset);
-	sobel = pow(abs(saturate(sobel) * uDepthMultiplier), uDepthBias);
+	// float sobel = SobelSampleDepth(vUv, offset);
+	// sobel = pow(abs(saturate(sobel) * uDepthMultiplier), uDepthBias);
 	
 	vec3 sobelNormalVec = abs(SobelSampleNormal(tNormal, vUv, offset));
 	float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
@@ -309,6 +503,8 @@ void main() {
 
 	// float sobelOutline = 1. - saturate(max(sobelDepth, sobelNormal));
 	// sobelOutline = smoothstep(uOutlineDensity, 1.0, sobelOutline);
-	gl_FragColor = vec4(sobel, s, 0., 1.);
+	float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
+
+	gl_FragColor = vec4(canny, normalEdge, 0., 1.);
 
 }`
