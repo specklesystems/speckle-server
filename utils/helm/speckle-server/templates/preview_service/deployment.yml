@@ -35,7 +35,7 @@ spec:
             command:
               - node
               - -e
-              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 3600 * 1000)
+              - {{ printf "process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > %d)" .Values.preview_service.puppeteer.timeoutMilliseconds }}
 
         resources:
           requests:
@@ -82,6 +82,16 @@ spec:
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+          {{- if .Values.preview_service.puppeteer.userDataDirectory }}
+          - name: USER_DATA_DIR
+            value: {{ .Values.preview_service.puppeteer.userDataDirectory | quote }}
+          {{- end }}
+
+          {{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
+          - name: PREVIEW_TIMEOUT
+            value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
 
       {{- if .Values.preview_service.affinity }}
