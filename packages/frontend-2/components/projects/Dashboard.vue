@@ -3,7 +3,7 @@
     <Portal to="primary-actions"></Portal>
     <ProjectsDashboardHeader
       :projects-invites="projectsPanelResult?.activeUser || undefined"
-      :workspaces-invites="workspacesInvitesResult?.activeUser || undefined"
+      :workspaces-invites="workspacesResult?.activeUser || undefined"
     />
 
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
@@ -30,6 +30,7 @@
             v-model="selectedRoles"
             class="md:w-56 grow md:grow-0"
             fixed-height
+            clearable
           />
         </div>
         <FormButton v-if="!isGuest" @click="openNewProject = true">
@@ -44,7 +45,7 @@
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" />
+      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"
@@ -64,15 +65,10 @@ import {
 } from '@vue/apollo-composable'
 import {
   projectsDashboardQuery,
-  projectsDashboardWorkspaceInvitesQuery
+  projectsDashboardWorkspaceQuery
 } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  getCacheId,
-  evictObjectFields,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import type { User, UserProjectsArgs } from '~~/lib/common/generated/gql/graphql'
+import { getCacheId, modifyObjectField } from '~~/lib/common/helpers/graphql'
 import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
@@ -114,8 +110,8 @@ const {
   }
 }))
 
-const { result: workspacesInvitesResult } = useQuery(
-  projectsDashboardWorkspaceInvitesQuery,
+const { result: workspacesResult } = useQuery(
+  projectsDashboardWorkspaceQuery,
   undefined,
   () => ({
     enabled: isWorkspacesEnabled.value
@@ -170,35 +166,19 @@ onUserProjectsUpdate((res) => {
 
   if (isNewProject && incomingProject) {
     // Add to User.projects where possible
-    modifyObjectFields<UserProjectsArgs, User['projects']>(
+    modifyObjectField(
       cache,
       getCacheId('User', activeUserId),
-      (fieldName, variables, value, { ref }) => {
-        if (fieldName !== 'projects') return
-        if (variables.filter?.search?.length) return
-        if (variables.filter?.onlyWithRoles?.length) {
-          const roles = variables.filter.onlyWithRoles
-          if (!roles.includes(incomingProject.role || '')) return
-        }
-
-        return {
-          ...value,
-          items: [ref('Project', incomingProject.id), ...(value.items || [])],
-          totalCount: (value.totalCount || 0) + 1
-        }
-      }
-    )
-
-    // Elsewhere - just evict fields directly
-    evictObjectFields<UserProjectsArgs, User['projects']>(
-      cache,
-      getCacheId('User', activeUserId),
-      (fieldName, variables) => {
-        if (fieldName !== 'projects') return false
-        if (variables.filter?.search?.length) return true
-
-        return false
-      }
+      'projects',
+      ({ helpers: { ref, createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
+          update('items', (items) => [
+            ref('Project', incomingProject.id),
+            ...(items || [])
+          ])
+          update('totalCount', (count) => count + 1)
+        }),
+      { autoEvictFiltered: true }
     )
   }
 

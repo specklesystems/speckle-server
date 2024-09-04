@@ -1,5 +1,6 @@
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import {
+  InviteCreateValidationError,
   InviteFinalizedForNewEmail,
   InviteFinalizingError,
   NoInviteFoundError
@@ -7,6 +8,7 @@ import {
 import {
   buildUserTarget,
   isProjectResourceTarget,
+  ResolvedTargetData,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 
@@ -25,6 +27,7 @@ import {
   UpdateAllInviteTargets
 } from '@/modules/serverinvites/domain/operations'
 import {
+  CollectAndValidateResourceTargets,
   FinalizeInvite,
   InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
@@ -39,6 +42,69 @@ import {
   FindEmail,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
+import { getUser } from '@/modules/core/repositories/users'
+import { ServerInfo } from '@/modules/core/helpers/types'
+import { getServerInfo } from '@/modules/core/services/generic'
+
+/**
+ * Convert the initial validation function to a finalization validation function so same logic can be reused
+ */
+export const convertToFinalizationValidation = (params: {
+  getUser: typeof getUser
+  initialValidation: CollectAndValidateResourceTargets
+  serverInfo: ServerInfo
+}): ValidateResourceInviteBeforeFinalization => {
+  return async ({ invite, action, finalizerUserId }) => {
+    // If decline action, allow doing so without extra validation
+    if (action === InviteFinalizationAction.DECLINE) {
+      return
+    }
+
+    const [inviter, finalizerUser] = await Promise.all([
+      params.getUser(invite.inviterId),
+      params.getUser(finalizerUserId)
+    ])
+    if (!inviter) {
+      throw new InviteFinalizingError('Inviter not found', {
+        info: {
+          invite
+        }
+      })
+    }
+    if (!finalizerUser) {
+      throw new InviteFinalizingError('Finalizer not found', {
+        info: {
+          finalizerUserId
+        }
+      })
+    }
+
+    const target: ResolvedTargetData = {
+      userId: finalizerUserId,
+      userEmail: null
+    }
+
+    try {
+      await params.initialValidation({
+        input: {
+          ...invite,
+          primaryResourceTarget: invite.resource
+        },
+        inviter,
+        inviterResourceAccessLimits: null,
+        target,
+        targetUser: finalizerUser,
+        serverInfo: params.serverInfo,
+        finalizingInvite: true
+      })
+    } catch (e) {
+      if (!(e instanceof InviteCreateValidationError)) throw e
+      throw new InviteFinalizingError(e.message, {
+        info: { invite }
+      })
+    }
+  }
+}
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -120,6 +186,9 @@ type FinalizeResourceInviteFactoryDeps = {
   emitEvent: EventBusEmit
   findEmail: FindEmail
   validateAndCreateUserEmail: ValidateAndCreateUserEmail
+  collectAndValidateResourceTargets: CollectAndValidateResourceTargets
+  getServerInfo: typeof getServerInfo
+  getUser: typeof getUser
 }
 
 export const finalizeResourceInviteFactory =
@@ -133,7 +202,10 @@ export const finalizeResourceInviteFactory =
       insertInviteAndDeleteOld,
       emitEvent,
       findEmail,
-      validateAndCreateUserEmail
+      validateAndCreateUserEmail,
+      collectAndValidateResourceTargets,
+      getServerInfo,
+      getUser
     } = deps
     const {
       finalizerUserId,
@@ -193,12 +265,24 @@ export const finalizeResourceInviteFactory =
       ? InviteFinalizationAction.ACCEPT
       : InviteFinalizationAction.DECLINE
 
-    await validateInvite({
+    const validatorPayload: Parameters<typeof validateInvite>[0] = {
       invite,
       finalizerUserId,
       action,
       finalizerResourceAccessLimits
+    }
+
+    // First, repeat same validation we did when creating the invite
+    // Then, do additional validation based on the finalization action, if there's any
+    const coreValidator = convertToFinalizationValidation({
+      initialValidation: collectAndValidateResourceTargets,
+      serverInfo: await getServerInfo(),
+      getUser
     })
+    await Promise.all([
+      coreValidator(validatorPayload),
+      validateInvite(validatorPayload)
+    ])
 
     // Delete invites first, so that any subscriptions fired by processInvite
     // don't return the invite back to the frontend
@@ -210,7 +294,7 @@ export const finalizeResourceInviteFactory =
 
     try {
       // Add email
-      if (isNewEmailTarget) {
+      if (isNewEmailTarget && action === InviteFinalizationAction.ACCEPT) {
         await validateAndCreateUserEmail({
           userEmail: {
             email: inviteTarget.userEmail!,

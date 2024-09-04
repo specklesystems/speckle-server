@@ -33,6 +33,7 @@
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
+import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 
@@ -56,11 +57,7 @@ const { result } = useQuery(
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
     errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
-    }
+    context: skipLoggingErrorsIfOneFieldError(['domains', 'invitedTeam'])
   })
 )
 

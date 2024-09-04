@@ -1,21 +1,31 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
+  WorkspaceDomain,
+  WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { WorkspaceRoles } from '@speckle/shared'
-import { UserWithRole } from '@/modules/core/repositories/users'
+import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
+import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
 /** Workspace */
 
 type UpsertWorkspaceArgs = {
-  workspace: Workspace
+  workspace: Omit<Workspace, 'domains'>
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+
+export type GetUserDiscoverableWorkspaces = (args: {
+  domains: string[]
+  userId: string
+}) => Promise<
+  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -27,16 +37,36 @@ export type GetWorkspaces = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type StoreWorkspaceDomain = (args: {
+  workspaceDomain: WorkspaceDomain
+}) => Promise<void>
+
+export type GetWorkspaceDomains = (args: {
+  workspaceIds: string[]
+}) => Promise<WorkspaceDomain[]>
+
 type DeleteWorkspaceArgs = {
   workspaceId: string
 }
+
+export type CountDomainsByWorkspaceId = (args: {
+  workspaceId: string
+}) => Promise<number>
+
+export type DeleteWorkspaceDomain = (args: { id: string }) => Promise<void>
+
+export type GetWorkspaceWithDomains = (args: {
+  id: string
+}) => Promise<WorkspaceWithDomains | null>
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
 /** Workspace Roles */
 
-type GetWorkspaceCollaboratorsArgs = {
+export type GetWorkspaceCollaboratorsArgs = {
   workspaceId: string
+  limit: number
+  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role
@@ -51,7 +81,15 @@ type GetWorkspaceCollaboratorsArgs = {
 
 export type GetWorkspaceCollaborators = (
   args: GetWorkspaceCollaboratorsArgs
-) => Promise<Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>>
+) => Promise<WorkspaceTeam>
+
+type GetWorkspaceCollaboratorsTotalCountArgs = {
+  workspaceId: string
+}
+
+export type GetWorkspaceCollaboratorsTotalCount = (
+  args: GetWorkspaceCollaboratorsTotalCountArgs
+) => Promise<number>
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
@@ -96,6 +134,10 @@ export type GetWorkspaceRolesForUser = (
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
+export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
@@ -123,3 +165,39 @@ export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
+
+export type CountProjectsVersionsByWorkspaceId = (args: {
+  workspaceId: string
+}) => Promise<number>
+
+export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
+  workspaceId: string
+  workspaceRole: WorkspaceRoles
+  projectRole?: StreamRoles
+  skipUserIds?: string[]
+}) => Promise<number>
+
+export type GetUserIdsWithRoleInWorkspace = (
+  args: {
+    workspaceId: string
+    workspaceRole: WorkspaceRoles
+  },
+  options?: { limit?: number }
+) => Promise<string[]>
+
+type WorkspaceUpdateArgs = {
+  workspaceId: string
+  workspaceInput: {
+    name?: string | null
+    description?: string | null
+    logo?: string | null
+    defaultLogoIndex?: number | null
+    discoverabilityEnabled?: boolean | null
+    domainBasedMembershipProtectionEnabled?: boolean | null
+  }
+}
+
+export type UpdateWorkspace = ({
+  workspaceId,
+  workspaceInput
+}: WorkspaceUpdateArgs) => Promise<Workspace>

@@ -2,7 +2,6 @@ const { ForbiddenError } = require('apollo-server-express')
 
 const { authorizeResolver } = require('@/modules/shared')
 const {
-  updateWebhook,
   deleteWebhook,
   getStreamWebhooks,
   getLastWebhookEvents,
@@ -54,31 +53,6 @@ module.exports = {
   },
 
   Mutation: {
-    async webhookUpdate(parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.webhook.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
-
-      const wh = await getWebhookByIdFactory({ db })({ id: args.webhook.id })
-      if (args.webhook.streamId !== wh.streamId)
-        throw new ForbiddenError(
-          'The webhook id and stream id do not match. Please check your inputs.'
-        )
-
-      const updated = await updateWebhook({
-        id: args.webhook.id,
-        url: args.webhook.url,
-        description: args.webhook.description,
-        secret: args.webhook.secret,
-        enabled: args.webhook.enabled !== false,
-        triggers: args.webhook.triggers
-      })
-
-      return !!updated
-    },
     async webhookDelete(parent, args, context) {
       await authorizeResolver(
         context.userId,

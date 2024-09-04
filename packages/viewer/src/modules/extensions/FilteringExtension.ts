@@ -261,7 +261,7 @@ export class FilteringExtension extends Extension {
 
       const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
       const idx = matchingIds[node.model.raw.id]
-      if (!idx) {
+      if (idx === undefined) {
         nonMatchingRvs.push(...rvs)
       } else {
         colorGroups.push({

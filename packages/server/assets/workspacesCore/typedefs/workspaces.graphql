@@ -17,6 +17,10 @@ input WorkspaceCreateInput {
   name: String!
   description: String
   defaultLogoIndex: Int
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
 }
 
 input WorkspaceUpdateInput {
@@ -28,6 +32,8 @@ input WorkspaceUpdateInput {
   """
   logo: String
   defaultLogoIndex: Int
+  domainBasedMembershipProtectionEnabled: Boolean
+  discoverabilityEnabled: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -67,6 +73,15 @@ input WorkspaceProjectInviteCreateInput {
   workspaceRole: String
 }
 
+input AddDomainToWorkspaceInput {
+  domain: String!
+  workspaceId: ID!
+}
+
+input JoinWorkspaceInput {
+  workspaceId: ID!
+}
+
 extend type ProjectInviteMutations {
   """
   Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
@@ -96,7 +111,29 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
+  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  addDomain(input: AddDomainToWorkspaceInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
+    @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
+  projects: WorkspaceProjectMutations!
+}
+
+type WorkspaceProjectMutations {
+  updateRole(input: ProjectUpdateRoleInput!): Project!
+    @hasServerRole(role: SERVER_USER)
+    @hasStreamRole(role: STREAM_OWNER)
+    @hasWorkspaceRole(role: MEMBER)
+}
+
+input WorkspaceDomainDeleteInput {
+  workspaceId: ID!
+  id: ID!
 }
 
 input WorkspaceInviteCreateInput {
@@ -153,6 +190,59 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+type WorkspaceVersionsCount {
+  """
+  Total number of versions of all projects in the workspace
+  """
+  current: Int!
+  """
+  Maximum number of version of all projects in the workspace with no additional cost
+  """
+  max: Int!
+}
+
+enum Currency {
+  GBP
+  USD
+  EUR
+}
+
+type WorkspaceCostItem {
+  count: Int!
+  name: String!
+  cost: Float!
+}
+
+type WorkspaceCostDiscount {
+  name: String!
+  amount: Float!
+}
+
+type WorkspaceCost {
+  """
+  Estimated cost of the workspace with no discount applied
+  """
+  subTotal: Float!
+  """
+  Currency of the price
+  """
+  currency: Currency!
+  items: [WorkspaceCostItem!]!
+  """
+  Discount applied to the total
+  """
+  discount: WorkspaceCostDiscount
+  """
+  Total cost with discount applied
+  """
+  total: Float!
+}
+
+type WorkspaceBilling {
+  versionsCount: WorkspaceVersionsCount!
+  cost: WorkspaceCost!
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -168,21 +258,54 @@ type Workspace {
   """
   defaultLogoIndex: Int!
   """
+  Verified workspace domains
+  """
+  domains: [WorkspaceDomain!] @hasWorkspaceRole(role: MEMBER)
+  """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
-  team(filter: WorkspaceTeamFilter): [WorkspaceCollaborator!]!
+  team(
+    limit: Int! = 25
+    cursor: String
+    filter: WorkspaceTeamFilter
+  ): WorkspaceCollaboratorCollection!
   """
-  Only available to workspace owners
+  Only available to workspace owners/members
   """
   invitedTeam(
     filter: PendingWorkspaceCollaboratorsFilter
-  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: ADMIN)
+  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: MEMBER)
   projects(
     limit: Int! = 25
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  """
+  Billing data for Workspaces beta
+  """
+  billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
+  """
+  Enable/Disable restriction to invite users to workspace as Guests only
+  """
+  domainBasedMembershipProtectionEnabled: Boolean!
+  """
+  Enable/Disable discovery of the workspace
+  """
+  discoverabilityEnabled: Boolean!
+}
+
+type DiscoverableWorkspace {
+  id: ID!
+  name: String!
+  description: String
+  logo: String
+  defaultLogoIndex: Int!
+}
+
+type WorkspaceDomain {
+  id: ID!
+  domain: String!
 }
 
 input WorkspaceProjectsFilter {
@@ -203,6 +326,15 @@ input WorkspaceTeamFilter {
   search: String
 }
 
+type WorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceCollaborator!]!
+}
+
+"""
+Overridden by `WorkspaceCollaboratorGraphQLReturn`
+"""
 type WorkspaceCollaborator {
   id: ID!
   role: String!
@@ -247,6 +379,11 @@ type WorkspaceCollection {
 }
 
 extend type User {
+  """
+  Get discoverable workspaces with verified domains that match the active user's
+  """
+  discoverableWorkspaces: [DiscoverableWorkspace!]!
+
   """
   Get the workspaces for the user
   """
@@ -295,4 +432,11 @@ input UserWorkspacesFilter {
 
 extend type Project {
   workspaceId: String
+}
+
+# case of using userSearch, and we alway expose this
+extend type LimitedUser {
+  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  # if workspaceId is undefined | null, just return undefined
+  # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }

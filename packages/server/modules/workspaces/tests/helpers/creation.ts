@@ -1,9 +1,13 @@
 import { db } from '@/db/knex'
 import {
+  deleteProjectRoleFactory,
   getStream,
-  grantStreamPermissions,
-  revokeStreamPermissions
+  upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
 import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
@@ -11,12 +15,16 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceWithDomainsFactory,
+  getWorkspaceDomainsFactory,
+  storeWorkspaceDomainFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -26,8 +34,11 @@ import {
 import {
   createWorkspaceFactory,
   updateWorkspaceRoleFactory,
-  deleteWorkspaceRoleFactory
+  deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory,
+  addDomainToWorkspaceFactory
 } from '@/modules/workspaces/services/management'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
@@ -44,11 +55,14 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
+  discoverabilityEnabled?: boolean
+  domainBasedMembershipProtectionEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
   workspace: BasicTestWorkspace,
-  owner: BasicTestUser
+  owner: BasicTestUser,
+  domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
     upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -56,7 +70,7 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
-  const finalWorkspace = await createWorkspace({
+  const newWorkspace = await createWorkspace({
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
@@ -67,7 +81,50 @@ export const createTestWorkspace = async (
     userResourceAccessLimits: null
   })
 
-  workspace.id = finalWorkspace.id
+  workspace.id = newWorkspace.id
+  if (domain) {
+    await addDomainToWorkspaceFactory({
+      findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+      storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+      getWorkspace: getWorkspaceFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit,
+      getDomains: getWorkspaceDomainsFactory({ db })
+    })({
+      userId: owner.id,
+      workspaceId: workspace.id,
+      domain
+    })
+  }
+
+  if (workspace.discoverabilityEnabled) {
+    if (!domain) throw new Error('Domain is needed for discoverability')
+    const updateWorkspace = updateWorkspaceFactory({
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+    })
+
+    await updateWorkspace({
+      workspaceId: newWorkspace.id,
+      workspaceInput: {
+        discoverabilityEnabled: true
+      }
+    })
+  }
+
+  if (workspace.domainBasedMembershipProtectionEnabled) {
+    if (!domain) throw new Error('Domain is needed for membership protection')
+    await updateWorkspaceFactory({
+      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+      upsertWorkspace: upsertWorkspaceFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit
+    })({
+      workspaceId: newWorkspace.id,
+      workspaceInput: { domainBasedMembershipProtectionEnabled: true }
+    })
+  }
+
   workspace.ownerId = owner.id
 }
 
@@ -77,11 +134,15 @@ export const assignToWorkspace = async (
   role?: WorkspaceRoles
 ) => {
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
+    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams,
-    grantStreamPermissions
+    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+    upsertProjectRole: upsertProjectRoleFactory({ db }),
+    deleteProjectRole: deleteProjectRoleFactory({ db }),
+    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
   await updateWorkspaceRole({
@@ -98,9 +159,9 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    getStreams,
-    revokeStreamPermissions
+    deleteProjectRole: deleteProjectRoleFactory({ db }),
+    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
   await deleteWorkspaceRole({
@@ -122,9 +183,9 @@ export const assignToWorkspaces = async (
 }
 
 export const createTestWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser][]
+  pairs: [BasicTestWorkspace, BasicTestUser, string?][]
 ) => {
-  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1])))
+  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1], p[2])))
 }
 
 export const createWorkspaceInviteDirectly = async (
@@ -136,7 +197,9 @@ export const createWorkspaceInviteDirectly = async (
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
-      getWorkspace: getWorkspaceFactory({ db })
+      getWorkspace: getWorkspaceFactory({ db }),
+      getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
     }),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,

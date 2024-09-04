@@ -94,10 +94,10 @@ export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
-
 export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
+import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
 
 export {
   CommonLoadingIcon,
@@ -164,7 +164,8 @@ export {
   FormTags,
   keyboardClick,
   useDebouncedTextInput,
-  buildManualPromise
+  buildManualPromise,
+  CommonProgressBar
 }
 export type {
   LayoutDialogButton,

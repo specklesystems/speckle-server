@@ -3,11 +3,6 @@ import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  Query,
-  QueryWorkspaceArgs,
-  QueryWorkspaceInviteArgs,
-  User,
-  UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -143,33 +138,33 @@ export const useProcessWorkspaceInvite = () => {
 
             if (accepted) {
               // Evict Query.workspace
-              modifyObjectField<Query['workspace'], QueryWorkspaceArgs>(
+              modifyObjectField(
                 cache,
                 ROOT_QUERY,
                 'workspace',
-                ({ variables, details: { DELETE } }) => {
-                  if (variables.id === workspaceId) return DELETE
+                ({ variables, helpers: { evict } }) => {
+                  if (variables.id === workspaceId) return evict()
                 }
               )
 
               // Evict all User.workspaces
-              modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+              modifyObjectField(
                 cache,
                 getCacheId('User', userId),
                 'workspaces',
-                ({ details: { DELETE } }) => DELETE
+                ({ helpers: { evict } }) => evict()
               )
             }
 
             // Set Query.workspaceInvite(id) = null (no invite)
-            modifyObjectField<Query['workspaceInvite'], QueryWorkspaceInviteArgs>(
+            modifyObjectField(
               cache,
               ROOT_QUERY,
               'workspaceInvite',
-              ({ value, variables, details: { readField } }) => {
+              ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const workspaceId = readField('workspaceId', value)
-                  if (workspaceId === workspaceId) return null
+                  const inviteWorkspaceId = readField(value, 'workspaceId')
+                  if (inviteWorkspaceId === workspaceId) return null
                 } else {
                   if (variables.workspaceId === workspaceId) return null
                 }
@@ -191,8 +186,11 @@ export const useProcessWorkspaceInvite = () => {
       })
       mp.track('Invite Action', {
         type: 'workspace invite',
-        accepted: input.accept
+        accepted: input.accept,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
+      mp.add_group('workspace_id', workspaceId)
     } else {
       const err = getFirstErrorMessage(errors)
       const preventErrorToasts = isFunction(options?.preventErrorToasts)
@@ -334,6 +332,7 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
+  const mixpanel = useMixpanel()
 
   return async (
     input: WorkspaceCreateInput,
@@ -343,6 +342,12 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
+    }>,
+    eventProperties?: Partial<{
+      /**
+       * Used for sending the Mixpanel event
+       */
+      source: string
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -351,12 +356,38 @@ export function useCreateWorkspace() {
     const res = await apollo
       .mutate({
         mutation: createWorkspaceMutation,
-        variables: { input }
-        // TODO: Fix the cache update
+        variables: { input },
+        update: (cache, { data }) => {
+          const workspaceId = data?.workspaceMutations.create.id
+          if (!workspaceId) return
+          // Navigation to workspace is gonna fetch everything needed for the page, so we only
+          // really need to update workspace fields used in sidebar & settings: User.workspaces
+          modifyObjectField(
+            cache,
+            getCacheId('User', userId),
+            'workspaces',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [...items, ref('Workspace', workspaceId)])
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.workspaceMutations.create.id) {
+      mixpanel.track('Workspace Created', {
+        source: eventProperties?.source,
+        fields: Object.keys(input) as Array<keyof WorkspaceCreateInput>,
+        // eslint-disable-next-line camelcase
+        workspace_id: res.data?.workspaceMutations.create.id
+      })
+
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'

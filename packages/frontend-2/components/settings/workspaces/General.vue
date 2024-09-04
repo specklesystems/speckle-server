@@ -8,6 +8,7 @@
           <SettingsWorkspacesGeneralEditAvatar
             v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
+            :disabled="!isAdmin"
             size="xxl"
           />
         </div>
@@ -24,7 +25,7 @@
             validate-on-value-update
             @change="save()"
           />
-          <hr class="mt-4 mb-2" />
+          <hr class="mt-4 mb-2 border-outline-3" />
           <FormTextInput
             v-model="description"
             color="foundation"
@@ -38,14 +39,12 @@
           />
         </div>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
-        <div
-          class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-        >
+        <CommonCard class="bg-foundation">
           By clicking the button below you will leave this workspace.
-        </div>
+        </CommonCard>
         <div>
           <FormButton color="danger" @click="showLeaveDialog = true">
             Leave workspace
@@ -53,15 +52,13 @@
         </div>
       </div>
       <template v-if="isAdmin">
-        <hr class="my-6 md:my-10" />
+        <hr class="my-6 md:my-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
-          <div
-            class="rounded border bg-foundation border-outline-3 text-body-xs text-foreground py-4 px-6"
-          >
+          <CommonCard class="bg-foundation">
             We will delete all content of this workspace, and any associated data. We
             will ask you to type in your workspace name and press the delete button.
-          </div>
+          </CommonCard>
           <div>
             <FormButton color="danger" @click="showDeleteDialog = true">
               Delete workspace
@@ -99,6 +96,7 @@ import {
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -118,6 +116,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -147,6 +146,14 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    mixpanel.track('Workspace General Settings Updated', {
+      fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
+        (key) => key !== 'id'
+      ),
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace updated'

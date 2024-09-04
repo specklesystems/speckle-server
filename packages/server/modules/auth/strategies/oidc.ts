@@ -29,6 +29,7 @@ import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
 import { Optional } from '@speckle/shared'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 
 const oidcStrategyBuilder: AuthStrategyBuilder = async (
   app,
@@ -98,39 +99,27 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
             return done(null, myUser)
           }
 
-          // if the server is not invite only, go ahead and log the user in.
-          if (!serverInfo.inviteOnly) {
-            const myUser = await findOrCreateUser({
-              user
-            })
-
-            // process invites
-            if (myUser.isNewUser) {
-              await finalizeInvitedServerRegistrationFactory({
-                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-              })(user.email, myUser.id)
-            }
-            return done(null, myUser)
-          }
-
           // if the server is invite only and we have no invite id, throw.
           if (serverInfo.inviteOnly && !token) {
             throw new Error('This server is invite only. Please provide an invite id.')
           }
 
-          // validate the invite
-          const validInvite = await validateServerInviteFactory({
-            findServerInvite: findServerInviteFactory({ db })
-          })(user.email, token)
+          // validate the invite, if any
+          let invite: Optional<ServerInviteRecord> = undefined
+          if (token) {
+            invite = await validateServerInviteFactory({
+              findServerInvite: findServerInviteFactory({ db })
+            })(user.email, token)
+          }
 
           // create the user
           const myUser = await findOrCreateUser({
             user: {
               ...user,
-              role: validInvite
-                ? getResourceTypeRole(validInvite.resource, ServerInviteResourceType)
-                : undefined
+              role: invite
+                ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+                : undefined,
+              verified: !!invite
             }
           })
 
@@ -140,12 +129,12 @@ const oidcStrategyBuilder: AuthStrategyBuilder = async (
           })(user.email, myUser.id)
 
           // Resolve redirect path
-          req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
+          req.authRedirectPath = resolveAuthRedirectPathFactory()(invite)
 
           // return to the auth flow
           return done(null, {
             ...myUser,
-            isInvite: !!validInvite
+            isInvite: !!invite
           })
         } catch (err) {
           logger.error(err)
