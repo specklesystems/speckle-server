@@ -62,15 +62,15 @@ const labelClasses = computed(() => {
 
 const switchClasses = computed(() => {
   const classParts = [
-    'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full',
-    'transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
-    'cursor-pointer disabled:cursor-not-allowed disabled:bg-foundation-disabled'
+    'relative inline-flex flex-shrink-0 h-[18px] w-[30px] rounded-full',
+    'transition-colors ease-in-out duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+    'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
   ]
 
   if (enabled.value) {
     classParts.push('bg-primary')
   } else {
-    classParts.push('bg-primary-muted')
+    classParts.push('bg-foreground-3')
   }
 
   return classParts.join(' ')
@@ -78,18 +78,12 @@ const switchClasses = computed(() => {
 
 const sliderClasses = computed(() => {
   const classParts = [
-    'scale-95 pointer-events-none inline-block h-5 w-5 rounded-full',
-    'shadow transform ring-0 transition ease-in-out duration-200'
+    'pointer-events-none inline-block h-3 w-3 rounded-full mt-[3px] ml-[3px]',
+    'ring-0 transition ease-in-out duration-200 bg-white'
   ]
 
-  if (props.disabled) {
-    classParts.push('bg-foreground-disabled')
-  } else {
-    classParts.push('bg-white')
-  }
-
   if (enabled.value) {
-    classParts.push('translate-x-5')
+    classParts.push('translate-x-[12px]')
   } else {
     classParts.push('translate-x-0')
   }
