@@ -121,12 +121,6 @@ export function useCreateProject() {
       .mutate({
         mutation: createProjectMutation,
         variables: { input },
-        errorPolicy: 'all',
-        context: {
-          skipLoggingErrors: (err) =>
-            err.graphQLErrors?.length === 1 &&
-            err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
-        },
         update: (cache, { data }) => {
           const newProject = data?.projectMutations.create
 
