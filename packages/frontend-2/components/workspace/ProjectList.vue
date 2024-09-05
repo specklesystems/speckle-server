@@ -70,7 +70,6 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
-import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 
@@ -103,6 +102,9 @@ const {
 })
 
 const token = computed(() => route.query.token as Optional<string>)
+
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
+
 const { result: initialQueryResult } = useQuery(
   workspacePageQuery,
   () => ({
@@ -113,16 +115,7 @@ const { result: initialQueryResult } = useQuery(
     token: token.value || null
   }),
   () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: skipLoggingErrorsIfOneFieldError([
-        'billing',
-        'domains',
-        'invitedTeam'
-      ])
-    }
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 

@@ -102,15 +102,7 @@ const { result: projectPageResult } = useQuery(
     ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
-    fetchPolicy: pageFetchPolicy.value,
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all'
-    // context: {
-    //   skipLoggingErrors: (err) =>
-    //     err.graphQLErrors?.length === 1 &&
-    //     err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    // }
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 
