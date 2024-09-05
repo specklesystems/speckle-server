@@ -48,7 +48,6 @@ import {
   FindEmailsByUserId,
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
-import { blockedDomains } from '@/modules/workspaces/helpers/blockedDomains'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -59,6 +58,7 @@ import {
 } from '@/modules/core/domain/projects/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
+import { blockedDomains } from '@speckle/shared'
 
 type WorkspaceCreateArgs = {
   userId: string

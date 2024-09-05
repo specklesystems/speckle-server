@@ -5,8 +5,11 @@
     </div>
     <template v-else>
       <Portal to="navigation">
-        <HeaderNavLink :to="workspacesRoute" name="Workspaces" :separator="false" />
-        <HeaderNavLink :to="workspaceRoute(workspaceId)" :name="workspace?.name" />
+        <HeaderNavLink
+          :to="workspaceRoute(workspaceId)"
+          :name="workspace?.name"
+          :separator="false"
+        />
       </Portal>
       <WorkspaceHeader
         v-if="workspace"
@@ -67,7 +70,7 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
-import { workspaceRoute, workspacesRoute } from '~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 
 graphql(`
