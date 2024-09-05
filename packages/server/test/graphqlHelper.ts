@@ -34,15 +34,9 @@ export type ExecuteOperationResponse<R extends Record<string, any>> = {
 
 export type ServerAndContext = {
   apollo: ApolloServer<GraphQLContext>
-  context: GraphQLContext
+  context?: MaybeNullOrUndefined<GraphQLContext>
 }
-
-const isServerAndContext = (
-  o: ApolloServer<any> | ServerAndContext
-): o is ServerAndContext => 'apollo' in o && 'context' in o
-
-// TODO: Remove ApolloServer option - context should always be specified!
-export type ExecuteOperationServer = ApolloServer<any> | ServerAndContext
+export type ExecuteOperationServer = ServerAndContext
 
 /**
  * Use this to execute GQL operations from tests against an Apollo instance and get
@@ -58,11 +52,8 @@ export async function executeOperation<
   variables?: V,
   context?: GraphQLContext
 ): Promise<ExecuteOperationResponse<R>> {
-  const server: ApolloServer<GraphQLContext> = isServerAndContext(apollo)
-    ? apollo.apollo
-    : apollo
-  const contextValue =
-    (isServerAndContext(apollo) ? apollo.context : context) || createTestContext()
+  const server: ApolloServer<GraphQLContext> = apollo.apollo
+  const contextValue = context || apollo.context || createTestContext()
 
   const res = (await server.executeOperation(
     {
