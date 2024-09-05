@@ -22,7 +22,6 @@ jobs:
   build-preview-service:
     name: Build Preview Service
     runs-on: ubuntu-latest
-    container: ubuntu
     permissions:
       contents: read
       pull-requests: read
