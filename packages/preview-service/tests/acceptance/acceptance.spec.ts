@@ -13,7 +13,7 @@ describe.sequential('Acceptance', () => {
     beforeEach(() => {
       const dbName = inject('dbName')
       const pgConnString =
-        process.env.PG_CONNECTION_STRING ||
+        process.env.DOCKER_PG_CONNECTION_STRING ||
         `postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`
       //purposefully running in the background without waiting
       void runProcess('docker', [
