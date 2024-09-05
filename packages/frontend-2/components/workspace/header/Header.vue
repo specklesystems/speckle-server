@@ -41,15 +41,25 @@
       </div>
       <div class="flex items-center gap-x-3">
         <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
-          <WorkspacePageVersionCount
-            :versions-count="workspaceInfo.billing.versionsCount"
-          />
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
+          >
+            <WorkspacePageVersionCount
+              :versions-count="workspaceInfo.billing.versionsCount"
+            />
+          </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <UserAvatarGroup
-            :users="team.map((teamMember) => teamMember.user)"
-            class="max-w-[104px]"
-          />
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          >
+            <UserAvatarGroup
+              :users="team.map((teamMember) => teamMember.user)"
+              class="max-w-[104px]"
+            />
+          </button>
           <FormButton
             v-if="isWorkspaceAdmin"
             color="outline"
@@ -82,7 +92,7 @@
     />
     <SettingsDialog
       v-model:open="showSettingsDialog"
-      target-menu-item="general"
+      :target-menu-item="settingsDialogTarget"
       :target-workspace-id="workspaceInfo.id"
     />
   </div>
@@ -96,6 +106,10 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -140,6 +154,7 @@ const menuId = useId()
 const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
 const showSettingsDialog = ref(false)
+const settingsDialogTarget = ref('general')
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
@@ -150,6 +165,11 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [{ title: 'Settings...', id: ActionTypes.Settings }]
 ])
 
+const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
+  settingsDialogTarget.value = target
+  showSettingsDialog.value = true
+}
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -158,7 +178,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copyWorkspaceLink(props.workspaceInfo.id)
       break
     case ActionTypes.Settings:
-      showSettingsDialog.value = true
+      openSettingsDialog(SettingMenuKeys.Workspace.General)
       break
   }
 }

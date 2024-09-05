@@ -1,4 +1,3 @@
-import { ApolloServer, gql } from 'apollo-server-express'
 import {
   GetActiveUserQuery,
   GetActiveUserQueryVariables,
@@ -11,7 +10,8 @@ import {
   RequestVerificationMutation,
   RequestVerificationMutationVariables
 } from '@/test/graphql/generated/graphql'
-import { executeOperation } from '@/test/graphqlHelper'
+import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import gql from 'graphql-tag'
 
 const baseUserFieldsFragment = gql`
   fragment BaseUserFields on User {
@@ -99,14 +99,14 @@ const requestVerificationMutation = gql`
   }
 `
 
-export const getActiveUser = (apollo: ApolloServer) =>
+export const getActiveUser = (apollo: ExecuteOperationServer) =>
   executeOperation<GetActiveUserQuery, GetActiveUserQueryVariables>(
     apollo,
     getActiveUserQuery
   )
 
 export const getOtherUser = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetOtherUserQueryVariables
 ) =>
   executeOperation<GetOtherUserQuery, GetOtherUserQueryVariables>(
@@ -116,7 +116,7 @@ export const getOtherUser = (
   )
 
 export async function getAdminUsersList(
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetAdminUsersQueryVariables
 ) {
   return await executeOperation<GetAdminUsersQuery, GetAdminUsersQueryVariables>(
@@ -127,7 +127,7 @@ export async function getAdminUsersList(
 }
 
 export const getPendingEmailVerificationStatus = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetPendingEmailVerificationStatusQueryVariables
 ) =>
   executeOperation<
@@ -136,7 +136,7 @@ export const getPendingEmailVerificationStatus = (
   >(apollo, getPendingEmailVerificationStatusQuery, variables)
 
 export const requestVerification = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables?: RequestVerificationMutationVariables
 ) =>
   executeOperation<RequestVerificationMutation, RequestVerificationMutationVariables>(

@@ -4,7 +4,6 @@ import {
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { UserInputError } from 'apollo-server-core'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import {
   getStructuredProjectModels,
@@ -19,6 +18,7 @@ import { last } from 'lodash'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import { BadRequestError } from '@/modules/shared/errors'
 
 export async function getStructuredStreamModels(streamId: string) {
   return getStructuredProjectModels(streamId)
@@ -30,7 +30,7 @@ export async function getPaginatedStreamBranches(
 ) {
   const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
   if (params.limit && params.limit > maxProjectModelsPerPage)
-    throw new UserInputError(
+    throw new BadRequestError(
       `Cannot return more than ${maxProjectModelsPerPage} items, please use pagination.`
     )
   const { items, cursor, totalCount } = await getBranchesByStreamId({

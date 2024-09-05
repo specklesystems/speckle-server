@@ -14,8 +14,8 @@ import {
   GetLimitedUserStreamsQuery,
   GetLimitedUserStreamsQueryVariables
 } from '@/test/graphql/generated/graphql'
-import { executeOperation } from '@/test/graphqlHelper'
-import { ApolloServer, gql } from 'apollo-server-express'
+import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import gql from 'graphql-tag'
 
 export const basicStreamFieldsFragment = gql`
   fragment BasicStreamFields on Stream {
@@ -129,7 +129,7 @@ const getLimitedUserStreamsQuery = gql`
 `
 
 export const leaveStream = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: LeaveStreamMutationVariables
 ) =>
   executeOperation<LeaveStreamMutation, LeaveStreamMutationVariables>(
@@ -139,7 +139,7 @@ export const leaveStream = (
   )
 
 export const createStream = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: CreateStreamMutationVariables
 ) =>
   executeOperation<CreateStreamMutation, CreateStreamMutationVariables>(
@@ -149,7 +149,7 @@ export const createStream = (
   )
 
 export const updateStream = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: UpdateStreamMutationVariables
 ) =>
   executeOperation<UpdateStreamMutation, UpdateStreamMutationVariables>(
@@ -158,7 +158,10 @@ export const updateStream = (
     variables
   )
 
-export const readStream = (apollo: ApolloServer, variables: ReadStreamQueryVariables) =>
+export const readStream = (
+  apollo: ExecuteOperationServer,
+  variables: ReadStreamQueryVariables
+) =>
   executeOperation<ReadStreamQuery, ReadStreamQueryVariables>(
     apollo,
     readStreamQuery,
@@ -166,7 +169,7 @@ export const readStream = (apollo: ApolloServer, variables: ReadStreamQueryVaria
   )
 
 export const readDiscoverableStreams = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: ReadDiscoverableStreamsQueryVariables
 ) =>
   executeOperation<ReadDiscoverableStreamsQuery, ReadDiscoverableStreamsQueryVariables>(
@@ -176,7 +179,7 @@ export const readDiscoverableStreams = (
   )
 
 export const getUserStreams = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetUserStreamsQueryVariables
 ) =>
   executeOperation<GetUserStreamsQuery, GetUserStreamsQueryVariables>(
@@ -186,7 +189,7 @@ export const getUserStreams = (
   )
 
 export const getLimitedUserStreams = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetLimitedUserStreamsQueryVariables
 ) =>
   executeOperation<GetLimitedUserStreamsQuery, GetLimitedUserStreamsQueryVariables>(

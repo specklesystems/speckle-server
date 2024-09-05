@@ -22,6 +22,7 @@ export const lightThemeVariables = {
   '--foreground-3': '#7C7C7D',
   /* foreground color when put on top of a primary colored background */
   '--foreground-on-primary': '#fff',
+  '--foreground-disabled': '#1A1A1A50',
 
   /* primary color */
   '--primary': '#136CFF',
@@ -83,6 +84,7 @@ export const darkThemeVariables = {
   '--foreground-2': '#B0B1B5',
   '--foreground-3': '#7E7F82',
   '--foreground-on-primary': '#FFFFFF',
+  '--foreground-disabled': '#FFFFFF50',
 
   /* primary color */
   '--primary': '#136CFF',
