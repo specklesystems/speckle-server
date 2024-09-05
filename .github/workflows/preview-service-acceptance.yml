@@ -74,7 +74,7 @@ jobs:
           PREVIEW_SERVICE_IMAGE: speckle/preview-service:local
           OUTPUT_FILE_PATH: /tmp/preview-service-output.png
           NODE_ENV: test
-          PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@localhost:5432/preview_service_test
+          PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@postgres:5432/preview_service_test
 
       - uses: actions/upload-artifact@v4
         name: Upload the output from the preview-service
