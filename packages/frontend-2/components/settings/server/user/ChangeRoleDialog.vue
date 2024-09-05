@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="isOpen" max-width="xs" :buttons="dialogButtons">
     <template #header>Change role</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
@@ -118,12 +118,12 @@ const changeUserRoleConfirmed = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Change role',
-    props: { color: 'danger', fullWidth: true },
+    props: { color: 'danger' },
     onClick: changeUserRoleConfirmed
   },
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => emit('update:open', false)
   }
 ])

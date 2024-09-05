@@ -35,14 +35,14 @@ const { triggerNotification } = useGlobalToast()
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Delete',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
     }

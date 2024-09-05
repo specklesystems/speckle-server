@@ -204,7 +204,7 @@ const enableSubmitTestAutomation = computed(() => {
 })
 
 const title = computed(() => {
-  return isTestAutomation.value ? undefined : 'Create Automation'
+  return isTestAutomation.value ? undefined : 'Create automation'
 })
 
 const buttons = computed((): LayoutDialogButton[] => {

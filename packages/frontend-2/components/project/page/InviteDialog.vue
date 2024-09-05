@@ -217,7 +217,7 @@ const isWorkspaceMemberAndProjectOwner = computed(() => {
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
