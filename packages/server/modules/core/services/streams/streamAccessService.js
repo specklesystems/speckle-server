@@ -1,8 +1,11 @@
 const { authorizeResolver } = require(`@/modules/shared`)
 
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { LogicError } = require('@/modules/shared/errors')
-const { ForbiddenError, UserInputError } = require('apollo-server-express')
+const {
+  LogicError,
+  ForbiddenError,
+  BadRequestError
+} = require('@/modules/shared/errors')
 const {
   StreamInvalidAccessError,
   StreamAccessUpdateError
@@ -170,7 +173,7 @@ async function addOrUpdateStreamCollaborator(
   if (role === Roles.Stream.Owner) {
     const userServerRole = await ServerAcl.knex().where({ userId }).first()
     if (userServerRole.role === Roles.Server.Guest)
-      throw new UserInputError('Server guests cannot own streams')
+      throw new BadRequestError('Server guests cannot own streams')
   }
 
   const stream = await grantStreamPermissions({

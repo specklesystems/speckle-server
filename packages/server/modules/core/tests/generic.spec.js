@@ -15,9 +15,9 @@ const { createUser } = require('@/modules/core/services/users')
 
 const { validateScopes, authorizeResolver } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
-const { ForbiddenError } = require('apollo-server-express')
 const { Roles, Scopes } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+const { ForbiddenError } = require('@/modules/shared/errors')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {

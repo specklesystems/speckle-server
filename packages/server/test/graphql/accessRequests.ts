@@ -10,8 +10,8 @@ import {
   UseStreamAccessRequestMutation,
   UseStreamAccessRequestMutationVariables
 } from '@/test/graphql/generated/graphql'
-import { executeOperation } from '@/test/graphqlHelper'
-import { ApolloServer, gql } from 'apollo-server-express'
+import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import { gql } from 'graphql-tag'
 
 const basicStreamAccessRequestFragment = gql`
   fragment BasicStreamAccessRequestFields on StreamAccessRequest {
@@ -89,7 +89,7 @@ const useStreamAccessRequestMutation = gql`
 `
 
 export const createStreamAccessRequest = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: CreateStreamAccessRequestMutationVariables
 ) =>
   executeOperation<
@@ -98,7 +98,7 @@ export const createStreamAccessRequest = (
   >(apollo, createStreamAccessRequestMutation, variables)
 
 export const getStreamAccessRequest = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetStreamAccessRequestQueryVariables
 ) =>
   executeOperation<GetStreamAccessRequestQuery, GetStreamAccessRequestQueryVariables>(
@@ -108,7 +108,7 @@ export const getStreamAccessRequest = (
   )
 
 export const getFullStreamAccessRequest = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetFullStreamAccessRequestQueryVariables
 ) =>
   executeOperation<
@@ -117,7 +117,7 @@ export const getFullStreamAccessRequest = (
   >(apollo, getFullStreamAccessRequestQuery, variables)
 
 export const getPendingStreamAccessRequests = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetPendingStreamAccessRequestsQueryVariables
 ) =>
   executeOperation<
@@ -126,7 +126,7 @@ export const getPendingStreamAccessRequests = (
   >(apollo, getPendingStreamAccessRequestsQuery, variables)
 
 export const useStreamAccessRequest = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: UseStreamAccessRequestMutationVariables
 ) =>
   executeOperation<

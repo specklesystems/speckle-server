@@ -7,18 +7,6 @@
       :name="name"
       :disabled="disabled"
     >
-      <div
-        class="absolute top-0 left-0 right-0 bottom-0 flex items-center space-x-2 px-1 text-white"
-      >
-        <CheckIcon
-          class="h-5 w-5 drop-shadow-md"
-          :class="icons ? 'opacity-100' : 'opacity-0'"
-        />
-        <XMarkIcon
-          class="h-5 w-5 drop-shadow-md"
-          :class="icons ? 'opacity-100' : 'opacity-0'"
-        />
-      </div>
       <span :class="sliderClasses"></span>
     </HeadlessSwitch>
     <label :for="id || name" :class="labelClasses">
@@ -29,12 +17,10 @@
 
 <script setup lang="ts">
 import { Switch as HeadlessSwitch } from '@headlessui/vue'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    icons?: boolean
     showLabel?: boolean
     name: string
     label?: string
@@ -62,15 +48,15 @@ const labelClasses = computed(() => {
 
 const switchClasses = computed(() => {
   const classParts = [
-    'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full',
-    'transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
-    'cursor-pointer disabled:cursor-not-allowed disabled:bg-foundation-disabled'
+    'relative inline-flex flex-shrink-0 h-[18px] w-[30px] rounded-full',
+    'transition-colors ease-in-out duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+    'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40'
   ]
 
   if (enabled.value) {
     classParts.push('bg-primary')
   } else {
-    classParts.push('bg-primary-muted')
+    classParts.push('bg-foreground-3')
   }
 
   return classParts.join(' ')
@@ -78,18 +64,12 @@ const switchClasses = computed(() => {
 
 const sliderClasses = computed(() => {
   const classParts = [
-    'scale-95 pointer-events-none inline-block h-5 w-5 rounded-full',
-    'shadow transform ring-0 transition ease-in-out duration-200'
+    'pointer-events-none inline-block h-3 w-3 rounded-full mt-[3px] ml-[3px]',
+    'ring-0 transition ease-in-out duration-200 bg-foreground-on-primary'
   ]
 
-  if (props.disabled) {
-    classParts.push('bg-foreground-disabled')
-  } else {
-    classParts.push('bg-white')
-  }
-
   if (enabled.value) {
-    classParts.push('translate-x-5')
+    classParts.push('translate-x-[12px]')
   } else {
     classParts.push('translate-x-0')
   }

@@ -227,7 +227,7 @@ describe('[Stream & Server Invites]', () => {
             streamId: otherGuyAlreadyInvitedStream.id
           })
 
-          expect(data?.serverInviteCreate).to.be.not.ok
+          expect(data?.streamInviteCreate).to.be.not.ok
           expect(errors).to.be.ok
           expect(errors!.map((e) => e.message).join('|')).to.contain(
             'user is already a collaborator'
