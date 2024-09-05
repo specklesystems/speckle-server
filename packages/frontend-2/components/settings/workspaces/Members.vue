@@ -33,7 +33,6 @@
 import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 
@@ -48,18 +47,9 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { result } = useQuery(
-  settingsWorkspacesMembersQuery,
-  () => ({
-    workspaceId: props.workspaceId
-  }),
-  () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: skipLoggingErrorsIfOneFieldError(['domains', 'invitedTeam'])
-  })
-)
+const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
+  workspaceId: props.workspaceId
+}))
 
 const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
 const tabItems = computed<LayoutPageTabItem[]>(() => [

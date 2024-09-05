@@ -1,5 +1,3 @@
-const { ForbiddenError } = require('apollo-server-express')
-
 const { authorizeResolver } = require('@/modules/shared')
 const {
   deleteWebhook,
@@ -10,6 +8,7 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getWebhookByIdFactory } = require('../../repositories/webhooks')
 const { db } = require('@/db/knex')
+const { ForbiddenError } = require('@/modules/shared/errors')
 
 const streamWebhooksResolver = async (parent, args, context) => {
   await authorizeResolver(

@@ -99,13 +99,12 @@ const token = computed(
 )
 const mainClasses = computed(() => {
   const classParts = [
-    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg'
+    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b border-outline-2 first:border-t first:rounded-t-lg last:rounded-b-lg'
   ]
 
   if (props.block) {
     classParts.push('')
   } else {
-    classParts.push('hover:bg-primary-muted')
     classParts.push('sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row sm:py-2')
   }
 

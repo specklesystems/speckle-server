@@ -1,7 +1,4 @@
-'use strict'
-
 const { CommitNotFoundError } = require('@/modules/core/errors/commit')
-const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
@@ -41,6 +38,7 @@ const {
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
+const { BadRequestError } = require('@/modules/shared/errors')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -61,7 +59,7 @@ const getUserCommits = async (publicOnly, userId, args, streamIdWhitelist) => {
     streamIdWhitelist
   })
   if (args.limit && args.limit > 100)
-    throw new UserInputError(
+    throw new BadRequestError(
       'Cannot return more than 100 items, please use pagination.'
     )
   const { commits: items, cursor } = await getCommitsByUserId({

@@ -2,15 +2,14 @@ const expect = require('chai').expect
 
 const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { beforeEachContext } = require('@/test/hooks')
-const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
 const {
   grantPermissionsStream,
   updateStream
 } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
-const { gql } = require('apollo-server-express')
+const { gql } = require('graphql-tag')
 const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
 const { createComment } = require('@/modules/comments/services')
@@ -18,6 +17,11 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
+const {
+  createTestContext,
+  createAuthedTestContext,
+  executeOperation
+} = require('@/test/graphqlHelper')
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -27,7 +31,7 @@ const testForbiddenResponse = (result) => {
   expect(result.errors, 'This should have failed').to.exist
   expect(result.errors.length).to.be.above(0)
   expect(result.errors[0].extensions.code).to.match(
-    /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN)/
+    /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
   )
 }
 
@@ -40,14 +44,32 @@ const testResult = (shouldSucceed, result, successTests) => {
   }
 }
 
+/**
+ * @typedef {{
+ * apollo: import('@/test/graphqlHelper').ServerAndContext,
+ * resources: {
+ *  streamId: string,
+ * objectId: string,
+ * commentId: string,
+ * testActorId: string
+ * },
+ * shouldSucceed: boolean,
+ * streamId: string
+ * }} TestContext
+ */
+
+/**
+ * @param {TestContext} param0
+ */
 const writeComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($input: CommentCreateInput!) {
         commentCreate(input: $input)
       }
     `,
-    variables: {
+    {
       input: {
         streamId: resources.streamId,
         text: buildCommentInputFromString('foo'),
@@ -56,16 +78,20 @@ const writeComment = async ({ apollo, resources, shouldSucceed }) => {
         resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
       }
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentCreate).to.be.string
     expect(res.data.commentCreate.length).to.equal(10)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const broadcastViewerActivity = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($streamId: String!, $resourceId: String!, $data: JSONObject) {
         userViewerActivityBroadcast(
           streamId: $streamId
@@ -74,20 +100,24 @@ const broadcastViewerActivity = async ({ apollo, resources, shouldSucceed }) => 
         )
       }
     `,
-    variables: {
+    {
       streamId: resources.streamId,
       data: {},
       resourceId: resources.objectId
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.userViewerActivityBroadcast).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const broadcastCommentActivity = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($streamId: String!, $commentId: String!, $data: JSONObject) {
         userCommentThreadActivityBroadcast(
           streamId: $streamId
@@ -96,36 +126,43 @@ const broadcastCommentActivity = async ({ apollo, resources, shouldSucceed }) =>
         )
       }
     `,
-    variables: {
+    {
       streamId: resources.streamId,
       data: {},
       commentId: resources.commentId
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.userCommentThreadActivityBroadcast).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const viewAComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($streamId: String!, $commentId: String!) {
         commentView(streamId: $streamId, commentId: $commentId)
       }
     `,
-    variables: {
+    {
       streamId: resources.streamId,
       commentId: resources.commentId
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentView).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
-  const context = await apollo.context()
+  const context = apollo.context
   const { id: commentId } = await createComment({
     userId: context.userId,
     input: {
@@ -139,40 +176,47 @@ const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
       ]
     }
   })
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($streamId: String!, $commentId: String!) {
         commentArchive(streamId: $streamId, commentId: $commentId)
       }
     `,
-    variables: { streamId: resources.streamId, commentId }
-  })
+    { streamId: resources.streamId, commentId }
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentArchive).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const archiveOthersComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($streamId: String!, $commentId: String!) {
         commentArchive(streamId: $streamId, commentId: $commentId)
       }
     `,
-    variables: {
+    {
       streamId: resources.streamId,
       commentId: resources.commentId
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentArchive).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
-  const context = await apollo.context()
   const { id: commentId } = await createComment({
-    userId: context.userId,
+    userId: apollo.context.userId,
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('i wrote this myself'),
@@ -184,13 +228,14 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
       ]
     }
   })
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($input: CommentEditInput!) {
         commentEdit(input: $input)
       }
     `,
-    variables: {
+    {
       input: {
         streamId: resources.streamId,
         id: commentId,
@@ -198,20 +243,24 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
         blobIds: []
       }
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentEdit).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($input: CommentEditInput!) {
         commentEdit(input: $input)
       }
     `,
-    variables: {
+    {
       input: {
         streamId: resources.streamId,
         id: resources.commentId,
@@ -221,20 +270,24 @@ const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
         blobIds: []
       }
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentEdit).to.be.true
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       mutation ($input: ReplyCreateInput!) {
         commentReply(input: $input)
       }
     `,
-    variables: {
+    {
       input: {
         streamId: resources.streamId,
         parentComment: resources.commentId,
@@ -245,16 +298,20 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
         data: {}
       }
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentReply).to.be.string
     expect(res.data.commentReply.length).to.equal(10)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const queryComment = async ({ apollo, resources, shouldSucceed }) => {
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($id: String!, $streamId: String!) {
         comment(id: $id, streamId: $streamId) {
           id
@@ -270,16 +327,20 @@ const queryComment = async ({ apollo, resources, shouldSucceed }) => {
         }
       }
     `,
-    variables: {
+    {
       id: resources.commentId,
       streamId: resources.streamId
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.comment.id).to.exist
     expect(res.data.comment.id).to.equal(resources.commentId)
   })
 }
+
+/**
+ * @param {TestContext} param0
+ */
 const queryComments = async ({ apollo, resources, shouldSucceed }) => {
   const object = {
     foo: 123,
@@ -304,8 +365,9 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
     )
   )
 
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($streamId: String!, $resources: [ResourceIdentifierInput]) {
         comments(streamId: $streamId, resources: $resources) {
           totalCount
@@ -318,20 +380,23 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
         }
       }
     `,
-    variables: {
+    {
       streamId: resources.streamId,
       resources: [
         // i expected this to work as intersection, but it works as union
         { resourceId: objectId, resourceType: 'object' }
       ]
     }
-  })
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.comments.totalCount).to.be.equal(numberOfComments)
     expect(res.data.comments.items.map((i) => i.id)).to.be.equalInAnyOrder(commentIds)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => {
   await createComment({
     userId: resources.testActorId,
@@ -344,8 +409,9 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     }
   })
 
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($id: String!) {
         stream(id: $id) {
           id
@@ -353,13 +419,16 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
         }
       }
     `,
-    variables: { id: resources.streamId }
-  })
+    { id: resources.streamId }
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.stream.commentCount).to.be.greaterThanOrEqual(1)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => {
   const objectId = await createObject({
     streamId: resources.streamId,
@@ -379,8 +448,9 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     }
   })
 
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($id: String!, $objectId: String!) {
         stream(id: $id) {
           object(id: $objectId) {
@@ -389,13 +459,16 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
         }
       }
     `,
-    variables: { id: resources.streamId, objectId }
-  })
+    { id: resources.streamId, objectId }
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.stream.object.commentCount).to.equal(1)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => {
   const objectId = await createObject({
     streamId: resources.streamId,
@@ -422,8 +495,9 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     }
   })
 
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($id: String!, $commitId: String!) {
         stream(id: $id) {
           commit(id: $commitId) {
@@ -432,13 +506,16 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
         }
       }
     `,
-    variables: { id: resources.streamId, commitId }
-  })
+    { id: resources.streamId, commitId }
+  )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.stream.commit.commentCount).to.equal(1)
   })
 }
 
+/**
+ * @param {TestContext} param0
+ */
 const queryCommitCollectionCommentCount = async ({
   apollo,
   resources,
@@ -469,8 +546,9 @@ const queryCommitCollectionCommentCount = async ({
     }
   })
 
-  const res = await apollo.executeOperation({
-    query: gql`
+  const res = await executeOperation(
+    apollo,
+    gql`
       query ($id: String!) {
         otherUser(id: $id) {
           commits {
@@ -481,8 +559,8 @@ const queryCommitCollectionCommentCount = async ({
         }
       }
     `,
-    variables: { id: resources.testActorId }
-  })
+    { id: resources.testActorId }
+  )
   testResult(shouldSucceed, res, (res) => {
     res.data.otherUser.commits.items
       .map((i) => i.commentCount)
@@ -830,19 +908,20 @@ describe('Graphql @comments', () => {
       userContext.streamData.forEach((streamContext) => {
         const stream = streamContext.stream
         let resources
+        /**
+         * @type {import('@/test/graphqlHelper').ServerAndContext}
+         */
         let apollo
 
         before(async () => {
-          apollo = await buildApolloServer({
-            context: () =>
-              addLoadersToCtx({
-                auth: true,
-                userId: user?.id,
-                role: user?.role,
-                token: 'asd',
-                scopes: AllScopes
-              })
-          })
+          apollo = {
+            apollo: await buildApolloServer(),
+            context: user
+              ? createAuthedTestContext(user.id, {
+                  ...(user.role ? { role: user.role } : {})
+                })
+              : createTestContext()
+          }
 
           if (user && stream.role) {
             await grantPermissionsStream({

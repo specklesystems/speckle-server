@@ -56,7 +56,6 @@ import {
   createTestStreams,
   leaveStream
 } from '@/test/speckle-helpers/streamHelper'
-import { ForbiddenError } from 'apollo-server-express'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 import {
   generateRegistrationParams,
@@ -78,6 +77,7 @@ import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/em
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 enum InviteByTarget {
   Email = 'email',

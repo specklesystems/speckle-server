@@ -1,6 +1,4 @@
-'use strict'
-
-const { ForbiddenError } = require('apollo-server-express')
+const { ForbiddenError } = require('@/modules/shared/errors')
 const {
   createPersonalAccessToken,
   revokeToken,
