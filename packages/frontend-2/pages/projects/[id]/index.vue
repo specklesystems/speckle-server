@@ -8,26 +8,32 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 my-2"
+        class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 my-2"
       >
         <ProjectPageHeader :project="project" />
-        <div class="flex gap-x-3 items-center">
-          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-            {{ project.modelCount.totalCount || 0 }} Model{{
-              project.modelCount.totalCount === 1 ? '' : 's'
-            }}
-          </CommonBadge>
-          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-            <span class="capitalize">{{ project.role?.split(':').reverse()[0] }}</span>
-          </CommonBadge>
-          <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-          <FormButton
-            v-if="canEdit"
-            color="outline"
-            :to="projectCollaboratorsRoute(project.id)"
-          >
-            Manage
-          </FormButton>
+        <div class="flex gap-x-3 items-center justify-between">
+          <div class="flex flex-row gap-x-3">
+            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+              {{ project.modelCount.totalCount || 0 }} Model{{
+                project.modelCount.totalCount === 1 ? '' : 's'
+              }}
+            </CommonBadge>
+            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+              <span class="capitalize">
+                {{ project.role?.split(':').reverse()[0] }}
+              </span>
+            </CommonBadge>
+          </div>
+          <div class="flex flex-row gap-x-3">
+            <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
+            <FormButton
+              v-if="canEdit"
+              color="outline"
+              :to="projectCollaboratorsRoute(project.id)"
+            >
+              Manage
+            </FormButton>
+          </div>
         </div>
       </div>
       <LayoutTabsHorizontal v-model:active-item="activePageTab" :items="pageTabItems">
@@ -96,15 +102,7 @@ const { result: projectPageResult } = useQuery(
     ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
-    fetchPolicy: pageFetchPolicy.value,
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all'
-    // context: {
-    //   skipLoggingErrors: (err) =>
-    //     err.graphQLErrors?.length === 1 &&
-    //     err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    // }
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 

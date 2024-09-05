@@ -5,7 +5,7 @@
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
-      :menu-position="HorizontalDirection.Right"
+      :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -104,12 +104,14 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Edit...',
             id: ActionTypes.Rename,
-            disabled: !props.canEdit
+            disabled: !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
           },
           {
             title: 'Upload new version...',
             id: ActionTypes.UploadVersion,
-            disabled: !props.canEdit
+            disabled: !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
           }
         ]
       ]
@@ -125,7 +127,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Delete...',
             id: ActionTypes.Delete,
-            disabled: isMain.value || !props.canEdit
+            disabled: isMain.value || !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
           }
         ]
       ]

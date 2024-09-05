@@ -21,6 +21,7 @@ export default class SpeckleConverter {
   private maxChildrenPromises: number
   private spoofIDs = false
   private tree: WorldTree
+  private subtree: TreeNode
   private typeLookupTable: { [type: string]: string } = {}
   private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
@@ -123,15 +124,15 @@ export default class SpeckleConverter {
 
     if (node === null) {
       /** We're adding a parent for the entire model (subtree) */
-      const subtreeNode: TreeNode = this.tree.parse({
+      this.subtree = this.tree.parse({
         id: objectURL,
         /* Hack required by frontend*/
         raw: { id: objectURL, children: [obj] },
         atomic: true,
         children: []
       })
-      this.tree.addSubtree(subtreeNode)
-      this.tree.addNode(childNode, subtreeNode)
+      this.tree.addSubtree(this.subtree)
+      this.tree.addNode(childNode, this.subtree)
     } else {
       this.tree.addNode(childNode, node)
     }
@@ -673,7 +674,7 @@ export default class SpeckleConverter {
       /** Break out when all applicationIds are accounted for*/
       if (consumeApplicationIdsCount === 0) return false
       return true
-    })
+    }, this.subtree)
 
     /** Consume them */
     for (const k in consumeApplicationIds) {
@@ -742,7 +743,7 @@ export default class SpeckleConverter {
       /** Break out when all applicationIds are accounted for*/
       if (renderMaterialCount === 0 && colorCount === 0) return false
       return true
-    })
+    }, this.subtree)
 
     /** For instances, we need some additional parsing */
     for (const k in this.instanceProxies) {
@@ -785,7 +786,7 @@ export default class SpeckleConverter {
             this.colorMap[instancedNodes[j].model.raw.parentLayerApplicationId]
           /** If definition geometry has no color, use it's layer color */
           if (!geometryColor) {
-            instancedNodes[j].model.color = geometryLayerColor.value
+            instancedNodes[j].model.color = geometryLayerColor?.value
             /** If definition geometry color source is object or layer use the definition's color */
           } else if (
             geometryColor.source === 'object' ||

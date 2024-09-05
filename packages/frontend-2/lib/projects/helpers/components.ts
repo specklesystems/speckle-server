@@ -1,5 +1,10 @@
 import { Roles } from '@speckle/shared'
-import type { Nullable, ServerRoles, StreamRoles } from '@speckle/shared'
+import type {
+  Nullable,
+  ServerRoles,
+  StreamRoles,
+  WorkspaceRoles
+} from '@speckle/shared'
 import type { LimitedUserAvatarFragment } from '~~/lib/common/generated/gql/graphql'
 
 export type ProjectCollaboratorListItem = {
@@ -9,13 +14,18 @@ export type ProjectCollaboratorListItem = {
   role: string
   inviteId: Nullable<string>
   serverRole: Nullable<ServerRoles>
+  workspaceRole: Nullable<WorkspaceRoles>
 }
 
 export type SelectableStreamRole = StreamRoles | 'delete'
+export type SelectableStreamRoleSelectItem = {
+  id: SelectableStreamRole
+  title: string
+}
 
 export const roleSelectItems: Record<
   SelectableStreamRole | string,
-  { id: SelectableStreamRole; title: string }
+  SelectableStreamRoleSelectItem
 > = {
   [Roles.Stream.Owner]: {
     id: Roles.Stream.Owner,

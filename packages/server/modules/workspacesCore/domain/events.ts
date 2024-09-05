@@ -1,4 +1,5 @@
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceRoles } from '@speckle/shared'
 
 export const workspaceEventNamespace = 'workspace' as const
 
@@ -20,7 +21,11 @@ type WorkspaceCreatedPayload = Workspace & {
 type WorkspaceUpdatedPayload = Workspace
 type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
 type WorkspaceRoleUpdatedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-type WorkspaceJoinedFromDiscoveryPayload = { userId: string; workspaceId: string }
+type WorkspaceJoinedFromDiscoveryPayload = {
+  userId: string
+  workspaceId: string
+  role: WorkspaceRoles
+}
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload

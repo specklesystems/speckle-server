@@ -1,12 +1,14 @@
 import {
   Workspace,
   WorkspaceAcl,
-  WorkspaceDomain
+  WorkspaceDomain,
+  WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { Roles } from '@speckle/shared'
@@ -19,11 +21,13 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import {
   WorkspaceAdminRequiredError,
   WorkspaceDomainBlockedError,
+  WorkspaceNotFoundError,
+  WorkspaceNoVerifiedDomainsError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { omit } from 'lodash'
+import { merge, omit } from 'lodash'
 import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
@@ -135,6 +139,184 @@ describe('Workspace services', () => {
         ...workspace,
         createdByUserId: userId
       })
+    })
+  })
+  describe('updateWorkspaceFactory creates a function, that', () => {
+    const createTestWorkspaceWithDomainsData = (
+      input: Partial<WorkspaceWithDomains> = {}
+    ): WorkspaceWithDomains => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspace: WorkspaceWithDomains = {
+        id: workspaceId,
+        name: cryptoRandomString({ length: 10 }),
+        description: cryptoRandomString({ length: 20 }),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        logo: null,
+        defaultLogoIndex: 0,
+        discoverabilityEnabled: false,
+        domainBasedMembershipProtectionEnabled: false,
+        domains: []
+      }
+      return merge(workspace, input)
+    }
+    it('throws WorkspaceNotFoundError if the workspace is not found', async () => {
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => null,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: cryptoRandomString({ length: 10 }),
+          workspaceInput: {}
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNotFoundError().message)
+    })
+    it('throws from image validator if the workspace logo is invalid', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            logo: 'a broken logo'
+          }
+        })
+      })
+      expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('validates description length', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            logo: 'a broken logo'
+          }
+        })
+      })
+      expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('does not allow turning on discoverability if the workspace has no verified domains', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            discoverabilityEnabled: true
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
+    })
+
+    it('does not allow turning on domainBasedMembershipProtection if the workspace has no verified domains', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            domainBasedMembershipProtectionEnabled: true
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceNoVerifiedDomainsError().message)
+    })
+
+    it('does not allow setting the workspace name to an empty string', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+
+      let newWorkspaceName
+      await updateWorkspaceFactory({
+        getWorkspace: async () => workspace,
+        emitWorkspaceEvent: async () => {
+          return []
+        },
+        upsertWorkspace: async ({ workspace }) => {
+          newWorkspaceName = workspace.name
+        }
+      })({
+        workspaceId: workspace.id,
+        workspaceInput: { name: '' }
+      })
+      expect(newWorkspaceName).to.be.equal(workspace.name)
+    })
+    it('updates the workspace and emits the correct event payload', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspace = createTestWorkspaceWithDomainsData({
+        id: workspaceId,
+        domains: [
+          {
+            createdAt: new Date(),
+            createdByUserId: cryptoRandomString({ length: 10 }),
+            domain: 'example.com',
+            updatedAt: new Date(),
+            id: cryptoRandomString({ length: 10 }),
+            verified: true,
+            workspaceId
+          }
+        ]
+      })
+
+      let updatedWorkspace
+
+      const workspaceInput = {
+        name: cryptoRandomString({ length: 10 }),
+        discoverabilityEnabled: true
+      }
+
+      await updateWorkspaceFactory({
+        getWorkspace: async () => workspace,
+        emitWorkspaceEvent: async () => {
+          return []
+        },
+        upsertWorkspace: async ({ workspace }) => {
+          updatedWorkspace = workspace
+        }
+      })({
+        workspaceId,
+        workspaceInput
+      })
+      expect(updatedWorkspace!.name).to.be.equal(workspaceInput.name)
+      expect(updatedWorkspace!.discoverabilityEnabled).to.be.equal(
+        workspaceInput.discoverabilityEnabled
+      )
     })
   })
 })

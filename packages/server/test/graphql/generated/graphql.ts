@@ -3861,7 +3861,7 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   /** Billing data for Workspaces beta */
-  billing: WorkspaceBilling;
+  billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -3871,9 +3871,9 @@ export type Workspace = {
   /** Enable/Disable restriction to invite users to workspace as Guests only */
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
-  domains: Array<WorkspaceDomain>;
+  domains?: Maybe<Array<WorkspaceDomain>>;
   id: Scalars['ID']['output'];
-  /** Only available to workspace owners */
+  /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
@@ -4049,6 +4049,7 @@ export type WorkspaceMutations = {
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
+  projects: WorkspaceProjectMutations;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -4104,6 +4105,16 @@ export type WorkspaceProjectInviteCreateInput = {
   userId?: InputMaybe<Scalars['String']['input']>;
   /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
   workspaceRole?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceProjectMutations = {
+  __typename?: 'WorkspaceProjectMutations';
+  updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
 };
 
 export type WorkspaceProjectsFilter = {
@@ -4166,7 +4177,7 @@ export type BasicWorkspaceFragment = { __typename?: 'Workspace', id: string, nam
 
 export type BasicPendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, inviteId: string, workspaceId: string, workspaceName: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string }, user?: { __typename?: 'LimitedUser', id: string, name: string } | null };
 
-export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } };
+export type WorkspaceBillingFragment = { __typename?: 'Workspace', billing?: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } | null };
 
 export type WorkspaceProjectsFragment = { __typename?: 'ProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string }> };
 
@@ -4198,7 +4209,7 @@ export type GetWorkspaceWithBillingQueryVariables = Exact<{
 }>;
 
 
-export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } } };
+export type GetWorkspaceWithBillingQuery = { __typename?: 'Query', workspace: { __typename?: 'Workspace', id: string, name: string, updatedAt: string, createdAt: string, role?: string | null, billing?: { __typename?: 'WorkspaceBilling', versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number }, cost: { __typename?: 'WorkspaceCost', subTotal: number, currency: Currency, total: number, items: Array<{ __typename?: 'WorkspaceCostItem', count: number, name: string, cost: number }>, discount?: { __typename?: 'WorkspaceCostDiscount', name: string, amount: number } | null } } | null } };
 
 export type GetWorkspaceWithProjectsQueryVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -4256,6 +4267,20 @@ export type ResendWorkspaceInviteMutationVariables = Exact<{
 
 
 export type ResendWorkspaceInviteMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', invites: { __typename?: 'WorkspaceInviteMutations', resend: boolean } } };
+
+export type AddWorkspaceDomainMutationVariables = Exact<{
+  input: AddDomainToWorkspaceInput;
+}>;
+
+
+export type AddWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', addDomain: { __typename?: 'Workspace', id: string, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string }> | null } } };
+
+export type DeleteWorkspaceDomainMutationVariables = Exact<{
+  input: WorkspaceDomainDeleteInput;
+}>;
+
+
+export type DeleteWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', deleteDomain: { __typename?: 'Workspace', id: string, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string }> | null } } };
 
 export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } };
 
@@ -4878,6 +4903,8 @@ export const GetMyWorkspaceInvitesDocument = {"kind":"Document","definitions":[{
 export const UseWorkspaceProjectInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UseWorkspaceProjectInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectInviteUseInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"use"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<UseWorkspaceProjectInviteMutation, UseWorkspaceProjectInviteMutationVariables>;
 export const CreateWorkspaceProjectInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateWorkspaceProjectInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"inputs"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceProjectInviteCreateInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createForWorkspace"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"inputs"},"value":{"kind":"Variable","name":{"kind":"Name","value":"inputs"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateWorkspaceProjectInviteMutation, CreateWorkspaceProjectInviteMutationVariables>;
 export const ResendWorkspaceInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResendWorkspaceInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceInviteResendInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resend"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<ResendWorkspaceInviteMutation, ResendWorkspaceInviteMutationVariables>;
+export const AddWorkspaceDomainDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddWorkspaceDomain"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AddDomainToWorkspaceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addDomain"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<AddWorkspaceDomainMutation, AddWorkspaceDomainMutationVariables>;
+export const DeleteWorkspaceDomainDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteWorkspaceDomain"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceDomainDeleteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteDomain"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"domains"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"domainBasedMembershipProtectionEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"discoverabilityEnabled"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteWorkspaceDomainMutation, DeleteWorkspaceDomainMutationVariables>;
 export const CreateStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequestCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<CreateStreamAccessRequestMutation, CreateStreamAccessRequestMutationVariables>;
 export const GetStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<GetStreamAccessRequestQuery, GetStreamAccessRequestQueryVariables>;
 export const GetFullStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetFullStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"}},{"kind":"Field","name":{"kind":"Name","value":"stream"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<GetFullStreamAccessRequestQuery, GetFullStreamAccessRequestQueryVariables>;

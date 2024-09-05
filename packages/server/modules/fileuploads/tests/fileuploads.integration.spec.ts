@@ -57,7 +57,7 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
-    await server.close()
+    await server?.close()
   })
 
   describe('Uploads files', () => {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { isUndefinedOrVoid } from '@speckle/shared'
+import { isNullOrUndefined, isUndefinedOrVoid } from '@speckle/shared'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type {
@@ -22,7 +22,8 @@ import {
   intersection,
   get,
   set,
-  cloneDeep
+  cloneDeep,
+  isObjectLike
 } from 'lodash-es'
 import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
 import type { Get, PartialDeep, Paths, ReadonlyDeep, Tagged } from 'type-fest'
@@ -490,7 +491,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
@@ -498,7 +499,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['NOT_FOUND_ERROR', 'STREAM_NOT_FOUND', 'AUTOMATION_NOT_FOUND'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
@@ -653,14 +654,43 @@ export const modifyObjectField = <
     | void,
   options?: Partial<{
     debug: boolean
+    /**
+     * Whether to auto evict values that have variables with common filters in them (e.g. a 'filter' or
+     * 'search' prop). Often its better to evict filtered values, because we can't tell if the newly
+     * added item should be included in the filtered list or not.
+     */
+    autoEvictFiltered: boolean
   }>
 ) => {
+  const { autoEvictFiltered } = options || {}
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   modifyObjectFields<any, any>(
     cache,
     key,
     (field, variables, value, details) => {
       if (field !== fieldName) return
+
+      // Auto evict filtered values?
+      if (autoEvictFiltered && isObjectLike(variables)) {
+        const checkFilter = (filter: string) => {
+          if (!has(variables, filter)) return false
+          const val = get(variables, filter)
+
+          // True, if any primitive value (e.g. string, number) && arrays
+          if (isNullOrUndefined(val)) return false
+          if (isArray(val)) return true
+          if (!isObjectLike(val)) return true
+          return false
+        }
+
+        const commonFilters = ['query', 'filter', 'search', 'filter.search']
+        const hasFilter = commonFilters.some(checkFilter)
+
+        if (hasFilter) {
+          return details.DELETE
+        }
+      }
 
       // Build helpers & clone value to allow for direct mutation
       const createUpdatedValue = (
@@ -683,7 +713,9 @@ export const modifyObjectField = <
         return clonedValue
       }
 
-      const get = <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+      const getIfExists = <
+        Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string
+      >(
         path: Path
       ) => getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(value, path)
       const evict = () => details.DELETE
@@ -703,7 +735,13 @@ export const modifyObjectField = <
         fieldName: field,
         variables,
         value,
-        helpers: { createUpdatedValue, get, evict, readField, ref: getObjectReference }
+        helpers: {
+          createUpdatedValue,
+          get: getIfExists,
+          evict,
+          readField,
+          ref: getObjectReference
+        }
       })
     },
     options

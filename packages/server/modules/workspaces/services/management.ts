@@ -9,7 +9,8 @@ import {
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
   GetWorkspaceDomains,
-  GetWorkspaceRoleToDefaultProjectRoleMapping
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  UpdateWorkspace
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -30,7 +31,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
-  WorkspaceInvalidDescriptionError
+  WorkspaceInvalidDescriptionError,
+  WorkspaceNoVerifiedDomainsError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -46,16 +48,17 @@ import {
   FindEmailsByUserId,
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
-import { blockedDomains } from '@/modules/workspaces/helpers/blockedDomains'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { chunk, isEmpty } from 'lodash'
+import { chunk, isEmpty, omit } from 'lodash'
 import {
   DeleteProjectRole,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
+import { blockedDomains } from '@speckle/shared'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -118,31 +121,19 @@ export const createWorkspaceFactory =
     return { ...workspace }
   }
 
-type WorkspaceUpdateArgs = {
-  workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
-    discoverabilityEnabled?: boolean | null
-    domainBasedMembershipProtectionEnabled?: boolean | null
-  }
-}
-
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
-    getWorkspace: GetWorkspace
+    getWorkspace: GetWorkspaceWithDomains
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
-  }) =>
-  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+  }): UpdateWorkspace =>
+  async ({ workspaceId, workspaceInput }) => {
     // Get existing workspace to merge with incoming changes
-    const currentWorkspace = await getWorkspace({ workspaceId })
+    const currentWorkspace = await getWorkspace({ id: workspaceId })
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
     }
@@ -159,8 +150,22 @@ export const updateWorkspaceFactory =
       throw new WorkspaceInvalidDescriptionError()
     }
 
+    if (
+      workspaceInput.discoverabilityEnabled &&
+      !currentWorkspace.discoverabilityEnabled &&
+      !currentWorkspace.domains.find((domain) => domain.verified)
+    )
+      throw new WorkspaceNoVerifiedDomainsError()
+
+    if (
+      workspaceInput.domainBasedMembershipProtectionEnabled &&
+      !currentWorkspace.domainBasedMembershipProtectionEnabled &&
+      !currentWorkspace.domains.find((domain) => domain.verified)
+    )
+      throw new WorkspaceNoVerifiedDomainsError()
+
     const workspace = {
-      ...currentWorkspace,
+      ...omit(currentWorkspace, 'domains'),
       ...removeNullOrUndefinedKeys(workspaceInput),
       updatedAt: new Date()
     }
@@ -310,12 +315,17 @@ export const updateWorkspaceRoleFactory =
     workspaceId,
     userId,
     role: nextRole,
-    skipProjectRoleUpdatesFor
+    skipProjectRoleUpdatesFor,
+    preventRoleDowngrade
   }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
      * If this gets triggered from a project role update, we don't want to override that project's role to the default one
      */
     skipProjectRoleUpdatesFor?: string[]
+    /**
+     * Only add or upgrade role, prevent downgrades
+     */
+    preventRoleDowngrade?: boolean
   }): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -324,6 +334,19 @@ export const updateWorkspaceRoleFactory =
       nextRole !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
+    }
+
+    // Prevent downgrades?
+    if (preventRoleDowngrade) {
+      const userRole = workspaceRoles.find((acl) => acl.userId === userId)
+      if (userRole) {
+        const roleWeights = workspaceRoleDefinitions
+        const existingRoleWeight = roleWeights.find(
+          (w) => w.name === userRole.role
+        )!.weight
+        const newRoleWeight = roleWeights.find((w) => w.name === nextRole)!.weight
+        if (newRoleWeight < existingRoleWeight) return
+      }
     }
 
     // ensure domain compliance

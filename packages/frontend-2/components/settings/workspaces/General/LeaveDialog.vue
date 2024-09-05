@@ -32,6 +32,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -51,6 +52,7 @@ const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
+const router = useRouter()
 
 const onLeave = async () => {
   isOpen.value = false
@@ -61,6 +63,8 @@ const onLeave = async () => {
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    router.push(homeRoute)
+
     if (activeUser.value) {
       cache.evict({
         id: getCacheId('Workspace', props.workspace.id)

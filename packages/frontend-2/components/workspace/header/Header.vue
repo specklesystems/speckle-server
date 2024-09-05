@@ -1,5 +1,10 @@
 <template>
-  <div class="flex flex-col gap-4 sm:flex-row justify-between md:items-center">
+  <div
+    class="flex flex-col gap-6 justify-between"
+    :class="[
+      isWorkspaceAdmin ? 'xl:flex-row xl:items-center' : 'lg:flex-row lg:items-center'
+    ]"
+  >
     <div class="flex gap-2 md:mb-3 md:mt-2">
       <div class="flex items-center mr-2">
         <WorkspaceAvatar
@@ -9,19 +14,19 @@
         />
       </div>
       <div class="flex flex-col">
-        <h1 class="text-heading">{{ workspaceInfo.name }}</h1>
-        <div class="text-body-xs text-foreground-2">
+        <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
+        <div class="text-body-xs text-foreground-2 line-clamp-2">
           {{ workspaceInfo.description || 'No workspace description' }}
         </div>
       </div>
     </div>
     <div
-      class="flex md:items-center gap-x-3 md:flex-row"
-      :class="[isWorkspaceAdmin ? 'flex-col' : 'flex-row items-cenetr']"
+      class="flex justify-between md:items-center gap-x-3 md:flex-row"
+      :class="[isWorkspaceAdmin ? 'flex-col' : 'flex-row items-center']"
     >
       <div
         class="flex items-center gap-x-3 md:mb-0"
-        :class="[!isWorkspaceAdmin ? 'flex-1' : ' mb-3']"
+        :class="[isWorkspaceAdmin ? 'mb-3' : ' flex-1']"
       >
         <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
           {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
@@ -35,16 +40,26 @@
         </CommonBadge>
       </div>
       <div class="flex items-center gap-x-3">
-        <div v-if="isWorkspaceAdmin" class="flex-1 md:flex-auto">
-          <WorkspacePageVersionCount
-            :versions-count="workspaceInfo.billing.versionsCount"
-          />
+        <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
+          >
+            <WorkspacePageVersionCount
+              :versions-count="workspaceInfo.billing.versionsCount"
+            />
+          </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <UserAvatarGroup
-            :users="team.map((teamMember) => teamMember.user)"
-            class="max-w-[104px]"
-          />
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          >
+            <UserAvatarGroup
+              :users="team.map((teamMember) => teamMember.user)"
+              class="max-w-[104px]"
+            />
+          </button>
           <FormButton
             v-if="isWorkspaceAdmin"
             color="outline"
@@ -56,6 +71,7 @@
             v-model:open="showActionsMenu"
             :items="actionsItems"
             :menu-position="HorizontalDirection.Left"
+            :menu-id="menuId"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
@@ -76,7 +92,7 @@
     />
     <SettingsDialog
       v-model:open="showSettingsDialog"
-      target-menu-item="general"
+      :target-menu-item="settingsDialogTarget"
       :target-workspace-id="workspaceInfo.id"
     />
   </div>
@@ -90,6 +106,10 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -130,9 +150,11 @@ const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
+const menuId = useId()
 const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
 const showSettingsDialog = ref(false)
+const settingsDialogTarget = ref('general')
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
@@ -143,6 +165,11 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [{ title: 'Settings...', id: ActionTypes.Settings }]
 ])
 
+const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
+  settingsDialogTarget.value = target
+  showSettingsDialog.value = true
+}
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -151,7 +178,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copyWorkspaceLink(props.workspaceInfo.id)
       break
     case ActionTypes.Settings:
-      showSettingsDialog.value = true
+      openSettingsDialog(SettingMenuKeys.Workspace.General)
       break
   }
 }

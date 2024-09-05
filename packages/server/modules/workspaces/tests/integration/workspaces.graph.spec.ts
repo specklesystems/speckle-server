@@ -26,7 +26,9 @@ import {
   CreateObjectDocument,
   CreateProjectVersionDocument,
   GetWorkspaceWithProjectsDocument,
-  CreateProjectDocument
+  CreateProjectDocument,
+  AddWorkspaceDomainDocument,
+  DeleteWorkspaceDomainDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -48,7 +50,6 @@ import {
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-import { WorkspaceEarlyAdopterDiscount } from '@/modules/workspaces/domain/constants'
 
 const createProjectWithVersions =
   ({ apollo }: { apollo: TestApolloServer }) =>
@@ -105,7 +106,8 @@ describe('Workspaces GQL CRUD', () => {
     id: '',
     name: 'John Speckle',
     email: 'john-speckle@example.org',
-    role: Roles.Server.Admin
+    role: Roles.Server.Admin,
+    verified: true
   }
 
   const testMemberUser: BasicTestUser = {
@@ -386,11 +388,12 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace.billing.versionsCount).to.deep.equal({
+        expect(res.data?.workspace.billing?.versionsCount).to.deep.equal({
           current: 5,
           max: 500
         })
       })
+
       it('should return workspace cost', async () => {
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
           input: { name: createRandomString() }
@@ -406,6 +409,11 @@ describe('Workspaces GQL CRUD', () => {
           name: createRandomPassword(),
           email: createRandomEmail()
         }
+        const freeGuests = new Array(10).fill(0).map(() => ({
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }))
         const guestWithWritePermission = {
           id: createRandomString(),
           name: createRandomPassword(),
@@ -421,6 +429,14 @@ describe('Workspaces GQL CRUD', () => {
           name: createRandomPassword(),
           email: createRandomEmail()
         }
+
+        // first 10 users
+        await createTestUsers(freeGuests)
+        await Promise.all(
+          freeGuests.map((guest) =>
+            assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
+          )
+        )
 
         await Promise.all([
           createTestUser(member),
@@ -469,33 +485,33 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         const { subTotal, currency, items, total, discount } =
-          res.data!.workspace.billing.cost
-        expect(subTotal).to.equal(70 + 50 + 10)
+          res.data?.workspace.billing?.cost || {}
+        expect(subTotal).to.equal(49 + 49 + 15 + 2 * 5)
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
           {
-            name: 'workspace admin',
-            count: 1,
-            cost: 70
-          },
-          {
-            name: 'workspace member',
-            count: 1,
-            cost: 50
-          },
-          {
-            name: 'read/write guest',
-            count: 1,
-            cost: 10
-          },
-          {
-            name: 'read only guest',
+            name: 'workspace members',
             count: 2,
+            cost: 49
+          },
+          {
+            name: 'free guests',
+            count: 10,
             cost: 0
+          },
+          {
+            name: 'read/write guests',
+            count: 1,
+            cost: 15
+          },
+          {
+            name: 'read only guests',
+            count: 2,
+            cost: 5
           }
         ])
-        expect(discount).to.deep.equal(WorkspaceEarlyAdopterDiscount)
-        expect(total).to.equal(65)
+        expect(discount).to.deep.equal(null)
+        expect(total).to.equal(123)
       })
     })
 
@@ -814,6 +830,51 @@ describe('Workspaces GQL CRUD', () => {
               .includes(name)
           ).to.be.true
         })
+      })
+    })
+
+    describe('mutation workspaceMutations.deleteDomain', () => {
+      it('should disable discoverability and domain protection when deleting last domain', async () => {
+        const workspaceName = cryptoRandomString({ length: 6 })
+
+        const createRes = await apollo.execute(CreateWorkspaceDocument, {
+          input: { name: workspaceName }
+        })
+        expect(createRes).to.not.haveGraphQLErrors()
+        const workspaceId = createRes.data!.workspaceMutations.create.id
+
+        const addDomainRes = await apollo.execute(AddWorkspaceDomainDocument, {
+          input: {
+            workspaceId,
+            domain: 'example.org'
+          }
+        })
+        expect(addDomainRes).to.not.haveGraphQLErrors()
+        // Enable domain protection and discoverability
+        const getRes = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspaceId,
+            domainBasedMembershipProtectionEnabled: true,
+            discoverabilityEnabled: true
+          }
+        })
+        expect(getRes).to.not.haveGraphQLErrors()
+
+        const deleteDomainRes = await apollo.execute(DeleteWorkspaceDomainDocument, {
+          input: {
+            workspaceId,
+            id: addDomainRes.data!.workspaceMutations.addDomain.domains?.[0]?.id ?? ''
+          }
+        })
+        expect(deleteDomainRes).to.not.haveGraphQLErrors()
+
+        expect(
+          deleteDomainRes.data?.workspaceMutations.deleteDomain.discoverabilityEnabled
+        ).to.false
+        expect(
+          deleteDomainRes.data?.workspaceMutations.deleteDomain
+            .domainBasedMembershipProtectionEnabled
+        ).to.false
       })
     })
   })

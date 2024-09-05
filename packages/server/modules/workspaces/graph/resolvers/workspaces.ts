@@ -1,9 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  ResolverTypeWrapper,
-  Resolvers,
-  WorkspaceBilling
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
@@ -44,11 +40,10 @@ import { authorizeResolver } from '@/modules/shared'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
-  WorkspaceEarlyAdopterDiscount,
-  WorkspaceInviteResourceType
-} from '@/modules/workspaces/domain/constants'
-import {
+  WorkspaceAdminError,
+  WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
@@ -67,13 +62,15 @@ import {
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter,
   getWorkspaceCollaboratorsTotalCountFactory,
+  deleteWorkspaceDomainFactory as repoDeleteWorkspaceDomainFactory,
   storeWorkspaceDomainFactory,
-  deleteWorkspaceDomainFactory,
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getUserIdsWithRoleInWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -115,15 +112,18 @@ import {
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import {
   getWorkspaceCostFactory,
   getWorkspaceCostItemsFactory
 } from '@/modules/workspaces/services/cost'
-import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import {
+  deleteWorkspaceDomainFactory,
+  isUserWorkspaceDomainPolicyCompliantFactory
+} from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
@@ -314,7 +314,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const updateWorkspace = updateWorkspaceFactory({
-            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspace: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })
@@ -415,7 +415,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             Roles.Workspace.Admin,
             context.resourceAccessRules
           )
-          await deleteWorkspaceDomainFactory({ db })({ id: args.input.id })
+          await deleteWorkspaceDomainFactory({
+            deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db }),
+            countDomainsByWorkspaceId: countProjectsVersionsByWorkspaceIdFactory({
+              db
+            }),
+            updateWorkspace: updateWorkspaceFactory({
+              getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+              upsertWorkspace: upsertWorkspaceFactory({ db }),
+              emitWorkspaceEvent: getEventBus().emit
+            })
+          })({ workspaceId: args.input.workspaceId, domainId: args.input.id })
+
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
@@ -454,7 +465,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return true
         },
-        invites: () => ({})
+        invites: () => ({}),
+        projects: () => ({})
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -622,6 +634,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         }
       },
+      WorkspaceProjectMutations: {
+        updateRole: async (_parent, args, context) => {
+          const { projectId, userId, role } = args.input
+
+          const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
+
+          if (!workspaceId) {
+            throw new WorkspaceInvalidProjectError()
+          }
+
+          const currentRole = await getWorkspaceRoleForUserFactory({ db })({
+            workspaceId,
+            userId
+          })
+
+          if (currentRole?.role === Roles.Workspace.Admin) {
+            // User is workspace admin and cannot have their project roles changed
+            throw new WorkspaceAdminError()
+          }
+
+          return await updateStreamRoleAndNotify(
+            { projectId, userId, role },
+            context.userId!,
+            context.resourceAccessRules
+          )
+        }
+      },
       Workspace: {
         role: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
@@ -680,12 +719,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) =>
-          ({ parent } as { parent: Workspace } & ResolverTypeWrapper<WorkspaceBilling>)
+        billing: (parent) => ({ parent })
       },
       WorkspaceBilling: {
-        versionsCount: async (parent) => {
-          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+        versionsCount: async ({ parent }) => {
+          const workspaceId = parent.id
           return {
             current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
               workspaceId
@@ -693,13 +731,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
             max: WORKSPACE_MAX_PROJECTS_VERSIONS
           }
         },
-        cost: async (parent) => {
-          const workspaceId = (parent as unknown as { parent: Workspace }).parent.id
+        cost: async ({ parent }) => {
+          const workspaceId = parent.id
           return getWorkspaceCostFactory({
             getWorkspaceCostItems: getWorkspaceCostItemsFactory({
-              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
-            }),
-            discount: WorkspaceEarlyAdopterDiscount
+              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
+              getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
+                db
+              })
+            })
           })({ workspaceId })
         }
       },

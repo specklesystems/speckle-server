@@ -15,15 +15,17 @@
         £{{ item.cost }}
       </p>
       <p
-        class="text-foreground ml-4 w-32 md:w-40 py-2 px-3"
+        class="text-right text-foreground ml-4 w-32 md:w-40 py-2 px-3"
         :class="[index < billingItems.length - 1 ? 'border-b border-outline-3' : null]"
       >
         £{{ item.count * item.cost }} / month
       </p>
     </li>
     <li class="flex justify-between text-foreground font-medium">
-      <p class="flex-1 p-3">Subtotal</p>
-      <p class="w-32 md:w-40 ml-4 p-3">£{{ workspaceCost.subTotal }} / month</p>
+      <p class="flex-1 p-3">Total</p>
+      <p class="text-right w-32 md:w-40 ml-4 p-3">
+        £{{ workspaceCost.subTotal }} / month
+      </p>
     </li>
   </ul>
 </template>

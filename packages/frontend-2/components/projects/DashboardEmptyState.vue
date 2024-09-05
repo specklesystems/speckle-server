@@ -7,8 +7,13 @@
       Projects are the place where your models and their versions live.
     </h4>
     <div class="flex flex-col items-center gap-2">
-      <FormButton v-if="!isGuest" class="shadow-lg" @click="$emit('create-project')">
-        Create a project
+      <FormButton
+        v-if="!isGuest"
+        color="outline"
+        class="shadow-lg"
+        @click="$emit('create-project')"
+      >
+        New project
       </FormButton>
     </div>
   </div>

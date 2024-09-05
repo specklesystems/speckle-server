@@ -68,6 +68,7 @@ ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB} \
     SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
 WORKDIR /speckle-server
+COPY --from=build-stage /speckle-server/package.json ./package.json
 COPY --from=build-stage /speckle-server/wait /wait
 COPY --from=build-stage /speckle-server/tini /tini
 COPY --from=build-stage /speckle-server/packages/shared /speckle-server/packages/shared
@@ -75,9 +76,13 @@ COPY --from=build-stage /speckle-server/packages/objectloader /speckle-server/pa
 COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
+COPY --from=build-stage /speckle-server/packages/server/package.json ./package.json
 COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
+
+# Copy only if exists https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile/46801962#46801962
+COPY --from=dependency-stage /speckle-server/packages/server/node_module[s] ./node_modules
 
 ENTRYPOINT ["node"]
 CMD ["bin/www"]

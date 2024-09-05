@@ -30,6 +30,7 @@
             v-model="selectedRoles"
             class="md:w-56 grow md:grow-0"
             fixed-height
+            clearable
           />
         </div>
         <FormButton v-if="!isGuest" @click="openNewProject = true">
@@ -169,24 +170,15 @@ onUserProjectsUpdate((res) => {
       cache,
       getCacheId('User', activeUserId),
       'projects',
-      ({ variables, helpers: { ref, createUpdatedValue, evict } }) => {
-        if (variables.filter?.search?.length) {
-          // Evict if filtered query
-          return evict()
-        }
-        if (variables.filter?.onlyWithRoles?.length) {
-          const roles = variables.filter.onlyWithRoles
-          if (!roles.includes(incomingProject.role || '')) return
-        }
-
-        return createUpdatedValue(({ update }) => {
+      ({ helpers: { ref, createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
           update('items', (items) => [
             ref('Project', incomingProject.id),
             ...(items || [])
           ])
           update('totalCount', (count) => count + 1)
-        })
-      }
+        }),
+      { autoEvictFiltered: true }
     )
   }
 

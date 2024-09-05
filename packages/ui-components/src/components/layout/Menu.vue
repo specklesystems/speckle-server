@@ -12,7 +12,7 @@
         v-if="isMenuOpen"
         ref="menuItems"
         :class="[
-          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50',
+          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
         :style="menuItemsStyles"
@@ -126,7 +126,7 @@ const buildButtonClassses = (params: {
   if (active && !color) {
     classParts.push('bg-primary-muted text-foreground')
   } else if (disabled) {
-    classParts.push('text-foreground-disabled')
+    classParts.push('opacity-40')
   } else if (color === 'danger' && active) {
     classParts.push('text-foreground-on-primary bg-danger')
   } else if (color === 'danger' && !active) {

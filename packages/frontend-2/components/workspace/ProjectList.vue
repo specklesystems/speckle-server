@@ -1,49 +1,57 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink :to="workspacesRoute" name="Workspaces" :separator="false" />
-      <HeaderNavLink :to="workspaceRoute(workspaceId)" :name="workspace?.name" />
-    </Portal>
-    <WorkspaceHeader
-      v-if="workspace"
-      :icon="Squares2X2Icon"
-      :workspace-info="workspace"
-    />
-    <div class="flex flex-col gap-4 mt-4">
-      <div class="flex flex-row gap-2 sm:items-center justify-between">
-        <FormTextInput
-          name="modelsearch"
-          :show-label="false"
-          placeholder="Search..."
-          :custom-icon="MagnifyingGlassIcon"
-          color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60"
-          show-clear
-          v-bind="bind"
-          v-on="on"
-        />
-        <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
-          New project
-        </FormButton>
-      </div>
+    <div v-if="workspaceInvite" class="flex justify-center">
+      <WorkspaceInviteBlock :invite="workspaceInvite" />
     </div>
+    <template v-else>
+      <Portal to="navigation">
+        <HeaderNavLink
+          :to="workspaceRoute(workspaceId)"
+          :name="workspace?.name"
+          :separator="false"
+        />
+      </Portal>
+      <WorkspaceHeader
+        v-if="workspace"
+        :icon="Squares2X2Icon"
+        :workspace-info="workspace"
+      />
+      <div class="flex flex-col gap-4 mt-4">
+        <div class="flex flex-row gap-2 sm:items-center justify-between">
+          <FormTextInput
+            name="modelsearch"
+            :show-label="false"
+            placeholder="Search..."
+            :custom-icon="MagnifyingGlassIcon"
+            color="foundation"
+            wrapper-classes="grow md:grow-0 md:w-60"
+            show-clear
+            v-bind="bind"
+            v-on="on"
+          />
+          <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
+            New project
+          </FormButton>
+        </div>
+      </div>
 
-    <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
+      <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
 
-    <ProjectsDashboardEmptyState
-      v-if="showEmptyState"
-      :is-guest="isWorkspaceGuest"
-      @create-project="openNewProject = true"
-    />
+      <ProjectsDashboardEmptyState
+        v-if="showEmptyState"
+        :is-guest="isWorkspaceGuest"
+        @create-project="openNewProject = true"
+      />
 
-    <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" />
-      <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
+      <template v-else-if="projects?.items?.length">
+        <ProjectsDashboardFilled :projects="projects" />
+        <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
+      </template>
+
+      <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
+
+      <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
     </template>
-
-    <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
-
-    <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
   </div>
 </template>
 
@@ -62,8 +70,7 @@ import type {
   WorkspaceProjectList_ProjectCollectionFragment,
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
-import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
-import { workspaceRoute, workspacesRoute } from '~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 
 graphql(`
@@ -80,6 +87,7 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 
 const areQueriesLoading = useQueryLoading()
+const route = useRoute()
 
 const props = defineProps<{
   workspaceId: string
@@ -93,21 +101,21 @@ const {
   debouncedBy: 800
 })
 
+const token = computed(() => route.query.token as Optional<string>)
+
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
+
 const { result: initialQueryResult } = useQuery(
   workspacePageQuery,
-  {
+  () => ({
     workspaceId: props.workspaceId,
     filter: {
       search: (search.value || '').trim() || null
-    }
-  },
+    },
+    token: token.value || null
+  }),
   () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
-    }
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 
@@ -137,6 +145,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 
 const workspace = computed(() => initialQueryResult.value?.workspace)
 const projects = computed(() => query.result.value?.workspace?.projects)
+const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 
 const showEmptyState = computed(() => {
   if (search.value) return false

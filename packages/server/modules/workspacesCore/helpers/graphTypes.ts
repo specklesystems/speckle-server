@@ -5,8 +5,10 @@ import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceGraphQLReturn = Workspace
+export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
+export type WorkspaceProjectMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 
 export type PendingWorkspaceCollaboratorGraphQLReturn = {
   id: string

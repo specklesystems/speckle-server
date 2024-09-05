@@ -47,22 +47,9 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { result } = useQuery(
-  settingsWorkspacesMembersQuery,
-  () => ({
-    workspaceId: props.workspaceId
-  }),
-  () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
-    }
-  })
-)
+const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
+  workspaceId: props.workspaceId
+}))
 
 const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
