@@ -165,7 +165,9 @@ const onCollaboratorRoleChange = async (
   mp.track('Stream Action', {
     type: 'action',
     name: 'update',
-    action: 'team member role'
+    action: 'team member role',
+    // eslint-disable-next-line camelcase
+    workspace_id: workspace.value?.id
   })
 
   if (!newRole) {
