@@ -12,11 +12,14 @@ describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
     beforeEach(() => {
       const dbName = inject('dbName')
+      const pgConnString =
+        process.env.PG_CONNECTION_STRING ||
+        `postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`
       //purposefully running in the background without waiting
       void runProcess('docker', [
         'run',
         '--env',
-        `PG_CONNECTION_STRING=postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`,
+        `PG_CONNECTION_STRING=${pgConnString}`,
         '--rm',
         '--name',
         'preview-service',
@@ -35,8 +38,6 @@ describe.sequential('Acceptance', () => {
       },
       async ({ context }) => {
         const { db } = context
-        const dbName = inject('dbName')
-        console.log('Running test in database: %s', dbName)
         // load data
         const streamId = cryptoRandomString({ length: 10 })
         const objectId = cryptoRandomString({ length: 10 })
