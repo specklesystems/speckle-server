@@ -105,22 +105,27 @@ describe('Workspace repositories', () => {
   })
 
   describe('getWorkspaceCollaboratorsFactory creates a function, that', () => {
-    const testServerAdminUser: BasicTestUser = {
+    const testUserA: BasicTestUser = {
       id: '',
-      name: 'John Speckle',
-      email: 'john-collaborators-speckle@example.org',
+      name: 'John A Speckle',
+      email: 'john-a-speckle-collaborators@example.org',
       role: Roles.Server.Admin
     }
 
-    const testServerMemberUser: BasicTestUser = {
+    const testUserB: BasicTestUser = {
       id: '',
-      name: 'Also John Speckle',
-      email: 'also-john-collaborators-speckle@example.org',
-      role: Roles.Server.User
+      name: 'John B Speckle',
+      email: 'john-b-speckle-collaborators@example.org'
+    }
+
+    const testUserC: BasicTestUser = {
+      id: '',
+      name: 'John C Speckle',
+      email: 'john-c-speckle-collaborators@example.org'
     }
 
     before(async () => {
-      await createTestUsers([testServerAdminUser, testServerMemberUser])
+      await createTestUsers([testUserA, testUserB, testUserC])
     })
 
     describe('when one workspace exists', () => {
@@ -131,12 +136,8 @@ describe('Workspace repositories', () => {
       }
 
       beforeEach(async () => {
-        await createTestWorkspace(testWorkspace, testServerAdminUser)
-        await assignToWorkspace(
-          testWorkspace,
-          testServerMemberUser,
-          Roles.Workspace.Member
-        )
+        await createTestWorkspace(testWorkspace, testUserA)
+        await assignToWorkspace(testWorkspace, testUserB, Roles.Workspace.Member)
       })
 
       afterEach(async () => {
@@ -167,18 +168,20 @@ describe('Workspace repositories', () => {
         {
           id: '',
           ownerId: '',
-          name: 'Test Workspace B'
+          name: 'Test Workspace C'
         }
       ]
 
       beforeEach(async () => {
         for (const workspace of testWorkspaces) {
-          await createTestWorkspace(workspace, testServerAdminUser)
-          await assignToWorkspace(
-            workspace,
-            testServerMemberUser,
-            Roles.Workspace.Member
-          )
+          await createTestWorkspace(workspace, testUserA)
+          await assignToWorkspace(workspace, testUserB, Roles.Workspace.Member)
+
+          if (workspace.name === 'Test Workspace C') {
+            return
+          }
+
+          await assignToWorkspace(workspace, testUserC, Roles.Workspace.Member)
         }
       })
 
@@ -188,11 +191,15 @@ describe('Workspace repositories', () => {
 
       it('limits search results to specified workspace', async () => {
         const result = await getWorkspaceCollaborators({
-          workspaceId: testWorkspaces[0].id,
+          workspaceId: testWorkspaces[2].id,
           limit: 50,
-          filter: { search: 'also' }
+          filter: { search: 'John' }
         })
-        expect(result.length).to.equal(1)
+        expect(result.length).to.equal(2)
+        expect(result.map((user) => user.id)).to.have.members([
+          testUserA.id,
+          testUserB.id
+        ])
       })
     })
   })
