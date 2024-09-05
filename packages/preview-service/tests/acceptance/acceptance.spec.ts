@@ -2,34 +2,17 @@ import { acceptanceTest } from '#/helpers/testExtensions.js'
 import { ObjectPreview, type ObjectPreviewRow } from '@/repositories/objectPreview.js'
 import { Previews } from '@/repositories/previews.js'
 import cryptoRandomString from 'crypto-random-string'
-import { afterEach, beforeEach, describe, expect, inject } from 'vitest'
+import { afterEach, beforeEach, describe, expect } from 'vitest'
 import { promises as fs } from 'fs'
-import { spawn } from 'child_process'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
 
 describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
     beforeEach(() => {
-      const dbName = inject('dbName')
-      const pgConnString =
-        process.env.PG_CONNECTION_STRING ||
-        `postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`
-      //purposefully running in the background without waiting
-      void runProcess('docker', [
-        'run',
-        '--add-host=host.docker.internal:host-gateway',
-        '--env',
-        `PG_CONNECTION_STRING=${pgConnString}`,
-        '--rm',
-        '--name',
-        'preview-service',
-        'speckle/preview-service:local'
-      ])
+      // const dbName = inject('dbName')
     })
-    afterEach(async () => {
-      await runProcess('docker', ['stop', 'preview-service'])
-    })
+    afterEach(async () => {})
 
     // we use integration test and not e2e test because we don't need the server
     acceptanceTest(
@@ -97,19 +80,3 @@ describe.sequential('Acceptance', () => {
     )
   })
 })
-
-function runProcess(cmd: string, cmdArgs: string[], extraEnv?: Record<string, string>) {
-  return new Promise((resolve, reject) => {
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
-    childProc.stdout.pipe(process.stdout)
-    childProc.stderr.pipe(process.stderr)
-
-    childProc.on('close', (code) => {
-      if (code === 0) {
-        resolve('success')
-      } else {
-        reject(`Parser exited with code ${code}`)
-      }
-    })
-  })
-}
