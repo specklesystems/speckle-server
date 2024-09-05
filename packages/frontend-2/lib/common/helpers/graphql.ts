@@ -491,7 +491,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
@@ -499,7 +499,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['NOT_FOUND_ERROR', 'STREAM_NOT_FOUND', 'AUTOMATION_NOT_FOUND'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
