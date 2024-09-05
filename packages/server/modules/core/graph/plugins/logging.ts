@@ -1,10 +1,29 @@
 /* eslint-disable camelcase */
-/* istanbul ignore file */
-const { ApolloError } = require('apollo-server-express')
-const prometheusClient = require('prom-client')
-const { graphqlLogger } = require('@/logging/logging')
-const { redactSensitiveVariables } = require('@/logging/loggingHelper')
-const { GraphQLError } = require('graphql')
+import prometheusClient from 'prom-client'
+import { graphqlLogger } from '@/logging/logging'
+import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { FieldNode, GraphQLError, SelectionNode } from 'graphql'
+import { ApolloServerPlugin } from '@apollo/server'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
+
+type ApolloLoggingPluginTransaction = {
+  start: number
+  op: string
+  name: string
+  finish: () => void
+}
+
+declare module '@apollo/server' {
+  interface GraphQLRequest {
+    /**
+     * Set and used in our apollo logging plugin
+     */
+    transaction?: ApolloLoggingPluginTransaction
+  }
+}
+
+const isFieldNode = (node: SelectionNode): node is FieldNode => node.kind === 'Field'
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -12,19 +31,33 @@ const metricCallCount = new prometheusClient.Counter({
   labelNames: ['actionName']
 })
 
-/** @type {import('apollo-server-core').PluginDefinition} */
-module.exports = {
-  // eslint-disable-next-line no-unused-vars
-  requestDidStart(ctx) {
+export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
+  requestDidStart: async () => {
     const apolloRequestStart = Date.now()
     return {
-      didResolveOperation(ctx) {
-        let logger = ctx.context.log || graphqlLogger
-        const auth = ctx.context
+      didResolveOperation: async (ctx) => {
+        let logger = ctx.contextValue.log || graphqlLogger
+
+        if (!ctx.operation) {
+          logger.debug('Attempted to log a GQL operation without an operation')
+          return
+        }
+
+        const firstSelectedField =
+          ctx.operation.selectionSet.selections.find(isFieldNode)
+        if (!firstSelectedField) {
+          logger.debug(
+            'Attempted to log a GQL operation without a top-level field selection'
+          )
+          return
+        }
+
+        const auth = ctx.contextValue
         const userId = auth?.userId
 
-        const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
-        const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
+        const actionName = `${ctx.operation.operation} ${firstSelectedField.name.value}`
+        const op = `GQL ${actionName}`
+        const name = `GQL ${firstSelectedField.name.value}`
         const kind = ctx.operation.operation
         const query = ctx.request.query
         const variables = ctx.request.variables
@@ -43,23 +76,23 @@ module.exports = {
           op,
           name,
           finish: () => {
-            //TODO add tracing with opentelemetry
+            // TODO: add tracing with opentelemetry
           }
         }
 
         try {
-          const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           logger = logger.child({ actionName })
           metricCallCount.labels(actionName).inc()
         } catch (e) {
           logger.error({ err: e, transaction }, 'Error while defining action name')
         }
 
+        ctx.request.http
         ctx.request.transaction = transaction
-        ctx.context.log = logger
+        ctx.contextValue.log = logger
       },
-      didEncounterErrors(ctx) {
-        let logger = ctx.context.log || graphqlLogger
+      didEncounterErrors: async (ctx) => {
+        let logger = ctx.contextValue.log || graphqlLogger
         logger = logger.child({
           apollo_query_duration_ms: Date.now() - apolloRequestStart
         })
@@ -77,10 +110,7 @@ module.exports = {
               graphql_variables: variables
             })
           }
-          if (
-            (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
-            err instanceof ApolloError
-          ) {
+          if (err instanceof GraphQLError && isUserGraphqlError(err)) {
             logger.info(
               { err },
               '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
@@ -93,12 +123,13 @@ module.exports = {
           }
         }
       },
-      willSendResponse(ctx) {
-        const logger = ctx.context.log || graphqlLogger
+      willSendResponse: async (ctx) => {
+        const logger = ctx.contextValue.log || graphqlLogger
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
+
         logger.info(
           {
             apollo_query_duration_ms: Date.now() - apolloRequestStart

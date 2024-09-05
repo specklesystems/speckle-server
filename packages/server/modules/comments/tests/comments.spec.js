@@ -35,8 +35,7 @@ const {
 } = require('@/modules/comments/services/commentTextService')
 const { range } = require('lodash')
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared/middleware')
-const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
+const { AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createAuthTokenForUser } = require('@/test/authHelper')
 const { uploadBlob } = require('@/test/blobHelper')
 const { Comments } = require('@/modules/core/dbSchema')
@@ -47,6 +46,7 @@ const {
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const { createAuthedTestContext } = require('@/test/graphqlHelper')
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -999,7 +999,7 @@ describe('Comments @comments', () => {
   })
 
   describe('when authenticated', () => {
-    /** @type {import('apollo-server-express').ApolloServer} */
+    /** @type {import('@/test/graphqlHelper').ServerAndContext} */
     let apollo
     let userToken
     let blob1
@@ -1008,16 +1008,10 @@ describe('Comments @comments', () => {
       const scopes = AllScopes
 
       // Init apollo instance w/ authenticated context
-      apollo = await buildApolloServer({
-        context: () =>
-          addLoadersToCtx({
-            auth: true,
-            userId: user.id,
-            role: Roles.Server.User,
-            token: 'asd',
-            scopes
-          })
-      })
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(user.id)
+      }
 
       // Init token for authenticating w/ REST API
       userToken = await createAuthTokenForUser(user.id, scopes)

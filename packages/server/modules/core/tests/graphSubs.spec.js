@@ -1,6 +1,6 @@
 const expect = require('chai').expect
 const request = require('supertest')
-const { gql } = require('apollo-server-express')
+const { gql } = require('graphql-tag')
 const { WebSocketLink } = require('@apollo/client/link/ws')
 const { execute } = require('@apollo/client/core')
 
