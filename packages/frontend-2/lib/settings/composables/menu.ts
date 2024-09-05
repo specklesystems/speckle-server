@@ -1,4 +1,3 @@
-import { settingsQueries } from '~/lib/common/helpers/route'
 import type { SettingsMenuItems } from '~/lib/settings/helpers/types'
 import SettingsUserProfile from '~/components/settings/user/Profile.vue'
 import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
@@ -15,35 +14,36 @@ import SettingsWorkspacesProjects from '~/components/settings/workspaces/Project
 import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
+import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 
 export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
-    general: {
+    [SettingMenuKeys.Workspace.General]: {
       title: 'General',
       component: SettingsWorkspaceGeneral,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
-    members: {
+    [SettingMenuKeys.Workspace.Members]: {
       title: 'Members',
       component: SettingsWorkspacesMembers,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    projects: {
+    [SettingMenuKeys.Workspace.Projects]: {
       title: 'Projects',
       component: SettingsWorkspacesProjects,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    security: {
+    [SettingMenuKeys.Workspace.Security]: {
       title: 'Security',
       component: SettingsWorkspacesSecurity,
       permission: [Roles.Workspace.Admin]
     },
-    billing: {
+    [SettingMenuKeys.Workspace.Billing]: {
       title: 'Billing',
       component: SettingsWorkspacesBilling,
       permission: [Roles.Workspace.Admin]
     },
-    regions: {
+    [SettingMenuKeys.Workspace.Regions]: {
       title: 'Regions',
       disabled: true,
       tooltipText: 'Set up regions for custom data residency',
@@ -52,15 +52,15 @@ export const useSettingsMenu = () => {
   })
 
   const userMenuItemValues: SettingsMenuItems = {
-    [settingsQueries.user.profile]: {
+    [SettingMenuKeys.User.Profile]: {
       title: 'Profile',
       component: SettingsUserProfile
     },
-    [settingsQueries.user.notifications]: {
+    [SettingMenuKeys.User.Notifications]: {
       title: 'Notifications',
       component: SettingsUserNotifications
     },
-    [settingsQueries.user.developerSettings]: {
+    [SettingMenuKeys.User.DeveloperSettings]: {
       title: 'Developer settings',
       component: SettingsUserDeveloper
     }
@@ -68,7 +68,7 @@ export const useSettingsMenu = () => {
 
   const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   if (multipleEmailsEnabled) {
-    userMenuItemValues[settingsQueries.user.emails] = {
+    userMenuItemValues[SettingMenuKeys.User.Emails] = {
       title: 'Email addresses',
       component: SettingsUserEmails
     }
@@ -77,19 +77,19 @@ export const useSettingsMenu = () => {
   const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 
   const serverMenuItems = shallowRef<SettingsMenuItems>({
-    [settingsQueries.server.general]: {
+    [SettingMenuKeys.Server.General]: {
       title: 'General',
       component: SettingsServerGeneral
     },
-    [settingsQueries.server.projects]: {
+    [SettingMenuKeys.Server.Projects]: {
       title: 'Projects',
       component: SettingsServerProjects
     },
-    [settingsQueries.server.activeUsers]: {
+    [SettingMenuKeys.Server.ActiveUsers]: {
       title: 'Active users',
       component: SettingsServerActiveUsers
     },
-    [settingsQueries.server.pendingInvitations]: {
+    [SettingMenuKeys.Server.PendingInvitations]: {
       title: 'Pending invitations',
       component: SettingsServerPendingInvitations
     }
