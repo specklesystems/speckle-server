@@ -31,11 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import { vKeyboardClickable } from '~~/src/directives/accessibility'
 
-defineProps<{
+const props = defineProps<{
   title: string
   text: string
 }>()
@@ -55,4 +55,12 @@ const updateIsExpandable = () => {
 }
 
 onMounted(updateIsExpandable)
+
+watch(
+  () => props.text,
+  async () => {
+    isExpanded.value = false
+    await nextTick(updateIsExpandable)
+  }
+)
 </script>
