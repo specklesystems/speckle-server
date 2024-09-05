@@ -10,14 +10,15 @@ import {
   storeWorkspaceDomainFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getWorkspaceCollaboratorsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestWorkspace,
   assignToWorkspace,
@@ -41,6 +42,7 @@ import {
 } from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
@@ -100,6 +102,99 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+  })
+
+  describe('getWorkspaceCollaboratorsFactory creates a function, that', () => {
+    const testServerAdminUser: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: 'john-collaborators-speckle@example.org',
+      role: Roles.Server.Admin
+    }
+
+    const testServerMemberUser: BasicTestUser = {
+      id: '',
+      name: 'Also John Speckle',
+      email: 'also-john-collaborators-speckle@example.org',
+      role: Roles.Server.User
+    }
+
+    before(async () => {
+      await createTestUsers([testServerAdminUser, testServerMemberUser])
+    })
+
+    describe('when one workspace exists', () => {
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Test Workspace'
+      }
+
+      beforeEach(async () => {
+        await createTestWorkspace(testWorkspace, testServerAdminUser)
+        await assignToWorkspace(
+          testWorkspace,
+          testServerMemberUser,
+          Roles.Workspace.Member
+        )
+      })
+
+      afterEach(async () => {
+        truncateTables(['workspaces'])
+      })
+
+      it('returns all workspace members', async () => {
+        const team = await getWorkspaceCollaborators({
+          workspaceId: testWorkspace.id,
+          limit: 50
+        })
+        expect(team.length).to.equal(2)
+      })
+    })
+
+    describe('when multiple workspaces exist', () => {
+      const testWorkspaces: BasicTestWorkspace[] = [
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace A'
+        },
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace B'
+        },
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace B'
+        }
+      ]
+
+      beforeEach(async () => {
+        for (const workspace of testWorkspaces) {
+          await createTestWorkspace(workspace, testServerAdminUser)
+          await assignToWorkspace(
+            workspace,
+            testServerMemberUser,
+            Roles.Workspace.Member
+          )
+        }
+      })
+
+      afterEach(async () => {
+        truncateTables(['workspaces'])
+      })
+
+      it('limits search results to specified workspace', async () => {
+        const result = await getWorkspaceCollaborators({
+          workspaceId: testWorkspaces[0].id,
+          limit: 50,
+          filter: { search: 'also' }
+        })
+        expect(result.length).to.equal(1)
+      })
+    })
   })
 
   describe('upsertWorkspaceFactory creates a function, that', () => {
