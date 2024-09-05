@@ -15,11 +15,10 @@ describe.sequential('Acceptance', () => {
       const pgConnString =
         process.env.PG_CONNECTION_STRING ||
         `postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`
-      const isHostNetwork = process.env.IS_HOST_NETWORK === 'true'
       //purposefully running in the background without waiting
       void runProcess('docker', [
         'run',
-        isHostNetwork ? '--network="host"' : '',
+        '--add-host=host.docker.internal:host-gateway',
         '--env',
         `PG_CONNECTION_STRING=${pgConnString}`,
         '--rm',
