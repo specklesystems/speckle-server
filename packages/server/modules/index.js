@@ -141,7 +141,7 @@ exports.graphDataloadersBuilders = () => {
 /**
  * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
  * that resolvers return valid values even if the module is disabled
- * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
+ * @returns {Pick<import('@apollo/server').ApolloServerOptions, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
  */
 const graphComponents = () => {
   // Base query and mutation to allow for type extension by modules.

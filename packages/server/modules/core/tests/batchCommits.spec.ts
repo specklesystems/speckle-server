@@ -1,3 +1,4 @@
+import { buildApolloServer } from '@/app'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommits } from '@/modules/core/repositories/commits'
@@ -5,14 +6,14 @@ import { createBranch } from '@/modules/core/services/branches'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
-import { truncateTables } from '@/test/hooks'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { truncateTables } from '@/test/hooks'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { describe } from 'mocha'
@@ -120,7 +121,7 @@ describe('Batch commits', () => {
   ]
 
   const buildBatchActionInvoker =
-    (apollo: ApolloServer) => (type: BatchActionType, commitIds: string[]) => {
+    (apollo: ServerAndContext) => (type: BatchActionType, commitIds: string[]) => {
       if (type === BatchActionType.Delete) {
         return deleteCommits(apollo, { input: { commitIds } })
       } else if (type === BatchActionType.Move) {
@@ -135,11 +136,14 @@ describe('Batch commits', () => {
   type BatchActionInvoker = ReturnType<typeof buildBatchActionInvoker>
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
@@ -268,11 +272,14 @@ describe('Batch commits', () => {
   })
 
   describe('when not authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createTestContext()
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
