@@ -427,13 +427,10 @@ export const useWorkspaceUpdateRole = () => {
               cache,
               getCacheId('Workspace', input.workspaceId),
               'team',
-              ({ value }) => {
-                if (value.totalCount) {
-                  return {
-                    ...value,
-                    totalCount: value.totalCount - 1
-                  }
-                }
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (totalCount) => totalCount - 1)
+                })
               },
               {
                 autoEvictFiltered: true
