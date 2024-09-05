@@ -1,5 +1,6 @@
 import type { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
+import type { PassThrough } from 'stream'
 
 export const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
 
@@ -32,9 +33,7 @@ export const getObjectFactory =
     return returned
   }
 
-export type GetObjectChildrenStream = (
-  params: ObjectIdentifier
-) => Promise<NodeJS.ReadableStream>
+export type GetObjectChildrenStream = (params: ObjectIdentifier) => Promise<PassThrough>
 export const getObjectChildrenStreamFactory =
   (deps: { db: Knex }): GetObjectChildrenStream =>
   async ({ streamId, objectId }) => {
@@ -75,7 +74,7 @@ type BatchObjectIdentifier = {
   streamId: string
   objectIds: string[]
 }
-export type GetObjectsStream = (params: BatchObjectIdentifier) => NodeJS.ReadableStream
+export type GetObjectsStream = (params: BatchObjectIdentifier) => PassThrough
 export const getObjectsStreamFactory =
   (deps: { db: Knex }): GetObjectsStream =>
   ({ streamId, objectIds }) => {
