@@ -419,10 +419,26 @@ export const useWorkspaceUpdateRole = () => {
       {
         update: (cache) => {
           if (!input.role) {
-            // If role is null, we're removing the user
             cache.evict({
               id: getCacheId('WorkspaceCollaborator', input.userId)
             })
+
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ value }) => {
+                if (value.totalCount) {
+                  return {
+                    ...value,
+                    totalCount: value.totalCount - 1
+                  }
+                }
+              },
+              {
+                autoEvictFiltered: true
+              }
+            )
           }
         }
       }
