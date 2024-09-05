@@ -14,7 +14,6 @@
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
-          v-if="!invite.workspace"
           :size="buttonSize"
           color="subtle"
           text

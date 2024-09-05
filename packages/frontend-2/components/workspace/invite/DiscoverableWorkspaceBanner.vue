@@ -47,7 +47,7 @@ const props = defineProps<{
 const { client: apollo } = useApolloClient()
 const { triggerNotification } = useGlobalToast()
 const router = useRouter()
-const isDismissed = useSynchronizedCookie<string[]>(
+const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
   CookieKeys.DismissedDiscoverableWorkspaces,
   {
     default: () => []
@@ -64,7 +64,13 @@ const invite = computed(() => ({
 
 const processJoin = async (accept: boolean) => {
   if (!accept) {
-    isDismissed.value = [...isDismissed.value]
+    dismissedDiscoverableWorkspaces.value = [
+      ...dismissedDiscoverableWorkspaces.value,
+      props.workspace.id
+    ]
+    apollo.cache.evict({
+      id: getCacheId('DiscoverableWorkspace', props.workspace.id)
+    })
     return
   }
 
