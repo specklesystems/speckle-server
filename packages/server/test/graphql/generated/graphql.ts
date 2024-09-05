@@ -3871,7 +3871,7 @@ export type Workspace = {
   /** Enable/Disable restriction to invite users to workspace as Guests only */
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
-  domains: Array<WorkspaceDomain>;
+  domains?: Maybe<Array<WorkspaceDomain>>;
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
@@ -4049,6 +4049,7 @@ export type WorkspaceMutations = {
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
+  projects: WorkspaceProjectMutations;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -4104,6 +4105,16 @@ export type WorkspaceProjectInviteCreateInput = {
   userId?: InputMaybe<Scalars['String']['input']>;
   /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
   workspaceRole?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceProjectMutations = {
+  __typename?: 'WorkspaceProjectMutations';
+  updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
 };
 
 export type WorkspaceProjectsFilter = {
@@ -4262,14 +4273,14 @@ export type AddWorkspaceDomainMutationVariables = Exact<{
 }>;
 
 
-export type AddWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', addDomain: { __typename?: 'Workspace', id: string, domains: Array<{ __typename?: 'WorkspaceDomain', id: string }> } } };
+export type AddWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', addDomain: { __typename?: 'Workspace', id: string, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string }> | null } } };
 
 export type DeleteWorkspaceDomainMutationVariables = Exact<{
   input: WorkspaceDomainDeleteInput;
 }>;
 
 
-export type DeleteWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', deleteDomain: { __typename?: 'Workspace', id: string, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean, domains: Array<{ __typename?: 'WorkspaceDomain', id: string }> } } };
+export type DeleteWorkspaceDomainMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', deleteDomain: { __typename?: 'Workspace', id: string, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string }> | null } } };
 
 export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } };
 

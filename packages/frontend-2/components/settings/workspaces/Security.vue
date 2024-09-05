@@ -46,6 +46,8 @@
             <FormSelectBase
               v-model="selectedDomain"
               :items="verifiedUserDomains"
+              :disabled-item-predicate="disabledItemPredicate"
+              disabled-item-tooltip="This domain can't be used for verified workspace domains"
               name="workspaceDomains"
               label="Verified domains"
               class="w-full"
@@ -111,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ShallowRef } from 'vue'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -122,6 +125,7 @@ import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { blockedDomains } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -158,6 +162,7 @@ const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
 const removeDialogDomain =
   ref<SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment>()
+const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
 
 const { result } = useQuery(settingsWorkspacesSecurityQuery, {
   workspaceId: props.workspaceId
@@ -295,7 +300,7 @@ const addDomain = async () => {
       domain: selectedDomain.value,
       workspaceId: props.workspaceId
     },
-    result.value?.workspace.domains,
+    result.value?.workspace.domains ?? [],
     result.value?.workspace.discoverabilityEnabled,
     result.value?.workspace.domainBasedMembershipProtectionEnabled
   )
@@ -312,6 +317,10 @@ const openRemoveDialog = (
 ) => {
   removeDialogDomain.value = domain
   showRemoveDomainDialog.value = true
+}
+
+const disabledItemPredicate = (item: string) => {
+  return blockedDomainItems.value.includes(item)
 }
 
 watch(

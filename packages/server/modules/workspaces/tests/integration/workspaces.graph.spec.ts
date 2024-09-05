@@ -50,7 +50,6 @@ import {
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-import { WorkspaceEarlyAdopterDiscount } from '@/modules/workspaces/domain/constants'
 
 const createProjectWithVersions =
   ({ apollo }: { apollo: TestApolloServer }) =>
@@ -511,8 +510,8 @@ describe('Workspaces GQL CRUD', () => {
             cost: 5
           }
         ])
-        expect(discount).to.deep.equal(WorkspaceEarlyAdopterDiscount)
-        expect(total).to.equal(61.5)
+        expect(discount).to.deep.equal(null)
+        expect(total).to.equal(123)
       })
     })
 
@@ -864,7 +863,7 @@ describe('Workspaces GQL CRUD', () => {
         const deleteDomainRes = await apollo.execute(DeleteWorkspaceDomainDocument, {
           input: {
             workspaceId,
-            id: addDomainRes.data!.workspaceMutations.addDomain.domains[0].id
+            id: addDomainRes.data!.workspaceMutations.addDomain.domains?.[0]?.id ?? ''
           }
         })
         expect(deleteDomainRes).to.not.haveGraphQLErrors()

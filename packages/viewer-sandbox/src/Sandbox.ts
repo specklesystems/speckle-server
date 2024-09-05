@@ -1211,6 +1211,7 @@ export default class Sandbox {
         // cubes
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // DUI3
 
         VisualDiffMode.COLORED,
         localStorage.getItem('AuthTokenLatest') as string

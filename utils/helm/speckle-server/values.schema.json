@@ -1666,6 +1666,21 @@
             }
           }
         },
+        "puppeteer": {
+          "type": "object",
+          "properties": {
+            "userDataDirectory": {
+              "type": "string",
+              "description": "The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.",
+              "default": ""
+            },
+            "timeoutMilliseconds": {
+              "type": "string",
+              "description": "The timeout in milliseconds for the Puppeteer service.",
+              "default": "3600000"
+            }
+          }
+        },
         "requests": {
           "type": "object",
           "properties": {

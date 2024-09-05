@@ -139,6 +139,9 @@
                     :disabled="disabledItemPredicate?.(item) || false"
                   >
                     <li
+                      v-tippy="
+                        disabledItemPredicate?.(item) ? disabledItemTooltip : undefined
+                      "
                       :class="
                         listboxOptionClasses({
                           active,
@@ -404,6 +407,13 @@ const props = defineProps({
   buttonId: {
     type: String,
     default: undefined
+  },
+  /**
+   * Tooltip shown on disabled items
+   */
+  disabledItemTooltip: {
+    required: false,
+    type: String
   }
 })
 
@@ -702,14 +712,14 @@ const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) =>
   const { hideCheckmarks } = props
 
   const classParts = [
-    'relative transition cursor-pointer select-none py-1.5 pl-3',
+    'relative transition select-none py-1.5 pl-3',
     !hideCheckmarks ? 'pr-9' : ''
   ]
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
   } else {
-    classParts.push(active ? 'text-primary' : 'text-foreground')
+    classParts.push(active ? 'text-primary' : 'text-foreground', 'cursor-pointer')
   }
 
   return classParts.join(' ')
