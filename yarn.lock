@@ -15487,7 +15487,7 @@ __metadata:
     express-async-errors: "npm:^3.1.1"
     express-prom-bundle: "npm:^6.6.0"
     express-session: "npm:^1.17.1"
-    graphql: "npm:^16.6.0"
+    graphql: "npm:^16.9.0"
     graphql-redis-subscriptions: "npm:^2.2.2"
     graphql-scalars: "npm:^1.18.0"
     graphql-subscriptions: "npm:^2.0.0"
@@ -31890,7 +31890,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:14 - 16, graphql@npm:^16.6.0":
+"graphql@npm:14 - 16, graphql@npm:^16.6.0, graphql@npm:^16.9.0":
   version: 16.9.0
   resolution: "graphql@npm:16.9.0"
   checksum: 10/5833f82bb6c31bec120bbf9cd400eda873e1bb7ef5c17974fa262cd82dc68728fda5d4cb859dc8aaa4c4fe4f6fe1103a9c47efc01a12c02ae5cb581d8e4029e2
