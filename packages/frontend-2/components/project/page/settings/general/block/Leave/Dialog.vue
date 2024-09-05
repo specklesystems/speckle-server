@@ -47,6 +47,11 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
 
 const onLeave = async () => {
   await leaveProject(props.project.id, { goHome: true })
-  mp.track('Stream Action', { type: 'action', name: 'leave' })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'leave',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.project.workspace?.id
+  })
 }
 </script>
