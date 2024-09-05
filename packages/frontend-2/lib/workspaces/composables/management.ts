@@ -414,7 +414,22 @@ export const useWorkspaceUpdateRole = () => {
   const { triggerNotification } = useGlobalToast()
 
   return async (input: WorkspaceRoleUpdateInput) => {
-    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          if (!input.role) {
+            // If role is null, we're removing the user
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ helpers: { evict } }) => evict()
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({
