@@ -312,10 +312,6 @@ export = {
         userResourceAccessRules: resourceAccessRules
       })
 
-      // Reset favorite count/date loaders
-      ctx.loaders.streams.getFavoritesCount.clear(streamId)
-      ctx.loaders.streams.getUserFavoriteData.clear(streamId)
-
       return stream
     },
 

@@ -64,6 +64,10 @@ export async function executeOperation<
   )) as TypedGraphqlResponse<R>
 
   const results = getResponseResults(res)
+
+  // Replicate clearing dataloaders after each request
+  contextValue.loaders.clearAll()
+
   return {
     ...results,
     res
