@@ -104,8 +104,8 @@
             <div v-if="spotlightUserSessionId && spotlightUser">
               Following {{ spotlightUser?.userName.split(' ')[0] }}
               <FormButton
-                color="secondary"
-                size="xs"
+                color="outline"
+                size="sm"
                 class="ml-1 -mr-1.5"
                 @click="() => (spotlightUserSessionId = null)"
               >

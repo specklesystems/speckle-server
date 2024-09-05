@@ -2,23 +2,41 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
+const {
+  beforeEachContext,
+  initializeTestServer,
+  truncateTables
+} = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const {
-  createWebhook,
   getStreamWebhooks,
   getLastWebhookEvents,
-  getWebhook,
-  updateWebhook,
   deleteWebhook,
   dispatchStreamEvent
 } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
+const {
+  createWebhookFactory,
+  countWebhooksByStreamIdFactory,
+  getWebhookByIdFactory,
+  updateWebhookFactory
+} = require('@/modules/webhooks/repositories/webhooks')
+const { db } = require('@/db/knex')
+const {
+  createWebhook,
+  updateWebhook: updateWebhookService
+} = require('@/modules/webhooks/services/webhooks-new')
+const { Users, Streams } = require('@/modules/core/dbSchema')
+
+const updateWebhook = updateWebhookService({
+  updateWebhookConfig: updateWebhookFactory({ db })
+})
 
 describe('Webhooks @webhooks', () => {
+  const getWebhook = getWebhookByIdFactory({ db })
   let server, sendRequest, app
 
   const userOne = {
@@ -54,12 +72,21 @@ describe('Webhooks @webhooks', () => {
   })
 
   after(async () => {
+    await truncateTables([
+      Users.name,
+      Streams.name,
+      'webhooks_config',
+      'webhooks_events'
+    ])
     await server.close()
   })
 
   describe('Create, Read, Update, Delete Webhooks', () => {
     it('Should create a webhook', async () => {
-      webhookOne.id = await createWebhook(webhookOne)
+      webhookOne.id = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhookOne)
       expect(webhookOne).to.have.property('id')
       expect(webhookOne.id).to.not.be.null
     })
@@ -72,9 +99,14 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should update a webhook', async () => {
+      const webhookId = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhookOne)
+
       const newUrl = 'http://localhost:42/new-url'
-      await updateWebhook({ id: webhookOne.id, url: newUrl })
-      const webhook = await getWebhook({ id: webhookOne.id })
+      await updateWebhook({ id: webhookId, url: newUrl })
+      const webhook = await getWebhook({ id: webhookId })
       expect(webhook).to.not.be.null
       expect(webhook).to.have.property('url')
       expect(webhook.url).to.equal(newUrl)
@@ -83,27 +115,67 @@ describe('Webhooks @webhooks', () => {
     it('Should delete a webhook', async () => {
       await deleteWebhook({ id: webhookOne.id })
       const webhook = await getWebhook({ id: webhookOne.id })
-      expect(webhook).to.be.undefined
+      expect(webhook).to.be.null
     })
 
     it('Should get webhooks for stream', async () => {
-      let streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
+      const stream = {
+        name: 'streamOne',
+        description: 'stream',
+        isPublic: true,
+        ownerId: userOne.id
+      }
+      const streamId = await createStream(stream)
+      let streamWebhooks = await getStreamWebhooks({ streamId })
       expect(streamWebhooks).to.have.lengthOf(0)
 
-      webhookOne.id = await createWebhook(webhookOne)
-      streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
+      const webhook = {
+        streamId, // filled in `before`
+        url: 'http://localhost:42/non-existent',
+        description: 'test wh',
+        secret: 'secret',
+        enabled: true,
+        triggers: ['commit_create', 'commit_update']
+      }
+      await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhook)
+      streamWebhooks = await getStreamWebhooks({ streamId })
       expect(streamWebhooks).to.have.lengthOf(1)
       expect(streamWebhooks[0]).to.have.property('url')
-      expect(streamWebhooks[0].url).to.equal(webhookOne.url)
+      expect(streamWebhooks[0].url).to.equal(webhook.url)
     })
 
     it('Should dispatch and get events', async () => {
+      const stream = {
+        name: 'streamOne',
+        description: 'stream',
+        isPublic: true,
+        ownerId: userOne.id
+      }
+      const streamId = await createStream(stream)
+      const streamWebhooks = await getStreamWebhooks({ streamId })
+      expect(streamWebhooks).to.have.lengthOf(0)
+
+      const webhook = {
+        streamId, // filled in `before`
+        url: 'http://localhost:42/non-existent',
+        description: 'test wh',
+        secret: 'secret',
+        enabled: true,
+        triggers: ['commit_create', 'commit_update']
+      }
+      const webhookId = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhook)
       await dispatchStreamEvent({
-        streamId: streamOne.id,
+        streamId,
         event: 'commit_create',
         eventPayload: { test: 'payload123' }
       })
-      const lastEvents = await getLastWebhookEvents({ webhookId: webhookOne.id })
+      const lastEvents = await getLastWebhookEvents({ webhookId })
       expect(lastEvents).to.have.lengthOf(1)
       expect(JSON.parse(lastEvents[0].payload).test).to.equal('payload123')
     })
@@ -198,7 +270,7 @@ describe('Webhooks @webhooks', () => {
       })
       const webhook = await getWebhook({ id: webhookTwo.id })
       expect(noErrors(res))
-      expect(res.body.data.webhookUpdate).to.equal('true')
+      expect(res.body.data.webhookUpdate).to.equal(webhook.id)
       expect(webhook.description).to.equal('updated webhook')
       expect(webhook.enabled).to.equal(false)
     })
@@ -208,6 +280,7 @@ describe('Webhooks @webhooks', () => {
         query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}" } ) }`
       })
       expect(res1.body.errors).to.exist
+      expect(res1.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res1.body.errors[0].message).to.equal(
         'The webhook id and stream id do not match. Please check your inputs.'
       )
@@ -217,6 +290,7 @@ describe('Webhooks @webhooks', () => {
         query: `mutation { webhookUpdate(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}", description: "updated webhook", enabled: false }) }`
       })
       expect(res2.body.errors).to.exist
+      expect(res2.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res2.body.errors[0].message).to.equal(
         'The webhook id and stream id do not match. Please check your inputs.'
       )
@@ -255,31 +329,22 @@ describe('Webhooks @webhooks', () => {
     it('Should have a webhook limit for streams', async () => {
       const limit = 100
       for (let i = 0; i < limit - 1; i++) {
-        await createWebhook(webhookOne)
+        await createWebhook({
+          createWebhookConfig: createWebhookFactory({ db }),
+          countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+        })(webhookOne)
       }
 
       try {
-        await createWebhook(webhookOne)
+        await createWebhook({
+          createWebhookConfig: createWebhookFactory({ db }),
+          countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+        })(webhookOne)
       } catch (err) {
         if (err.toString().indexOf('Maximum') > -1) return
       }
 
       assert.fail('Configured more webhooks than the limit')
-    })
-
-    it('Should cleanup stream webhooks', async () => {
-      // just cleanup the 99 extra webhooks added before (not a real test)
-      let streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
-      for (const webhook of streamWebhooks) {
-        if (webhook.id !== webhookOne.id) {
-          await deleteWebhook({ id: webhook.id })
-        }
-      }
-
-      streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
-      expect(streamWebhooks).to.have.lengthOf(1)
-      expect(streamWebhooks[0]).to.have.property('id')
-      expect(streamWebhooks[0].id).to.equal(webhookOne.id)
     })
   })
 })

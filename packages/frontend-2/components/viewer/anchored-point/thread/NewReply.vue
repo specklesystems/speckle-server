@@ -19,14 +19,12 @@
         hide-text
         text
         :disabled="loading"
-        color="card"
         class="sm:px-0"
         @click="trackAttachAndOpenFilePicker()"
       />
       <FormButton
         :icon-left="PaperAirplaneIcon"
         hide-text
-        color="default"
         :disabled="loading"
         @click="onSubmit"
       />

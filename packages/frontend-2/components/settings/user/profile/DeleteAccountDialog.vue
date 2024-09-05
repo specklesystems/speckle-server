@@ -2,17 +2,17 @@
   <LayoutDialog v-model:open="isOpen" title="Delete account" max-width="md">
     <form class="flex flex-col gap-2" @submit="onDelete">
       <div
-        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
+        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-3 rounded border bg-foundation-2 border-outline-5 text-body-xs text-foreground py-4 px-6 mb-2"
       >
         <div>
-          <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-danger" />
+          <ExclamationTriangleIcon class="mt-0.5 h-6 w-6 text-danger" />
         </div>
         <div>
-          <p class="font-semibold text-danger-darker dark:text-danger-lighter">
+          <p class="text-body-xs font-medium mb-1">
             This action cannot be undone. We will delete all projects where you are the
             sole owner, and any associated data.
           </p>
-          <p class="text-sm">
+          <p class="text-body-xs">
             To delete your account, type in your
             <HelpText :text="emailPlaceholder">e-mail address</HelpText>
             and press the button.
@@ -24,6 +24,7 @@
           name="deleteEmail"
           label="Your e-mail address"
           :placeholder="emailPlaceholder"
+          color="foundation"
           full-width
           validate-on-mount
           validate-on-value-update
@@ -46,11 +47,11 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsUserProfileDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDeleteAccount } from '~~/lib/user/composables/management'
 
 graphql(`
-  fragment UserProfileEditDialogDeleteAccount_User on User {
+  fragment SettingsUserProfileDeleteAccount_User on User {
     id
     email
   }
@@ -67,7 +68,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  user: UserProfileEditDialogDeleteAccount_UserFragment
+  user: SettingsUserProfileDeleteAccount_UserFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })

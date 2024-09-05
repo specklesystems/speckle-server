@@ -1,12 +1,14 @@
 <template>
   <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
-      Subscribe to events and get notified in real time. Use to trigger CI apps,
-      automation workflows, and more.
+      <p class="text-body-xs text-foreground">
+        Subscribe to events and get notified in real time. Use to trigger CI apps,
+        automation workflows, and more.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton
-        color="secondary"
+        color="outline"
         :icon-left="BookOpenIcon"
         to="https://speckle.guide/dev/server-webhooks.html"
         external
@@ -14,9 +16,7 @@
       >
         Docs
       </FormButton>
-      <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-        New
-      </FormButton>
+      <FormButton @click="openCreateWebhookDialog">New</FormButton>
     </template>
     <template v-if="webhooks.length !== 0">
       <LayoutTable
@@ -49,17 +49,15 @@
         <template #enabled="{ item }">
           <FormSwitch
             :model-value="!!item.enabled"
-            icons
             :name="'switch-' + item.id"
             :show-label="false"
-            class="scale-90"
             @update:model-value="(newValue) => onEnabledChange(item, newValue)"
           />
         </template>
         <template #data="{ item }">
           <div class="flex flex-col">
             <h3
-              class="font-bold text-sm truncate"
+              class="font-medium text-sm truncate"
               :class="{ 'opacity-60': !item.enabled }"
             >
               {{ item.description }}
@@ -122,7 +120,6 @@
 <script setup lang="ts">
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
-  PlusIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   XCircleIcon

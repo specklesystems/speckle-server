@@ -30,7 +30,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                 throw new Error('Fake workspace create error')
               }
 
-              return getMockRef('Workspace', { values: omit(args.input, ['logoUrl']) })
+              return getMockRef('Workspace', { values: omit(args.input, ['logo']) })
             },
             delete: () => {
               const val = faker.datatype.boolean()
@@ -50,7 +50,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                   type: 'Workspace',
                   id: args.input.id
                 },
-                omit(args.input, ['logoUrl', 'id'])
+                omit(args.input, ['logo', 'id'])
               )
 
               return getMockRef('Workspace', { id: args.input.id })
@@ -60,17 +60,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
 
               if (val) {
                 throw new Error('Fake update role error')
-              }
-
-              return getMockRef('Workspace', {
-                id: args.input.workspaceId
-              })
-            },
-            deleteRole: (_parent, args) => {
-              const val = faker.datatype.boolean()
-
-              if (val) {
-                throw new Error('Fake delete role error')
               }
 
               return getMockRef('Workspace', {
@@ -141,6 +130,15 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
             }
           },
           User: {
+            discoverableWorkspaces: resolveAndCache(() => [
+              {
+                id: faker.string.uuid(),
+                name: workspaceName(),
+                description: faker.lorem.sentence(),
+                defaultLogoIndex: 0,
+                logo: null
+              }
+            ]),
             workspaces: resolveAndCache((_parent, args) =>
               getMockRef('WorkspaceCollection', {
                 values: {
@@ -156,7 +154,23 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
           },
           Workspace: {
             role: resolveFromMockParent(),
-            team: resolveFromMockParent(),
+            team: resolveAndCache((_parent, args) => {
+              const id = faker.string.uuid()
+              return getMockRef('WorkspaceCollaboratorCollection', {
+                values: {
+                  items: [...new Array(args.limit)].map(() => ({
+                    id,
+                    role: faker.helpers.arrayElement(Object.values(Roles.Workspace)),
+                    user: {
+                      id,
+                      name: faker.person.fullName()
+                    }
+                  })),
+                  totalCount: args.limit,
+                  cursor: null
+                }
+              })
+            }),
             invitedTeam: resolveFromMockParent({
               mapRefs: (mock, { parent }) =>
                 addMockRefValues(mock, {
@@ -170,7 +184,17 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                   cursor: args.cursor ? null : undefined
                 }
               })
-            )
+            ),
+            domains: resolveAndCache(() => [
+              {
+                id: faker.string.uuid(),
+                domain: 'speckle.systems'
+              },
+              {
+                id: faker.string.uuid(),
+                domain: 'example.org'
+              }
+            ])
           },
           WorkspaceCollaborator: {
             role: resolveFromMockParent(),
@@ -216,7 +240,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
           name: workspaceName(),
           description: faker.lorem.sentence(),
           role: faker.helpers.arrayElement(Object.values(Roles.Workspace)),
-          team: listMock(1, 5),
           invitedTeam: listMock(1, 5)
         }),
         WorkspaceCollaborator: () => ({

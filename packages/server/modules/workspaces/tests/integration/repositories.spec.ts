@@ -5,7 +5,12 @@ import {
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   getWorkspaceRolesFactory,
-  getWorkspaceRolesForUserFactory
+  getWorkspaceRolesForUserFactory,
+  deleteWorkspaceFactory,
+  storeWorkspaceDomainFactory,
+  getUserDiscoverableWorkspacesFactory,
+  getWorkspaceWithDomainsFactory,
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -13,14 +18,41 @@ import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import {
+  BasicTestWorkspace,
+  assignToWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import {
+  createUserEmailFactory,
+  updateUserEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { Roles } from '@speckle/shared'
+import {
+  createRandomEmail,
+  createRandomPassword,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
+import { truncateTables } from '@/test/hooks'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import {
+  grantStreamPermissions,
+  upsertProjectRoleFactory
+} from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
 const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
 const getWorkspaceRolesForUser = getWorkspaceRolesForUserFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
+const storeWorkspaceDomain = storeWorkspaceDomainFactory({ db })
+const createUserEmail = createUserEmailFactory({ db })
+const updateUserEmail = updateUserEmailFactory({ db })
+const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
+const upsertProjectRole = upsertProjectRoleFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   const testId = cryptoRandomString({ length: 6 })
@@ -38,14 +70,20 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   return userRecord
 }
 
-const createAndStoreTestWorkspace = async (): Promise<Workspace> => {
-  const workspace: Workspace = {
+const createAndStoreTestWorkspace = async (
+  workspaceOverrides: Partial<Workspace> = {}
+) => {
+  const workspace: Omit<Workspace, 'domains'> = {
     id: cryptoRandomString({ length: 10 }),
     name: cryptoRandomString({ length: 10 }),
     createdAt: new Date(),
     updatedAt: new Date(),
     description: null,
-    logoUrl: null
+    logo: null,
+    domainBasedMembershipProtectionEnabled: false,
+    discoverabilityEnabled: false,
+    defaultLogoIndex: 0,
+    ...workspaceOverrides
   }
 
   await upsertWorkspace({ workspace })
@@ -70,7 +108,7 @@ describe('Workspace repositories', () => {
       const storedWorkspace = await getWorkspace({ workspaceId: testWorkspace.id })
       expect(storedWorkspace).to.deep.equal(testWorkspace)
 
-      const modifiedTestWorkspace: Workspace = {
+      const modifiedTestWorkspace: Omit<Workspace, 'domains'> = {
         ...testWorkspace,
         description: 'now im adding a description to the workspace'
       }
@@ -104,12 +142,42 @@ describe('Workspace repositories', () => {
     })
   })
 
+  describe('deleteWorkspaceFactory creates a function, that', () => {
+    const user: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: 'function-deleter@example.org'
+    }
+
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Incredibly Forgettable'
+    }
+
+    before(async () => {
+      await createTestUser(user)
+      await createTestWorkspace(workspace, user)
+    })
+
+    it('deletes specified workspace', async () => {
+      await deleteWorkspace({ workspaceId: workspace.id })
+      const workspaceData = await getWorkspace({ workspaceId: workspace.id })
+      expect(workspaceData).to.not.exist
+    })
+  })
+
   describe('deleteWorkspaceRoleFactory creates a function, that', () => {
     it('deletes specified workspace role', async () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
+      await upsertWorkspaceRole({
+        userId,
+        workspaceId,
+        role: 'workspace:member',
+        createdAt: new Date()
+      })
       await deleteWorkspaceRole({ userId, workspaceId })
 
       const role = await getWorkspaceRoleForUser({ userId, workspaceId })
@@ -123,7 +191,8 @@ describe('Workspace repositories', () => {
       const createdRole: WorkspaceAcl = {
         userId,
         workspaceId,
-        role: 'workspace:member'
+        role: 'workspace:member',
+        createdAt: new Date()
       }
       await upsertWorkspaceRole(createdRole)
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
@@ -147,12 +216,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdA,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId,
         userId: userIdB,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -168,7 +239,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId,
+        role: 'workspace:admin',
+        createdAt: new Date()
+      })
 
       const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
 
@@ -195,12 +271,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser({ userId })
@@ -220,12 +298,14 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({
         workspaceId: workspaceIdA,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
       await upsertWorkspaceRole({
         workspaceId: workspaceIdB,
         userId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        createdAt: new Date()
       })
 
       const workspaceRoles = await getWorkspaceRolesForUser(
@@ -248,6 +328,619 @@ describe('Workspace repositories', () => {
       }
 
       await expectToThrow(() => upsertWorkspaceRole(role))
+    })
+  })
+
+  describe('getDiscoverableWorkspacesForUserFactory creates a function, that', () => {
+    afterEach(async () => {
+      await truncateTables(['workspaces'])
+    })
+
+    it('should return only one workspace where multiple emails match', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      await createUserEmail({
+        userEmail: {
+          email: 'john-speckle@speckle.systems',
+          userId: user.id
+        }
+      })
+      await updateUserEmail({
+        query: {
+          email: 'john-speckle@speckle.systems'
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'speckle.systems',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org', 'speckle.systems'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(1)
+    })
+
+    it('should not return matches if the user email is not verified', async () => {
+      const user = await createAndStoreTestUser()
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: [],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('should not return workspaces if the workspace email is not verified', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('should return multiple workspaces matching the user email', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      await createUserEmail({
+        userEmail: {
+          email: 'john-speckle@speckle.systems',
+          userId: user.id
+        }
+      })
+      await updateUserEmail({
+        query: {
+          email: 'john-speckle@speckle.systems'
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspaceA = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspaceA.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      const workspaceB = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspaceB.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(2)
+    })
+
+    it('should not return workspaces the user is already a member of', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await upsertWorkspaceRole({
+        userId: user.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('should not return workspaces that are not discoverable', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace()
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('should return discoverable workspaces that already have members', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const problemChild = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: problemChild.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await upsertWorkspaceRole({
+        userId: user.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Member,
+        createdAt: new Date()
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: problemChild.id
+      })
+
+      expect(workspaces.length).to.equal(1)
+    })
+  })
+
+  describe('getWorkspaceDomainsFactory creates a function, that', () => {
+    it('returns a workspace with domains', async () => {
+      const user = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomPassword()
+      }
+      await createTestUser(user)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user)
+
+      await storeWorkspaceDomainFactory({ db })({
+        workspaceDomain: {
+          id: createRandomPassword(),
+          domain: 'example.org',
+          verified: true,
+          workspaceId: workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
+        id: workspace.id
+      })
+      expect(workspaceWithDomains?.domains.length).to.eq(1)
+    })
+  })
+
+  describe('countWorkspaceRoleWithOptionalProjectRoleFactory returns a function, that', () => {
+    it('counts workspace roles by userId', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      // just another workspace, for testing if workspaceId filter works
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const admin2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin2)
+      await assignToWorkspace(workspace, admin2, Roles.Workspace.Admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin
+      })
+      expect(count).to.equal(2)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member
+      })
+      expect(count).to.equal(1)
+    })
+    it('counts workspace roles with a project role filter', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+
+      await createTestWorkspace(workspace, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+
+      const member2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member2)
+      await assignToWorkspace(workspace, member2, Roles.Workspace.Member)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace.id
+      }
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+
+      const project3 = {
+        id: createRandomString(),
+        name: 'test stream 3',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+      await createTestStream(project1, admin)
+      await createTestStream(project2, member)
+      await createTestStream(project3, member2)
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(1)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(2)
+    })
+    it('does not count project roles, that are not in the workspace', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
+
+      const guest = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(guest)
+      await assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
+
+      const guest2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(guest2)
+      await assignToWorkspace(workspace, guest2, Roles.Workspace.Guest)
+
+      // only project 1 is in the workspace
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: guest.id
+      }
+
+      await createTestStream(project1, admin)
+      await createTestStream(project2, guest)
+
+      // adding project roles to guests
+      await upsertProjectRole({
+        role: Roles.Stream.Contributor,
+        projectId: project1.id,
+        userId: guest.id
+      })
+
+      await upsertProjectRole({
+        role: Roles.Stream.Reviewer,
+        projectId: project1.id,
+        userId: guest2.id
+      })
+
+      // adding contributor to guest 2 on project 2
+      await upsertProjectRole({
+        role: Roles.Stream.Contributor,
+        projectId: project2.id,
+        userId: guest2.id
+      })
+
+      const count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+      // checking that the non workspace project doesn't leak into the counts
+      expect(count).to.equal(1)
+    })
+    it('does not count roles from other workspaces when filtering by project role too', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace1 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace1, admin)
+
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace 2',
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace1, member, Roles.Workspace.Member)
+      // member becomes a guest in the other workspace and it leaks back into the first
+      await assignToWorkspace(workspace2, member, Roles.Workspace.Guest)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace1.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace2.id
+      }
+
+      await createTestStream(project1, admin)
+      await createTestStream(project2, admin)
+
+      await grantStreamPermissions({
+        role: Roles.Stream.Contributor,
+        streamId: project2.id,
+        userId: member.id
+      })
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace1.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(0)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace2.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(1)
     })
   })
 })

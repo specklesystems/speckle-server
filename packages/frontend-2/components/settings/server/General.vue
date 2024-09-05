@@ -64,12 +64,12 @@
               />
             </div>
             <div>
-              <FormButton color="default" @click="onSubmit">Save changes</FormButton>
+              <FormButton color="primary" @click="onSubmit">Save changes</FormButton>
             </div>
           </div>
         </form>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsServerGeneralVersion />
     </div>
   </section>
@@ -179,7 +179,7 @@ const onSubmit = handleSubmit(async () => {
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Saving failed',
-      description: `Failed to update server info`
+      description: 'Failed to update server info'
     })
   }
 })

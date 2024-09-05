@@ -6,7 +6,7 @@
         <ViewerDataviewerRow :prop="kvp" />
       </div>
       <div v-if="limit < kvps.length">
-        <FormButton text full-width size="xs" @click="limit += 20">
+        <FormButton text full-width size="sm" @click="limit += 20">
           show more
         </FormButton>
       </div>

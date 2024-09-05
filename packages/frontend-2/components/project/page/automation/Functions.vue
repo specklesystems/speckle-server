@@ -1,6 +1,6 @@
 <template>
   <div class="col-span-1">
-    <h2 class="h6 font-bold mb-6">Function</h2>
+    <h2 class="h6 font-medium mb-6">Function</h2>
     <AutomateFunctionCardView v-if="functions.length" vertical>
       <AutomateFunctionCard
         v-for="fn in functions"

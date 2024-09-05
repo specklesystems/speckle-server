@@ -83,7 +83,7 @@ const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
 
 /**
  * Define mocking config in dev env
- * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
+ * https://www.apollographql.com/docs/apollo-server/testing/mocking
  */
 export async function buildMocksConfig(): Promise<{
   mocks: boolean | IMocks

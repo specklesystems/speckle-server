@@ -61,6 +61,7 @@ class HighlightExtension extends SelectionExtension {
       selectionMaterialData: {
         id: MathUtils.generateUUID(),
         color: 0x04cbfb,
+        emissive: 0x0,
         opacity: 1,
         roughness: 1,
         metalness: 0,

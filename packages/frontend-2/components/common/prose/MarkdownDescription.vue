@@ -11,9 +11,8 @@ const props = defineProps<{
 
 const { html: cleanReadmeHtml } = useMarkdown(computed(() => props.markdown || ''))
 
-// Scaling these down, cause these should appear smaller than the main site headings
 const proseClasses = ref([
-  'prose max-w-none',
+  'prose-sm max-w-none',
   'prose-img:inline',
   'prose-img:my-0',
   'prose-h1:h2 prose-h1:font-medium prose-h1:mb-8',

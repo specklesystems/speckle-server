@@ -1,7 +1,10 @@
 /* eslint-disable camelcase */
 import { type Nullable, resolveMixpanelServerId } from '@speckle/shared'
 import { isString, mapKeys } from 'lodash-es'
-import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import {
+  useJustLoggedOutTracking,
+  useOnAuthStateChange
+} from '~/lib/auth/composables/auth'
 import {
   HOST_APP,
   HOST_APP_DISPLAY_NAME,
@@ -54,9 +57,11 @@ function useMixpanelUserIdentification() {
   } = useRuntimeConfig()
 
   return {
-    reidentify: (mp: MixpanelClient) => {
-      // Reset previous user data, if any
-      mp.reset()
+    reidentify: (mp: MixpanelClient, didJustLogOut: boolean) => {
+      // Reset previous user data on logout
+      if (didJustLogOut) {
+        mp.reset()
+      }
 
       // Register session
       mp.register({
@@ -84,6 +89,7 @@ export const useClientsideMixpanelClientBuilder = () => {
   const onAuthStateChange = useOnAuthStateChange()
   const logger = useLogger()
   const collectUtmTags = useMixpanelUtmCollection()
+  const { wasJustLoggedOut } = useJustLoggedOutTracking()
 
   return async (): Promise<Nullable<MixpanelClient>> => {
     // Dynamic import to be able to suppress loading errors that happen because of adblock
@@ -100,7 +106,15 @@ export const useClientsideMixpanelClientBuilder = () => {
     const utmParams = collectUtmTags()
 
     // Reidentify on auth change
-    await onAuthStateChange(() => reidentify(mixpanel), { immediate: true })
+    await onAuthStateChange(
+      (user, { isReset }) => {
+        const justLoggedOut = !!(!user && isReset)
+        const loggedOutInSSR = wasJustLoggedOut()
+
+        reidentify(mixpanel, justLoggedOut || loggedOutInSSR)
+      },
+      { immediate: true }
+    )
 
     // Track UTM (only on initial visit)
     if (Object.values(utmParams).length) {

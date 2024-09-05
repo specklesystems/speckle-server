@@ -183,7 +183,8 @@ module.exports = {
         { branchName: 'branches.name' },
         { authorName: 'users.name' },
         { authorId: 'users.id' },
-        { authorAvatar: 'users.avatar' }
+        { authorAvatar: 'users.avatar' },
+        knex.raw(`?? as "author"`, ['users.id'])
       ])
       .select()
       .join('commits', 'commits.id', 'stream_commits.commitId')

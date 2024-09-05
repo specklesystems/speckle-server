@@ -7,11 +7,11 @@
     @click="setSelection()"
     @keypress="keyboardClick(setSelection)"
   >
-    <div :class="`h2 font-bold truncate max-w-full ${color}`">
+    <div :class="`text-heading-xl -mb-1 font-medium truncate max-w-full ${color}`">
       {{ objectCount }}
     </div>
-    <div>{{ name }}</div>
-    <div class="text-xs text-foreground-2 px-1">{{ description }}</div>
+    <div class="text-body-xs -mb-1">{{ name }}</div>
+    <div class="text-body-2xs text-foreground-2 px-1">{{ description }}</div>
   </div>
 </template>
 <script setup lang="ts">

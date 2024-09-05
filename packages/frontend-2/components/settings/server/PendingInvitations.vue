@@ -16,13 +16,11 @@
             :show-clear="!!search"
             placeholder="Search invitations"
             class="rounded-md border border-outline-3"
-            :model-value="bind.modelValue.value"
+            v-bind="bind"
             v-on="on"
           />
         </div>
-        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-          Invite
-        </FormButton>
+        <FormButton @click="toggleInviteDialog">Invite</FormButton>
       </div>
 
       <LayoutTable
@@ -52,12 +50,8 @@
 
         <template #resend="{ item }">
           <FormButton
-            :link="true"
-            :class="{
-              'font-semibold': true,
-              'text-primary': !successfullyResentInvites.includes(item.id),
-              'text-foreground': successfullyResentInvites.includes(item.id)
-            }"
+            color="outline"
+            size="sm"
             :disabled="successfullyResentInvites.includes(item.id)"
             @click="resendInvitation(item as InviteItem)"
           >
@@ -90,7 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { adminResendInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
@@ -152,7 +146,7 @@ const resendInvitation = async (item: InviteItem) => {
     successfullyResentInvites.value.push(inviteId)
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Invitation Resent',
+      title: 'Invitation resent',
       description: 'The invitation has been successfully resent'
     })
   } else {

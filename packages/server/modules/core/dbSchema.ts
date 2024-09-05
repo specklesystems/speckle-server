@@ -338,6 +338,7 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
+  'updatedAt',
   'message',
   'resource',
   'token'
@@ -595,6 +596,14 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
   'responseImage'
 ])
 
-export { knex }
+export const UserEmails = buildTableHelper('user_emails', [
+  'id',
+  'email',
+  'primary',
+  'verified',
+  'userId',
+  'createdAt',
+  'updatedAt'
+])
 
-export const USER_EMAILS_TABLE_NAME = 'user_emails'
+export { knex }

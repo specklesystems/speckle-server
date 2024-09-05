@@ -1,4 +1,4 @@
-import { knex, ServerInvites, Streams } from '@/modules/core/dbSchema'
+import { knex, ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import {
   getUserByEmail,
   getUser,
@@ -24,6 +24,7 @@ import {
   FindServerInvite,
   FindServerInvites,
   InsertInviteAndDeleteOld,
+  MarkInviteUpdated,
   QueryAllResourceInvites,
   QueryAllUserResourceInvites,
   QueryInvites,
@@ -91,7 +92,7 @@ const buildInvitesBaseQuery =
 
     const q = db(ServerInvites.name)
       .select<Result>(ServerInvites.cols)
-      .orderBy(ServerInvites.col.createdAt, sort)
+      .orderBy(ServerInvites.col.updatedAt, sort)
 
     // single built in filter
     projectInviteValidityFilter(q)
@@ -241,13 +242,31 @@ export const queryAllResourceInvitesFactory =
     filter: Pick<
       InviteResourceTarget<TargetType, RoleType>,
       'resourceId' | 'resourceType'
-    >
+    > & { search?: string }
   ) => {
     if (!filter.resourceId) return []
 
-    return await buildInvitesBaseQuery({ db })<
+    const q = buildInvitesBaseQuery({ db })<
       ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
-    >({ filterQuery }).where((q) => filterByResource(q, filter))
+    >({ filterQuery })
+
+    q.where((q) => filterByResource(q, filter))
+
+    if (filter.search) {
+      q.leftJoin(
+        Users.name,
+        Users.col.id,
+        knex.raw('SUBSTRING(?? FROM 2)', [ServerInvites.col.target])
+      ).where((w1) => {
+        w1.where(ServerInvites.col.target, 'ILIKE', `%${filter.search}%`).orWhere(
+          Users.col.name,
+          'ILIKE',
+          `%${filter.search}%`
+        )
+      })
+    }
+
+    return await q
   }
 
 export const deleteAllResourceInvitesFactory =
@@ -480,4 +499,14 @@ export const findInviteByTokenFactory =
       .first()
 
     return (await q) || null
+  }
+
+export const markInviteUpdatedfactory =
+  ({ db }: { db: Knex }): MarkInviteUpdated =>
+  async ({ inviteId }) => {
+    const cols = ServerInvites.with({ withoutTablePrefix: true }).col
+    const ret = await db(ServerInvites.name)
+      .where(ServerInvites.col.id, inviteId)
+      .update(cols.updatedAt, new Date())
+    return !!ret
   }

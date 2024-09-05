@@ -1,6 +1,4 @@
-'use strict'
-const { ForbiddenError } = require('apollo-server-express')
-
+const { ForbiddenError } = require('@/modules/shared/errors')
 const {
   getApp,
   getAllPublicApps,
@@ -73,6 +71,12 @@ module.exports = {
 
     async appDelete(parent, args, context) {
       const app = await getApp({ id: args.appId })
+      if (!app) {
+        //Possibly ould have been an UserInputError, but
+        //we do not want to leak the existence of any app
+        //the user may not own or have access to.
+        throw new ForbiddenError('You are not authorized to edit this app.')
+      }
 
       if (!app.author && context.role !== Roles.Server.Admin)
         throw new ForbiddenError('You are not authorized to edit this app.')

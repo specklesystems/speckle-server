@@ -37,11 +37,7 @@ export const Dashboard: StoryObj = {
             <template #title-icon>
               <HomeIcon class="h-5 w-5" />
             </template>
-            <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
-              <template #icon>
-                <HomeIcon class="h-5 w-5" />
-              </template>
-            </LayoutSidebarMenuGroupItem>
+            <LayoutSidebarMenuGroupItem label="Group Item with Icon" tag="Coming soon" disabled />
             <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
               <template #icon>
                 <HomeIcon class="h-5 w-5" />
@@ -55,7 +51,7 @@ export const Dashboard: StoryObj = {
             <LayoutSidebarMenuGroupItem label="Group Item with no Icon" to="/" />
             <LayoutSidebarMenuGroupItem label="Group Item with Child" to="/">
               <LayoutSidebarMenuGroupItem label="Group Item child with Child" to="/">
-                <LayoutSidebarMenuGroupItem label="Group Item child" to="/">
+                <LayoutSidebarMenuGroupItem label="Group Item child" to="/" external>
                   <template #icon>
                     <HomeIcon class="h-5 w-5" />
                   </template>
