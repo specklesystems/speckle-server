@@ -14,7 +14,7 @@
       <div class="grow" />
       <CommonTextLink
         v-if="!isEditing || !isPreviewDisabled"
-        size="xs"
+        size="sm"
         @click="toggleEditor"
       >
         {{ isEditing ? 'Preview' : 'Editor' }}
@@ -25,6 +25,7 @@
       v-model="value"
       textarea-classes="font-mono"
       :name="name"
+      color="foundation"
       :label="label"
       :show-label="false"
       :show-required="showRequired"

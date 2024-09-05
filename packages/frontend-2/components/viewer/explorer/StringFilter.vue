@@ -1,12 +1,12 @@
 <template>
-  <div v-if="filter" class="pr-3 pl-2 flex flex-col space-y-2 pb-2">
+  <div class="pr-3 pl-2 flex flex-col space-y-2 pb-2">
     <ViewerExplorerStringFilterItem
       v-for="(vg, index) in groupsLimited"
       :key="index"
       :item="vg"
     />
     <div v-if="itemCount < filter.valueGroups.length" class="mb-2">
-      <FormButton size="xs" text full-width @click="itemCount += 10">
+      <FormButton size="sm" text full-width @click="itemCount += 10">
         View more ({{ filter.valueGroups.length - itemCount }})
       </FormButton>
     </div>

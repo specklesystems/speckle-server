@@ -65,6 +65,7 @@ export class RenderTree {
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
+      const colorMaterialNode = this.getColorMaterialNode(node)
       ret = {
         id: node.model.id,
         subtreeId: node.model.subtreeId,
@@ -77,7 +78,8 @@ export class RenderTree {
         /** Line-type geometry can also use a renderMaterial*/
         displayStyle: Materials.displayStyleFromNode(
           displayStyleNode || renderMaterialNode
-        )
+        ),
+        colorMaterial: Materials.colorMaterialFromNode(colorMaterialNode)
       }
     }
     return ret
@@ -103,6 +105,19 @@ export class RenderTree {
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
+        return ancestors[k]
+      }
+    }
+    return null
+  }
+
+  private getColorMaterialNode(node: TreeNode): TreeNode | null {
+    if (node.model.color) {
+      return node
+    }
+    const ancestors = this.tree.getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.color) {
         return ancestors[k]
       }
     }

@@ -71,22 +71,9 @@ const updateProject = useUpdateProject()
 
 const projectId = computed(() => route.params.id as string)
 
-const { result: pageResult } = useQuery(
-  projectPageSettingsGeneralQuery,
-  () => ({
-    projectId: projectId.value
-  }),
-  () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    }
-  })
-)
+const { result: pageResult } = useQuery(projectPageSettingsGeneralQuery, () => ({
+  projectId: projectId.value
+}))
 
 const project = computed(() => pageResult.value?.project)
 

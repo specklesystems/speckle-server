@@ -5,24 +5,26 @@
       <div class="flex flex-col gap-3 mb-6">
         <FormTextInput
           name="name"
-          label="Project name"
+          label="Name"
           placeholder="Project name"
           color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
           autocomplete="off"
+          show-label
         />
         <FormTextArea
           name="description"
-          label="Project description"
+          label="Description"
           placeholder="Description (optional)"
           color="foundation"
           size="lg"
+          show-label
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
       </div>
-      <h3 class="label mb-3">Access permissions</h3>
+      <h3 class="label mb-2">Access permissions</h3>
       <ProjectVisibilitySelect
         v-model="visibility"
         class="sm:max-w-none w-full"
@@ -44,6 +46,10 @@ type FormValues = {
   description?: string
 }
 
+const props = defineProps<{
+  workspaceId?: string
+}>()
+
 const emit = defineEmits<{
   (e: 'created'): void
 }>()
@@ -60,17 +66,22 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
     ...values,
-    visibility: visibility.value
+    visibility: visibility.value,
+    workspaceId: props.workspaceId
   })
   emit('created')
-  mp.track('Stream Action', { type: 'action', name: 'create' })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'create',
+    workspaceId: props.workspaceId
+  })
   open.value = false
 })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       open.value = false
     }
@@ -78,9 +89,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      color: 'default',
       fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: onSubmit

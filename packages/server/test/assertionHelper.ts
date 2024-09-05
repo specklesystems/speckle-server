@@ -17,7 +17,7 @@ export const expectToThrow = async (fn: () => MaybeAsync<any>) => {
  * Create parameterizable test cases for each element in an array
  */
 export const itEach = <T>(
-  testCases: Array<T>,
+  testCases: Array<T> | ReadonlyArray<T>,
   name: (test: T) => string,
   testHandler: (test: T) => MaybeAsync<void>
 ) => {

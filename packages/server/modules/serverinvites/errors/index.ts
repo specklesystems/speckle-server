@@ -10,6 +10,12 @@ export class InviteFinalizingError extends BaseError {
   static defaultMessage = 'An issue occurred while finalizing the invitation'
 }
 
+export class InviteFinalizedForNewEmail extends BaseError {
+  static code = 'INVITE_FINALIZED_FOR_NEW_EMAIL'
+  static defaultMessage =
+    'Attempted to finalize an invite for a mismatched e-mail address'
+}
+
 export class NoInviteFoundError extends BaseError {
   static code = 'NO_INVITE_FOUND'
   static defaultMessage = 'No invitation for the related resources was found'

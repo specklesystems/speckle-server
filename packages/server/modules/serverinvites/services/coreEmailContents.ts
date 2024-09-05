@@ -8,7 +8,10 @@ import {
   EmailTemplateParams,
   sanitizeMessage
 } from '@/modules/emails/services/emailRendering'
-import { ProjectInviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import {
+  PrimaryInviteResourceTarget,
+  ProjectInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   isProjectResourceTarget,
@@ -89,7 +92,7 @@ const buildServerInviteContentsFactory = (): BuildInviteEmailContents => (params
 
 type BuildProjectInviteEmailContents = (
   params: Parameters<BuildInviteEmailContents>[0] & {
-    primaryResourceTarget: ProjectInviteResourceTarget
+    primaryResourceTarget: PrimaryInviteResourceTarget<ProjectInviteResourceTarget>
   }
 ) => ReturnType<BuildInviteEmailContents>
 

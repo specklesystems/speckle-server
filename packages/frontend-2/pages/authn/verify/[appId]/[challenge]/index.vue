@@ -3,7 +3,9 @@
   <div class="mx-auto">
     <LayoutPanel class="max-w-lg mx-auto w-full">
       <div class="space-y-8 flex flex-col items-center">
-        <h1 class="text-center h3 font-bold inline-block text-foreground bg-clip-text">
+        <h1
+          class="text-center text-heading-xl inline-block text-foreground bg-clip-text"
+        >
           Authorize application
         </h1>
         <template v-if="activeUser && app && !action">
@@ -13,16 +15,15 @@
               <div class="label-light">{{ activeUser.name }}</div>
             </div>
             <CommonTextLink
-              size="xs"
+              size="sm"
               :icon-right="ArrowsRightLeftIcon"
-              no-underline
               @click="onSwitchAccounts"
             >
               Not you? Switch accounts
             </CommonTextLink>
           </div>
           <div class="text-foreground h4 text-center">
-            <span class="text-primary font-bold">
+            <span class="text-primary font-medium">
               <ShieldCheckIcon
                 v-if="trustByDefault"
                 class="h-6 w-6 inline-block relative -top-1"
@@ -38,7 +39,7 @@
               >
                 <div class="flex space-x-2 items-center">
                   <InformationCircleIcon class="h-5 w-5 shrink-0" />
-                  <span class="font-bold text-left">
+                  <span class="font-medium text-left">
                     App info & requested permissions ({{ app.scopes.length }})
                   </span>
                 </div>
@@ -54,14 +55,14 @@
                 <table v-if="app.author || app.description?.length" class="table-fixed">
                   <tbody>
                     <tr v-if="app.author">
-                      <td class="font-bold pr-2 w-[100px]">Author:</td>
+                      <td class="font-medium pr-2 w-[100px]">Author:</td>
                       <td class="inline-flex space-x-1 items-center">
                         <UserAvatar :user="app.author" size="sm" />
                         <span>{{ app.author.name }}</span>
                       </td>
                     </tr>
                     <tr v-if="app.description?.length">
-                      <td class="align-top font-bold pr-2">Description:</td>
+                      <td class="align-top font-medium pr-2">Description:</td>
                       <td>
                         {{ app.description }}
                       </td>
@@ -69,7 +70,7 @@
                   </tbody>
                 </table>
                 <div class="space-y-4">
-                  <div class="font-bold">Permissions:</div>
+                  <div class="font-medium">Permissions:</div>
                   <!-- <ul v-if="false" class="list-disc list-inside space-y-4">
                   <li v-for="scope in app.scopes" :key="scope?.name">
                     <span>{{ scope.description }}</span>
@@ -81,7 +82,7 @@
                       :key="group"
                     >
                       <li>
-                        <span class="font-bold">{{ group }}</span>
+                        <span class="font-medium">{{ group }}</span>
                         <ul class="ps-5 list-[circle] list-outside">
                           <li v-for="desc in scope" :key="desc">
                             <span>{{ desc }}</span>
@@ -95,7 +96,7 @@
             </Disclosure>
           </div>
           <div class="flex space-x-2 w-full">
-            <FormButton color="secondary" full-width :disabled="loading" @click="deny">
+            <FormButton color="outline" full-width :disabled="loading" @click="deny">
               Deny
             </FormButton>
             <FormButton full-width :disabled="loading" @click="allow">
@@ -115,7 +116,7 @@
               class="h-9 w-9"
               :class="[action === ChosenAction.Allow ? 'text-success' : 'text-danger']"
             />
-            <span class="h3 font-bold">
+            <span class="text-heading-xl">
               <template v-if="action">
                 {{ action === ChosenAction.Allow ? 'Success' : 'Denied' }}
               </template>
@@ -125,15 +126,15 @@
           <div class="text-center">
             <template v-if="app">
               <template v-if="action === ChosenAction.Allow">
-                <span class="font-bold text-primary">{{ app?.name }}</span>
+                <span class="font-medium text-primary">{{ app?.name }}</span>
                 is connected to your
-                <span class="font-bold">Speckle</span>
+                <span class="font-medium">Speckle</span>
                 account.
               </template>
               <template v-else>
-                <span class="font-bold text-primary">{{ app?.name }}</span>
+                <span class="font-medium text-primary">{{ app?.name }}</span>
                 has not been connected to your
-                <span class="font-bold">Speckle</span>
+                <span class="font-medium">Speckle</span>
                 account.
               </template>
             </template>
@@ -191,7 +192,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Authorize Application'
+  title: 'Authorize application'
 })
 
 const apiOrigin = useApiOrigin()

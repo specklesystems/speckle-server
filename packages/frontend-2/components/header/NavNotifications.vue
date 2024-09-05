@@ -1,23 +1,24 @@
 <template>
-  <div v-if="hasNotifications">
+  <div>
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: menuOpen }" as="div">
-        <div class="cursor-pointer">
+        <div
+          class="relative cursor-pointer p-1 w-8 h-8 flex items-center justify-center rounded-md"
+          :class="menuOpen ? 'border border-outline-2' : ''"
+        >
           <span class="sr-only">Open notifications menu</span>
           <div class="relative">
-            <div v-if="hasNotifications && !menuOpen" class="scale-75">
+            <div v-if="!menuOpen">
               <div
-                class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
+                class="absolute -top-1 right-0 w-1.5 h-1.5 rounded-full bg-primary animate-ping"
               ></div>
-              <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary"></div>
+              <div
+                class="absolute -top-1 right-0 w-1.5 h-1.5 rounded-full bg-primary"
+              ></div>
             </div>
 
-            <UserAvatar v-if="!menuOpen" no-bg size="lg" hover-effect>
-              <BellIcon class="text-primary sm:text-foreground w-5 h-5" />
-            </UserAvatar>
-            <UserAvatar v-else size="lg" hover-effect no-bg>
-              <XMarkIcon class="text-primary sm:text-foreground w-5 h-5" />
-            </UserAvatar>
+            <BellIcon v-if="!menuOpen" class="w-5 h-5" />
+            <XMarkIcon v-else class="w-5 h-5" />
           </div>
         </div>
       </MenuButton>
@@ -30,11 +31,9 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute z-50 right-0 md:right-16 top-14 sm:top-16 w-full sm:w-64 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute z-50 right-0 md:right-20 top-10 mt-1.5 w-full sm:w-64 origin-top-right bg-foundation-page outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="p-2 text-sm font-bold bg-gray-50 dark:bg-foundation mb-2">
-            Notifications
-          </div>
+          <div class="px-3 py-2 text-body-xs font-medium">Notifications</div>
           <!-- <div class="p-2 text-sm">TODO: project invites</div> -->
           <MenuItem>
             <AuthVerificationReminderMenuNotice />
@@ -47,14 +46,6 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-const { activeUser } = useActiveUser()
 const menuButtonId = useId()
-
-const hasNotifications = computed(() => {
-  if (!activeUser.value) return false
-  if (!activeUser.value?.verified) return true
-  return false
-})
 </script>

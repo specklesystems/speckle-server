@@ -7,7 +7,7 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-import { chunk } from '#lodash'
+import { chunk, isString } from '#lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -126,6 +126,18 @@ class ObjectLoader {
     this.buffer = []
     this.promises = []
     Object.values(this.intervals).forEach((i) => clearInterval(i.interval))
+  }
+
+  async getTotalObjectCount() {
+    /** This is fine, because it gets cached */
+    const rootObjJson = await this.getRawRootObject()
+    /** Ideally we shouldn't to a `parse` here since it's going to pointlessly allocate
+     *  But doing string gymnastics in order to get closure length is going to be the same
+     *  if not even more memory constly
+     */
+    const rootObj = JSON.parse(rootObjJson)
+    const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
+    return totalChildrenCount
   }
 
   /**
@@ -545,6 +557,10 @@ class ObjectLoader {
       return {}
     }
 
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
+    }
+
     const ret = {}
 
     for (let i = 0; i < ids.length; i += 500) {
@@ -561,9 +577,13 @@ class ObjectLoader {
       // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for (const cachedObj of cachedData) {
-        if (!cachedObj.data)
-          // non-existent objects are retrieved with `undefined` data
+        if (
+          !cachedObj.data ||
+          (isString(cachedObj.data) && cachedObj.data.startsWith('<html'))
+        ) {
+          // non-existent/invalid objects are retrieved with `undefined` data
           continue
+        }
         ret[cachedObj.id] = cachedObj.data
       }
     }
@@ -571,9 +591,13 @@ class ObjectLoader {
     return ret
   }
 
-  cacheStoreObjects(objects) {
+  async cacheStoreObjects(objects) {
     if (!this.supportsCache()) {
       return {}
+    }
+
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
     }
 
     try {
@@ -581,8 +605,12 @@ class ObjectLoader {
         .transaction('objects', 'readwrite')
         .objectStore('objects')
       for (const obj of objects) {
-        const idAndData = obj.split('\t')
-        store.put(idAndData[1], idAndData[0])
+        const [key, value] = obj.split('\t')
+        if (!value || !isString(value) || value.startsWith('<html')) {
+          continue
+        }
+
+        store.put(value, key)
       }
       return this.promisifyIdbRequest(store.transaction)
     } catch (e) {

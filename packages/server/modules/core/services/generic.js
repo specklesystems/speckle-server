@@ -4,7 +4,9 @@ const {
   getServerVersion,
   getServerOrigin,
   getServerMovedTo,
-  getServerMovedFrom
+  getServerMovedFrom,
+  getMaximumObjectSizeMB,
+  getFileSizeLimitMB
 } = require('@/modules/shared/helpers/envHelper')
 
 const Roles = () => knex('user_roles')
@@ -21,6 +23,10 @@ module.exports = {
     serverInfo.canonicalUrl = getServerOrigin()
     const movedTo = getServerMovedTo()
     const movedFrom = getServerMovedFrom()
+    serverInfo.configuration = {
+      objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
+      objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024
+    }
     if (movedTo || movedFrom) serverInfo.migration = { movedTo, movedFrom }
     return serverInfo
   },
@@ -41,6 +47,9 @@ module.exports = {
     return await Roles().select('*').where({ public: true })
   },
 
+  /**
+   * @param {Partial<import('@/modules/core/helpers/types').ServerConfigRecord>} param0
+   */
   async updateServerInfo({
     name,
     company,

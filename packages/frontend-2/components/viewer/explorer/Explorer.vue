@@ -5,9 +5,10 @@
 
       <template #actions>
         <div class="flex items-center justify-between w-full">
-          <div v-if="!showRaw" class="flex items-center">
+          <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
-              size="xs"
+              size="sm"
+              color="primary"
               text
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
@@ -15,7 +16,8 @@
               Unfold
             </FormButton>
             <FormButton
-              size="xs"
+              size="sm"
+              color="primary"
               text
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
@@ -25,15 +27,14 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev mode</h4>
+            <h4 class="font-medium whitespace-normal text-body-2xs ml-1">Dev mode</h4>
           </div>
 
           <FormButton
-            v-tippy="showRaw ? 'Switch back' : 'Switch to dev mode'"
-            size="xs"
-            text
-            class="-mr-0.5 sm:-mr-1"
-            color="secondary"
+            v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
+            size="sm"
+            class="-mr-1"
+            color="subtle"
             @click="showRaw = !showRaw"
           >
             <CodeBracketIcon
@@ -47,11 +48,7 @@
         v-if="!showRaw && rootNodes.length !== 0"
         class="relative flex flex-col gap-y-2 py-2"
       >
-        <div
-          v-for="(rootNode, idx) in rootNodes"
-          :key="idx"
-          class="bg-foundation rounded-lg"
-        >
+        <div v-for="(rootNode, idx) in rootNodes" :key="idx" class="rounded-xl">
           <ViewerExplorerTreeItem
             :tree-item="rootNode"
             :sub-header="'Model version'"

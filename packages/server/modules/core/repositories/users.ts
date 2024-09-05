@@ -1,7 +1,11 @@
-import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
+import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
+import {
+  LimitedUserRecord,
+  UserRecord,
+  UserWithRole
+} from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { clamp, isArray } from 'lodash'
+import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
@@ -16,10 +20,6 @@ export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = 
    * (this can be the server role or stream role depending on how and where this was retrieved)
    */
   role?: ServerRoles
-}
-
-export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
-  role: ServerRoles
 }
 
 export type GetUserParams = Partial<{
@@ -40,6 +40,28 @@ function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
   return user
 }
 
+// This function is exported because it is used in services
+// Once we will refactor services this one should not be exported
+export const getUsersBaseQuery = (
+  query: Knex.QueryBuilder,
+  { searchQuery, role }: { searchQuery: string | null; role?: string | null }
+) => {
+  if (searchQuery) {
+    query.where((queryBuilder) => {
+      queryBuilder
+        .where((qb) => {
+          qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
+            [UserEmails.col.primary]: true
+          })
+        })
+        .orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Users.col.company, 'ILIKE', `%${searchQuery}%`)
+    })
+  }
+  if (role) query.where({ role })
+  return query
+}
+
 /**
  * Get users by ID
  */
@@ -51,36 +73,32 @@ export async function getUsers(
   userIds = isArray(userIds) ? userIds : [userIds]
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
+  q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
+    [UserEmails.col.primary]: true
+  })
+
+  const columns: (Knex.Raw<UserRecord> | string)[] = [
+    ...Object.values(omit(Users.col, ['email', 'verified'])),
+    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+  ]
   if (withRole) {
-    q.columns([
-      ...Object.values(Users.col),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
-    ])
+    // Getting first role from grouped results
+    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
     q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    q.groupBy(Users.col.id)
   }
+
+  q.columns(columns)
+  q.groupBy(Users.col.id)
 
   return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
 }
 
 type UserQuery = {
   query: string | null
-  role: ServerRoles | null
+  role?: ServerRoles | null
 }
 
-const getUsersBaseQuery = (q: Knex.QueryBuilder, { query, role }: UserQuery) => {
-  if (query) {
-    q.where((queryBuilder) => {
-      queryBuilder
-        .where('email', 'ILIKE', `%${query}%`)
-        .orWhere('name', 'ILIKE', `%${query}%`)
-        .orWhere('company', 'ILIKE', `%${query}%`)
-    })
-  }
-  if (role) q.where({ role })
-  return q
-}
 /**
  * List users
  */
@@ -91,32 +109,40 @@ export async function listUsers({
   role
 }: {
   limit: number
-  cursor: Date | null
+  cursor?: Date | null
 } & UserQuery): Promise<UserWithRole[]> {
   const sanitizedLimit = clamp(limit, 1, 200)
+
+  const userCols = omit(Users.col, ['email', 'verified'])
   const q = Users.knex<UserWithRole[]>()
     .orderBy(Users.col.createdAt, 'desc')
     .limit(sanitizedLimit)
     .columns([
-      ...Object.values(Users.col),
+      ...Object.values(userCols),
       // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
+      knex.raw(`(array_agg("server_acl"."role"))[1] as role`),
+      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
     ])
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+    .where({ [UserEmails.col.primary]: true })
     .groupBy(Users.col.id)
   if (cursor) q.where(Users.col.createdAt, '<', cursor)
-  const users: UserWithRole[] = await getUsersBaseQuery(q, { query, role })
+  const users: UserWithRole[] = await getUsersBaseQuery(q, { searchQuery: query, role })
   return users.map((u) => sanitizeUserRecord(u))
 }
 
 export async function countUsers(args: UserQuery): Promise<number> {
-  // const result = await getUsersBaseQuery(Users.knex(), args).countDistinct(Users.col.id)
   const q = Users.knex()
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
     .countDistinct(Users.col.id)
-  const result = await getUsersBaseQuery(q, args)
-  // .groupBy(Users.col.id)
-  // const result = await q
+
+  const result = await getUsersBaseQuery(q, {
+    searchQuery: args.query,
+    role: args.role
+  })
   return parseInt(result[0]['count'])
 }
 
@@ -136,19 +162,24 @@ export async function getUserByEmail(
   email: string,
   options?: Partial<{ skipClean: boolean; withRole: boolean }>
 ) {
-  const q = Users.knex<UserWithOptionalRole[]>().whereRaw('lower(email) = lower(?)', [
-    email
-  ])
+  const q = Users.knex<UserWithOptionalRole[]>()
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+    .where({
+      [UserEmails.col.primary]: true
+    })
+    .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+  const columns: (Knex.Raw<UserRecord> | string)[] = [
+    ...Object.values(omit(Users.col, ['email', 'verified'])),
+    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+  ]
   if (options?.withRole) {
-    q.columns([
-      ...Object.values(Users.col),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
-    ])
+    // Getting first role from grouped results
+    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
     q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    q.groupBy(Users.col.id)
   }
-
+  q.columns(columns)
+  q.groupBy(Users.col.id)
   const user = await q.first()
   return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
 }
@@ -158,17 +189,18 @@ export async function getUserByEmail(
  */
 export async function markUserAsVerified(email: string) {
   const UserCols = Users.with({ withoutTablePrefix: true }).col
-  const q = Users.knex()
+
+  const usersUpdate = await Users.knex()
     .whereRaw('lower(email) = lower(?)', [email])
     .update({
       [UserCols.verified]: true
     })
 
-  await markUserEmailAsVerifiedFactory({
+  const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
     updateUserEmail: updateUserEmailFactory({ db })
   })({ email: email.toLowerCase().trim() })
 
-  return !!(await q)
+  return !!(usersUpdate || userEmailsUpdate)
 }
 
 export async function markOnboardingComplete(userId: string) {

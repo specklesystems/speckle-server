@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex gap-2 mb-2 last:mb-0"
+    class="relative flex space-x-2 mb-2 last:mb-0"
     :class="description && inlineDescription ? 'items-start' : 'items-center'"
   >
     <div class="flex h-6 items-center">
@@ -21,18 +21,18 @@
     </div>
     <div
       class="text-xs sm:text-sm"
-      :class="inlineDescription ? 'flex gap-2 items-center' : ''"
+      :class="inlineDescription ? 'flex space-x-2 items-center' : ''"
     >
       <label
         :for="finalId"
-        class="text-foreground flex gap-2 items-center"
+        class="text-foreground flex space-x-2 items-center"
         :class="{ 'sr-only': hideLabel }"
       >
-        <div v-if="icon" class="text-sm">
+        <div v-if="icon">
           <component :is="icon" class="h-8 sm:h-10 w-8 sm:w-10"></component>
         </div>
         <div class="flex flex-col">
-          <span>{{ title }}</span>
+          <span class="text-body-sm font-medium">{{ title }}</span>
           <p
             v-if="descriptionText && !inlineDescription"
             :id="descriptionId"
@@ -199,7 +199,7 @@ const computedClasses = computed((): string => {
 const descriptionText = computed(() => props.description || errorMessage.value)
 const descriptionId = computed(() => `${props.name}-description`)
 const descriptionClasses = computed((): string => {
-  const classParts: string[] = ['text-xs']
+  const classParts: string[] = ['text-body-3xs']
 
   if (errorMessage.value) {
     classParts.push('text-danger')

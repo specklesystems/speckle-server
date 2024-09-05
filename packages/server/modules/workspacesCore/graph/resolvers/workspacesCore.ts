@@ -9,6 +9,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Query: {
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvite: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Mutation: {
@@ -27,7 +30,16 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-        deleteRole: async () => {
+        addDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        deleteDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        join: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        leave: async () => {
           throw new WorkspacesModuleDisabledError()
         },
         invites: () => ({})
@@ -44,6 +56,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         cancel: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        resend: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Workspace: {
@@ -58,22 +73,35 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         projects: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        domains: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       User: {
+        discoverableWorkspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         workspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvites: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },
       Project: {
         workspace: async () => {
-          throw new WorkspacesModuleDisabledError()
+          // Return type is always workspace or null, to make the FE implementation easier we force return null in this case
+          return null
         }
       },
       AdminQueries: {
         workspaceList: async () => {
           throw new WorkspacesModuleDisabledError()
         }
+      },
+      LimitedUser: {
+        workspaceDomainPolicyCompliant: async () => null
       }
     } as Resolvers)
   : {}

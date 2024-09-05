@@ -12,6 +12,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
   const postAuthRedirect = usePostAuthRedirect({ route: to })
 
+  const isAccessCodeReq = !!to.query?.access_code
+  const isBasicHomepage = to.path === '/' && !Object.keys(to.query).length
+  const savePostAuthRedirect = !isAccessCodeReq && !isBasicHomepage
+
   const { data } = await client
     .query({
       query: activeUserQuery
@@ -25,9 +29,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return
     }
 
-    postAuthRedirect.set(to.fullPath)
-    return navigateTo(loginRoute)
+    // Save current route for post-auth redirect and just go to login page
+    if (savePostAuthRedirect) {
+      postAuthRedirect.set(to.fullPath)
+      return navigateTo(loginRoute)
+    } else {
+      // Go to login page and forward all query params there too (this is probably the
+      // access code retrieval fetch request)
+      return navigateTo({ path: loginRoute, query: to.query })
+    }
   }
-
-  return undefined
 })

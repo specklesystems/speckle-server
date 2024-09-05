@@ -23,7 +23,7 @@ const props = withDefaults(
 const finalLogo = computed(() => cleanFunctionLogo(props.logo))
 const classes = computed(() => {
   const classParts = [
-    'bg-foundation-focus text-primary font-bold rounded-full shrink-0 flex justify-center text-center items-center overflow-hidden select-none'
+    'bg-foundation-focus text-primary font-medium rounded-full shrink-0 flex justify-center text-center items-center overflow-hidden select-none'
   ]
 
   switch (props.size) {

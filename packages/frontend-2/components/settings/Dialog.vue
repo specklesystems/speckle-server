@@ -11,38 +11,89 @@
     <div class="w-full h-full flex">
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
+        class="w-full md:w-56 lg:w-60 md:pb-4 md:px-2 md:pt-6 md:bg-foundation md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account settings">
             <template #title-icon>
-              <UserIcon class="h-5 w-5" />
+              <IconAccount class="size-4" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, key) in menuItemConfig.user"
+              v-for="(sidebarMenuItem, key) in userMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-foundation-focus hover:!bg-foundation-focus':
-                  selectedMenuItem?.title === sidebarMenuItem.title
-              }"
+              :active="targetMenuItem === key"
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
             <template #title-icon>
-              <ServerStackIcon class="h-5 w-5" />
+              <IconServer class="size-4" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, key) in menuItemConfig.server"
+              v-for="(sidebarMenuItem, key) in serverMenuItems"
               :key="key"
               :label="sidebarMenuItem.title"
-              :class="{
-                'bg-foundation-focus hover:!bg-foundation-focus':
-                  selectedMenuItem?.title === sidebarMenuItem.title
-              }"
+              :active="targetMenuItem === key"
               @click="targetMenuItem = `${key}`"
             />
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
+            <template #title-icon>
+              <IconWorkspaces class="size-4 text-foreground-2" />
+            </template>
+            <LayoutSidebarMenuGroup
+              v-for="(workspaceItem, key) in workspaceItems"
+              :key="key"
+              :title="workspaceItem.name"
+              collapsible
+              class="workspace-item"
+              :collapsed="targetWorkspaceId !== workspaceItem.id"
+            >
+              <template #title-icon>
+                <WorkspaceAvatar
+                  :logo="workspaceItem.logo"
+                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  size="sm"
+                />
+              </template>
+              <template
+                v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
+                :key="`${key}-${itemKey}`"
+              >
+                <LayoutSidebarMenuGroupItem
+                  v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                  :label="workspaceMenuItem.title"
+                  :active="
+                    workspaceMenuItemClasses(
+                      itemKey,
+                      workspaceItem.id,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                  :tooltip-text="workspaceMenuItem.tooltipText"
+                  :disabled="workspaceMenuItem.disabled"
+                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
+                  extra-padding
+                  @click="
+                    onWorkspaceMenuItemClick(
+                      workspaceItem.id,
+                      `${itemKey}`,
+                      workspaceMenuItem.disabled
+                    )
+                  "
+                />
+              </template>
+            </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroupItem
+              v-if="canCreateWorkspace"
+              label="Add workspace"
+              @click="openWorkspaceCreateDialog"
+            >
+              <template #icon>
+                <PlusIcon class="h-4 w-4 text-foreground-2" />
+              </template>
+            </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -50,101 +101,127 @@
         :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'bg-foundation md:px-10 md:py-12 md:bg-foundation w-full',
+          'md:bg-foundation md:px-10 md:py-12 md:bg-foundation-page w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"
+        :workspace-id="targetWorkspaceId"
+        @close="isOpen = false"
       />
     </div>
+
+    <WorkspaceCreateDialog
+      v-model:open="showWorkspaceCreateDialog"
+      event-source="settings"
+    />
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import type { defineComponent } from 'vue'
-import SettingsUserProfile from '~/components/settings/user/Profile.vue'
-import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
-import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
-import SettingsServerGeneral from '~/components/settings/server/General.vue'
-import SettingsServerProjects from '~/components/settings/server/Projects.vue'
-import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
-import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
+import { Roles } from '@speckle/shared'
+import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
+import { useIsWorkspacesEnabled } from '~/composables/globals'
+import { useQuery } from '@vue/apollo-composable'
+import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
-import { settingsQueries } from '~/lib/common/helpers/route'
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { useSettingsMenu } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
-import { Roles } from '@speckle/shared'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
-type MenuItem = {
-  title: string
-  component: ReturnType<typeof defineComponent>
-}
+graphql(`
+  fragment SettingsDialog_Workspace on Workspace {
+    ...WorkspaceAvatar_Workspace
+    id
+    role
+    name
+  }
+`)
 
-const { activeUser: user } = useActiveUser()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('md')
-
-const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }>({
-  user: {
-    [settingsQueries.user.profile]: {
-      title: 'Profile',
-      component: SettingsUserProfile
-    },
-    [settingsQueries.user.notifications]: {
-      title: 'Notifications',
-      component: SettingsUserNotifications
-    },
-    [settingsQueries.user.developerSettings]: {
-      title: 'Developer settings',
-      component: SettingsUserDeveloper
-    }
-  },
-  server: {
-    [settingsQueries.server.general]: {
-      title: 'General',
-      component: SettingsServerGeneral
-    },
-    [settingsQueries.server.projects]: {
-      title: 'Projects',
-      component: SettingsServerProjects
-    },
-    [settingsQueries.server.activeUsers]: {
-      title: 'Active users',
-      component: SettingsServerActiveUsers
-    },
-    [settingsQueries.server.pendingInvitations]: {
-      title: 'Pending invitations',
-      component: SettingsServerPendingInvitations
+graphql(`
+  fragment SettingsDialog_User on User {
+    workspaces {
+      items {
+        ...SettingsDialog_Workspace
+      }
     }
   }
-})
+`)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
+const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 
+const { activeUser: user } = useActiveUser()
+const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const mixpanel = useMixpanel()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
+  enabled: isWorkspacesEnabled.value
+})
+
+const isMobile = breakpoints.smaller('md')
+const showWorkspaceCreateDialog = ref(false)
+
+const workspaceItems = computed(
+  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
-const selectedMenuItem = computed((): MenuItem | null => {
-  const categories = [menuItemConfig.value.user, menuItemConfig.value.server]
+const canCreateWorkspace = computed(
+  () =>
+    user.value?.role === Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
+
+const selectedMenuItem = computed((): SettingsMenuItem | null => {
+  const categories = [
+    userMenuItems.value,
+    serverMenuItems.value,
+    workspaceMenuItems.value
+  ]
   for (const category of categories) {
     if (targetMenuItem.value && targetMenuItem.value in category) {
       return category[targetMenuItem.value]
     }
   }
 
-  if (!isMobile.value && targetMenuItem.value) {
-    // Fallback for invalid queries/typos
-    return targetMenuItem.value.includes('server') && isAdmin.value
-      ? menuItemConfig.value.server.general
-      : menuItemConfig.value.user.profile
-  }
-
   return null
 })
+
+const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean) => {
+  if (disabled) return
+  targetWorkspaceId.value = id
+  targetMenuItem.value = target
+  mixpanel.track('Workspace Settings Menuitem Clicked', {
+    // eslint-disable-next-line camelcase
+    workspace_id: id,
+    item: target
+  })
+}
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'settings'
+  })
+}
+
+const workspaceMenuItemClasses = (
+  itemKey: string | number,
+  workspaceId: string,
+  disabled?: boolean
+) =>
+  targetMenuItem.value === itemKey &&
+  targetWorkspaceId.value === workspaceId &&
+  !disabled
 
 watch(
   () => user.value,
@@ -156,3 +233,8 @@ watch(
   { immediate: true }
 )
 </script>
+<style>
+.workspace-item h6 {
+  @apply !font-normal !text-body-xs !text-foreground;
+}
+</style>

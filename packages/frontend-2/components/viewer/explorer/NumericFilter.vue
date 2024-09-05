@@ -1,5 +1,5 @@
 <template>
-  <div v-if="filter" class="px-3 flex flex-col space-y-2 pb-2">
+  <div class="px-3 flex flex-col space-y-2 pb-2">
     <div class="flex w-full space-x-1">
       <div class="text-xs">Range:</div>
       <div class="text-xs truncate">[{{ props.filter.min.toFixed(2) }},</div>

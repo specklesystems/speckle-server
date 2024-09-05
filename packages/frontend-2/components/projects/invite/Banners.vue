@@ -1,13 +1,7 @@
 <template>
   <!-- Breakout div from main container -->
-
   <div class="flex flex-col">
-    <ProjectsInviteBanner
-      v-for="item in items"
-      :key="item.id"
-      :invite="item"
-      @processed="$emit('processed', $event)"
-    />
+    <ProjectsInviteBanner v-for="item in items" :key="item.id" :invite="item" />
   </div>
 </template>
 <script setup lang="ts">
@@ -21,10 +15,6 @@ graphql(`
     }
   }
 `)
-
-defineEmits<{
-  (e: 'processed', val: { accepted: boolean }): void
-}>()
 
 const props = defineProps<{
   invites: ProjectsInviteBannersFragment

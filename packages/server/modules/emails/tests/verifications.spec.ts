@@ -1,11 +1,6 @@
-import { EmailVerifications, Users } from '@/modules/core/dbSchema'
+import { EmailVerifications, UserEmails, Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { buildApp, truncateTables } from '@/test/hooks'
-import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
-import { ApolloServer } from 'apollo-server-express'
 import request from 'supertest'
 import { expect } from 'chai'
 import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
@@ -19,12 +14,17 @@ import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import {
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { buildApolloServer } from '@/app'
 
 const mailerMock = EmailSendingServiceMock
 
 const cleanup = async () => {
-  await truncateTables([Users.name, EmailVerifications.name, USER_EMAILS_TABLE_NAME])
+  await truncateTables([Users.name, EmailVerifications.name, UserEmails.name])
 }
 
 describe('Email verifications @emails', () => {
@@ -72,10 +72,13 @@ describe('Email verifications @emails', () => {
   })
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(userA.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(userA.id)
+      }
     })
 
     it('pending verification is reported correctly', async () => {
@@ -102,7 +105,10 @@ describe('Email verifications @emails', () => {
 
     describe('and requesting verification', () => {
       const invokeRequestVerification = async (user: BasicTestUser) => {
-        const apollo = await buildAuthenticatedApolloServer(user.id)
+        const apollo = {
+          apollo: await buildApolloServer(),
+          context: createAuthedTestContext(user.id)
+        }
         return await requestVerification(apollo, {})
       }
 
@@ -148,10 +154,13 @@ describe('Email verifications @emails', () => {
   })
 
   describe('when not authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createTestContext()
+      }
     })
 
     it('cant request an account verification', async () => {

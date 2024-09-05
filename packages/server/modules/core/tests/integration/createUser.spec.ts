@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { createUser, getUser, getUserById } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
-import { UserRecord } from '@/modules/core/helpers/types'
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
@@ -75,8 +74,9 @@ describe('Users @core-users', () => {
       password: createRandomPassword()
     })
 
-    const user = (await getUserById({ userId })) as UserRecord
-    expect(user.email).to.eq(email)
+    const user = await getUserById({ userId })
+    expect(user).to.be.ok
+    expect(user!.email.toLowerCase()).to.eq(email.toLowerCase())
 
     const userEmail = await findPrimaryEmailForUserFactory({ db })({ userId })
 

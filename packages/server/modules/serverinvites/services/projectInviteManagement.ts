@@ -8,8 +8,12 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { getStream } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
-import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
 import {
   CreateInviteParams,
   FindInvite,
@@ -17,6 +21,7 @@ import {
   QueryAllUserResourceInvites
 } from '@/modules/serverinvites/domain/operations'
 import {
+  PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
@@ -27,7 +32,8 @@ import {
 import {
   buildUserTarget,
   resolveInviteTargetTitle,
-  resolveTarget
+  resolveTarget,
+  ResourceTargetTypeRoleTypeMap
 } from '@/modules/serverinvites/helpers/core'
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes'
 import {
@@ -35,7 +41,14 @@ import {
   FinalizeInvite,
   GetInvitationTargetUsers
 } from '@/modules/serverinvites/services/operations'
-import { MaybeNullOrUndefined, Nullable, Roles, StreamRoles } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  Roles,
+  ServerRoles,
+  StreamRoles
+} from '@speckle/shared'
 import { has } from 'lodash'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
@@ -45,19 +58,64 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createProjectInviteFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite }) =>
-  async (
-    input: StreamInviteCreateInput | FullProjectInviteCreateInput,
-    inviterId: string,
+  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: typeof getStream }) =>
+  async (params: {
+    input: StreamInviteCreateInput | FullProjectInviteCreateInput
+    inviterId: string
     inviterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  ) => {
+    /**
+     * If invite also has secondary resource targets, you can specify the expected roles here
+     */
+    secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+    allowWorkspacedProjects?: boolean
+  }) => {
+    const {
+      input,
+      inviterId,
+      inviterResourceAccessRules,
+      secondaryResourceRoles,
+      allowWorkspacedProjects
+    } = params
     const { email, userId, role } = input
 
     if (!email && !userId) {
       throw new InviteCreateValidationError('Either email or userId must be specified')
     }
 
+    const serverRole = input.serverRole as Optional<ServerRoles>
+    if (serverRole && !Object.values(Roles.Server).includes(serverRole)) {
+      throw new InviteCreateValidationError('Invalid server role specified')
+    }
+
+    const resourceId = isStreamInviteCreateInput(input)
+      ? input.streamId
+      : input.projectId
+    if (!resourceId?.length) {
+      throw new InviteCreateValidationError('Invalid project ID specified')
+    }
+
+    // If workspace project, ensure secondaryResourceRoles are set (channeling users
+    // to the correct gql resolver)
+    const project = await deps.getStream({ streamId: resourceId })
+    if (!allowWorkspacedProjects && project && project?.workspaceId) {
+      throw new InviteCreateValidationError(
+        'Target project belongs to a workspace, you should use a workspace invite instead'
+      )
+    }
+
     const target = (userId ? buildUserTarget(userId) : email)!
+
+    const primaryResourceTarget: PrimaryInviteResourceTarget<ProjectInviteResourceTarget> =
+      {
+        resourceType: ProjectInviteResourceType,
+        resourceId,
+        role: (role as StreamRoles) || Roles.Stream.Contributor,
+        primary: true,
+        secondaryResourceRoles: {
+          ...(secondaryResourceRoles || {}),
+          ...(serverRole ? { [ServerInviteResourceType]: serverRole } : undefined)
+        }
+      }
     await deps.createAndSendInvite(
       {
         target,
@@ -65,14 +123,7 @@ export const createProjectInviteFactory =
         message: isStreamInviteCreateInput(input)
           ? input.message || undefined
           : undefined,
-        primaryResourceTarget: {
-          resourceType: ProjectInviteResourceType,
-          resourceId: isStreamInviteCreateInput(input)
-            ? input.streamId
-            : input.projectId,
-          role: role || Roles.Stream.Contributor,
-          primary: true
-        }
+        primaryResourceTarget
       },
       inviterResourceAccessRules
     )
@@ -111,18 +162,20 @@ export const inviteUsersToProjectFactory =
     const users = await getUsers(userIds)
     if (!users.length) return false
 
-    const inviteParamsArray = users.map(
-      (u): CreateInviteParams => ({
-        target: buildUserTarget(u.id)!,
-        inviterId,
-        primaryResourceTarget: {
+    const inviteParamsArray = users.map((u): CreateInviteParams => {
+      const primaryResourceTarget: PrimaryInviteResourceTarget<ProjectInviteResourceTarget> =
+        {
           resourceType: ProjectInviteResourceType,
           resourceId: streamId,
           role: Roles.Stream.Contributor,
           primary: true
         }
-      })
-    )
+      return {
+        target: buildUserTarget(u.id)!,
+        inviterId,
+        primaryResourceTarget
+      }
+    })
 
     await Promise.all(
       inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))

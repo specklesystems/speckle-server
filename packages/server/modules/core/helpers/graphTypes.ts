@@ -1,6 +1,5 @@
 import {
   LimitedUser,
-  Stream,
   StreamRole,
   ServerRole,
   ModelsTreeItem,
@@ -11,7 +10,8 @@ import {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
-  StreamRecord
+  StreamRecord,
+  UserRecord
 } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
@@ -23,27 +23,13 @@ import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
  * These are registered in the server's codegen.yml
  */
 
-export type StreamGraphQLReturn = Omit<
-  Stream,
-  | 'pendingAccessRequests'
-  | 'activity'
-  | 'blobs'
-  | 'blob'
-  | 'commentCount'
-  | 'branches'
-  | 'branch'
-  | 'commit'
-  | 'commits'
-  | 'object'
-  | 'collaborators'
-  | 'pendingCollaborators'
-  | 'favoritedDate'
-  | 'favoritesCount'
-  | 'role'
-  | 'fileUploads'
-  | 'fileUpload'
-  | 'webhooks'
->
+export type StreamGraphQLReturn = StreamRecord & {
+  /**
+   * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
+   * be resolved by the Project.role/Stream.role resolver in an efficient manner.
+   */
+  role?: string | null
+}
 
 export type CommitGraphQLReturn = Commit & {
   /**
@@ -53,13 +39,7 @@ export type CommitGraphQLReturn = Commit & {
   author: Nullable<string>
 }
 
-export type ProjectGraphQLReturn = StreamRecord & {
-  /**
-   * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
-   * be resolved by the Project.role resolver in an efficient manner.
-   */
-  role?: string | null
-}
+export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
 
@@ -68,6 +48,11 @@ export type VersionGraphQLReturn = CommitRecord
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
+>
+
+export type UserGraphQLReturn = Pick<
+  UserRecord,
+  'id' | 'createdAt' | 'name' | 'bio' | 'company' | 'email' | 'verified' | 'avatar'
 >
 
 export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
