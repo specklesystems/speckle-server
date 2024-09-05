@@ -46,7 +46,7 @@ jobs:
           node-version: 20
           cache: 'yarn'
       - name: Install dependencies
-        working-directory: utils/preview-service-acceptance
+        working-directory: packages/preview-service
         run: yarn install
 
       #TODO load the docker image from a previous job
