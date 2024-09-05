@@ -7,11 +7,12 @@ on:
       - .yarnrc.yml .
       - .yarn
       - package.json
-      - packages/frontend-2/type-augmentations/stubs/**
-      - packages/preview-service/**
-      - packages/viewer/**
-      - packages/objectloader/**
-      - packages/shared/**
+      - '.github/workflows/preview-service-acceptance.yml'
+      - 'packages/frontend-2/type-augmentations/stubs/**/*'
+      - 'packages/preview-service/**/*'
+      - 'packages/viewer/**/*'
+      - 'packages/objectloader/**/*'
+      - 'packages/shared/**/*'
 
 jobs:
   preview-service-acceptance:
