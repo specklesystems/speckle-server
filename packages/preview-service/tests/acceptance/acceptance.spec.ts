@@ -105,6 +105,10 @@ describe.sequential('Acceptance', () => {
         const s3Config = getS3Config()
 
         if (s3Config.credentials.accessKeyId && s3Config.credentials.secretAccessKey) {
+          logger.info(
+            { outputFilePath },
+            'S3 credentials provided, saving to S3 at {outputFilePath}'
+          )
           const s3Client = new S3Client(s3Config)
 
           const params: PutObjectCommandInput = {
