@@ -10,14 +10,15 @@ import {
   storeWorkspaceDomainFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getWorkspaceCollaboratorsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestWorkspace,
   assignToWorkspace,
@@ -41,6 +42,7 @@ import {
 } from '@/modules/core/repositories/streams'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
@@ -100,6 +102,106 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+  })
+
+  describe('getWorkspaceCollaboratorsFactory creates a function, that', () => {
+    const testUserA: BasicTestUser = {
+      id: '',
+      name: 'John A Speckle',
+      email: 'john-a-speckle-collaborators@example.org',
+      role: Roles.Server.Admin
+    }
+
+    const testUserB: BasicTestUser = {
+      id: '',
+      name: 'John B Speckle',
+      email: 'john-b-speckle-collaborators@example.org'
+    }
+
+    const testUserC: BasicTestUser = {
+      id: '',
+      name: 'John C Speckle',
+      email: 'john-c-speckle-collaborators@example.org'
+    }
+
+    before(async () => {
+      await createTestUsers([testUserA, testUserB, testUserC])
+    })
+
+    describe('when one workspace exists', () => {
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        name: 'Test Workspace'
+      }
+
+      beforeEach(async () => {
+        await createTestWorkspace(testWorkspace, testUserA)
+        await assignToWorkspace(testWorkspace, testUserB, Roles.Workspace.Member)
+      })
+
+      afterEach(async () => {
+        truncateTables(['workspaces'])
+      })
+
+      it('returns all workspace members', async () => {
+        const team = await getWorkspaceCollaborators({
+          workspaceId: testWorkspace.id,
+          limit: 50
+        })
+        expect(team.length).to.equal(2)
+      })
+    })
+
+    describe('when multiple workspaces exist', () => {
+      const testWorkspaces: BasicTestWorkspace[] = [
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace A'
+        },
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace B'
+        },
+        {
+          id: '',
+          ownerId: '',
+          name: 'Test Workspace C'
+        }
+      ]
+
+      beforeEach(async () => {
+        for (const workspace of testWorkspaces) {
+          await createTestWorkspace(workspace, testUserA)
+          await assignToWorkspace(workspace, testUserB, Roles.Workspace.Member)
+
+          if (workspace.name === 'Test Workspace C') {
+            return
+          }
+
+          await assignToWorkspace(workspace, testUserC, Roles.Workspace.Member)
+        }
+      })
+
+      afterEach(async () => {
+        truncateTables(['workspaces'])
+      })
+
+      it('limits search results to specified workspace', async () => {
+        const result = await getWorkspaceCollaborators({
+          workspaceId: testWorkspaces[2].id,
+          limit: 50,
+          filter: { search: 'John' }
+        })
+        expect(result.length).to.equal(2)
+        expect(result.map((user) => user.id)).to.have.members([
+          testUserA.id,
+          testUserB.id
+        ])
+      })
+    })
   })
 
   describe('upsertWorkspaceFactory creates a function, that', () => {

@@ -40,7 +40,14 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
+
       const speckleObjStream = new SpeckleObjectsStream(isSimpleTextRequested(req))
+      const speckleObjStreamCloseHandler = () => {
+        // https://knexjs.org/faq/recipes.html#manually-closing-streams
+        dbStream.end.bind(dbStream)
+      }
+      speckleObjStream.once('close', speckleObjStreamCloseHandler)
+
       const gzipStream = zlib.createGzip()
 
       speckleObjStream.write(obj)

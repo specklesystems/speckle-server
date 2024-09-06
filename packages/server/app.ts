@@ -12,10 +12,11 @@ import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger } from '@/logging/logging'
+import { startupLogger, shutdownLogger, subscriptionLogger } from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
-  LoggingExpressMiddleware
+  LoggingExpressMiddleware,
+  sanitizeHeaders
 } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
@@ -27,7 +28,8 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
 
-import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
+import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
+import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -155,21 +157,32 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       schema,
       execute,
       subscribe,
-      onConnect: async (connectionParams: Record<string, unknown>) => {
+      onConnect: async (
+        connectionParams: Record<string, unknown>,
+        webSocket: WebSocket,
+        connContext: ConnectionContext
+      ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+
+        const logger = connContext.request.log || subscriptionLogger
+
+        const possiblePaths = [
+          'Authorization',
+          'authorization',
+          'headers.Authorization',
+          'headers.authorization'
+        ]
 
         // Resolve token
         let token: string
         try {
+          const requestId = get(connectionParams, 'headers.x-request-id') as string
+          logger.debug(
+            { requestId, headers: sanitizeHeaders(connContext.request.headers) },
+            'New websocket connection'
+          )
           let header: Optional<string>
-
-          const possiblePaths = [
-            'Authorization',
-            'authorization',
-            'headers.Authorization',
-            'headers.authorization'
-          ]
 
           for (const possiblePath of possiblePaths) {
             if (has(connectionParams, possiblePath)) {
@@ -193,12 +206,35 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token, cleanLoadersEarly: false })
+          const buildCtx = await buildContext({
+            req: null,
+            token,
+            cleanLoadersEarly: false
+          })
+          buildCtx.log.info(
+            {
+              userId: buildCtx.userId,
+              ws_protocol: webSocket.protocol,
+              ws_url: webSocket.url,
+              headers: sanitizeHeaders(connContext.request.headers)
+            },
+            'Websocket connected and subscription context built.'
+          )
+          return buildCtx
         } catch (e) {
           throw new ContextError('Subscription context build failed')
         }
       },
-      onDisconnect: () => {
+      onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
+        const logger = connContext.request.log || subscriptionLogger
+        logger.debug(
+          {
+            ws_protocol: webSocket.protocol,
+            ws_url: webSocket.url,
+            headers: sanitizeHeaders(connContext.request.headers)
+          },
+          'Websocket disconnected.'
+        )
         metricConnectedClients.dec()
       },
       onOperation: (...params: [() => void, ExecutionParams]) => {
@@ -209,6 +245,18 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
           subscriptionType: baseParams.operationName
         })
         const ctx = baseParams.context as GraphQLContext
+
+        const logger = ctx.log || subscriptionLogger
+        logger.debug(
+          {
+            graphql_operation_name: baseParams.operationName,
+            userId: baseParams.context.userId,
+            graphql_query: baseParams.query.toString(),
+            graphql_variables: redactSensitiveVariables(baseParams.variables),
+            graphql_operation_type: 'subscription'
+          },
+          'Subscription started for {graphqlOperationName}'
+        )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()

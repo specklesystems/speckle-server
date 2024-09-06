@@ -211,6 +211,7 @@ type WorkspaceCostItem {
   count: Int!
   name: String!
   cost: Float!
+  label: String!
 }
 
 type WorkspaceCostDiscount {

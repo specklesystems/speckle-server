@@ -248,9 +248,11 @@ export const getWorkspaceCollaboratorsFactory =
     const { search, role } = filter || {}
 
     if (search) {
-      query
-        .where(Users.col.name, 'ILIKE', `%${search}%`)
-        .orWhere(Users.col.email, 'ILIKE', `%${search}%`)
+      query.andWhere((builder) => {
+        builder
+          .where(Users.col.name, 'ILIKE', `%${search}%`)
+          .orWhere(Users.col.email, 'ILIKE', `%${search}%`)
+      })
     }
 
     if (role) {

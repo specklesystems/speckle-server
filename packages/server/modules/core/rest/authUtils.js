@@ -22,6 +22,7 @@ module.exports = {
     if (!stream) return { result: false, status: 404 }
 
     if (!stream.isPublic && req.context.auth === false) {
+      req.log.debug('User is not authenticated, so cannot read from non-public stream.')
       return { result: false, status: 401 }
     }
 
@@ -51,6 +52,7 @@ module.exports = {
 
   async validatePermissionsWriteStream(streamId, req) {
     if (!req.context || !req.context.auth) {
+      req.log.debug('User is not authenticated, so cannot write to stream.')
       return { result: false, status: 401 }
     }
 
