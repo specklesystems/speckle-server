@@ -13,10 +13,10 @@ import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/clie
 const getS3Config = () => {
   return {
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY,
-      secretAccessKey: process.env.S3_SECRET_KEY
+      accessKeyId: process.env.S3_ACCESS_KEY || '',
+      secretAccessKey: process.env.S3_SECRET_KEY || ''
     },
-    endpoint: process.env.S3_ENDPOINT,
+    endpoint: process.env.S3_ENDPOINT || '',
     forcePathStyle: true,
     // s3ForcePathStyle: true,
     // signatureVersion: 'v4',
