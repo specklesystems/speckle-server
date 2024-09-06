@@ -78,12 +78,14 @@ export const e2eTest = test.extend<E2ETestContext>({
       const dbName = inject('dbName')
       // equivalent of beforeEach
       const db = await getTestDb(dbName).transaction()
-      const { server, metricsServer } = await startAndWaitOnServers({ db })
+      const { server, metricsServer, puppeteerClient } = await startAndWaitOnServers({
+        db
+      })
 
       // schedule the cleanup. Runs regardless of test status, and runs after afterEach.
       onTestFinished(async () => {
-        if (server) stopServer({ server })
-        if (metricsServer) stopServer({ server: metricsServer })
+        if (server) await stopServer({ server, puppeteerClient })
+        if (metricsServer) await stopServer({ server: metricsServer, puppeteerClient })
         if (db) await db.rollback()
       })
 

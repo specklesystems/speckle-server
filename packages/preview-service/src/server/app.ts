@@ -1,3 +1,4 @@
+import { PuppeteerClient } from '@/clients/puppeteer.js'
 import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
 import { srcRoot } from '@/root.js'
 import apiRouterFactory from '@/server/routes/api.js'
@@ -10,8 +11,8 @@ import createError from 'http-errors'
 import type { Knex } from 'knex'
 import path from 'path'
 
-export const appFactory = (deps: { db: Knex }) => {
-  const { db } = deps
+export const appFactory = (deps: { db: Knex; puppeteerClient: PuppeteerClient }) => {
+  const { db, puppeteerClient } = deps
   const app = express()
 
   app.use(loggingExpressMiddleware)
@@ -22,7 +23,7 @@ export const appFactory = (deps: { db: Knex }) => {
   app.use(express.static(path.join(srcRoot, '../public')))
 
   app.use('/', indexRouterFactory())
-  app.use('/preview', previewRouterFactory())
+  app.use('/preview', previewRouterFactory({ puppeteerClient }))
   app.use('/objects', objectsRouterFactory({ db }))
   app.use('/api', apiRouterFactory({ db }))
 

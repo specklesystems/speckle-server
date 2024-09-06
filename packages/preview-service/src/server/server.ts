@@ -5,14 +5,43 @@ import { getAppPort, getHost, getMetricsHost, getMetricsPort } from '@/utils/env
 import http from 'http'
 import type { Knex } from 'knex'
 import { isNaN, isString, toNumber } from 'lodash-es'
+import { PuppeteerClient, puppeteerClientFactory } from '@/clients/puppeteer.js'
+import { extendLoggerComponent, logger } from '@/observability/logging.js'
+import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
+import {
+  getChromiumExecutablePath,
+  getPreviewTimeout,
+  getPuppeteerUserDataDir,
+  serviceOrigin,
+  shouldBeHeadless
+} from '@/utils/env.js'
 
-export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) => {
+export const startServer = async (params: {
+  db: Knex
+  serveOnRandomPort?: boolean
+}) => {
   const { db } = params
+
+  const puppeteerClient = await puppeteerClientFactory({
+    logger: extendLoggerComponent(logger, 'puppeteerClient'),
+    url: `${serviceOrigin()}/render/`,
+    script: puppeteerDriver,
+    launchParams: {
+      headless: shouldBeHeadless(),
+      userDataDir: getPuppeteerUserDataDir(),
+      executablePath: getChromiumExecutablePath(),
+      protocolTimeout: getPreviewTimeout(),
+      // we trust the web content that is running, so can disable the sandbox
+      // disabling the sandbox allows us to run the docker image without linux kernel privileges
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    },
+    timeoutMilliseconds: getPreviewTimeout()
+  })
   /**
    * Get port from environment and store in Express.
    */
   const inputPort = params.serveOnRandomPort ? 0 : normalizePort(getAppPort())
-  const app = appFactory({ db })
+  const app = appFactory({ db, puppeteerClient })
   app.set('port', inputPort)
 
   // we place the metrics on a separate port as we wish to expose it to external monitoring tools, but do not wish to expose other routes (for now)
@@ -48,11 +77,15 @@ export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) =
   })
   metricsServer.listen(inputMetricsPort, metricsHost)
 
-  return { app, server, metricsServer }
+  return { app, server, metricsServer, puppeteerClient }
 }
 
-export const stopServer = (params: { server: http.Server }) => {
-  const { server } = params
+export const stopServer = async (params: {
+  server: http.Server
+  puppeteerClient: PuppeteerClient
+}) => {
+  const { server, puppeteerClient } = params
+  await puppeteerClient.dispose()
   server.close()
 }
 

@@ -9,7 +9,10 @@ export const startAndWaitOnServers = async (deps: { db: Knex }) => {
   let metricsServerAddress: string | AddressInfo | null = null
 
   const { db } = deps
-  const { app, server, metricsServer } = startServer({ db, serveOnRandomPort: true })
+  const { app, server, metricsServer, puppeteerClient } = await startServer({
+    db,
+    serveOnRandomPort: true
+  })
   server.on('listening', () => {
     serverAddress = server.address()
   })
@@ -23,7 +26,7 @@ export const startAndWaitOnServers = async (deps: { db: Knex }) => {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
-  return { app, server, metricsServer }
+  return { app, server, metricsServer, puppeteerClient }
 }
 
 export const getServerPort = (server: http.Server) => {

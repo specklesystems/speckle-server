@@ -4,5 +4,5 @@ import { startServer } from '@/server/server.js'
 import { startPreviewService } from '@/server/background.js'
 import { db } from '@/clients/knex.js'
 
-startServer({ db })
+await startServer({ db })
 startPreviewService({ db })
