@@ -17,6 +17,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/speckle-preview-service
+  OUTPUT_FILE_PATH: 'preview-service-output/${{ github.sha }}.png'
 
 jobs:
   build-preview-service:
@@ -106,14 +107,13 @@ jobs:
           TEST_DB: preview_service_test
           # note that the host is localhost, but the port is the port mapped to the postgres service
           PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@localhost:5432/preview_service_test
-          OUTPUT_FILE_PATH: /tmp/preview-service-output.png
+          OUTPUT_FILE_PATH: ${{ env.OUTPUT_FILE_PATH }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_REGION: ${{ vars.S3_REGION }}
 
-      - uses: actions/upload-artifact@v4
-        name: Upload the output from the preview-service
-        id: upload-preview-service-output
-        with:
-          name: preview-service-output
-          path: /tmp/preview-service-output.png
       - uses: actions/github-script@v7
         with:
           script: |
@@ -121,5 +121,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '📸 Preview service has generated the following image:<br/><img src="${{ steps.upload-preview-service-output.outputs.artifact-url }}"/><br/>'
+              body: '📸 Preview service has generated the following image:<br/><img src="${{ secrets.S3_ENDPOINT }}/${{ env.OUTPUT_FILE_PATH}}"/><br/>'
             })

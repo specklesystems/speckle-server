@@ -8,6 +8,22 @@ import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
 import { testLogger as logger } from '@/observability/logging.js'
 
+import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
+
+const getS3Config = () => {
+  return {
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY,
+      secretAccessKey: process.env.S3_SECRET_KEY
+    },
+    endpoint: process.env.S3_ENDPOINT,
+    forcePathStyle: true,
+    // s3ForcePathStyle: true,
+    // signatureVersion: 'v4',
+    region: process.env.S3_REGION || 'us-east-1'
+  }
+}
+
 describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
     beforeEach(() => {
@@ -81,11 +97,47 @@ describe.sequential('Acceptance', () => {
           return //HACK to appease typescript
         }
 
-        //TODO use environment variable
-        const outputFilePath =
-          process.env.OUTPUT_FILE_PATH || '/tmp/preview-service-output.png'
-        await fs.writeFile(outputFilePath, previewData.data)
-        logger.info({ outputFilePath }, '📝 Saved preview image to {outputFilePath}')
+        if (!process.env.OUTPUT_FILE_PATH)
+          throw new Error('OUTPUT_FILE_PATH environment variable not set')
+
+        const outputFilePath = process.env.OUTPUT_FILE_PATH
+
+        const s3Config = getS3Config()
+
+        if (s3Config.credentials.accessKeyId && s3Config.credentials.secretAccessKey) {
+          const s3Client = new S3Client(s3Config)
+
+          const params: PutObjectCommandInput = {
+            Bucket: 'github-action-speckle-preview-service-acceptance-test',
+            Key: outputFilePath,
+            Body: previewData.data,
+            ACL: 'public-read',
+            Metadata: {
+              // Defines metadata tags.
+              // 'x-amz-meta-my-key': 'your-value'
+            }
+          }
+
+          const uploadObject = async () => {
+            try {
+              const data = await s3Client.send(new PutObjectCommand(params))
+              logger.info(
+                'Successfully uploaded object: ' + params.Bucket + '/' + params.Key
+              )
+              return data
+            } catch (err) {
+              logger.error(err, 'Failed to upload object')
+            }
+          }
+
+          await uploadObject()
+        } else {
+          logger.info(
+            { outputFilePath },
+            'No S3 credentials provided, saving to local file system at {outputFilePath}'
+          )
+          await fs.writeFile(outputFilePath, previewData.data)
+        }
       }
     )
   })
