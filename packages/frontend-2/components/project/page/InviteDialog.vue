@@ -49,6 +49,7 @@
               :user="user"
               :stream-role="role"
               :disabled="loading"
+              :target-workspace-role="workspaceRole"
               @invite-user="($event) => onInviteUser($event.user)"
             />
           </template>
