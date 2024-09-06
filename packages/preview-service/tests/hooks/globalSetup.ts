@@ -21,6 +21,7 @@ const dbName =
     length: 10,
     type: 'alphanumeric'
   })}`.toLocaleLowerCase() //postgres will automatically lower case new db names
+let isDatabaseCreatedExternally = true
 
 /**
  * Global setup hook
@@ -34,6 +35,7 @@ export async function setup({ provide }: GlobalSetupContext) {
     .select('datname')
     .where('datname', dbName)
   if (!dbAlreadyExists.length) {
+    isDatabaseCreatedExternally = false
     await superUserDbClient.raw(`CREATE DATABASE ${dbName}
     WITH
     OWNER = preview_service_test
@@ -63,9 +65,11 @@ export async function teardown() {
   await down(db) //we need the migration to occur in our named database, so cannot use knex's built in migration functionality.
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
-  //use connection without database to drop the db
-  const superUserDbClient = getTestDb()
-  await superUserDbClient.raw(`DROP DATABASE ${dbName};`)
-  await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
+  if (!isDatabaseCreatedExternally) {
+    //use connection without database to drop the db
+    const superUserDbClient = getTestDb()
+    await superUserDbClient.raw(`DROP DATABASE ${dbName};`)
+    await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
+  }
   logger.info('✅ Completed the vitest teardown global hook')
 }
