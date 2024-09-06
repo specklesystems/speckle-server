@@ -4,6 +4,7 @@ import { getTestDb } from '#/helpers/testKnexClient.js'
 import { startAndWaitOnServers } from '#/helpers/helpers.js'
 import type { Knex } from 'knex'
 import { Server } from 'http'
+import { PuppeteerClient } from '@/clients/puppeteer.js'
 
 export interface AcceptanceTestContext {
   context: {
@@ -78,8 +79,14 @@ export const e2eTest = test.extend<E2ETestContext>({
       const dbName = inject('dbName')
       // equivalent of beforeEach
       const db = await getTestDb(dbName).transaction()
-      const { server, metricsServer, puppeteerClient } = await startAndWaitOnServers({
-        db
+      const puppeteerClient: PuppeteerClient = {
+        //FIXME this is a stub for the moment
+        loadPageAndEvaluateScript: async () => {},
+        dispose: async () => {}
+      }
+      const { server, metricsServer } = await startAndWaitOnServers({
+        db,
+        puppeteerClient
       })
 
       // schedule the cleanup. Runs regardless of test status, and runs after afterEach.

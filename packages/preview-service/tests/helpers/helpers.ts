@@ -3,14 +3,19 @@ import type { Knex } from 'knex'
 import http from 'http'
 import type { AddressInfo } from 'net'
 import { getPostgresConnectionString } from '@/utils/env.js'
+import { PuppeteerClient } from '@/clients/puppeteer.js'
 
-export const startAndWaitOnServers = async (deps: { db: Knex }) => {
+export const startAndWaitOnServers = async (deps: {
+  db: Knex
+  puppeteerClient: PuppeteerClient
+}) => {
   let serverAddress: string | AddressInfo | null = null
   let metricsServerAddress: string | AddressInfo | null = null
 
-  const { db } = deps
-  const { app, server, metricsServer, puppeteerClient } = await startServer({
+  const { db, puppeteerClient } = deps
+  const { app, server, metricsServer } = startServer({
     db,
+    puppeteerClient,
     serveOnRandomPort: true
   })
   server.on('listening', () => {
@@ -26,7 +31,7 @@ export const startAndWaitOnServers = async (deps: { db: Knex }) => {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
-  return { app, server, metricsServer, puppeteerClient }
+  return { app, server, metricsServer }
 }
 
 export const getServerPort = (server: http.Server) => {
