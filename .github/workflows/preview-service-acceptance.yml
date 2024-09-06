@@ -121,5 +121,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '📸 Preview service has generated the following image:<br/><img src="${{ vars.S3_ENDPOINT }}/${{ env.OUTPUT_FILE_PATH}}"/><br/>'
+              body: '📸 Preview service has generated the following image:<br/><img src="${{ vars.S3_ENDPOINT }}/${{ vars.S3_BUCKET }}/${{ env.OUTPUT_FILE_PATH}}"/><br/>'
             })
