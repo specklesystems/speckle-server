@@ -148,9 +148,14 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       schema,
       execute,
       subscribe,
-      onConnect: async (connectionParams: Record<string, unknown>) => {
+      onConnect: async (
+        connectionParams: Record<string, unknown>,
+        webSocket: WebSocket,
+        connContext: ConnectionContext
+      ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+
         const logger = connContext.request.log || subscriptionLogger
 
         const possiblePaths = [
