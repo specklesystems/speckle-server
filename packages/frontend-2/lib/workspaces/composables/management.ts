@@ -414,7 +414,32 @@ export const useWorkspaceUpdateRole = () => {
   const { triggerNotification } = useGlobalToast()
 
   return async (input: WorkspaceRoleUpdateInput) => {
-    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          if (!input.role) {
+            cache.evict({
+              id: getCacheId('WorkspaceCollaborator', input.userId)
+            })
+
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (totalCount) => totalCount - 1)
+                })
+              },
+              {
+                autoEvictFiltered: true
+              }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({

@@ -1,7 +1,7 @@
 import { serverLogger } from '@/observability/logging.js'
 import { appFactory as metricsAppFactory } from '@/observability/metricsApp.js'
 import { appFactory } from '@/server/app.js'
-import { getAppPort, getHost, getMetricsPort } from '@/utils/env.js'
+import { getAppPort, getHost, getMetricsHost, getMetricsPort } from '@/utils/env.js'
 import http from 'http'
 import type { Knex } from 'knex'
 import { isNaN, isString, toNumber } from 'lodash-es'
@@ -39,12 +39,14 @@ export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) =
     onListening(server)
   })
   server.listen(inputPort, host)
+
+  const metricsHost = getMetricsHost()
   metricsServer.on('error', onErrorFactory(inputPort))
   metricsServer.on('listening', () => {
     serverLogger.info('📊 Started Preview Service metrics server')
     onListening(metricsServer)
   })
-  metricsServer.listen(inputMetricsPort, host)
+  metricsServer.listen(inputMetricsPort, metricsHost)
 
   return { app, server, metricsServer }
 }

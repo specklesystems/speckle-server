@@ -490,24 +490,28 @@ describe('Workspaces GQL CRUD', () => {
         expect(currency).to.equal('GBP')
         expect(items).to.deep.equal([
           {
-            name: 'workspace members',
+            name: 'workspace-members',
             count: 2,
-            cost: 49
+            cost: 49,
+            label: '2 workspace members'
           },
           {
-            name: 'free guests',
+            name: 'free-guests',
             count: 10,
-            cost: 0
+            cost: 0,
+            label: '10/10 free guests'
           },
           {
-            name: 'read/write guests',
+            name: 'read-write-guests',
             count: 1,
-            cost: 15
+            cost: 15,
+            label: '1 read/write guest'
           },
           {
-            name: 'read only guests',
+            name: 'read-only-guests',
             count: 2,
-            cost: 5
+            cost: 5,
+            label: '2 read only guests'
           }
         ])
         expect(discount).to.deep.equal(null)

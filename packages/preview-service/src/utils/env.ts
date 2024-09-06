@@ -6,6 +6,7 @@ export const getChromiumExecutablePath = () => {
 export const getHealthCheckFilePath = () =>
   process.env.HEALTHCHECK_FILE_PATH || '/tmp/last_successful_query'
 export const getHost = () => process.env.HOST || '127.0.0.1'
+export const getMetricsHost = () => process.env.METRICS_HOST || '127.0.0.1'
 export const getLogLevel = () => process.env.LOG_LEVEL || 'info'
 export const getMetricsPort = () => process.env.PROMETHEUS_METRICS_PORT || '9094'
 export const getNodeEnv = () => process.env.NODE_ENV || 'production'

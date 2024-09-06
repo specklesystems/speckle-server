@@ -17,7 +17,11 @@ import {
   type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { CookieKeys } from '~/lib/common/helpers/constants'
-import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import {
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectField
+} from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspace on DiscoverableWorkspace {
@@ -45,6 +49,7 @@ const props = defineProps<{
 }>()
 
 const { client: apollo } = useApolloClient()
+const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const router = useRouter()
 const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
@@ -74,6 +79,9 @@ const processJoin = async (accept: boolean) => {
     return
   }
 
+  const userId = activeUser.value?.id
+  if (!userId) return
+
   const result = await apollo
     .mutate({
       mutation: DashboardJoinWorkspaceDocument,
@@ -81,6 +89,24 @@ const processJoin = async (accept: boolean) => {
         input: {
           workspaceId: props.workspace.id
         }
+      },
+      update(cache, { data }) {
+        const workspaceId = data?.workspaceMutations.join.id
+        if (!workspaceId) return
+
+        modifyObjectField(
+          cache,
+          getCacheId('User', userId),
+          'workspaces',
+          ({ variables, helpers: { evict, createUpdatedValue, ref } }) => {
+            if (variables.filter?.search?.length) return evict()
+
+            return createUpdatedValue(({ update }) => {
+              update('totalCount', (totalCount) => totalCount + 1)
+              update('items', (items) => [...items, ref('Workspace', workspaceId)])
+            })
+          }
+        )
       }
     })
     .catch(convertThrowIntoFetchResult)
