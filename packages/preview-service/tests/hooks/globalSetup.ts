@@ -30,8 +30,8 @@ const dbName =
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
   const superUserDbClient = getTestDb()
-  const dbAlreadyExists = await superUserDbClient
-    .select('pg_database')
+  const dbAlreadyExists = await superUserDbClient('pg_database')
+    .select('datname')
     .where('datname', dbName)
   if (!dbAlreadyExists.length) {
     await superUserDbClient.raw(`CREATE DATABASE ${dbName}
