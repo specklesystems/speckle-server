@@ -59,9 +59,14 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { ForbiddenError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  BaseError,
+  ContextError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
-import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
+import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 
 const GRAPHQL_PATH = '/graphql'
 

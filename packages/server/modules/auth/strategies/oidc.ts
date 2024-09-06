@@ -30,6 +30,7 @@ import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
 import { Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const oidcStrategyBuilder: AuthStrategyBuilder = async (
   app,
