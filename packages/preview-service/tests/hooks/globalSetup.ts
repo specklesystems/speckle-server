@@ -15,10 +15,12 @@ declare module 'vitest' {
   }
 }
 
-const dbName = `preview_service_${cryptoRandomString({
-  length: 10,
-  type: 'alphanumeric'
-})}`.toLocaleLowerCase() //postgres will automatically lower case new db names
+const dbName =
+  process.env.TEST_DB || // in the acceptance tests we need to use a database name that is known prior to the test running
+  `preview_service_${cryptoRandomString({
+    length: 10,
+    type: 'alphanumeric'
+  })}`.toLocaleLowerCase() //postgres will automatically lower case new db names
 
 /**
  * Global setup hook
@@ -28,12 +30,17 @@ const dbName = `preview_service_${cryptoRandomString({
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
   const superUserDbClient = getTestDb()
-  await superUserDbClient.raw(`CREATE DATABASE ${dbName}
+  const dbAlreadyExists = await superUserDbClient
+    .select('pg_database')
+    .where('datname', dbName)
+  if (!dbAlreadyExists.length) {
+    await superUserDbClient.raw(`CREATE DATABASE ${dbName}
     WITH
     OWNER = preview_service_test
     ENCODING = 'UTF8'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;`)
+  }
   await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
   // this provides the dbName to all tests, and can be accessed via inject('dbName'). NB: The test extensions already implement this, so use a test extension.

@@ -103,6 +103,7 @@ jobs:
         run: yarn test:acceptance
         env:
           NODE_ENV: test
+          TEST_DB: preview_service_test
           # note that the host is localhost, but the port is the port mapped to the postgres service
           PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@localhost:5432/preview_service_test
           OUTPUT_FILE_PATH: /tmp/preview-service-output.png
