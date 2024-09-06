@@ -29,7 +29,11 @@
               class="absolute inset-y-0 right-0 flex items-center pr-2"
               :class="disabled ? 'pointer-events-none' : ''"
             >
-              <ProjectPageTeamPermissionSelect v-model="role" hide-remove />
+              <ProjectPageTeamPermissionSelect
+                v-model="role"
+                hide-remove
+                :disabled-roles="isTargettingWorkspaceGuest ? [Roles.Stream.Owner] : []"
+              />
             </div>
           </template>
         </FormTextInput>
@@ -70,15 +74,16 @@
         <div>
           <div class="text-body-xs font-medium mb-1">Add users from workspace</div>
           <div
-            v-if="filteredInviteMembers.length"
+            v-if="invitableWorkspaceMembers.length"
             class="flex flex-col border bg-foundation border-primary-muted rounded-md"
           >
             <ProjectPageTeamDialogInviteUserServerUserRow
-              v-for="user in filteredInviteMembers"
-              :key="user.id"
-              :user="user"
+              v-for="user in invitableWorkspaceMembers"
+              :key="user.user.id"
+              :user="user.user"
               :stream-role="role"
-              :disabled="loading"
+              :disabled="!!(loading || disabledWorkspaceMemberRowMessage(user))"
+              :disabled-message="disabledWorkspaceMemberRowMessage(user)"
               :target-workspace-role="workspaceRole"
               @invite-user="($event) => onInviteUser($event.user)"
             />
@@ -161,17 +166,16 @@ const workspaceMembers = computed(() => {
   return props.project?.workspace?.team?.items || []
 })
 
-const filteredInviteMembers = computed(() => {
+const invitableWorkspaceMembers = computed(() => {
   const currentProjectMemberIds = new Set(
     collaboratorListItems.value.map((item) => item.user?.id)
   )
 
-  return workspaceMembers.value
-    .filter(
-      (member) =>
-        member.user && member.user.id && !currentProjectMemberIds.has(member.user.id)
-    )
-    .map((member) => member.user)
+  return workspaceMembers.value.filter((member) => {
+    if (!member.user.id || currentProjectMemberIds.has(member.user.id)) return false
+
+    return true
+  })
 })
 
 const loading = ref(false)
@@ -235,6 +239,9 @@ const unmatchingDomainPolicy = computed(() => {
 
   return false
 })
+const isTargettingWorkspaceGuest = computed(
+  () => workspaceRole.value === Roles.Workspace.Guest
+)
 
 const onInviteUser = async (
   user: InvitableUser | InvitableUser[],
@@ -282,4 +289,20 @@ const onInviteUser = async (
 
   loading.value = false
 }
+
+const disabledWorkspaceMemberRowMessage = (
+  item: (typeof invitableWorkspaceMembers.value)[0]
+) => {
+  return item.role === Roles.Workspace.Guest && role.value === Roles.Stream.Owner
+    ? 'You cannot invite a workspace guest as a project owner.'
+    : undefined
+}
+
+watch(workspaceRole, (newRole, oldRole) => {
+  if (newRole === oldRole) return
+
+  if (newRole === Roles.Workspace.Guest && role.value === Roles.Stream.Owner) {
+    role.value = Roles.Stream.Reviewer
+  }
+})
 </script>

@@ -73,7 +73,8 @@ const onSubmit = handleSubmit(async (values) => {
   mp.track('Stream Action', {
     type: 'action',
     name: 'create',
-    workspaceId: props.workspaceId
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
   open.value = false
 })

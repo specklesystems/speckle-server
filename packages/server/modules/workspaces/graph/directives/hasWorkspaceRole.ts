@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { authorizeResolver } from '@/modules/shared'
 import { ForbiddenError } from '@/modules/shared/errors'

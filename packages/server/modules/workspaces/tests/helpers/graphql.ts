@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import { gql } from 'graphql-tag'
 
 export const basicWorkspaceFragment = gql`
   fragment BasicWorkspace on Workspace {
@@ -44,6 +44,7 @@ export const workspaceBillingFragment = gql`
           count
           name
           cost
+          label
         }
         discount {
           name

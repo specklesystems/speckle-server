@@ -1,4 +1,3 @@
-import { UserInputError } from 'apollo-server-express'
 import {
   getStream,
   getStreams,
@@ -49,6 +48,7 @@ import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/reposito
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { getUsers } from '@/modules/core/repositories/users'
+import { BadRequestError } from '@/modules/shared/errors'
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
@@ -125,7 +125,7 @@ export = {
 
     async adminStreams(parent, args, ctx) {
       if (args.limit && args.limit > 50)
-        throw new UserInputError('Cannot return more than 50 items at a time.')
+        throw new BadRequestError('Cannot return more than 50 items at a time.')
 
       const { streams, totalCount } = await getStreams({
         offset: args.offset,
@@ -200,7 +200,7 @@ export = {
       const { limit, cursor } = args
 
       if (userId !== requestedUserId)
-        throw new UserInputError("Cannot view another user's favorite streams")
+        throw new BadRequestError("Cannot view another user's favorite streams")
 
       return await getFavoriteStreamsCollection({
         userId,
@@ -305,12 +305,14 @@ export = {
       const { streamId, favorited } = args
       const { userId, resourceAccessRules } = ctx
 
-      return await favoriteStream({
+      const stream = await favoriteStream({
         userId: userId!,
         streamId,
         favorited,
         userResourceAccessRules: resourceAccessRules
       })
+
+      return stream
     },
 
     async streamLeave(_parent, args, ctx) {

@@ -157,7 +157,7 @@ export async function buildContext({
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
-  token: Nullable<string>
+  token?: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
   const ctx =

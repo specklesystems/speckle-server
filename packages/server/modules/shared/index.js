@@ -1,6 +1,4 @@
-'use strict'
 const knex = require(`@/db/knex`)
-const { ForbiddenError } = require('apollo-server-express')
 const {
   pubsub,
   StreamSubscriptions,
@@ -17,6 +15,7 @@ const {
   isResourceAllowed
 } = require('@/modules/core/helpers/token')
 const db = require('@/db/knex')
+const { ForbiddenError } = require('@/modules/shared/errors')
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**

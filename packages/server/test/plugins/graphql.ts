@@ -1,5 +1,5 @@
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { GraphQLResponse } from 'apollo-server-core'
+import { ExecuteOperationResponse } from '@/test/graphqlHelper'
 import { AssertionError } from 'chai'
 import { isString } from 'lodash'
 
@@ -21,7 +21,8 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
     Assertion.prototype,
     'haveGraphQLErrors',
     function (
-      this: ChaiPluginThis<GraphQLResponse>,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this: ChaiPluginThis<ExecuteOperationResponse<any>>,
       messageOrOptions?: string | ({ message: string } | { code: string })
     ) {
       const message = isString(messageOrOptions)
