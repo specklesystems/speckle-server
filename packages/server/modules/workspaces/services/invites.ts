@@ -31,6 +31,7 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
+  isProjectResourceTarget,
   resolveInviteTargetTitle,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
@@ -200,6 +201,17 @@ export const collectAndValidateWorkspaceTargetsFactory =
     if (!workspace) {
       throw new InviteCreateValidationError(
         'Attempting to invite into a non-existant workspace'
+      )
+    }
+
+    // If inviting to workspace project, disallow workspace guests to become project owners
+    const projectTarget = baseTargets.find(isProjectResourceTarget)
+    if (
+      workspace?.role === Roles.Workspace.Guest &&
+      projectTarget?.role === Roles.Stream.Owner
+    ) {
+      throw new InviteCreateValidationError(
+        'Workspace guests cannot be owners of workspace projects'
       )
     }
 

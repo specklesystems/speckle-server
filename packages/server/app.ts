@@ -21,12 +21,11 @@ import {
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
-import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express'
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginUsageReportingDisabled,
-  ApolloServerPluginUsageReporting
-} from 'apollo-server-core'
+import { ApolloServer } from '@apollo/server'
+import { expressMiddleware } from '@apollo/server/express4'
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
+import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
+import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
 
 import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
@@ -60,15 +59,13 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import {
-  BadRequestError,
-  BaseError,
-  ContextError,
-  UnauthorizedError
-} from '@/modules/shared/errors'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
 
-let graphqlServer: ApolloServer
+const GRAPHQL_PATH = '/graphql'
+
+let graphqlServer: ApolloServer<GraphQLContext>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
@@ -115,10 +112,7 @@ function logSubscriptionOperation(params: {
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-function buildApolloSubscriptionServer(
-  apolloServer: ApolloServer,
-  server: http.Server
-): SubscriptionServer {
+function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer {
   const schema = ModulesSetup.graphSchema()
 
   // Init metrics
@@ -156,7 +150,6 @@ function buildApolloSubscriptionServer(
       schema,
       execute,
       subscribe,
-      validationRules: apolloServer.requestOptions.validationRules,
       onConnect: async (connectionParams: Record<string, unknown>) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
@@ -238,41 +231,37 @@ function buildApolloSubscriptionServer(
     },
     {
       server,
-      path: apolloServer.graphqlPath
+      path: GRAPHQL_PATH
     }
   )
 }
 
 /**
  * Create Apollo Server instance
- * @param optionOverrides Optionally override ctor options
- * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
- * pass in a callable that resolves the subscription server
  */
-export async function buildApolloServer(
-  optionOverrides?: Partial<ApolloServerExpressConfig>,
-  subscriptionServerResolver?: () => SubscriptionServer
-): Promise<ApolloServer> {
-  const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
+export async function buildApolloServer(options?: {
+  subscriptionServer?: SubscriptionServer
+}): Promise<ApolloServer<GraphQLContext>> {
+  const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
+  const subscriptionServer = options?.subscriptionServer
   const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
     schema,
-    context: buildContext,
     plugins: [
       statusCodePlugin,
-      require('@/logging/apolloPlugin'),
+      loggingPlugin,
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
       }),
-      ...(subscriptionServerResolver
+      ...(subscriptionServer
         ? [
             {
               async serverWillStart() {
                 return {
                   async drainServer() {
-                    subscriptionServerResolver().close()
+                    subscriptionServer?.close()
                   }
                 }
               }
@@ -292,9 +281,8 @@ export async function buildApolloServer(
     cache: 'bounded',
     persistedQueries: false,
     csrfPrevention: true,
-    formatError: buildErrorFormatter(debug),
-    debug,
-    ...optionOverrides
+    formatError: buildErrorFormatter({ includeStacktraceInErrorResponses }),
+    includeStacktraceInErrorResponses
   })
   await server.start()
 
@@ -353,23 +341,26 @@ export async function init() {
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
 
+  // Init HTTP server & subscription server
+  const server = http.createServer(app)
+  const subscriptionServer = buildApolloSubscriptionServer(server)
+
   // Initialize graphql server
-  // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,
-  // and the SubscriptionServer ctor needs ApolloServer...hence the callback passed into buildApolloServer)
-  // eslint-disable-next-line prefer-const
-  let subscriptionServer: SubscriptionServer
-  graphqlServer = await buildApolloServer(undefined, () => subscriptionServer)
-  graphqlServer.applyMiddleware({ app })
+  graphqlServer = await buildApolloServer({
+    subscriptionServer
+  })
+  app.use(
+    GRAPHQL_PATH,
+    expressMiddleware(graphqlServer, {
+      context: buildContext
+    })
+  )
 
   // Expose prometheus metrics
   app.get('/metrics', async (req, res) => {
     res.set('Content-Type', prometheusClient.register.contentType)
     res.end(await prometheusClient.register.metrics())
   })
-
-  // Init HTTP server & subscription server
-  const server = http.createServer(app)
-  subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
 
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)

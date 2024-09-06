@@ -42,6 +42,7 @@ const config: Config = {
         foreground: {
           DEFAULT: 'var(--foreground)',
           2: 'var(--foreground-2)',
+          3: 'var(--foreground-3)',
           disabled: 'var(--foreground-disabled)',
           'on-primary': 'var(--foreground-on-primary)',
           primary: 'var(--foreground-primary)'

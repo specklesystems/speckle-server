@@ -18,10 +18,10 @@ import {
   incomingOverwritesExistingMergeFunction,
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
-import { onError } from '@apollo/client/link/error'
+import { onError, type ErrorResponse } from '@apollo/client/link/error'
 import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { isArray, isBoolean, omit } from 'lodash-es'
+import { intersection, isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
@@ -332,6 +332,21 @@ function createWsClient(params: {
   )
 }
 
+const coreShouldSkipLoggingErrors = (err: ErrorResponse): boolean => {
+  // These fields have special auth requirements and will often throw errors that we don't want to log
+  const specialAuthFields = ['invitedTeam', 'billing', 'domains']
+  const specialAuthFieldErrorCodes = ['FORBIDDEN', 'UNAUTHORIZED_ACCESS_ERROR']
+
+  return !!(
+    err.graphQLErrors &&
+    err.graphQLErrors.every(
+      (e) =>
+        intersection(e.path || [], specialAuthFields).length > 0 &&
+        specialAuthFieldErrorCodes.includes(e.extensions?.code as string)
+    )
+  )
+}
+
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
@@ -349,10 +364,14 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    const skipLoggingErrors = res.operation.getContext().skipLoggingErrors
-    const shouldSkip = isBoolean(skipLoggingErrors)
-      ? skipLoggingErrors
-      : skipLoggingErrors?.(res)
+    let shouldSkip = coreShouldSkipLoggingErrors(res)
+    const skipLoggingErrorsResolver = res.operation.getContext().skipLoggingErrors
+    if (skipLoggingErrorsResolver) {
+      shouldSkip = isBoolean(skipLoggingErrorsResolver)
+        ? skipLoggingErrorsResolver
+        : skipLoggingErrorsResolver?.(res)
+    }
+
     if (!isSubTokenMissingError && !shouldSkip) {
       const gqlErrors: Array<GraphQLError> = isArray(res.graphQLErrors)
         ? res.graphQLErrors
@@ -484,7 +503,20 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
     cache: markRaw(createCache()),
     link,
     name: appName,
-    version: speckleServerVersion
+    version: speckleServerVersion,
+    defaultOptions: {
+      // We want to retain all data even if there are errors, cause there's often fields with special auth requirements that we don't want
+      // to be able to kill the entire query. Besides - in most cases partial data is better than no data at all.
+      query: {
+        errorPolicy: 'all'
+      },
+      mutate: {
+        errorPolicy: 'all'
+      },
+      watchQuery: {
+        errorPolicy: 'all'
+      }
+    }
   }
 }
 
