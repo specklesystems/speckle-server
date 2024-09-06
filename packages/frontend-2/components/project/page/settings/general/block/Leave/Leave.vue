@@ -35,6 +35,9 @@ graphql(`
         role
       }
     }
+    workspace {
+      id
+    }
   }
 `)
 

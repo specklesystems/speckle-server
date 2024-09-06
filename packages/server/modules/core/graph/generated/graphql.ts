@@ -3965,6 +3965,7 @@ export type WorkspaceCostItem = {
   __typename?: 'WorkspaceCostItem';
   cost: Scalars['Float']['output'];
   count: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -6143,6 +6144,7 @@ export type WorkspaceCostDiscountResolvers<ContextType = GraphQLContext, ParentT
 export type WorkspaceCostItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceCostItem'] = ResolversParentTypes['WorkspaceCostItem']> = {
   cost?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
