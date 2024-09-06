@@ -3954,6 +3954,7 @@ export type WorkspaceCostItem = {
   __typename?: 'WorkspaceCostItem';
   cost: Scalars['Float']['output'];
   count: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
   name: Scalars['String']['output'];
 };
 

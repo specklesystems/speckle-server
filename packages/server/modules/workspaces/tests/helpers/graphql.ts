@@ -44,6 +44,7 @@ export const workspaceBillingFragment = gql`
           count
           name
           cost
+          label
         }
         discount {
           name
