@@ -10,7 +10,7 @@
         class="text-foreground flex-1 py-2 px-3"
         :class="[index < billingItems.length - 1 ? 'border-b border-outline-3' : null]"
       >
-        {{ item.count }} {{ item.name }}
+        {{ item.label }}
         <span class="text-foreground-2">x</span>
         £{{ item.cost }}
       </p>
@@ -40,6 +40,7 @@ graphql(`
       cost
       count
       name
+      label
     }
     discount {
       amount
