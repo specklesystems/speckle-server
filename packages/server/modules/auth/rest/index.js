@@ -11,7 +11,6 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
-const { ForbiddenError } = require('@/modules/shared/errors')
 const { BadRequestError, UnauthorizedError } = require('@/modules/shared/errors')
 
 // TODO: Secure these endpoints!
