@@ -6,13 +6,17 @@ import { afterEach, beforeEach, describe, expect } from 'vitest'
 import { promises as fs } from 'fs'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
+import { testLogger as logger } from '@/observability/logging.js'
 
 describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
     beforeEach(() => {
       // const dbName = inject('dbName')
+      logger.info('🤜 running acceptance test before-each')
     })
-    afterEach(async () => {})
+    afterEach(() => {
+      logger.info('🤛 running acceptance test after-each')
+    })
 
     // we use integration test and not e2e test because we don't need the server
     acceptanceTest(
@@ -57,6 +61,10 @@ describe.sequential('Acceptance', () => {
             .where('streamId', streamId)
             .andWhere('objectId', objectId)
 
+          logger.info(
+            { result: objectPreviewResult, streamId, objectId },
+            '🔍 Polled object preview for a result for {streamId} and {objectId}'
+          )
           // wait a second before polling again
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
@@ -65,6 +73,7 @@ describe.sequential('Acceptance', () => {
           .select(['data'])
           .where('id', objectPreviewResult[0].preview['all' as Angle])
           .first()
+        logger.info({ previewData }, '🔍 Retrieved preview data')
 
         if (!previewData) {
           expect(previewData).toBeDefined()
@@ -76,6 +85,7 @@ describe.sequential('Acceptance', () => {
         const outputFilePath =
           process.env.OUTPUT_FILE_PATH || '/tmp/preview-service-output.png'
         await fs.writeFile(outputFilePath, previewData.data)
+        logger.info({ outputFilePath }, '📝 Saved preview image to {outputFilePath}')
       }
     )
   })
