@@ -21,9 +21,6 @@ export const loggingExpressMiddleware = pinoHttp({
   // and we don't really care about 3xx stuff
   // all the user related 4xx responses are treated as info
   customLogLevel: (req, res, error) => {
-    if (req.url?.startsWith('/metrics')) {
-      return 'debug'
-    }
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
     } else if (res.statusCode >= 500 || error) {
