@@ -1,9 +1,16 @@
-import type { PuppeteerClient } from '@/clients/puppeteer.js'
+import { puppeteerClientFactory } from '@/clients/puppeteer.js'
+import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
 import { getScreenshotFactory } from '@/services/screenshot.js'
-import { serviceOrigin } from '@/utils/env.js'
-import express, { type RequestHandler } from 'express'
+import {
+  getChromiumExecutablePath,
+  getPreviewTimeout,
+  getPuppeteerUserDataDir,
+  serviceOrigin,
+  shouldBeHeadless
+} from '@/utils/env.js'
+import express, { RequestHandler } from 'express'
 
-const previewRouterFactory = (deps: { puppeteerClient: PuppeteerClient }) => {
+const previewRouterFactory = () => {
   const previewRouter = express.Router()
 
   previewRouter.get(
@@ -18,16 +25,36 @@ const previewRouterFactory = (deps: { puppeteerClient: PuppeteerClient }) => {
 
       boundLogger.info('Requesting screenshot.')
 
-      let screenshot: { [key: string]: string } | null = null
-
-      screenshot = await getScreenshotFactory({
-        loadPageAndEvaluateScript: deps.puppeteerClient.loadPageAndEvaluateScript,
+      //FIXME should we be creating a puppeteer client for every request, or per app instance?
+      const puppeteerClient = await puppeteerClientFactory({
         logger: boundLogger,
-        serviceOrigin: serviceOrigin()
-      })({
-        objectId,
-        streamId
+        url: `${serviceOrigin()}/render/`,
+        script: puppeteerDriver,
+        launchParams: {
+          headless: shouldBeHeadless(),
+          userDataDir: getPuppeteerUserDataDir(),
+          executablePath: getChromiumExecutablePath(),
+          protocolTimeout: getPreviewTimeout(),
+          // we trust the web content that is running, so can disable the sandbox
+          // disabling the sandbox allows us to run the docker image without linux kernel privileges
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        },
+        timeoutMilliseconds: getPreviewTimeout()
       })
+
+      let screenshot: { [key: string]: string } | null = null
+      try {
+        screenshot = await getScreenshotFactory({
+          loadPageAndEvaluateScript: puppeteerClient.loadPageAndEvaluateScript,
+          logger: boundLogger,
+          serviceOrigin: serviceOrigin()
+        })({
+          objectId,
+          streamId
+        })
+      } finally {
+        await puppeteerClient.dispose()
+      }
 
       if (!screenshot) {
         return res.status(500).end()

@@ -5,20 +5,14 @@ import { getAppPort, getHost, getMetricsHost, getMetricsPort } from '@/utils/env
 import http from 'http'
 import type { Knex } from 'knex'
 import { isNaN, isString, toNumber } from 'lodash-es'
-import type { PuppeteerClient } from '@/clients/puppeteer.js'
 
-export const startServer = (params: {
-  db: Knex
-  serveOnRandomPort?: boolean
-  puppeteerClient: PuppeteerClient
-}) => {
-  const { db, serveOnRandomPort, puppeteerClient } = params
-
+export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) => {
+  const { db } = params
   /**
    * Get port from environment and store in Express.
    */
-  const inputPort = serveOnRandomPort ? 0 : normalizePort(getAppPort())
-  const app = appFactory({ db, puppeteerClient })
+  const inputPort = params.serveOnRandomPort ? 0 : normalizePort(getAppPort())
+  const app = appFactory({ db })
   app.set('port', inputPort)
 
   // we place the metrics on a separate port as we wish to expose it to external monitoring tools, but do not wish to expose other routes (for now)
@@ -57,12 +51,8 @@ export const startServer = (params: {
   return { app, server, metricsServer }
 }
 
-export const stopServer = async (params: {
-  server: http.Server
-  puppeteerClient: PuppeteerClient
-}) => {
-  const { server, puppeteerClient } = params
-  await puppeteerClient.dispose()
+export const stopServer = (params: { server: http.Server }) => {
+  const { server } = params
   server.close()
 }
 
