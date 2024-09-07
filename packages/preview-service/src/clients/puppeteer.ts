@@ -49,16 +49,33 @@ export const puppeteerClientFactory = async (deps: {
           let messageText = message.text()
           if (messageText.startsWith('data:image'))
             messageText = messageText.substring(0, 200).concat('...')
-          logger.debug(`${message.type().substring(0, 3).toUpperCase()} ${messageText}`)
+          logger.debug(
+            {
+              puppeteerMessageType: message.type().substring(0, 3).toUpperCase()
+            },
+            `{puppeteerMessageType} ${messageText}`
+          )
         })
-        .on('pageerror', ({ message }) => {
-          logger.error(message)
+        .on('pageerror', (error) => {
+          logger.error(error, 'Puppeteer page encountered an error.')
         })
         .on('response', (response) =>
-          logger.info(`${response.status()} ${response.url()}`)
+          logger.info(
+            {
+              response: {
+                headers: response.headers(),
+                status: response.status(),
+                statusText: response.statusText()
+              }
+            },
+            'Response received from puppeteer page'
+          )
         )
         .on('requestfailed', (request) =>
-          logger.error(`${request.failure()?.errorText} ${request.url()}`)
+          logger.error(
+            { err: request.failure()?.errorText, puppeteerPageUrl: request.url() },
+            'Request sent to puppeteer page failed'
+          )
         )
 
       const evaluationResult: unknown = await page.evaluate(script, args)
