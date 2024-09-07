@@ -37,7 +37,10 @@ describe.sequential('Acceptance', () => {
       async ({ context }) => {
         const { db } = context
         const dbName = inject('dbName')
-        logger.info('Running test in database: %s', dbName)
+        logger.info(
+          { databaseName: dbName },
+          'Running test in database: {databaseName}'
+        )
         // load data
         const streamId = cryptoRandomString({ length: 10 })
         const objectId = cryptoRandomString({ length: 10 })
