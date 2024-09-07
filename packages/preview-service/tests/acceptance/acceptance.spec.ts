@@ -7,6 +7,7 @@ import { promises as fs } from 'fs'
 import { spawn } from 'child_process'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
+import { testLogger as logger } from '@/observability/logging.js'
 
 describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
@@ -36,7 +37,7 @@ describe.sequential('Acceptance', () => {
       async ({ context }) => {
         const { db } = context
         const dbName = inject('dbName')
-        console.log('Running test in database: %s', dbName)
+        logger.info('Running test in database: %s', dbName)
         // load data
         const streamId = cryptoRandomString({ length: 10 })
         const objectId = cryptoRandomString({ length: 10 })
