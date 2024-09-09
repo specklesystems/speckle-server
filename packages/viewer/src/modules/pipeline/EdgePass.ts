@@ -49,11 +49,11 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
         size: { value: new Vector2(512, 512) },
 
         uDepthMultiplier: { value: 1 },
-        uDepthBias: { value: 1 },
+        uDepthBias: { value: 0.001 },
         uNormalMultiplier: { value: 1 },
         uNormalBias: { value: 1 },
         uOutlineThickness: { value: 1 },
-        uOutlineDensity: { value: 0 },
+        uOutlineDensity: { value: 0.5 },
 
         cameraNear: { value: 1 },
         cameraFar: { value: 100 },

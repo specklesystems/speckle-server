@@ -1,16 +1,11 @@
 import {
-  AddEquation,
-  CustomBlending,
-  DstAlphaFactor,
-  DstColorFactor,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
   Scene,
   ShaderMaterial,
   Texture,
-  WebGLRenderer,
-  ZeroFactor
+  WebGLRenderer
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag.js'
@@ -48,13 +43,13 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     this.materialCopy.transparent = true
     this.materialCopy.depthTest = false
     this.materialCopy.depthWrite = false
-    this.materialCopy.blending = CustomBlending
-    this.materialCopy.blendSrc = DstColorFactor
-    this.materialCopy.blendDst = ZeroFactor
-    this.materialCopy.blendEquation = AddEquation
-    this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    this.materialCopy.blendDstAlpha = ZeroFactor
-    this.materialCopy.blendEquationAlpha = AddEquation
+    // this.materialCopy.blending = CustomBlending
+    // this.materialCopy.blendSrc = DstColorFactor
+    // this.materialCopy.blendDst = ZeroFactor
+    // this.materialCopy.blendEquation = AddEquation
+    // this.materialCopy.blendSrcAlpha = DstAlphaFactor
+    // this.materialCopy.blendDstAlpha = ZeroFactor
+    // this.materialCopy.blendEquationAlpha = AddEquation
 
     this.materialCopy.needsUpdate = true
     this.fsQuad = new FullScreenQuad(this.materialCopy)

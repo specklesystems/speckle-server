@@ -554,10 +554,10 @@ export default class Sandbox {
     }
     const edgesParams = {
       depthMultiplier: 1,
-      depthBias: 1,
+      depthBias: 0.001,
       normalMultiplier: 1,
       normalBias: 1,
-      outlineDensity: 0,
+      outlineDensity: 0.5,
       outlineThickness: 1
     }
     const edgesFolder = this.tabs.pages[0].addFolder({
@@ -583,7 +583,7 @@ export default class Sandbox {
         label: 'depthBias',
         min: 0,
         max: 1,
-        step: 0.01
+        step: 0.0001
       })
       .on('change', (value) => {
         this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[

@@ -491,20 +491,19 @@ float cannyEdgeDetection(
 
 void main() {
 	// Silhouette-edge value
-  	float depthEdge = DetectSilho(ivec2(gl_FragCoord), 0.001) * uDepthMultiplier; 
+  float depthEdge = DetectSilho(ivec2(gl_FragCoord), uDepthBias) * uDepthMultiplier; 
 	float normalEdge = pow(NormalEdge(uOutlineThickness) * uNormalMultiplier, uNormalBias);
-	vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
+	// vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
 	// float sobel = SobelSampleDepth(vUv, offset);
 	// sobel = pow(abs(saturate(sobel) * uDepthMultiplier), uDepthBias);
 	
-	vec3 sobelNormalVec = abs(SobelSampleNormal(tNormal, vUv, offset));
-	float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
-	sobelNormal = pow(abs(sobelNormal * uNormalMultiplier), uNormalBias);
+	// vec3 sobelNormalVec = abs(SobelSampleNormal(tNormal, vUv, offset));
+	// float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
+	// sobelNormal = pow(abs(sobelNormal * uNormalMultiplier), uNormalBias);
 
-	// float sobelOutline = 1. - saturate(max(sobelDepth, sobelNormal));
-	// sobelOutline = smoothstep(uOutlineDensity, 1.0, sobelOutline);
-	float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
+	float sobelOutline = 1. - saturate(max(depthEdge, normalEdge)) * uOutlineDensity;
+	// float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
 
-	gl_FragColor = vec4(canny, normalEdge, 0., 1.);
+	gl_FragColor = vec4(sobelOutline, sobelOutline, sobelOutline, 1.);
 
 }`
