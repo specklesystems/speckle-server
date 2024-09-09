@@ -31,8 +31,8 @@ const { result } = useQuery(
 watch(
   () => result.value,
   (newVal, oldVal) => {
-    if (newVal?.workspace.id && newVal.workspace.id !== oldVal?.workspace.id) {
-      workspaceMixpanelUpdateGroup(newVal)
+    if (newVal?.workspace && newVal.workspace.id !== oldVal?.workspace.id) {
+      workspaceMixpanelUpdateGroup(newVal.workspace)
     }
   },
   { deep: true }
