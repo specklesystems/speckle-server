@@ -9,11 +9,19 @@ import {
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
-import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
+import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
+import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { createObject } from '@/modules/core/services/objects'
+import { getObject } from '@/modules/core/repositories/objects'
+import {
+  createCommentReplyAndNotify,
+  createCommentThreadAndNotify
+} from '@/modules/comments/services/management'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -159,6 +167,18 @@ const importVersions = async (params: {
       `/projects/${projectId}/models/${version.model.id}@${version.id}`,
       origin
     )
+
+    const downloadCommit = downloadCommitFactory({
+      getStream,
+      getStreamBranchByName,
+      getStreamCollaborators,
+      getUser,
+      createCommitByBranchId,
+      createObject,
+      getObject,
+      createCommentThreadAndNotify,
+      createCommentReplyAndNotify
+    })
     await downloadCommit(
       {
         commitUrl: url.toString(),
