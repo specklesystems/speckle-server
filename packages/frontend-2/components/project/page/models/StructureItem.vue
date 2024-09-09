@@ -380,7 +380,9 @@ const modelLink = computed(() => {
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.project.id, `$${props.item.fullName}`)
+  const fullName = props.item.fullName
+  const encodedFullName = encodeURIComponent(`$${fullName}`)
+  return modelRoute(props.project.id, encodedFullName)
 })
 
 const {
