@@ -1,29 +1,30 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader title="General" text="Manage general server information" />
+      <SettingsSectionHeader title="General" text="Manage your server settings" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Server details" subheading />
         <form class="flex flex-col gap-2" @submit="onSubmit">
           <div class="flex flex-col gap-4">
             <FormTextInput
               v-model="name"
-              label="Public name"
+              label="Server public name"
               name="serverName"
               color="foundation"
               placeholder="Server name"
               show-label
-              :show-required="true"
+              label-position="left"
               :rules="requiredRule"
               type="text"
             />
-            <FormTextArea
+            <FormTextInput
               v-model="description"
               color="foundation"
               label="Description"
               name="description"
               placeholder="Description"
               show-label
+              label-position="left"
             />
             <FormTextInput
               v-model="company"
@@ -32,6 +33,7 @@
               name="owner"
               placeholder="Owner"
               show-label
+              label-position="left"
             />
             <FormTextInput
               v-model="adminContact"
@@ -41,6 +43,7 @@
               placeholder="Admin email"
               show-label
               type="email"
+              label-position="left"
             />
             <FormTextInput
               v-model="termsOfService"
@@ -48,6 +51,7 @@
               label="URL to the Terms of Service"
               name="terms"
               show-label
+              label-position="left"
             />
             <div class="text-sm flex flex-col gap-2 mt-2">
               <FormCheckbox
@@ -80,11 +84,7 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import {
-  FormTextInput,
-  FormTextArea,
-  useFormCheckboxModel
-} from '@speckle/ui-components'
+import { FormTextInput, useFormCheckboxModel } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
 import {
   ROOT_QUERY,

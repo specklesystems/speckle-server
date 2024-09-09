@@ -9,7 +9,6 @@
           placeholder="Project name"
           color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-          show-required
           auto-focus
           autocomplete="off"
           show-label
@@ -21,6 +20,7 @@
           color="foundation"
           size="lg"
           show-label
+          show-optional
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
         <div>

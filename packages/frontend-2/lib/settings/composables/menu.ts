@@ -51,28 +51,32 @@ export const useSettingsMenu = () => {
     }
   })
 
+  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
+
   const userMenuItemValues: SettingsMenuItems = {
     [SettingMenuKeys.User.Profile]: {
-      title: 'Profile',
+      title: 'User profile',
       component: SettingsUserProfile
-    },
+    }
+  }
+
+  if (multipleEmailsEnabled) {
+    userMenuItemValues[SettingMenuKeys.User.Emails] = {
+      title: 'Emails',
+      component: SettingsUserEmails
+    }
+  }
+
+  Object.assign(userMenuItemValues, {
     [SettingMenuKeys.User.Notifications]: {
       title: 'Notifications',
       component: SettingsUserNotifications
     },
     [SettingMenuKeys.User.DeveloperSettings]: {
-      title: 'Developer settings',
+      title: 'Developer',
       component: SettingsUserDeveloper
     }
-  }
-
-  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
-  if (multipleEmailsEnabled) {
-    userMenuItemValues[SettingMenuKeys.User.Emails] = {
-      title: 'Email addresses',
-      component: SettingsUserEmails
-    }
-  }
+  })
 
   const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 

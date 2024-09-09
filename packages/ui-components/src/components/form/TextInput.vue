@@ -5,6 +5,7 @@
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
         <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </label>
       <p
         v-if="labelPosition === 'left' && helpTipId && !hideHelpTip"
@@ -150,6 +151,13 @@ const props = defineProps({
    * Whether to show the red "required" asterisk
    */
   showRequired: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the "optional" text
+   */
+  showOptional: {
     type: Boolean,
     default: false
   },
