@@ -54,3 +54,11 @@ export const workspaceInviteQuery = graphql(`
     }
   }
 `)
+
+export const workspaceMixpanelUpdateGroupQuery = graphql(`
+  query WorkspaceMixpanelUpdateGroup($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...WorkspaceMixpanelUpdateGroup_Workspace
+    }
+  }
+`)
