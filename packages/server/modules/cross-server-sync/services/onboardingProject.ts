@@ -1,10 +1,23 @@
 import { crossServerSyncLogger } from '@/logging/logging'
 import {
+  createCommentReplyAndNotify,
+  createCommentThreadAndNotify
+} from '@/modules/comments/services/management'
+import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { getObject } from '@/modules/core/repositories/objects'
+import {
   getOnboardingBaseStream,
+  getStream,
+  getStreamCollaborators,
   markOnboardingBaseStream
 } from '@/modules/core/repositories/streams'
-import { getFirstAdmin } from '@/modules/core/repositories/users'
-import { downloadProject } from '@/modules/cross-server-sync/services/project'
+import { getFirstAdmin, getUser } from '@/modules/core/repositories/users'
+import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { createObject } from '@/modules/core/services/objects'
+import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
+import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
+import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import {
   getOnboardingStreamCacheBustNumber,
   getOnboardingStreamUrl
@@ -52,6 +65,24 @@ export async function ensureOnboardingProject() {
   }
 
   logger.info('Onboarding stream not found, pulling from target server...')
+
+  const downloadProject = downloadProjectFactory({
+    downloadCommit: downloadCommitFactory({
+      getStream,
+      getStreamBranchByName,
+      getStreamCollaborators,
+      getUser,
+      createCommitByBranchId,
+      createObject,
+      getObject,
+      createCommentThreadAndNotify,
+      createCommentReplyAndNotify
+    }),
+    createStreamReturnRecord,
+    getUser,
+    getStreamBranchByName,
+    createBranchAndNotify
+  })
   const res = await downloadProject(
     {
       projectUrl: metadata.url,
