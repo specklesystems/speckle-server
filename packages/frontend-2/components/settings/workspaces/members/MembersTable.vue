@@ -210,7 +210,7 @@ const filteredActionsItems = (user: UserItem) => {
 
   // Allow role change if the active user is an admin
   if (isWorkspaceAdmin.value) {
-    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
+    baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
   }
 
   // Allow the current user to leave the workspace

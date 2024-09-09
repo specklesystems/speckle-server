@@ -1,14 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Change role</template>
-    <div class="flex flex-col gap-4 text-body-xs text-foreground">
-      <p>
-        Select a new role for
-        <span class="font-medium">{{ name }}</span>
-        :
-      </p>
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
+    <template #header>Update role</template>
+    <div class="flex flex-col gap-4 mb-4 -mt-1">
       <FormSelectWorkspaceRoles
         v-model="newRole"
+        label="Role"
         fully-control-value
         :disabled-items="disabledItems"
       />
@@ -61,12 +57,12 @@ const disabledItems = computed<WorkspaceRoles[]>(() =>
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => (open.value = false)
   },
   {
     text: 'Update',
-    props: { color: 'primary', fullWidth: true, disabled: !newRole.value },
+    props: { color: 'primary', disabled: !newRole.value },
     onClick: () => {
       open.value = false
       if (newRole.value) {

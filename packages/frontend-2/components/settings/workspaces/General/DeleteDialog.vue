@@ -121,7 +121,7 @@ const onDelete = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -129,7 +129,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Delete',
     props: {
-      fullWidth: true,
       color: 'danger'
     },
     onClick: onDelete

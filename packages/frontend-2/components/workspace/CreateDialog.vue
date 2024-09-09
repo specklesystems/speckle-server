@@ -2,9 +2,8 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    hide-closer
     :buttons="dialogButtons"
-    title="Create workspace"
+    title="Create a new workspace"
   >
     <div class="flex flex-col gap-4 w-full">
       <FormTextInput
@@ -20,7 +19,7 @@
       <FormTextInput
         v-model:model-value="workspaceDescription"
         name="description"
-        label="Description"
+        label="Workspace description"
         placeholder="Workspace description"
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
@@ -70,7 +69,7 @@ const defaultLogoIndex = ref<number>(0)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -78,7 +77,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      fullWidth: true,
       color: 'primary'
     },
     onClick: handleCreateWorkspace

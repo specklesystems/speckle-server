@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-10 flex flex-col space-y-4 md:space-y-6">
+  <div class="relative z-10 flex flex-col !mt-0">
     <!-- Left Arrow Button -->
     <div
       class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
@@ -84,7 +84,7 @@
         <ArrowLongRightIcon class="h-4 w-4" />
       </button>
     </div>
-    <div>
+    <div class="pt-4">
       <slot :active-item="activeItem" />
     </div>
   </div>
@@ -119,7 +119,7 @@ const buttonClass = computed(() => {
       'flex',
       'items-center',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
-      'text-body-sm',
+      'text-body-xs',
       'hover:sm:border-outline-2',
       'pb-2',
       'border-b-[2px]',
