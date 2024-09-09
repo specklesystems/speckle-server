@@ -65,7 +65,7 @@
       <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
 
       <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
-      {{ workspace?.role !== Roles.Workspace.Admin }}
+
       <template v-if="workspace">
         <WorkspaceInviteDialog
           v-model:open="showInviteDialog"
@@ -155,51 +155,6 @@ const { result: initialQueryResult } = useQuery(
   })
 )
 
-const workspace = computed(() => initialQueryResult.value?.workspace)
-const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
-
-const emptyStateItems = shallowRef([
-  ...(workspace.value?.role !== Roles.Workspace.Admin
-    ? [
-        {
-          title: 'Set up verified domains',
-          description:
-            'Manage your team and allow them to join your workspace automatically based on email domain policies.',
-          buttons: [
-            {
-              text: 'Manage domains',
-              onClick: () => onShowSettingsDialog(SettingMenuKeys.Workspace.Security)
-            }
-          ]
-        }
-      ]
-    : []),
-  {
-    title: 'Make it a space for your entire team',
-    description:
-      'Nothing great is made alone. Safely collaborate with your entire team and manage guests.',
-    buttons: [
-      {
-        text: 'Invite members & guests',
-        onClick: () => (showInviteDialog.value = true),
-        disabled: isWorkspaceGuest.value
-      }
-    ]
-  },
-  {
-    title: 'Add your first project',
-    description:
-      'Projects are the place where your models and their versions live. Add one and start creating.',
-    buttons: [
-      {
-        text: 'New project',
-        onClick: () => (openNewProject.value = true),
-        disabled: isWorkspaceGuest.value
-      }
-    ]
-  }
-])
-
 const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
   { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },
   WorkspaceProjectsQueryQueryVariables
@@ -226,16 +181,54 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 
 const projects = computed(() => query.result.value?.workspace?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
-
+const workspace = computed(() => initialQueryResult.value?.workspace)
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const showEmptyState = computed(() => {
   if (search.value) return false
 
   return projects.value && !projects.value?.items?.length
 })
-
 const showLoadingBar = computed(() => {
   return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
 })
+const emptyStateItems = computed(() => [
+  {
+    title: 'Set up verified domains',
+    description:
+      'Manage your team and allow them to join your workspace automatically based on email domain policies.',
+    buttons: [
+      {
+        text: 'Manage domains',
+        onClick: () => onShowSettingsDialog(SettingMenuKeys.Workspace.Security),
+        disabled: workspace.value?.role !== Roles.Workspace.Admin
+      }
+    ]
+  },
+  {
+    title: 'Make it a space for your entire team',
+    description:
+      'Nothing great is made alone. Safely collaborate with your entire team and manage guests.',
+    buttons: [
+      {
+        text: 'Invite members & guests',
+        onClick: () => (showInviteDialog.value = true),
+        disabled: isWorkspaceGuest.value
+      }
+    ]
+  },
+  {
+    title: 'Add your first project',
+    description:
+      'Projects are the place where your models and their versions live. Add one and start creating.',
+    buttons: [
+      {
+        text: 'New project',
+        onClick: () => (openNewProject.value = true),
+        disabled: isWorkspaceGuest.value
+      }
+    ]
+  }
+])
 
 const clearSearch = () => {
   search.value = ''
