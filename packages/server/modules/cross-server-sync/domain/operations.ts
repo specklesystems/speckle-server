@@ -64,3 +64,6 @@ export type DownloadProject = (
   projectId: string
   project: StreamRecord
 }>
+
+export type GetOnboardingBaseProject = () => Promise<StreamRecord | undefined>
+export type EnsureOnboardingProject = () => Promise<StreamRecord | undefined>
