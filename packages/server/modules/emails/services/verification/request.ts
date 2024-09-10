@@ -1,4 +1,7 @@
-import { FindEmail } from '@/modules/core/domain/userEmails/operations'
+import {
+  FindEmail,
+  FindPrimaryEmailForUser
+} from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
@@ -14,47 +17,50 @@ import {
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { db } from '@/db/knex'
 import {
   DeleteOldAndInsertNewVerification,
   RequestNewEmailVerification
 } from '@/modules/emails/domain/operations'
+import { db } from '@/db/knex'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
-const findPrimaryEmailForUser = findPrimaryEmailForUserFactory({ db })
-
-async function createNewVerification(
-  userId: string
-): Promise<VerificationRequestContext> {
-  if (!userId)
-    throw new EmailVerificationRequestError('User for verification not specified')
-
-  const [user, email, serverInfo] = await Promise.all([
-    getUser(userId),
-    findPrimaryEmailForUser({ userId }),
-    getServerInfo()
-  ])
-
-  if (!user || !email)
-    throw new EmailVerificationRequestError(
-      'Unable to resolve verification target user'
-    )
-
-  if (user.verified)
-    throw new EmailVerificationRequestError("User's email is already verified")
-
-  const verificationId = await deleteOldAndInsertNewVerificationFactory({ db })(
-    user.email
-  )
-
-  return {
-    user,
-    email,
-    verificationId,
-    serverInfo
-  }
+type CreateNewVerificationDeps = {
+  getUser: typeof getUser
+  findPrimaryEmailForUser: FindPrimaryEmailForUser
+  getServerInfo: typeof getServerInfo
+  deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
+
+const createNewVerificationFactory =
+  (deps: CreateNewVerificationDeps) =>
+  async (userId: string): Promise<VerificationRequestContext> => {
+    if (!userId)
+      throw new EmailVerificationRequestError('User for verification not specified')
+
+    const [user, email, serverInfo] = await Promise.all([
+      deps.getUser(userId),
+      deps.findPrimaryEmailForUser({ userId }),
+      deps.getServerInfo()
+    ])
+
+    if (!user || !email)
+      throw new EmailVerificationRequestError(
+        'Unable to resolve verification target user'
+      )
+
+    if (user.verified)
+      throw new EmailVerificationRequestError("User's email is already verified")
+
+    const verificationId = await deps.deleteOldAndInsertNewVerification(user.email)
+
+    return {
+      user,
+      email,
+      verificationId,
+      serverInfo
+    }
+  }
 
 type VerificationRequestContext = {
   user: UserRecord
@@ -165,10 +171,11 @@ async function sendVerificationEmail(state: VerificationRequestContext) {
 /**
  * Request email verification (send out verification message) for user with specified ID
  */
-export async function requestEmailVerification(userId: string) {
-  const newVerificationState = await createNewVerification(userId)
-  await sendVerificationEmail(newVerificationState)
-}
+export const requestEmailVerificationFactory =
+  (deps: CreateNewVerificationDeps) => async (userId: string) => {
+    const newVerificationState = await createNewVerificationFactory(deps)(userId)
+    await sendVerificationEmail(newVerificationState)
+  }
 
 /**
  * Listen for user:created events and trigger email verification initialization
@@ -177,6 +184,15 @@ export function initializeVerificationOnRegistration() {
   return UsersEmitter.listen(UsersEvents.Created, async ({ user }) => {
     // user might already be verified because of registration through an external identity provider
     if (user.verified) return
+
+    const requestEmailVerification = requestEmailVerificationFactory({
+      getUser,
+      getServerInfo,
+      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+        db
+      }),
+      findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+    })
 
     await requestEmailVerification(user.id)
   })
