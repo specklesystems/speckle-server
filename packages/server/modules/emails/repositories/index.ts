@@ -5,6 +5,10 @@ import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { Knex } from 'knex'
 
+const tables = {
+  emailVerifications: (db: Knex) => db<EmailVerificationRecord>(EmailVerifications.name)
+}
+
 export type EmailVerificationRecord = {
   id: string
   email: string
@@ -21,7 +25,8 @@ export const getPendingTokenFactory =
 
     const aWeekAgo = dayjs().subtract(1, 'week')
 
-    const q = EmailVerifications.knex<EmailVerificationRecord>(deps.db)
+    const q = tables
+      .emailVerifications(deps.db)
       .where(EmailVerifications.col.createdAt, '>', aWeekAgo.toISOString())
       .first()
 
