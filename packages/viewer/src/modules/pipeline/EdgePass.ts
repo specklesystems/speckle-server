@@ -1,5 +1,6 @@
 import {
   Camera,
+  HalfFloatType,
   LinearFilter,
   Matrix4,
   OrthographicCamera,
@@ -35,10 +36,11 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
     super()
 
     this.renderTarget = new WebGLRenderTarget(256, 256, {
+      type: HalfFloatType,
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })
-    this.renderTarget.samples = 8
+    // this.renderTarget.samples = 8
 
     this.edgesMaterial = new ShaderMaterial({
       fragmentShader: speckleEdgesGeneratorFrag,

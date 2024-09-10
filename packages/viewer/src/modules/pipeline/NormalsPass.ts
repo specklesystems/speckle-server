@@ -23,9 +23,13 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
   private camera: Camera
 
   private colorBuffer: Color = new Color()
+  public jitter = true
 
   public onBeforeRender: (() => void) | undefined = undefined
   public onAfterRender: (() => void) | undefined = undefined
+
+  private jitterIndex: number = 0
+  private jitterOffsets: number[][] = this.generateHaltonJiters(16)
 
   get displayName(): string {
     return 'GEOMETRY-NORMALS'
@@ -52,7 +56,7 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
      */
     this.renderTarget.depthBuffer = true
     this.renderTarget.stencilBuffer = true
-    this.renderTarget.samples = 8
+    // this.renderTarget.samples = 8
 
     this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
     this.normalsMaterial.blending = NoBlending
@@ -87,7 +91,22 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
     this.applyLayers(this.camera)
+    if (this.jitter) {
+      const [jitterX, jitterY] = this.jitterOffsets[this.jitterIndex]
+      this.camera.projectionMatrix.elements[8] = jitterX / this.renderTarget.width
+      this.camera.projectionMatrix.elements[9] = jitterY / this.renderTarget.height
+      // ;(this.camera as PerspectiveCamera).updateProjectionMatrix()
+      // ;(this.camera as PerspectiveCamera).setViewOffset(
+      //   this.renderTarget.width,
+      //   this.renderTarget.height,
+      //   jitterX / 2,
+      //   jitterY / 2,
+      //   this.renderTarget.width,
+      //   this.renderTarget.height
+      // )
+    }
     renderer.render(this.scene, this.camera)
+    this.jitterIndex = (this.jitterIndex + 1) % this.jitterOffsets.length
     renderer.shadowMap.enabled = shadowmapEnabled
     renderer.shadowMap.needsUpdate = shadowmapNeedsUpdate
     this.scene.overrideMaterial = null
@@ -101,5 +120,36 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
 
   public setSize(width: number, height: number) {
     this.renderTarget.setSize(width, height)
+  }
+
+  /**
+   * Generate a number in the Halton Sequence at a given index. This is
+   * shamelessly stolen from the pseudocode on the Wikipedia page
+   *
+   * @param base the base to use for the Halton Sequence
+   * @param index the index into the sequence
+   */
+  haltonNumber(base: number, index: number) {
+    let result = 0
+    let f = 1
+    while (index > 0) {
+      f /= base
+      result += f * (index % base)
+      index = Math.floor(index / base)
+    }
+
+    return result
+  }
+
+  generateHaltonJiters(length: number) {
+    const jitters = []
+
+    for (let i = 1; i <= length; i++)
+      jitters.push([
+        (this.haltonNumber(2, i) - 0.5) * 2,
+        (this.haltonNumber(3, i) - 0.5) * 2
+      ])
+
+    return jitters
   }
 }

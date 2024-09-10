@@ -26,6 +26,9 @@ import { OverlayPass } from './OverlayPass.js'
 import { ObjectLayers } from '../../IViewer.js'
 import type { BatchUpdateRange } from '../batching/Batch.js'
 import { EdgePass } from './EdgePass.js'
+import { SMAAPass } from './SMAAPass.js'
+import { JitterPass } from './JitterPass.js'
+import { TAAPass } from './TAAPass.js'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -77,6 +80,9 @@ export class Pipeline {
   private staticAoPass: StaticAOPass
   private overlayPass: OverlayPass
   public edgesPass: EdgePass
+  public smaaPass: SMAAPass
+  public jitterPass: JitterPass
+  public taaPass: TAAPass
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -113,6 +119,7 @@ export class Pipeline {
         pipeline = this.getDefaultPipeline()
         this.depthPass.enabled = true
         this.normalsPass.enabled = true
+        this.normalsPass.jitter = this.taaPass.enabled
         this.depthPass.depthType = DepthType.LINEAR_DEPTH
         this.depthPass.depthSize = DepthSize.FULL
         this.debugPipeline = true
@@ -120,8 +127,11 @@ export class Pipeline {
         this.depthPass.depthSize = DepthSize.FULL
         this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-        this.applySaoPass.materialCopy.uniforms['tEdges'].value =
-          this.edgesPass.outputTexture
+        this.applySaoPass.materialCopy.uniforms['tEdges'].value = this.smaaPass.enabled
+          ? this.smaaPass.outputTexture
+          : this.taaPass.enabled
+          ? this.taaPass.outputTexture
+          : this.edgesPass.outputTexture
         this.applySaoPass.materialCopy.needsUpdate = true
         this.debugPipeline = false
         break
@@ -278,6 +288,10 @@ export class Pipeline {
     this.staticAoPass = new StaticAOPass()
     this.overlayPass = new OverlayPass()
     this.edgesPass = new EdgePass()
+    this.smaaPass = new SMAAPass()
+    this.jitterPass = new JitterPass()
+    this.taaPass = new TAAPass()
+    this.smaaPass.enabled = false
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
@@ -391,11 +405,18 @@ export class Pipeline {
     this.staticAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
     this.edgesPass.setTexture('tDepth', this.depthPass.outputTexture)
     this.edgesPass.setTexture('tNormal', this.normalsPass.outputTexture)
+    this.smaaPass.inputTexture = this.edgesPass.outputTexture
+    this.jitterPass.inputTexture = this.edgesPass.outputTexture
+    this.taaPass.inputTexture = this.edgesPass.outputTexture
 
     const pipeline = []
     pipeline.push(this.depthPass)
     pipeline.push(this.normalsPass)
     pipeline.push(this.edgesPass)
+    pipeline.push(this.smaaPass)
+    // pipeline.push(this.jitterPass)
+    pipeline.push(this.taaPass)
+
     pipeline.push(this.dynamicAoPass)
     pipeline.push(this.staticAoPass)
     // pipeline.push(this.stencilPass)
@@ -495,6 +516,9 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // this.taaPass.enabled = true
+    this.taaPass.firstRun = true
+    // this.applySaoPass.materialCopy.uniforms['tEdges'].value = this.taaPass.outputTexture
   }
 
   public onStationaryEnd() {
@@ -510,6 +534,9 @@ export class Pipeline {
     this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // this.taaPass.enabled = false
+    // this.applySaoPass.materialCopy.uniforms['tEdges'].value =
+    //   this.edgesPass.outputTexture
   }
 
   protected onAccumulationComplete() {
@@ -524,5 +551,6 @@ export class Pipeline {
     this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // this.taaPass.enabled = false
   }
 }

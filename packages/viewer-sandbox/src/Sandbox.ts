@@ -558,7 +558,9 @@ export default class Sandbox {
       normalMultiplier: 1,
       normalBias: 1,
       outlineDensity: 0.5,
-      outlineThickness: 1
+      outlineThickness: 1,
+      smaa: false,
+      taa: true
     }
     const edgesFolder = this.tabs.pages[0].addFolder({
       title: 'Edges',
@@ -646,6 +648,24 @@ export default class Sandbox {
           'uOutlineThickness'
         ].value = value.value
         this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'smaa', {
+        label: 'SMAA'
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.smaaPass.enabled = edgesParams.smaa
+        this.viewer.getRenderer().pipeline.pipelineOutput = 8
+        this.viewer.requestRender()
+      })
+    edgesFolder
+      .addInput(edgesParams, 'taa', {
+        label: 'TAA'
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().pipeline.taaPass.enabled = edgesParams.taa
+        this.viewer.getRenderer().pipeline.pipelineOutput = 8
         this.viewer.requestRender()
       })
   }
