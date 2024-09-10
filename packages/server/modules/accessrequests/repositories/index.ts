@@ -1,7 +1,13 @@
+import { db } from '@/db/knex'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
+
+const tables = {
+  serverAccessRequests: (db: Knex) => db(ServerAccessRequests.name)
+}
 
 export enum AccessRequestType {
   Stream = 'stream'
@@ -29,48 +35,49 @@ export const isStreamAccessRequest = (
 ): req is StreamAccessRequestRecord =>
   !!(req.resourceId && req.resourceType === AccessRequestType.Stream)
 
-const baseQuery = <
-  T extends AccessRequestType = AccessRequestType,
-  I extends Nullable<string> = Nullable<string>
->(
-  resourceType?: T
-) => {
-  const q = ServerAccessRequests.knex().select<ServerAccessRequestRecord<T, I>[]>(
-    ServerAccessRequests.cols
-  )
+const baseQueryFactory =
+  (deps: { db: Knex }) =>
+  <
+    T extends AccessRequestType = AccessRequestType,
+    I extends Nullable<string> = Nullable<string>
+  >(
+    resourceType?: T
+  ) => {
+    const q = tables
+      .serverAccessRequests(deps.db)
+      .select<ServerAccessRequestRecord<T, I>[]>(ServerAccessRequests.cols)
 
-  if (resourceType) {
-    q.where(ServerAccessRequests.col.resourceType, resourceType)
-  }
-
-  // validate that resourceId points to a valid resource
-  if (resourceType) {
-    switch (resourceType) {
-      case AccessRequestType.Stream:
-        q.innerJoin(Streams.name, Streams.col.id, ServerAccessRequests.col.resourceId)
-        break
+    if (resourceType) {
+      q.where(ServerAccessRequests.col.resourceType, resourceType)
     }
-  }
 
-  return q
-}
+    // validate that resourceId points to a valid resource
+    if (resourceType) {
+      switch (resourceType) {
+        case AccessRequestType.Stream:
+          q.innerJoin(Streams.name, Streams.col.id, ServerAccessRequests.col.resourceId)
+          break
+      }
+    }
+
+    return q
+  }
 
 export const generateId = () => cryptoRandomString({ length: 10 })
 
-export async function getPendingAccessRequests<T extends AccessRequestType>(
-  resourceType: T,
-  resourceId: string
-) {
-  if (!resourceId || !resourceType) {
-    throw new InvalidArgumentError('Resource type and ID missing')
+export const getPendingAccessRequestsFactory =
+  (deps: { db: Knex }) =>
+  async <T extends AccessRequestType>(resourceType: T, resourceId: string) => {
+    if (!resourceId || !resourceType) {
+      throw new InvalidArgumentError('Resource type and ID missing')
+    }
+
+    const q = baseQueryFactory({ db: deps.db })<T, string>(resourceType)
+      .andWhere(ServerAccessRequests.col.resourceId, resourceId)
+      .orderBy(ServerAccessRequests.col.createdAt)
+
+    return await q
   }
-
-  const q = baseQuery<T, string>(resourceType)
-    .andWhere(ServerAccessRequests.col.resourceId, resourceId)
-    .orderBy(ServerAccessRequests.col.createdAt)
-
-  return await q
-}
 
 export async function getPendingAccessRequest<
   T extends AccessRequestType = AccessRequestType
@@ -79,7 +86,7 @@ export async function getPendingAccessRequest<
     throw new InvalidArgumentError('Request ID missing')
   }
 
-  const q = baseQuery<T, string>(resourceType)
+  const q = baseQueryFactory({ db })<T, string>(resourceType)
     .andWhere(ServerAccessRequests.col.id, requestId)
     .first()
 
@@ -122,7 +129,7 @@ export async function getUsersPendingAccessRequest<
     throw new InvalidArgumentError('User ID or resource type missing')
   }
 
-  const q = baseQuery<T, I>(resourceType)
+  const q = baseQueryFactory({ db })<T, I>(resourceType)
     .andWhere(ServerAccessRequests.col.requesterId, userId)
     .andWhere(ServerAccessRequests.col.resourceId, resourceId)
     .first()
