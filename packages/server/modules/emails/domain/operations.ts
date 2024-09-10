@@ -6,3 +6,5 @@ export type GetPendingToken = (params: {
 }) => Promise<EmailVerificationRecord | undefined>
 
 export type DeleteVerifications = (email: string) => Promise<void>
+
+export type DeleteOldAndInsertNewVerification = (email: string) => Promise<string>
