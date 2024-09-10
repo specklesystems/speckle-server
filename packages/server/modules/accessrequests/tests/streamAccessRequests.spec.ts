@@ -1,7 +1,7 @@
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
 import {
-  deleteRequestById,
+  deleteRequestByIdFactory,
   getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
@@ -249,7 +249,7 @@ describe('Stream access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()

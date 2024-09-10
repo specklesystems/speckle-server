@@ -7,7 +7,7 @@ import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpe
 import {
   AccessRequestType,
   createNewRequest,
-  deleteRequestById,
+  deleteRequestByIdFactory,
   generateId,
   getPendingAccessRequestFactory,
   getPendingAccessRequestsFactory,
@@ -178,7 +178,7 @@ export async function processPendingStreamRequest(
     )
   }
 
-  await deleteRequestById(req.id)
+  await deleteRequestByIdFactory({ db })(req.id)
 
   await AccessRequestsEmitter.emit(AccessRequestsEmitter.events.Finalized, {
     request: req,

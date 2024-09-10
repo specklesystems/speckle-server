@@ -96,16 +96,18 @@ export const getPendingAccessRequestFactory =
     return await q
   }
 
-export async function deleteRequestById(requestId: string) {
-  if (!requestId) {
-    throw new InvalidArgumentError('Request ID missing')
-  }
+export const deleteRequestByIdFactory =
+  (deps: { db: Knex }) => async (requestId: string) => {
+    if (!requestId) {
+      throw new InvalidArgumentError('Request ID missing')
+    }
 
-  const q = await ServerAccessRequests.knex()
-    .where(ServerAccessRequests.col.id, requestId)
-    .del()
-  return !!q
-}
+    const q = await tables
+      .serverAccessRequests(deps.db)
+      .where(ServerAccessRequests.col.id, requestId)
+      .del()
+    return !!q
+  }
 
 type AccessRecordInput<
   T extends AccessRequestType = AccessRequestType,
