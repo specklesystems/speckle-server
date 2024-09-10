@@ -4,7 +4,7 @@ import { buildApp, truncateTables } from '@/test/hooks'
 import request from 'supertest'
 import { expect } from 'chai'
 import {
-  deleteVerifications,
+  deleteVerificationsFactory,
   getPendingTokenFactory
 } from '@/modules/emails/repositories'
 import {
@@ -27,6 +27,7 @@ import { db } from '@/db/knex'
 
 const mailerMock = EmailSendingServiceMock
 const getPendingToken = getPendingTokenFactory({ db })
+const deleteVerifications = deleteVerificationsFactory({ db })
 
 const cleanup = async () => {
   await truncateTables([Users.name, EmailVerifications.name, UserEmails.name])

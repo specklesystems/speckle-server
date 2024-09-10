@@ -1,5 +1,9 @@
 import { EmailVerifications } from '@/modules/core/dbSchema'
-import { GetPendingToken } from '@/modules/emails/domain/operations'
+import {
+  DeleteOldAndInsertNewVerification,
+  DeleteVerifications,
+  GetPendingToken
+} from '@/modules/emails/domain/operations'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -39,31 +43,38 @@ export const getPendingTokenFactory =
     return await q
   }
 
-export async function deleteVerifications(email: string) {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
-  const q = EmailVerifications.knex().where(EmailVerifications.col.email, email).del()
-  await q
-}
+export const deleteVerificationsFactory =
+  (deps: { db: Knex }): DeleteVerifications =>
+  async (email) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
+    const q = tables
+      .emailVerifications(deps.db)
+      .where(EmailVerifications.col.email, email)
+      .del()
+    await q
+  }
 
 /**
  * Delete all previous verification entries and create a new one
  */
-export async function deleteOldAndInsertNewVerification(email: string) {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
+export const deleteOldAndInsertNewVerificationFactory =
+  (deps: { db: Knex }): DeleteOldAndInsertNewVerification =>
+  async (email) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
 
-  // delete all existing verifications first
-  await deleteVerifications(email)
+    // delete all existing verifications first
+    await deleteVerificationsFactory({ db: deps.db })(email)
 
-  // insert new one
-  const EmailVerificationCols = EmailVerifications.with({
-    withoutTablePrefix: true
-  }).col
+    // insert new one
+    const EmailVerificationCols = EmailVerifications.with({
+      withoutTablePrefix: true
+    }).col
 
-  const newId = cryptoRandomString({ length: 20 })
-  await EmailVerifications.knex().insert({
-    [EmailVerificationCols.id]: newId,
-    [EmailVerificationCols.email]: email
-  })
+    const newId = cryptoRandomString({ length: 20 })
+    await tables.emailVerifications(deps.db).insert({
+      [EmailVerificationCols.id]: newId,
+      [EmailVerificationCols.email]: email
+    })
 
-  return newId
-}
+    return newId
+  }
