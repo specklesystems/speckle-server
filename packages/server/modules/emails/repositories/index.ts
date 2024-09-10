@@ -71,7 +71,7 @@ export const deleteOldAndInsertNewVerificationFactory =
     }).col
 
     const newId = cryptoRandomString({ length: 20 })
-    await EmailVerifications.knex(deps.db).insert({
+    await tables.emailVerifications(deps.db).insert({
       [EmailVerificationCols.id]: newId,
       [EmailVerificationCols.email]: email
     })
