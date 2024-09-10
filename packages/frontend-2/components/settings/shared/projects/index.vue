@@ -16,7 +16,7 @@
     </div>
 
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
         { id: 'type', header: 'Type', classes: 'col-span-1' },
@@ -25,7 +25,7 @@
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
         { id: 'contributors', header: 'Contributors', classes: 'col-span-2 pr-8' },
-        { id: 'actions', header: '', classes: 'absolute right-2 top-1.5' }
+        { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
       :items="projects"
     >
@@ -66,7 +66,7 @@
       </template>
 
       <template #contributors="{ item }">
-        <div v-if="isProject(item)" class="py-1">
+        <div v-if="isProject(item)">
           <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />
         </div>
       </template>

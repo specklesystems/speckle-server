@@ -41,7 +41,8 @@
           name="description"
           show-label
           label="Model description"
-          placeholder="Description (optional)"
+          show-optional
+          placeholder="Description"
           color="foundation"
           :disabled="loading"
         />

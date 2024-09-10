@@ -6,7 +6,7 @@
           title="Developer settings"
           text="Manage your tokens and authorized app"
         />
-        <div class="flex flex-col gap-6 md:gap-12">
+        <div class="flex flex-col gap-6">
           <div class="flex flex-col">
             <SettingsSectionHeader
               title="Explore GraphQL"
