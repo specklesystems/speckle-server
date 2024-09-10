@@ -18,3 +18,5 @@ export type DeleteOldAndInsertNewVerification = (email: string) => Promise<strin
  */
 
 export type RequestNewEmailVerification = (emailId: string) => Promise<void>
+
+export type RequestEmailVerification = (userId: string) => Promise<void>
