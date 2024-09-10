@@ -114,7 +114,7 @@ const showCreateEditApplicationDialog = ref(false)
 const showCreateApplicationSuccessDialog = ref(false)
 const showRevealSecretDialog = ref(false)
 const showActionsMenu = ref<Record<string, boolean>>({})
-const applicationToEdit = ref<ApplicationItem | null>(null)
+const applicationToEdit = ref<ApplicationItem | undefined>(undefined)
 const applicationToReveal = ref<ApplicationItem | null>(null)
 const createdApplication = ref<ApplicationItem | null>(null)
 
@@ -131,11 +131,11 @@ enum ActionTypes {
 const actionItems: LayoutMenuItem[][] = [
   [
     {
-      title: 'Edit application',
+      title: 'Edit application...',
       id: ActionTypes.EditApplication
     },
     {
-      title: 'Reveal secret',
+      title: 'Reveal secret...',
       id: ActionTypes.RevealSecret
     },
     {
@@ -161,7 +161,7 @@ const toggleMenu = (itemId: string) => {
 }
 
 const openCreateApplicationDialog = () => {
-  applicationToEdit.value = null
+  applicationToEdit.value = undefined
   showCreateEditApplicationDialog.value = true
 }
 

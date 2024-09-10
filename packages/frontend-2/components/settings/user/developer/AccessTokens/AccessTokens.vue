@@ -161,12 +161,11 @@ const getItemScopes = (item: TokenItem): string => {
   if (!item.scopes || item.scopes.length === 0) return 'No scopes available'
 
   return item.scopes
-    .map((scope) => {
-      if (typeof scope === 'string') return `"${scope}"`
-      if (typeof scope === 'object' && scope !== null) {
-        return `"${scope.name}"`
-      }
-    })
-    .join(', ')
+    ? item.scopes
+        .map(
+          (event, index, array) => `"${event}"${index < array.length - 1 ? ',' : ''}`
+        )
+        .join(' ')
+    : 'No scopes available'
 }
 </script>
