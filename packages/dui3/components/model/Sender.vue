@@ -131,7 +131,7 @@ const sendOrCancel = () => {
     return
   }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
-  else store.sendModel(props.modelCard.modelCardId)
+  else store.sendModel(props.modelCard.modelCardId, 'ModelCardButton')
 }
 
 let newFilter: ISendFilter
@@ -163,7 +163,7 @@ const hover = ref(false)
 
 const saveFilterAndSend = async () => {
   await saveFilter()
-  store.sendModel(props.modelCard.modelCardId)
+  store.sendModel(props.modelCard.modelCardId, 'Filter')
 }
 
 const expiredNotification = computed(() => {
@@ -176,13 +176,14 @@ const expiredNotification = computed(() => {
     ? 'Model was changed while publishing'
     : 'Model is out of sync with application.'
 
+  const ctaType = props.modelCard.progress ? 'Restart' : 'Update'
   notification.cta = {
-    name: props.modelCard.progress ? 'Restart' : 'Update',
+    name: ctaType,
     action: async () => {
       if (props.modelCard.progress) {
         await store.sendModelCancel(props.modelCard.modelCardId)
       }
-      store.sendModel(props.modelCard.modelCardId)
+      store.sendModel(props.modelCard.modelCardId, ctaType)
     }
   }
   return notification

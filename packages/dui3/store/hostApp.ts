@@ -202,15 +202,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
    * Tells the host app to start sending a specific model card. This will reach inside the host application.
    * @param modelId
    */
-  const sendModel = (modelCardId: string) => {
+  const sendModel = (modelCardId: string, sendType: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
     if (model.expired) {
       // user sends via "Update" button
-      void trackEvent('DUI3 Action', { name: 'Send', expired: true }, model.accountId)
+      void trackEvent(
+        'DUI3 Action',
+        { name: 'Send', expired: true, type: sendType },
+        model.accountId
+      )
     } else {
-      void trackEvent('DUI3 Action', { name: 'Send', expired: false }, model.accountId)
+      void trackEvent(
+        'DUI3 Action',
+        { name: 'Send', expired: false, type: sendType },
+        model.accountId
+      )
     }
     model.latestCreatedVersionId = undefined
     model.error = undefined
