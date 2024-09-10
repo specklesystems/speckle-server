@@ -63,7 +63,7 @@
           <FormButton
             v-if="isWorkspaceAdmin"
             color="outline"
-            @click="showInviteDialog = !showInviteDialog"
+            @click="$emit('show-invite-dialog')"
           >
             Invite
           </FormButton>
@@ -85,16 +85,6 @@
         </div>
       </div>
     </div>
-    <WorkspaceInviteDialog
-      v-model:open="showInviteDialog"
-      :workspace-id="workspaceInfo.id"
-      :workspace="workspaceInfo"
-    />
-    <SettingsDialog
-      v-model:open="showSettingsDialog"
-      :target-menu-item="settingsDialogTarget"
-      :target-workspace-id="workspaceInfo.id"
-    />
   </div>
 </template>
 
@@ -146,15 +136,17 @@ enum ActionTypes {
   CopyLink = 'copy-link'
 }
 
+const emit = defineEmits<{
+  (e: 'show-invite-dialog'): void
+  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
+}>()
+
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
 const menuId = useId()
-const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
-const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref('general')
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
@@ -166,8 +158,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
 ])
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  settingsDialogTarget.value = target
-  showSettingsDialog.value = true
+  emit('show-settings-dialog', target)
 }
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {

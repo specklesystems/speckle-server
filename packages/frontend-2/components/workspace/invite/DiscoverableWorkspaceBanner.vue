@@ -1,7 +1,7 @@
 <template>
   <InviteBanner :invite="invite" @processed="processJoin">
     <template #message>
-      Your team is already using Workspaces! Collaborate with your peers in the
+      Your team is already using Workspaces! Collaborate in the
       <span class="font-medium">{{ workspace.name }}</span>
       space!
     </template>
@@ -10,11 +10,13 @@
 
 <script setup lang="ts">
 import { useApolloClient } from '@vue/apollo-composable'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   DashboardJoinWorkspaceDocument,
   type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import { CookieKeys } from '~/lib/common/helpers/constants'
 import {
   getCacheId,
   getFirstErrorMessage,
@@ -50,6 +52,12 @@ const { client: apollo } = useApolloClient()
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const router = useRouter()
+const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
+  CookieKeys.DismissedDiscoverableWorkspaces,
+  {
+    default: () => []
+  }
+)
 
 const invite = computed(() => ({
   workspace: {
@@ -61,7 +69,13 @@ const invite = computed(() => ({
 
 const processJoin = async (accept: boolean) => {
   if (!accept) {
-    // TODO: Use cookies to enable dismissing the discoverable workspace invite
+    dismissedDiscoverableWorkspaces.value = [
+      ...dismissedDiscoverableWorkspaces.value,
+      props.workspace.id
+    ]
+    apollo.cache.evict({
+      id: getCacheId('DiscoverableWorkspace', props.workspace.id)
+    })
     return
   }
 

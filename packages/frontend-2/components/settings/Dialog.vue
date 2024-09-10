@@ -235,6 +235,6 @@ watch(
 </script>
 <style>
 .workspace-item h6 {
-  @apply !font-normal !text-body-xs !text-foreground;
+  @apply !font-normal text-body-xs !text-foreground;
 }
 </style>

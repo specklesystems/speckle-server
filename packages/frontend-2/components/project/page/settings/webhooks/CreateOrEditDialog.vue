@@ -9,7 +9,7 @@
       {{ props.webhook ? 'Edit webhook' : 'Create webhook' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3">
         <FormTextInput
           v-model="url"
           label="URL"
@@ -225,14 +225,14 @@ const resetWebhookModel = () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.webhook ? 'Save' : 'Create',
-    props: { fullWidth: true },
+    props: {},
     onClick: onSubmit
   }
 ])

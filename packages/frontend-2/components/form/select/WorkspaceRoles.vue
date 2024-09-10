@@ -9,6 +9,7 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    show-label
     :fully-control-value="fullyControlValue"
     :disabled="disabled"
     :disabled-item-predicate="disabledItemPredicate"

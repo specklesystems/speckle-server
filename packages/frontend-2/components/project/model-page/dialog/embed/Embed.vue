@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="lg"
     :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
     <template v-if="isPrivate" #header>Change access permissions</template>
@@ -196,14 +196,14 @@ const isPrivate = computed(() => {
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Copy embed code',
-    props: { fullWidth: true },
+    props: {},
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
@@ -213,7 +213,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
 const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -221,7 +221,6 @@ const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Save',
     props: {
-      fullWidth: true,
       disabled: projectVisibility.value === props.project.visibility
     },
     onClick: saveProjectVisibility
