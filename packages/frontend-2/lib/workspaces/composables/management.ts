@@ -184,6 +184,13 @@ export const useProcessWorkspaceInvite = () => {
         type: ToastNotificationType.Success,
         title: input.accept ? 'Invite accepted' : 'Invite dismissed'
       })
+
+      mp.track('Workspace Joined', {
+        location: 'banner',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+
       mp.track('Invite Action', {
         type: 'workspace invite',
         accepted: input.accept,
