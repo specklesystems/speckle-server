@@ -72,6 +72,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
+import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -86,6 +87,7 @@ graphql(`
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 
+const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
 
@@ -105,7 +107,7 @@ const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
-const { result: initialQueryResult } = useQuery(
+const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
     workspaceId: props.workspaceId,
@@ -163,4 +165,10 @@ const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
 }
+
+onResult(() => {
+  if (initialQueryResult.value) {
+    workspaceMixpanelUpdateGroup(initialQueryResult.value.workspace)
+  }
+})
 </script>

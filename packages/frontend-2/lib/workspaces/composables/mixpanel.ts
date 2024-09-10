@@ -30,9 +30,6 @@ graphql(`
         max
       }
     }
-    projects {
-      totalCount
-    }
     team {
       totalCount
       items {
@@ -71,7 +68,6 @@ export const useWorkspacesMixpanel = () => {
       costTotal: workspace.billing?.cost.total,
       versionsCountCurrent: workspace.billing?.versionsCount.current,
       versionsCountMax: workspace.billing?.versionsCount.max,
-      projectsCount: workspace.projects.totalCount,
       teamTotalCount: workspace.team.totalCount,
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
