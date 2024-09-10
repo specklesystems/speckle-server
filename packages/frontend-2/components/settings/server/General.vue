@@ -17,6 +17,7 @@
               :rules="requiredRule"
               type="text"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="description"
               color="foundation"
@@ -26,6 +27,7 @@
               show-label
               label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="company"
               color="foundation"
@@ -35,6 +37,7 @@
               show-label
               label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="adminContact"
               color="foundation"
@@ -45,6 +48,7 @@
               type="email"
               label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="termsOfService"
               color="foundation"
@@ -53,21 +57,25 @@
               show-label
               label-position="left"
             />
-            <div class="text-sm flex flex-col gap-2 mt-2">
-              <FormCheckbox
-                v-model="inviteOnly"
-                label="Invite only mode - Only users with an invitation will be able to join"
-                name="inviteOnly"
-                show-label
-              />
-              <FormCheckbox
-                v-model="guestModeEnabled"
-                label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
-                name="guestModeEnabled"
-                show-label
-              />
-            </div>
-            <div>
+            <hr class="border-outline-3" />
+            <FormCheckbox
+              v-model="inviteOnly"
+              label="Invite only mode"
+              description="Only users with an invitation will be able to join the server"
+              label-position="left"
+              name="inviteOnly"
+              show-label
+            />
+            <hr class="border-outline-3" />
+            <FormCheckbox
+              v-model="guestModeEnabled"
+              label="Guest mode"
+              description="Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+              label-position="left"
+              name="guestModeEnabled"
+              show-label
+            />
+            <div class="mt-6">
               <FormButton color="primary" @click="onSubmit">Save changes</FormButton>
             </div>
           </div>

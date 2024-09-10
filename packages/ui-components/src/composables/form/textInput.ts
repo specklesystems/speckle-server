@@ -6,9 +6,9 @@ import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
+import type { LabelPosition } from './input'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
-export type LabelPosition = 'top' | 'left'
 
 /**
  * Common setup for text input & textarea fields

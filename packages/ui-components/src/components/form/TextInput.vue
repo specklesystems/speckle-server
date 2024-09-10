@@ -1,7 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="computedWrapperClasses">
-    <div :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'">
+    <div
+      :class="
+        labelPosition === 'left' ? 'w-full md:w-6/12 flex items-center' : 'w-full'
+      "
+    >
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
         <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
@@ -95,7 +99,8 @@ import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { LabelPosition, InputColor } from '~~/src/composables/form/textInput'
+import type { InputColor } from '~~/src/composables/form/textInput'
+import type { LabelPosition } from '~~/src/composables/form/input'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
