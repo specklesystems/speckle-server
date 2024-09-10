@@ -1,16 +1,15 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
+import { createUser } from '@/modules/core/services/users'
+import { createPersonalAccessToken } from '@/modules/core/services/tokens'
+import { createStream } from '@/modules/core/services/streams'
+import { createObjects } from '@/modules/core/services/objects'
+import { createCommitByBranchName } from '@/modules/core/services/commits'
 
-const { createUser } = require(`@/modules/core/services/users`)
-const { createPersonalAccessToken } = require(`@/modules/core/services/tokens`)
-const { createStream } = require(`@/modules/core/services/streams`)
-const { createObjects } = require(`@/modules/core/services/objects`)
-const { createCommitByBranchName } = require(`@/modules/core/services/commits`)
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { createManyObjects } from '@/test/helpers'
 
-const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
-const { createManyObjects } = require(`@/test/helpers`)
-
-const {
+import {
   getStreamHistory,
   getCommitHistory,
   getObjectHistory,
@@ -19,8 +18,10 @@ const {
   getTotalCommitCount,
   getTotalObjectCount,
   getTotalUserCount
-} = require('../services')
-const { Scopes } = require('@speckle/shared')
+} from '@/modules/stats/services/index'
+import { Scopes } from '@speckle/shared'
+import { Server } from 'node:http'
+import { Express } from 'express'
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
@@ -89,18 +90,26 @@ describe('Server stats services @stats-services', function () {
 })
 
 describe('Server stats api @stats-api', function () {
-  let server, sendRequest, app
+  let server: Server,
+    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest'],
+    app: Express
 
   const adminUser = {
     name: 'Dimitrie',
     password: 'TestPasswordSecure',
-    email: 'spam@spam.spam'
+    email: 'spam@spam.spam',
+    id: '', // Will be filled in before()
+    goodToken: '',
+    badToken: ''
   }
 
   const notAdminUser = {
     name: 'Andrei',
     password: 'TestPasswordSecure',
-    email: 'spasm@spam.spam'
+    email: 'spasm@spam.spam',
+    id: '', // Will be filled in before()
+    goodToken: '',
+    badToken: ''
   }
 
   const fullQuery = `
@@ -218,20 +227,25 @@ async function seedDb({
   const userIds = await Promise.all(userPromises)
 
   // create streams
-  const streamPromises = []
+  const streamPromises: Array<Promise<{ id: string; ownerId: string }>> = []
   for (let i = 0; i < numStreams; i++) {
+    const ownerId = userIds[i >= userIds.length ? userIds.length - 1 : i]
     const promise = createStream({
       name: `Stream ${i}`,
-      ownerId: userIds[i >= userIds.length ? userIds.length - 1 : i]
-    })
+      ownerId
+    }).then((id) => ({
+      id,
+      ownerId
+    }))
+
     streamPromises.push(promise)
   }
 
-  const streamIds = await Promise.all(streamPromises)
+  const streamData = await Promise.all(streamPromises)
 
   // create a objects
   const objs = await createObjects({
-    streamId: streamIds[0],
+    streamId: streamData[0].id,
     objects: createManyObjects(numObjects - 1)
   })
 
@@ -239,10 +253,14 @@ async function seedDb({
   const commitPromises = []
   for (let i = 0; i < numCommits; i++) {
     const promise = createCommitByBranchName({
-      streamId: streamIds[0],
+      streamId: streamData[0].id,
+      authorId: streamData[0].ownerId,
       branchName: 'main',
       sourceApplication: 'tests',
-      objectId: objs[i >= objs.length ? objs.length - 1 : i]
+      objectId: objs[i >= objs.length ? objs.length - 1 : i],
+      message: null,
+      totalChildrenCount: undefined,
+      parents: null
     })
     commitPromises.push(promise)
   }
