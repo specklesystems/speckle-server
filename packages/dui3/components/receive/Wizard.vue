@@ -165,7 +165,9 @@ const selectVersionAndAddModel = async (
     // Patch the existing model card with new versions!
     await hostAppStore.patchModel(existingModel.modelCardId, {
       selectedVersionId: version.id,
-      latestVersionId: latestVersion.id
+      selectedVersionSourceApp: version.sourceApplication,
+      latestVersionId: latestVersion.id,
+      latestVersionSourceApp: latestVersion.sourceApplication
     })
     await hostAppStore.receiveModel(existingModel.modelCardId)
     return
@@ -182,7 +184,9 @@ const selectVersionAndAddModel = async (
   modelCard.modelName = selectedModel.value?.name as string
 
   modelCard.selectedVersionId = version.id
+  modelCard.selectedVersionSourceApp = version.sourceApplication || 'n/a' // TODO: check with dim
   modelCard.latestVersionId = latestVersion.id
+  modelCard.latestVersionSourceApp = latestVersion.sourceApplication || 'n/a' // TODO: check with dim
 
   modelCard.hasDismissedUpdateWarning = true
   modelCard.hasSelectedOldVersion = version.id !== latestVersion.id

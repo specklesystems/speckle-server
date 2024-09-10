@@ -285,7 +285,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     void trackEvent(
       'DUI3 Action',
-      { name: 'Receive', expired: model.expired },
+      {
+        name: 'Receive',
+        expired: model.expired,
+        sourceHostApp: model.selectedVersionSourceApp
+      },
       model.accountId
     )
 

@@ -133,7 +133,9 @@ const handleVersionSelection = async (
   }
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
+    selectedVersionSourceApp: selectedVersion.sourceApplication,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
+    latestVersionSourceApp: latestVersion.referencedObject,
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
 
@@ -155,7 +157,8 @@ const receiveCurrentVersion = async () => {
 const receiveLatestVersion = async () => {
   // Note: here we're updating the model card info, and afterwards we're hitting the receive action
   await store.patchModel(props.modelCard.modelCardId, {
-    selectedVersionId: props.modelCard.latestVersionId
+    selectedVersionId: props.modelCard.latestVersionId,
+    selectedVersionSourceApp: props.modelCard.latestVersionSourceApp
   })
   if (props.modelCard.progress)
     await store.receiveModelCancel(props.modelCard.modelCardId)
