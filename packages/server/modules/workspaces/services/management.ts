@@ -18,7 +18,7 @@ import {
   WorkspaceDomain,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
-import { MaybeNullOrUndefined, Roles, StreamRoles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
@@ -136,10 +136,7 @@ const validateInput = (input: WorkspaceUpdateInput): void => {
   }
 
   if (!!input.defaultProjectRole) {
-    const validRoles: string[] = [
-      'stream:reviewer',
-      'stream:contributor'
-    ] satisfies StreamRoles[]
+    const validRoles = ['stream:reviewer', 'stream:contributor']
     if (!validRoles.includes(input.defaultProjectRole))
       throw new WorkspaceInvalidUpdateError('Provided default project role is invalid')
   }
@@ -195,34 +192,8 @@ export const updateWorkspaceFactory =
     validateInput(workspaceInput)
     validateWorkspace(workspaceInput, currentWorkspace)
 
-    // if (!!workspaceInput.logo) {
-    //   validateImageString(workspaceInput.logo)
-    // }
-    // if (isEmpty(workspaceInput.name)) {
-    //   // Do not allow setting an empty name (empty descriptions allowed)
-    //   delete workspaceInput.name
-    // }
-    // if (!!workspaceInput.description && workspaceInput.description.length > 512) {
-    //   throw new WorkspaceInvalidDescriptionError()
-    // }
-
-    // if (
-    //   workspaceInput.discoverabilityEnabled &&
-    //   !currentWorkspace.discoverabilityEnabled &&
-    //   !currentWorkspace.domains.find((domain) => domain.verified)
-    // )
-    //   throw new WorkspaceNoVerifiedDomainsError()
-
-    // if (
-    //   workspaceInput.domainBasedMembershipProtectionEnabled &&
-    //   !currentWorkspace.domainBasedMembershipProtectionEnabled &&
-    //   !currentWorkspace.domains.find((domain) => domain.verified)
-    // )
-    //   throw new WorkspaceNoVerifiedDomainsError()
-
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
-      // ...removeNullOrUndefinedKeys(workspaceInput),
       ...sanitizeInput(workspaceInput),
       updatedAt: new Date()
     }
