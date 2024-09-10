@@ -1,7 +1,8 @@
 import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
 import {
   deleteRequestById,
-  getPendingAccessRequest
+  getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
@@ -368,7 +369,7 @@ describe('Stream access requests', () => {
         expect(results.data?.streamAccessRequestUse).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

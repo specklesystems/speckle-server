@@ -79,19 +79,22 @@ export const getPendingAccessRequestsFactory =
     return await q
   }
 
-export async function getPendingAccessRequest<
-  T extends AccessRequestType = AccessRequestType
->(requestId: string, resourceType?: T) {
-  if (!requestId) {
-    throw new InvalidArgumentError('Request ID missing')
+export const getPendingAccessRequestFactory =
+  (deps: { db: Knex }) =>
+  async <T extends AccessRequestType = AccessRequestType>(
+    requestId: string,
+    resourceType?: T
+  ) => {
+    if (!requestId) {
+      throw new InvalidArgumentError('Request ID missing')
+    }
+
+    const q = baseQueryFactory({ db: deps.db })<T, string>(resourceType)
+      .andWhere(ServerAccessRequests.col.id, requestId)
+      .first()
+
+    return await q
   }
-
-  const q = baseQueryFactory({ db })<T, string>(resourceType)
-    .andWhere(ServerAccessRequests.col.id, requestId)
-    .first()
-
-  return await q
-}
 
 export async function deleteRequestById(requestId: string) {
   if (!requestId) {
