@@ -64,9 +64,12 @@
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
+          class="mb-4"
           placeholder="A Beautiful Home, A Small Bridge..."
           autocomplete="off"
           name="name"
+          label="Project Name"
+          show-label
           color="foundation"
           :show-clear="!!newProjectName"
           :rules="[
@@ -76,6 +79,32 @@
           full-width
           size="lg"
         />
+        <div
+          v-if="hasWorkspace"
+          class="text-xs caption rounded p-2 bg-orange-500/10 mb-2"
+        >
+          You are not involved in any
+          <b>Workspace</b>
+          yet. Explore the workspaces!
+          <!-- Provide link here -->
+        </div>
+        <FormSelectBase
+          key="name"
+          :disabled="hasWorkspace"
+          clearable
+          label="Workspaces"
+          placeholder="Nothing selected"
+          name="Workspaces"
+          show-label
+          :items="workspaces"
+          mount-menu-on-body
+        >
+          <template #option="{ item }">
+            <div class="flex items-center">
+              <span class="truncate">{{ item.name }}</span>
+            </div>
+          </template>
+        </FormSelectBase>
         <div class="mt-4 flex justify-center items-center space-x-2">
           <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
           <FormButton submit>Create</FormButton>
@@ -91,7 +120,8 @@ import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import {
   createProjectMutation,
-  projectsListQuery
+  projectsListQuery,
+  workspacesListQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
 import type { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
@@ -190,6 +220,21 @@ const {
   }),
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
+
+const { result: workspacesResult } = useQuery(
+  workspacesListQuery,
+  () => ({
+    limit: 5,
+    filter: {
+      search: (searchText.value || '').trim() || null
+    }
+  }),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
+
+const hasWorkspace = computed(() => workspaces.value?.length !== 0)
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasReachedEnd = ref(false)
