@@ -1,13 +1,17 @@
 import { Optional } from '@speckle/shared'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
-import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import {
+  deleteVerifications,
+  getPendingTokenFactory
+} from '@/modules/emails/repositories'
+import { db } from '@/db/knex'
 
 async function initializeState(tokenId: Optional<string>) {
   if (!tokenId)
     throw new EmailVerificationFinalizationError('Missing verification token')
 
-  const token = await getPendingToken({ token: tokenId })
+  const token = await getPendingTokenFactory({ db })({ token: tokenId })
   if (!token)
     throw new EmailVerificationFinalizationError(
       'Invalid or expired verification token'
