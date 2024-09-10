@@ -173,7 +173,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
     workspaceId: props.workspaceId
   }),
   () => ({
-    enabled: !!search.value.length || roleFilter.value
+    enabled: !!search.value.length || !!roleFilter.value
   })
 )
 
