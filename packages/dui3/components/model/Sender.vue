@@ -18,8 +18,8 @@
           v-tippy="'Edit what gets published'"
           :icon-left="Square3Stack3DIcon"
           text
-          size="xs"
-          color="card"
+          size="sm"
+          color="primary"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress || noWriteAccess"
           @click.stop="openFilterDialog = true"
@@ -38,8 +38,8 @@
             modelCard.sendFilter.name === 'Selection'
           "
           text
-          color="secondary"
-          size="xs"
+          color="primary"
+          size="sm"
           class="truncate"
           :disabled="!!modelCard.progress || noWriteAccess"
           @click.stop="openFilterDialog = true"
