@@ -9,7 +9,7 @@
         search
         show-clear
         :placeholder="searchPlaceholder"
-        class="rounded-md border border-outline-3 lg:w-72"
+        class="rounded-md h-full lg:w-72"
         v-bind="bind"
         v-on="on"
       />
