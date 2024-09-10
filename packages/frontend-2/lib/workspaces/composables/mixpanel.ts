@@ -41,11 +41,6 @@ graphql(`
 
 export const useWorkspacesMixpanel = () => {
   const mixpanel = useMixpanel()
-  const serverId = ref<string>()
-
-  if (import.meta.client) {
-    serverId.value = resolveMixpanelServerId(window.location.hostname)
-  }
 
   const workspaceMixpanelUpdateGroup = (
     workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment
@@ -78,7 +73,7 @@ export const useWorkspacesMixpanel = () => {
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
       // eslint-disable-next-line camelcase
-      server_id: serverId.value
+      server_id: resolveMixpanelServerId(window.location.hostname)
     })
   }
 
