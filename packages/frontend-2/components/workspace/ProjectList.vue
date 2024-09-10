@@ -99,6 +99,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
+import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
@@ -117,6 +118,7 @@ graphql(`
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 
+const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
 const {
@@ -141,7 +143,7 @@ const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
-const { result: initialQueryResult } = useQuery(
+const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
     workspaceId: props.workspaceId,
@@ -239,4 +241,10 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   showSettingsDialog.value = true
   settingsDialogTarget.value = target
 }
+
+onResult((queryResult) => {
+  if (queryResult.data?.workspace) {
+    workspaceMixpanelUpdateGroup(queryResult.data.workspace)
+  }
+})
 </script>
