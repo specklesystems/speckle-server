@@ -47,7 +47,8 @@ export const deleteVerificationsFactory =
   (deps: { db: Knex }): DeleteVerifications =>
   async (email) => {
     if (!email) throw new InvalidArgumentError('E-mail address is empty')
-    const q = EmailVerifications.knex(deps.db)
+    const q = tables
+      .emailVerifications(deps.db)
       .where(EmailVerifications.col.email, email)
       .del()
     await q
