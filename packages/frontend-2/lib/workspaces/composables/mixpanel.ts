@@ -70,21 +70,15 @@ export const useWorkspacesMixpanel = () => {
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
       // eslint-disable-next-line camelcase
-      server_id: resolveMixpanelServerId(window.location.hostname)
+      server_id: resolveMixpanelServerId(window.location.hostname),
+      ...(workspace.billing && {
+        costTotal: workspace.billing.cost.total,
+        versionsCountCurrent: workspace.billing.versionsCount.current,
+        versionsCountMax: workspace.billing.versionsCount.max
+      })
     }
 
-    const billingInput = workspace.billing
-      ? {
-          costTotal: workspace.billing.cost.total,
-          versionsCountCurrent: workspace.billing.versionsCount.current,
-          versionsCountMax: workspace.billing.versionsCount.max
-        }
-      : {}
-
-    mixpanel.get_group('workspace_id', workspace.id).set({
-      ...input,
-      ...billingInput
-    })
+    mixpanel.get_group('workspace_id', workspace.id).set(input)
   }
 
   return {
