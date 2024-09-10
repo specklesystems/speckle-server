@@ -13,7 +13,7 @@ import {
   getStreamHistoryFactory,
   getCommitHistoryFactory,
   getObjectHistoryFactory,
-  getUserHistory,
+  getUserHistoryFactory,
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
   getTotalObjectCountFactory,
@@ -81,7 +81,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the user creation history by month', async () => {
-    const res = await getUserHistory()
+    const res = await getUserHistoryFactory({ db })()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')

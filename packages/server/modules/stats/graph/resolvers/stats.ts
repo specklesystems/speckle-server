@@ -5,7 +5,7 @@ import {
   getStreamHistoryFactory,
   getCommitHistoryFactory,
   getObjectHistoryFactory,
-  getUserHistory,
+  getUserHistoryFactory,
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
   getTotalObjectCountFactory,
@@ -57,7 +57,7 @@ export = {
     },
 
     async userHistory() {
-      return await getUserHistory()
+      return await getUserHistoryFactory({ db })()
     }
   }
 } as Resolvers
