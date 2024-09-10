@@ -10,7 +10,7 @@ import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
 import {
-  getStreamHistory,
+  getStreamHistoryFactory,
   getCommitHistory,
   getObjectHistory,
   getUserHistory,
@@ -54,7 +54,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the stream creation history by month', async () => {
-    const res = await getStreamHistory()
+    const res = await getStreamHistoryFactory({ db })()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')

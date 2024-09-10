@@ -27,7 +27,7 @@ export const getTotalUserCountFactory = (deps: { db: Knex }) => async () => {
   return parseInt(result.rows[0].count)
 }
 
-export async function getStreamHistory() {
+export const getStreamHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', streams. "createdAt") AS created_month,
@@ -38,7 +38,7 @@ export async function getStreamHistory() {
       DATE_TRUNC('month', streams. "createdAt")
     `
 
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
