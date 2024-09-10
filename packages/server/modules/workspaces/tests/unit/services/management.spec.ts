@@ -156,6 +156,7 @@ describe('Workspace services', () => {
         defaultLogoIndex: 0,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        defaultProjectRole: 'stream:contributor',
         domains: []
       }
       return merge(workspace, input)
@@ -907,6 +908,7 @@ describe('Workspace role services', () => {
                   description: null,
                   discoverabilityEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
+                  defaultProjectRole: 'stream:contributor',
                   defaultLogoIndex: 0
                 }
               },
@@ -949,6 +951,7 @@ describe('Workspace role services', () => {
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultProjectRole: 'stream:contributor',
           defaultLogoIndex: 0
         }
 
@@ -1003,6 +1006,7 @@ describe('Workspace role services', () => {
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultProjectRole: 'stream:contributor',
           defaultLogoIndex: 0
         }
 
@@ -1064,6 +1068,7 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           domains: [],
+          defaultProjectRole: 'stream:contributor',
           defaultLogoIndex: 0
         }
 

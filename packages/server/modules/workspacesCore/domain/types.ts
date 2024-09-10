@@ -27,6 +27,8 @@ export type Workspace = {
   updatedAt: Date
   logo: string | null
   defaultLogoIndex: number
+  /** Valid values: 'stream:reviewer' | 'stream: collaborator' */
+  defaultProjectRole: string
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }

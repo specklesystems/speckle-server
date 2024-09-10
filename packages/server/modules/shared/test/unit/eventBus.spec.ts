@@ -14,6 +14,7 @@ const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
     createdAt: new Date(),
+    defaultProjectRole: 'stream:contributor',
     domainBasedMembershipProtectionEnabled: false,
     discoverabilityEnabled: false
   }

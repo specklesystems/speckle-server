@@ -763,6 +763,31 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(updateRes).to.haveGraphQLErrors('too long')
       })
+
+      it('should require default project role to be a valid role', async () => {
+        const resA = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:contributor'
+          }
+        })
+        const resB = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:reviewer'
+          }
+        })
+        const resC = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:collaborator'
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
+      })
     })
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
       describe('leave', () => {

@@ -15,9 +15,10 @@ import {
 import {
   Workspace,
   WorkspaceAcl,
-  WorkspaceDomain
+  WorkspaceDomain,
+  WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, StreamRoles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
@@ -31,8 +32,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
-  WorkspaceInvalidDescriptionError,
-  WorkspaceNoVerifiedDomainsError
+  WorkspaceNoVerifiedDomainsError,
+  WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -100,6 +101,7 @@ export const createWorkspaceFactory =
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
+      defaultProjectRole: Roles.Stream.Contributor,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false
     }
@@ -121,6 +123,57 @@ export const createWorkspaceFactory =
     return { ...workspace }
   }
 
+type WorkspaceUpdateInput = Parameters<UpdateWorkspace>[0]['workspaceInput']
+
+const validateInput = (input: WorkspaceUpdateInput): void => {
+  if (!!input.logo) {
+    validateImageString(input.logo)
+  }
+
+  if (!!input.description) {
+    if (input.description.length > 512)
+      throw new WorkspaceInvalidUpdateError('Provided description is too long')
+  }
+
+  if (!!input.defaultProjectRole) {
+    const validRoles: string[] = [
+      'stream:reviewer',
+      'stream:contributor'
+    ] satisfies StreamRoles[]
+    if (!validRoles.includes(input.defaultProjectRole))
+      throw new WorkspaceInvalidUpdateError('Provided default project role is invalid')
+  }
+}
+
+const validateWorkspace = (
+  input: WorkspaceUpdateInput,
+  workspace: WorkspaceWithDomains
+): void => {
+  const hasVerifiedDomains = workspace.domains.find((domain) => domain.verified)
+
+  if (input.discoverabilityEnabled && !workspace.discoverabilityEnabled) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+
+  if (
+    input.domainBasedMembershipProtectionEnabled &&
+    !workspace.domainBasedMembershipProtectionEnabled
+  ) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+}
+
+const sanitizeInput = (input: WorkspaceUpdateInput) => {
+  const sanitizedInput = structuredClone(input)
+
+  if (isEmpty(sanitizedInput.name)) {
+    // Do not allow setting an empty name (empty descriptions allowed)
+    delete sanitizedInput.name
+  }
+
+  return removeNullOrUndefinedKeys(sanitizedInput)
+}
+
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
@@ -139,34 +192,38 @@ export const updateWorkspaceFactory =
     }
 
     // Validate incoming changes
-    if (!!workspaceInput.logo) {
-      validateImageString(workspaceInput.logo)
-    }
-    if (isEmpty(workspaceInput.name)) {
-      // Do not allow setting an empty name (empty descriptions allowed)
-      delete workspaceInput.name
-    }
-    if (!!workspaceInput.description && workspaceInput.description.length > 512) {
-      throw new WorkspaceInvalidDescriptionError()
-    }
+    validateInput(workspaceInput)
+    validateWorkspace(workspaceInput, currentWorkspace)
 
-    if (
-      workspaceInput.discoverabilityEnabled &&
-      !currentWorkspace.discoverabilityEnabled &&
-      !currentWorkspace.domains.find((domain) => domain.verified)
-    )
-      throw new WorkspaceNoVerifiedDomainsError()
+    // if (!!workspaceInput.logo) {
+    //   validateImageString(workspaceInput.logo)
+    // }
+    // if (isEmpty(workspaceInput.name)) {
+    //   // Do not allow setting an empty name (empty descriptions allowed)
+    //   delete workspaceInput.name
+    // }
+    // if (!!workspaceInput.description && workspaceInput.description.length > 512) {
+    //   throw new WorkspaceInvalidDescriptionError()
+    // }
 
-    if (
-      workspaceInput.domainBasedMembershipProtectionEnabled &&
-      !currentWorkspace.domainBasedMembershipProtectionEnabled &&
-      !currentWorkspace.domains.find((domain) => domain.verified)
-    )
-      throw new WorkspaceNoVerifiedDomainsError()
+    // if (
+    //   workspaceInput.discoverabilityEnabled &&
+    //   !currentWorkspace.discoverabilityEnabled &&
+    //   !currentWorkspace.domains.find((domain) => domain.verified)
+    // )
+    //   throw new WorkspaceNoVerifiedDomainsError()
+
+    // if (
+    //   workspaceInput.domainBasedMembershipProtectionEnabled &&
+    //   !currentWorkspace.domainBasedMembershipProtectionEnabled &&
+    //   !currentWorkspace.domains.find((domain) => domain.verified)
+    // )
+    //   throw new WorkspaceNoVerifiedDomainsError()
 
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
-      ...removeNullOrUndefinedKeys(workspaceInput),
+      // ...removeNullOrUndefinedKeys(workspaceInput),
+      ...sanitizeInput(workspaceInput),
       updatedAt: new Date()
     }
 

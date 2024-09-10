@@ -143,6 +143,7 @@ export const upsertWorkspaceFactory =
         'description',
         'logo',
         'defaultLogoIndex',
+        'defaultProjectRole',
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
