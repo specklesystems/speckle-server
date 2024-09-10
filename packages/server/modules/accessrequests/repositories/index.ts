@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
@@ -132,18 +131,24 @@ export const createNewRequestFactory =
     return results[0]
   }
 
-export async function getUsersPendingAccessRequest<
-  T extends AccessRequestType = AccessRequestType,
-  I extends Nullable<string> = Nullable<string>
->(userId: string, resourceType: T, resourceId: I) {
-  if (!userId || !resourceType) {
-    throw new InvalidArgumentError('User ID or resource type missing')
+export const getUsersPendingAccessRequestFactory =
+  (deps: { db: Knex }) =>
+  async <
+    T extends AccessRequestType = AccessRequestType,
+    I extends Nullable<string> = Nullable<string>
+  >(
+    userId: string,
+    resourceType: T,
+    resourceId: I
+  ) => {
+    if (!userId || !resourceType) {
+      throw new InvalidArgumentError('User ID or resource type missing')
+    }
+
+    const q = baseQueryFactory({ db: deps.db })<T, I>(resourceType)
+      .andWhere(ServerAccessRequests.col.requesterId, userId)
+      .andWhere(ServerAccessRequests.col.resourceId, resourceId)
+      .first()
+
+    return await q
   }
-
-  const q = baseQueryFactory({ db })<T, I>(resourceType)
-    .andWhere(ServerAccessRequests.col.requesterId, userId)
-    .andWhere(ServerAccessRequests.col.resourceId, resourceId)
-    .first()
-
-  return await q
-}
