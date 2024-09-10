@@ -3,10 +3,7 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import {
-  findEmailFactory,
-  findPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
@@ -18,6 +15,10 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
+import {
+  DeleteOldAndInsertNewVerification,
+  RequestNewEmailVerification
+} from '@/modules/emails/domain/operations'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
@@ -62,10 +63,17 @@ type VerificationRequestContext = {
   email: UserEmail
 }
 
+type CreateNewEmailVerificationFactoryDeps = {
+  findEmail: FindEmail
+  getUser: typeof getUser
+  getServerInfo: typeof getServerInfo
+  deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
+}
+
 const createNewEmailVerificationFactory =
-  ({ findEmail }: { findEmail: FindEmail }) =>
+  (deps: CreateNewEmailVerificationFactoryDeps) =>
   async (emailId: string): Promise<VerificationRequestContext> => {
-    const emailRecord = await findEmail({ id: emailId })
+    const emailRecord = await deps.findEmail({ id: emailId })
 
     if (!emailRecord) throw new EmailVerificationRequestError('Email not found')
 
@@ -73,8 +81,8 @@ const createNewEmailVerificationFactory =
       throw new EmailVerificationRequestError('Email is already verified')
 
     const [user, serverInfo] = await Promise.all([
-      getUser(emailRecord.userId),
-      getServerInfo()
+      deps.getUser(emailRecord.userId),
+      deps.getServerInfo()
     ])
 
     if (!user)
@@ -82,7 +90,7 @@ const createNewEmailVerificationFactory =
         'Unable to resolve verification target user'
       )
 
-    const verificationId = await deleteOldAndInsertNewVerificationFactory({ db })(
+    const verificationId = await deps.deleteOldAndInsertNewVerification(
       emailRecord.email
     )
     return {
@@ -174,12 +182,13 @@ export function initializeVerificationOnRegistration() {
   })
 }
 
-const findEmail = findEmailFactory({ db })
+type RequestNewEmailVerificationDeps = CreateNewEmailVerificationFactoryDeps
 
-export const requestNewEmailVerification = async (emailId: string) => {
-  const newVerificationState = await createNewEmailVerificationFactory({
-    findEmail
-  })(emailId)
+export const requestNewEmailVerificationFactory =
+  (deps: RequestNewEmailVerificationDeps): RequestNewEmailVerification =>
+  async (emailId) => {
+    const createNewEmailVerification = createNewEmailVerificationFactory(deps)
+    const newVerificationState = await createNewEmailVerification(emailId)
 
-  await sendVerificationEmail(newVerificationState)
-}
+    await sendVerificationEmail(newVerificationState)
+  }

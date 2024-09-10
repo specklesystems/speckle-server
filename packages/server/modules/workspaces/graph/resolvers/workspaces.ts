@@ -111,7 +111,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import {
   getWorkspaceCostFactory,
@@ -124,6 +124,14 @@ import {
 import { getServerInfo } from '@/modules/core/services/generic'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db })
+})
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
