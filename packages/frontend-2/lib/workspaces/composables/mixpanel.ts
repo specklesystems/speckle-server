@@ -59,21 +59,31 @@ export const useWorkspacesMixpanel = () => {
       }
     )
 
-    mixpanel.get_group('workspace_id', workspace.id).set({
+    const input = {
       name: workspace.name,
       description: workspace.description,
       domainBasedMembershipProtectionEnabled:
         workspace.domainBasedMembershipProtectionEnabled,
       discoverabilityEnabled: workspace.discoverabilityEnabled,
-      costTotal: workspace.billing?.cost.total,
-      versionsCountCurrent: workspace.billing?.versionsCount.current,
-      versionsCountMax: workspace.billing?.versionsCount.max,
       teamTotalCount: workspace.team.totalCount,
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
       // eslint-disable-next-line camelcase
       server_id: resolveMixpanelServerId(window.location.hostname)
+    }
+
+    const billingInput = workspace.billing
+      ? {
+          costTotal: workspace.billing.cost.total,
+          versionsCountCurrent: workspace.billing.versionsCount.current,
+          versionsCountMax: workspace.billing.versionsCount.max
+        }
+      : {}
+
+    mixpanel.get_group('workspace_id', workspace.id).set({
+      ...input,
+      ...billingInput
     })
   }
 
