@@ -7,6 +7,7 @@
         label="Role"
         fully-control-value
         :disabled-items="disabledItems"
+        show-label
       />
       <div
         v-if="

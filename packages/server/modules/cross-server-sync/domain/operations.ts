@@ -1,4 +1,5 @@
 import { type Logger } from '@/logging/logging'
+import { StreamRecord } from '@/modules/core/helpers/types'
 
 export type DownloadCommit = (
   argv: {
@@ -38,3 +39,31 @@ export type DownloadCommit = (
   commitId: string
   branchId: string
 }>
+
+export type DownloadProject = (
+  params: {
+    /**
+     * An FE2 project URL (must be publicly accessible)
+     */
+    projectUrl: string
+    /**
+     * ID of user that should own the project locally
+     */
+    authorId: string
+    syncComments?: boolean
+    /**
+     * Specify if target project is private
+     */
+    token?: string
+  },
+  options?: Partial<{
+    logger: Logger
+  }>
+) => Promise<{
+  newProjectUrl: string
+  projectId: string
+  project: StreamRecord
+}>
+
+export type GetOnboardingBaseProject = () => Promise<StreamRecord | undefined>
+export type EnsureOnboardingProject = () => Promise<StreamRecord | undefined>

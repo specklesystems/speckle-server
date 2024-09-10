@@ -4,6 +4,7 @@ import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
   countUsers,
+  getUser,
   getUserByEmail,
   listUsers,
   markUserAsVerified
@@ -35,7 +36,16 @@ import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db })
+})
 
 const createUserEmail = validateAndCreateUserEmailFactory({
   createUserEmail: createUserEmailFactory({ db }),

@@ -2,9 +2,11 @@
   <div>
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
+      v-model:role="roleFilter"
       search-placeholder="Search members..."
       :workspace-id="workspaceId"
       :workspace="workspace"
+      show-role-filter
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -22,9 +24,7 @@
       :items="members"
       :loading="searchResultLoading"
       :empty-message="
-        search.length
-          ? `No members found for '${search}'`
-          : 'This workspace has no members'
+        hasNoResults ? 'No members found' : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -161,17 +161,19 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+const roleFilter = ref<WorkspaceRoles>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
     filter: {
-      search: search.value
+      search: search.value,
+      role: roleFilter.value
     },
     workspaceId: props.workspaceId
   }),
   () => ({
-    enabled: !!search.value.length
+    enabled: !!search.value.length || !!roleFilter.value
   })
 )
 
@@ -188,9 +190,10 @@ const userToModify = ref<UserItem>()
 const showActionsMenu = ref<Record<string, boolean>>({})
 
 const members = computed(() => {
-  const memberArray = search.value.length
-    ? searchResult.value?.workspace?.team.items
-    : props.workspace?.team.items
+  const memberArray =
+    search.value.length || roleFilter.value
+      ? searchResult.value?.workspace?.team.items
+      : props.workspace?.team.items
   return (memberArray || []).map(({ user, ...rest }) => ({
     ...user,
     ...rest
@@ -204,7 +207,11 @@ const isActiveUserCurrentUser = computed(
 const canRemoveMember = computed(
   () => (user: UserItem) => activeUser.value?.id !== user.id && isWorkspaceAdmin.value
 )
-
+const hasNoResults = computed(
+  () =>
+    (search.value.length || roleFilter.value) &&
+    searchResult.value?.workspace.team.items.length === 0
+)
 const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 

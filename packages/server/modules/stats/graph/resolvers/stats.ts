@@ -1,6 +1,7 @@
-'use strict'
-const { validateScopes } = require('@/modules/shared')
-const {
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+
+import { validateScopes } from '@/modules/shared'
+import {
   getStreamHistory,
   getCommitHistory,
   getObjectHistory,
@@ -9,16 +10,16 @@ const {
   getTotalCommitCount,
   getTotalObjectCount,
   getTotalUserCount
-} = require('../../services')
-const { Roles, Scopes } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+} from '@/modules/stats/services/index'
+import { Roles, Scopes } from '@speckle/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 
-module.exports = {
+export = {
   Query: {
     /**
      * @deprecated('Use admin.serverStatistics')
      */
-    async serverStats(parent, args, context) {
+    async serverStats(_parent, _args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Stats)
       return {}
@@ -58,4 +59,4 @@ module.exports = {
       return await getUserHistory()
     }
   }
-}
+} as Resolvers

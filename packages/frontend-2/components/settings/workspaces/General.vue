@@ -146,17 +146,18 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace updated'
+    })
+
     mixpanel.track('Workspace General Settings Updated', {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
+
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceId
-    })
-
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Workspace updated'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
