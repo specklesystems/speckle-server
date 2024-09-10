@@ -1,7 +1,13 @@
 import { EmailVerifications } from '@/modules/core/dbSchema'
+import { GetPendingToken } from '@/modules/emails/domain/operations'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
+import { Knex } from 'knex'
+
+const tables = {
+  emailVerifications: (db: Knex) => db<EmailVerificationRecord>(EmailVerifications.name)
+}
 
 export type EmailVerificationRecord = {
   id: string
@@ -12,24 +18,26 @@ export type EmailVerificationRecord = {
 /**
  * Attempt to find a valid & pending token entry for email verification
  */
-export async function getPendingToken(params: { token?: string; email?: string }) {
-  const { token, email } = params
-  if (!token && !email) throw new InvalidArgumentError('Token & email is empty')
+export const getPendingTokenFactory =
+  (deps: { db: Knex }): GetPendingToken =>
+  async ({ token, email }) => {
+    if (!token && !email) throw new InvalidArgumentError('Token & email is empty')
 
-  const aWeekAgo = dayjs().subtract(1, 'week')
+    const aWeekAgo = dayjs().subtract(1, 'week')
 
-  const q = EmailVerifications.knex<EmailVerificationRecord>()
-    .where(EmailVerifications.col.createdAt, '>', aWeekAgo.toISOString())
-    .first()
+    const q = tables
+      .emailVerifications(deps.db)
+      .where(EmailVerifications.col.createdAt, '>', aWeekAgo.toISOString())
+      .first()
 
-  if (token) {
-    q.andWhere(EmailVerifications.col.id, token)
-  } else {
-    q.andWhere(EmailVerifications.col.email, email)
+    if (token) {
+      q.andWhere(EmailVerifications.col.id, token)
+    } else {
+      q.andWhere(EmailVerifications.col.email, email)
+    }
+
+    return await q
   }
-
-  return await q
-}
 
 export async function deleteVerifications(email: string) {
   if (!email) throw new InvalidArgumentError('E-mail address is empty')

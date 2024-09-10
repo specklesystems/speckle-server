@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: (db?: Knex) => (knex || db)(aliasedTableName),
+      knex: (db?: Knex) => (db || knex)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
