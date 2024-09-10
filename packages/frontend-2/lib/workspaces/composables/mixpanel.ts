@@ -69,8 +69,10 @@ export const useWorkspacesMixpanel = () => {
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
-      // eslint-disable-next-line camelcase
-      server_id: resolveMixpanelServerId(window.location.hostname),
+      ...(import.meta.client && {
+        // eslint-disable-next-line camelcase
+        server_id: resolveMixpanelServerId(window.location.hostname)
+      }),
       ...(workspace.billing && {
         costTotal: workspace.billing.cost.total,
         versionsCountCurrent: workspace.billing.versionsCount.current,
