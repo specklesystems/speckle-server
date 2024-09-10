@@ -125,6 +125,7 @@ const processJoin = async (accept: boolean) => {
     })
 
     mixpanel.track('Workspace Joined', {
+      location: 'discovery banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
     })

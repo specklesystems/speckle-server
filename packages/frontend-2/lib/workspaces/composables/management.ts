@@ -186,7 +186,6 @@ export const useProcessWorkspaceInvite = () => {
       })
 
       mp.track('Workspace Joined', {
-        location: 'banner',
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
