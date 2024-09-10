@@ -3,7 +3,9 @@
   <div :class="computedWrapperClasses">
     <div
       :class="
-        labelPosition === 'left' ? 'w-full md:w-6/12 flex items-center' : 'w-full'
+        labelPosition === 'left'
+          ? 'w-full md:w-6/12 flex flex-col justify-center'
+          : 'w-full'
       "
     >
       <label :for="name" :class="labelClasses">
@@ -67,7 +69,7 @@
         <div
           v-if="errorMessage"
           :class="[
-            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
+            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center h-8',
             shouldShowClear ? 'pr-8' : 'pr-2'
           ]"
         >

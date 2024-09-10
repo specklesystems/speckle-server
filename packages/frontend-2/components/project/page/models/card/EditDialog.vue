@@ -29,7 +29,6 @@
           label="Model name"
           placeholder="model/name/here"
           :rules="rules"
-          show-required
           auto-focus
           color="foundation"
           :disabled="loading"
