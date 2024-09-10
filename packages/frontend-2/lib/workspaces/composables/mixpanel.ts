@@ -20,7 +20,6 @@ graphql(`
     description
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
-    id
     billing {
       cost {
         total
