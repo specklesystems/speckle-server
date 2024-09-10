@@ -2,7 +2,7 @@ import { Optional } from '@speckle/shared'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import {
-  deleteVerifications,
+  deleteVerificationsFactory,
   getPendingTokenFactory
 } from '@/modules/emails/repositories'
 import { db } from '@/db/knex'
@@ -26,7 +26,10 @@ async function finalizeVerification(state: FinalizationState) {
   const { token } = state
   const { email } = token
 
-  await Promise.all([markUserAsVerified(email), deleteVerifications(email)])
+  await Promise.all([
+    markUserAsVerified(email),
+    deleteVerificationsFactory({ db })(email)
+  ])
 }
 
 /**

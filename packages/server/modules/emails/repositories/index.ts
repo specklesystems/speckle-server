@@ -1,5 +1,9 @@
+import { db } from '@/db/knex'
 import { EmailVerifications } from '@/modules/core/dbSchema'
-import { GetPendingToken } from '@/modules/emails/domain/operations'
+import {
+  DeleteVerifications,
+  GetPendingToken
+} from '@/modules/emails/domain/operations'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -39,11 +43,15 @@ export const getPendingTokenFactory =
     return await q
   }
 
-export async function deleteVerifications(email: string) {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
-  const q = EmailVerifications.knex().where(EmailVerifications.col.email, email).del()
-  await q
-}
+export const deleteVerificationsFactory =
+  (deps: { db: Knex }): DeleteVerifications =>
+  async (email) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
+    const q = EmailVerifications.knex(deps.db)
+      .where(EmailVerifications.col.email, email)
+      .del()
+    await q
+  }
 
 /**
  * Delete all previous verification entries and create a new one
@@ -52,7 +60,7 @@ export async function deleteOldAndInsertNewVerification(email: string) {
   if (!email) throw new InvalidArgumentError('E-mail address is empty')
 
   // delete all existing verifications first
-  await deleteVerifications(email)
+  await deleteVerificationsFactory({ db })(email)
 
   // insert new one
   const EmailVerificationCols = EmailVerifications.with({
