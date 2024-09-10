@@ -13,9 +13,9 @@ export const getTotalCommitCountFactory = (deps: { db: Knex }) => async () => {
   return parseInt(result.rows[0].count)
 }
 
-export async function getTotalObjectCount() {
+export const getTotalObjectCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM objects'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
