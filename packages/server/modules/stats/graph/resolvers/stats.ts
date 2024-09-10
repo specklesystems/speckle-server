@@ -4,7 +4,7 @@ import { validateScopes } from '@/modules/shared'
 import {
   getStreamHistoryFactory,
   getCommitHistoryFactory,
-  getObjectHistory,
+  getObjectHistoryFactory,
   getUserHistory,
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
@@ -53,7 +53,7 @@ export = {
     },
 
     async objectHistory() {
-      return await getObjectHistory()
+      return await getObjectHistoryFactory({ db })()
     },
 
     async userHistory() {
