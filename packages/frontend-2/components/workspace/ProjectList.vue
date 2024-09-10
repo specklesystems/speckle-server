@@ -242,9 +242,9 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   settingsDialogTarget.value = target
 }
 
-onResult(() => {
-  if (initialQueryResult.value) {
-    workspaceMixpanelUpdateGroup(initialQueryResult.value.workspace)
+onResult((queryResult) => {
+  if (queryResult.data?.workspace) {
+    workspaceMixpanelUpdateGroup(queryResult.data.workspace)
   }
 })
 </script>
