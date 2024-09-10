@@ -10,7 +10,7 @@ import {
 import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
-import { deleteOldAndInsertNewVerification } from '@/modules/emails/repositories'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import {
   EmailTemplateParams,
   renderEmail
@@ -43,7 +43,9 @@ async function createNewVerification(
   if (user.verified)
     throw new EmailVerificationRequestError("User's email is already verified")
 
-  const verificationId = await deleteOldAndInsertNewVerification(user.email)
+  const verificationId = await deleteOldAndInsertNewVerificationFactory({ db })(
+    user.email
+  )
 
   return {
     user,
@@ -80,7 +82,9 @@ const createNewEmailVerificationFactory =
         'Unable to resolve verification target user'
       )
 
-    const verificationId = await deleteOldAndInsertNewVerification(emailRecord.email)
+    const verificationId = await deleteOldAndInsertNewVerificationFactory({ db })(
+      emailRecord.email
+    )
     return {
       user,
       email: emailRecord,

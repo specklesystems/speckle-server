@@ -1,6 +1,6 @@
-import { db } from '@/db/knex'
 import { EmailVerifications } from '@/modules/core/dbSchema'
 import {
+  DeleteOldAndInsertNewVerification,
   DeleteVerifications,
   GetPendingToken
 } from '@/modules/emails/domain/operations'
@@ -57,22 +57,24 @@ export const deleteVerificationsFactory =
 /**
  * Delete all previous verification entries and create a new one
  */
-export async function deleteOldAndInsertNewVerification(email: string) {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
+export const deleteOldAndInsertNewVerificationFactory =
+  (deps: { db: Knex }): DeleteOldAndInsertNewVerification =>
+  async (email) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
 
-  // delete all existing verifications first
-  await deleteVerificationsFactory({ db })(email)
+    // delete all existing verifications first
+    await deleteVerificationsFactory({ db: deps.db })(email)
 
-  // insert new one
-  const EmailVerificationCols = EmailVerifications.with({
-    withoutTablePrefix: true
-  }).col
+    // insert new one
+    const EmailVerificationCols = EmailVerifications.with({
+      withoutTablePrefix: true
+    }).col
 
-  const newId = cryptoRandomString({ length: 20 })
-  await EmailVerifications.knex().insert({
-    [EmailVerificationCols.id]: newId,
-    [EmailVerificationCols.email]: email
-  })
+    const newId = cryptoRandomString({ length: 20 })
+    await tables.emailVerifications(deps.db).insert({
+      [EmailVerificationCols.id]: newId,
+      [EmailVerificationCols.email]: email
+    })
 
-  return newId
-}
+    return newId
+  }
