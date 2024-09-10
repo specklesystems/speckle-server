@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
@@ -6,7 +7,10 @@ import {
   adminProjectList,
   adminUserList
 } from '@/modules/core/services/admin'
-import { getTotalStreamCount, getTotalUserCount } from '@/modules/stats/services'
+import {
+  getTotalStreamCountFactory,
+  getTotalUserCount
+} from '@/modules/stats/repositories'
 
 export = {
   Query: {
@@ -38,7 +42,7 @@ export = {
   },
   ServerStatistics: {
     async totalProjectCount() {
-      return await getTotalStreamCount()
+      return await getTotalStreamCountFactory({ db })()
     },
 
     async totalUserCount() {
