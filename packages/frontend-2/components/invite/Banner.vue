@@ -149,7 +149,7 @@ const onDeclineClick = (token?: string) => {
     mixpanel.track('Invite Action', {
       accepted: false,
       type: 'workspace invite',
-      location: 'banner',
+      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
