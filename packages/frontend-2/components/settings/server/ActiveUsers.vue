@@ -44,7 +44,7 @@
       </template>
 
       <template #emailState="{ item }">
-        <div class="flex items-center gap-2 select-none">
+        <div class="flex items-center gap-2 select-none text-foreground-2">
           <template v-if="isUser(item) && item.verified">
             <span>Verified</span>
           </template>
