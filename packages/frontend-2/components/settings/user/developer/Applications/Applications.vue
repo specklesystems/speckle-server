@@ -35,30 +35,11 @@
         {
           id: 'scope',
           header: 'Scope',
-          classes: 'col-span-7 whitespace-break-spaces text-xs'
-        }
+          classes: 'col-span-6 whitespace-break-spaces text-xs'
+        },
+        { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
       ]"
       :items="applications"
-      :buttons="[
-        {
-          icon: LockOpenIcon,
-          label: 'Reveal Secret',
-          action: openRevealSecretDialog,
-          class: 'text-primary'
-        },
-        {
-          icon: PencilIcon,
-          label: 'Edit',
-          action: openEditApplicationDialog,
-          class: 'text-primary'
-        },
-        {
-          icon: TrashIcon,
-          label: 'Delete',
-          action: (item) => $emit('delete', item),
-          class: 'text-danger'
-        }
-      ]"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -71,6 +52,23 @@
 
       <template #scope="{ item }">
         {{ getItemScopes(item) }}
+      </template>
+
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click.stop="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
       </template>
     </LayoutTable>
 
@@ -96,14 +94,15 @@ import { useQuery } from '@vue/apollo-composable'
 import {
   PlusIcon,
   BookOpenIcon,
-  TrashIcon,
-  PencilIcon,
-  LockOpenIcon
+  EllipsisHorizontalIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import { developerSettingsApplicationsQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'delete', item: ApplicationItem): void
 }>()
 
@@ -114,6 +113,7 @@ const { result: applicationsResult, refetch: refetchApplications } = useQuery(
 const showCreateEditApplicationDialog = ref(false)
 const showCreateApplicationSuccessDialog = ref(false)
 const showRevealSecretDialog = ref(false)
+const showActionsMenu = ref<Record<string, boolean>>({})
 const applicationToEdit = ref<ApplicationItem | null>(null)
 const applicationToReveal = ref<ApplicationItem | null>(null)
 const createdApplication = ref<ApplicationItem | null>(null)
@@ -121,6 +121,44 @@ const createdApplication = ref<ApplicationItem | null>(null)
 const applications = computed<ApplicationItem[]>(() => {
   return applicationsResult.value?.activeUser?.createdApps || []
 })
+
+enum ActionTypes {
+  EditApplication = 'edit-application',
+  RevealSecret = 'reveal-secret',
+  RemoveApplication = 'remove-application'
+}
+
+const actionItems: LayoutMenuItem[][] = [
+  [
+    {
+      title: 'Edit application',
+      id: ActionTypes.EditApplication
+    },
+    {
+      title: 'Reveal secret',
+      id: ActionTypes.RevealSecret
+    },
+    {
+      title: 'Remove application...',
+      id: ActionTypes.RemoveApplication
+    }
+  ]
+]
+
+const onActionChosen = (actionItem: LayoutMenuItem, application: ApplicationItem) => {
+  if (actionItem.id === ActionTypes.EditApplication) {
+    openEditApplicationDialog(application)
+  } else if (actionItem.id === ActionTypes.RevealSecret) {
+    applicationToReveal.value = application
+    showRevealSecretDialog.value = true
+  } else if (actionItem.id === ActionTypes.RemoveApplication) {
+    emit('delete', application)
+  }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
 
 const openCreateApplicationDialog = () => {
   applicationToEdit.value = null
@@ -130,11 +168,6 @@ const openCreateApplicationDialog = () => {
 const openEditApplicationDialog = (item: ApplicationItem) => {
   applicationToEdit.value = item
   showCreateEditApplicationDialog.value = true
-}
-
-const openRevealSecretDialog = (item: ApplicationItem) => {
-  applicationToReveal.value = item
-  showRevealSecretDialog.value = true
 }
 
 const handleApplicationCreated = (applicationId: string) => {

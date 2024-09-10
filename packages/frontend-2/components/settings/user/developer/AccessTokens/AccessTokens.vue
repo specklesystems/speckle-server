@@ -41,18 +41,11 @@
         {
           id: 'scope',
           header: 'Scope',
-          classes: 'col-span-7 whitespace-break-spaces text-xs'
-        }
+          classes: 'col-span-6 whitespace-break-spaces text-xs'
+        },
+        { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
       ]"
       :items="tokens"
-      :buttons="[
-        {
-          icon: TrashIcon,
-          label: 'Delete',
-          action: (item) => $emit('delete', item),
-          class: 'text-danger'
-        }
-      ]"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -65,6 +58,23 @@
 
       <template #scope="{ item }">
         {{ getItemScopes(item) }}
+      </template>
+
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click.stop="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
       </template>
     </LayoutTable>
 
@@ -82,11 +92,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { PlusIcon, BookOpenIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import {
+  PlusIcon,
+  BookOpenIcon,
+  EllipsisHorizontalIcon,
+  XMarkIcon
+} from '@heroicons/vue/24/outline'
 import { developerSettingsAccessTokensQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { TokenItem } from '~~/lib/developer-settings/helpers/types'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'delete', item: TokenItem): void
 }>()
 
@@ -97,6 +114,7 @@ const { result: tokensResult, refetch: refetchTokens } = useQuery(
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
 const showCreateTokenSuccessDialog = ref(false)
+const showActionsMenu = ref<Record<string, boolean>>({})
 
 const tokens = computed<TokenItem[]>(() => {
   return (
@@ -105,6 +123,29 @@ const tokens = computed<TokenItem[]>(() => {
     ) || []
   )
 })
+
+enum ActionTypes {
+  RemoveToken = 'remove-token'
+}
+
+const actionItems: LayoutMenuItem[][] = [
+  [
+    {
+      title: 'Remove token...',
+      id: ActionTypes.RemoveToken
+    }
+  ]
+]
+
+const onActionChosen = (actionItem: LayoutMenuItem, token: TokenItem) => {
+  if (actionItem.id === ActionTypes.RemoveToken) {
+    emit('delete', token)
+  }
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
 
 const openCreateTokenDialog = () => {
   showCreateTokenDialog.value = true

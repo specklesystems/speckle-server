@@ -28,46 +28,17 @@
           </div>
 
           <hr class="border-outline-3" />
-
           <SettingsUserDeveloperAccessTokens @delete="openDeleteDialog" />
-
           <hr class="border-outline-3" />
-
           <SettingsUserDeveloperApplications @delete="openDeleteDialog" />
-
           <hr class="border-outline-3" />
-
           <SettingsUserDeveloperAuthorizedApps @delete="openDeleteDialog" />
-
-          <SettingsUserDeveloperCreateTokenDialog
-            v-model:open="showCreateTokenDialog"
-            @token-created="(token) => handleTokenCreated(token)"
-          />
-          <SettingsUserDeveloperDeleteDialog
-            v-model:open="showDeleteDialog"
-            :item="itemToModify"
-          />
-          <SettingsUserDeveloperCreateEditApplicationDialog
-            v-model:open="showCreateEditApplicationDialog"
-            :application="(itemToModify as ApplicationItem)"
-            @application-created="handleApplicationCreated"
-          />
-          <SettingsUserDeveloperRevealSecretDialog
-            v-model:open="showRevealSecretDialog"
-            :application="
-              itemToModify && 'secret' in itemToModify ? itemToModify : null
-            "
-          />
-          <SettingsUserDeveloperCreateTokenSuccessDialog
-            v-model:open="showCreateTokenSuccessDialog"
-            :token="tokenSuccess"
-          />
-          <SettingsUserDeveloperCreateApplicationSuccessDialog
-            v-model:open="showCreateApplicationSuccessDialog"
-            :application="(itemToModify as ApplicationItem)"
-          />
         </div>
       </div>
+      <SettingsUserDeveloperDeleteDialog
+        v-model:open="showDeleteDialog"
+        :item="itemToModify"
+      />
     </div>
   </section>
 </template>
@@ -87,13 +58,7 @@ useHead({
 const apiOrigin = useApiOrigin()
 
 const itemToModify = ref<TokenItem | ApplicationItem | AuthorizedAppItem | null>(null)
-const tokenSuccess = ref('')
-const showCreateTokenDialog = ref(false)
-const showCreateTokenSuccessDialog = ref(false)
-const showCreateApplicationSuccessDialog = ref(false)
 const showDeleteDialog = ref(false)
-const showCreateEditApplicationDialog = ref(false)
-const showRevealSecretDialog = ref(false)
 
 const openDeleteDialog = (item: TokenItem | ApplicationItem | AuthorizedAppItem) => {
   itemToModify.value = item
