@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
-    <div class="relative w-full md:max-w-sm mt-6 md:mt-0">
+    <div class="relative mt-6 md:mt-0 gap-x-4 flex justify-flex-start">
       <FormTextInput
         name="search"
         :custom-icon="MagnifyingGlassIcon"
@@ -9,9 +9,16 @@
         search
         show-clear
         :placeholder="searchPlaceholder"
-        class="rounded-md border border-outline-3"
+        class="rounded-md border border-outline-3 lg:w-72"
         v-bind="bind"
         v-on="on"
+      />
+      <FormSelectWorkspaceRoles
+        v-if="showRoleFilter"
+        v-model="role"
+        fully-control-value
+        clearable
+        class="min-w-32"
       />
     </div>
     <FormButton
@@ -46,9 +53,11 @@ const props = defineProps<{
   searchPlaceholder: string
   workspaceId: string
   workspace?: SettingsWorkspacesMembersTableHeader_WorkspaceFragment
+  showRoleFilter?: boolean
 }>()
 
 const search = defineModel<string>('search')
+const role = defineModel<string>('role')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const isInviteDialogOpen = ref(false)
 
