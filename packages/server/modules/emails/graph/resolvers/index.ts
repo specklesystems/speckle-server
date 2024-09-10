@@ -7,13 +7,17 @@ import {
   deleteOldAndInsertNewVerificationFactory,
   getPendingTokenFactory
 } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 
 const requestEmailVerification = requestEmailVerificationFactory({
   getUser,
   getServerInfo,
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+  sendEmail,
+  renderEmail
 })
 
 export = {

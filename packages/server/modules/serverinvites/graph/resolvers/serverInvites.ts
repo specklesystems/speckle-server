@@ -69,12 +69,16 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { getServerInfo } from '@/modules/core/services/generic'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
   getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db })
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
 })
 
 const buildCollectAndValidateResourceTargets = () =>
