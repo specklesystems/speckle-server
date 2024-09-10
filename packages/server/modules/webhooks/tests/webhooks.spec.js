@@ -12,7 +12,6 @@ const { createPersonalAccessToken } = require('../../core/services/tokens')
 const {
   getStreamWebhooks,
   getLastWebhookEvents,
-  deleteWebhook,
   dispatchStreamEvent
 } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
@@ -22,12 +21,14 @@ const {
   createWebhookFactory,
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
-  updateWebhookFactory
+  updateWebhookFactory,
+  deleteWebhookFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
   createWebhook,
-  updateWebhook: updateWebhookService
+  updateWebhook: updateWebhookService,
+  deleteWebhook
 } = require('@/modules/webhooks/services/webhooks-new')
 const { Users, Streams } = require('@/modules/core/dbSchema')
 
@@ -113,9 +114,31 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should delete a webhook', async () => {
-      await deleteWebhook({ id: webhookOne.id })
-      const webhook = await getWebhook({ id: webhookOne.id })
-      expect(webhook).to.be.null
+      const stream = {
+        name: 'test stream',
+        description: 'stream',
+        isPublic: true,
+        ownerId: userOne.id
+      }
+      const streamId = await createStream(stream)
+      const webhook = {
+        streamId,
+        url: 'http://localhost:42/non-existent',
+        description: 'test wh',
+        secret: 'secret',
+        enabled: true,
+        triggers: ['commit_create', 'commit_update']
+      }
+      webhook.id = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhook)
+      await deleteWebhook({
+        deleteWebhookConfig: deleteWebhookFactory({ db }),
+        getWebhookById: getWebhookByIdFactory({ db })
+      })(webhook)
+      const webhookDeleted = await getWebhookByIdFactory({ db })({ id: webhook.id })
+      expect(webhookDeleted).to.be.null
     })
 
     it('Should get webhooks for stream', async () => {
@@ -298,11 +321,30 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should delete a webhook', async () => {
-      const res = await sendRequest(userTwo.token, {
-        query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamTwo.id}" } ) }`
+      const stream = {
+        name: 'test stream',
+        description: 'stream',
+        isPublic: true,
+        ownerId: userOne.id
+      }
+      const streamId = await createStream(stream)
+      const webhook = {
+        streamId,
+        url: 'http://localhost:42/non-existent',
+        description: 'test wh',
+        secret: 'secret',
+        enabled: true,
+        triggers: ['commit_create', 'commit_update']
+      }
+      webhook.id = await createWebhook({
+        createWebhookConfig: createWebhookFactory({ db }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+      })(webhook)
+      const res = await sendRequest(userOne.token, {
+        query: `mutation { webhookDelete(webhook: { id: "${webhook.id}", streamId: "${streamId}" } ) }`
       })
       expect(noErrors(res))
-      expect(res.body.data.webhookDelete).to.equal('true')
+      expect(res.body.data.webhookDelete).to.equal(webhook.id)
     })
 
     it('Should *not* create a webhook if user is not a stream owner', async () => {
@@ -328,18 +370,33 @@ describe('Webhooks @webhooks', () => {
 
     it('Should have a webhook limit for streams', async () => {
       const limit = 100
-      for (let i = 0; i < limit - 1; i++) {
+      const stream = {
+        name: 'test stream',
+        description: 'stream',
+        isPublic: true,
+        ownerId: userOne.id
+      }
+      const streamId = await createStream(stream)
+      const webhook = {
+        streamId,
+        url: 'http://localhost:42/non-existent',
+        description: 'test wh',
+        secret: 'secret',
+        enabled: true,
+        triggers: ['commit_create', 'commit_update']
+      }
+      for (let i = 0; i < limit; i++) {
         await createWebhook({
           createWebhookConfig: createWebhookFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
-        })(webhookOne)
+        })(webhook)
       }
 
       try {
         await createWebhook({
           createWebhookConfig: createWebhookFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
-        })(webhookOne)
+        })(webhook)
       } catch (err) {
         if (err.toString().indexOf('Maximum') > -1) return
       }
