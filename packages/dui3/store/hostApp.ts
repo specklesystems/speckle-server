@@ -16,6 +16,7 @@ import type { HostAppError } from '~/lib/bridge/errorHandler'
 import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
+import { useAccountStore } from '~/store/accounts'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -28,6 +29,7 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()
+  const accountsStore = useAccountStore()
 
   const currentNotification = ref<Nullable<ToastNotification>>(null)
   const showErrorDialog = ref<boolean>(false)
@@ -283,12 +285,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
 
+    const account = accountsStore.accounts.find(
+      (a) => a.accountInfo.id === model.accountId
+    )
+
     void trackEvent(
       'DUI3 Action',
       {
         name: 'Receive',
         expired: model.expired,
-        sourceHostApp: model.selectedVersionSourceApp
+        sourceHostApp: model.selectedVersionSourceApp,
+        isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id
       },
       model.accountId
     )

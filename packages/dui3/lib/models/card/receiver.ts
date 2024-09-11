@@ -6,8 +6,10 @@ export interface IReceiverModelCard extends IModelCard {
   modelName: string
   selectedVersionId: string
   selectedVersionSourceApp: string
+  selectedVersionUserId: string
   latestVersionId?: string
   latestVersionSourceApp?: string
+  latestVersionUserId?: string
   latestVersionCreatedAt?: string
   hasDismissedUpdateWarning: boolean
   /** Keeps track whether the user intentionally selected an older version to receive when creating the model card. */
@@ -21,8 +23,10 @@ export class ReceiverModelCard extends ModelCard implements IReceiverModelCard {
   modelName!: string
   selectedVersionId!: string
   selectedVersionSourceApp!: string
+  selectedVersionUserId!: string
   latestVersionId!: string
   latestVersionSourceApp!: string
+  latestVersionUserId!: string
   hasDismissedUpdateWarning!: boolean
   hasSelectedOldVersion!: boolean
   displayReceiveComplete!: boolean
