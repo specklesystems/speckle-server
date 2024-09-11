@@ -16,7 +16,7 @@ import {
   getUserHistory,
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
-  getTotalObjectCount,
+  getTotalObjectCountFactory,
   getTotalUserCount
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
@@ -49,7 +49,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the total number of objects on this server', async () => {
-    const res = await getTotalObjectCount()
+    const res = await getTotalObjectCountFactory({ db })()
     expect(res).to.equal(params.numObjects)
   })
 

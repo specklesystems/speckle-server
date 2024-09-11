@@ -8,7 +8,7 @@ import {
   getUserHistory,
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
-  getTotalObjectCount,
+  getTotalObjectCountFactory,
   getTotalUserCount
 } from '@/modules/stats/repositories/index'
 import { Roles, Scopes } from '@speckle/shared'
@@ -37,7 +37,7 @@ export = {
     },
 
     async totalObjectCount() {
-      return await getTotalObjectCount()
+      return await getTotalObjectCountFactory({ db })()
     },
 
     async totalUserCount() {
