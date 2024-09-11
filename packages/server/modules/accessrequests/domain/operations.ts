@@ -36,3 +36,8 @@ export type GetUserStreamAccessRequest = (
   userId: string,
   streamId: string
 ) => Promise<Nullable<StreamAccessRequestGraphQLReturn>>
+
+export type RequestProjectAccess = (
+  userId: string,
+  projectId: string
+) => Promise<StreamAccessRequestRecord>
