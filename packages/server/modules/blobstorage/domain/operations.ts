@@ -2,7 +2,7 @@ import {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 export type GetBlobs = (params: {
   streamId?: MaybeNullOrUndefined<string>
@@ -20,3 +20,10 @@ export type GetBlobMetadata = (params: {
   blobId: string
   streamId: string
 }) => Promise<BlobStorageItem>
+
+export type GetBlobMetadataCollection = (params: {
+  streamId: string
+  query?: Nullable<string>
+  limit?: Nullable<number>
+  cursor?: Nullable<string>
+}) => Promise<{ blobs: BlobStorageItem[]; cursor: Nullable<string> }>

@@ -1,9 +1,6 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 const {
-  getBlobMetadataCollection,
-  cursorFromRows,
-  decodeCursor,
   blobCollectionSummary,
   getFileStream,
   deleteBlob,
@@ -17,9 +14,11 @@ const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/uplo
 const {
   upsertBlobFactory,
   updateBlobFactory,
-  getBlobMetadataFactory
+  getBlobMetadataFactory,
+  getBlobMetadataCollectionFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
+const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/db')
 const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
 const cryptoRandomString = require('crypto-random-string')
 const { createTestUser } = require('@/test/authHelper')
@@ -30,6 +29,7 @@ const uploadFileStream = uploadFileStreamFactory({
   updateBlob: updateBlobFactory({ db })
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {

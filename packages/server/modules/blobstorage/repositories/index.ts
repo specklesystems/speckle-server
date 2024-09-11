@@ -1,5 +1,6 @@
 import {
   GetBlobMetadata,
+  GetBlobMetadataCollection,
   GetBlobs,
   UpdateBlob,
   UpsertBlob
@@ -8,6 +9,7 @@ import {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
+import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
   BadRequestError,
@@ -97,4 +99,26 @@ export const getBlobMetadataFactory =
       throw new ResourceMismatch("The stream doesn't have the given resource")
 
     return obj
+  }
+
+export const getBlobMetadataCollectionFactory =
+  (deps: { db: Knex }): GetBlobMetadataCollection =>
+  async ({ streamId, query = null, limit = 25, cursor = null }) => {
+    const cursorTarget = 'createdAt'
+    const limitMax = 25
+    const queryLimit = limit && limit < limitMax ? limit : limitMax
+    const blobs = tables
+      .blobStorage(deps.db)
+      .where({ [BlobStorage.col.streamId]: streamId })
+      .orderBy(cursorTarget, 'desc')
+      .limit(queryLimit)
+
+    if (query) blobs.andWhereLike('fileName', `%${query}%`)
+    if (cursor) blobs.andWhere(cursorTarget, '<', decodeCursor(cursor))
+
+    const rows = await blobs
+    return {
+      blobs: rows,
+      cursor: cursorFromRows(rows, cursorTarget)
+    }
   }

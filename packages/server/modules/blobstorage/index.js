@@ -22,7 +22,6 @@ const {
   markUploadSuccess,
   markUploadOverFileSizeLimit,
   deleteBlob,
-  getBlobMetadataCollection,
   getFileSizeLimit
 } = require('@/modules/blobstorage/services')
 
@@ -38,7 +37,8 @@ const {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,
   updateBlobFactory,
-  getBlobMetadataFactory
+  getBlobMetadataFactory,
+  getBlobMetadataCollectionFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
 const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/upload')
@@ -49,6 +49,7 @@ const uploadFileStream = uploadFileStreamFactory({
   updateBlob: updateBlobFactory({ db })
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {

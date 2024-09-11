@@ -1,10 +1,9 @@
 import { db } from '@/db/knex'
-import { getBlobMetadataFactory } from '@/modules/blobstorage/repositories'
 import {
-  getBlobMetadataCollection,
-  blobCollectionSummary,
-  getFileSizeLimit
-} from '@/modules/blobstorage/services'
+  getBlobMetadataCollectionFactory,
+  getBlobMetadataFactory
+} from '@/modules/blobstorage/repositories'
+import { blobCollectionSummary, getFileSizeLimit } from '@/modules/blobstorage/services'
 import {
   ProjectBlobArgs,
   ProjectBlobsArgs,
@@ -20,6 +19,7 @@ import {
 } from '@/modules/shared/errors'
 
 const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
