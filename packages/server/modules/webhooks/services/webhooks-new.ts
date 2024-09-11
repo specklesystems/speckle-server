@@ -1,6 +1,9 @@
+import { ForbiddenError } from '@/modules/shared/errors'
 import {
   CountWebhooksByStreamId,
   CreateWebhook,
+  DeleteWebhook,
+  GetWebhookById,
   UpdateWebhook
 } from '@/modules/webhooks/domain/operations'
 import { Webhook } from '@/modules/webhooks/domain/types'
@@ -63,4 +66,24 @@ export const updateWebhook =
         updatedAt: new Date()
       }
     })
+  }
+
+export const deleteWebhook =
+  ({
+    deleteWebhookConfig,
+    getWebhookById
+  }: {
+    deleteWebhookConfig: DeleteWebhook
+    getWebhookById: GetWebhookById
+  }) =>
+  async ({ id, streamId }: { id: string; streamId: string }) => {
+    const wh = await getWebhookById({ id })
+    if (streamId !== wh?.streamId)
+      throw new ForbiddenError(
+        'The webhook id and stream id do not match. Please check your inputs.'
+      )
+
+    await deleteWebhookConfig({ id })
+
+    return id
   }

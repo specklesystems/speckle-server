@@ -11,59 +11,6 @@ const blobLookup = ({ blobId, streamId }) =>
   BlobStorage().where({ id: blobId, streamId })
 
 /**
- * Get blobs - use only internally, as this doesn't require a streamId
- */
-const getBlobs = async ({ streamId, blobIds }) => {
-  const q = BlobStorage().whereIn('id', blobIds)
-  if (streamId) {
-    q.andWhere('streamId', streamId)
-  }
-
-  return await q
-}
-
-const getAllStreamBlobIds = async ({ streamId }) => {
-  const res = await BlobStorage().where({ streamId }).select('id')
-  return res
-}
-
-/**
- * Get a single blob - use only internally, as this doesn't require a streamId
- */
-const getBlob = async ({ streamId, blobId }) => {
-  const blobs = await getBlobs({ streamId, blobIds: [blobId] })
-  return blobs?.length ? blobs[0] : null
-}
-
-const uploadFileStream = async (
-  storeFileStream,
-  { streamId, userId },
-  { blobId, fileName, fileType, fileStream }
-) => {
-  if (streamId.length !== 10)
-    throw new BadRequestError('The stream id has to be of length 10')
-  if (userId.length !== 10)
-    throw new BadRequestError('The user id has to be of length 10')
-  const objectKey = `assets/${streamId}/${blobId}`
-  const dbFile = {
-    id: blobId,
-    streamId,
-    userId,
-    objectKey,
-    fileName,
-    fileType
-  }
-  // need to insert the upload data before starting otherwise the upload finished
-  // even might fire faster, than the db insert, causing missing asset data in the db
-  await BlobStorage().insert(dbFile).onConflict(['id', 'streamId']).ignore()
-
-  const { fileHash } = await storeFileStream({ objectKey, fileStream })
-  // here we should also update the blob db record with the fileHash
-  await BlobStorage().where({ id: blobId }).update({ fileHash })
-  return { blobId, fileName, fileHash }
-}
-
-/**
  * @returns {import('@/modules/blobstorage/helpers/types').BlobStorageRecord | null}
  */
 const getBlobMetadata = async ({ streamId, blobId }, blobRepo = blobLookup) => {
@@ -177,7 +124,6 @@ module.exports = {
   cursorFromRows,
   decodeCursor,
   getBlobMetadata,
-  uploadFileStream,
   markUploadSuccess,
   markUploadOverFileSizeLimit,
   markUploadError,
@@ -185,8 +131,5 @@ module.exports = {
   deleteBlob,
   getBlobMetadataCollection,
   blobCollectionSummary,
-  getBlobs,
-  getBlob,
-  getAllStreamBlobIds,
   getFileSizeLimit
 }

@@ -1,34 +1,50 @@
 import { Optional } from '@speckle/shared'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
-import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import {
+  DeleteVerifications,
+  GetPendingToken
+} from '@/modules/emails/domain/operations'
 
-async function initializeState(tokenId: Optional<string>) {
-  if (!tokenId)
-    throw new EmailVerificationFinalizationError('Missing verification token')
-
-  const token = await getPendingToken({ token: tokenId })
-  if (!token)
-    throw new EmailVerificationFinalizationError(
-      'Invalid or expired verification token'
-    )
-
-  return { token }
+type InitializeStateDeps = {
+  getPendingToken: GetPendingToken
 }
 
-type FinalizationState = Awaited<ReturnType<typeof initializeState>>
+const initializeState =
+  (deps: InitializeStateDeps) => async (tokenId: Optional<string>) => {
+    if (!tokenId)
+      throw new EmailVerificationFinalizationError('Missing verification token')
 
-async function finalizeVerification(state: FinalizationState) {
-  const { token } = state
-  const { email } = token
+    const token = await deps.getPendingToken({ token: tokenId })
+    if (!token)
+      throw new EmailVerificationFinalizationError(
+        'Invalid or expired verification token'
+      )
 
-  await Promise.all([markUserAsVerified(email), deleteVerifications(email)])
+    return { token }
+  }
+
+type FinalizationState = Awaited<ReturnType<ReturnType<typeof initializeState>>>
+
+type FinalizeVerificationDeps = {
+  markUserAsVerified: typeof markUserAsVerified
+  deleteVerifications: DeleteVerifications
 }
+
+const finalizeVerification =
+  (deps: FinalizeVerificationDeps) => async (state: FinalizationState) => {
+    const { token } = state
+    const { email } = token
+
+    await Promise.all([deps.markUserAsVerified(email), deps.deleteVerifications(email)])
+  }
 
 /**
  * Finalize the email verification process
  */
-export async function finalizeEmailVerification(tokenId: Optional<string>) {
-  const state = await initializeState(tokenId)
-  await finalizeVerification(state)
-}
+export const finalizeEmailVerificationFactory =
+  (deps: InitializeStateDeps & FinalizeVerificationDeps) =>
+  async (tokenId: Optional<string>) => {
+    const state = await initializeState(deps)(tokenId)
+    await finalizeVerification(deps)(state)
+  }

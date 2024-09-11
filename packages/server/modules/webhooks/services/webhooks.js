@@ -11,10 +11,6 @@ const Users = () => knex('users')
 const { getServerInfo } = require('../../core/services/generic')
 
 module.exports = {
-  async deleteWebhook({ id }) {
-    return await WebhooksConfig().where({ id }).del()
-  },
-
   async getStreamWebhooks({ streamId }) {
     const webhooks = await WebhooksConfig()
       .select('*')
