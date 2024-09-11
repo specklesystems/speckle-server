@@ -1,26 +1,40 @@
 import { db } from '@/db/knex'
+import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   AccessRequestType,
+  createNewRequestFactory,
   getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import {
   getPendingProjectRequests,
   getPendingStreamRequests,
   getUserProjectAccessRequestFactory,
-  getUserStreamAccessRequest,
+  getUserStreamAccessRequestFactory,
   processPendingProjectRequest,
   processPendingStreamRequest,
-  requestProjectAccess,
+  requestProjectAccessFactory,
   requestStreamAccess
 } from '@/modules/accessrequests/services/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
+import { getStream } from '@/modules/core/repositories/streams'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
 
 const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
   getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+})
+
+const getUserStreamAccessRequest = getUserStreamAccessRequestFactory({
+  getUserProjectAccessRequest
+})
+
+const requestProjectAccess = requestProjectAccessFactory({
+  getUserStreamAccessRequest,
+  getStream,
+  createNewRequest: createNewRequestFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
 })
 
 const resolvers: Resolvers = {
