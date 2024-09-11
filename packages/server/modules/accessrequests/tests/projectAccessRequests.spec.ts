@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import {
-  deleteRequestById,
+  deleteRequestByIdFactory,
   getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { requestProjectAccess } from '@/modules/accessrequests/services/stream'
@@ -271,7 +271,7 @@ describe('Project access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getActiveUserReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
