@@ -6,9 +6,7 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
-  deleteRequestByIdFactory,
   generateId,
-  getPendingAccessRequestFactory,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
@@ -21,10 +19,15 @@ import {
   validateStreamAccess
 } from '@/modules/core/services/streams/streamAccessService'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
-import { db } from '@/db/knex'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional
+} from '@/modules/shared/helpers/typeHelper'
 import {
   CreateNewRequest,
+  DeleteRequestById,
+  GetPendingAccessRequest,
   GetPendingAccessRequests,
   GetPendingProjectRequests,
   GetUserProjectAccessRequest,
@@ -159,59 +162,67 @@ export const getPendingStreamRequestsFactory =
 /**
  * Accept or decline a pending access request
  */
-export async function processPendingStreamRequest(
-  userId: string,
-  requestId: string,
-  accept: boolean,
-  role: StreamRoles = Roles.Stream.Contributor,
-  resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-) {
-  const req = await getPendingAccessRequestFactory({ db })(
-    requestId,
-    AccessRequestType.Stream
-  )
-  if (!req) {
-    throw new AccessRequestProcessingError('No request with this ID exists')
-  }
-
-  try {
-    await validateStreamAccess(
-      userId,
-      req.resourceId,
-      Roles.Stream.Owner,
-      resourceAccessRules
+export const processPendingStreamRequestFactory =
+  (deps: {
+    getPendingAccessRequest: GetPendingAccessRequest
+    validateStreamAccess: typeof validateStreamAccess
+    addOrUpdateStreamCollaborator: typeof addOrUpdateStreamCollaborator
+    deleteRequestById: DeleteRequestById
+    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+  }) =>
+  async (
+    userId: string,
+    requestId: string,
+    accept: boolean,
+    role: StreamRoles = Roles.Stream.Contributor,
+    resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  ) => {
+    const req: Optional<StreamAccessRequestRecord> = await deps.getPendingAccessRequest(
+      requestId,
+      AccessRequestType.Stream
     )
-  } catch (e: unknown) {
-    const err = ensureError(e, 'Stream access validation failed')
-    if (err instanceof StreamInvalidAccessError) {
-      throw new AccessRequestProcessingError(
-        'You must own the stream to process access requests',
-        { cause: err }
-      )
-    } else {
-      throw err
+    if (!req) {
+      throw new AccessRequestProcessingError('No request with this ID exists')
     }
+
+    try {
+      await deps.validateStreamAccess(
+        userId,
+        req.resourceId,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
+    } catch (e: unknown) {
+      const err = ensureError(e, 'Stream access validation failed')
+      if (err instanceof StreamInvalidAccessError) {
+        throw new AccessRequestProcessingError(
+          'You must own the stream to process access requests',
+          { cause: err }
+        )
+      } else {
+        throw err
+      }
+    }
+
+    if (accept) {
+      await deps.addOrUpdateStreamCollaborator(
+        req.resourceId,
+        req.requesterId,
+        role,
+        userId,
+        resourceAccessRules
+      )
+    }
+
+    await deps.deleteRequestById(req.id)
+
+    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Finalized, {
+      request: req,
+      approved: accept ? { role } : undefined,
+      finalizedBy: userId
+    })
+
+    return req
   }
 
-  if (accept) {
-    await addOrUpdateStreamCollaborator(
-      req.resourceId,
-      req.requesterId,
-      role,
-      userId,
-      resourceAccessRules
-    )
-  }
-
-  await deleteRequestByIdFactory({ db })(req.id)
-
-  await AccessRequestsEmitter.emit(AccessRequestsEmitter.events.Finalized, {
-    request: req,
-    approved: accept ? { role } : undefined,
-    finalizedBy: userId
-  })
-
-  return req
-}
-
-export const processPendingProjectRequest = processPendingStreamRequest
+export const processPendingProjectRequest = processPendingStreamRequestFactory

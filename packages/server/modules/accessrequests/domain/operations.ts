@@ -32,6 +32,13 @@ export type GetPendingAccessRequests = <T extends AccessRequestType>(
   resourceId: string
 ) => Promise<ServerAccessRequestRecord<T, string>[]>
 
+export type GetPendingAccessRequest = <T extends AccessRequestType = AccessRequestType>(
+  requestId: string,
+  resourceType?: T
+) => Promise<Optional<ServerAccessRequestRecord<T, string>>>
+
+export type DeleteRequestById = (requestId: string) => Promise<boolean>
+
 export type GetUserProjectAccessRequest = (
   userId: string,
   projectId: string
