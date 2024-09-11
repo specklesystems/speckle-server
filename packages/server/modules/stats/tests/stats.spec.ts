@@ -11,7 +11,7 @@ import { createManyObjects } from '@/test/helpers'
 
 import {
   getStreamHistoryFactory,
-  getCommitHistory,
+  getCommitHistoryFactory,
   getObjectHistory,
   getUserHistory,
   getTotalStreamCountFactory,
@@ -63,7 +63,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the commit creation history by month', async () => {
-    const res = await getCommitHistory()
+    const res = await getCommitHistoryFactory({ db })()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')

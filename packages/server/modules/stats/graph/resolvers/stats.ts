@@ -3,7 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { validateScopes } from '@/modules/shared'
 import {
   getStreamHistoryFactory,
-  getCommitHistory,
+  getCommitHistoryFactory,
   getObjectHistory,
   getUserHistory,
   getTotalStreamCountFactory,
@@ -49,7 +49,7 @@ export = {
     },
 
     async commitHistory() {
-      return await getCommitHistory()
+      return await getCommitHistoryFactory({ db })()
     },
 
     async objectHistory() {

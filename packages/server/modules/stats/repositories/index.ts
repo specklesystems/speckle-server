@@ -45,7 +45,7 @@ export const getStreamHistoryFactory = (deps: { db: Knex }) => async () => {
   return result.rows
 }
 
-export async function getCommitHistory() {
+export const getCommitHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', commits. "createdAt") AS created_month,
@@ -55,7 +55,7 @@ export async function getCommitHistory() {
     GROUP BY
       DATE_TRUNC('month', commits. "createdAt")
     `
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
