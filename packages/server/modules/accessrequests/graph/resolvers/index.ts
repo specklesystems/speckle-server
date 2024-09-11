@@ -13,7 +13,7 @@ import {
   processPendingProjectRequest,
   processPendingStreamRequest,
   requestProjectAccessFactory,
-  requestStreamAccess
+  requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
@@ -35,6 +35,10 @@ const requestProjectAccess = requestProjectAccessFactory({
   getStream,
   createNewRequest: createNewRequestFactory({ db }),
   accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess
 })
 
 const resolvers: Resolvers = {

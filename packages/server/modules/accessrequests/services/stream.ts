@@ -6,12 +6,10 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
-  createNewRequestFactory,
   deleteRequestByIdFactory,
   generateId,
   getPendingAccessRequestFactory,
   getPendingAccessRequestsFactory,
-  getUsersPendingAccessRequestFactory,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
@@ -30,7 +28,8 @@ import {
   CreateNewRequest,
   GetUserProjectAccessRequest,
   GetUsersPendingAccessRequest,
-  GetUserStreamAccessRequest
+  GetUserStreamAccessRequest,
+  RequestProjectAccess
 } from '@/modules/accessrequests/domain/operations'
 
 function buildStreamAccessRequestGraphQLReturn(
@@ -83,7 +82,7 @@ export const requestProjectAccessFactory =
     getStream: typeof getStream
     createNewRequest: CreateNewRequest
     accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
-  }) =>
+  }): RequestProjectAccess =>
   async (userId: string, projectId: string) => {
     const [stream, existingRequest] = await Promise.all([
       deps.getStream({ userId, streamId: projectId }),
@@ -128,20 +127,12 @@ export const requestProjectAccessFactory =
 /**
  * Create new stream access request
  */
-export async function requestStreamAccess(userId: string, streamId: string) {
-  const requestProjectAccess = requestProjectAccessFactory({
-    getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
-      getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
-        getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
-      })
-    }),
-    getStream,
-    createNewRequest: createNewRequestFactory({ db }),
-    accessRequestsEmitter: AccessRequestsEmitter.emit
-  })
-  const req = await requestProjectAccess(userId, streamId)
-  return buildStreamAccessRequestGraphQLReturn(req)
-}
+export const requestStreamAccessFactory =
+  (deps: { requestProjectAccess: RequestProjectAccess }) =>
+  async (userId: string, streamId: string) => {
+    const req = await deps.requestProjectAccess(userId, streamId)
+    return buildStreamAccessRequestGraphQLReturn(req)
+  }
 
 /**
  * Get pending project access requests
