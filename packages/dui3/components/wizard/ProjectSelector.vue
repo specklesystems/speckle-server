@@ -80,7 +80,7 @@
           size="lg"
         />
         <div
-          v-if="hasWorkspace"
+          v-if="!hasWorkspace"
           class="text-xs caption rounded p-2 bg-orange-500/10 mb-2"
         >
           You are not involved in any
@@ -90,7 +90,7 @@
         </div>
         <FormSelectBase
           key="name"
-          :disabled="hasWorkspace"
+          :disabled="!hasWorkspace"
           clearable
           label="Workspaces"
           placeholder="Nothing selected"
