@@ -1,3 +1,4 @@
+import { GetUsersPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
@@ -132,7 +133,7 @@ export const createNewRequestFactory =
   }
 
 export const getUsersPendingAccessRequestFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetUsersPendingAccessRequest =>
   async <
     T extends AccessRequestType = AccessRequestType,
     I extends Nullable<string> = Nullable<string>
