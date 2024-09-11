@@ -85,6 +85,8 @@ const documents = {
     "\n  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {\n    id\n    role\n    name\n    description\n  }\n": types.ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamDialog on Project {\n    id\n    name\n    role\n    allowPublicComments\n    visibility\n    team {\n      id\n      role\n      user {\n        ...LimitedUserAvatar\n        role\n      }\n    }\n    invitedTeam {\n      id\n      title\n      inviteId\n      role\n      user {\n        ...LimitedUserAvatar\n        role\n      }\n    }\n    ...ProjectsPageTeamDialogManagePermissions_Project\n  }\n": types.ProjectPageTeamDialogFragmentDoc,
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n": types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
+    "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n": types.ProjectsAddDialog_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsAddDialog_UserFragmentDoc,
     "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    ...ProjectsInviteBanners\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
@@ -233,6 +235,7 @@ const documents = {
     "\n  query ProjectAutomationAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      automations(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ProjectAutomationAccessCheckDocument,
     "\n  query ProjectWebhooks($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      webhooks {\n        items {\n          streamId\n          triggers\n          enabled\n          url\n          id\n          description\n          history(limit: 5) {\n            items {\n              status\n              statusInfo\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.ProjectWebhooksDocument,
     "\n  query ProjectBlobInfo($blobId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      blob(id: $blobId) {\n        id\n        fileName\n        fileType\n        fileSize\n        createdAt\n      }\n    }\n  }\n": types.ProjectBlobInfoDocument,
+    "\n  query ProjectWorkspaceSelect {\n    activeUser {\n      id\n      ...ProjectsAddDialog_User\n    }\n  }\n": types.ProjectWorkspaceSelectDocument,
     "\n  subscription OnProjectUpdated($id: String!) {\n    projectUpdated(id: $id) {\n      id\n      type\n      project {\n        ...ProjectPageProject\n        ...ProjectDashboardItemNoModels\n      }\n    }\n  }\n": types.OnProjectUpdatedDocument,
     "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n            referencedObject\n          }\n        }\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.OnProjectModelsUpdateDocument,
     "\n  subscription OnProjectVersionsUpdate($id: String!) {\n    projectVersionsUpdated(id: $id) {\n      id\n      modelId\n      type\n      version {\n        id\n        ...ViewerModelVersionCardItem\n        ...ProjectModelPageVersionsCardVersion\n        model {\n          id\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
@@ -625,6 +628,14 @@ export function graphql(source: "\n  fragment ProjectPageTeamDialog on Project {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"): (typeof documents)["\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1217,6 +1228,10 @@ export function graphql(source: "\n  query ProjectWebhooks($projectId: String!) 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectBlobInfo($blobId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      blob(id: $blobId) {\n        id\n        fileName\n        fileType\n        fileSize\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectBlobInfo($blobId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      blob(id: $blobId) {\n        id\n        fileName\n        fileType\n        fileSize\n        createdAt\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectWorkspaceSelect {\n    activeUser {\n      id\n      ...ProjectsAddDialog_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectWorkspaceSelect {\n    activeUser {\n      id\n      ...ProjectsAddDialog_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
