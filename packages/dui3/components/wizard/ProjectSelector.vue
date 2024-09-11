@@ -77,19 +77,10 @@
             ValidationHelpers.isStringOfLength({ minLength: 3 })
           ]"
           full-width
-          size="lg"
         />
-        <div
-          v-if="!hasWorkspace"
-          class="text-xs caption rounded p-2 bg-orange-500/10 mb-2"
-        >
-          You are not involved in any
-          <b>Workspace</b>
-          yet. Explore the workspaces!
-          <!-- Provide link here -->
-        </div>
         <FormSelectBase
           key="name"
+          v-model="selectedWorkspace"
           :disabled="!hasWorkspace"
           clearable
           label="Workspaces"
@@ -99,12 +90,30 @@
           :items="workspaces"
           mount-menu-on-body
         >
+          <template #something-selected="{ value }">
+            <span>{{ value.name }}</span>
+          </template>
           <template #option="{ item }">
             <div class="flex items-center">
               <span class="truncate">{{ item.name }}</span>
             </div>
           </template>
         </FormSelectBase>
+        <div
+          v-if="!hasWorkspace"
+          class="text-xs caption rounded p-2 bg-orange-500/10 mb-2"
+        >
+          You are not involved in any
+          <b>Workspace</b>
+          yet. Explore the workspaces!
+          <!-- Provide link here -->
+        </div>
+        <div
+          v-if="selectedWorkspace"
+          class="text-xs caption rounded p-2 bg-orange-500/10 my-2"
+        >
+          Project will be created in the selected workspace.
+        </div>
         <div class="mt-4 flex justify-center items-center space-x-2">
           <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
           <FormButton submit>Create</FormButton>
@@ -124,7 +133,10 @@ import {
   workspacesListQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
-import type { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
+import type {
+  ProjectListProjectItemFragment,
+  WorkspaceListWorkspaceItemFragment
+} from 'lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -146,6 +158,8 @@ const props = withDefaults(
   }>(),
   { showNewProject: true, disableNoWriteAccessProjects: false }
 )
+
+const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
 
 const searchText = ref<string>()
 const newProjectName = ref<string>()
@@ -186,17 +200,46 @@ const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   emit('next', accountId.value, project)
 }
 
-const createNewProject = async (name: string) => {
-  const account = accountStore.accounts.find(
+const account = computed(() => {
+  return accountStore.accounts.find(
     (acc) => acc.accountInfo.id === accountId.value
   ) as DUIAccount
+})
 
-  void trackEvent('DUI3 Action', { name: 'Project Create' }, account.accountInfo.id)
+const createNewProject = async (name: string) => {
+  if (selectedWorkspace.value) {
+    return createNewProjectInWorkspace(name)
+  }
 
-  const { mutate } = provideApolloClient(account.client)(() =>
+  void trackEvent(
+    'DUI3 Action',
+    { name: 'Project Create', workspace: false },
+    account.value.accountInfo.id
+  )
+  const { mutate } = provideApolloClient(account.value.client)(() =>
     useMutation(createProjectMutation)
   )
   const res = await mutate({ input: { name } })
+  if (res?.data?.projectMutations.create) {
+    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
+    emit('next', accountId.value, res?.data?.projectMutations.create)
+  } else {
+    // TODO: Error out
+  }
+}
+
+const createNewProjectInWorkspace = async (name: string) => {
+  void trackEvent(
+    'DUI3 Action',
+    { name: 'Project Create', workspace: true },
+    account.value.accountInfo.id
+  )
+  const { mutate } = provideApolloClient(account.value.client)(() =>
+    useMutation(createProjectMutation)
+  )
+  const res = await mutate({
+    input: { name, workspaceId: selectedWorkspace.value?.id }
+  })
   if (res?.data?.projectMutations.create) {
     refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
