@@ -6,7 +6,6 @@ import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerMembers from '~/components/settings/server/Members.vue'
-import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
 import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
 import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
@@ -92,10 +91,6 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Server.Projects]: {
       title: 'Projects',
       component: SettingsServerProjects
-    },
-    [SettingMenuKeys.Server.PendingInvitations]: {
-      title: 'Pending invitations',
-      component: SettingsServerPendingInvitations
     }
   })
 
