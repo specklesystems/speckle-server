@@ -1,5 +1,5 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
-import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
+import { GetFileInfo, SaveUploadFile } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
   FileUploadRecord
@@ -50,28 +50,30 @@ export type SaveUploadFileInput = Pick<
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string }
 
-export async function saveUploadFile({
-  fileId,
-  streamId,
-  branchName,
-  userId,
-  fileName,
-  fileType,
-  fileSize
-}: SaveUploadFileInput) {
-  const dbFile: Partial<FileUploadRecord> = {
-    id: fileId,
+export const saveUploadFileFactory =
+  (deps: { db: Knex }): SaveUploadFile =>
+  async ({
+    fileId,
     streamId,
     branchName,
     userId,
     fileName,
     fileType,
-    fileSize,
-    uploadComplete: true
+    fileSize
+  }: SaveUploadFileInput) => {
+    const dbFile: Partial<FileUploadRecord> = {
+      id: fileId,
+      streamId,
+      branchName,
+      userId,
+      fileName,
+      fileType,
+      fileSize,
+      uploadComplete: true
+    }
+    const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
+    return newRecord as FileUploadRecord
   }
-  const [newRecord] = await FileUploads.knex().insert(dbFile, '*')
-  return newRecord as FileUploadRecord
-}
 
 const getPendingUploadsBaseQuery = (
   streamId: string,

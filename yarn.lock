@@ -15450,6 +15450,7 @@ __metadata:
     "@types/passport-google-oauth20": "npm:^2.0.16"
     "@types/pg": "npm:^8.6.6"
     "@types/pino-http": "npm:^5.8.4"
+    "@types/request": "npm:^2.48.12"
     "@types/sanitize-html": "npm:^2.6.2"
     "@types/supertest": "npm:^2.0.12"
     "@types/ua-parser-js": "npm:^0.7.39"
@@ -19000,7 +19001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/request@npm:^2.48.8":
+"@types/request@npm:^2.48.12, @types/request@npm:^2.48.8":
   version: 2.48.12
   resolution: "@types/request@npm:2.48.12"
   dependencies:
