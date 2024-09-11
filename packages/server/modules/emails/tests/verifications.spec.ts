@@ -27,6 +27,8 @@ import { db } from '@/db/knex'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 
 const mailerMock = EmailSendingServiceMock
 const getPendingToken = getPendingTokenFactory({ db })
@@ -37,7 +39,9 @@ const requestEmailVerification = requestEmailVerificationFactory({
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
     db
   }),
-  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+  sendEmail,
+  renderEmail
 })
 
 const cleanup = async () => {

@@ -1,7 +1,8 @@
 import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
 import {
-  deleteRequestById,
-  getPendingAccessRequest
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
@@ -248,7 +249,7 @@ describe('Stream access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
@@ -368,7 +369,7 @@ describe('Stream access requests', () => {
         expect(results.data?.streamAccessRequestUse).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

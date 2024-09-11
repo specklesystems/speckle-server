@@ -1,5 +1,6 @@
 import type { Angle, ObjectIdentifier } from '@/domain/domain.js'
 import { isCastableToBrand } from '@/utils/brand.js'
+import axios from 'axios'
 import { z } from 'zod'
 
 const previewResponseSchema = z.record(
@@ -12,11 +13,16 @@ export type GeneratePreview = (
 ) => Promise<Record<Angle, string | undefined>>
 
 export const generatePreviewFactory =
-  (deps: { serviceOrigin: string }): GeneratePreview =>
+  ({
+    serviceOrigin,
+    timeout
+  }: {
+    serviceOrigin: string
+    timeout: number
+  }): GeneratePreview =>
   async (task: ObjectIdentifier) => {
-    const previewUrl = `${deps.serviceOrigin}/preview/${task.streamId}/${task.objectId}`
-    const response = await fetch(previewUrl)
-    const responseBody: unknown = await response.json()
-    const previewResponse = previewResponseSchema.parse(responseBody)
+    const previewUrl = `${serviceOrigin}/preview/${task.streamId}/${task.objectId}`
+    const res = await axios.get(previewUrl, { timeout })
+    const previewResponse = previewResponseSchema.parse(res.data)
     return previewResponse
   }

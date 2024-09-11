@@ -2,17 +2,18 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 import { validateScopes } from '@/modules/shared'
 import {
-  getStreamHistory,
-  getCommitHistory,
-  getObjectHistory,
-  getUserHistory,
-  getTotalStreamCount,
-  getTotalCommitCount,
-  getTotalObjectCount,
-  getTotalUserCount
-} from '@/modules/stats/services/index'
+  getStreamHistoryFactory,
+  getCommitHistoryFactory,
+  getObjectHistoryFactory,
+  getUserHistoryFactory,
+  getTotalStreamCountFactory,
+  getTotalCommitCountFactory,
+  getTotalObjectCountFactory,
+  getTotalUserCountFactory
+} from '@/modules/stats/repositories/index'
 import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { db } from '@/db/knex'
 
 export = {
   Query: {
@@ -28,35 +29,35 @@ export = {
 
   ServerStats: {
     async totalStreamCount() {
-      return await getTotalStreamCount()
+      return await getTotalStreamCountFactory({ db })()
     },
 
     async totalCommitCount() {
-      return await getTotalCommitCount()
+      return await getTotalCommitCountFactory({ db })()
     },
 
     async totalObjectCount() {
-      return await getTotalObjectCount()
+      return await getTotalObjectCountFactory({ db })()
     },
 
     async totalUserCount() {
-      return await getTotalUserCount()
+      return await getTotalUserCountFactory({ db })()
     },
 
     async streamHistory() {
-      return await getStreamHistory()
+      return await getStreamHistoryFactory({ db })()
     },
 
     async commitHistory() {
-      return await getCommitHistory()
+      return await getCommitHistoryFactory({ db })()
     },
 
     async objectHistory() {
-      return await getObjectHistory()
+      return await getObjectHistoryFactory({ db })()
     },
 
     async userHistory() {
-      return await getUserHistory()
+      return await getUserHistoryFactory({ db })()
     }
   }
 } as Resolvers

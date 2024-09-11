@@ -1,10 +1,15 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { createWebhook, updateWebhook } from '@/modules/webhooks/services/webhooks-new'
+import {
+  createWebhook,
+  deleteWebhook,
+  updateWebhook
+} from '@/modules/webhooks/services/webhooks-new'
 import { Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
   createWebhookFactory,
+  deleteWebhookFactory,
   getWebhookByIdFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/repositories/webhooks'
@@ -61,6 +66,19 @@ export = {
       })
 
       return updated
+    },
+    webhookDelete: async (_parent, args, context) => {
+      await authorizeResolver(
+        context.userId,
+        args.webhook.streamId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
+
+      return await deleteWebhook({
+        deleteWebhookConfig: deleteWebhookFactory({ db }),
+        getWebhookById: getWebhookByIdFactory({ db })
+      })(args.webhook)
     }
   }
 } as Resolvers

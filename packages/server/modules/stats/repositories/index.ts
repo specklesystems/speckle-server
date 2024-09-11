@@ -1,32 +1,32 @@
-import knex from '@/db/knex'
+import { Knex } from 'knex'
 
-export async function getTotalStreamCount() {
+export const getTotalStreamCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM streams'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
-export async function getTotalCommitCount() {
+export const getTotalCommitCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM commits'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
-export async function getTotalObjectCount() {
+export const getTotalObjectCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM objects'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
-export async function getTotalUserCount() {
+export const getTotalUserCountFactory = (deps: { db: Knex }) => async () => {
   // returns -1 for small tables, no good
   // const fastQuery = "SELECT reltuples::bigint AS estimate FROM pg_catalog.pg_class WHERE relname = 'users'"
   const query = 'SELECT COUNT(*) FROM users'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
-export async function getStreamHistory() {
+export const getStreamHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', streams. "createdAt") AS created_month,
@@ -37,14 +37,14 @@ export async function getStreamHistory() {
       DATE_TRUNC('month', streams. "createdAt")
     `
 
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
   return result.rows
 }
 
-export async function getCommitHistory() {
+export const getCommitHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', commits. "createdAt") AS created_month,
@@ -54,14 +54,14 @@ export async function getCommitHistory() {
     GROUP BY
       DATE_TRUNC('month', commits. "createdAt")
     `
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
   return result.rows
 }
 
-export async function getObjectHistory() {
+export const getObjectHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', objects. "createdAt") AS created_month,
@@ -71,14 +71,14 @@ export async function getObjectHistory() {
     GROUP BY
       DATE_TRUNC('month', objects. "createdAt")
     `
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
   return result.rows
 }
 
-export async function getUserHistory() {
+export const getUserHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', users. "createdAt") AS created_month,
@@ -88,7 +88,7 @@ export async function getUserHistory() {
     GROUP BY
       DATE_TRUNC('month', users. "createdAt")
     `
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))

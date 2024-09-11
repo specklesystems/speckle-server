@@ -26,3 +26,5 @@ export type UpdateWebhook = ({
       >
     >
 }) => Promise<string>
+
+export type DeleteWebhook = ({ id }: Pick<Webhook, 'id'>) => Promise<number>
