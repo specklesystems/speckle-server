@@ -18,11 +18,13 @@
     <template #something-selected="{ value }">
       <div class="flex items-center gap-x-2">
         <WorkspaceAvatar
-          :logo="value.logo"
-          :default-logo-index="value.defaultLogoIndex"
+          :logo="(value as ProjectsAddDialog_WorkspaceFragment).logo"
+          :default-logo-index="(value as ProjectsAddDialog_WorkspaceFragment).defaultLogoIndex"
           size="2xs"
         />
-        <span class="truncate text-foreground">{{ value.name }}</span>
+        <span class="truncate text-foreground">
+          {{ (value as ProjectsAddDialog_WorkspaceFragment).name }}
+        </span>
       </div>
     </template>
     <template #option="{ item }">
@@ -44,21 +46,25 @@ import type { PropType } from 'vue'
 import { Roles } from '@speckle/shared'
 import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
-type ValueType = ProjectsAddDialog_WorkspaceFragment | undefined
-
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: ValueType): void
+  (
+    e: 'update:modelValue',
+    v:
+      | ProjectsAddDialog_WorkspaceFragment
+      | ProjectsAddDialog_WorkspaceFragment[]
+      | undefined
+  ): void
 }>()
 
 const props = defineProps({
   modelValue: {
-    type: Object as PropType<ValueType>,
+    type: Object as PropType<ProjectsAddDialog_WorkspaceFragment | undefined>,
     default: undefined
   },
-  items: Array as PropType<ValueType[]>,
+  items: Array as PropType<ProjectsAddDialog_WorkspaceFragment[]>,
   disabledItems: {
     required: false,
-    type: Array as PropType<ValueType[]>
+    type: Array as PropType<ProjectsAddDialog_WorkspaceFragment[]>
   }
 })
 
