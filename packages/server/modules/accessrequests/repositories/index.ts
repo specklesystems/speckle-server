@@ -1,6 +1,9 @@
 import {
   AccessRecordInput,
   CreateNewRequest,
+  DeleteRequestById,
+  GetPendingAccessRequest,
+  GetPendingAccessRequests,
   GetUsersPendingAccessRequest
 } from '@/modules/accessrequests/domain/operations'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
@@ -70,7 +73,7 @@ const baseQueryFactory =
 export const generateId = () => cryptoRandomString({ length: 10 })
 
 export const getPendingAccessRequestsFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetPendingAccessRequests =>
   async <T extends AccessRequestType>(resourceType: T, resourceId: string) => {
     if (!resourceId || !resourceType) {
       throw new InvalidArgumentError('Resource type and ID missing')
@@ -84,7 +87,7 @@ export const getPendingAccessRequestsFactory =
   }
 
 export const getPendingAccessRequestFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetPendingAccessRequest =>
   async <T extends AccessRequestType = AccessRequestType>(
     requestId: string,
     resourceType?: T
@@ -101,7 +104,8 @@ export const getPendingAccessRequestFactory =
   }
 
 export const deleteRequestByIdFactory =
-  (deps: { db: Knex }) => async (requestId: string) => {
+  (deps: { db: Knex }): DeleteRequestById =>
+  async (requestId: string) => {
     if (!requestId) {
       throw new InvalidArgumentError('Request ID missing')
     }
