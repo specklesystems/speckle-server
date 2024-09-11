@@ -26,7 +26,12 @@ import {
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { db } from '@/db/knex'
-import { GetUsersPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
+import {
+  CreateNewRequest,
+  GetUserProjectAccessRequest,
+  GetUsersPendingAccessRequest,
+  GetUserStreamAccessRequest
+} from '@/modules/accessrequests/domain/operations'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -40,7 +45,9 @@ function buildStreamAccessRequestGraphQLReturn(
 }
 
 export const getUserProjectAccessRequestFactory =
-  (deps: { getUsersPendingAccessRequest: GetUsersPendingAccessRequest }) =>
+  (deps: {
+    getUsersPendingAccessRequest: GetUsersPendingAccessRequest
+  }): GetUserProjectAccessRequest =>
   async (
     userId: string,
     projectId: string
@@ -53,63 +60,82 @@ export const getUserProjectAccessRequestFactory =
     return req || null
   }
 
-export async function getUserStreamAccessRequest(
-  userId: string,
-  streamId: string
-): Promise<Nullable<StreamAccessRequestGraphQLReturn>> {
-  const req = await getUserProjectAccessRequestFactory({
-    getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
-  })(userId, streamId)
-  if (!req) return null
+export const getUserStreamAccessRequestFactory =
+  (deps: {
+    getUserProjectAccessRequest: GetUserProjectAccessRequest
+  }): GetUserStreamAccessRequest =>
+  async (
+    userId: string,
+    streamId: string
+  ): Promise<Nullable<StreamAccessRequestGraphQLReturn>> => {
+    const req = await deps.getUserProjectAccessRequest(userId, streamId)
+    if (!req) return null
 
-  return buildStreamAccessRequestGraphQLReturn(req)
-}
+    return buildStreamAccessRequestGraphQLReturn(req)
+  }
 
 /**
  * Create new project access request
  */
-export async function requestProjectAccess(userId: string, projectId: string) {
-  const [stream, existingRequest] = await Promise.all([
-    getStream({ userId, streamId: projectId }),
-    getUserStreamAccessRequest(userId, projectId)
-  ])
+export const requestProjectAccessFactory =
+  (deps: {
+    getUserStreamAccessRequest: GetUserStreamAccessRequest
+    getStream: typeof getStream
+    createNewRequest: CreateNewRequest
+    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+  }) =>
+  async (userId: string, projectId: string) => {
+    const [stream, existingRequest] = await Promise.all([
+      deps.getStream({ userId, streamId: projectId }),
+      deps.getUserStreamAccessRequest(userId, projectId)
+    ])
 
-  if (existingRequest) {
-    throw new AccessRequestCreationError(
-      'User already has a pending access request for this resource'
-    )
+    if (existingRequest) {
+      throw new AccessRequestCreationError(
+        'User already has a pending access request for this resource'
+      )
+    }
+
+    if (!stream) {
+      throw new AccessRequestCreationError(
+        "Can't request access to a non-existant resource"
+      )
+    }
+
+    if (stream.role) {
+      throw new AccessRequestCreationError(
+        'User already has access to the specified resource'
+      )
+    }
+
+    const req = await deps.createNewRequest<AccessRequestType.Stream, string>({
+      id: generateId(),
+      requesterId: userId,
+      resourceType: AccessRequestType.Stream,
+      resourceId: projectId
+    })
+
+    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Created, {
+      request: req
+    })
+
+    return req
   }
-
-  if (!stream) {
-    throw new AccessRequestCreationError(
-      "Can't request access to a non-existant resource"
-    )
-  }
-
-  if (stream.role) {
-    throw new AccessRequestCreationError(
-      'User already has access to the specified resource'
-    )
-  }
-
-  const req = await createNewRequestFactory({ db })<AccessRequestType.Stream, string>({
-    id: generateId(),
-    requesterId: userId,
-    resourceType: AccessRequestType.Stream,
-    resourceId: projectId
-  })
-
-  await AccessRequestsEmitter.emit(AccessRequestsEmitter.events.Created, {
-    request: req
-  })
-
-  return req
-}
 
 /**
  * Create new stream access request
  */
 export async function requestStreamAccess(userId: string, streamId: string) {
+  const requestProjectAccess = requestProjectAccessFactory({
+    getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
+      getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
+        getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+      })
+    }),
+    getStream,
+    createNewRequest: createNewRequestFactory({ db }),
+    accessRequestsEmitter: AccessRequestsEmitter.emit
+  })
   const req = await requestProjectAccess(userId, streamId)
   return buildStreamAccessRequestGraphQLReturn(req)
 }

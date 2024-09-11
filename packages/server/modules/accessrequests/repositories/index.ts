@@ -1,4 +1,8 @@
-import { GetUsersPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
+import {
+  AccessRecordInput,
+  CreateNewRequest,
+  GetUsersPendingAccessRequest
+} from '@/modules/accessrequests/domain/operations'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
@@ -109,13 +113,8 @@ export const deleteRequestByIdFactory =
     return !!q
   }
 
-type AccessRecordInput<
-  T extends AccessRequestType = AccessRequestType,
-  I extends Nullable<string> = Nullable<string>
-> = Omit<ServerAccessRequestRecord<T, I>, 'createdAt' | 'updatedAt'>
-
 export const createNewRequestFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): CreateNewRequest =>
   async <
     T extends AccessRequestType = AccessRequestType,
     I extends Nullable<string> = Nullable<string>
