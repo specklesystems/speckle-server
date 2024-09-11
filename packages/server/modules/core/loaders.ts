@@ -51,7 +51,7 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAppScopes } from '@/modules/auth/repositories'
 import {
@@ -87,6 +87,8 @@ import db from '@/db/knex'
 import { graphDataloadersBuilders } from '@/modules'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
+
+const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
