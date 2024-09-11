@@ -1,4 +1,5 @@
 import { Nullable } from '@speckle/shared'
+import { SetOptional } from 'type-fest'
 
 export type BlobStorageItem = {
   id: string
@@ -13,3 +14,8 @@ export type BlobStorageItem = {
   createdAt: Date
   fileHash: Nullable<string>
 }
+
+export type BlobStorageItemInput = SetOptional<
+  BlobStorageItem,
+  'fileSize' | 'uploadStatus' | 'uploadError' | 'createdAt' | 'fileHash'
+>

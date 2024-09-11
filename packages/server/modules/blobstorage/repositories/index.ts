@@ -1,5 +1,12 @@
-import { GetBlobs } from '@/modules/blobstorage/domain/operationts'
-import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import {
+  GetBlobs,
+  UpdateBlob,
+  UpsertBlob
+} from '@/modules/blobstorage/domain/operations'
+import {
+  BlobStorageItem,
+  BlobStorageItemInput
+} from '@/modules/blobstorage/domain/types'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import { Knex } from 'knex'
 
@@ -41,5 +48,28 @@ export const getAllStreamBlobIdsFactory =
   (deps: { db: Knex }) => async (params: { streamId: string }) => {
     const { streamId } = params
     const res = await tables.blobStorage(deps.db).where({ streamId }).select('id')
+    return res
+  }
+
+export const upsertBlobFactory =
+  (deps: { db: Knex }): UpsertBlob =>
+  async (item: BlobStorageItemInput) => {
+    const [res] = await tables
+      .blobStorage(deps.db)
+      .insert(item)
+      .onConflict(['id', 'streamId'])
+      .ignore()
+      .returning('*')
+    return res
+  }
+
+export const updateBlobFactory =
+  (deps: { db: Knex }): UpdateBlob =>
+  async (params: { id: string; item: Partial<BlobStorageItem> }) => {
+    const { id, item } = params
+    const [res] = await tables
+      .blobStorage(deps.db)
+      .where(BlobStorage.col.id, id)
+      .update(item, '*')
     return res
   }
