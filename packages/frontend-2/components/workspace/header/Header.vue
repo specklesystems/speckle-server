@@ -13,10 +13,25 @@
           size="lg"
         />
       </div>
-      <div class="flex flex-col">
+      <div class="group flex flex-col">
         <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
-        <div class="text-body-xs text-foreground-2 line-clamp-2">
-          {{ workspaceInfo.description || 'No workspace description' }}
+        <div class="flex">
+          <div
+            ref="descriptionRef"
+            class="text-body-xs text-foreground-2 line-clamp-1 max-w-xs"
+          >
+            {{ workspaceInfo.description || 'No workspace description' }}
+          </div>
+          <FormButton
+            v-if="hasOverflow"
+            color="subtle"
+            size="sm"
+            class="hidden group-hover:flex items-center text-foreground text-body-2xs"
+            @click="showDescriptionDialog"
+          >
+            Read more
+            <IconTriangle class="text-foreground" />
+          </FormButton>
         </div>
       </div>
     </div>
@@ -85,6 +100,10 @@
         </div>
       </div>
     </div>
+    <DescriptionDialog
+      v-model:open="isDescriptionDialogOpen"
+      :description="workspaceInfo.description || 'No workspace description'"
+    />
   </div>
 </template>
 
@@ -100,6 +119,7 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
+import DescriptionDialog from './DescriptionDialog.vue'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -173,4 +193,29 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
   }
 }
+
+const descriptionRef = ref<HTMLElement | null>(null)
+const hasOverflow = ref(false)
+
+const checkOverflow = () => {
+  if (descriptionRef.value) {
+    hasOverflow.value =
+      descriptionRef.value.scrollHeight > descriptionRef.value.clientHeight
+  }
+}
+
+const isDescriptionDialogOpen = ref(false)
+
+const showDescriptionDialog = () => {
+  isDescriptionDialogOpen.value = true
+}
+
+onMounted(checkOverflow)
+watch(() => props.workspaceInfo.description, checkOverflow)
+watch(
+  () => props.workspaceInfo.id,
+  () => {
+    nextTick(checkOverflow)
+  }
+)
 </script>
