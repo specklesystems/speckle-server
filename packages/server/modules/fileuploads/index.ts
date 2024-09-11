@@ -1,21 +1,18 @@
 /* istanbul ignore file */
-const {
-  insertNewUploadAndNotifyFactory
-} = require('@/modules/fileuploads/services/management')
-const request = require('request')
-const { streamWritePermissions } = require('@/modules/shared/authz')
-const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-const { moduleLogger } = require('@/logging/logging')
-const {
-  listenForImportUpdatesFactory
-} = require('@/modules/fileuploads/services/resultListener')
-const {
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
+import request from 'request'
+import { streamWritePermissions } from '@/modules/shared/authz'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { moduleLogger } from '@/logging/logging'
+import { listenForImportUpdatesFactory } from '@/modules/fileuploads/services/resultListener'
+import {
   getFileInfoFactory,
   saveUploadFileFactory
-} = require('@/modules/fileuploads/repositories/fileUploads')
-const { db } = require('@/db/knex')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getStreamBranchByName } = require('@/modules/core/repositories/branches')
+} from '@/modules/fileuploads/repositories/fileUploads'
+import { db } from '@/db/knex'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
   getStreamBranchByName,
@@ -23,7 +20,21 @@ const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
   publish
 })
 
-const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
+const saveFileUploads = async ({
+  userId,
+  streamId,
+  branchName,
+  uploadResults
+}: {
+  userId: string
+  streamId: string
+  branchName: string
+  uploadResults: Array<{
+    blobId: string
+    fileName: string
+    fileSize: number
+  }>
+}) => {
   await Promise.all(
     uploadResults.map(async (upload) => {
       await insertNewUploadAndNotify({
@@ -32,14 +43,14 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
         branchName,
         userId,
         fileName: upload.fileName,
-        fileType: upload.fileName.split('.').pop(),
+        fileType: upload.fileName.split('.').pop()!,
         fileSize: upload.fileSize
       })
     })
   )
 }
 
-exports.init = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async (app, isInitial) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
@@ -69,7 +80,7 @@ exports.init = async (app, isInitial) => {
             if (response.statusCode === 201) {
               const { uploadResults } = JSON.parse(body)
               await saveFileUploads({
-                userId: req.context.userId,
+                userId: req.context.userId!,
                 streamId: req.params.streamId,
                 branchName,
                 uploadResults
@@ -100,5 +111,3 @@ exports.init = async (app, isInitial) => {
     listenForImportUpdates()
   }
 }
-
-exports.finalize = () => {}
