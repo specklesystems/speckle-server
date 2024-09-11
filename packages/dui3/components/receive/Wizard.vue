@@ -186,17 +186,15 @@ const selectVersionAndAddModel = async (
   modelCard.modelName = selectedModel.value?.name as string
 
   modelCard.selectedVersionId = version.id
-  modelCard.selectedVersionSourceApp = version.sourceApplication || 'n/a' // TODO: check with dim
-  modelCard.selectedVersionUserId = version.authorUser?.id as string // TODO: check with dim
+  modelCard.selectedVersionSourceApp = version.sourceApplication as string
+  modelCard.selectedVersionUserId = version.authorUser?.id as string
 
   modelCard.latestVersionId = latestVersion.id
-  modelCard.latestVersionSourceApp = latestVersion.sourceApplication || 'n/a' // TODO: check with dim
-  modelCard.latestVersionUserId = latestVersion.authorUser?.id as string // TODO: check with dim
+  modelCard.latestVersionSourceApp = latestVersion.sourceApplication as string
+  modelCard.latestVersionUserId = latestVersion.authorUser?.id as string
 
   modelCard.hasDismissedUpdateWarning = true
   modelCard.hasSelectedOldVersion = version.id !== latestVersion.id
-
-  console.log(modelCard, 'before add receiver model card')
 
   emit('close')
   await hostAppStore.addModel(modelCard)
