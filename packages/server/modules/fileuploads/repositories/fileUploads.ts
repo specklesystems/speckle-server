@@ -1,17 +1,26 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
+import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
   FileUploadRecord
 } from '@/modules/fileuploads/helpers/types'
+import { Knex } from 'knex'
 
-export async function getFileInfo(params: { fileId: string }) {
-  const { fileId } = params
-  const fileInfo = await FileUploads.knex()
-    .where({ [FileUploads.col.id]: fileId })
-    .select<FileUploadRecord[]>('*')
-    .first()
-  return fileInfo
+const tables = {
+  fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
 }
+
+export const getFileInfoFactory =
+  (deps: { db: Knex }): GetFileInfo =>
+  async (params: { fileId: string }) => {
+    const { fileId } = params
+    const fileInfo = await tables
+      .fileUploads(deps.db)
+      .where({ [FileUploads.col.id]: fileId })
+      .select<FileUploadRecord[]>('*')
+      .first()
+    return fileInfo
+  }
 
 export async function getStreamFileUploads(params: { streamId: string }) {
   const { streamId } = params

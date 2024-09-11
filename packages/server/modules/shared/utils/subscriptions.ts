@@ -319,6 +319,8 @@ export const publish = <T extends SubscriptionEvent>(
   payload: SubscriptionTypeMap[T]['payload']
 ) => pubsub.publish(event, payload)
 
+export type PublishSubscription = typeof publish
+
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers
  * depending on the payload, variables and/or GQL context
