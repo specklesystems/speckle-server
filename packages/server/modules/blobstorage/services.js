@@ -1,26 +1,11 @@
 const knex = require('@/db/knex')
-const {
-  NotFoundError,
-  ResourceMismatch,
-  BadRequestError
-} = require('@/modules/shared/errors')
+const { getBlobMetadataFactory } = require('@/modules/blobstorage/repositories')
+const { BadRequestError } = require('@/modules/shared/errors')
 const { getFileSizeLimitMB } = require('@/modules/shared/helpers/envHelper')
 const BlobStorage = () => knex('blob_storage')
 
 const blobLookup = ({ blobId, streamId }) =>
   BlobStorage().where({ id: blobId, streamId })
-
-/**
- * @returns {import('@/modules/blobstorage/helpers/types').BlobStorageRecord | null}
- */
-const getBlobMetadata = async ({ streamId, blobId }, blobRepo = blobLookup) => {
-  if (!streamId) throw new BadRequestError('No steamId provided')
-  const obj = (await blobRepo({ blobId, streamId }).first()) || null
-  if (!obj) throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`)
-  if (obj.streamId !== streamId)
-    throw new ResourceMismatch("The stream doesn't have the given resource")
-  return obj
-}
 
 const blobQuery = ({ streamId, query }) => {
   let blobs = BlobStorage().where({ streamId })
@@ -86,7 +71,7 @@ const blobCollectionSummary = async ({ streamId, query }) => {
 }
 
 const getFileStream = async ({ getObjectStream, streamId, blobId }) => {
-  const { objectKey } = await getBlobMetadata({ streamId, blobId })
+  const { objectKey } = await getBlobMetadataFactory({ db: knex })({ streamId, blobId })
   return await getObjectStream({ objectKey })
 }
 
@@ -106,13 +91,16 @@ const markUploadError = async (deleteObject, streamId, blobId, error) =>
   })
 
 const deleteBlob = async ({ streamId, blobId, deleteObject }) => {
-  const { objectKey } = await getBlobMetadata({ streamId, blobId })
+  const { objectKey } = await getBlobMetadataFactory({ db: knex })({ streamId, blobId })
   await deleteObject({ objectKey })
   await blobLookup({ blobId, streamId }).del()
 }
 
 const updateBlobMetadata = async (streamId, blobId, updateCallback) => {
-  const { objectKey, fileName } = await getBlobMetadata({ streamId, blobId })
+  const { objectKey, fileName } = await getBlobMetadataFactory({ db: knex })({
+    streamId,
+    blobId
+  })
   const updateData = await updateCallback({ objectKey })
   await blobLookup({ blobId, streamId }).update(updateData)
   return { blobId, fileName, ...updateData }
@@ -123,7 +111,6 @@ const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
 module.exports = {
   cursorFromRows,
   decodeCursor,
-  getBlobMetadata,
   markUploadSuccess,
   markUploadOverFileSizeLimit,
   markUploadError,

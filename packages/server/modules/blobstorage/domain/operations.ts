@@ -15,3 +15,8 @@ export type UpdateBlob = (params: {
   id: string
   item: Partial<BlobStorageItem>
 }) => Promise<BlobStorageItem>
+
+export type GetBlobMetadata = (params: {
+  blobId: string
+  streamId: string
+}) => Promise<BlobStorageItem>
