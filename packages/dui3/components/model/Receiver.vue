@@ -133,11 +133,15 @@ const handleVersionSelection = async (
   }
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
+    selectedVersionSourceApp: selectedVersion.sourceApplication,
+    selectedVersionUserId: selectedVersion.authorUser?.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
+    latestVersionSourceApp: latestVersion.sourceApplication,
+    latestVersionUserId: latestVersion.authorUser?.id,
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
 
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'VersionSelector')
 }
 
 // Cancels any in progress receive OR receives latest version
@@ -148,18 +152,20 @@ const handleMainButtonClick = async () => {
 }
 
 const receiveCurrentVersion = async () => {
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'ModelCardButton')
 }
 
 // Cancels any in progress receive AND receives latest version
 const receiveLatestVersion = async () => {
   // Note: here we're updating the model card info, and afterwards we're hitting the receive action
   await store.patchModel(props.modelCard.modelCardId, {
-    selectedVersionId: props.modelCard.latestVersionId
+    selectedVersionId: props.modelCard.latestVersionId,
+    selectedVersionSourceApp: props.modelCard.latestVersionSourceApp,
+    selectedVersionUserId: props.modelCard.latestVersionUserId
   })
   if (props.modelCard.progress)
     await store.receiveModelCancel(props.modelCard.modelCardId)
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'UpdateNotification')
 }
 
 const expiredNotification = computed(() => {
@@ -274,6 +280,8 @@ watchOnce(versionDetailsResult, async (newVal) => {
     patchObject = {
       latestVersionId: newVal?.project.model.versions.items[0].id,
       latestVersionCreatedAt: newVal?.project.model.versions.items[0].createdAt,
+      latestVersionSourceApp: newVal?.project.model.versions.items[0].sourceApplication,
+      latestVersionUserId: newVal?.project.model.versions.items[0].authorUser?.id,
       hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }

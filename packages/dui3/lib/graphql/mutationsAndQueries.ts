@@ -230,6 +230,10 @@ export const versionDetailsQuery = graphql(`
           items {
             id
             createdAt
+            sourceApplication
+            authorUser {
+              id
+            }
           }
         }
         version(id: $versionId) {
