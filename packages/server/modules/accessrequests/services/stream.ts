@@ -108,7 +108,10 @@ export const requestProjectAccessFactory =
       )
     }
 
-    const req = await deps.createNewRequest<AccessRequestType.Stream, string>({
+    const req: StreamAccessRequestRecord = await deps.createNewRequest<
+      AccessRequestType.Stream,
+      string
+    >({
       id: generateId(),
       requesterId: userId,
       resourceType: AccessRequestType.Stream,
