@@ -4,7 +4,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { isNonNullable } from '@speckle/shared'
 import { keyBy } from 'lodash'
 
-exports = {
+export = {
   SmartTextEditorValue: {
     async attachments(parent) {
       const { blobIds } = parent
