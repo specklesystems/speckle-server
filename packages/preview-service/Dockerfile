@@ -58,7 +58,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
-    google-chrome-stable=128.0.6613.119-1 \
+    google-chrome-stable=128.0.6613.137-1 \
     fonts-ipafont-gothic=00303-23 \
     fonts-wqy-zenhei=0.9.45-8 \
     fonts-thai-tlwg=1:0.7.3-1 \
@@ -104,4 +104,4 @@ RUN groupadd -g 30000 -r pptruser && \
 # Run everything after as non-privileged user.
 USER pptruser
 
-ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
