@@ -80,7 +80,10 @@ export const useWorkspacesMixpanel = () => {
       })
     }
 
+    // Update all group properties
     mixpanel.get_group('workspace_id', workspace.id).set(input)
+    // Ensure the user is matched to the group
+    mixpanel.add_group('workspace_id', workspace.id)
   }
 
   return {
