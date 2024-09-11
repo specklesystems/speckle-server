@@ -10,7 +10,7 @@ import {
   deleteRequestById,
   generateId,
   getPendingAccessRequest,
-  getPendingAccessRequests,
+  getPendingAccessRequestsFactory,
   getUsersPendingAccessRequest,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
@@ -25,6 +25,7 @@ import {
 } from '@/modules/core/services/streams/streamAccessService'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
+import { db } from '@/db/knex'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -114,7 +115,10 @@ export async function requestStreamAccess(userId: string, streamId: string) {
 export async function getPendingProjectRequests(
   projectId: string
 ): Promise<StreamAccessRequestRecord[]> {
-  return await getPendingAccessRequests(AccessRequestType.Stream, projectId)
+  return await getPendingAccessRequestsFactory({ db })(
+    AccessRequestType.Stream,
+    projectId
+  )
 }
 
 /**
