@@ -7,8 +7,12 @@ const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 const { moduleLogger } = require('@/logging/logging')
 const {
-  listenForImportUpdates
+  listenForImportUpdatesFactory
 } = require('@/modules/fileuploads/services/resultListener')
+const { getFileInfoFactory } = require('@/modules/fileuploads/repositories/fileUploads')
+const { db } = require('@/db/knex')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const { getStreamBranchByName } = require('@/modules/core/repositories/branches')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -78,6 +82,12 @@ exports.init = async (app, isInitial) => {
   )
 
   if (isInitial) {
+    const listenForImportUpdates = listenForImportUpdatesFactory({
+      getFileInfo: getFileInfoFactory({ db }),
+      publish,
+      getStreamBranchByName
+    })
+
     listenForImportUpdates()
   }
 }
