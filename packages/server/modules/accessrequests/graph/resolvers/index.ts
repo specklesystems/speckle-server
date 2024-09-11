@@ -3,11 +3,12 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   AccessRequestType,
   createNewRequestFactory,
+  getPendingAccessRequestsFactory,
   getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import {
-  getPendingProjectRequests,
-  getPendingStreamRequests,
+  getPendingProjectRequestsFactory,
+  getPendingStreamRequestsFactory,
   getUserProjectAccessRequestFactory,
   getUserStreamAccessRequestFactory,
   processPendingProjectRequest,
@@ -39,6 +40,14 @@ const requestProjectAccess = requestProjectAccessFactory({
 
 const requestStreamAccess = requestStreamAccessFactory({
   requestProjectAccess
+})
+
+const getPendingProjectRequests = getPendingProjectRequestsFactory({
+  getPendingAccessRequests: getPendingAccessRequestsFactory({ db })
+})
+
+const getPendingStreamRequests = getPendingStreamRequestsFactory({
+  getPendingProjectRequests
 })
 
 const resolvers: Resolvers = {

@@ -1,6 +1,7 @@
 import {
   AccessRecordInput,
   CreateNewRequest,
+  GetPendingAccessRequests,
   GetUsersPendingAccessRequest
 } from '@/modules/accessrequests/domain/operations'
 import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
@@ -70,7 +71,7 @@ const baseQueryFactory =
 export const generateId = () => cryptoRandomString({ length: 10 })
 
 export const getPendingAccessRequestsFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetPendingAccessRequests =>
   async <T extends AccessRequestType>(resourceType: T, resourceId: string) => {
     if (!resourceId || !resourceType) {
       throw new InvalidArgumentError('Resource type and ID missing')
