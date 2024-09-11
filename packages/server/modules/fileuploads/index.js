@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 const {
-  insertNewUploadAndNotify
+  insertNewUploadAndNotifyFactory
 } = require('@/modules/fileuploads/services/management')
 const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
@@ -9,10 +9,19 @@ const { moduleLogger } = require('@/logging/logging')
 const {
   listenForImportUpdatesFactory
 } = require('@/modules/fileuploads/services/resultListener')
-const { getFileInfoFactory } = require('@/modules/fileuploads/repositories/fileUploads')
+const {
+  getFileInfoFactory,
+  saveUploadFileFactory
+} = require('@/modules/fileuploads/repositories/fileUploads')
 const { db } = require('@/db/knex')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const { getStreamBranchByName } = require('@/modules/core/repositories/branches')
+
+const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+  getStreamBranchByName,
+  saveUploadFile: saveUploadFileFactory({ db }),
+  publish
+})
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
