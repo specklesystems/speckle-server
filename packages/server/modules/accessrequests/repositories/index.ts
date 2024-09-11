@@ -1,6 +1,8 @@
 import {
   AccessRecordInput,
   CreateNewRequest,
+  DeleteRequestById,
+  GetPendingAccessRequest,
   GetPendingAccessRequests,
   GetUsersPendingAccessRequest
 } from '@/modules/accessrequests/domain/operations'
@@ -85,7 +87,7 @@ export const getPendingAccessRequestsFactory =
   }
 
 export const getPendingAccessRequestFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetPendingAccessRequest =>
   async <T extends AccessRequestType = AccessRequestType>(
     requestId: string,
     resourceType?: T
@@ -102,7 +104,8 @@ export const getPendingAccessRequestFactory =
   }
 
 export const deleteRequestByIdFactory =
-  (deps: { db: Knex }) => async (requestId: string) => {
+  (deps: { db: Knex }): DeleteRequestById =>
+  async (requestId: string) => {
     if (!requestId) {
       throw new InvalidArgumentError('Request ID missing')
     }

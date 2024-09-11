@@ -3,6 +3,8 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   AccessRequestType,
   createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
   getPendingAccessRequestsFactory,
   getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
@@ -11,8 +13,7 @@ import {
   getPendingStreamRequestsFactory,
   getUserProjectAccessRequestFactory,
   getUserStreamAccessRequestFactory,
-  processPendingProjectRequest,
-  processPendingStreamRequest,
+  processPendingStreamRequestFactory,
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
@@ -20,7 +21,10 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStream } from '@/modules/core/repositories/streams'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import {
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
 
 const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
@@ -49,6 +53,16 @@ const getPendingProjectRequests = getPendingProjectRequestsFactory({
 const getPendingStreamRequests = getPendingStreamRequestsFactory({
   getPendingProjectRequests
 })
+
+const processPendingStreamRequest = processPendingStreamRequestFactory({
+  getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
+  validateStreamAccess,
+  addOrUpdateStreamCollaborator,
+  deleteRequestById: deleteRequestByIdFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const processPendingProjectRequest = processPendingStreamRequest
 
 const resolvers: Resolvers = {
   Mutation: {
