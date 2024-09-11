@@ -1,6 +1,7 @@
+import { db } from '@/db/knex'
 import {
   deleteRequestById,
-  getPendingAccessRequest
+  getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { requestProjectAccess } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
@@ -386,7 +387,7 @@ describe('Project access requests', () => {
         expect(results.data?.projectMutations.accessRequestMutations.use).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

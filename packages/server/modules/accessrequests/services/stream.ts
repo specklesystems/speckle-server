@@ -9,7 +9,7 @@ import {
   createNewRequest,
   deleteRequestById,
   generateId,
-  getPendingAccessRequest,
+  getPendingAccessRequestFactory,
   getPendingAccessRequestsFactory,
   getUsersPendingAccessRequest,
   ServerAccessRequestRecord,
@@ -141,7 +141,10 @@ export async function processPendingStreamRequest(
   role: StreamRoles = Roles.Stream.Contributor,
   resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) {
-  const req = await getPendingAccessRequest(requestId, AccessRequestType.Stream)
+  const req = await getPendingAccessRequestFactory({ db })(
+    requestId,
+    AccessRequestType.Stream
+  )
   if (!req) {
     throw new AccessRequestProcessingError('No request with this ID exists')
   }
