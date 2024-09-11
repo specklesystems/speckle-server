@@ -63,6 +63,8 @@ generates:
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueSchema'
+        BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'
