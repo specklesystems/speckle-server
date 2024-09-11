@@ -9,7 +9,7 @@ import {
   getTotalStreamCountFactory,
   getTotalCommitCountFactory,
   getTotalObjectCountFactory,
-  getTotalUserCount
+  getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -41,7 +41,7 @@ export = {
     },
 
     async totalUserCount() {
-      return await getTotalUserCount()
+      return await getTotalUserCountFactory({ db })()
     },
 
     async streamHistory() {

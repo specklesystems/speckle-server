@@ -9,7 +9,7 @@ import {
 } from '@/modules/core/services/admin'
 import {
   getTotalStreamCountFactory,
-  getTotalUserCount
+  getTotalUserCountFactory
 } from '@/modules/stats/repositories'
 
 export = {
@@ -46,7 +46,7 @@ export = {
     },
 
     async totalUserCount() {
-      return await getTotalUserCount()
+      return await getTotalUserCountFactory({ db })()
     },
     async totalPendingInvites() {
       return 0

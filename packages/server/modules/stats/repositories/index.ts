@@ -19,11 +19,11 @@ export const getTotalObjectCountFactory = (deps: { db: Knex }) => async () => {
   return parseInt(result.rows[0].count)
 }
 
-export async function getTotalUserCount() {
+export const getTotalUserCountFactory = (deps: { db: Knex }) => async () => {
   // returns -1 for small tables, no good
   // const fastQuery = "SELECT reltuples::bigint AS estimate FROM pg_catalog.pg_class WHERE relname = 'users'"
   const query = 'SELECT COUNT(*) FROM users'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 
