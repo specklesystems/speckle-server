@@ -136,7 +136,7 @@ const handleVersionSelection = async (
     selectedVersionSourceApp: selectedVersion.sourceApplication,
     selectedVersionUserId: selectedVersion.authorUser?.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
-    latestVersionSourceApp: latestVersion.referencedObject,
+    latestVersionSourceApp: latestVersion.sourceApplication,
     latestVersionUserId: latestVersion.authorUser?.id,
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
@@ -280,6 +280,8 @@ watchOnce(versionDetailsResult, async (newVal) => {
     patchObject = {
       latestVersionId: newVal?.project.model.versions.items[0].id,
       latestVersionCreatedAt: newVal?.project.model.versions.items[0].createdAt,
+      latestVersionSourceApp: newVal?.project.model.versions.items[0].sourceApplication,
+      latestVersionUserId: newVal?.project.model.versions.items[0].authorUser?.id,
       hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }
