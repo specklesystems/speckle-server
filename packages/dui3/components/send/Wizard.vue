@@ -162,7 +162,7 @@ const addModel = async () => {
       sendFilter: filter.value as ISendFilter,
       expired: false
     })
-    void hostAppStore.sendModel(existingModel.modelCardId)
+    void hostAppStore.sendModel(existingModel.modelCardId, 'Wizard')
     return
   }
 
@@ -177,6 +177,6 @@ const addModel = async () => {
 
   emit('close')
   await hostAppStore.addModel(model)
-  void hostAppStore.sendModel(model.modelCardId)
+  void hostAppStore.sendModel(model.modelCardId, 'Wizard')
 }
 </script>
