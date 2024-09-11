@@ -1,4 +1,4 @@
-import { Resolvers, Webhook } from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   createWebhook,
@@ -31,7 +31,7 @@ const streamWebhooksResolver = async (
   )
 
   if (args.id) {
-    const wh = (await getWebhookByIdFactory({ db })({ id: args.id })) as Webhook | null
+    const wh = await getWebhookByIdFactory({ db })({ id: args.id })
     const items = wh ? [wh] : []
     return { items, totalCount: items.length }
   }
@@ -41,6 +41,10 @@ const streamWebhooksResolver = async (
 }
 
 export = {
+  Webhook: {
+    projectId: (parent) => parent.streamId,
+    hasSecret: (parent) => !!parent.secret?.length
+  },
   Stream: {
     webhooks: streamWebhooksResolver
   },
