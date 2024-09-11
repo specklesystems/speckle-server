@@ -1,4 +1,3 @@
-import knex from '@/db/knex'
 import { Knex } from 'knex'
 
 export const getTotalStreamCountFactory = (deps: { db: Knex }) => async () => {
@@ -79,7 +78,7 @@ export const getObjectHistoryFactory = (deps: { db: Knex }) => async () => {
   return result.rows
 }
 
-export async function getUserHistory() {
+export const getUserHistoryFactory = (deps: { db: Knex }) => async () => {
   const query = `
     SELECT
       DATE_TRUNC('month', users. "createdAt") AS created_month,
@@ -89,7 +88,7 @@ export async function getUserHistory() {
     GROUP BY
       DATE_TRUNC('month', users. "createdAt")
     `
-  const result = (await knex.raw(query)) as {
+  const result = (await deps.db.raw(query)) as {
     rows: Array<{ created_month: Date; count: string | number }>
   }
   result.rows.forEach((row) => (row.count = parseInt(row.count + '')))
