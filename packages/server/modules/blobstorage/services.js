@@ -10,11 +10,6 @@ const BlobStorage = () => knex('blob_storage')
 const blobLookup = ({ blobId, streamId }) =>
   BlobStorage().where({ id: blobId, streamId })
 
-const getAllStreamBlobIds = async ({ streamId }) => {
-  const res = await BlobStorage().where({ streamId }).select('id')
-  return res
-}
-
 const uploadFileStream = async (
   storeFileStream,
   { streamId, userId },
@@ -165,6 +160,5 @@ module.exports = {
   deleteBlob,
   getBlobMetadataCollection,
   blobCollectionSummary,
-  getAllStreamBlobIds,
   getFileSizeLimit
 }

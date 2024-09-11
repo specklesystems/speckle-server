@@ -25,7 +25,6 @@ const {
   deleteBlob,
   getBlobMetadata,
   getBlobMetadataCollection,
-  getAllStreamBlobIds,
   getFileSizeLimit
 } = require('@/modules/blobstorage/services')
 
@@ -37,6 +36,10 @@ const {
   BadRequestError
 } = require('@/modules/shared/errors')
 const { moduleLogger, logger } = require('@/logging/logging')
+const { getAllStreamBlobIdsFactory } = require('@/modules/blobstorage/repositories')
+const { db } = require('@/db/knex')
+
+const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
