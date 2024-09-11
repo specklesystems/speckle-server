@@ -35,14 +35,14 @@ const { mutate: updateMutation } = useMutation(settingsSetPrimaryUserEmailMutati
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', outline: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Make primary',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       onSetPrimary()
       isOpen.value = false

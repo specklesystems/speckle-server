@@ -8,7 +8,7 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 my-2"
+        class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mt-2 mb-6"
       >
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
@@ -102,15 +102,7 @@ const { result: projectPageResult } = useQuery(
     ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
-    fetchPolicy: pageFetchPolicy.value,
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all'
-    // context: {
-    //   skipLoggingErrors: (err) =>
-    //     err.graphQLErrors?.length === 1 &&
-    //     err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    // }
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 

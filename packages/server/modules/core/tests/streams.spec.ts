@@ -23,10 +23,6 @@ import {
 } from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
-import {
   getLimitedUserStreams,
   getUserStreams,
   leaveStream
@@ -43,7 +39,6 @@ import {
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
 import { Streams } from '@/modules/core/dbSchema'
-import { ApolloServer } from 'apollo-server-express'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { sleep } from '@/test/helpers'
 import dayjs, { Dayjs } from 'dayjs'
@@ -53,6 +48,12 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { Get } from 'type-fest'
 import { changeUserRole } from '@/modules/core/services/users'
+import {
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { buildApolloServer } from '@/app'
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -210,7 +211,10 @@ describe('Streams @core-streams', () => {
         userOne.id
       )
 
-      const apollo = await buildAuthenticatedApolloServer(userTwo.id)
+      const apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(userTwo.id)
+      }
       const { data, errors } = await leaveStream(apollo, { streamId })
 
       expect(errors).to.be.not.ok
@@ -445,7 +449,7 @@ describe('Streams @core-streams', () => {
      * Base test for testing paginated & unpaginated User.streams query in various circumstances
      */
     const testPaginatedUserStreams = async (
-      apollo: ApolloServer,
+      apollo: ServerAndContext,
       pagination: boolean,
       userId: string,
       isOtherUser: boolean,
@@ -534,12 +538,15 @@ describe('Streams @core-streams', () => {
     }
 
     describe('and user is authenticated', () => {
-      let apollo: ApolloServer
+      let apollo: ServerAndContext
       let activeUserId: string
 
       before(async () => {
         activeUserId = userOne.id
-        apollo = await buildAuthenticatedApolloServer(activeUserId)
+        apollo = {
+          apollo: await buildApolloServer(),
+          context: createAuthedTestContext(activeUserId)
+        }
       })
 
       paginationDataset.forEach(({ display, pagination }) => {
@@ -562,10 +569,13 @@ describe('Streams @core-streams', () => {
     })
 
     describe('and user is not authenticated', () => {
-      let apollo: ApolloServer
+      let apollo: ServerAndContext
 
       before(async () => {
-        apollo = await buildUnauthenticatedApolloServer()
+        apollo = {
+          apollo: await buildApolloServer(),
+          context: createTestContext()
+        }
       })
 
       userLimitedUserDataSet.forEach(({ display, limitedUser }) => {
@@ -573,8 +583,17 @@ describe('Streams @core-streams', () => {
           const results = limitedUser
             ? await getLimitedUserStreams(apollo, { userId: userOne.id })
             : await getUserStreams(apollo, { userId: userOne.id })
+
+          const user = results.data
+            ? 'otherUser' in results.data
+              ? results.data.otherUser
+              : 'user' in results.data
+              ? results.data.user
+              : null
+            : null
+
           expect(results).to.haveGraphQLErrors()
-          expect(results.data?.otherUser || results.data?.user).to.be.not.ok
+          expect(user).to.be.not.ok
         })
       })
     })

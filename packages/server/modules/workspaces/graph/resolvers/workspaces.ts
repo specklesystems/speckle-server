@@ -40,11 +40,10 @@ import { authorizeResolver } from '@/modules/shared'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
-  WorkspaceEarlyAdopterDiscount,
-  WorkspaceInviteResourceType
-} from '@/modules/workspaces/domain/constants'
-import {
+  WorkspaceAdminError,
+  WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
@@ -70,7 +69,8 @@ import {
   getWorkspaceWithDomainsFactory,
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getUserIdsWithRoleInWorkspaceFactory
+  getUserIdsWithRoleInWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -111,7 +111,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import {
   getWorkspaceCostFactory,
@@ -123,6 +123,19 @@ import {
 } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
@@ -464,7 +477,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return true
         },
-        invites: () => ({})
+        invites: () => ({}),
+        projects: () => ({})
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -632,6 +646,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         }
       },
+      WorkspaceProjectMutations: {
+        updateRole: async (_parent, args, context) => {
+          const { projectId, userId, role } = args.input
+
+          const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
+
+          if (!workspaceId) {
+            throw new WorkspaceInvalidProjectError()
+          }
+
+          const currentRole = await getWorkspaceRoleForUserFactory({ db })({
+            workspaceId,
+            userId
+          })
+
+          if (currentRole?.role === Roles.Workspace.Admin) {
+            // User is workspace admin and cannot have their project roles changed
+            throw new WorkspaceAdminError()
+          }
+
+          return await updateStreamRoleAndNotify(
+            { projectId, userId, role },
+            context.userId!,
+            context.resourceAccessRules
+          )
+        }
+      },
       Workspace: {
         role: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
@@ -710,8 +751,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
                 db
               })
-            }),
-            discount: WorkspaceEarlyAdopterDiscount
+            })
           })({ workspaceId })
         }
       },

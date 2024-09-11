@@ -13,14 +13,14 @@ import {
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId
 } from '@/modules/core/services/commits'
-import { UserInputError } from 'apollo-server-core'
+import { BadRequestError } from '@/modules/shared/errors'
 
 export async function getPaginatedStreamCommits(
   streamId: string,
   params: StreamCommitsArgs
 ) {
   if (params.limit && params.limit > 100)
-    throw new UserInputError(
+    throw new BadRequestError(
       'Cannot return more than 100 items, please use pagination.'
     )
   const { commits: items, cursor } = await getCommitsByStreamId({
@@ -41,7 +41,7 @@ export async function getPaginatedBranchCommits(
   params: PaginatedBranchCommitsParams & { filter?: Nullable<ModelVersionsFilter> }
 ) {
   if (params.limit && params.limit > 100)
-    throw new UserInputError(
+    throw new BadRequestError(
       'Cannot return more than 100 items, please use pagination.'
     )
 

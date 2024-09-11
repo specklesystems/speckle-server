@@ -20,7 +20,12 @@
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
-            v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
+            v-if="
+              canEdit &&
+              activeUser &&
+              collaborator.id !== activeUser.id &&
+              collaborator.workspaceRole !== Roles.Workspace.Admin
+            "
             class="shrink-0"
             :model-value="collaborator.role"
             :disabled="loading"
@@ -28,9 +33,11 @@
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
-          <span v-else class="shrink-0 text-body-2xs">
-            {{ roleSelectItems[collaborator.role].title }}
-          </span>
+          <div v-else class="flex items-center justify-end">
+            <span v-tippy="getRoleTooltip(collaborator)" class="shrink-0 text-body-2xs">
+              {{ roleSelectItems[collaborator.role].title }}
+            </span>
+          </div>
         </template>
         <template v-else-if="canEdit">
           <div class="flex items-end sm:items-center shrink-0 gap-3">
@@ -96,9 +103,17 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
   }
 `)
 
+const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
+  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...ProjectPageTeamInternals_Workspace
+    }
+  }
+`)
+
 const route = useRoute()
 const apollo = useApolloClient().client
-const updateRole = useUpdateUserRole()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const cancelInvite = useCancelProjectInvite()
 const { activeUser } = useActiveUser()
 const mp = useMixpanel()
@@ -111,10 +126,25 @@ const projectId = computed(() => route.params.id as string)
 const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
+const { result: workspaceResult } = useQuery(
+  projectPageSettingsCollaboratorWorkspaceQuery,
+  () => ({
+    workspaceId: pageResult.value!.project.workspaceId!
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspaceId
+  })
+)
 
 const project = computed(() => pageResult.value?.project)
+const workspace = computed(() => workspaceResult.value?.workspace)
 
-const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(project)
+const updateRole = useUpdateUserRole(project)
+
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
+  project,
+  workspace
+)
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
@@ -135,7 +165,9 @@ const onCollaboratorRoleChange = async (
   mp.track('Stream Action', {
     type: 'action',
     name: 'update',
-    action: 'team member role'
+    action: 'team member role',
+    // eslint-disable-next-line camelcase
+    workspace_id: workspace.value?.id
   })
 
   if (!newRole) {
@@ -156,6 +188,18 @@ const onCollaboratorRoleChange = async (
       }
     )
   }
+}
+
+const getRoleTooltip = (collaborator: ProjectCollaboratorListItem): string | null => {
+  if (!canEdit.value) {
+    return null
+  }
+
+  if (collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return 'User is workspace admin'
+  }
+
+  return null
 }
 
 const toggleInviteDialog = () => {

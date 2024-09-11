@@ -10,8 +10,8 @@ const { validateToken, revokeTokenById } = require(`@/modules/core/services/toke
 const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
-const { ForbiddenError } = require('apollo-server-errors')
 const { Scopes } = require('@speckle/shared')
+const { ForbiddenError } = require('@/modules/shared/errors')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {

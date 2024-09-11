@@ -13,9 +13,12 @@ import {
   StreamBlobsArgs
 } from '@/modules/core/graph/generated/graphql'
 import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { NotFoundError, ResourceMismatch } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  NotFoundError,
+  ResourceMismatch
+} from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
-import { UserInputError } from 'apollo-server-errors'
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -47,7 +50,7 @@ const streamBlobResolvers = {
       })) as Nullable<BlobStorageRecord>
     } catch (err: unknown) {
       if (err instanceof NotFoundError) return null
-      if (err instanceof ResourceMismatch) throw new UserInputError(err.message)
+      if (err instanceof ResourceMismatch) throw new BadRequestError(err.message)
       throw err
     }
   }

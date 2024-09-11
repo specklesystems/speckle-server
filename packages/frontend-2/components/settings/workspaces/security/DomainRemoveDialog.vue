@@ -70,7 +70,7 @@ const handleRemove = async () => {
           id: getCacheId('Workspace', props.workspaceId),
           fields: {
             domains(currentDomains, { isReference }) {
-              return [...currentDomains].filter((domain) =>
+              return [...(currentDomains ?? [])].filter((domain) =>
                 isReference(domain) ? false : domain.id !== props.domain.id
               )
             }
@@ -104,7 +104,7 @@ const handleRemove = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -112,7 +112,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Remove',
     props: {
-      fullWidth: true,
       color: 'danger'
     },
     onClick: handleRemove

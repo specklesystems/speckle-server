@@ -4,7 +4,7 @@
       {{ props.application ? 'Edit application' : 'Create application' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4 mb-2">
         <FormTextInput
           v-model="name"
           label="Name"
@@ -199,14 +199,14 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.application ? 'Save' : 'Create',
-    props: { fullWidth: true },
+    props: {},
     onClick: onSubmit
   }
 ])

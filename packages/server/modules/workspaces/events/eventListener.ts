@@ -6,7 +6,8 @@ import {
 import { getStream } from '@/modules/core/repositories/streams'
 import {
   GetWorkspaceRoles,
-  GetWorkspaceRoleToDefaultProjectRoleMapping
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  QueryAllWorkspaceProjects
 } from '@/modules/workspaces/domain/operations'
 import {
   ServerInvitesEvents,
@@ -20,8 +21,9 @@ import { logger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { UpsertProjectRole } from '@/modules/core/domain/projects/operations'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export const onProjectCreatedFactory =
   ({
@@ -107,19 +109,64 @@ export const onInviteFinalizedFactory =
     })
   }
 
+export const onWorkspaceJoinedFactory =
+  ({
+    getDefaultWorkspaceProjectRoleMapping,
+    queryAllWorkspaceProjects,
+    upsertProjectRole
+  }: {
+    getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    upsertProjectRole: UpsertProjectRole
+  }) =>
+  async ({
+    userId,
+    role,
+    workspaceId
+  }: {
+    userId: string
+    role: WorkspaceRoles
+    workspaceId: string
+  }) => {
+    const defaultRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
+      workspaceId
+    })
+
+    const maybeProjectRole = defaultRoleMapping[role]
+    if (!maybeProjectRole) return
+
+    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+      await Promise.all(
+        projects.map(async (project) => {
+          await upsertProjectRole({
+            projectId: project.id,
+            userId,
+            role: maybeProjectRole
+          })
+        })
+      )
+    }
+  }
+
 export const initializeEventListenersFactory =
   ({
     onProjectCreated,
-    onInviteFinalized
+    onInviteFinalized,
+    onWorkspaceJoined
   }: {
     onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
     onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
+    onWorkspaceJoined: ReturnType<typeof onWorkspaceJoinedFactory>
   }) =>
   () => {
+    const eventBus = getEventBus()
     const quitCbs = [
       ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated),
-      getEventBus().listen(ServerInvitesEvents.Finalized, ({ payload }) =>
+      eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
         onInviteFinalized(payload)
+      ),
+      eventBus.listen(WorkspaceEvents.JoinedFromDiscovery, ({ payload }) =>
+        onWorkspaceJoined(payload)
       )
     ]
 

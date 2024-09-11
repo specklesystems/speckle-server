@@ -184,6 +184,12 @@ export const useProcessWorkspaceInvite = () => {
         type: ToastNotificationType.Success,
         title: input.accept ? 'Invite accepted' : 'Invite dismissed'
       })
+
+      mp.track('Workspace Joined', {
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+
       mp.track('Invite Action', {
         type: 'workspace invite',
         accepted: input.accept,
@@ -414,7 +420,32 @@ export const useWorkspaceUpdateRole = () => {
   const { triggerNotification } = useGlobalToast()
 
   return async (input: WorkspaceRoleUpdateInput) => {
-    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          if (!input.role) {
+            cache.evict({
+              id: getCacheId('WorkspaceCollaborator', input.userId)
+            })
+
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (totalCount) => totalCount - 1)
+                })
+              },
+              {
+                autoEvictFiltered: true
+              }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({

@@ -2,9 +2,11 @@
   <div>
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
+      v-model:role="roleFilter"
       search-placeholder="Search members..."
       :workspace-id="workspaceId"
       :workspace="workspace"
+      show-role-filter
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -22,9 +24,7 @@
       :items="members"
       :loading="searchResultLoading"
       :empty-message="
-        search.length
-          ? `No members found for '${search}'`
-          : 'This workspace has no members'
+        hasNoResults ? 'No members found' : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -32,7 +32,10 @@
           <UserAvatar :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <div
-            v-if="item.workspaceDomainPolicyCompliant === false"
+            v-if="
+              item.workspaceDomainPolicyCompliant === false &&
+              item.role !== Roles.Workspace.Guest
+            "
             v-tippy="
               'This user does not comply with the domain policy set on this workspace'
             "
@@ -81,9 +84,7 @@
       v-model:open="showChangeUserRoleDialog"
       :name="userToModify?.name ?? ''"
       :is-workspace-admin="isWorkspaceAdmin"
-      :workspace-domain-policy-compliant="
-        userToModify?.workspaceDomainPolicyCompliant ?? true
-      "
+      :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
@@ -160,17 +161,19 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+const roleFilter = ref<WorkspaceRoles>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
     filter: {
-      search: search.value
+      search: search.value,
+      role: roleFilter.value
     },
     workspaceId: props.workspaceId
   }),
   () => ({
-    enabled: !!search.value.length
+    enabled: !!search.value.length || !!roleFilter.value
   })
 )
 
@@ -187,9 +190,10 @@ const userToModify = ref<UserItem>()
 const showActionsMenu = ref<Record<string, boolean>>({})
 
 const members = computed(() => {
-  const memberArray = search.value.length
-    ? searchResult.value?.workspace?.team.items
-    : props.workspace?.team.items
+  const memberArray =
+    search.value.length || roleFilter.value
+      ? searchResult.value?.workspace?.team.items
+      : props.workspace?.team.items
   return (memberArray || []).map(({ user, ...rest }) => ({
     ...user,
     ...rest
@@ -203,13 +207,17 @@ const isActiveUserCurrentUser = computed(
 const canRemoveMember = computed(
   () => (user: UserItem) => activeUser.value?.id !== user.id && isWorkspaceAdmin.value
 )
-
+const hasNoResults = computed(
+  () =>
+    (search.value.length || roleFilter.value) &&
+    searchResult.value?.workspace.team.items.length === 0
+)
 const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
   // Allow role change if the active user is an admin
   if (isWorkspaceAdmin.value) {
-    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
+    baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
   }
 
   // Allow the current user to leave the workspace

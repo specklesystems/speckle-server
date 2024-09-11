@@ -111,7 +111,7 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
-  invites: WorkspaceInviteMutations!
+  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
   # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
   # We are, for the moment, doing the check in the resolver
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
@@ -120,7 +120,15 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
+  invites: WorkspaceInviteMutations!
+  projects: WorkspaceProjectMutations!
+}
+
+type WorkspaceProjectMutations {
+  updateRole(input: ProjectUpdateRoleInput!): Project!
+    @hasServerRole(role: SERVER_USER)
+    @hasStreamRole(role: STREAM_OWNER)
+    @hasWorkspaceRole(role: MEMBER)
 }
 
 input WorkspaceDomainDeleteInput {
@@ -203,6 +211,7 @@ type WorkspaceCostItem {
   count: Int!
   name: String!
   cost: Float!
+  label: String!
 }
 
 type WorkspaceCostDiscount {
@@ -252,7 +261,7 @@ type Workspace {
   """
   Verified workspace domains
   """
-  domains: [WorkspaceDomain!]! @hasWorkspaceRole(role: MEMBER)
+  domains: [WorkspaceDomain!] @hasWorkspaceRole(role: MEMBER)
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

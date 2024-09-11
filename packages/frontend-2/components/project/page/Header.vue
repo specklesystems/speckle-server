@@ -3,13 +3,9 @@
     <Portal to="navigation">
       <template v-if="project.workspace && isWorkspacesEnabled">
         <HeaderNavLink
-          :to="workspacesRoute"
-          name="Workspaces"
-          :separator="false"
-        ></HeaderNavLink>
-        <HeaderNavLink
           :to="workspaceRoute(project.workspace.id)"
           :name="project.workspace.name"
+          :separator="false"
         ></HeaderNavLink>
       </template>
       <HeaderNavLink
@@ -49,7 +45,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageProjectHeaderFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, projectsRoute } from '~~/lib/common/helpers/route'
-import { workspaceRoute, workspacesRoute } from '~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {

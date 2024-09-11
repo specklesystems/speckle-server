@@ -1,17 +1,25 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Change role</template>
-    <div class="flex flex-col gap-4 text-body-xs text-foreground">
-      <p>
-        Select a new role for
-        <strong>{{ name }}</strong>
-        :
-      </p>
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
+    <template #header>Update role</template>
+    <div class="flex flex-col gap-4 mb-4 -mt-1">
       <FormSelectWorkspaceRoles
         v-model="newRole"
+        label="Role"
         fully-control-value
         :disabled-items="disabledItems"
+        show-label
       />
+      <div
+        v-if="
+          workspaceDomainPolicyCompliant === false && newRole !== Roles.Workspace.Guest
+        "
+        class="flex gap-x-2 items-center"
+      >
+        <ExclamationCircleIcon class="text-danger w-5 w-4" />
+        <p class="text-foreground">
+          This user can only have the guest role due to the workspace policy.
+        </p>
+      </div>
       <div v-if="newRole" class="flex flex-col items-start gap-1 text-xs">
         <div
           v-for="(message, i) in getWorkspaceProjectRoleMessages(newRole)"
@@ -27,6 +35,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits<{
   (e: 'updateRole', newRole: WorkspaceRoles): void
@@ -34,14 +43,14 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   name: string
-  workspaceDomainPolicyCompliant: boolean
+  workspaceDomainPolicyCompliant?: boolean | null
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
 const newRole = ref<WorkspaceRoles | undefined>()
 
 const disabledItems = computed<WorkspaceRoles[]>(() =>
-  !props.workspaceDomainPolicyCompliant
+  props.workspaceDomainPolicyCompliant === false
     ? [Roles.Workspace.Member, Roles.Workspace.Admin]
     : []
 )
@@ -49,12 +58,12 @@ const disabledItems = computed<WorkspaceRoles[]>(() =>
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => (open.value = false)
   },
   {
     text: 'Update',
-    props: { color: 'primary', fullWidth: true, disabled: !newRole.value },
+    props: { color: 'primary', disabled: !newRole.value },
     onClick: () => {
       open.value = false
       if (newRole.value) {

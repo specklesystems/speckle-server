@@ -6,7 +6,7 @@ import {
 import { ensureNoPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { UserEmailAlreadyExistsError } from '@/modules/core/errors/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { RequestNewEmailVerification } from '@/modules/emails/domain/operations'
 
 export const validateAndCreateUserEmailFactory =
   (deps: {
@@ -14,7 +14,7 @@ export const validateAndCreateUserEmailFactory =
     ensureNoPrimaryEmailForUser: ReturnType<typeof ensureNoPrimaryEmailForUserFactory>
     findEmail: FindEmail
     updateEmailInvites: ReturnType<typeof finalizeInvitedServerRegistrationFactory>
-    requestNewEmailVerification: typeof requestNewEmailVerification
+    requestNewEmailVerification: RequestNewEmailVerification
   }): ValidateAndCreateUserEmail =>
   async (params) => {
     const { userEmail } = params

@@ -5,10 +5,10 @@ import {
 import { Roles, throwUncoveredError } from '@speckle/shared'
 
 type KnownWorkspaceCostItemNames =
-  | 'workspace members'
-  | 'free guests'
-  | 'read/write guests'
-  | 'read only guests'
+  | 'workspace-members'
+  | 'free-guests'
+  | 'read-write-guests'
+  | 'read-only-guests'
 
 type KnownCurrencies = 'GBP'
 
@@ -17,6 +17,7 @@ type WorkspaceCostItem = {
   description: string
   count: number
   cost: number
+  label: string
 }
 
 const getWorkspaceCostItemCost = ({
@@ -26,13 +27,13 @@ const getWorkspaceCostItemCost = ({
   currency?: KnownCurrencies
 }): number => {
   switch (name) {
-    case 'workspace members':
+    case 'workspace-members':
       return 49
-    case 'free guests':
+    case 'free-guests':
       return 0
-    case 'read/write guests':
+    case 'read-write-guests':
       return 15
-    case 'read only guests':
+    case 'read-only-guests':
       return 5
     default:
       throwUncoveredError(name)
@@ -79,29 +80,40 @@ export const getWorkspaceCostItemsFactory =
 
     const workspaceCostItems: WorkspaceCostItem[] = []
 
+    const workspaceMembersCount = adminCount + memberCount
+    const freeGuestsCount = freeGuestsIds.length
+
     workspaceCostItems.push({
-      name: 'workspace members',
+      name: 'workspace-members',
       description: 'General workspace member',
-      count: adminCount + memberCount,
-      cost: getWorkspaceCostItemCost({ name: 'workspace members' })
+      count: workspaceMembersCount,
+      cost: getWorkspaceCostItemCost({ name: 'workspace-members' }),
+      label: `${workspaceMembersCount} workspace ${
+        workspaceMembersCount === 1 ? 'member' : 'members'
+      }`
     })
     workspaceCostItems.push({
-      name: 'free guests',
+      name: 'free-guests',
       description: 'The first 10 workspace guests are free',
-      count: freeGuestsIds.length,
-      cost: getWorkspaceCostItemCost({ name: 'free guests' })
+      count: freeGuestsCount,
+      cost: getWorkspaceCostItemCost({ name: 'free-guests' }),
+      label: `${freeGuestsCount}/10 free ${freeGuestsCount === 1 ? 'guest' : 'guests'}`
     })
     workspaceCostItems.push({
-      name: 'read/write guests',
+      name: 'read-write-guests',
       description: 'Workspace guests with write access to minimum 1 workspace project',
       count: writeGuestCount,
-      cost: getWorkspaceCostItemCost({ name: 'read/write guests' })
+      cost: getWorkspaceCostItemCost({ name: 'read-write-guests' }),
+      label: `${writeGuestCount} read/write ${
+        writeGuestCount === 1 ? 'guest' : 'guests'
+      }`
     })
     workspaceCostItems.push({
-      name: 'read only guests',
+      name: 'read-only-guests',
       description: 'Workspace guests with only read access to some workspace projects',
       count: readGuestCount,
-      cost: getWorkspaceCostItemCost({ name: 'read only guests' })
+      cost: getWorkspaceCostItemCost({ name: 'read-only-guests' }),
+      label: `${readGuestCount} read only ${readGuestCount === 1 ? 'guest' : 'guests'}`
     })
 
     return workspaceCostItems

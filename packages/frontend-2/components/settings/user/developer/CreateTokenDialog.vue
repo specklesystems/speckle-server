@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>Create token</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4 mb-2">
         <FormTextInput
           v-model="name"
           label="Name"
@@ -107,14 +107,14 @@ const onSubmit = handleSubmit(async (tokenFormValues) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Create',
-    props: { fullWidth: true },
+    props: {},
     onClick: onSubmit
   }
 ])

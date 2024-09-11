@@ -56,7 +56,6 @@ import {
   createTestStreams,
   leaveStream
 } from '@/test/speckle-helpers/streamHelper'
-import { ForbiddenError } from 'apollo-server-express'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
 import {
   generateRegistrationParams,
@@ -78,6 +77,7 @@ import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/em
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 enum InviteByTarget {
   Email = 'email',
@@ -610,8 +610,14 @@ describe('Workspaces Invites GQL', () => {
         id: ''
       }
 
+      const workspaceGuest: BasicTestUser = {
+        name: 'Workspace Guest #1',
+        email: 'workspaceGuest1@bababooey.com',
+        id: ''
+      }
+
       before(async () => {
-        await createTestUsers([workspaceMemberWithNoProjectAccess])
+        await createTestUsers([workspaceMemberWithNoProjectAccess, workspaceGuest])
         await createTestWorkspaces([[myProjectInviteTargetWorkspace, me]])
         await assignToWorkspaces([
           [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
@@ -619,7 +625,8 @@ describe('Workspaces Invites GQL', () => {
             myProjectInviteTargetWorkspace,
             workspaceMemberWithNoProjectAccess,
             Roles.Workspace.Member
-          ]
+          ],
+          [myProjectInviteTargetWorkspace, workspaceGuest, Roles.Workspace.Guest]
         ])
 
         myProjectInviteTargetWorkspaceProject.workspaceId =
@@ -727,6 +734,23 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+      })
+
+      it("can't invite a workspace guest to be a workspace project owner", async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          inputs: [
+            {
+              userId: workspaceGuest.id,
+              role: Roles.Stream.Owner
+            }
+          ]
+        })
+
+        expect(res).to.haveGraphQLErrors(
+          'Workspace guests cannot be owners of workspace projects'
+        )
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
       it("can't invite invalid domain email to domain protected workspace project", async () => {

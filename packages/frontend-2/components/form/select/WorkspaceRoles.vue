@@ -9,9 +9,11 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    :show-label="showLabel"
     :fully-control-value="fullyControlValue"
     :disabled="disabled"
     :disabled-item-predicate="disabledItemPredicate"
+    :clearable="clearable"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -74,7 +76,9 @@ const props = defineProps({
   disabledItems: {
     required: false,
     type: Array as PropType<WorkspaceRoles[]>
-  }
+  },
+  showLabel: Boolean,
+  clearable: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

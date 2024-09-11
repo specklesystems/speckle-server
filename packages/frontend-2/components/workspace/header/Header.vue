@@ -40,23 +40,30 @@
         </CommonBadge>
       </div>
       <div class="flex items-center gap-x-3">
-        <div
-          v-if="isWorkspaceAdmin && workspaceInfo.billing"
-          class="flex-1 md:flex-auto"
-        >
-          <WorkspacePageVersionCount
-            :versions-count="workspaceInfo.billing.versionsCount"
-          />
+        <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
+          >
+            <WorkspacePageVersionCount
+              :versions-count="workspaceInfo.billing.versionsCount"
+            />
+          </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <UserAvatarGroup
-            :users="team.map((teamMember) => teamMember.user)"
-            class="max-w-[104px]"
-          />
+          <button
+            class="block"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          >
+            <UserAvatarGroup
+              :users="team.map((teamMember) => teamMember.user)"
+              class="max-w-[104px]"
+            />
+          </button>
           <FormButton
             v-if="isWorkspaceAdmin"
             color="outline"
-            @click="showInviteDialog = !showInviteDialog"
+            @click="$emit('show-invite-dialog')"
           >
             Invite
           </FormButton>
@@ -78,16 +85,6 @@
         </div>
       </div>
     </div>
-    <WorkspaceInviteDialog
-      v-model:open="showInviteDialog"
-      :workspace-id="workspaceInfo.id"
-      :workspace="workspaceInfo"
-    />
-    <SettingsDialog
-      v-model:open="showSettingsDialog"
-      target-menu-item="general"
-      :target-workspace-id="workspaceInfo.id"
-    />
   </div>
 </template>
 
@@ -99,6 +96,10 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -135,14 +136,17 @@ enum ActionTypes {
   CopyLink = 'copy-link'
 }
 
+const emit = defineEmits<{
+  (e: 'show-invite-dialog'): void
+  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
+}>()
+
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
 const menuId = useId()
-const showInviteDialog = ref(false)
 const showActionsMenu = ref(false)
-const showSettingsDialog = ref(false)
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
@@ -153,6 +157,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [{ title: 'Settings...', id: ActionTypes.Settings }]
 ])
 
+const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
+  emit('show-settings-dialog', target)
+}
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -161,7 +169,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copyWorkspaceLink(props.workspaceInfo.id)
       break
     case ActionTypes.Settings:
-      showSettingsDialog.value = true
+      openSettingsDialog(SettingMenuKeys.Workspace.General)
       break
   }
 }

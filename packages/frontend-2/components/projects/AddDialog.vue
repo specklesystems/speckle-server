@@ -1,11 +1,11 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Create new project</template>
+    <template #header>Create a new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="flex flex-col gap-3 mb-6">
+      <div class="flex flex-col gap-3 mb-2">
         <FormTextInput
           name="name"
-          label="Name"
+          label="Project name"
           placeholder="Project name"
           color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
@@ -16,20 +16,22 @@
         />
         <FormTextArea
           name="description"
-          label="Description"
-          placeholder="Description (optional)"
+          label="Project description"
+          placeholder="Description"
           color="foundation"
           size="lg"
           show-label
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
+        <div>
+          <h3 class="label mb-2">Access permissions</h3>
+          <ProjectVisibilitySelect
+            v-model="visibility"
+            class="max-w-xs"
+            mount-menu-on-body
+          />
+        </div>
       </div>
-      <h3 class="label mb-2">Access permissions</h3>
-      <ProjectVisibilitySelect
-        v-model="visibility"
-        class="sm:max-w-none w-full"
-        mount-menu-on-body
-      />
     </form>
   </LayoutDialog>
 </template>
@@ -73,7 +75,8 @@ const onSubmit = handleSubmit(async (values) => {
   mp.track('Stream Action', {
     type: 'action',
     name: 'create',
-    workspaceId: props.workspaceId
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
   open.value = false
 })
@@ -81,7 +84,7 @@ const onSubmit = handleSubmit(async (values) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       open.value = false
     }
@@ -89,7 +92,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      fullWidth: true,
       submit: true
     },
     onClick: onSubmit

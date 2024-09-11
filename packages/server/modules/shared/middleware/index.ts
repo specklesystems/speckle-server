@@ -26,6 +26,7 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
+import { subscriptionLogger } from '@/logging/logging'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -156,7 +157,7 @@ export async function buildContext({
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
-  token: Nullable<string>
+  token?: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
   const ctx =
@@ -164,7 +165,7 @@ export async function buildContext({
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
   const log = Observability.extendLoggerComponent(
-    req?.log || Observability.getLogger(),
+    req?.log || subscriptionLogger,
     'graphql'
   )
 
