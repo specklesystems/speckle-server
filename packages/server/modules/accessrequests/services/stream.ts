@@ -9,7 +9,6 @@ import {
   deleteRequestByIdFactory,
   generateId,
   getPendingAccessRequestFactory,
-  getPendingAccessRequestsFactory,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
@@ -26,6 +25,8 @@ import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHel
 import { db } from '@/db/knex'
 import {
   CreateNewRequest,
+  GetPendingAccessRequests,
+  GetPendingProjectRequests,
   GetUserProjectAccessRequest,
   GetUsersPendingAccessRequest,
   GetUserStreamAccessRequest,
@@ -137,24 +138,23 @@ export const requestStreamAccessFactory =
 /**
  * Get pending project access requests
  */
-export async function getPendingProjectRequests(
-  projectId: string
-): Promise<StreamAccessRequestRecord[]> {
-  return await getPendingAccessRequestsFactory({ db })(
-    AccessRequestType.Stream,
-    projectId
-  )
-}
+export const getPendingProjectRequestsFactory =
+  (deps: {
+    getPendingAccessRequests: GetPendingAccessRequests
+  }): GetPendingProjectRequests =>
+  async (projectId: string): Promise<StreamAccessRequestRecord[]> => {
+    return await deps.getPendingAccessRequests(AccessRequestType.Stream, projectId)
+  }
 
 /**
  * Get pending stream access requests
  */
-export async function getPendingStreamRequests(
-  streamId: string
-): Promise<StreamAccessRequestGraphQLReturn[]> {
-  const reqs = await getPendingProjectRequests(streamId)
-  return reqs.map(buildStreamAccessRequestGraphQLReturn)
-}
+export const getPendingStreamRequestsFactory =
+  (deps: { getPendingProjectRequests: GetPendingProjectRequests }) =>
+  async (streamId: string): Promise<StreamAccessRequestGraphQLReturn[]> => {
+    const reqs = await deps.getPendingProjectRequests(streamId)
+    return reqs.map(buildStreamAccessRequestGraphQLReturn)
+  }
 
 /**
  * Accept or decline a pending access request
