@@ -114,17 +114,23 @@ type AccessRecordInput<
   I extends Nullable<string> = Nullable<string>
 > = Omit<ServerAccessRequestRecord<T, I>, 'createdAt' | 'updatedAt'>
 
-export async function createNewRequest<
-  T extends AccessRequestType = AccessRequestType,
-  I extends Nullable<string> = Nullable<string>
->(input: AccessRecordInput<T, I>) {
-  const results = await ServerAccessRequests.knex().insert<
-    string,
-    ServerAccessRequestRecord<T, I>[]
-  >(input, ServerAccessRequests.cols)
+export const createNewRequestFactory =
+  (deps: { db: Knex }) =>
+  async <
+    T extends AccessRequestType = AccessRequestType,
+    I extends Nullable<string> = Nullable<string>
+  >(
+    input: AccessRecordInput<T, I>
+  ) => {
+    const results = await tables
+      .serverAccessRequests(deps.db)
+      .insert<string, ServerAccessRequestRecord<T, I>[]>(
+        input,
+        ServerAccessRequests.cols
+      )
 
-  return results[0]
-}
+    return results[0]
+  }
 
 export async function getUsersPendingAccessRequest<
   T extends AccessRequestType = AccessRequestType,

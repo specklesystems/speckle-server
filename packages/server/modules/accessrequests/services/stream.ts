@@ -6,7 +6,7 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
-  createNewRequest,
+  createNewRequestFactory,
   deleteRequestByIdFactory,
   generateId,
   getPendingAccessRequestFactory,
@@ -87,7 +87,7 @@ export async function requestProjectAccess(userId: string, projectId: string) {
     )
   }
 
-  const req = await createNewRequest<AccessRequestType.Stream, string>({
+  const req = await createNewRequestFactory({ db })<AccessRequestType.Stream, string>({
     id: generateId(),
     requesterId: userId,
     resourceType: AccessRequestType.Stream,
