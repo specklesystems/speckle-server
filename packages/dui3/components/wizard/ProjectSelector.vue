@@ -68,7 +68,7 @@
           placeholder="A Beautiful Home, A Small Bridge..."
           autocomplete="off"
           name="name"
-          label="Project Name"
+          label="Project name"
           show-label
           color="foundation"
           :show-clear="!!newProjectName"
