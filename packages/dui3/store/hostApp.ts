@@ -16,6 +16,7 @@ import type { HostAppError } from '~/lib/bridge/errorHandler'
 import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
+import { useAccountStore } from '~/store/accounts'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -28,6 +29,7 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()
+  const accountsStore = useAccountStore()
 
   const currentNotification = ref<Nullable<ToastNotification>>(null)
   const showErrorDialog = ref<boolean>(false)
@@ -202,15 +204,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
    * Tells the host app to start sending a specific model card. This will reach inside the host application.
    * @param modelId
    */
-  const sendModel = (modelCardId: string) => {
+  const sendModel = (modelCardId: string, actionSource: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
     if (model.expired) {
       // user sends via "Update" button
-      void trackEvent('DUI3 Action', { name: 'Send', expired: true }, model.accountId)
+      void trackEvent(
+        'DUI3 Action',
+        { name: 'Send', expired: true, actionSource: actionSource.toLowerCase() },
+        model.accountId
+      )
     } else {
-      void trackEvent('DUI3 Action', { name: 'Send', expired: false }, model.accountId)
+      void trackEvent(
+        'DUI3 Action',
+        { name: 'Send', expired: false, actionSource: actionSource.toLowerCase() },
+        model.accountId
+      )
     }
     model.latestCreatedVersionId = undefined
     model.error = undefined
@@ -270,14 +280,24 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$sendBinding?.on('setModelSendResult', setModelSendResult)
 
   /// RECEIVE STUFF
-  const receiveModel = async (modelCardId: string) => {
+  const receiveModel = async (modelCardId: string, actionSource: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
 
+    const account = accountsStore.accounts.find(
+      (a) => a.accountInfo.id === model.accountId
+    )
+
     void trackEvent(
       'DUI3 Action',
-      { name: 'Receive', expired: model.expired },
+      {
+        name: 'Receive',
+        expired: model.expired,
+        sourceHostApp: model.selectedVersionSourceApp,
+        isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
+        actionSource: actionSource.toLowerCase()
+      },
       model.accountId
     )
 

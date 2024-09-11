@@ -164,7 +164,7 @@ export class SketchupBridge extends BaseBridge {
       input: {
         versionId: eventPayload.selectedVersionId,
         projectId: eventPayload.projectId,
-        sourceApplication: 'Sketchup'
+        sourceApplication: 'sketchup'
       }
     })
 
@@ -252,7 +252,7 @@ export class SketchupBridge extends BaseBridge {
       input: {
         modelId: args.modelId,
         objectId: args.objectId,
-        sourceApplication: 'Sketchup',
+        sourceApplication: 'sketchup',
         projectId: args.projectId
       }
     })
