@@ -150,10 +150,7 @@ export const LabelLeft = mergeStories(Default, {
   args: {
     name: generateRandomName('labelleft'),
     label: 'With label left',
-    labelPosition: 'left',
-    error: true,
-    rules: () => 'This is an example error message',
-    validateOnMount: true
+    labelPosition: 'left'
   }
 })
 

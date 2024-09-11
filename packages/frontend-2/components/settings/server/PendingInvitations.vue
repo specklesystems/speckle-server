@@ -75,7 +75,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import {
   MagnifyingGlassIcon,
