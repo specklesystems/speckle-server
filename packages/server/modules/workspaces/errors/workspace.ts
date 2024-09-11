@@ -13,7 +13,7 @@ export class WorkspaceAdminRequiredError extends BaseError {
 }
 
 export class WorkspaceInvalidUpdateError extends BaseError {
-  static defaultMessage = 'Provided workspace update in invalid or malformed'
+  static defaultMessage = 'Provided workspace update input is invalid or malformed'
   static code = 'WORKSPACE_INVALID_UPDATE_ERROR'
   static statusCode = 400
 }
