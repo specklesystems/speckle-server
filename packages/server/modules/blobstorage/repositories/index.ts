@@ -36,3 +36,10 @@ export const getBlobsFactory =
 
     return await q
   }
+
+export const getAllStreamBlobIdsFactory =
+  (deps: { db: Knex }) => async (params: { streamId: string }) => {
+    const { streamId } = params
+    const res = await tables.blobStorage(deps.db).where({ streamId }).select('id')
+    return res
+  }
