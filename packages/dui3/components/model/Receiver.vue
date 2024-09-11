@@ -141,7 +141,7 @@ const handleVersionSelection = async (
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
 
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'VersionSelector')
 }
 
 // Cancels any in progress receive OR receives latest version
@@ -152,7 +152,7 @@ const handleMainButtonClick = async () => {
 }
 
 const receiveCurrentVersion = async () => {
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'ModelCardButton')
 }
 
 // Cancels any in progress receive AND receives latest version
@@ -165,7 +165,7 @@ const receiveLatestVersion = async () => {
   })
   if (props.modelCard.progress)
     await store.receiveModelCancel(props.modelCard.modelCardId)
-  await store.receiveModel(props.modelCard.modelCardId)
+  await store.receiveModel(props.modelCard.modelCardId, 'UpdateNotification')
 }
 
 const expiredNotification = computed(() => {

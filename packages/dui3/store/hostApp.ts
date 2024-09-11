@@ -204,7 +204,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
    * Tells the host app to start sending a specific model card. This will reach inside the host application.
    * @param modelId
    */
-  const sendModel = (modelCardId: string, sendType: string) => {
+  const sendModel = (modelCardId: string, actionSource: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
@@ -212,13 +212,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       // user sends via "Update" button
       void trackEvent(
         'DUI3 Action',
-        { name: 'Send', expired: true, type: sendType },
+        { name: 'Send', expired: true, actionSource: actionSource.toLowerCase() },
         model.accountId
       )
     } else {
       void trackEvent(
         'DUI3 Action',
-        { name: 'Send', expired: false, type: sendType },
+        { name: 'Send', expired: false, actionSource: actionSource.toLowerCase() },
         model.accountId
       )
     }
@@ -280,7 +280,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$sendBinding?.on('setModelSendResult', setModelSendResult)
 
   /// RECEIVE STUFF
-  const receiveModel = async (modelCardId: string) => {
+  const receiveModel = async (modelCardId: string, actionSource: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
@@ -295,7 +295,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         name: 'Receive',
         expired: model.expired,
         sourceHostApp: model.selectedVersionSourceApp,
-        isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id
+        isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
+        actionSource: actionSource.toLowerCase()
       },
       model.accountId
     )

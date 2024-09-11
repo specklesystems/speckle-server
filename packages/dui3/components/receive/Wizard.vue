@@ -171,7 +171,7 @@ const selectVersionAndAddModel = async (
       latestVersionSourceApp: latestVersion.sourceApplication,
       latestVersionUserId: latestVersion.authorUser?.id
     })
-    await hostAppStore.receiveModel(existingModel.modelCardId)
+    await hostAppStore.receiveModel(existingModel.modelCardId, 'Wizard')
     return
   }
 
@@ -198,7 +198,7 @@ const selectVersionAndAddModel = async (
 
   emit('close')
   await hostAppStore.addModel(modelCard)
-  await hostAppStore.receiveModel(modelCard.modelCardId)
+  await hostAppStore.receiveModel(modelCard.modelCardId, 'Wizard')
 }
 
 const hostAppStore = useHostAppStore()
