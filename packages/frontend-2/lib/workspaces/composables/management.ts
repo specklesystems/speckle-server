@@ -394,6 +394,8 @@ export function useCreateWorkspace() {
         workspace_id: res.data?.workspaceMutations.create.id
       })
 
+      mixpanel.add_group('workspace_id', res.data?.workspaceMutations.create.id)
+
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'
