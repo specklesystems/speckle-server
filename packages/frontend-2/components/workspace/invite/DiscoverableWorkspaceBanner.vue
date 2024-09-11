@@ -22,6 +22,7 @@ import {
   getFirstErrorMessage,
   modifyObjectField
 } from '~/lib/common/helpers/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspace on DiscoverableWorkspace {
@@ -48,6 +49,7 @@ const props = defineProps<{
   workspace: WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
 }>()
 
+const mixpanel = useMixpanel()
 const { client: apollo } = useApolloClient()
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
@@ -115,11 +117,20 @@ const processJoin = async (accept: boolean) => {
     apollo.cache.evict({
       id: getCacheId('DiscoverableWorkspace', props.workspace.id)
     })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Joined workspace',
       description: 'Successfully joined workspace'
     })
+
+    mixpanel.track('Workspace Joined', {
+      location: 'discovery banner',
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspace.id
+    })
+    mixpanel.add_group('workspace_id', props.workspace.id)
+
     router.push(`/workspaces/${props.workspace.id}`)
   } else {
     triggerNotification({

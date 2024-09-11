@@ -1,19 +1,45 @@
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import { db } from '@/db/knex'
+import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
+import {
+  AccessRequestType,
+  createNewRequestFactory,
+  getUsersPendingAccessRequestFactory
+} from '@/modules/accessrequests/repositories'
 import {
   getPendingProjectRequests,
   getPendingStreamRequests,
-  getUserProjectAccessRequest,
-  getUserStreamAccessRequest,
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
   processPendingProjectRequest,
   processPendingStreamRequest,
-  requestProjectAccess,
-  requestStreamAccess
+  requestProjectAccessFactory,
+  requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
+import { getStream } from '@/modules/core/repositories/streams'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
+
+const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
+  getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+})
+
+const getUserStreamAccessRequest = getUserStreamAccessRequestFactory({
+  getUserProjectAccessRequest
+})
+
+const requestProjectAccess = requestProjectAccessFactory({
+  getUserStreamAccessRequest,
+  getStream,
+  createNewRequest: createNewRequestFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess
+})
 
 const resolvers: Resolvers = {
   Mutation: {

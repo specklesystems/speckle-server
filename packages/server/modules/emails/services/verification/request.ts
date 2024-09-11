@@ -6,11 +6,9 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import {
   EmailTemplateParams,
   renderEmail
@@ -19,9 +17,9 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   DeleteOldAndInsertNewVerification,
+  RequestEmailVerification,
   RequestNewEmailVerification
 } from '@/modules/emails/domain/operations'
-import { db } from '@/db/knex'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
@@ -152,59 +150,66 @@ function buildEmailTemplateParams(verificationId: string): EmailTemplateParams {
   }
 }
 
-async function sendVerificationEmail(state: VerificationRequestContext) {
-  const emailTemplateParams = buildEmailTemplateParams(state.verificationId)
-  const { html, text } = await renderEmail(
-    emailTemplateParams,
-    state.serverInfo,
-    // im deliberately setting this to null, so that the email will not show the unsubscribe bit
-    null
-  )
-  await sendEmail({
-    to: state.email.email,
-    subject: EMAIL_SUBJECT,
-    text,
-    html
-  })
+type SendVerificationEmailDeps = {
+  sendEmail: typeof sendEmail
+  renderEmail: typeof renderEmail
 }
+
+const sendVerificationEmailFactory =
+  (deps: SendVerificationEmailDeps) => async (state: VerificationRequestContext) => {
+    const emailTemplateParams = buildEmailTemplateParams(state.verificationId)
+    const { html, text } = await deps.renderEmail(
+      emailTemplateParams,
+      state.serverInfo,
+      // im deliberately setting this to null, so that the email will not show the unsubscribe bit
+      null
+    )
+    await deps.sendEmail({
+      to: state.email.email,
+      subject: EMAIL_SUBJECT,
+      text,
+      html
+    })
+  }
 
 /**
  * Request email verification (send out verification message) for user with specified ID
  */
 export const requestEmailVerificationFactory =
-  (deps: CreateNewVerificationDeps) => async (userId: string) => {
+  (
+    deps: CreateNewVerificationDeps & SendVerificationEmailDeps
+  ): RequestEmailVerification =>
+  async (userId) => {
     const newVerificationState = await createNewVerificationFactory(deps)(userId)
-    await sendVerificationEmail(newVerificationState)
+    await sendVerificationEmailFactory(deps)(newVerificationState)
   }
 
 /**
  * Listen for user:created events and trigger email verification initialization
  */
-export function initializeVerificationOnRegistration() {
-  return UsersEmitter.listen(UsersEvents.Created, async ({ user }) => {
-    // user might already be verified because of registration through an external identity provider
-    if (user.verified) return
+export const initializeVerificationOnRegistrationFactory =
+  (deps: {
+    userEmitterListener: typeof UsersEmitter.listen
+    requestEmailVerification: RequestEmailVerification
+  }) =>
+  () => {
+    return deps.userEmitterListener(UsersEvents.Created, async ({ user }) => {
+      // user might already be verified because of registration through an external identity provider
+      if (user.verified) return
 
-    const requestEmailVerification = requestEmailVerificationFactory({
-      getUser,
-      getServerInfo,
-      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-        db
-      }),
-      findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+      await deps.requestEmailVerification(user.id)
     })
-
-    await requestEmailVerification(user.id)
-  })
-}
+  }
 
 type RequestNewEmailVerificationDeps = CreateNewEmailVerificationFactoryDeps
 
 export const requestNewEmailVerificationFactory =
-  (deps: RequestNewEmailVerificationDeps): RequestNewEmailVerification =>
+  (
+    deps: RequestNewEmailVerificationDeps & SendVerificationEmailDeps
+  ): RequestNewEmailVerification =>
   async (emailId) => {
     const createNewEmailVerification = createNewEmailVerificationFactory(deps)
     const newVerificationState = await createNewEmailVerification(emailId)
 
-    await sendVerificationEmail(newVerificationState)
+    await sendVerificationEmailFactory(deps)(newVerificationState)
   }

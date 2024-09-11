@@ -1,6 +1,6 @@
 import {
   AccessRequestType,
-  getPendingAccessRequest
+  getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { getUser } from '@/modules/core/repositories/users'
 import {
@@ -20,6 +20,7 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { getServerInfo } from '@/modules/core/services/generic'
+import { db } from '@/db/knex'
 
 async function validateMessage(msg: NewStreamAccessRequestMessage) {
   const {
@@ -28,7 +29,7 @@ async function validateMessage(msg: NewStreamAccessRequestMessage) {
   } = msg
 
   const [request, user] = await Promise.all([
-    getPendingAccessRequest(requestId, AccessRequestType.Stream),
+    getPendingAccessRequestFactory({ db })(requestId, AccessRequestType.Stream),
     getUser(targetUserId)
   ])
 

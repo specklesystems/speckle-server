@@ -5,6 +5,7 @@ import type {
   WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { resolveMixpanelServerId } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -64,13 +65,19 @@ export const useWorkspacesMixpanel = () => {
       domainBasedMembershipProtectionEnabled:
         workspace.domainBasedMembershipProtectionEnabled,
       discoverabilityEnabled: workspace.discoverabilityEnabled,
-      costTotal: workspace.billing?.cost.total,
-      versionsCountCurrent: workspace.billing?.versionsCount.current,
-      versionsCountMax: workspace.billing?.versionsCount.max,
       teamTotalCount: workspace.team.totalCount,
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
-      teamGuestCount: roleCount[Roles.Workspace.Guest]
+      teamGuestCount: roleCount[Roles.Workspace.Guest],
+      ...(import.meta.client && {
+        // eslint-disable-next-line camelcase
+        server_id: resolveMixpanelServerId(window.location.hostname)
+      }),
+      ...(workspace.billing && {
+        costTotal: workspace.billing.cost.total,
+        versionsCountCurrent: workspace.billing.versionsCount.current,
+        versionsCountMax: workspace.billing.versionsCount.max
+      })
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)
