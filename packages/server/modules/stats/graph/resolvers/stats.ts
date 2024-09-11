@@ -2,7 +2,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 import { validateScopes } from '@/modules/shared'
 import {
-  getStreamHistory,
+  getStreamHistoryFactory,
   getCommitHistory,
   getObjectHistory,
   getUserHistory,
@@ -45,7 +45,7 @@ export = {
     },
 
     async streamHistory() {
-      return await getStreamHistory()
+      return await getStreamHistoryFactory({ db })()
     },
 
     async commitHistory() {
