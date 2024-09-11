@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { Resolvers, Webhook } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   createWebhook,
@@ -10,13 +10,43 @@ import {
   countWebhooksByStreamIdFactory,
   createWebhookFactory,
   deleteWebhookFactory,
+  getStreamWebhooksFactory,
   getWebhookByIdFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { db } from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+
+const streamWebhooksResolver = async (
+  parent: { id: string },
+  args: { id?: string },
+  context: { resourceAccessRules?: TokenResourceIdentifier[] | null; userId: string }
+) => {
+  await authorizeResolver(
+    context.userId,
+    parent.id,
+    Roles.Stream.Owner,
+    context.resourceAccessRules
+  )
+
+  if (args.id) {
+    const wh = (await getWebhookByIdFactory({ db })({ id: args.id })) as Webhook | null
+    const items = wh ? [wh] : []
+    return { items, totalCount: items.length }
+  }
+
+  const items = await getStreamWebhooksFactory({ db })({ streamId: parent.id })
+  return { items, totalCount: items.length }
+}
 
 export = {
+  Stream: {
+    webhooks: streamWebhooksResolver
+  },
+  Project: {
+    webhooks: streamWebhooksResolver
+  },
   Mutation: {
     webhookCreate: async (_parent, args, context) => {
       await authorizeResolver(
