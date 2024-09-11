@@ -210,12 +210,11 @@ const showDescriptionDialog = () => {
   isDescriptionDialogOpen.value = true
 }
 
-onMounted(checkOverflow)
-watch(() => props.workspaceInfo.description, checkOverflow)
 watch(
-  () => props.workspaceInfo.id,
+  () => props.workspaceInfo,
   () => {
     nextTick(checkOverflow)
-  }
+  },
+  { immediate: true, deep: true }
 )
 </script>
