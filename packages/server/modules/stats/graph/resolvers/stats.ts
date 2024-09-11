@@ -6,13 +6,14 @@ import {
   getCommitHistory,
   getObjectHistory,
   getUserHistory,
-  getTotalStreamCount,
+  getTotalStreamCountFactory,
   getTotalCommitCount,
   getTotalObjectCount,
   getTotalUserCount
-} from '@/modules/stats/services/index'
+} from '@/modules/stats/repositories/index'
 import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { db } from '@/db/knex'
 
 export = {
   Query: {
@@ -28,7 +29,7 @@ export = {
 
   ServerStats: {
     async totalStreamCount() {
-      return await getTotalStreamCount()
+      return await getTotalStreamCountFactory({ db })()
     },
 
     async totalCommitCount() {

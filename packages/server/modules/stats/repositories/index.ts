@@ -1,8 +1,9 @@
 import knex from '@/db/knex'
+import { Knex } from 'knex'
 
-export async function getTotalStreamCount() {
+export const getTotalStreamCountFactory = (deps: { db: Knex }) => async () => {
   const query = 'SELECT COUNT(*) FROM streams'
-  const result = await knex.raw(query)
+  const result = await deps.db.raw(query)
   return parseInt(result.rows[0].count)
 }
 

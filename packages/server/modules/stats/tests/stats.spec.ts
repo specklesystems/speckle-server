@@ -14,14 +14,15 @@ import {
   getCommitHistory,
   getObjectHistory,
   getUserHistory,
-  getTotalStreamCount,
+  getTotalStreamCountFactory,
   getTotalCommitCount,
   getTotalObjectCount,
   getTotalUserCount
-} from '@/modules/stats/services/index'
+} from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
 import { Express } from 'express'
+import { db } from '@/db/knex'
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
@@ -38,7 +39,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the total number of streams on this server', async () => {
-    const res = await getTotalStreamCount()
+    const res = await getTotalStreamCountFactory({ db })()
     expect(res).to.equal(params.numStreams)
   })
 
