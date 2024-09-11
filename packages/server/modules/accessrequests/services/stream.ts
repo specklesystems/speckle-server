@@ -26,6 +26,7 @@ import {
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { db } from '@/db/knex'
+import { GetUsersPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -38,23 +39,27 @@ function buildStreamAccessRequestGraphQLReturn(
   }
 }
 
-export async function getUserProjectAccessRequest(
-  userId: string,
-  projectId: string
-): Promise<Nullable<StreamAccessRequestRecord>> {
-  const req = await getUsersPendingAccessRequestFactory({ db })(
-    userId,
-    AccessRequestType.Stream,
-    projectId
-  )
-  return req || null
-}
+export const getUserProjectAccessRequestFactory =
+  (deps: { getUsersPendingAccessRequest: GetUsersPendingAccessRequest }) =>
+  async (
+    userId: string,
+    projectId: string
+  ): Promise<Nullable<StreamAccessRequestRecord>> => {
+    const req = await deps.getUsersPendingAccessRequest(
+      userId,
+      AccessRequestType.Stream,
+      projectId
+    )
+    return req || null
+  }
 
 export async function getUserStreamAccessRequest(
   userId: string,
   streamId: string
 ): Promise<Nullable<StreamAccessRequestGraphQLReturn>> {
-  const req = await getUserProjectAccessRequest(userId, streamId)
+  const req = await getUserProjectAccessRequestFactory({
+    getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+  })(userId, streamId)
   if (!req) return null
 
   return buildStreamAccessRequestGraphQLReturn(req)

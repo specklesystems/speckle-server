@@ -1,8 +1,12 @@
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import { db } from '@/db/knex'
+import {
+  AccessRequestType,
+  getUsersPendingAccessRequestFactory
+} from '@/modules/accessrequests/repositories'
 import {
   getPendingProjectRequests,
   getPendingStreamRequests,
-  getUserProjectAccessRequest,
+  getUserProjectAccessRequestFactory,
   getUserStreamAccessRequest,
   processPendingProjectRequest,
   processPendingStreamRequest,
@@ -14,6 +18,10 @@ import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
+
+const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
+  getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+})
 
 const resolvers: Resolvers = {
   Mutation: {
