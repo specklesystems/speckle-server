@@ -1,7 +1,6 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 const {
-  uploadFileStream,
   getBlobMetadata,
   getBlobMetadataCollection,
   cursorFromRows,
@@ -19,8 +18,18 @@ const {
 } = require('@/modules/shared/errors')
 const { range } = require('lodash')
 const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
+const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/upload')
+const {
+  upsertBlobFactory,
+  updateBlobFactory
+} = require('@/modules/blobstorage/repositories')
+const { db } = require('@/db/knex')
 
 const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
+const uploadFileStream = uploadFileStreamFactory({
+  upsertBlob: upsertBlobFactory({ db }),
+  updateBlob: updateBlobFactory({ db })
+})
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {
