@@ -11,7 +11,7 @@ import {
   generateId,
   getPendingAccessRequestFactory,
   getPendingAccessRequestsFactory,
-  getUsersPendingAccessRequest,
+  getUsersPendingAccessRequestFactory,
   ServerAccessRequestRecord,
   StreamAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
@@ -42,7 +42,7 @@ export async function getUserProjectAccessRequest(
   userId: string,
   projectId: string
 ): Promise<Nullable<StreamAccessRequestRecord>> {
-  const req = await getUsersPendingAccessRequest(
+  const req = await getUsersPendingAccessRequestFactory({ db })(
     userId,
     AccessRequestType.Stream,
     projectId
