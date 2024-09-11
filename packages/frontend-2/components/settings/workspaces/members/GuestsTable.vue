@@ -43,6 +43,7 @@
           v-if="isWorkspaceAdmin"
           v-model:open="showActionsMenu[item.id]"
           :items="actionItems"
+          size="lg"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
@@ -57,11 +58,16 @@
       </template>
     </LayoutTable>
 
-    <!-- Delete User Dialog -->
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
+      title="Remove guest"
       :name="userToModify?.name ?? ''"
       @remove-user="onRemoveUser"
+    />
+
+    <SettingsWorkspacesMembersGuestsPermissionsDialog
+      v-model:open="showGuestsPermissionsDialog"
+      :name="userToModify?.name ?? ''"
     />
   </div>
 </template>
@@ -106,6 +112,7 @@ graphql(`
 `)
 
 enum ActionTypes {
+  ChangeProjectPermissions = 'change-project-permissions',
   RemoveMember = 'remove-member'
 }
 
@@ -119,6 +126,7 @@ const props = defineProps<{
 const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
 const showDeleteUserRoleDialog = ref(false)
+const showGuestsPermissionsDialog = ref(false)
 const userToModify = ref<UserItem>()
 
 const mixpanel = useMixpanel()
@@ -153,12 +161,18 @@ const guests = computed(() => {
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
 const actionItems: LayoutMenuItem[][] = [
-  [{ title: 'Remove member', id: ActionTypes.RemoveMember }]
+  [
+    { title: 'Change project permissions...', id: ActionTypes.ChangeProjectPermissions }
+  ],
+  [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
 ]
 
 const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
   userToModify.value = user
 
+  if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
+    openGuestsPermissionsDialog(user)
+  }
   if (actionItem.id === ActionTypes.RemoveMember) {
     openDeleteUserRoleDialog(user)
   }
@@ -167,6 +181,11 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
 const openDeleteUserRoleDialog = (user: UserItem) => {
   userToModify.value = user
   showDeleteUserRoleDialog.value = true
+}
+
+const openGuestsPermissionsDialog = (user: UserItem) => {
+  userToModify.value = user
+  showGuestsPermissionsDialog.value = true
 }
 
 const onRemoveUser = async () => {
