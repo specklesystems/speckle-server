@@ -15,7 +15,7 @@ import {
   getObjectHistory,
   getUserHistory,
   getTotalStreamCountFactory,
-  getTotalCommitCount,
+  getTotalCommitCountFactory,
   getTotalObjectCount,
   getTotalUserCount
 } from '@/modules/stats/repositories/index'
@@ -44,7 +44,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the total number of commits on this server', async () => {
-    const res = await getTotalCommitCount()
+    const res = await getTotalCommitCountFactory({ db })()
     expect(res).to.equal(params.numCommits)
   })
 

@@ -7,7 +7,7 @@ import {
   getObjectHistory,
   getUserHistory,
   getTotalStreamCountFactory,
-  getTotalCommitCount,
+  getTotalCommitCountFactory,
   getTotalObjectCount,
   getTotalUserCount
 } from '@/modules/stats/repositories/index'
@@ -33,7 +33,7 @@ export = {
     },
 
     async totalCommitCount() {
-      return await getTotalCommitCount()
+      return await getTotalCommitCountFactory({ db })()
     },
 
     async totalObjectCount() {
