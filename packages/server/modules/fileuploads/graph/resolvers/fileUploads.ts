@@ -1,10 +1,10 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  getStreamFileUploads,
   getStreamPendingModels,
   getBranchPendingVersions,
-  getFileInfoFactory
+  getFileInfoFactory,
+  getStreamFileUploadsFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { authorizeResolver } from '@/modules/shared'
 import {
@@ -14,6 +14,7 @@ import {
 import { db } from '@/db/knex'
 
 const getFileInfo = getFileInfoFactory({ db })
+const getStreamFileUploads = getStreamFileUploadsFactory({ db })
 
 export = {
   Stream: {

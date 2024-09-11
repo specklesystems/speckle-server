@@ -22,20 +22,28 @@ export const getFileInfoFactory =
     return fileInfo
   }
 
-export async function getStreamFileUploads(params: { streamId: string }) {
-  const { streamId } = params
-  const fileInfos = await FileUploads.knex()
-    .select<FileUploadRecord[]>('*')
-    .where({ [FileUploads.col.streamId]: streamId })
-    .andWhere((q1) => {
-      q1.orWhereIn(FileUploads.col.convertedStatus, [
-        FileUploadConvertedStatus.Completed,
-        FileUploadConvertedStatus.Error
-      ]).orWhere(FileUploads.col.uploadDate, '>=', knex.raw(`now()-'1 day'::interval`))
-    })
-    .orderBy([{ column: FileUploads.withoutTablePrefix.col.uploadDate, order: 'desc' }])
-  return fileInfos
-}
+export const getStreamFileUploadsFactory =
+  (deps: { db: Knex }) => async (params: { streamId: string }) => {
+    const { streamId } = params
+    const fileInfos = await tables
+      .fileUploads(deps.db)
+      .select<FileUploadRecord[]>('*')
+      .where({ [FileUploads.col.streamId]: streamId })
+      .andWhere((q1) => {
+        q1.orWhereIn(FileUploads.col.convertedStatus, [
+          FileUploadConvertedStatus.Completed,
+          FileUploadConvertedStatus.Error
+        ]).orWhere(
+          FileUploads.col.uploadDate,
+          '>=',
+          knex.raw(`now()-'1 day'::interval`)
+        )
+      })
+      .orderBy([
+        { column: FileUploads.withoutTablePrefix.col.uploadDate, order: 'desc' }
+      ])
+    return fileInfos
+  }
 
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
