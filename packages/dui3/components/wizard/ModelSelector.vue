@@ -98,16 +98,15 @@
           :rules="rules"
           placeholder="West facade, Level 1 layout..."
           name="name"
+          color="foundation"
           :show-clear="!!newModelName"
           full-width
           autocomplete="off"
           size="lg"
         />
-        <div class="mt-4 flex">
-          <FormButton class="flex-grow" text @click="showNewModelDialog = false">
-            Cancel
-          </FormButton>
-          <FormButton class="flex-grow" submit>Create</FormButton>
+        <div class="mt-4 flex justify-center items-center space-x-2">
+          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
+          <FormButton submit>Create</FormButton>
         </div>
       </form>
     </LayoutDialog>

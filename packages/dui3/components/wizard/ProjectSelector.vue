@@ -67,6 +67,7 @@
           placeholder="A Beautiful Home, A Small Bridge..."
           autocomplete="off"
           name="name"
+          color="foundation"
           :show-clear="!!newProjectName"
           :rules="[
             ValidationHelpers.isRequired,
@@ -75,11 +76,9 @@
           full-width
           size="lg"
         />
-        <div class="mt-4 flex">
-          <FormButton class="flex-grow" text @click="showNewProjectDialog = false">
-            Cancel
-          </FormButton>
-          <FormButton class="flex-grow" submit>Create</FormButton>
+        <div class="mt-4 flex justify-center items-center space-x-2">
+          <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
+          <FormButton submit>Create</FormButton>
         </div>
       </form>
     </LayoutDialog>
