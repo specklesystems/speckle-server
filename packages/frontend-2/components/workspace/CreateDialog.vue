@@ -46,6 +46,8 @@ import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
+const emit = defineEmits<(e: 'created') => void>()
+
 type FormValues = { name: string; description: string }
 
 const props = defineProps<{
@@ -101,6 +103,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
   )
 
   if (newWorkspace) {
+    emit('created')
     isOpen.value = false
   }
 })

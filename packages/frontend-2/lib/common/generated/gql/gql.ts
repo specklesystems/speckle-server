@@ -93,6 +93,7 @@ const documents = {
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    ...WorkspaceInviteBanners_User\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
+    "\n  fragment PromoBannersWorkspace_activeUser on User {\n    workspaces {\n      totalCount\n    }\n  }\n": types.PromoBannersWorkspace_ActiveUserFragmentDoc,
     "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    role\n    name\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsDialog_User on User {\n    workspaces {\n      items {\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
@@ -244,6 +245,7 @@ const documents = {
     "\n  subscription OnProjectPendingVersionsUpdated($id: String!) {\n    projectPendingVersionsUpdated(id: $id) {\n      id\n      type\n      version {\n        ...PendingFileUpload\n        model {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectPendingVersionsUpdatedDocument,
     "\n  subscription OnProjectTriggeredAutomationsStatusUpdated($id: String!) {\n    projectTriggeredAutomationsStatusUpdated(projectId: $id) {\n      type\n      version {\n        id\n        automationsStatus {\n          automationRuns {\n            ...AutomateViewerPanel_AutomateRun\n          }\n          ...TriggeredAutomationsStatusSummary\n          ...AutomateRunsTriggerStatusDialog_TriggeredAutomationsStatus\n        }\n      }\n      model {\n        id\n      }\n      run {\n        id\n        automationId\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.OnProjectTriggeredAutomationsStatusUpdatedDocument,
     "\n  subscription OnProjectAutomationsUpdated($id: String!) {\n    projectAutomationsUpdated(projectId: $id) {\n      type\n      automationId\n      automation {\n        id\n        ...ProjectPageAutomationPage_Automation\n        ...ProjectPageAutomationsRow_Automation\n      }\n    }\n  }\n": types.OnProjectAutomationsUpdatedDocument,
+    "\n  query PromoBannersWorkspace {\n    activeUser {\n      ...PromoBannersWorkspace_activeUser\n    }\n  }\n": types.PromoBannersWorkspaceDocument,
     "\n  mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {\n    serverInfoUpdate(info: $info)\n  }\n": types.ServerInfoUpdateDocument,
     "\n  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n": types.AdminPanelDeleteUserDocument,
     "\n  mutation AdminPanelDeleteProject($ids: [String!]!) {\n    projectMutations {\n      batchDelete(ids: $ids)\n    }\n  }\n": types.AdminPanelDeleteProjectDocument,
@@ -660,6 +662,10 @@ export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStr
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PromoBannersWorkspace_activeUser on User {\n    workspaces {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment PromoBannersWorkspace_activeUser on User {\n    workspaces {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1264,6 +1270,10 @@ export function graphql(source: "\n  subscription OnProjectTriggeredAutomationsS
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  subscription OnProjectAutomationsUpdated($id: String!) {\n    projectAutomationsUpdated(projectId: $id) {\n      type\n      automationId\n      automation {\n        id\n        ...ProjectPageAutomationPage_Automation\n        ...ProjectPageAutomationsRow_Automation\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnProjectAutomationsUpdated($id: String!) {\n    projectAutomationsUpdated(projectId: $id) {\n      type\n      automationId\n      automation {\n        id\n        ...ProjectPageAutomationPage_Automation\n        ...ProjectPageAutomationsRow_Automation\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query PromoBannersWorkspace {\n    activeUser {\n      ...PromoBannersWorkspace_activeUser\n    }\n  }\n"): (typeof documents)["\n  query PromoBannersWorkspace {\n    activeUser {\n      ...PromoBannersWorkspace_activeUser\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
