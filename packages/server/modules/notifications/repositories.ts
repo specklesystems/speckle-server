@@ -1,5 +1,8 @@
 import { UserNotificationPreferences } from '@/modules/core/dbSchema'
-import { GetSavedUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import {
+  GetSavedUserNotificationPreferences,
+  SaveUserNotificationPreferences
+} from '@/modules/notifications/domain/operations'
 import {
   NotificationPreferences,
   UserNotificationPreferencesRecord
@@ -22,12 +25,12 @@ export const getSavedUserNotificationPreferencesFactory =
     return userPreferences?.preferences ?? {}
   }
 
-export async function saveUserNotificationPreferences(
-  userId: string,
-  preferences: NotificationPreferences
-): Promise<void> {
-  await UserNotificationPreferences.knex()
-    .insert({ userId, preferences })
-    .onConflict('userId')
-    .merge()
-}
+export const saveUserNotificationPreferencesFactory =
+  (deps: { db: Knex }): SaveUserNotificationPreferences =>
+  async (userId: string, preferences: NotificationPreferences): Promise<void> => {
+    await tables
+      .userNotificationPreferences(deps.db)
+      .insert({ userId, preferences })
+      .onConflict('userId')
+      .merge()
+  }

@@ -1,15 +1,22 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import {
-  updateNotificationPreferences,
-  getUserNotificationPreferencesFactory
+  getSavedUserNotificationPreferencesFactory,
+  saveUserNotificationPreferencesFactory
+} from '@/modules/notifications/repositories'
+import {
+  getUserNotificationPreferencesFactory,
+  updateNotificationPreferencesFactory
 } from '@/modules/notifications/services/notificationPreferences'
 
 const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
   getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
     db
   })
+})
+
+const updateNotificationPreferences = updateNotificationPreferencesFactory({
+  saveUserNotificationPreferences: saveUserNotificationPreferencesFactory({ db })
 })
 
 export = {

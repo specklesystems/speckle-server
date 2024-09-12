@@ -1,15 +1,20 @@
 import { truncateTables } from '@/test/hooks'
 import { UserNotificationPreferences, Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import * as services from '@/modules/notifications/services/notificationPreferences'
 import { expect } from 'chai'
 import {
   NotificationType,
   NotificationChannel
 } from '@/modules/notifications/helpers/types'
 import { BaseError } from '@/modules/shared/errors'
-import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
-import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
+import {
+  getUserNotificationPreferencesFactory,
+  updateNotificationPreferencesFactory
+} from '@/modules/notifications/services/notificationPreferences'
+import {
+  getSavedUserNotificationPreferencesFactory,
+  saveUserNotificationPreferencesFactory
+} from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
 
 const getSavedUserNotificationPreferences = getSavedUserNotificationPreferencesFactory({
@@ -17,6 +22,9 @@ const getSavedUserNotificationPreferences = getSavedUserNotificationPreferencesF
 })
 const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
   getSavedUserNotificationPreferences
+})
+const updateNotificationPreferences = updateNotificationPreferencesFactory({
+  saveUserNotificationPreferences: saveUserNotificationPreferencesFactory({ db })
 })
 
 const cleanup = async () => {
@@ -49,13 +57,13 @@ describe('User notification preferences @notifications', () => {
       }
     })
     it('store notification settings', async () => {
-      await services.updateNotificationPreferences(userA.id, {
+      await updateNotificationPreferences(userA.id, {
         activityDigest: { email: false }
       })
       let preferences = await getUserNotificationPreferences(userA.id)
       expect(preferences).to.not.be.empty
       expect(preferences.activityDigest?.email).to.be.false
-      await services.updateNotificationPreferences(userA.id, {
+      await updateNotificationPreferences(userA.id, {
         activityDigest: { email: true }
       })
       preferences = await getUserNotificationPreferences(userA.id)
@@ -81,7 +89,7 @@ describe('User notification preferences @notifications', () => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           //@ts-ignore
           preferences[nt][nc] = value
-          await services.updateNotificationPreferences(userA.id, preferences)
+          await updateNotificationPreferences(userA.id, preferences)
         } catch (err) {
           expect(err instanceof BaseError)
           const error = err as BaseError
