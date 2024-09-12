@@ -180,6 +180,7 @@ const selectVersionAndAddModel = async (
   modelCard.serverUrl = activeAccount.value.accountInfo.serverInfo.url
 
   modelCard.projectId = selectedProject.value?.id as string
+  modelCard.workspaceId = selectedProject.value?.workspaceId as string
   modelCard.modelId = selectedModel.value?.id as string
 
   modelCard.projectName = selectedProject.value?.name as string

@@ -208,17 +208,28 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
+
     if (model.expired) {
       // user sends via "Update" button
       void trackEvent(
         'DUI3 Action',
-        { name: 'Send', expired: true, actionSource: actionSource.toLowerCase() },
+        {
+          name: 'Send',
+          expired: true,
+          actionSource: actionSource.toLowerCase(),
+          workspaceId: model.workspaceId
+        },
         model.accountId
       )
     } else {
       void trackEvent(
         'DUI3 Action',
-        { name: 'Send', expired: false, actionSource: actionSource.toLowerCase() },
+        {
+          name: 'Send',
+          expired: false,
+          actionSource: actionSource.toLowerCase(),
+          workspaceId: model.workspaceId
+        },
         model.accountId
       )
     }
@@ -296,7 +307,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         expired: model.expired,
         sourceHostApp: model.selectedVersionSourceApp,
         isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
-        actionSource: actionSource.toLowerCase()
+        actionSource: actionSource.toLowerCase(),
+        workspaceId: model.workspaceId
       },
       model.accountId
     )

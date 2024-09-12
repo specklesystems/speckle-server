@@ -18,7 +18,7 @@ const documents = {
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        ...ModelListModelItem\n      }\n    }\n  }\n": types.CreateModelDocument,
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
-    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
+    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
     "\n  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.ProjectListQueryDocument,
     "\n  fragment ModelListModelItem on Model {\n    displayName\n    name\n    id\n    previewUrl\n    updatedAt\n    versions(limit: 1) {\n      totalCount\n      items {\n        ...VersionListItem\n      }\n    }\n  }\n": types.ModelListModelItemFragmentDoc,
     "\n  query ProjectModels(\n    $projectId: String!\n    $cursor: String\n    $limit: Int!\n    $filter: ProjectModelsFilter\n  ) {\n    project(id: $projectId) {\n      id\n      models(cursor: $cursor, limit: $limit, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ModelListModelItem\n        }\n      }\n    }\n  }\n": types.ProjectModelsDocument,
@@ -73,7 +73,7 @@ export function graphql(source: "\n  mutation StreamAccessRequestCreate($input: 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
