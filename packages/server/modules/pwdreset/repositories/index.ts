@@ -6,6 +6,7 @@ import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Knex } from 'knex'
 import {
   CreateToken,
+  DeleteTokens,
   EmailOrTokenId,
   GetPendingToken
 } from '@/modules/pwdreset/domain/operations'
@@ -56,7 +57,8 @@ export const getPendingTokenFactory =
  * Delete all tokens that fit the specified identity
  */
 export const deleteTokensFactory =
-  (deps: { db: Knex }) => async (identity: EmailOrTokenId) => {
+  (deps: { db: Knex }): DeleteTokens =>
+  async (identity: EmailOrTokenId) => {
     const q = baseQueryFactory(deps)
     await q(identity).del()
   }

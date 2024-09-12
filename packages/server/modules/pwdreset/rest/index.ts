@@ -1,13 +1,16 @@
 import { db } from '@/db/knex'
+import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
+import { updateUserPassword } from '@/modules/core/services/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
   createTokenFactory,
+  deleteTokensFactory,
   getPendingTokenFactory
 } from '@/modules/pwdreset/repositories'
-import { finalizePasswordReset } from '@/modules/pwdreset/services/finalize'
+import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { Express } from 'express'
@@ -38,6 +41,14 @@ export default function (app: Express) {
   // Finalizes password recovery.
   app.post('/auth/pwdreset/finalize', async (req, res) => {
     try {
+      const finalizePasswordReset = finalizePasswordResetFactory({
+        getUserByEmail,
+        getPendingToken: getPendingTokenFactory({ db }),
+        deleteTokens: deleteTokensFactory({ db }),
+        updateUserPassword,
+        deleteExistingAuthTokens
+      })
+
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')
       await finalizePasswordReset(req.body.tokenId, req.body.password)
 
