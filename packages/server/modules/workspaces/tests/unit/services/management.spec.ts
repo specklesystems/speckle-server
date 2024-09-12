@@ -8,6 +8,7 @@ import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  isSlugValid,
   updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
@@ -24,6 +25,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceNoVerifiedDomainsError,
   WorkspaceProtectedError,
+  WorkspaceSlugInvalidError,
+  WorkspaceSlugTakenError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
@@ -64,6 +67,7 @@ const buildCreateWorkspaceWithTestContext = (
     }) => {
       context.storedWorkspaces.push(workspace)
     },
+    getWorkspaceBySlug: async () => null,
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
@@ -86,6 +90,7 @@ const getCreateWorkspaceInput = () => {
     userId: cryptoRandomString({ length: 10 }),
     workspaceInput: {
       description: 'foobar',
+      slug: cryptoRandomString({ length: 10 }),
       logo: null,
       name: cryptoRandomString({ length: 6 }),
       defaultLogoIndex: 0
@@ -94,7 +99,47 @@ const getCreateWorkspaceInput = () => {
 }
 
 describe('Workspace services', () => {
+  describe('isSlugValid', () => {
+    it('returns false for url unsafe characters', () => {
+      expect(isSlugValid('{')).to.be.false
+    })
+    it('returns false if slug contains a character that needs encoding', () => {
+      expect(isSlugValid('asdf asdf')).to.be.false
+    })
+    it('returns true for valid slugs', () => {
+      expect(isSlugValid('asdf-asdf')).to.be.true
+    })
+  })
   describe('createWorkspaceFactory creates a function, that', () => {
+    it('throws WorkspaceSlugTakenError if the input slug clashes an existing workspace', async () => {
+      const { createWorkspace } = buildCreateWorkspaceWithTestContext({
+        getWorkspaceBySlug: async () =>
+          ({ id: cryptoRandomString({ length: 10 }) } as Workspace)
+      })
+
+      const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const err = await expectToThrow(async () => {
+        await createWorkspace({
+          userId,
+          workspaceInput,
+          userResourceAccessLimits: null
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugTakenError().message)
+    })
+    it('throws WorkspaceSlugInvalidError if the input slug is not valid', async () => {
+      const { createWorkspace } = buildCreateWorkspaceWithTestContext({})
+
+      const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const err = await expectToThrow(async () => {
+        await createWorkspace({
+          userId,
+          workspaceInput: { ...workspaceInput, slug: 'asdf{{}}}' },
+          userResourceAccessLimits: null
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugInvalidError().message)
+    })
     it('stores the workspace', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
 
@@ -148,6 +193,7 @@ describe('Workspace services', () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspace: WorkspaceWithDomains = {
         id: workspaceId,
+        slug: cryptoRandomString({ length: 10 }),
         name: cryptoRandomString({ length: 10 }),
         description: cryptoRandomString({ length: 20 }),
         createdAt: new Date(),
@@ -216,6 +262,26 @@ describe('Workspace services', () => {
         })
       })
       expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('validates description length', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            slug: '{}{}{}{}'
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugInvalidError().message)
     })
     it('does not allow turning on discoverability if the workspace has no verified domains', async () => {
       const workspace = createTestWorkspaceWithDomainsData()
@@ -901,6 +967,7 @@ describe('Workspace role services', () => {
                   userId,
                   id: workspaceId,
                   name: cryptoRandomString({ length: 10 }),
+                  slug: cryptoRandomString({ length: 10 }),
                   logo: null,
                   createdAt: new Date(),
                   updatedAt: new Date(),
@@ -943,6 +1010,7 @@ describe('Workspace role services', () => {
         const workspace: Workspace = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -997,6 +1065,7 @@ describe('Workspace role services', () => {
         const workspace: Workspace = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -1057,6 +1126,7 @@ describe('Workspace role services', () => {
         const workspaceWithoutDomains = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),

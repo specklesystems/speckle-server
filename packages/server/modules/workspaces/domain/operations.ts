@@ -32,7 +32,17 @@ export type GetWorkspace = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole | null>
 
+export type GetWorkspaceBySlug = (args: {
+  workspaceSlug: string
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole | null>
+
 export type GetWorkspaces = (args: {
+  workspaceIds: string[]
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole[]>
+
+export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
@@ -189,6 +199,7 @@ type WorkspaceUpdateArgs = {
   workspaceId: string
   workspaceInput: {
     name?: string | null
+    slug?: string | null
     description?: string | null
     logo?: string | null
     defaultLogoIndex?: number | null

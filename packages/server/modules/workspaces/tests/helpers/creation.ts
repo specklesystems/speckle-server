@@ -24,7 +24,8 @@ import {
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
   getWorkspaceDomainsFactory,
-  storeWorkspaceDomainFactory
+  storeWorkspaceDomainFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -42,6 +43,7 @@ import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestWorkspace = {
   /**
@@ -52,6 +54,7 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
+  slug: string
   name: string
   description?: string
   logo?: string
@@ -60,11 +63,12 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: BasicTestWorkspace,
+  workspace: Omit<BasicTestWorkspace, 'slug'> & { slug?: string },
   owner: BasicTestUser,
   domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
+    getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
@@ -74,6 +78,7 @@ export const createTestWorkspace = async (
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
+      slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
       logo: workspace.logo || null,
       defaultLogoIndex: 0

@@ -11,7 +11,8 @@ import {
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getWorkspaceCollaboratorsFactory
+  getWorkspaceCollaboratorsFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -40,8 +41,10 @@ import {
   grantStreamPermissions,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
+import { omit } from 'lodash'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
@@ -77,6 +80,7 @@ const createAndStoreTestWorkspace = async (
 ) => {
   const workspace: Omit<Workspace, 'domains'> = {
     id: cryptoRandomString({ length: 10 }),
+    slug: cryptoRandomString({ length: 10 }),
     name: cryptoRandomString({ length: 10 }),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -102,6 +106,37 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+  })
+
+  describe('getWorkspaceBySlugFactory creates a function, that', () => {
+    it('returns null if the workspace is not found', async () => {
+      const workspace = await getWorkspaceBySlug({
+        workspaceSlug: cryptoRandomString({ length: 10 })
+      })
+      expect(workspace).to.be.null
+    })
+    it('returns the workspace', async () => {
+      const testUserA: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
+        name: 'Test Workspace'
+      }
+
+      await createTestUsers([testUserA])
+      await createTestWorkspace(testWorkspace, testUserA)
+
+      const workspace = await getWorkspaceBySlug({
+        workspaceSlug: testWorkspace.slug
+      })
+      expect(workspace?.id).to.be.equal(testWorkspace.id)
+    })
   })
 
   describe('getWorkspaceCollaboratorsFactory creates a function, that', () => {
@@ -132,6 +167,7 @@ describe('Workspace repositories', () => {
       const testWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
         name: 'Test Workspace'
       }
 
@@ -158,17 +194,20 @@ describe('Workspace repositories', () => {
         {
           id: '',
           ownerId: '',
-          name: 'Test Workspace A'
+          name: 'Test Workspace A',
+          slug: cryptoRandomString({ length: 10 })
         },
         {
           id: '',
           ownerId: '',
-          name: 'Test Workspace B'
+          name: 'Test Workspace B',
+          slug: cryptoRandomString({ length: 10 })
         },
         {
           id: '',
           ownerId: '',
-          name: 'Test Workspace C'
+          name: 'Test Workspace C',
+          slug: cryptoRandomString({ length: 10 })
         }
       ]
 
@@ -228,11 +267,16 @@ describe('Workspace repositories', () => {
       const storedWorkspace = await getWorkspace({ workspaceId: testWorkspace.id })
       expect(storedWorkspace).to.deep.equal(testWorkspace)
 
+      const updateData = {
+        slug: cryptoRandomString({ length: 10 }),
+        name: cryptoRandomString({ length: 20 }),
+        createdAt: new Date()
+      }
+
       await upsertWorkspace({
         workspace: {
           ...testWorkspace,
-          id: cryptoRandomString({ length: 13 }),
-          createdAt: new Date()
+          ...updateData
         }
       })
 
@@ -240,7 +284,10 @@ describe('Workspace repositories', () => {
         workspaceId: testWorkspace.id
       })
 
-      expect(modifiedStoredWorkspace).to.deep.equal(testWorkspace)
+      expect(modifiedStoredWorkspace).to.deep.equal({
+        ...testWorkspace,
+        ...omit(updateData, ['createdAt'])
+      })
     })
   })
 
@@ -254,6 +301,7 @@ describe('Workspace repositories', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'Incredibly Forgettable'
     }
 
@@ -752,6 +800,7 @@ describe('Workspace repositories', () => {
       const workspace = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: user.id
       }
       await createTestWorkspace(workspace, user)
@@ -785,6 +834,7 @@ describe('Workspace repositories', () => {
       const workspace = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
       await createTestWorkspace(workspace, admin)
@@ -793,6 +843,7 @@ describe('Workspace repositories', () => {
       const workspace2 = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
       await createTestWorkspace(workspace2, admin)
@@ -834,6 +885,7 @@ describe('Workspace repositories', () => {
       const workspace = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
 
@@ -905,6 +957,7 @@ describe('Workspace repositories', () => {
       const workspace = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
       await createTestWorkspace(workspace, admin)
@@ -982,6 +1035,7 @@ describe('Workspace repositories', () => {
       const workspace1 = {
         id: createRandomPassword(),
         name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
       await createTestWorkspace(workspace1, admin)
@@ -989,6 +1043,7 @@ describe('Workspace repositories', () => {
       const workspace2 = {
         id: createRandomPassword(),
         name: 'my workspace 2',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: admin.id
       }
       await createTestWorkspace(workspace2, admin)

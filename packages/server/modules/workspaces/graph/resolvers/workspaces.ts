@@ -70,7 +70,8 @@ import {
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getUserIdsWithRoleInWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -272,9 +273,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo } = args.input
+          const { name, description, defaultLogoIndex, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -284,6 +286,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
+              slug,
               description: description ?? null,
               logo: logo ?? null,
               defaultLogoIndex: defaultLogoIndex ?? 0

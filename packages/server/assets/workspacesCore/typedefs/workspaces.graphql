@@ -15,6 +15,7 @@ extend type Query {
 
 input WorkspaceCreateInput {
   name: String!
+  slug: String!
   description: String
   defaultLogoIndex: Int
   """
@@ -26,6 +27,7 @@ input WorkspaceCreateInput {
 input WorkspaceUpdateInput {
   id: String!
   name: String
+  slug: String
   description: String
   """
   Logo image as base64-encoded string
@@ -247,6 +249,7 @@ type WorkspaceBilling {
 type Workspace {
   id: ID!
   name: String!
+  slug: String!
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!

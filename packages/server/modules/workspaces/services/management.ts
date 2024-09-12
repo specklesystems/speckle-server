@@ -10,7 +10,8 @@ import {
   GetWorkspaceWithDomains,
   GetWorkspaceDomains,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
-  UpdateWorkspace
+  UpdateWorkspace,
+  GetWorkspaceBySlug
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -32,7 +33,9 @@ import {
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
   WorkspaceInvalidDescriptionError,
-  WorkspaceNoVerifiedDomainsError
+  WorkspaceNoVerifiedDomainsError,
+  WorkspaceSlugTakenError,
+  WorkspaceSlugInvalidError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -64,6 +67,7 @@ type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
+    slug: string
     description: string | null
     logo: string | null
     defaultLogoIndex: number
@@ -71,12 +75,22 @@ type WorkspaceCreateArgs = {
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
+export const isSlugValid = (slug: string): boolean => {
+  const urlString = `https://example.com/${slug}`
+  if (!URL.canParse(urlString)) return false
+  const url = new URL(urlString)
+  if (url.pathname !== `/${slug}`) return false
+  return true
+}
+
 export const createWorkspaceFactory =
   ({
+    getWorkspaceBySlug,
     upsertWorkspace,
     upsertWorkspaceRole,
     emitWorkspaceEvent
   }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
@@ -95,6 +109,12 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
+    if (!isSlugValid(workspaceInput.slug)) throw new WorkspaceSlugInvalidError()
+
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: workspaceInput.slug
+    })
+    if (maybeClashingWorkspace) throw new WorkspaceSlugTakenError()
     const workspace = {
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
@@ -149,6 +169,9 @@ export const updateWorkspaceFactory =
     if (!!workspaceInput.description && workspaceInput.description.length > 512) {
       throw new WorkspaceInvalidDescriptionError()
     }
+
+    if (workspaceInput.slug && !isSlugValid(workspaceInput.slug))
+      throw new WorkspaceSlugInvalidError()
 
     if (
       workspaceInput.discoverabilityEnabled &&
