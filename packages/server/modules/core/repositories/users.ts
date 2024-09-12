@@ -13,6 +13,8 @@ import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { NotFoundError } from '@/modules/shared/errors'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
