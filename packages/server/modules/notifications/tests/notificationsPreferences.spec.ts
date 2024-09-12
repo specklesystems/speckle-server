@@ -1,7 +1,6 @@
 import { truncateTables } from '@/test/hooks'
 import { UserNotificationPreferences, Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import * as repo from '@/modules/notifications/repositories'
 import * as services from '@/modules/notifications/services/notificationPreferences'
 import { expect } from 'chai'
 import {
@@ -9,6 +8,16 @@ import {
   NotificationChannel
 } from '@/modules/notifications/helpers/types'
 import { BaseError } from '@/modules/shared/errors'
+import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
+import { db } from '@/db/knex'
+
+const getSavedUserNotificationPreferences = getSavedUserNotificationPreferencesFactory({
+  db
+})
+const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
+  getSavedUserNotificationPreferences
+})
 
 const cleanup = async () => {
   await truncateTables([Users.name, UserNotificationPreferences.name])
@@ -28,10 +37,10 @@ describe('User notification preferences @notifications', () => {
 
   describe('services', () => {
     it('gets default preferences if none saved', async () => {
-      const savedPreferences = await repo.getUserNotificationPreferences(userA.id)
+      const savedPreferences = await getSavedUserNotificationPreferences(userA.id)
       expect(savedPreferences).to.deep.equal({})
       expect(savedPreferences).to.be.empty
-      const preferences = await services.getUserNotificationPreferences(userA.id)
+      const preferences = await getUserNotificationPreferences(userA.id)
       expect(preferences).to.not.be.empty
       for (const val of Object.values(preferences)) {
         for (const setting of Object.values(val)) {
@@ -43,13 +52,13 @@ describe('User notification preferences @notifications', () => {
       await services.updateNotificationPreferences(userA.id, {
         activityDigest: { email: false }
       })
-      let preferences = await services.getUserNotificationPreferences(userA.id)
+      let preferences = await getUserNotificationPreferences(userA.id)
       expect(preferences).to.not.be.empty
       expect(preferences.activityDigest?.email).to.be.false
       await services.updateNotificationPreferences(userA.id, {
         activityDigest: { email: true }
       })
-      preferences = await services.getUserNotificationPreferences(userA.id)
+      preferences = await getUserNotificationPreferences(userA.id)
       expect(preferences.activityDigest?.email).to.be.true
     })
     it("doesn't store invalid preference keys", async () => {

@@ -1,10 +1,18 @@
+import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import {
   updateNotificationPreferences,
-  getUserNotificationPreferences
+  getUserNotificationPreferencesFactory
 } from '@/modules/notifications/services/notificationPreferences'
 
-module.exports = {
+const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
+  getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
+    db
+  })
+})
+
+export = {
   User: {
     async notificationPreferences(parent) {
       const preferences = await getUserNotificationPreferences(parent.id)
@@ -12,12 +20,8 @@ module.exports = {
     }
   },
   Mutation: {
-    async userNotificationPreferencesUpdate(
-      _parent,
-      args,
-      context: { userId: string }
-    ) {
-      await updateNotificationPreferences(context.userId, args.preferences)
+    async userNotificationPreferencesUpdate(_parent, args, context) {
+      await updateNotificationPreferences(context.userId!, args.preferences)
       return true
     }
   }
