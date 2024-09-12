@@ -22,7 +22,10 @@ import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/manage
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
-import { UpsertProjectRole } from '@/modules/core/domain/projects/operations'
+import {
+  DeleteProjectRole,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export const onProjectCreatedFactory =
@@ -89,7 +92,7 @@ export const onInviteFinalizedFactory =
     })
     if (!project || !project.role) {
       deps.logger.warn(
-        `When handling accepted invite - project not found or useris not a collaborator`,
+        `When handling accepted invite - project not found or user is not a collaborator`,
         { invite, project: { id: project?.id, role: project?.role } }
       )
       return
@@ -109,39 +112,77 @@ export const onInviteFinalizedFactory =
     })
   }
 
-export const onWorkspaceJoinedFactory =
+export const onWorkspaceRoleDeletedFactory =
+  ({
+    queryAllWorkspaceProjects,
+    deleteProjectRole
+  }: {
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteProjectRole: DeleteProjectRole
+  }) =>
+  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    // Delete roles for all workspace projects
+    for await (const projectsPage of queryAllWorkspaceProjects({
+      workspaceId
+    })) {
+      await Promise.all(
+        projectsPage.map(({ id: projectId }) =>
+          deleteProjectRole({ projectId, userId })
+        )
+      )
+    }
+  }
+
+export const onWorkspaceRoleUpdatedFactory =
   ({
     getDefaultWorkspaceProjectRoleMapping,
     queryAllWorkspaceProjects,
+    deleteProjectRole,
     upsertProjectRole
   }: {
     getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteProjectRole: DeleteProjectRole
     upsertProjectRole: UpsertProjectRole
   }) =>
   async ({
     userId,
     role,
-    workspaceId
+    workspaceId,
+    flags
   }: {
     userId: string
     role: WorkspaceRoles
     workspaceId: string
+    flags?: {
+      skipProjectRoleUpdatesFor: string[]
+    }
   }) => {
-    const defaultRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
+    const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
       workspaceId
     })
 
-    const maybeProjectRole = defaultRoleMapping[role]
-    if (!maybeProjectRole) return
+    const nextProjectRole = defaultProjectRoleMapping[role]
 
-    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+    for await (const projectsPage of queryAllWorkspaceProjects({ workspaceId })) {
       await Promise.all(
-        projects.map(async (project) => {
+        projectsPage.map(async ({ id: projectId }) => {
+          if (flags?.skipProjectRoleUpdatesFor.includes(projectId)) {
+            // Skip assignment (used during invite flow)
+            // TODO: Can we refactor this special case away?
+            return
+          }
+
+          if (!nextProjectRole) {
+            // User is being demoted to a workspace role without project access
+            await deleteProjectRole({ projectId, userId })
+            return
+          }
+
           await upsertProjectRole({
-            projectId: project.id,
+            projectId,
             userId,
-            role: maybeProjectRole
+            role: nextProjectRole
           })
         })
       )
@@ -152,11 +193,13 @@ export const initializeEventListenersFactory =
   ({
     onProjectCreated,
     onInviteFinalized,
-    onWorkspaceJoined
+    onWorkspaceRoleDeleted,
+    onWorkspaceRoleUpdated
   }: {
     onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
     onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
-    onWorkspaceJoined: ReturnType<typeof onWorkspaceJoinedFactory>
+    onWorkspaceRoleDeleted: ReturnType<typeof onWorkspaceRoleDeletedFactory>
+    onWorkspaceRoleUpdated: ReturnType<typeof onWorkspaceRoleUpdatedFactory>
   }) =>
   () => {
     const eventBus = getEventBus()
@@ -165,8 +208,11 @@ export const initializeEventListenersFactory =
       eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
         onInviteFinalized(payload)
       ),
-      eventBus.listen(WorkspaceEvents.JoinedFromDiscovery, ({ payload }) =>
-        onWorkspaceJoined(payload)
+      eventBus.listen(WorkspaceEvents.RoleDeleted, ({ payload }) =>
+        onWorkspaceRoleDeleted(payload)
+      ),
+      eventBus.listen(WorkspaceEvents.RoleUpdated, ({ payload }) =>
+        onWorkspaceRoleUpdated(payload)
       )
     ]
 

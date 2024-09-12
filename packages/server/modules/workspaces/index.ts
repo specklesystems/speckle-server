@@ -10,7 +10,8 @@ import {
   initializeEventListenersFactory,
   onInviteFinalizedFactory,
   onProjectCreatedFactory,
-  onWorkspaceJoinedFactory
+  onWorkspaceRoleDeletedFactory,
+  onWorkspaceRoleUpdatedFactory
 } from '@/modules/workspaces/events/eventListener'
 import {
   getWorkspaceRolesFactory,
@@ -64,9 +65,14 @@ const workspacesModule: SpeckleModule = {
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db })
         }),
-        onWorkspaceJoined: onWorkspaceJoinedFactory({
+        onWorkspaceRoleDeleted: onWorkspaceRoleDeletedFactory({
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db })
+        }),
+        onWorkspaceRoleUpdated: onWorkspaceRoleUpdatedFactory({
           getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
           queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db }),
           upsertProjectRole: upsertProjectRoleFactory({ db })
         }),
         onInviteFinalized: onInviteFinalizedFactory({
@@ -77,10 +83,6 @@ const workspacesModule: SpeckleModule = {
             findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
-            upsertProjectRole: upsertProjectRoleFactory({ db }),
-            deleteProjectRole: deleteProjectRoleFactory({ db }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
             emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
           })
         })
