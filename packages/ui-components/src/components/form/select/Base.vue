@@ -12,11 +12,12 @@
       <ListboxLabel
         :id="labelId"
         class="flex text-body-xs text-foreground font-medium pb-1"
-        :class="{ 'sr-only': !showLabel }"
+        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
         :for="buttonId"
       >
         {{ label }}
         <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
@@ -389,6 +390,13 @@ const props = defineProps({
    * Whether to show the red "required" asterisk
    */
   showRequired: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the optional text
+   */
+  showOptional: {
     type: Boolean,
     default: false
   },

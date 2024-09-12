@@ -14,7 +14,6 @@
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
-        show-required
       />
       <FormTextInput
         v-model:model-value="workspaceDescription"
@@ -24,6 +23,7 @@
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
         show-label
+        show-optional
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
