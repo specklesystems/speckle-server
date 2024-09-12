@@ -217,7 +217,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
           name: 'Send',
           expired: true,
           actionSource: actionSource.toLowerCase(),
-          workspaceId: model.workspaceId
+          // eslint-disable-next-line camelcase
+          workspace_id: model.workspaceId
         },
         model.accountId
       )
@@ -228,7 +229,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
           name: 'Send',
           expired: false,
           actionSource: actionSource.toLowerCase(),
-          workspaceId: model.workspaceId
+          // eslint-disable-next-line camelcase
+          workspace_id: model.workspaceId
         },
         model.accountId
       )
@@ -308,7 +310,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         sourceHostApp: model.selectedVersionSourceApp,
         isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
         actionSource: actionSource.toLowerCase(),
-        workspaceId: model.workspaceId
+        // eslint-disable-next-line camelcase
+        workspace_id: model.workspaceId
       },
       model.accountId
     )
