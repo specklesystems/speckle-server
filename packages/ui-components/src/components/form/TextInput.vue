@@ -1,10 +1,17 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="computedWrapperClasses">
-    <div :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'">
+    <div
+      :class="
+        labelPosition === 'left'
+          ? 'w-full md:w-6/12 flex flex-col justify-center'
+          : 'w-full'
+      "
+    >
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
         <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </label>
       <p
         v-if="labelPosition === 'left' && helpTipId && !hideHelpTip"
@@ -62,7 +69,7 @@
         <div
           v-if="errorMessage"
           :class="[
-            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
+            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center h-8',
             shouldShowClear ? 'pr-8' : 'pr-2'
           ]"
         >
@@ -94,7 +101,8 @@ import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { LabelPosition, InputColor } from '~~/src/composables/form/textInput'
+import type { InputColor } from '~~/src/composables/form/textInput'
+import type { LabelPosition } from '~~/src/composables/form/input'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -150,6 +158,13 @@ const props = defineProps({
    * Whether to show the red "required" asterisk
    */
   showRequired: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the "optional" text
+   */
+  showOptional: {
     type: Boolean,
     default: false
   },

@@ -9,7 +9,6 @@
           placeholder="Name"
           color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-          show-required
           auto-focus
           autocomplete="off"
           show-label
@@ -21,13 +20,14 @@
           color="foundation"
           size="lg"
           show-label
+          show-optional
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
         <div>
           <h3 class="label mb-2">Access permissions</h3>
           <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
         </div>
-        <template v-if="isWorkspacesEnabled">
+        <template v-if="isWorkspacesEnabled && !workspaceId">
           <div v-if="!isCreatingWorkspace" class="flex gap-y-2 flex-col">
             <p class="text-body-xs text-foreground font-medium">Workspace</p>
             <div v-if="hasWorkspaces">
