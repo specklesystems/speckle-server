@@ -4,15 +4,17 @@ import { StringChain } from 'lodash'
 import dayjs from 'dayjs'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Knex } from 'knex'
-import { db } from '@/db/knex'
+import {
+  CreateToken,
+  EmailOrTokenId,
+  GetPendingToken
+} from '@/modules/pwdreset/domain/operations'
 
 export type PasswordResetTokenRecord = {
   id: string
   email: string
   createdAt: StringChain
 }
-
-export type EmailOrTokenId = { email?: string; tokenId?: string }
 
 const tables = {
   pwdresetTokens: (db: Knex) => db<PasswordResetTokenRecord>(PasswordResetTokens.name)
@@ -38,15 +40,17 @@ const baseQueryFactory = (deps: { db: Knex }) => (identity: EmailOrTokenId) => {
 /**
  * Attempt to find a valid & pending password reset token that was created in the last hour
  */
-export async function getPendingToken(identity: EmailOrTokenId) {
-  const anHourAgo = dayjs().subtract(1, 'hour')
+export const getPendingTokenFactory =
+  (deps: { db: Knex }): GetPendingToken =>
+  async (identity: EmailOrTokenId) => {
+    const anHourAgo = dayjs().subtract(1, 'hour')
 
-  const record = await baseQueryFactory({ db })(identity)
-    .andWhere(PasswordResetTokens.col.createdAt, '>', anHourAgo.toISOString())
-    .first()
+    const record = await baseQueryFactory(deps)(identity)
+      .andWhere(PasswordResetTokens.col.createdAt, '>', anHourAgo.toISOString())
+      .first()
 
-  return record
-}
+    return record
+  }
 
 /**
  * Delete all tokens that fit the specified identity
@@ -60,18 +64,22 @@ export const deleteTokensFactory =
 /**
  * Delete old tokens and create new one
  */
-export const createTokenFactory = (deps: { db: Knex }) => async (email: string) => {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
+export const createTokenFactory =
+  (deps: { db: Knex }): CreateToken =>
+  async (email: string) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
 
-  await deleteTokensFactory(deps)({ email })
+    await deleteTokensFactory(deps)({ email })
 
-  const data: PasswordResetTokenRecord[] = await tables.pwdresetTokens(deps.db).insert(
-    {
-      id: crs({ length: 10 }),
-      email
-    },
-    '*'
-  )
+    const data: PasswordResetTokenRecord[] = await tables
+      .pwdresetTokens(deps.db)
+      .insert(
+        {
+          id: crs({ length: 10 }),
+          email
+        },
+        '*'
+      )
 
-  return data[0]
-}
+    return data[0]
+  }
