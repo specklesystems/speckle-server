@@ -1,5 +1,10 @@
-import { UpdateBlob, UpsertBlob } from '@/modules/blobstorage/domain/operations'
+import {
+  GetBlobMetadata,
+  UpdateBlob,
+  UpsertBlob
+} from '@/modules/blobstorage/domain/operations'
 import { BadRequestError } from '@/modules/shared/errors'
+import { MaybeAsync } from '@speckle/shared'
 
 export const uploadFileStreamFactory =
   (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }) =>
@@ -38,4 +43,21 @@ export const uploadFileStreamFactory =
     await deps.updateBlob({ id: blobId, item: { fileHash } })
 
     return { blobId, fileName, fileHash }
+  }
+
+export const getFileStreamFactory =
+  (deps: { getBlobMetadata: GetBlobMetadata }) =>
+  async <
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    StreamGetter extends (args: { objectKey: string }) => MaybeAsync<any>
+  >(params: {
+    blobId: string
+    streamId: string
+    getObjectStream: StreamGetter
+  }): Promise<Awaited<ReturnType<StreamGetter>>> => {
+    const { blobId, streamId, getObjectStream } = params
+
+    const { objectKey } = await deps.getBlobMetadata({ blobId, streamId })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await getObjectStream({ objectKey: objectKey! })
   }

@@ -6,11 +6,6 @@ const BlobStorage = () => knex('blob_storage')
 const blobLookup = ({ blobId, streamId }) =>
   BlobStorage().where({ id: blobId, streamId })
 
-const getFileStream = async ({ getObjectStream, streamId, blobId }) => {
-  const { objectKey } = await getBlobMetadataFactory({ db: knex })({ streamId, blobId })
-  return await getObjectStream({ objectKey })
-}
-
 const markUploadSuccess = async (getObjectAttributes, streamId, blobId) =>
   await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
     const { fileSize } = await getObjectAttributes({ objectKey })
@@ -48,7 +43,6 @@ module.exports = {
   markUploadSuccess,
   markUploadOverFileSizeLimit,
   markUploadError,
-  getFileStream,
   deleteBlob,
   getFileSizeLimit
 }
