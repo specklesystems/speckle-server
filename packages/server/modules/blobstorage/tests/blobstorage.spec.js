@@ -1,7 +1,6 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 const {
-  blobCollectionSummary,
   getFileStream,
   deleteBlob,
   markUploadOverFileSizeLimit,
@@ -15,7 +14,8 @@ const {
   upsertBlobFactory,
   updateBlobFactory,
   getBlobMetadataFactory,
-  getBlobMetadataCollectionFactory
+  getBlobMetadataCollectionFactory,
+  blobCollectionSummaryFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
 const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/db')
@@ -30,6 +30,7 @@ const uploadFileStream = uploadFileStreamFactory({
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const blobCollectionSummary = blobCollectionSummaryFactory({ db })
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {

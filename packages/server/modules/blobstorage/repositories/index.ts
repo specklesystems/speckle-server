@@ -16,6 +16,7 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { Knex } from 'knex'
 
 const BlobStorage = buildTableHelper('blob_storage', [
@@ -120,5 +121,29 @@ export const getBlobMetadataCollectionFactory =
     return {
       blobs: rows,
       cursor: cursorFromRows(rows, cursorTarget)
+    }
+  }
+
+export const blobCollectionSummaryFactory =
+  (deps: { db: Knex }) =>
+  async (params: { streamId: string; query?: MaybeNullOrUndefined<string> }) => {
+    const { streamId, query } = params
+
+    const q = tables
+      .blobStorage(deps.db)
+      .where({ [BlobStorage.col.streamId]: streamId })
+      .sum('fileSize')
+      .count('id')
+
+    if (query) q.andWhereLike('fileName', `%${query}%`)
+
+    const [summary] = (await q) as unknown as Array<{
+      sum: Nullable<string>
+      count: string
+    }>
+
+    return {
+      totalSize: summary.sum ? parseInt(summary.sum) : 0,
+      totalCount: parseInt(summary.count)
     }
   }
