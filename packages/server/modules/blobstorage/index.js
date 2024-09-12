@@ -17,7 +17,6 @@ const crs = require('crypto-random-string')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 
 const {
-  getFileStream,
   markUploadError,
   markUploadSuccess,
   markUploadOverFileSizeLimit,
@@ -41,7 +40,10 @@ const {
   getBlobMetadataCollectionFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
-const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/upload')
+const {
+  uploadFileStreamFactory,
+  getFileStreamFactory
+} = require('@/modules/blobstorage/services/management')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({
@@ -50,6 +52,7 @@ const uploadFileStream = uploadFileStreamFactory({
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const getFileStream = getFileStreamFactory({ getBlobMetadata })
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {

@@ -1,7 +1,6 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 const {
-  getFileStream,
   deleteBlob,
   markUploadOverFileSizeLimit,
   markUploadSuccess
@@ -9,7 +8,10 @@ const {
 const { NotFoundError, BadRequestError } = require('@/modules/shared/errors')
 const { range } = require('lodash')
 const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
-const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/upload')
+const {
+  uploadFileStreamFactory,
+  getFileStreamFactory
+} = require('@/modules/blobstorage/services/management')
 const {
   upsertBlobFactory,
   updateBlobFactory,
@@ -31,6 +33,7 @@ const uploadFileStream = uploadFileStreamFactory({
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 const blobCollectionSummary = blobCollectionSummaryFactory({ db })
+const getFileStream = getFileStreamFactory({ getBlobMetadata })
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {
