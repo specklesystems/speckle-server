@@ -6,20 +6,6 @@ const BlobStorage = () => knex('blob_storage')
 const blobLookup = ({ blobId, streamId }) =>
   BlobStorage().where({ id: blobId, streamId })
 
-const blobQuery = ({ streamId, query }) => {
-  let blobs = BlobStorage().where({ streamId })
-  if (query) blobs = blobs.andWhereLike('fileName', `%${query}%`)
-  return blobs
-}
-
-const blobCollectionSummary = async ({ streamId, query }) => {
-  const [summary] = await blobQuery({ streamId, query }).sum('fileSize').count('id')
-  return {
-    totalSize: summary.sum ? parseInt(summary.sum) : 0,
-    totalCount: parseInt(summary.count)
-  }
-}
-
 const getFileStream = async ({ getObjectStream, streamId, blobId }) => {
   const { objectKey } = await getBlobMetadataFactory({ db: knex })({ streamId, blobId })
   return await getObjectStream({ objectKey })
@@ -64,6 +50,5 @@ module.exports = {
   markUploadError,
   getFileStream,
   deleteBlob,
-  blobCollectionSummary,
   getFileSizeLimit
 }
