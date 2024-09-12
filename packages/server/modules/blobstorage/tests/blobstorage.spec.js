@@ -1,6 +1,5 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
-const { deleteBlob } = require('@/modules/blobstorage/services')
 const { NotFoundError, BadRequestError } = require('@/modules/shared/errors')
 const { range } = require('lodash')
 const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
@@ -8,14 +7,16 @@ const {
   uploadFileStreamFactory,
   getFileStreamFactory,
   markUploadSuccessFactory,
-  markUploadOverFileSizeLimitFactory
+  markUploadOverFileSizeLimitFactory,
+  fullyDeleteBlobFactory
 } = require('@/modules/blobstorage/services/management')
 const {
   upsertBlobFactory,
   updateBlobFactory,
   getBlobMetadataFactory,
   getBlobMetadataCollectionFactory,
-  blobCollectionSummaryFactory
+  blobCollectionSummaryFactory,
+  deleteBlobFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
 const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/db')
@@ -37,6 +38,10 @@ const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob
 const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
   getBlobMetadata,
   updateBlob
+})
+const deleteBlob = fullyDeleteBlobFactory({
+  getBlobMetadata,
+  deleteBlob: deleteBlobFactory({ db })
 })
 
 describe('Blob storage @blobstorage', () => {

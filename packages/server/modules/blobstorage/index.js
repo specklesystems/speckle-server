@@ -15,9 +15,6 @@ const {
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-
-const { deleteBlob } = require('@/modules/blobstorage/services')
-
 const { isArray } = require('lodash')
 
 const {
@@ -31,7 +28,8 @@ const {
   upsertBlobFactory,
   updateBlobFactory,
   getBlobMetadataFactory,
-  getBlobMetadataCollectionFactory
+  getBlobMetadataCollectionFactory,
+  deleteBlobFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
 const {
@@ -40,7 +38,8 @@ const {
   getFileSizeLimit,
   markUploadSuccessFactory,
   markUploadErrorFactory,
-  markUploadOverFileSizeLimitFactory
+  markUploadOverFileSizeLimitFactory,
+  fullyDeleteBlobFactory
 } = require('@/modules/blobstorage/services/management')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
@@ -57,6 +56,10 @@ const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
 const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
   getBlobMetadata,
   updateBlob
+})
+const deleteBlob = fullyDeleteBlobFactory({
+  getBlobMetadata,
+  deleteBlob: deleteBlobFactory({ db })
 })
 
 const ensureConditions = async () => {

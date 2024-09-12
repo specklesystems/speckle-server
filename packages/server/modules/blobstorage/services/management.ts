@@ -1,4 +1,5 @@
 import {
+  DeleteBlob,
   GetBlobMetadata,
   UpdateBlob,
   UpsertBlob
@@ -56,7 +57,7 @@ export const getFileStreamFactory =
   (deps: { getBlobMetadata: GetBlobMetadata }) =>
   async <
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    StreamGetter extends (args: { objectKey: string }) => MaybeAsync<any>
+    StreamGetter extends (args: ObjectKeyPayload) => MaybeAsync<any>
   >(params: {
     blobId: string
     streamId: string
@@ -79,9 +80,7 @@ const updateBlobMetadataFactory =
   async (
     streamId: string,
     blobId: string,
-    updateCallback: (params: {
-      objectKey: string
-    }) => MaybeAsync<Partial<BlobStorageItem>>
+    updateCallback: (params: ObjectKeyPayload) => MaybeAsync<Partial<BlobStorageItem>>
   ) => {
     const { objectKey, fileName } = await deps.getBlobMetadata({
       streamId,
@@ -95,9 +94,7 @@ const updateBlobMetadataFactory =
 export const markUploadSuccessFactory =
   (deps: UpdateBlobMetadataDeps) =>
   async (
-    getObjectAttributes: (params: {
-      objectKey: string
-    }) => MaybeAsync<{ fileSize: number }>,
+    getObjectAttributes: (params: ObjectKeyPayload) => MaybeAsync<{ fileSize: number }>,
     streamId: string,
     blobId: string
   ) => {
@@ -108,7 +105,8 @@ export const markUploadSuccessFactory =
     })
   }
 
-type DeleteObjectFromStorage = (params: { objectKey: string }) => MaybeAsync<void>
+type ObjectKeyPayload = { objectKey: string }
+type DeleteObjectFromStorage = (params: ObjectKeyPayload) => MaybeAsync<void>
 
 export const markUploadErrorFactory =
   (deps: UpdateBlobMetadataDeps) =>
@@ -135,4 +133,23 @@ export const markUploadOverFileSizeLimitFactory =
       blobId,
       'File size limit reached'
     )
+  }
+
+export const fullyDeleteBlobFactory =
+  (deps: { getBlobMetadata: GetBlobMetadata; deleteBlob: DeleteBlob }) =>
+  async ({
+    streamId,
+    blobId,
+    deleteObject
+  }: {
+    streamId: string
+    blobId: string
+    deleteObject: (params: ObjectKeyPayload) => MaybeAsync<void>
+  }) => {
+    const { objectKey } = await deps.getBlobMetadata({
+      streamId,
+      blobId
+    })
+    await deleteObject({ objectKey: objectKey! })
+    await deps.deleteBlob({ id: blobId, streamId })
   }
