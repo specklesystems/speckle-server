@@ -27,7 +27,7 @@
           <h3 class="label mb-2">Access permissions</h3>
           <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
         </div>
-        <template v-if="isWorkspacesEnabled">
+        <template v-if="isWorkspacesEnabled && !workspaceId">
           <div v-if="!isCreatingWorkspace" class="flex gap-y-2 flex-col">
             <p class="text-body-xs text-foreground font-medium">Workspace</p>
             <div v-if="hasWorkspaces">
