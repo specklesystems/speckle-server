@@ -314,7 +314,7 @@ export const updateWorkspaceRoleFactory =
   async ({
     workspaceId,
     userId,
-    role: nextRole,
+    role: nextWorkspaceRole,
     skipProjectRoleUpdatesFor,
     preventRoleDowngrade
   }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
@@ -331,26 +331,29 @@ export const updateWorkspaceRoleFactory =
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
       isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      nextRole !== Roles.Workspace.Admin
+      nextWorkspaceRole !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
     }
 
-    // Prevent downgrades?
+    const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
+
+    // prevent role downgrades (used during invite flow)
     if (preventRoleDowngrade) {
-      const userRole = workspaceRoles.find((acl) => acl.userId === userId)
-      if (userRole) {
+      if (previousWorkspaceRole) {
         const roleWeights = workspaceRoleDefinitions
         const existingRoleWeight = roleWeights.find(
-          (w) => w.name === userRole.role
+          (w) => w.name === previousWorkspaceRole.role
         )!.weight
-        const newRoleWeight = roleWeights.find((w) => w.name === nextRole)!.weight
+        const newRoleWeight = roleWeights.find(
+          (w) => w.name === nextWorkspaceRole
+        )!.weight
         if (newRoleWeight < existingRoleWeight) return
       }
     }
 
     // ensure domain compliance
-    if (nextRole !== Roles.Workspace.Guest) {
+    if (nextWorkspaceRole !== Roles.Workspace.Guest) {
       const workspace = await getWorkspaceWithDomains({ id: workspaceId })
       if (!workspace) throw new WorkspaceNotFoundError()
       if (workspace.domainBasedMembershipProtectionEnabled) {
@@ -367,64 +370,48 @@ export const updateWorkspaceRoleFactory =
     }
 
     // Perform upsert
-    const { role: previousRole, createdAt } =
-      workspaceRoles.find((acl) => acl.userId === userId) ?? {}
-
     await upsertWorkspaceRole({
       userId,
       workspaceId,
-      role: nextRole,
-      createdAt: createdAt ?? new Date()
+      role: nextWorkspaceRole,
+      createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
 
     // Emit new role
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
-      payload: { userId, workspaceId, role: nextRole }
+      payload: { userId, workspaceId, role: nextWorkspaceRole }
     })
 
-    // Update project roles
+    // Update roles for all workspace projects
     const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
       workspaceId
     })
 
-    // apply the change to all projects
     for await (const projectsPage of queryAllWorkspaceProjects({
       workspaceId
     })) {
       await Promise.all(
         projectsPage.map(({ id: projectId }) => {
-          // this is used only for invites
+          // skip assigning project role implied by workspace role (used during invite flow)
           if (skipProjectRoleUpdatesFor?.includes(projectId)) {
-            // Project role handled explicitly elsewhere
             return
           }
 
-          if (!previousRole) {
-            // User is being added to workspace
-            const initialRole = defaultProjectRoleMapping[nextRole]
+          // no change required
+          if (previousWorkspaceRole?.role === nextWorkspaceRole) return
 
-            if (!initialRole) {
-              // User is being added as guest
-              return
-            }
+          const nextProjectRole = defaultProjectRoleMapping[nextWorkspaceRole]
 
-            return upsertProjectRole({ projectId, userId, role: initialRole })
-          }
-
-          if (!nextRole) {
-            // User is being removed from workspace
+          // user is being removed from workspace or demoted to workspace guest
+          if (!nextWorkspaceRole || !nextProjectRole)
             return deleteProjectRole({ projectId, userId })
-          }
 
-          if (previousRole === nextRole) return
-
-          const newProjectRole = defaultProjectRoleMapping[nextRole]
-          if (!newProjectRole) return deleteProjectRole({ projectId, userId })
+          // user is being granted a workspace role with new role for given project
           return upsertProjectRole({
             projectId,
             userId,
-            role: newProjectRole
+            role: nextProjectRole
           })
         })
       )
