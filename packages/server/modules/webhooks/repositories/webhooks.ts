@@ -4,6 +4,7 @@ import {
   CountWebhooksByStreamId,
   CreateWebhook,
   DeleteWebhook,
+  GetStreamWebhooks,
   GetWebhookById,
   UpdateWebhook
 } from '@/modules/webhooks/domain/operations'
@@ -78,4 +79,18 @@ export const deleteWebhookFactory =
   ({ db }: { db: Knex }): DeleteWebhook =>
   async ({ id }) => {
     return await tables(db).webhooksConfigs.where({ id }).del()
+  }
+
+export const getStreamWebhooksFactory =
+  ({ db }: { db: Knex }): GetStreamWebhooks =>
+  async ({ streamId }) => {
+    const webhooks = await tables(db)
+      .webhooksConfigs.select('*')
+      .where({ streamId })
+      .orderBy('updatedAt', 'desc')
+
+    return webhooks.map((webhook) => ({
+      ...webhook,
+      triggers: toTriggersArray(webhook.triggers)
+    }))
   }
