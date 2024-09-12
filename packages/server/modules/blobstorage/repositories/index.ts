@@ -1,4 +1,5 @@
 import {
+  DeleteBlob,
   GetBlobMetadata,
   GetBlobMetadataCollection,
   GetBlobs,
@@ -70,6 +71,14 @@ export const upsertBlobFactory =
       .ignore()
       .returning('*')
     return res
+  }
+
+export const deleteBlobFactory =
+  (deps: { db: Knex }): DeleteBlob =>
+  async (params: { id: string; streamId?: string }) => {
+    const q = tables.blobStorage(deps.db).where(BlobStorage.col.id, params.id)
+    if (params.streamId) q.andWhere(BlobStorage.col.streamId, params.streamId)
+    return await q.del()
   }
 
 export const updateBlobFactory =

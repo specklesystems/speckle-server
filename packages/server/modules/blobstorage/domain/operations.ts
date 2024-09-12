@@ -17,6 +17,8 @@ export type UpdateBlob = (params: {
   streamId?: string
 }) => Promise<BlobStorageItem>
 
+export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>
+
 export type GetBlobMetadata = (params: {
   blobId: string
   streamId: string
