@@ -3,7 +3,11 @@ import {
   ProjectEvents,
   ProjectEventsPayloads
 } from '@/modules/core/events/projectsEmitter'
-import { getStream } from '@/modules/core/repositories/streams'
+import {
+  deleteProjectRoleFactory,
+  getStream,
+  upsertProjectRoleFactory
+} from '@/modules/core/repositories/streams'
 import {
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
@@ -17,7 +21,7 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { logger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
@@ -27,6 +31,17 @@ import {
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { Knex } from 'knex'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import {
+  getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { getStreams } from '@/modules/core/services/streams'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 export const onProjectCreatedFactory =
   ({
@@ -189,31 +204,81 @@ export const onWorkspaceRoleUpdatedFactory =
     }
   }
 
+// export const initializeEventListenersFactory =
+//   ({
+//     onProjectCreated,
+//     onInviteFinalized,
+//     onWorkspaceRoleDeleted,
+//     onWorkspaceRoleUpdated
+//   }: {
+//     onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
+//     onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
+//     onWorkspaceRoleDeleted: ReturnType<typeof onWorkspaceRoleDeletedFactory>
+//     onWorkspaceRoleUpdated: ReturnType<typeof onWorkspaceRoleUpdatedFactory>
+//   }) =>
+//     () => {
+//       const eventBus = getEventBus()
+//       const quitCbs = [
+//         ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated),
+//         eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
+//           onInviteFinalized(payload)
+//         ),
+//         eventBus.listen(WorkspaceEvents.RoleDeleted, ({ payload }) =>
+//           onWorkspaceRoleDeleted(payload)
+//         ),
+//         eventBus.listen(WorkspaceEvents.RoleUpdated, ({ payload }) =>
+//           onWorkspaceRoleUpdated(payload)
+//         )
+//       ]
+
+//       return () => quitCbs.forEach((quit) => quit())
+//     }
+
 export const initializeEventListenersFactory =
-  ({
-    onProjectCreated,
-    onInviteFinalized,
-    onWorkspaceRoleDeleted,
-    onWorkspaceRoleUpdated
-  }: {
-    onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
-    onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
-    onWorkspaceRoleDeleted: ReturnType<typeof onWorkspaceRoleDeletedFactory>
-    onWorkspaceRoleUpdated: ReturnType<typeof onWorkspaceRoleUpdatedFactory>
-  }) =>
+  ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
     const quitCbs = [
-      ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated),
-      eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
-        onInviteFinalized(payload)
-      ),
-      eventBus.listen(WorkspaceEvents.RoleDeleted, ({ payload }) =>
-        onWorkspaceRoleDeleted(payload)
-      ),
-      eventBus.listen(WorkspaceEvents.RoleUpdated, ({ payload }) =>
-        onWorkspaceRoleUpdated(payload)
-      )
+      ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
+        const onProjectCreated = onProjectCreatedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          upsertProjectRole: upsertProjectRoleFactory({ db }),
+          getWorkspaceRoles: getWorkspaceRolesFactory({ db })
+        })
+        await onProjectCreated(payload)
+      }),
+      eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
+        const onInviteFinalized = onInviteFinalizedFactory({
+          getStream,
+          logger: moduleLogger,
+          updateWorkspaceRole: updateWorkspaceRoleFactory({
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+          })
+        })
+        await onInviteFinalized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
+        const trx = await db.transaction()
+        const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db: trx })
+        })
+        await withTransaction(onWorkspaceRoleDeleted(payload), trx)
+      }),
+      eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
+        const trx = await db.transaction()
+        const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+          upsertProjectRole: upsertProjectRoleFactory({ db: trx })
+        })
+        await withTransaction(onWorkspaceRoleUpdated(payload), trx)
+      })
     ]
 
     return () => quitCbs.forEach((quit) => quit())
