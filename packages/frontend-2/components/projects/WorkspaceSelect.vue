@@ -10,7 +10,7 @@
     mount-menu-on-body
     fully-control-value
     :disabled-item-predicate="disabledItemPredicate"
-    disabled-item-tooltip="You need to be a workspace member or admin to create projects in this workspace"
+    disabled-item-tooltip="You dont have rights to create projects in this workspace"
   >
     <template #nothing-selected>
       {{ 'Select workspace' }}
