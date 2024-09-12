@@ -1,5 +1,14 @@
+import { db } from '@/db/knex'
+import { getUserByEmail } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  createTokenFactory,
+  getPendingTokenFactory
+} from '@/modules/pwdreset/repositories'
 import { finalizePasswordReset } from '@/modules/pwdreset/services/finalize'
-import { requestPasswordRecovery } from '@/modules/pwdreset/services/request'
+import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { Express } from 'express'
 
@@ -7,6 +16,15 @@ export default function (app: Express) {
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
     try {
+      const requestPasswordRecovery = requestPasswordRecoveryFactory({
+        getUserByEmail,
+        getPendingToken: getPendingTokenFactory({ db }),
+        createToken: createTokenFactory({ db }),
+        getServerInfo,
+        renderEmail,
+        sendEmail
+      })
+
       const email = req.body.email
       await requestPasswordRecovery(email)
 

@@ -3,13 +3,16 @@ import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
-import { deleteTokensFactory, getPendingToken } from '@/modules/pwdreset/repositories'
+import {
+  deleteTokensFactory,
+  getPendingTokenFactory
+} from '@/modules/pwdreset/repositories'
 
 async function initializeState(tokenId: string, password: string) {
   if (!tokenId && !password)
     throw new PasswordRecoveryFinalizationError('Both the token & password must be set')
 
-  const token = await getPendingToken({ tokenId })
+  const token = await getPendingTokenFactory({ db })({ tokenId })
   if (!token)
     throw new PasswordRecoveryFinalizationError(
       'Invalid reset token, it may be expired'
