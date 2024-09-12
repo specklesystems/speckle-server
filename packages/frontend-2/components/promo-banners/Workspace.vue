@@ -69,7 +69,11 @@ const { result } = useQuery(promoBannersWorkspaceQuery, null, {
 
 const showWorkspaceCreateDialog = ref(false)
 
-const hasWorkspaces = computed(() => result.value?.activeUser.workspaces.totalCount > 0)
+const hasWorkspaces = computed(() =>
+  result.value?.activeUser?.workspaces.totalCount
+    ? result.value.activeUser.workspaces.totalCount > 0
+    : false
+)
 const showBanner = computed(
   () =>
     isWorkspacesEnabled &&
