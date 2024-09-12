@@ -4,7 +4,7 @@ import {
   getBlobMetadataCollectionFactory,
   getBlobMetadataFactory
 } from '@/modules/blobstorage/repositories'
-import { getFileSizeLimit } from '@/modules/blobstorage/services'
+import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import {
   ProjectBlobArgs,
   ProjectBlobsArgs,

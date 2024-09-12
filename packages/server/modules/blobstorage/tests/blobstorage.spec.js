@@ -1,16 +1,14 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
-const {
-  deleteBlob,
-  markUploadOverFileSizeLimit,
-  markUploadSuccess
-} = require('@/modules/blobstorage/services')
+const { deleteBlob } = require('@/modules/blobstorage/services')
 const { NotFoundError, BadRequestError } = require('@/modules/shared/errors')
 const { range } = require('lodash')
 const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
 const {
   uploadFileStreamFactory,
-  getFileStreamFactory
+  getFileStreamFactory,
+  markUploadSuccessFactory,
+  markUploadOverFileSizeLimitFactory
 } = require('@/modules/blobstorage/services/management')
 const {
   upsertBlobFactory,
@@ -26,14 +24,20 @@ const cryptoRandomString = require('crypto-random-string')
 const { createTestUser } = require('@/test/authHelper')
 const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
 const upsertBlob = upsertBlobFactory({ db })
+const updateBlob = updateBlobFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob,
-  updateBlob: updateBlobFactory({ db })
+  updateBlob
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 const blobCollectionSummary = blobCollectionSummaryFactory({ db })
 const getFileStream = getFileStreamFactory({ getBlobMetadata })
+const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
+const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+  getBlobMetadata,
+  updateBlob
+})
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {
