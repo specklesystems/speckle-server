@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
@@ -8,7 +9,7 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
 import {
-  createToken,
+  createTokenFactory,
   getPendingToken,
   PasswordResetTokenRecord
 } from '@/modules/pwdreset/repositories'
@@ -39,6 +40,7 @@ async function initializeNewToken(email: string) {
     )
   }
 
+  const createToken = createTokenFactory({ db })
   const [serverInfo, newToken] = await Promise.all([
     getServerInfo(),
     createToken(email)

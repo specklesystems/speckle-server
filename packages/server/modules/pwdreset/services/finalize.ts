@@ -1,8 +1,9 @@
+import { db } from '@/db/knex'
 import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
-import { deleteTokens, getPendingToken } from '@/modules/pwdreset/repositories'
+import { deleteTokensFactory, getPendingToken } from '@/modules/pwdreset/repositories'
 
 async function initializeState(tokenId: string, password: string) {
   if (!tokenId && !password)
@@ -27,6 +28,7 @@ type FinalizationState = Awaited<ReturnType<typeof initializeState>>
 async function finalizeNewPassword(state: FinalizationState) {
   const { user, password, tokenId } = state
   await updateUserPassword({ id: user.id, newPassword: password })
+  const deleteTokens = deleteTokensFactory({ db })
 
   // Delete password reset tokens
   await Promise.all([deleteTokens({ tokenId }), deleteTokens({ email: user.email })])
