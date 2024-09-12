@@ -73,7 +73,7 @@ const hasWorkspaces = computed(() => result.value?.activeUser.workspaces.totalCo
 const showBanner = computed(
   () =>
     isWorkspacesEnabled &&
-    hasWorkspaces.value &&
+    !hasWorkspaces.value &&
     (import.meta.client ? !dismissedCookie.value : false)
 )
 
