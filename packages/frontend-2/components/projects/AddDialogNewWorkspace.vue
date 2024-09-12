@@ -66,7 +66,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
       navigateOnSuccess: false
     },
     {
-      source: 'create project modal'
+      source: 'create-project-modal'
     }
   )
 
