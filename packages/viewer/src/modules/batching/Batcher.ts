@@ -25,6 +25,7 @@ import { Geometry } from '../converter/Geometry.js'
 import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
+import { ObjectVisibility } from '../pipeline/G/GPass.js'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch
@@ -410,6 +411,19 @@ export default class Batcher {
       } else {
         batch.setVisibleRange([range])
       }
+    }
+  }
+
+  public getVisibility(objectVisibility: ObjectVisibility) {
+    switch (objectVisibility) {
+      case ObjectVisibility.OPAQUE:
+        return this.getOpaque()
+      case ObjectVisibility.TRANSPARENT:
+        return this.getTransparent()
+      case ObjectVisibility.STENCIL:
+        return this.getStencil()
+      case ObjectVisibility.DEPTH:
+        return this.getDepth()
     }
   }
 

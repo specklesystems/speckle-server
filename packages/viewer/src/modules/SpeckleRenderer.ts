@@ -41,11 +41,7 @@ import {
   type SunLightConfiguration,
   ViewerEvent
 } from '../IViewer.js'
-import {
-  DefaultPipelineOptions,
-  Pipeline,
-  type PipelineOptions
-} from './pipeline/Pipeline.js'
+import { DefaultPipelineOptions, type PipelineOptions } from './pipeline/Pipeline.js'
 import { Shadowcatcher } from './Shadowcatcher.js'
 import SpeckleMesh from './objects/SpeckleMesh.js'
 import { type ExtendedIntersection } from './objects/SpeckleRaycaster.js'
@@ -62,10 +58,10 @@ import { SpeckleMaterial } from './materials/SpeckleMaterial.js'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer.js'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
-import { BaseSpecklePass } from './pipeline/SpecklePass.js'
 import { MeshBatch } from './batching/MeshBatch.js'
-import type { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { RenderTree } from './tree/RenderTree.js'
+import { GPipeline } from './pipeline/G/GPipeline.js'
+import { DefaultPipeline } from './pipeline/G/DefaultPipeline.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -131,7 +127,7 @@ export default class SpeckleRenderer {
   protected _renderOverride: (() => void) | null = null
 
   public viewer: Viewer // TEMPORARY
-  public pipeline: Pipeline
+  public pipeline: GPipeline
   public input: Input
 
   /********************************
@@ -242,9 +238,9 @@ export default class SpeckleRenderer {
     })
     this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
       this.needsRender = needsUpdate
-      if (this.pipeline.needsAccumulation && needsUpdate) {
-        this.pipeline.reset()
-      }
+      // if (this.pipeline.needsAccumulation && needsUpdate) {
+      // this.pipeline.reset()
+      // }
     })
   }
 
@@ -256,11 +252,12 @@ export default class SpeckleRenderer {
   /**********
    * Pipeline */
   public set pipelineOptions(value: PipelineOptions) {
-    this.pipeline.pipelineOptions = value
+    // this.pipeline.pipelineOptions = value
   }
 
   public get pipelineOptions() {
-    return this.pipeline.pipelineOptions
+    return DefaultPipelineOptions
+    // return this.pipeline.pipelineOptions
   }
 
   public get shadowcatcher(): Shadowcatcher | null {
@@ -338,6 +335,11 @@ export default class SpeckleRenderer {
     this._renderer.shadowMap.autoUpdate = false
     this._renderer.shadowMap.needsUpdate = true
     this._renderer.physicallyCorrectLights = true
+
+    /** No autoclear. We're clearing ourselves */
+    this._renderer.autoClear = false
+    this._renderer.autoClearColor = false
+    this._renderer.autoClearDepth = false
     this._renderer.autoClearStencil = false
 
     this.container = container
@@ -349,9 +351,10 @@ export default class SpeckleRenderer {
       this.renderer.capabilities.floatVertexTextures
     )
 
-    this.pipeline = new Pipeline(this._renderer, this.batcher)
-    this.pipeline.configure()
-    this.pipeline.pipelineOptions = DefaultPipelineOptions
+    // this.pipeline = new Pipeline(this._renderer, this.batcher)
+    // this.pipeline.configure()
+    // this.pipeline.pipelineOptions = DefaultPipelineOptions
+    this.pipeline = new DefaultPipeline(this)
 
     this.input = new Input(this._renderer.domElement)
     this.input.on(InputEvent.Click, this.onClick.bind(this))
@@ -413,7 +416,7 @@ export default class SpeckleRenderer {
 
     this.updateTransforms()
 
-    this.pipeline.update(this)
+    this.pipeline.update(this.renderingCamera)
 
     if (this.sunConfiguration.shadowcatcher && this._shadowcatcher) {
       this._shadowcatcher.update(this._scene)
@@ -523,7 +526,7 @@ export default class SpeckleRenderer {
 
   public resetPipeline() {
     this._needsRender = true
-    this.pipeline.reset()
+    // this.pipeline.reset()
   }
 
   public render(): void {
@@ -533,7 +536,8 @@ export default class SpeckleRenderer {
     }
 
     if (!this._speckleCamera) return
-    if (this._needsRender || this.pipeline.needsAccumulation) {
+    if (this._needsRender) {
+      // || this.pipeline.needsAccumulation) {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
@@ -831,7 +835,7 @@ export default class SpeckleRenderer {
         }
       }
     })
-    this.pipeline.updateClippingPlanes(planes)
+    this.pipeline.setClippingPlanes(planes)
     this._shadowcatcher?.updateClippingPlanes(planes)
   }
 
@@ -1258,11 +1262,14 @@ export default class SpeckleRenderer {
   }
 
   public enableLayers(layers: ObjectLayers[], value: boolean) {
-    this.pipeline.composer.passes.forEach((pass: Pass) => {
-      if (!(pass instanceof BaseSpecklePass)) return
-      layers.forEach((layer: ObjectLayers) => {
-        pass.enableLayer(layer, value)
-      })
-    })
+    layers
+    value
+    // TO DO
+    // this.pipeline.composer.passes.forEach((pass: Pass) => {
+    //   if (!(pass instanceof BaseSpecklePass)) return
+    //   layers.forEach((layer: ObjectLayers) => {
+    //     pass.enableLayer(layer, value)
+    //   })
+    // })
   }
 }
