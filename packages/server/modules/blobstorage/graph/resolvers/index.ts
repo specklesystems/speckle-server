@@ -1,10 +1,10 @@
-import { BlobStorageRecord } from '@/modules/blobstorage/helpers/types'
+import { db } from '@/db/knex'
 import {
-  getBlobMetadata,
-  getBlobMetadataCollection,
-  blobCollectionSummary,
-  getFileSizeLimit
-} from '@/modules/blobstorage/services'
+  blobCollectionSummaryFactory,
+  getBlobMetadataCollectionFactory,
+  getBlobMetadataFactory
+} from '@/modules/blobstorage/repositories'
+import { getFileSizeLimit } from '@/modules/blobstorage/services'
 import {
   ProjectBlobArgs,
   ProjectBlobsArgs,
@@ -18,7 +18,10 @@ import {
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
-import { Nullable } from '@speckle/shared'
+
+const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const blobCollectionSummary = blobCollectionSummaryFactory({ db })
 
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
@@ -44,10 +47,10 @@ const streamBlobResolvers = {
   },
   async blob(parent: StreamGraphQLReturn, args: StreamBlobArgs | ProjectBlobArgs) {
     try {
-      return (await getBlobMetadata({
+      return await getBlobMetadata({
         streamId: parent.id,
         blobId: args.id
-      })) as Nullable<BlobStorageRecord>
+      })
     } catch (err: unknown) {
       if (err instanceof NotFoundError) return null
       if (err instanceof ResourceMismatch) throw new BadRequestError(err.message)
