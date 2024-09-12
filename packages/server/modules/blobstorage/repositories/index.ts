@@ -1,4 +1,6 @@
 import {
+  GetBlobMetadata,
+  GetBlobMetadataCollection,
   GetBlobs,
   UpdateBlob,
   UpsertBlob
@@ -7,7 +9,13 @@ import {
   BlobStorageItem,
   BlobStorageItemInput
 } from '@/modules/blobstorage/domain/types'
+import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
 import { buildTableHelper } from '@/modules/core/dbSchema'
+import {
+  BadRequestError,
+  NotFoundError,
+  ResourceMismatch
+} from '@/modules/shared/errors'
 import { Knex } from 'knex'
 
 const BlobStorage = buildTableHelper('blob_storage', [
@@ -72,4 +80,45 @@ export const updateBlobFactory =
       .where(BlobStorage.col.id, id)
       .update(item, '*')
     return res
+  }
+
+export const getBlobMetadataFactory =
+  (deps: { db: Knex }): GetBlobMetadata =>
+  async (params: { blobId: string; streamId: string }) => {
+    const { blobId, streamId } = params
+
+    if (!streamId) throw new BadRequestError('No steamId provided')
+    const obj =
+      (await tables
+        .blobStorage(deps.db)
+        .where({ [BlobStorage.col.id]: blobId, [BlobStorage.col.streamId]: streamId })
+        .first()) || null
+
+    if (!obj) throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`)
+    if (obj.streamId !== streamId)
+      throw new ResourceMismatch("The stream doesn't have the given resource")
+
+    return obj
+  }
+
+export const getBlobMetadataCollectionFactory =
+  (deps: { db: Knex }): GetBlobMetadataCollection =>
+  async ({ streamId, query = null, limit = 25, cursor = null }) => {
+    const cursorTarget = 'createdAt'
+    const limitMax = 25
+    const queryLimit = limit && limit < limitMax ? limit : limitMax
+    const blobs = tables
+      .blobStorage(deps.db)
+      .where({ [BlobStorage.col.streamId]: streamId })
+      .orderBy(cursorTarget, 'desc')
+      .limit(queryLimit)
+
+    if (query) blobs.andWhereLike('fileName', `%${query}%`)
+    if (cursor) blobs.andWhere(cursorTarget, '<', decodeCursor(cursor))
+
+    const rows = await blobs
+    return {
+      blobs: rows,
+      cursor: cursorFromRows(rows, cursorTarget)
+    }
   }
