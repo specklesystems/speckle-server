@@ -204,36 +204,6 @@ export const onWorkspaceRoleUpdatedFactory =
     }
   }
 
-// export const initializeEventListenersFactory =
-//   ({
-//     onProjectCreated,
-//     onInviteFinalized,
-//     onWorkspaceRoleDeleted,
-//     onWorkspaceRoleUpdated
-//   }: {
-//     onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
-//     onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
-//     onWorkspaceRoleDeleted: ReturnType<typeof onWorkspaceRoleDeletedFactory>
-//     onWorkspaceRoleUpdated: ReturnType<typeof onWorkspaceRoleUpdatedFactory>
-//   }) =>
-//     () => {
-//       const eventBus = getEventBus()
-//       const quitCbs = [
-//         ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated),
-//         eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
-//           onInviteFinalized(payload)
-//         ),
-//         eventBus.listen(WorkspaceEvents.RoleDeleted, ({ payload }) =>
-//           onWorkspaceRoleDeleted(payload)
-//         ),
-//         eventBus.listen(WorkspaceEvents.RoleUpdated, ({ payload }) =>
-//           onWorkspaceRoleUpdated(payload)
-//         )
-//       ]
-
-//       return () => quitCbs.forEach((quit) => quit())
-//     }
-
 export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
