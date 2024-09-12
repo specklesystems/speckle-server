@@ -14,6 +14,7 @@ export type UpsertBlob = (item: BlobStorageItemInput) => Promise<BlobStorageItem
 export type UpdateBlob = (params: {
   id: string
   item: Partial<BlobStorageItem>
+  streamId?: string
 }) => Promise<BlobStorageItem>
 
 export type GetBlobMetadata = (params: {

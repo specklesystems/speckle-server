@@ -74,12 +74,16 @@ export const upsertBlobFactory =
 
 export const updateBlobFactory =
   (deps: { db: Knex }): UpdateBlob =>
-  async (params: { id: string; item: Partial<BlobStorageItem> }) => {
-    const { id, item } = params
-    const [res] = await tables
+  async (params: { id: string; item: Partial<BlobStorageItem>; streamId?: string }) => {
+    const { id, item, streamId } = params
+    const q = tables
       .blobStorage(deps.db)
       .where(BlobStorage.col.id, id)
       .update(item, '*')
+
+    if (streamId) q.andWhere(BlobStorage.col.streamId, streamId)
+
+    const [res] = await q
     return res
   }
 

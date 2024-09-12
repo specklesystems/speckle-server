@@ -3,8 +3,15 @@ import {
   UpdateBlob,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
+import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { BadRequestError } from '@/modules/shared/errors'
+import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
 import { MaybeAsync } from '@speckle/shared'
+
+/**
+ * File size limit in bytes
+ */
+export const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
 
 export const uploadFileStreamFactory =
   (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }) =>
@@ -60,4 +67,72 @@ export const getFileStreamFactory =
     const { objectKey } = await deps.getBlobMetadata({ blobId, streamId })
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await getObjectStream({ objectKey: objectKey! })
+  }
+
+type UpdateBlobMetadataDeps = {
+  getBlobMetadata: GetBlobMetadata
+  updateBlob: UpdateBlob
+}
+
+const updateBlobMetadataFactory =
+  (deps: UpdateBlobMetadataDeps) =>
+  async (
+    streamId: string,
+    blobId: string,
+    updateCallback: (params: {
+      objectKey: string
+    }) => MaybeAsync<Partial<BlobStorageItem>>
+  ) => {
+    const { objectKey, fileName } = await deps.getBlobMetadata({
+      streamId,
+      blobId
+    })
+    const updateData = await updateCallback({ objectKey: objectKey! })
+    await deps.updateBlob({ id: blobId, item: updateData, streamId })
+    return { blobId, fileName, ...updateData }
+  }
+
+export const markUploadSuccessFactory =
+  (deps: UpdateBlobMetadataDeps) =>
+  async (
+    getObjectAttributes: (params: {
+      objectKey: string
+    }) => MaybeAsync<{ fileSize: number }>,
+    streamId: string,
+    blobId: string
+  ) => {
+    const updateBlobMetadata = updateBlobMetadataFactory(deps)
+    return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
+      const { fileSize } = await getObjectAttributes({ objectKey })
+      return { uploadStatus: 1, fileSize }
+    })
+  }
+
+type DeleteObjectFromStorage = (params: { objectKey: string }) => MaybeAsync<void>
+
+export const markUploadErrorFactory =
+  (deps: UpdateBlobMetadataDeps) =>
+  async (
+    deleteObject: DeleteObjectFromStorage,
+    streamId: string,
+    blobId: string,
+    error: string
+  ) => {
+    const updateBlobMetadata = updateBlobMetadataFactory(deps)
+    return await updateBlobMetadata(streamId, blobId, async ({ objectKey }) => {
+      await deleteObject({ objectKey })
+      return { uploadStatus: 2, uploadError: error }
+    })
+  }
+
+export const markUploadOverFileSizeLimitFactory =
+  (deps: UpdateBlobMetadataDeps) =>
+  async (deleteObject: DeleteObjectFromStorage, streamId: string, blobId: string) => {
+    const markUploadError = markUploadErrorFactory(deps)
+    return await markUploadError(
+      deleteObject,
+      streamId,
+      blobId,
+      'File size limit reached'
+    )
   }

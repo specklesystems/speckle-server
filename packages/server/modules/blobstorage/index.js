@@ -16,13 +16,7 @@ const {
 const crs = require('crypto-random-string')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 
-const {
-  markUploadError,
-  markUploadSuccess,
-  markUploadOverFileSizeLimit,
-  deleteBlob,
-  getFileSizeLimit
-} = require('@/modules/blobstorage/services')
+const { deleteBlob } = require('@/modules/blobstorage/services')
 
 const { isArray } = require('lodash')
 
@@ -42,17 +36,28 @@ const {
 const { db } = require('@/db/knex')
 const {
   uploadFileStreamFactory,
-  getFileStreamFactory
+  getFileStreamFactory,
+  getFileSizeLimit,
+  markUploadSuccessFactory,
+  markUploadErrorFactory,
+  markUploadOverFileSizeLimitFactory
 } = require('@/modules/blobstorage/services/management')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
+const updateBlob = updateBlobFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob: upsertBlobFactory({ db }),
-  updateBlob: updateBlobFactory({ db })
+  updateBlob
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 const getFileStream = getFileStreamFactory({ getBlobMetadata })
+const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
+const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
+const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+  getBlobMetadata,
+  updateBlob
+})
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
