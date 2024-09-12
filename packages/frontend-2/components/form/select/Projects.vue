@@ -5,6 +5,7 @@
     :search="true"
     :search-placeholder="searchPlaceholder"
     :get-search-results="invokeSearch"
+    :show-optional="showOptional"
     :label="label"
     :show-label="showLabel"
     :name="name || 'projects'"
@@ -112,6 +113,13 @@ const props = defineProps({
    * Whether to show the label visually
    */
   showLabel: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the optional text
+   */
+  showOptional: {
     type: Boolean,
     default: false
   },
