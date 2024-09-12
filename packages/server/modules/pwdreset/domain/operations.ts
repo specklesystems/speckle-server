@@ -8,3 +8,5 @@ export type GetPendingToken = (
 ) => Promise<Optional<PasswordResetTokenRecord>>
 
 export type CreateToken = (email: string) => Promise<PasswordResetTokenRecord>
+
+export type DeleteTokens = (identity: EmailOrTokenId) => Promise<void>
