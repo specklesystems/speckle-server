@@ -193,3 +193,20 @@ export const getProjectWorkspaceQuery = gql`
     }
   }
 `
+
+export const moveProjectToWorkspaceMutation = gql`
+  mutation MoveProjectToWorkspace($projectId: String!, $workspaceId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
+          id
+          workspaceId
+          team {
+            id
+            role
+          }
+        }
+      }
+    }
+  }
+`

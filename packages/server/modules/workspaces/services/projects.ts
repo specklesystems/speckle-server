@@ -17,9 +17,8 @@ import {
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import { chunk, isUndefined } from 'lodash'
+import { chunk } from 'lodash'
 import { Roles, StreamRoles } from '@speckle/shared'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -76,23 +75,23 @@ type GetWorkspaceProjectsReturnValue = {
 
 export const getWorkspaceProjectsFactory =
   ({ getStreams }: { getStreams: typeof getUserStreams }) =>
-  async (
-    args: GetWorkspaceProjectsArgs,
-    opts: GetWorkspaceProjectsOptions
-  ): Promise<GetWorkspaceProjectsReturnValue> => {
-    const { streams, cursor } = await getStreams({
-      cursor: opts.cursor,
-      limit: opts.limit || 25,
-      searchQuery: opts.filter?.search || undefined,
-      workspaceId: args.workspaceId,
-      userId: opts.filter.userId
-    })
+    async (
+      args: GetWorkspaceProjectsArgs,
+      opts: GetWorkspaceProjectsOptions
+    ): Promise<GetWorkspaceProjectsReturnValue> => {
+      const { streams, cursor } = await getStreams({
+        cursor: opts.cursor,
+        limit: opts.limit || 25,
+        searchQuery: opts.filter?.search || undefined,
+        workspaceId: args.workspaceId,
+        userId: opts.filter.userId
+      })
 
-    return {
-      items: streams,
-      cursor
+      return {
+        items: streams,
+        cursor
+      }
     }
-  }
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string
@@ -119,48 +118,49 @@ export const moveProjectToWorkspaceFactory =
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
   }) =>
-  async ({
-    projectId,
-    workspaceId
-  }: MoveProjectToWorkspaceArgs): Promise<StreamRecord> => {
-    const project = await getProject({ projectId })
+    async ({
+      projectId,
+      workspaceId
+    }: MoveProjectToWorkspaceArgs): Promise<StreamRecord> => {
+      const project = await getProject({ projectId })
 
-    if (!isUndefined(project.workspaceId)) {
-      // We do not currently support moving projects between workspaces
-      throw new WorkspacesNotYetImplementedError()
-    }
+      if (project.workspaceId?.length) {
+        // We do not currently support moving projects between workspaces
+        throw new WorkspacesNotYetImplementedError()
+      }
 
-    // Update roles for current project members
-    const projectTeam = await getProjectCollaborators({ projectId })
-    const workspaceTeam = await getWorkspaceRoles({ workspaceId })
-    const defaultProjectRoleMapping = await getWorkspaceRoleToDefaultProjectRoleMapping(
-      { workspaceId }
-    )
+      // Update roles for current project members
+      const projectTeam = await getProjectCollaborators({ projectId })
+      const workspaceTeam = await getWorkspaceRoles({ workspaceId })
+      const defaultProjectRoleMapping = await getWorkspaceRoleToDefaultProjectRoleMapping(
+        { workspaceId }
+      )
 
-    for (const projectMembers of chunk(projectTeam, 20)) {
-      await Promise.all(
-        projectMembers.map(
-          ({ id: userId, role: serverRole, streamRole: currentProjectRole }) =>
-            async () => {
+      for (const projectMembers of chunk(projectTeam, 5)) {
+        await Promise.all(
+          projectMembers.map(
+            async ({ id: userId, role: serverRole, streamRole: currentProjectRole }) => {
               // Update workspace role. Prefer existing workspace role if there is one.
               const currentWorkspaceRole = workspaceTeam.find(
                 (role) => role.userId === userId
               )
-              const nextWorkspaceRole: WorkspaceAcl = {
+
+              const nextWorkspaceRole = currentWorkspaceRole ?? {
                 userId,
                 workspaceId,
-                role:
-                  currentWorkspaceRole?.role ?? serverRole === Roles.Server.Guest
-                    ? Roles.Workspace.Guest
-                    : Roles.Workspace.Member,
-                createdAt: currentWorkspaceRole?.createdAt ?? new Date()
+                role: serverRole === Roles.Server.Guest
+                  ? Roles.Workspace.Guest
+                  : Roles.Workspace.Member,
+                createdAt: new Date()
               }
 
-              await upsertWorkspaceRole(nextWorkspaceRole)
-              await emitWorkspaceEvent({
-                eventName: 'workspace.role-updated',
-                payload: nextWorkspaceRole
-              })
+              if (nextWorkspaceRole.role !== currentWorkspaceRole?.role) {
+                await upsertWorkspaceRole(nextWorkspaceRole)
+                await emitWorkspaceEvent({
+                  eventName: 'workspace.role-updated',
+                  payload: nextWorkspaceRole
+                })
+              }
 
               // Update project role. Prefer default workspace project role if more permissive.
               const defaultProjectRole =
@@ -170,16 +170,17 @@ export const moveProjectToWorkspaceFactory =
                 [currentProjectRole, defaultProjectRole],
                 coreUserRoles
               )[0]
+              console.log({ nextProjectRole })
               await upsertProjectRole({
                 userId,
                 projectId,
                 role: nextProjectRole.name as StreamRoles
               })
             }
+          )
         )
-      )
-    }
+      }
 
-    // Assign project to workspace
-    return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
-  }
+      // Assign project to workspace
+      return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
+    }
