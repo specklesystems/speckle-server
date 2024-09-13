@@ -10,7 +10,7 @@ const {
 const { makeOgImage } = require('./ogImage')
 const { moduleLogger } = require('@/logging/logging')
 const {
-  listenForPreviewGenerationUpdates
+  listenForPreviewGenerationUpdatesFactory
 } = require('@/modules/previews/services/resultListener')
 
 const httpErrorImage = (httpErrorCode) =>
@@ -29,6 +29,8 @@ const {
   createObjectPreviewFactory,
   getPreviewImageFactory
 } = require('@/modules/previews/repository/previews')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const { getObjectCommitsWithStreamIds } = require('@/modules/core/repositories/commits')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
@@ -159,6 +161,10 @@ exports.init = (app, isInitial) => {
   })
 
   if (isInitial) {
+    const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
+      getObjectCommitsWithStreamIds,
+      publish
+    })
     listenForPreviewGenerationUpdates()
   }
 }
