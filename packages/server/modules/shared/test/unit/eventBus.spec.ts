@@ -8,6 +8,7 @@ import cryptoRandomString from 'crypto-random-string'
 const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
   return {
     id: cryptoRandomString({ length: 10 }),
+    slug: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
     logo: null,
     defaultLogoIndex: 0,

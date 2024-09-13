@@ -24,6 +24,7 @@ const createTestWorkspaceWithDomains = (
     createdAt: new Date(),
     updatedAt: new Date(),
     name: createRandomPassword(),
+    slug: createRandomPassword(),
     description: createRandomPassword(),
     id: createRandomPassword(),
     logo: null,
