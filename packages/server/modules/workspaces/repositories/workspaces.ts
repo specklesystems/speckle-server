@@ -11,6 +11,7 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetProjectRoles,
   GetUserDiscoverableWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
@@ -28,7 +29,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -55,6 +56,7 @@ import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
+  streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
@@ -237,6 +239,7 @@ export const getWorkspaceCollaboratorsFactory =
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
+        DbWorkspaceAcl.col.workspaceId, // this field is necessary for projectRoles field resolver
         DbWorkspaceAcl.colAs('role', 'workspaceRole'),
         DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
       )
@@ -270,6 +273,7 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
+      workspaceId: i.workspaceId,
       role: i.role,
       createdAt: i.workspaceRoleCreatedAt
     }))
@@ -407,4 +411,35 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
 
     const [res] = await query
     return parseInt(res.count.toString())
+  }
+
+export const getProjectRolesFactory =
+  ({ db }: { db: Knex }): GetProjectRoles =>
+  async ({ userIds, workspaceId }) => {
+    return await tables
+      .streamAcl(db)
+      .select<{ project: StreamRecord } & Pick<StreamAclRecord, 'role'>>(
+        StreamAcl.col.userId,
+        knex.raw(
+          `array_agg(json_build_object(
+      'project', json_build_object(
+            'id', "streams"."id",
+            'name', "streams"."name",
+            'description', "streams"."description",
+            'isPublic', "streams"."isPublic",
+            'clonedFrom', "streams"."clonedFrom",
+            'createdAt', "streams"."createdAt",
+            'updatedAt', "streams"."updatedAt",
+            'allowPublicComments', "streams"."allowPublicComments",
+            'isDiscoverable', "streams"."isDiscoverable",
+            'workspaceId', "streams"."workspaceId"
+      ),
+      'role', "stream_acl"."role"
+      ) ORDER BY "createdAt" ) "projectRoles"`
+        )
+      )
+      .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+      .where(Streams.col.workspaceId, '=', workspaceId)
+      .whereIn(StreamAcl.col.userId, userIds)
+      .groupBy(StreamAcl.col.userId)
   }

@@ -1,5 +1,5 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -201,3 +201,16 @@ export type UpdateWorkspace = ({
   workspaceId,
   workspaceInput
 }: WorkspaceUpdateArgs) => Promise<Workspace>
+
+export type GetProjectRoles = ({
+  userIds,
+  workspaceId
+}: {
+  userIds: string[]
+  workspaceId: string
+}) => Promise<
+  {
+    userId: string
+    projectRoles: ({ project: StreamRecord } & Pick<StreamAclRecord, 'role'>)[]
+  }[]
+>
