@@ -211,14 +211,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (model.expired) {
       // user sends via "Update" button
       void trackEvent(
-        'DUI3 Action',
-        { name: 'Send', expired: true, actionSource: actionSource.toLowerCase() },
+        'Send',
+        { expired: true, actionSource: actionSource.toLowerCase() },
         model.accountId
       )
     } else {
       void trackEvent(
-        'DUI3 Action',
-        { name: 'Send', expired: false, actionSource: actionSource.toLowerCase() },
+        'Send',
+        { expired: false, actionSource: actionSource.toLowerCase() },
         model.accountId
       )
     }
@@ -290,9 +290,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     )
 
     void trackEvent(
-      'DUI3 Action',
+      'Receive',
       {
-        name: 'Receive',
         expired: model.expired,
         sourceHostApp: model.selectedVersionSourceApp,
         isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
