@@ -50,7 +50,11 @@ import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { StreamAccessUpdateError, StreamNotFoundError, StreamUpdateError } from '@/modules/core/errors/stream'
+import {
+  StreamAccessUpdateError,
+  StreamNotFoundError,
+  StreamUpdateError
+} from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { db as defaultKnexInstance } from '@/db/knex'
@@ -117,8 +121,9 @@ const nouns = [
 ]
 
 const generateStreamName = () => {
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]
-    }`
+  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }`
 }
 
 /**
@@ -170,15 +175,17 @@ export async function getStream(
 }
 
 // TODO: Inject db
-export const getProjectFactory = (): GetProject => async ({ projectId }) => {
-  const project = await getStream({ streamId: projectId })
+export const getProjectFactory =
+  (): GetProject =>
+  async ({ projectId }) => {
+    const project = await getStream({ streamId: projectId })
 
-  if (!project) {
-    throw new StreamNotFoundError()
+    if (!project) {
+      throw new StreamNotFoundError()
+    }
+
+    return project
   }
-
-  return project
-}
 
 export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
 
@@ -658,7 +665,8 @@ export async function getStreamCollaborators(streamId: string, type?: StreamRole
 }
 
 // TODO: Inject db
-export const getProjectCollaboratorsFactory = (): GetProjectCollaborators =>
+export const getProjectCollaboratorsFactory =
+  (): GetProjectCollaborators =>
   async ({ projectId }) => {
     return await getStreamCollaborators(projectId)
   }
@@ -965,15 +973,17 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
   return updatedStream
 }
 
-export const updateProjectFactory = (): UpdateProject => async ({ projectUpdate }) => {
-  const updatedStream = await updateStream(projectUpdate)
+export const updateProjectFactory =
+  (): UpdateProject =>
+  async ({ projectUpdate }) => {
+    const updatedStream = await updateStream(projectUpdate)
 
-  if (!updatedStream) {
-    throw new StreamUpdateError()
+    if (!updatedStream) {
+      throw new StreamUpdateError()
+    }
+
+    return updatedStream
   }
-
-  return updatedStream
-}
 
 export async function markBranchStreamUpdated(branchId: string) {
   const q = Streams.knex()
@@ -1002,16 +1012,16 @@ export async function markCommitStreamUpdated(commitId: string) {
 // TODO: Replace all calls to `grantStreamPermissions` with this
 export const upsertProjectRoleFactory =
   ({ db }: { db: Knex }): UpsertProjectRole =>
-    async ({ projectId, userId, role }) => {
-      return await grantStreamPermissions(
-        {
-          streamId: projectId,
-          userId,
-          role
-        },
-        db
-      )
-    }
+  async ({ projectId, userId, role }) => {
+    return await grantStreamPermissions(
+      {
+        streamId: projectId,
+        userId,
+        role
+      },
+      db
+    )
+  }
 
 /**
  * (Moved from services/streams.js, could be refactored into something better)
@@ -1069,15 +1079,15 @@ export async function grantStreamPermissions(
 // TODO: Replace all calls of `revokeStreamPermissions` with this
 export const deleteProjectRoleFactory =
   ({ db }: { db: Knex }): DeleteProjectRole =>
-    async ({ projectId, userId }) => {
-      return await revokeStreamPermissions(
-        {
-          streamId: projectId,
-          userId
-        },
-        db
-      )
-    }
+  async ({ projectId, userId }) => {
+    return await revokeStreamPermissions(
+      {
+        streamId: projectId,
+        userId
+      },
+      db
+    )
+  }
 
 /**
  * (Moved from services/streams.js, could be refactored into something better)

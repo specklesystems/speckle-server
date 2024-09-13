@@ -2,9 +2,7 @@ import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { StreamRoles } from '@speckle/shared'
 
-export type GetProject = (args: {
-  projectId: string
-}) => Promise<StreamRecord>
+export type GetProject = (args: { projectId: string }) => Promise<StreamRecord>
 
 export type GetProjectCollaborators = (args: {
   projectId: string

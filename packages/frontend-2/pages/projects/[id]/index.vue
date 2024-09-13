@@ -18,7 +18,11 @@
                 project.modelCount.totalCount === 1 ? '' : 's'
               }}
             </CommonBadge>
-            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+            <CommonBadge
+              v-if="project.role"
+              rounded
+              :color-classes="'text-foreground-2 bg-primary-muted'"
+            >
               <span class="capitalize">
                 {{ project.role?.split(':').reverse()[0] }}
               </span>

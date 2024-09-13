@@ -15,18 +15,6 @@ const {
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-
-const {
-  getFileStream,
-  markUploadError,
-  markUploadSuccess,
-  markUploadOverFileSizeLimit,
-  deleteBlob,
-  getBlobMetadata,
-  getBlobMetadataCollection,
-  getFileSizeLimit
-} = require('@/modules/blobstorage/services')
-
 const { isArray } = require('lodash')
 
 const {
@@ -38,15 +26,40 @@ const { moduleLogger, logger } = require('@/logging/logging')
 const {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,
-  updateBlobFactory
+  updateBlobFactory,
+  getBlobMetadataFactory,
+  getBlobMetadataCollectionFactory,
+  deleteBlobFactory
 } = require('@/modules/blobstorage/repositories')
 const { db } = require('@/db/knex')
-const { uploadFileStreamFactory } = require('@/modules/blobstorage/services/upload')
+const {
+  uploadFileStreamFactory,
+  getFileStreamFactory,
+  getFileSizeLimit,
+  markUploadSuccessFactory,
+  markUploadErrorFactory,
+  markUploadOverFileSizeLimitFactory,
+  fullyDeleteBlobFactory
+} = require('@/modules/blobstorage/services/management')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
+const updateBlob = updateBlobFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob: upsertBlobFactory({ db }),
-  updateBlob: updateBlobFactory({ db })
+  updateBlob
+})
+const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const getFileStream = getFileStreamFactory({ getBlobMetadata })
+const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
+const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
+const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+  getBlobMetadata,
+  updateBlob
+})
+const deleteBlob = fullyDeleteBlobFactory({
+  getBlobMetadata,
+  deleteBlob: deleteBlobFactory({ db })
 })
 
 const ensureConditions = async () => {
