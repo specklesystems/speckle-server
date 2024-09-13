@@ -2,6 +2,7 @@ import { logger } from '@/logging/logging'
 import { getStream } from '@/modules/core/repositories/streams'
 import { getObject } from '@/modules/core/services/objects'
 import {
+  CheckStreamPermissions,
   CreateObjectPreview,
   GetObjectPreviewBufferOrFilepath,
   GetObjectPreviewInfo,
@@ -9,6 +10,8 @@ import {
   SendObjectPreview
 } from '@/modules/previews/domain/operations'
 import { makeOgImage } from '@/modules/previews/ogImage'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { Roles, Scopes } from '@speckle/shared'
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -127,4 +130,44 @@ export const sendObjectPreviewFactory =
       res.set('Cache-Control', 'private, max-age=604800')
       res.send(previewBufferOrFile.buffer)
     }
+  }
+
+export const checkStreamPermissionsFactory =
+  (deps: {
+    validateScopes: typeof validateScopes
+    authorizeResolver: typeof authorizeResolver
+  }): CheckStreamPermissions =>
+  async (req) => {
+    const stream = await getStream({
+      streamId: req.params.streamId,
+      userId: req.context.userId
+    })
+
+    if (!stream) {
+      return { hasPermissions: false, httpErrorCode: 404 }
+    }
+
+    if (!stream.isPublic && req.context.auth === false) {
+      return { hasPermissions: false, httpErrorCode: 401 }
+    }
+
+    if (!stream.isPublic) {
+      try {
+        await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
+      } catch {
+        return { hasPermissions: false, httpErrorCode: 401 }
+      }
+
+      try {
+        await deps.authorizeResolver(
+          req.context.userId,
+          req.params.streamId,
+          Roles.Stream.Reviewer,
+          req.context.resourceAccessRules
+        )
+      } catch {
+        return { hasPermissions: false, httpErrorCode: 401 }
+      }
+    }
+    return { hasPermissions: true, httpErrorCode: 200 }
   }

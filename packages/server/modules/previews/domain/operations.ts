@@ -36,3 +36,7 @@ export type SendObjectPreview = (
   objectId: string,
   angle: string
 ) => Promise<void>
+
+export type CheckStreamPermissions = (
+  req: express.Request
+) => Promise<{ hasPermissions: boolean; httpErrorCode: number }>
