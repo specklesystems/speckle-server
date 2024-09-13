@@ -9,11 +9,7 @@ const {
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
-const {
-  getStreamWebhooks,
-  getLastWebhookEvents,
-  dispatchStreamEvent
-} = require('../services/webhooks')
+const { getLastWebhookEvents, dispatchStreamEvent } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
@@ -22,7 +18,8 @@ const {
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
   updateWebhookFactory,
-  deleteWebhookFactory
+  deleteWebhookFactory,
+  getStreamWebhooksFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
@@ -35,6 +32,7 @@ const { Users, Streams } = require('@/modules/core/dbSchema')
 const updateWebhook = updateWebhookService({
   updateWebhookConfig: updateWebhookFactory({ db })
 })
+const getStreamWebhooks = getStreamWebhooksFactory({ db })
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })

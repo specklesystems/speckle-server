@@ -4,9 +4,7 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
   getUserStreams,
-  getUserStreamsCount,
-  upsertProjectRoleFactory,
-  deleteProjectRoleFactory
+  getUserStreamsCount
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -123,7 +121,6 @@ import {
   isUserWorkspaceDomainPolicyCompliantFactory
 } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -357,10 +354,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -379,13 +372,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              getDefaultWorkspaceProjectRoleMapping:
-                mapWorkspaceRoleToInitialProjectRole,
-              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -468,8 +454,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
             emitWorkspaceEvent: getEventBus().emit
           })
 
@@ -583,13 +567,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                upsertProjectRole: upsertProjectRoleFactory({ db }),
-                getDefaultWorkspaceProjectRoleMapping:
-                  mapWorkspaceRoleToInitialProjectRole,
-                deleteProjectRole: deleteProjectRoleFactory({ db }),
-                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                  getStreams
-                }),
                 emitWorkspaceEvent: getEventBus().emit
               })
             }),

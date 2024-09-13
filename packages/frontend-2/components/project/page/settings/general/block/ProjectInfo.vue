@@ -19,8 +19,9 @@
         v-model="localProjectDescription"
         name="projectDescription"
         label="Project description"
-        placeholder="Description (optional)"
+        placeholder="Description"
         show-label
+        show-optional
         color="foundation"
         :disabled="disabled"
       />
