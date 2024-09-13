@@ -41,7 +41,8 @@ const isTimeframe = (date: ConfigType) => {
     unit.includes('second') ||
     unit.includes('minute') ||
     unit.includes('hour') ||
-    unit.includes('day')
+    unit.includes('day') ||
+    unit.includes('just now')
   )
 }
 
