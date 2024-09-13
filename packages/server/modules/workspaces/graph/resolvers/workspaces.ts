@@ -878,6 +878,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
         }
+      },
+      ServerInfo: {
+        workspaces: () => ({})
+      },
+      ServerWorkspacesInfo: {
+        workspacesEnabled: () => true
       }
     } as Resolvers)
   : {}
