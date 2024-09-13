@@ -5,15 +5,18 @@ import {
   NotificationPreferences
 } from '@/modules/notifications/helpers/types'
 import { InvalidArgumentError } from '@/modules/shared/errors'
+import { GetSavedUserNotificationPreferences } from '@/modules/notifications/domain/operations'
 
-export async function getUserNotificationPreferences(
-  userId: string
-): Promise<NotificationPreferences> {
-  const savedPreferences = await repo.getUserNotificationPreferences(userId)
-  return addDefaultPreferenceValues(savedPreferences)
-}
+export const getUserNotificationPreferencesFactory =
+  (deps: {
+    getSavedUserNotificationPreferences: GetSavedUserNotificationPreferences
+  }) =>
+  async (userId: string): Promise<NotificationPreferences> => {
+    const savedPreferences = await deps.getSavedUserNotificationPreferences(userId)
+    return addDefaultPreferenceValues(savedPreferences)
+  }
 
-export function addDefaultPreferenceValues(
+function addDefaultPreferenceValues(
   preferences: NotificationPreferences
 ): NotificationPreferences {
   const savedPreferences = { ...preferences }

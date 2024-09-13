@@ -10,7 +10,6 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
@@ -26,6 +25,9 @@ import {
   EmailInput,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
+import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
+import { db } from '@/db/knex'
 
 const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
   const {
@@ -44,6 +46,12 @@ const digestNotificationEmailHandler = async (
   end: Date,
   emailSender: (params: SendEmailParams) => Promise<boolean>
 ): Promise<boolean | null> => {
+  const getUserNotificationPreferences = getUserNotificationPreferencesFactory({
+    getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
+      db
+    })
+  })
+
   const wantDigests =
     (await (await getUserNotificationPreferences(userId)).activityDigest?.email) !==
     false

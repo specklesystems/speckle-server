@@ -1,19 +1,26 @@
 import { UserNotificationPreferences } from '@/modules/core/dbSchema'
+import { GetSavedUserNotificationPreferences } from '@/modules/notifications/domain/operations'
 import {
   NotificationPreferences,
   UserNotificationPreferencesRecord
 } from '@/modules/notifications/helpers/types'
+import { Knex } from 'knex'
 
-export async function getUserNotificationPreferences(
-  userId: string
-): Promise<NotificationPreferences> {
-  const userPreferences =
-    await UserNotificationPreferences.knex<UserNotificationPreferencesRecord>()
+const tables = {
+  userNotificationPreferences: (db: Knex) =>
+    db<UserNotificationPreferencesRecord>(UserNotificationPreferences.name)
+}
+
+export const getSavedUserNotificationPreferencesFactory =
+  (deps: { db: Knex }): GetSavedUserNotificationPreferences =>
+  async (userId: string): Promise<NotificationPreferences> => {
+    const userPreferences = await tables
+      .userNotificationPreferences(deps.db)
       .where({ userId })
       .first()
 
-  return userPreferences?.preferences ?? {}
-}
+    return userPreferences?.preferences ?? {}
+  }
 
 export async function saveUserNotificationPreferences(
   userId: string,
