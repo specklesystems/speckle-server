@@ -9,7 +9,7 @@ const {
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { getLastWebhookEvents, dispatchStreamEvent } = require('../services/webhooks')
+const { getLastWebhookEvents } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
@@ -19,15 +19,20 @@ const {
   getWebhookByIdFactory,
   updateWebhookFactory,
   deleteWebhookFactory,
-  getStreamWebhooksFactory
+  getStreamWebhooksFactory,
+  createWebhookEventFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
   createWebhook,
   updateWebhook: updateWebhookService,
-  deleteWebhook
+  deleteWebhook,
+  dispatchStreamEvent
 } = require('@/modules/webhooks/services/webhooks-new')
 const { Users, Streams } = require('@/modules/core/dbSchema')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { getStream } = require('@/modules/core/repositories/streams')
+const { getUser } = require('@/modules/core/repositories/users')
 
 const updateWebhook = updateWebhookService({
   updateWebhookConfig: updateWebhookFactory({ db })
@@ -192,6 +197,12 @@ describe('Webhooks @webhooks', () => {
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       await dispatchStreamEvent({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId,
         event: 'commit_create',
         eventPayload: { test: 'payload123' }
@@ -260,6 +271,12 @@ describe('Webhooks @webhooks', () => {
 
     it('Should get stream webhooks and the previous events', async () => {
       await dispatchStreamEvent({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId: streamTwo.id,
         event: 'commit_create',
         eventPayload: { test: 'payload321' }

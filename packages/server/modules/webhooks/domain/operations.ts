@@ -1,4 +1,5 @@
 import { Webhook } from '@/modules/webhooks/domain/types'
+import { WebhookEvent } from '@/test/graphql/generated/graphql'
 
 export type CreateWebhook = (
   webhook: Pick<
@@ -32,3 +33,7 @@ export type DeleteWebhook = ({ id }: Pick<Webhook, 'id'>) => Promise<number>
 export type GetStreamWebhooks = ({
   streamId
 }: Pick<Webhook, 'streamId'>) => Promise<Webhook[]>
+
+export type CreateWebhookEvent = (
+  event: Pick<WebhookEvent, 'id' | 'payload' | 'webhookId'>
+) => Promise<string>

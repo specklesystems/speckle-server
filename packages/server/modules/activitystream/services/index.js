@@ -2,7 +2,13 @@
 
 const knex = require('@/db/knex')
 
-const { dispatchStreamEvent } = require('../../webhooks/services/webhooks')
+const { dispatchStreamEvent } = require('../../webhooks/services/webhooks-new')
+const { getStream } = require('@/modules/core/repositories/streams')
+const {
+  createWebhookEventFactory
+} = require('@/modules/webhooks/repositories/webhooks')
+const { getUser } = require('@/modules/core/repositories/users')
+const { getServerInfo } = require('@/modules/core/services/generic')
 const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
@@ -41,7 +47,13 @@ module.exports = {
         }
       }
 
-      await dispatchStreamEvent(
+      await dispatchStreamEvent({
+        db: trx ?? knex.db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db: knex.db }),
+        getUser
+      })(
         {
           streamId,
           event: actionType,

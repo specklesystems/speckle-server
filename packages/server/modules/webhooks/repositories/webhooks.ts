@@ -3,6 +3,7 @@ import { Webhook } from '@/modules/webhooks/domain/types'
 import {
   CountWebhooksByStreamId,
   CreateWebhook,
+  CreateWebhookEvent,
   DeleteWebhook,
   GetStreamWebhooks,
   GetWebhookById,
@@ -93,4 +94,10 @@ export const getStreamWebhooksFactory =
       ...webhook,
       triggers: toTriggersArray(webhook.triggers)
     }))
+  }
+
+export const createWebhookEventFactory =
+  ({ db }: { db: Knex }): CreateWebhookEvent =>
+  async (event) => {
+    return await tables(db).webhooksEvents.insert(event).returning('id')
   }
