@@ -148,6 +148,7 @@ graphql(`
 
 graphql(`
   fragment SettingsDialog_User on User {
+    id
     workspaces {
       items {
         ...SettingsDialog_Workspace
