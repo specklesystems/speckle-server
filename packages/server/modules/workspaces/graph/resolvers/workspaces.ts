@@ -2,9 +2,13 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
+  getProjectCollaboratorsFactory,
+  getProjectFactory,
   getStream,
   getUserStreams,
-  getUserStreamsCount
+  getUserStreamsCount,
+  updateProjectFactory,
+  upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -90,6 +94,7 @@ import {
 } from '@/modules/workspaces/services/management'
 import {
   getWorkspaceProjectsFactory,
+  moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
@@ -124,6 +129,7 @@ import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/manag
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -648,6 +654,38 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.userId!,
             context.resourceAccessRules
           )
+        },
+        moveToWorkspace: async (_parent, args, context) => {
+          const { projectId, workspaceId } = args
+
+          await Promise.all([
+            authorizeResolver(
+              context.userId,
+              projectId,
+              Roles.Stream.Owner,
+              context.resourceAccessRules
+            ),
+            authorizeResolver(
+              context.userId,
+              workspaceId,
+              Roles.Workspace.Admin,
+              context.resourceAccessRules
+            )
+          ])
+
+          const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+            getProject: getProjectFactory(),
+            updateProject: updateProjectFactory(),
+            upsertProjectRole: upsertProjectRoleFactory({ db }),
+            getProjectCollaborators: getProjectCollaboratorsFactory(),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            getWorkspaceRoleToDefaultProjectRoleMapping:
+              mapWorkspaceRoleToInitialProjectRole,
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit
+          })
+
+          return await moveProjectToWorkspace({ projectId, workspaceId })
         }
       },
       Workspace: {
