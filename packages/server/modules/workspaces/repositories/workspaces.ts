@@ -11,7 +11,6 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
-  GetProjectRoles,
   GetUserDiscoverableWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
@@ -411,35 +410,4 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
 
     const [res] = await query
     return parseInt(res.count.toString())
-  }
-
-export const getProjectRolesFactory =
-  ({ db }: { db: Knex }): GetProjectRoles =>
-  async ({ userIds, workspaceId }) => {
-    return await tables
-      .streamAcl(db)
-      .select<{ project: StreamRecord } & Pick<StreamAclRecord, 'role'>>(
-        StreamAcl.col.userId,
-        knex.raw(
-          `array_agg(json_build_object(
-      'project', json_build_object(
-            'id', "streams"."id",
-            'name', "streams"."name",
-            'description', "streams"."description",
-            'isPublic', "streams"."isPublic",
-            'clonedFrom', "streams"."clonedFrom",
-            'createdAt', "streams"."createdAt",
-            'updatedAt', "streams"."updatedAt",
-            'allowPublicComments', "streams"."allowPublicComments",
-            'isDiscoverable', "streams"."isDiscoverable",
-            'workspaceId', "streams"."workspaceId"
-      ),
-      'role', "stream_acl"."role"
-      ) ORDER BY "createdAt" ) "projectRoles"`
-        )
-      )
-      .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-      .where(Streams.col.workspaceId, '=', workspaceId)
-      .whereIn(StreamAcl.col.userId, userIds)
-      .groupBy(StreamAcl.col.userId)
   }

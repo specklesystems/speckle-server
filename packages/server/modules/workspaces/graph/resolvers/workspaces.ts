@@ -6,7 +6,8 @@ import {
   getUserStreams,
   getUserStreamsCount,
   upsertProjectRoleFactory,
-  deleteProjectRoleFactory
+  deleteProjectRoleFactory,
+  getRolesByUserIdFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -763,10 +764,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return parent.workspaceRole
         },
         projectRoles: async (parent, _args, ctx) => {
-          return await ctx.loaders.workspaces!.getProjectRolesByWorkspaceId.load({
-            workspaceId: parent.workspaceId,
-            userId: parent.id
+          const projectRoles = await getRolesByUserIdFactory({ db })({
+            userId: parent.id,
+            workspaceId: parent.workspaceId
           })
+          return await Promise.all(
+            projectRoles.map(({ role, resourceId }) => ({
+              project: ctx.loaders.streams.getStream.load(resourceId),
+              role
+            }))
+          )
         }
       },
       PendingWorkspaceCollaborator: {

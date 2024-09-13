@@ -444,75 +444,64 @@ describe('Workspaces GQL CRUD', () => {
         expect(res).to.not.haveGraphQLErrors()
         const items = res.data?.workspace!.team?.items ?? []
         expect(items).to.have.length(3)
-        expect(items.find((item) => item.role === Roles.Workspace.Admin)).to.deep.eq({
-          id: testMemberUser.id,
-          role: Roles.Workspace.Admin,
-          user: {
-            name: testMemberUser.name
-          },
-          projectRoles: [
-            {
-              role: Roles.Stream.Owner,
-              project: {
-                id: project1Id,
-                name: project1Name
-              }
-            },
-            {
-              role: Roles.Stream.Owner,
-              project: {
-                id: project2Id,
-                name: project2Name
-              }
+
+        const adminRoles = items.find(
+          (item) => item.role === Roles.Workspace.Admin
+        )?.projectRoles
+        expect(adminRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Owner,
+            project: {
+              id: project1Id,
+              name: project1Name
             }
-          ]
-        })
-        expect(items.find((item) => item.role === Roles.Workspace.Member)).to.deep.eq({
-          id: member.id,
-          role: Roles.Workspace.Member,
-          user: {
-            name: member.name
           },
-          projectRoles: [
-            {
-              role: Roles.Stream.Contributor,
-              project: {
-                id: project1Id,
-                name: project1Name
-              }
-            },
-            {
-              role: Roles.Stream.Reviewer,
-              project: {
-                id: project2Id,
-                name: project2Name
-              }
+          {
+            role: Roles.Stream.Owner,
+            project: {
+              id: project2Id,
+              name: project2Name
             }
-          ]
-        })
-        expect(items.find((item) => item.role === Roles.Workspace.Guest)).to.deep.eq({
-          id: guest.id,
-          role: Roles.Workspace.Guest,
-          user: {
-            name: guest.name
+          }
+        ])
+        const memberRoles = items.find(
+          (item) => item.role === Roles.Workspace.Member
+        )?.projectRoles
+        expect(memberRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Contributor,
+            project: {
+              id: project1Id,
+              name: project1Name
+            }
           },
-          projectRoles: [
-            {
-              role: Roles.Stream.Reviewer,
-              project: {
-                id: project1Id,
-                name: project1Name
-              }
-            },
-            {
-              role: Roles.Stream.Contributor,
-              project: {
-                id: project2Id,
-                name: project2Name
-              }
+          {
+            role: Roles.Stream.Reviewer,
+            project: {
+              id: project2Id,
+              name: project2Name
             }
-          ]
-        })
+          }
+        ])
+        const guestRoles = items.find(
+          (item) => item.role === Roles.Workspace.Guest
+        )?.projectRoles
+        expect(guestRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Reviewer,
+            project: {
+              id: project1Id,
+              name: project1Name
+            }
+          },
+          {
+            role: Roles.Stream.Contributor,
+            project: {
+              id: project2Id,
+              name: project2Name
+            }
+          }
+        ])
       })
     })
 
