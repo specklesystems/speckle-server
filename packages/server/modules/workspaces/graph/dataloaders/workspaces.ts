@@ -1,7 +1,9 @@
 import { db } from '@/db/knex'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
 import {
+  getProjectRolesFactory,
   getWorkspaceDomainsFactory,
   getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -21,6 +23,7 @@ declare module '@/modules/core/loaders' {
 const dataLoadersDefinition = defineRequestDataloaders(({ ctx, createLoader }) => {
   const getWorkspaces = getWorkspacesFactory({ db })
   const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
+  const getProjectRoles = getProjectRolesFactory({ db })
 
   return {
     workspaces: {
@@ -35,7 +38,18 @@ const dataLoadersDefinition = defineRequestDataloaders(({ ctx, createLoader }) =
           )
           return ids.map((id) => results[id] || null)
         }
-      )
+      ),
+      getProjectRolesByWorkspaceId: createLoader<
+        { workspaceId: string; userId: string },
+        (Pick<StreamAclRecord, 'role'> & { project: StreamRecord })[] | null
+      >(async (keys) => {
+        const workspaceId = keys[0].workspaceId
+        const userIds = keys.map(({ userId }) => userId)
+        const usersWithRoles = await getProjectRoles({ workspaceId, userIds })
+        return userIds.map(
+          (id) => usersWithRoles.find(({ userId }) => id === userId)?.projectRoles || []
+        )
+      })
     },
     workspaceDomains: {
       /**

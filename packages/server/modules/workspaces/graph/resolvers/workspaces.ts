@@ -761,6 +761,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         role: async (parent) => {
           return parent.workspaceRole
+        },
+        projectRoles: async (parent, _args, ctx) => {
+          return await ctx.loaders.workspaces!.getProjectRolesByWorkspaceId.load({
+            workspaceId: parent.workspaceId,
+            userId: parent.id
+          })
         }
       },
       PendingWorkspaceCollaborator: {
