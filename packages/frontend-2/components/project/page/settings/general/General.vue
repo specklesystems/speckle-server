@@ -30,6 +30,11 @@
     />
     <ProjectPageSettingsGeneralBlockLeave :project="project" />
 
+    <ProjectPageSettingsGeneralBlockMove
+      v-if="isOwner && !isGuest && isWorkspacesEnabled"
+      :project="project"
+    />
+
     <ProjectPageSettingsGeneralBlockDelete
       v-if="isOwner && !isGuest"
       :project="project"
@@ -61,6 +66,7 @@ const projectPageSettingsGeneralQuery = graphql(`
       ...ProjectPageSettingsGeneralBlockDiscussions_Project
       ...ProjectPageSettingsGeneralBlockLeave_Project
       ...ProjectPageSettingsGeneralBlockDelete_Project
+      ...ProjectPageSettingsGeneralBlockMove_Project
       ...ProjectPageTeamInternals_Project
     }
   }
@@ -68,6 +74,7 @@ const projectPageSettingsGeneralQuery = graphql(`
 
 const route = useRoute()
 const updateProject = useUpdateProject()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const projectId = computed(() => route.params.id as string)
 
