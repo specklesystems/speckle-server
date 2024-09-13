@@ -870,6 +870,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspace = await context.loaders.workspaces!.getWorkspace.load(
             parent.workspaceId
           )
+
+          // for public or discoverable projects, if the user doesn't have a role in the workspace
+          // or there is no user in the context, we should not throw, we just don't expose the workspace data
+          if (
+            (parent.isDiscoverable || parent.isPublic) &&
+            workspace?.role === undefined
+          ) {
+            return null
+          }
           if (!workspace) {
             throw new WorkspaceNotFoundError()
           }
