@@ -194,20 +194,31 @@ describe('Workspace project GQL CRUD', () => {
 
     beforeEach(async () => {
       await createTestStream(testProject, serverAdminUser)
-      await grantStreamPermissions({ streamId: testProject.id, userId: serverMemberUser.id, role: Roles.Stream.Contributor })
+      await grantStreamPermissions({
+        streamId: testProject.id,
+        userId: serverMemberUser.id,
+        role: Roles.Stream.Contributor
+      })
     })
 
     it('should move the project to the target workspace', async () => {
-      const res = await apollo.execute(MoveProjectToWorkspaceDocument, { projectId: testProject.id, workspaceId: targetWorkspace.id })
+      const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
 
-      const { workspaceId } = res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
+      const { workspaceId } =
+        res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
 
       expect(res).to.not.haveGraphQLErrors()
       expect(workspaceId).to.equal(targetWorkspace.id)
     })
 
     it('should preserve project roles for project members', async () => {
-      const res = await apollo.execute(MoveProjectToWorkspaceDocument, { projectId: testProject.id, workspaceId: targetWorkspace.id })
+      const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
 
       const { team } = res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
 
@@ -220,10 +231,17 @@ describe('Workspace project GQL CRUD', () => {
     })
 
     it('should grant workspace roles to project members that are not already in the target workspace', async () => {
-      const resA = await apollo.execute(MoveProjectToWorkspaceDocument, { projectId: testProject.id, workspaceId: targetWorkspace.id })
-      const resB = await apollo.execute(GetWorkspaceTeamDocument, { workspaceId: targetWorkspace.id })
+      const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
+      const resB = await apollo.execute(GetWorkspaceTeamDocument, {
+        workspaceId: targetWorkspace.id
+      })
 
-      const memberWorkspaceRole = resB.data?.workspace.team.items.find((role) => role.id === serverMemberUser.id)
+      const memberWorkspaceRole = resB.data?.workspace.team.items.find(
+        (role) => role.id === serverMemberUser.id
+      )
 
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
@@ -231,16 +249,21 @@ describe('Workspace project GQL CRUD', () => {
     })
 
     it('should preserve workspace roles for project members that are already in the target workspace', async () => {
-      const resA = await apollo.execute(MoveProjectToWorkspaceDocument, { projectId: testProject.id, workspaceId: targetWorkspace.id })
-      const resB = await apollo.execute(GetWorkspaceTeamDocument, { workspaceId: targetWorkspace.id })
+      const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
+      const resB = await apollo.execute(GetWorkspaceTeamDocument, {
+        workspaceId: targetWorkspace.id
+      })
 
-      const adminWorkspaceRole = resB.data?.workspace.team.items.find((role) => role.id === serverAdminUser.id)
+      const adminWorkspaceRole = resB.data?.workspace.team.items.find(
+        (role) => role.id === serverAdminUser.id
+      )
 
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
     })
-
   })
-
 })
