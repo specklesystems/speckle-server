@@ -26,8 +26,9 @@
           color="foundation"
           name="description"
           show-label
+          show-optional
           label="Model description"
-          placeholder="Description (optional)"
+          placeholder="Description"
           size="lg"
           :disabled="anyMutationsLoading"
         />
