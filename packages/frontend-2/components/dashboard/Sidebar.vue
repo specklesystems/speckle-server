@@ -203,9 +203,13 @@ const mixpanel = useMixpanel()
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
 
-const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
-  enabled: isWorkspacesEnabled.value
-})
+const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
+  settingsSidebarQuery,
+  null,
+  {
+    enabled: isWorkspacesEnabled.value
+  }
+)
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
@@ -233,4 +237,13 @@ const openWorkspaceCreateDialog = () => {
     source: 'sidebar'
   })
 }
+
+onWorkspaceResult((result) => {
+  if (result.data?.activeUser) {
+    const workspaceIds = result.data.activeUser.workspaces.items.map(
+      (workspace) => workspace.id
+    )
+    mixpanel.people.set('workspace_id', workspaceIds)
+  }
+})
 </script>
