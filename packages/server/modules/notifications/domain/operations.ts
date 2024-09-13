@@ -8,3 +8,7 @@ export type SaveUserNotificationPreferences = (
   userId: string,
   preferences: NotificationPreferences
 ) => Promise<void>
+
+export type GetUserNotificationPreferences = (
+  userId: string
+) => Promise<NotificationPreferences>
