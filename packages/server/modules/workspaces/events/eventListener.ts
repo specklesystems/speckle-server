@@ -3,7 +3,11 @@ import {
   ProjectEvents,
   ProjectEventsPayloads
 } from '@/modules/core/events/projectsEmitter'
-import { getStream } from '@/modules/core/repositories/streams'
+import {
+  deleteProjectRoleFactory,
+  getStream,
+  upsertProjectRoleFactory
+} from '@/modules/core/repositories/streams'
 import {
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
@@ -17,13 +21,27 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { logger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
-import { UpsertProjectRole } from '@/modules/core/domain/projects/operations'
+import {
+  DeleteProjectRole,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { Knex } from 'knex'
+import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import {
+  getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { getStreams } from '@/modules/core/services/streams'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 
 export const onProjectCreatedFactory =
   ({
@@ -89,7 +107,7 @@ export const onInviteFinalizedFactory =
     })
     if (!project || !project.role) {
       deps.logger.warn(
-        `When handling accepted invite - project not found or useris not a collaborator`,
+        `When handling accepted invite - project not found or user is not a collaborator`,
         { invite, project: { id: project?.id, role: project?.role } }
       )
       return
@@ -109,39 +127,77 @@ export const onInviteFinalizedFactory =
     })
   }
 
-export const onWorkspaceJoinedFactory =
+export const onWorkspaceRoleDeletedFactory =
+  ({
+    queryAllWorkspaceProjects,
+    deleteProjectRole
+  }: {
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteProjectRole: DeleteProjectRole
+  }) =>
+  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    // Delete roles for all workspace projects
+    for await (const projectsPage of queryAllWorkspaceProjects({
+      workspaceId
+    })) {
+      await Promise.all(
+        projectsPage.map(({ id: projectId }) =>
+          deleteProjectRole({ projectId, userId })
+        )
+      )
+    }
+  }
+
+export const onWorkspaceRoleUpdatedFactory =
   ({
     getDefaultWorkspaceProjectRoleMapping,
     queryAllWorkspaceProjects,
+    deleteProjectRole,
     upsertProjectRole
   }: {
     getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteProjectRole: DeleteProjectRole
     upsertProjectRole: UpsertProjectRole
   }) =>
   async ({
     userId,
     role,
-    workspaceId
+    workspaceId,
+    flags
   }: {
     userId: string
     role: WorkspaceRoles
     workspaceId: string
+    flags?: {
+      skipProjectRoleUpdatesFor: string[]
+    }
   }) => {
-    const defaultRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
+    const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
       workspaceId
     })
 
-    const maybeProjectRole = defaultRoleMapping[role]
-    if (!maybeProjectRole) return
+    const nextProjectRole = defaultProjectRoleMapping[role]
 
-    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+    for await (const projectsPage of queryAllWorkspaceProjects({ workspaceId })) {
       await Promise.all(
-        projects.map(async (project) => {
+        projectsPage.map(async ({ id: projectId }) => {
+          if (flags?.skipProjectRoleUpdatesFor.includes(projectId)) {
+            // Skip assignment (used during invite flow)
+            // TODO: Can we refactor this special case away?
+            return
+          }
+
+          if (!nextProjectRole) {
+            // User is being demoted to a workspace role without project access
+            await deleteProjectRole({ projectId, userId })
+            return
+          }
+
           await upsertProjectRole({
-            projectId: project.id,
+            projectId,
             userId,
-            role: maybeProjectRole
+            role: nextProjectRole
           })
         })
       )
@@ -149,25 +205,50 @@ export const onWorkspaceJoinedFactory =
   }
 
 export const initializeEventListenersFactory =
-  ({
-    onProjectCreated,
-    onInviteFinalized,
-    onWorkspaceJoined
-  }: {
-    onProjectCreated: ReturnType<typeof onProjectCreatedFactory>
-    onInviteFinalized: ReturnType<typeof onInviteFinalizedFactory>
-    onWorkspaceJoined: ReturnType<typeof onWorkspaceJoinedFactory>
-  }) =>
+  ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
     const quitCbs = [
-      ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated),
-      eventBus.listen(ServerInvitesEvents.Finalized, ({ payload }) =>
-        onInviteFinalized(payload)
-      ),
-      eventBus.listen(WorkspaceEvents.JoinedFromDiscovery, ({ payload }) =>
-        onWorkspaceJoined(payload)
-      )
+      ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
+        const onProjectCreated = onProjectCreatedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          upsertProjectRole: upsertProjectRoleFactory({ db }),
+          getWorkspaceRoles: getWorkspaceRolesFactory({ db })
+        })
+        await onProjectCreated(payload)
+      }),
+      eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
+        const onInviteFinalized = onInviteFinalizedFactory({
+          getStream,
+          logger: moduleLogger,
+          updateWorkspaceRole: updateWorkspaceRoleFactory({
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+          })
+        })
+        await onInviteFinalized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
+        const trx = await db.transaction()
+        const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db: trx })
+        })
+        await withTransaction(onWorkspaceRoleDeleted(payload), trx)
+      }),
+      eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
+        const trx = await db.transaction()
+        const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
+          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
+          deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+          upsertProjectRole: upsertProjectRoleFactory({ db: trx })
+        })
+        await withTransaction(onWorkspaceRoleUpdated(payload), trx)
+      })
     ]
 
     return () => quitCbs.forEach((quit) => quit())

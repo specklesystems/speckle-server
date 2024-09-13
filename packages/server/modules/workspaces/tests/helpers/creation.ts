@@ -1,21 +1,15 @@
 import { db } from '@/db/knex'
-import {
-  deleteProjectRoleFactory,
-  getStream,
-  upsertProjectRoleFactory
-} from '@/modules/core/repositories/streams'
+import { getStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
-import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -38,7 +32,6 @@ import {
   updateWorkspaceFactory,
   addDomainToWorkspaceFactory
 } from '@/modules/workspaces/services/management'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
@@ -138,10 +131,6 @@ export const assignToWorkspace = async (
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
-    upsertProjectRole: upsertProjectRoleFactory({ db }),
-    deleteProjectRole: deleteProjectRoleFactory({ db }),
-    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
@@ -159,8 +148,6 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
-    deleteProjectRole: deleteProjectRoleFactory({ db }),
-    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
