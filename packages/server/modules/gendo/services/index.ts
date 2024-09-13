@@ -5,7 +5,7 @@ import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { Merge } from 'type-fest'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
-import { uploadFileStreamFactory } from '@/modules/blobstorage/services/upload'
+import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
 import {
   updateBlobFactory,
   upsertBlobFactory
