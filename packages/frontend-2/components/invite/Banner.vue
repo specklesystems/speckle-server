@@ -172,5 +172,6 @@ const onAcceptClick = (token?: string) => {
       workspace_id: props.invite.workspace.id
     })
   }
+  mixpanel.add_group('workspace_id', props.invite.workspace.id)
 }
 </script>

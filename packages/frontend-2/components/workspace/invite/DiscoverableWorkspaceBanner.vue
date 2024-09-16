@@ -129,6 +129,7 @@ const processJoin = async (accept: boolean) => {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
     })
+    mixpanel.add_group('workspace_id', props.workspace.id)
 
     router.push(`/workspaces/${props.workspace.id}`)
   } else {
