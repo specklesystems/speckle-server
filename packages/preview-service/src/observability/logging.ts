@@ -11,3 +11,4 @@ export const logger = extendLoggerComponent(
 )
 export const serverLogger = extendLoggerComponent(logger, 'server')
 export const testLogger = getLogger(getLogLevel(), isLogPretty())
+export const knexLogger = extendLoggerComponent(logger, 'knex')
