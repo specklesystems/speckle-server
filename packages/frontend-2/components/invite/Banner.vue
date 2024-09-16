@@ -171,7 +171,7 @@ const onAcceptClick = (token?: string) => {
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
+    mixpanel.add_group('workspace_id', props.invite.workspace.id)
   }
-  mixpanel.add_group('workspace_id', props.invite.workspace.id)
 }
 </script>
