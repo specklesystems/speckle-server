@@ -9,6 +9,7 @@ import {
 import {
   cancelResourceInviteFactory,
   deleteInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
 import {
@@ -28,7 +29,10 @@ import {
   insertInviteAndDeleteOldFactory,
   deleteInviteFactory as deleteInviteFromDbFactory,
   queryAllUserResourceInvitesFactory,
-  queryAllResourceInvitesFactory
+  queryAllResourceInvitesFactory,
+  markInviteUpdatedfactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
   createProjectInviteFactory,
@@ -42,7 +46,10 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { getStream } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ServerInviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -53,14 +60,37 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+
+const buildCollectAndValidateResourceTargets = () =>
+  collectAndValidateCoreTargetsFactory({
+    getStream
+  })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
@@ -96,6 +126,8 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
+      if (!token?.length) return null
+
       return getServerInviteForTokenFactory({
         findServerInvite: findServerInviteFactory({ db })
       })(token)
@@ -135,17 +167,19 @@ export = {
     async serverInviteCreate(_parent, args, context) {
       const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
 
+      const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+        {
+          resourceId: '',
+          role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
+          resourceType: ServerInviteResourceType,
+          primary: true
+        }
       await createAndSendInvite(
         {
           target: args.input.email,
           inviterId: context.userId!,
           message: args.input.message,
-          primaryResourceTarget: <ServerInviteResourceTarget>{
-            resourceId: '',
-            role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
-            resourceType: ServerInviteResourceType,
-            primary: true
-          }
+          primaryResourceTarget
         },
         context.resourceAccessRules
       )
@@ -154,21 +188,16 @@ export = {
     },
 
     async streamInviteCreate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.input.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
-      await createProjectInvite(
-        args.input,
-        context.userId!,
-        context.resourceAccessRules
-      )
+      await createProjectInvite({
+        input: args.input,
+        inviterId: context.userId!,
+        inviterResourceAccessRules: context.resourceAccessRules
+      })
 
       return true
     },
@@ -189,22 +218,25 @@ export = {
       const batches = chunk(paramsArray, 50)
       for (const paramsBatchArray of batches) {
         await Promise.all(
-          paramsBatchArray.map((params) =>
-            createAndSendInvite(
+          paramsBatchArray.map((params) => {
+            const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
+              {
+                resourceId: '',
+                role: (params.serverRole as ServerRoles) || Roles.Server.User,
+                resourceType: ServerInviteResourceType,
+                primary: true
+              }
+
+            return createAndSendInvite(
               {
                 target: params.email,
                 inviterId: context.userId!,
                 message: params.message,
-                primaryResourceTarget: <ServerInviteResourceTarget>{
-                  resourceId: '',
-                  role: (params.serverRole as ServerRoles) || Roles.Server.User,
-                  resourceType: ServerInviteResourceType,
-                  primary: true
-                }
+                primaryResourceTarget
               },
               context.resourceAccessRules
             )
-          )
+          })
         )
       }
 
@@ -225,7 +257,8 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       // Batch calls so that we don't kill the server
@@ -233,11 +266,11 @@ export = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) => {
-            return createProjectInvite(
-              params,
-              context.userId!,
-              context.resourceAccessRules
-            )
+            return createProjectInvite({
+              input: params,
+              inviterId: context.userId!,
+              inviterResourceAccessRules: context.resourceAccessRules
+            })
           })
         )
       }
@@ -259,7 +292,21 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args),
+          findEmail: findEmailFactory({ db }),
+          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+            createUserEmail: createUserEmailFactory({ db }),
+            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+            findEmail: findEmailFactory({ db }),
+            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+            }),
+            requestNewEmailVerification
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 
@@ -299,7 +346,8 @@ export = {
           getStream
         }),
         findUserByTarget: findUserByTargetFactory(),
-        findInvite: findInviteFactory({ db })
+        findInvite: findInviteFactory({ db }),
+        markInviteUpdated: markInviteUpdatedfactory({ db })
       })
 
       await resendInviteEmail({ inviteId })
@@ -320,17 +368,19 @@ export = {
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
-      await createProjectInvite(args, ctx.userId!, ctx.resourceAccessRules)
+      await createProjectInvite({
+        input: {
+          projectId: args.projectId,
+          ...args.input
+        },
+        inviterId: ctx.userId!,
+        inviterResourceAccessRules: ctx.resourceAccessRules
+      })
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
@@ -349,18 +399,22 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createProjectInvite(
-              { ...i, projectId: args.projectId },
-              ctx.userId!,
-              ctx.resourceAccessRules
-            )
+            createProjectInvite({
+              input: {
+                ...i,
+                projectId: args.projectId
+              },
+              inviterId: ctx.userId!,
+              inviterResourceAccessRules: ctx.resourceAccessRules
+            })
           )
         )
       }
@@ -380,7 +434,21 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args),
+          findEmail: findEmailFactory({ db }),
+          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+            createUserEmail: createUserEmailFactory({ db }),
+            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+            findEmail: findEmailFactory({ db }),
+            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+            }),
+            requestNewEmailVerification
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 

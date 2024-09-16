@@ -3,6 +3,8 @@
   <div :class="[fullWidth ? 'w-full' : '']">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
+      <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+      <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
     </label>
     <div class="relative">
       <textarea
@@ -37,7 +39,7 @@
       <div
         v-if="errorMessage"
         :class="[
-          'pointer-events-none absolute inset-y-0 right-0 flex items-start mt-2',
+          'pointer-events-none absolute top-0 bottom-0 right-0 flex items-start mt-2',
           shouldShowClear ? 'pr-8' : 'pr-2'
         ]"
       >
@@ -45,7 +47,7 @@
       </div>
       <div
         v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
+        class="pointer-events-none absolute top-0 bottom-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
         :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
       >
         *
@@ -91,6 +93,7 @@ const props = withDefaults(
     showClear?: boolean
     fullWidth?: boolean
     showRequired?: boolean
+    showOptional?: boolean
     color?: InputColor
     textareaClasses?: string
   }>(),

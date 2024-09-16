@@ -9,16 +9,14 @@ const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const {
-  createStreamInviteDirectlyFactory
-} = require('@/test/speckle-helpers/inviteHelper')
+const { createStreamInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
 const {
   findInviteFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
 
-const createInviteDirectly = createStreamInviteDirectlyFactory({ db })
+const createInviteDirectly = createStreamInviteDirectly
 const findInvite = findInviteFactory({ db })
 const expect = chai.expect
 

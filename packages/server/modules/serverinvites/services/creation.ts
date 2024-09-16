@@ -6,14 +6,14 @@ import sanitizeHtml from 'sanitize-html'
 import {
   resolveTarget,
   buildUserTarget,
-  ResolvedTargetData,
-  getPrimaryResourceTarget
+  ResolvedTargetData
 } from '@/modules/serverinvites/helpers/core'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   FindInvite,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
+  MarkInviteUpdated,
   ServerInviteRecordInsertModel
 } from '@/modules/serverinvites/domain/operations'
 import {
@@ -25,7 +25,10 @@ import {
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { MaybeNullOrUndefined } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  PrimaryInviteResourceTarget,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
@@ -95,7 +98,8 @@ export const createAndSendInviteFactory =
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
-    const { inviterId, target } = params
+    const { inviterId } = params
+    let { target } = params
     let { message } = params
 
     const [inviter, targetUser, serverInfo] = await Promise.all([
@@ -111,6 +115,10 @@ export const createAndSendInviteFactory =
       throw new InviteCreateValidationError('Attempting to invite an invalid user')
     }
 
+    if (targetData.userId) {
+      target = buildUserTarget(targetData.userId)!
+    }
+
     if (message && message.length >= 1024) {
       throw new InviteCreateValidationError('Personal message too long')
     }
@@ -124,7 +132,9 @@ export const createAndSendInviteFactory =
       targetUser,
       serverInfo
     })
-    const finalPrimaryResource = getPrimaryResourceTarget(resources)
+    const finalPrimaryResource = resources.find(
+      (r): r is PrimaryInviteResourceTarget => 'primary' in r && r.primary
+    )
     if (!finalPrimaryResource) {
       throw new InviteCreateValidationError('No primary resource could be resolved')
     }
@@ -179,16 +189,18 @@ export const resendInviteEmailFactory =
   ({
     buildInviteEmailContents,
     findUserByTarget,
-    findInvite
+    findInvite,
+    markInviteUpdated
   }: {
     buildInviteEmailContents: BuildInviteEmailContents
     findUserByTarget: FindUserByTarget
     findInvite: FindInvite
+    markInviteUpdated: MarkInviteUpdated
   }): ResendInviteEmail =>
-  async (params: { inviteId: string }) => {
+  async (params) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
-    const { inviteId } = params
-    const invite = await findInvite({ inviteId })
+    const { inviteId, resourceFilter } = params
+    const invite = await findInvite({ inviteId, resourceFilter })
     if (!invite) {
       throw new InviteCreateValidationError('Invite not found')
     }
@@ -212,4 +224,6 @@ export const resendInviteEmailFactory =
       targetUser,
       targetData
     })
+
+    await markInviteUpdated({ inviteId })
   }

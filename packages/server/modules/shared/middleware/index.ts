@@ -26,6 +26,7 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
+import { subscriptionLogger } from '@/logging/logging'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -122,9 +123,15 @@ export async function authContextMiddleware(
   if (!authContext.auth && authContext.err) {
     let message = 'Unknown Auth context error'
     let status = 500
-    message = authContext.err?.message || message
-    if (authContext.err instanceof UnauthorizedError) status = 401
-    if (authContext.err instanceof ForbiddenError) status = 403
+    if (authContext.err instanceof UnauthorizedError) {
+      status = 401
+      message = authContext.err?.message || message
+    }
+    if (authContext.err instanceof ForbiddenError) {
+      status = 403
+      message = authContext.err?.message || message
+    }
+    if (status === 500) req.log.error({ err: authContext.err }, 'Auth context error')
     return res.status(status).json({ error: message })
   }
   req.context = authContext
@@ -150,7 +157,7 @@ export async function buildContext({
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
-  token: Nullable<string>
+  token?: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
   const ctx =
@@ -158,7 +165,7 @@ export async function buildContext({
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
   const log = Observability.extendLoggerComponent(
-    req?.log || Observability.getLogger(),
+    req?.log || subscriptionLogger,
     'graphql'
   )
 

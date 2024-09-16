@@ -16,7 +16,6 @@ import { AuthContext } from '@/modules/shared/authz'
 import {
   BranchRecord,
   CommitRecord,
-  LimitedUserRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UsersMetaRecord
@@ -52,7 +51,7 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAppScopes } from '@/modules/auth/repositories'
 import {
@@ -88,6 +87,8 @@ import db from '@/db/knex'
 import { graphDataloadersBuilders } from '@/modules'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
+
+const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -448,15 +449,10 @@ export function buildRequestLoaders(
       /**
        * Get user from DB
        */
-      getUser: createLoader<string, Nullable<UserWithOptionalRole<LimitedUserRecord>>>(
-        async (userIds) => {
-          const results = keyBy(
-            await getUsers(userIds.slice(), { withRole: true }),
-            'id'
-          )
-          return userIds.map((i) => results[i] || null)
-        }
-      ),
+      getUser: createLoader<string, Nullable<UserWithOptionalRole>>(async (userIds) => {
+        const results = keyBy(await getUsers(userIds.slice(), { withRole: true }), 'id')
+        return userIds.map((i) => results[i] || null)
+      }),
 
       /**
        * Get meta values associated with one or more users

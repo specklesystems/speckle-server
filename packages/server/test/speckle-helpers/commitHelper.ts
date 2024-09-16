@@ -36,7 +36,7 @@ export type BasicTestCommit = {
 }
 
 export async function createTestObject(params: { projectId: string }) {
-  return await createObject(params.projectId, { foo: 'bar' })
+  return await createObject({ streamId: params.projectId, object: { foo: 'bar' } })
 }
 
 /**
@@ -46,7 +46,9 @@ async function ensureObjects(commits: BasicTestCommit[]) {
   const commitsWithoutObjects = commits.filter((c) => !c.objectId)
   await Promise.all(
     commitsWithoutObjects.map((c) =>
-      createObject(c.streamId, { foo: 'bar' }).then((oid) => (c.objectId = oid))
+      createObject({ streamId: c.streamId, object: { foo: 'bar' } }).then(
+        (oid) => (c.objectId = oid)
+      )
     )
   )
 }

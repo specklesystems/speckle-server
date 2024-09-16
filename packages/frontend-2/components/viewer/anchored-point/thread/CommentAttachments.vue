@@ -4,7 +4,6 @@
       v-for="attachment in attachments.text.attachments || []"
       :key="attachment.id"
       :icon-left="resolveIconComponent(attachment)"
-      size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
       <span class="truncate relative text-xs pl-1">
@@ -151,8 +150,6 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      color: 'default',
-      fullWidth: true,
       iconLeft: ArrowDownTrayIcon
     },
     onClick: () => {

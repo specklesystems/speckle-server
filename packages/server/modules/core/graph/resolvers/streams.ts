@@ -1,4 +1,3 @@
-import { UserInputError } from 'apollo-server-express'
 import {
   getStream,
   getStreams,
@@ -47,10 +46,9 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
-import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
-import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { getUsers } from '@/modules/core/repositories/users'
+import { BadRequestError } from '@/modules/shared/errors'
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
@@ -127,7 +125,7 @@ export = {
 
     async adminStreams(parent, args, ctx) {
       if (args.limit && args.limit > 50)
-        throw new UserInputError('Cannot return more than 50 items at a time.')
+        throw new BadRequestError('Cannot return more than 50 items at a time.')
 
       const { streams, totalCount } = await getStreams({
         offset: args.offset,
@@ -202,7 +200,7 @@ export = {
       const { limit, cursor } = args
 
       if (userId !== requestedUserId)
-        throw new UserInputError("Cannot view another user's favorite streams")
+        throw new BadRequestError("Cannot view another user's favorite streams")
 
       return await getFavoriteStreamsCollection({
         userId,
@@ -239,19 +237,6 @@ export = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
-      }
-
-      if (args.stream.workspaceId) {
-        if (!isWorkspacesModuleEnabled()) {
-          // Ugly but complete, will go away if/when resolver moved to workspaces module
-          throw new WorkspacesModuleDisabledError()
-        }
-        await authorizeResolver(
-          context.userId,
-          args.stream.workspaceId,
-          Roles.Workspace.Member,
-          context.resourceAccessRules
-        )
       }
 
       const { id } = await createStreamReturnRecord(
@@ -320,12 +305,14 @@ export = {
       const { streamId, favorited } = args
       const { userId, resourceAccessRules } = ctx
 
-      return await favoriteStream({
+      const stream = await favoriteStream({
         userId: userId!,
         streamId,
         favorited,
         userResourceAccessRules: resourceAccessRules
       })
+
+      return stream
     },
 
     async streamLeave(_parent, args, ctx) {

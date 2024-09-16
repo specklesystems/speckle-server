@@ -1,13 +1,13 @@
 <template>
   <div>
     <div
-      class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
+      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4"
     >
-      <div class="flex justify-between items-center flex-wrap sm:flex-nowrap">
-        <h1 class="block h4 font-bold">Models</h1>
+      <div class="flex justify-between items-center flex-wrap xl:flex-nowrap">
+        <h1 class="block text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
@@ -17,15 +17,14 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
       <div
-        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
+        class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:items-center xl:space-x-2"
       >
         <FormTextInput
           v-model="localSearch"
@@ -33,7 +32,7 @@
           :show-label="false"
           placeholder="Search models..."
           color="foundation"
-          wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
+          wrapper-classes="grow lg:grow-0 xl:ml-2 xl:w-40 min-w-40 shrink-0"
           :show-clear="localSearch !== ''"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
@@ -67,7 +66,7 @@
             <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             @click="trackFederateAll"
@@ -77,10 +76,9 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -99,7 +97,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

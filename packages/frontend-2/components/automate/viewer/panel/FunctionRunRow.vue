@@ -16,7 +16,7 @@
         />
       </div>
       <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
-      <div class="font-bold text-xs truncate">
+      <div class="font-medium text-xs truncate">
         {{ automationName ? automationName + ' / ' : ''
         }}{{ functionRun.function?.name || 'Unknown function' }}
       </div>
@@ -34,7 +34,7 @@
     <div v-if="expanded" class="px-2 pb-2 space-y-4">
       <!-- Status message -->
       <div class="space-y-1">
-        <div class="text-xs font-bold text-foreground-2">Status</div>
+        <div class="text-xs font-medium text-foreground-2">Status</div>
         <div
           v-if="
             [
@@ -57,7 +57,7 @@
         v-if="attachments.length !== 0"
         class="border-t pt-2 border-foreground-2 space-y-1"
       >
-        <div class="text-xs font-bold text-foreground-2">Attachments</div>
+        <div class="text-xs font-medium text-foreground-2">Attachments</div>
         <div class="ml-[2px] justify-start">
           <AutomateRunsAttachmentButton
             v-for="id in attachments"
@@ -74,7 +74,7 @@
       <div v-if="hasValidContextView" class="border-t pt-2 border-foreground-2">
         <div>
           <FormButton
-            size="xs"
+            size="sm"
             link
             class="truncate max-w-full"
             :to="functionRun.contextView || ''"
@@ -88,7 +88,7 @@
         v-if="!!results?.values.objectResults.length"
         class="border-t pt-2 border-foreground-2"
       >
-        <div class="text-xs font-bold text-foreground-2 mb-2">Results</div>
+        <div class="text-xs font-medium text-foreground-2 mb-2">Results</div>
         <div class="space-y-1">
           <AutomateViewerPanelFunctionRunRowObjectResult
             v-for="(result, index) in results.values.objectResults.slice(
@@ -101,8 +101,8 @@
           />
           <FormButton
             v-if="pageRunLimit < results.values.objectResults.length"
-            size="xs"
-            color="card"
+            size="sm"
+            color="outline"
             class="w-full"
             @click="pageRunLimit += 10"
           >

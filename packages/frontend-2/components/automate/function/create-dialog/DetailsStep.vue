@@ -15,6 +15,7 @@
           name="name"
           label="Name"
           placeholder="Function Name"
+          color="foundation"
           help="This will be used as the function's display name and also as the name of the Git repository."
           show-label
           show-required
@@ -44,6 +45,7 @@
     />
     <FormTags
       name="tags"
+      color="foundation"
       label="Tags"
       show-label
       show-clear
@@ -58,7 +60,8 @@
       allow-unset
       button-style="tinted"
       clearable
-      placeholder="Choose a GitHub organization (optional)"
+      show-optional
+      placeholder="Choose a GitHub organization"
       help="Choose an organization to publish your Git repository to. If left empty, it will be published to your personal account."
       :items="githubOrgs"
       mount-menu-on-body

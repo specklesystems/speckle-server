@@ -1,41 +1,27 @@
 <template>
-  <div class="h-96 flex justify-center flex-col">
-    <div class="w-full flex align-center justify-center animate-pulse">
-      <img
-        src="~~/assets/images/boxes/empty.png"
-        alt="No search results found image"
-        class="h-32"
-      />
-    </div>
-    <h2 class="block font-bold leading-8 text-center p-2 h3">
-      {{ isGuest ? 'No projects found!' : 'Create your first project!' }}
+  <div class="flex justify-center flex-col text-center my-12">
+    <h2 class="text-heading mt-2 text-foreground">
+      {{ isGuest ? 'No projects found' : 'Create your first project' }}
     </h2>
-    <h4 class="block font-normal leading-8 text-center p-2">
+    <h4 class="text-body-xs mb-4 mt-2 max-w-xs mx-auto text-foreground-2">
       Projects are the place where your models and their versions live.
     </h4>
-    <div class="flex flex-col items-center space-y-4">
+    <div class="flex flex-col items-center gap-2">
       <FormButton
         v-if="!isGuest"
-        size="xl"
+        color="outline"
         class="shadow-lg"
         @click="$emit('create-project')"
       >
-        Create a project
-      </FormButton>
-      <FormButton text size="xs" to="/onboarding?force=true">
-        {{
-          isGuest
-            ? 'Go through the onboarding again?'
-            : 'Or go through the onboarding again'
-        }}
+        New project
       </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+defineProps<{
+  isGuest: boolean
+}>()
 
 defineEmits(['create-project'])
-
-const { isGuest } = useActiveUser()
 </script>

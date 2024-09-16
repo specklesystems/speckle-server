@@ -1,11 +1,6 @@
 <template>
   <div>
-    <ProjectPageSettingsBlock
-      v-if="canLeaveProject"
-      background
-      title="Leave Project"
-      :icon="ArrowRightOnRectangleIcon"
-    >
+    <ProjectPageSettingsBlock v-if="canLeaveProject" background title="Leave project">
       <p>
         Remove yourself from this project. To join again you will need to get invited.
       </p>
@@ -24,7 +19,6 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockLeave_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
@@ -40,6 +34,9 @@ graphql(`
         ...LimitedUserAvatar
         role
       }
+    }
+    workspace {
+      id
     }
   }
 `)

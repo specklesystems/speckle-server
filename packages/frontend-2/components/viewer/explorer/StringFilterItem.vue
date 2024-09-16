@@ -3,13 +3,13 @@
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <button
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md text-foreground cursor-pointer ${
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-foundation-2 py-0.5 text-foreground cursor-pointer ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       :title="item.value"
       @click="setSelection()"
     >
-      <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
+      <div class="flex gap-1 items-center flex-shrink truncate text-body-2xs">
         <span
           v-if="color"
           class="w-3 h-3 rounded"

@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: (db?: Knex) => (knex || db)(aliasedTableName),
+      knex: (db?: Knex) => (db || knex)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
@@ -186,7 +186,11 @@ export function buildTableHelper<
 /**
  * Create meta table schema helper
  */
-function buildMetaTableHelper<T extends string, C extends string, MK extends string>(
+export function buildMetaTableHelper<
+  T extends string,
+  C extends string,
+  MK extends string
+>(
   tableName: T,
   extraColumns: C[],
   metaKeys: MK[],
@@ -338,6 +342,7 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
+  'updatedAt',
   'message',
   'resource',
   'token'
@@ -595,6 +600,14 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
   'responseImage'
 ])
 
-export { knex }
+export const UserEmails = buildTableHelper('user_emails', [
+  'id',
+  'email',
+  'primary',
+  'verified',
+  'userId',
+  'createdAt',
+  'updatedAt'
+])
 
-export const USER_EMAILS_TABLE_NAME = 'user_emails'
+export { knex }

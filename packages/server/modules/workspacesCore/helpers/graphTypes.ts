@@ -1,12 +1,14 @@
 import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
-import { UserWithRole } from '@/modules/core/repositories/users'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceGraphQLReturn = Workspace
+export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
+export type WorkspaceProjectMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 
 export type PendingWorkspaceCollaboratorGraphQLReturn = {
   id: string
@@ -16,8 +18,12 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
   role: WorkspaceRoles
   invitedById: string
   user: LimitedUserRecord | null
+  updatedAt: Date
+  email: string
+  /**
+   * The token that was specified when retrieving this collaborator, if any
+   */
+  token?: string
 }
 
-export type WorkspaceCollaboratorGraphQLReturn = UserWithRole<LimitedUserRecord> & {
-  workspaceRole: WorkspaceRoles
-}
+export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember

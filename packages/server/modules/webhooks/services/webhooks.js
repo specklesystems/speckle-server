@@ -4,89 +4,12 @@ const knex = require('@/db/knex')
 const { getStream } = require('@/modules/core/repositories/streams')
 const crs = require('crypto-random-string')
 
-const WebhooksConfig = () => knex('webhooks_config')
 const WebhooksEvents = () => knex('webhooks_events')
 const Users = () => knex('users')
 
 const { getServerInfo } = require('../../core/services/generic')
-const MAX_STREAM_WEBHOOKS = 100
 
 module.exports = {
-  async createWebhook({ streamId, url, description, secret, enabled, triggers }) {
-    const streamWebhookCount = await module.exports.getStreamWebhooksCount({ streamId })
-    if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
-      throw new Error(
-        `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`
-      )
-    }
-
-    const triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
-
-    const [{ id }] = await WebhooksConfig()
-      .returning('id')
-      .insert({
-        id: crs({ length: 10 }),
-        streamId,
-        url,
-        description,
-        secret,
-        enabled,
-        triggers: triggersObj
-      })
-    return id
-  },
-
-  async getWebhook({ id }) {
-    const webhook = await WebhooksConfig().select('*').where({ id }).first()
-    if (webhook) {
-      webhook.triggers = Object.keys(webhook.triggers)
-    }
-
-    return webhook
-  },
-
-  async updateWebhook({ id, url, description, secret, enabled, triggers }) {
-    const fieldsToUpdate = {
-      updatedAt: new Date()
-    }
-    if (url !== undefined) fieldsToUpdate.url = url
-    if (description !== undefined) fieldsToUpdate.description = description
-    if (secret !== undefined) fieldsToUpdate.secret = secret
-    if (enabled !== undefined) fieldsToUpdate.enabled = enabled
-    if (triggers !== undefined) {
-      const triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
-      fieldsToUpdate.triggers = triggersObj
-    }
-
-    const [{ id: res }] = await WebhooksConfig()
-      .returning('id')
-      .where({ id })
-      .update(fieldsToUpdate)
-    return res
-  },
-
-  async deleteWebhook({ id }) {
-    return await WebhooksConfig().where({ id }).del()
-  },
-
-  async getStreamWebhooks({ streamId }) {
-    const webhooks = await WebhooksConfig()
-      .select('*')
-      .where({ streamId })
-      .orderBy('updatedAt', 'desc')
-
-    for (const webhook of webhooks) {
-      webhook.triggers = Object.keys(webhook.triggers)
-    }
-
-    return webhooks
-  },
-
-  async getStreamWebhooksCount({ streamId }) {
-    const [res] = await WebhooksConfig().count().where({ streamId })
-    return parseInt(res.count)
-  },
-
   async dispatchStreamEvent({ streamId, event, eventPayload }, { trx } = {}) {
     // Add server info
     eventPayload.server = await getServerInfo()

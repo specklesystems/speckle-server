@@ -10,6 +10,7 @@
     :disabled="disabled"
     :label-id="labelId"
     :button-id="buttonId"
+    :disabled-item-predicate="disabledItemPredicate"
     hide-checkmarks
     by="id"
     class="min-w-[85px]"
@@ -36,7 +37,10 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { roleSelectItems } from '~~/lib/projects/helpers/components'
+import {
+  roleSelectItems,
+  type SelectableStreamRoleSelectItem
+} from '~~/lib/projects/helpers/components'
 import { Roles } from '@speckle/shared'
 import type { StreamRoles } from '@speckle/shared'
 import { reduce, isArray } from 'lodash-es'
@@ -53,6 +57,7 @@ const props = defineProps<{
   disabled?: boolean
   hideRemove?: boolean
   hideOwner?: boolean
+  disabledRoles?: StreamRoles[]
 }>()
 
 const labelId = useId()
@@ -91,4 +96,9 @@ const selectValue = computed({
     selectedValue.value = newVal.id
   }
 })
+
+const disabledItemPredicate = (item: SelectableStreamRoleSelectItem) => {
+  if (!props.disabledRoles?.length) return false
+  return (props.disabledRoles as string[]).includes(item.id)
+}
 </script>

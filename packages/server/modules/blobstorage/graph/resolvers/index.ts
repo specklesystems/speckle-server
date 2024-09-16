@@ -1,10 +1,10 @@
-import { BlobStorageRecord } from '@/modules/blobstorage/helpers/types'
+import { db } from '@/db/knex'
 import {
-  getBlobMetadata,
-  getBlobMetadataCollection,
-  blobCollectionSummary,
-  getFileSizeLimit
-} from '@/modules/blobstorage/services'
+  blobCollectionSummaryFactory,
+  getBlobMetadataCollectionFactory,
+  getBlobMetadataFactory
+} from '@/modules/blobstorage/repositories'
+import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import {
   ProjectBlobArgs,
   ProjectBlobsArgs,
@@ -12,19 +12,19 @@ import {
   StreamBlobArgs,
   StreamBlobsArgs
 } from '@/modules/core/graph/generated/graphql'
+import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
-  ProjectGraphQLReturn,
-  StreamGraphQLReturn
-} from '@/modules/core/helpers/graphTypes'
-import { NotFoundError, ResourceMismatch } from '@/modules/shared/errors'
-import { Nullable } from '@speckle/shared'
-import { UserInputError } from 'apollo-server-errors'
+  BadRequestError,
+  NotFoundError,
+  ResourceMismatch
+} from '@/modules/shared/errors'
+
+const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const blobCollectionSummary = blobCollectionSummaryFactory({ db })
 
 const streamBlobResolvers = {
-  async blobs(
-    parent: StreamGraphQLReturn | ProjectGraphQLReturn,
-    args: StreamBlobsArgs | ProjectBlobsArgs
-  ) {
+  async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
     const streamId = parent.id
     const [summary, blobs] = await Promise.all([
       blobCollectionSummary({
@@ -45,18 +45,15 @@ const streamBlobResolvers = {
       items: blobs.blobs
     }
   },
-  async blob(
-    parent: StreamGraphQLReturn | ProjectGraphQLReturn,
-    args: StreamBlobArgs | ProjectBlobArgs
-  ) {
+  async blob(parent: StreamGraphQLReturn, args: StreamBlobArgs | ProjectBlobArgs) {
     try {
-      return (await getBlobMetadata({
+      return await getBlobMetadata({
         streamId: parent.id,
         blobId: args.id
-      })) as Nullable<BlobStorageRecord>
+      })
     } catch (err: unknown) {
       if (err instanceof NotFoundError) return null
-      if (err instanceof ResourceMismatch) throw new UserInputError(err.message)
+      if (err instanceof ResourceMismatch) throw new BadRequestError(err.message)
       throw err
     }
   }
@@ -64,6 +61,12 @@ const streamBlobResolvers = {
 
 export = {
   ServerInfo: {
+    //deprecated
+    blobSizeLimitBytes() {
+      return getFileSizeLimit()
+    }
+  },
+  ServerConfiguration: {
     blobSizeLimitBytes() {
       return getFileSizeLimit()
     }

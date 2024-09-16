@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-40" @close="onClose">
+    <Dialog as="div" class="relative z-50" @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -11,7 +11,7 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-black/70 dark:bg-neutral-900/70 transition-opacity"
+          class="fixed top-0 left-0 w-full h-full backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
@@ -49,10 +49,11 @@
             >
               <div
                 v-if="hasTitle"
+                class="border-b border-outline-3"
                 :class="scrolledFromTop && 'relative z-20 shadow-lg'"
               >
                 <div
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[3rem] px-6 py-4 truncate text-heading-sm"
                 >
                   <div class="flex items-center pr-12">
                     <ChevronLeftIcon
@@ -75,22 +76,23 @@
               -->
               <button class="hidden" type="button" />
 
-              <button
+              <FormButton
                 v-if="!hideCloser"
-                type="button"
-                class="absolute z-20 bg-foundation hover:bg-foundation-page transition rounded-full p-1.5 shadow border top-5 right-5 border-outline-3"
+                color="subtle"
+                size="sm"
+                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0"
                 @click="open = false"
               >
-                <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
-              </button>
+                <XMarkIcon class="h-6 w-6 text-foreground-2" />
+              </FormButton>
               <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex p-6 gap-3 shrink-0 bg-foundation"
+                class="relative z-50 flex justify-end px-6 pb-6 space-x-2 shrink-0 bg-foundation-page"
                 :class="{
-                  'shadow-t': !scrolledToBottom,
+                  'shadow-t pt-6': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true
                 }"
               >
@@ -126,7 +128,7 @@ import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
-type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
 
 const emit = defineEmits<{
@@ -188,14 +190,16 @@ const open = computed({
 
 const maxWidthWeight = computed(() => {
   switch (props.maxWidth) {
-    case 'sm':
+    case 'xs':
       return 0
-    case 'md':
+    case 'sm':
       return 1
-    case 'lg':
+    case 'md':
       return 2
-    case 'xl':
+    case 'lg':
       return 3
+    case 'xl':
+      return 4
     default:
       return 10000
   }
@@ -205,16 +209,22 @@ const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
   if (!isFullscreenDesktop.value) {
-    classParts.push('md:max-w-2xl')
-
+    if (maxWidthWeight.value === 0) {
+      classParts.push('md:max-w-sm')
+    }
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-lg')
+    }
     if (maxWidthWeight.value >= 2) {
-      classParts.push('lg:max-w-4xl')
+      classParts.push('md:max-w-2xl')
     }
     if (maxWidthWeight.value >= 3) {
-      classParts.push('xl:max-w-6xl')
+      classParts.push('lg:max-w-3xl')
     }
     if (maxWidthWeight.value >= 4) {
-      classParts.push('2xl:max-w-7xl')
+      classParts.push('xl:max-w-6xl')
+    } else {
+      classParts.push('md:max-w-2xl')
     }
   }
 
@@ -227,21 +237,17 @@ const isFullscreenDesktop = computed(
 
 const dialogPanelClasses = computed(() => {
   const classParts: string[] = [
-    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto'
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation-page text-left shadow-xl border border-outline-2 flex flex-col md:h-auto'
   ]
 
   if (isFullscreenDesktop.value) {
-    classParts.push('md:h-full md:h-[98vh] md:!h-[98dvh]')
+    classParts.push('md:h-full')
   } else {
     classParts.push('md:max-h-[90vh]')
   }
 
-  if (props.fullscreen === 'mobile') {
+  if (props.fullscreen === 'mobile' || props.fullscreen === 'all') {
     classParts.push('max-md:h-[98vh] max-md:!h-[98dvh]')
-  }
-
-  if (props.fullscreen === 'all') {
-    classParts.push('h-[98vh] !h-[98dvh]')
   }
 
   if (props.fullscreen === 'none' || props.fullscreen === 'desktop') {
@@ -255,17 +261,15 @@ const dialogPanelClasses = computed(() => {
 })
 
 const slotContainerClasses = computed(() => {
-  const classParts: string[] = [
-    'flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base'
-  ]
+  const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
   if (hasTitle.value) {
-    classParts.push('px-6 pb-4')
+    classParts.push('px-6 py-4')
     if (isFullscreenDesktop.value) {
       classParts.push('md:p-0')
     }
   } else if (!isFullscreenDesktop.value) {
-    classParts.push('p-6')
+    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')

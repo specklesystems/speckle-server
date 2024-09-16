@@ -1,11 +1,11 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     title="Delete webhook"
     :buttons="dialogButtons"
   >
-    <div class="flex flex-col gap-6 text-sm text-foreground">
+    <div class="flex flex-col gap-2 text-body-xs text-foreground">
       <p>
         Are you sure you want to
         <strong>permanently delete</strong>
@@ -108,12 +108,12 @@ const deleteConfirmed = async () => {
 const dialogButtons: LayoutDialogButton[] = [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline' },
     onClick: () => (isOpen.value = false)
   },
   {
     text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
+    props: { color: 'danger' },
     onClick: deleteConfirmed
   }
 ]

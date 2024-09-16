@@ -1,14 +1,14 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     @fully-closed="$emit('fully-closed')"
   >
     <template #header>
       Move {{ versions.length }} version{{ versions.length > 1 ? 's' : '' }}
     </template>
     <div class="flex flex-col space-y-4">
-      <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
+      <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
           <div class="min-h-40">
             <ProjectModelPageDialogMoveToExistingTab
@@ -28,7 +28,7 @@
             />
           </div>
         </template>
-      </LayoutTabsHoriztonal>
+      </LayoutTabsHorizontal>
     </div>
   </LayoutDialog>
 </template>
@@ -38,7 +38,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
-import { LayoutTabsHoriztonal } from '@speckle/ui-components'
 import type { LayoutPageTabItem } from '@speckle/ui-components'
 
 graphql(`

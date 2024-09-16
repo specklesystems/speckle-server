@@ -1,7 +1,8 @@
 import type { ApolloCache } from '@apollo/client/core'
+import type { Optional } from '@speckle/shared'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isArray } from 'lodash-es'
+import { isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -15,7 +16,12 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery
+  AdminPanelProjectsListQuery,
+  WorkspaceProjectsArgs,
+  Workspace,
+  WorkspaceProjectInviteCreateInput,
+  InviteProjectUserMutation,
+  Project
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -24,15 +30,18 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
   deleteProjectMutation,
   inviteProjectUserMutation,
+  inviteWorkspaceProjectUserMutation,
   leaveProjectMutation,
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
+  updateWorkspaceProjectRoleMutation,
   useProjectInviteMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
@@ -113,7 +122,10 @@ export function useCreateProject() {
         mutation: createProjectMutation,
         variables: { input },
         update: (cache, { data }) => {
-          if (data?.projectMutations.create.id) {
+          const newProject = data?.projectMutations.create
+
+          if (newProject?.id) {
+            // Existing cache update for projects
             modifyObjectFields<
               undefined,
               { [key: string]: AdminPanelProjectsListQuery }
@@ -133,6 +145,33 @@ export function useCreateProject() {
               },
               { fieldNameWhitelist: ['admin'] }
             )
+
+            if (input.workspaceId) {
+              const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
+
+              modifyObjectFields<WorkspaceProjectsArgs, Workspace['projects']>(
+                cache,
+                workspaceCacheId,
+                (_fieldName, variables, value, details) => {
+                  const newItems = isUndefined(value?.items)
+                    ? undefined
+                    : [details.ref('Project', newProject.id), ...value.items]
+
+                  const newTotalCount = isUndefined(value?.totalCount)
+                    ? undefined
+                    : (value.totalCount || 0) + 1
+
+                  return {
+                    ...value,
+                    ...(isUndefined(newItems) ? {} : { items: newItems }),
+                    ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
+                  }
+                },
+                {
+                  fieldNameWhitelist: ['projects']
+                }
+              )
+            }
           }
         }
       })
@@ -156,12 +195,15 @@ export function useCreateProject() {
   }
 }
 
-export function useUpdateUserRole() {
+export function useUpdateUserRole(
+  project?: Ref<Pick<Project, 'workspaceId'> | undefined>
+) {
   const apollo = useApolloClient().client
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (input: ProjectUpdateRoleInput) => {
+  const updateProjectRole = async (input: ProjectUpdateRoleInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -188,6 +230,39 @@ export function useUpdateUserRole() {
 
     return data?.projectMutations.updateRole
   }
+
+  const updateWorkspaceProjectRole = async (input: ProjectUpdateRoleInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateWorkspaceProjectRoleMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.workspaceMutations.projects.updateRole.id) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Permission update failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace project permissions updated'
+      })
+    }
+
+    return data?.workspaceMutations.projects
+  }
+
+  const isWorkspaceProject =
+    isWorkspacesEnabled.value && project?.value?.workspaceId?.length
+
+  return isWorkspaceProject ? updateWorkspaceProjectRole : updateProjectRole
 }
 
 export function useInviteUserToProject() {
@@ -197,20 +272,42 @@ export function useInviteUserToProject() {
 
   return async (
     projectId: string,
-    input: ProjectInviteCreateInput | ProjectInviteCreateInput[]
+    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
   ) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
-    const { data, errors } = await apollo
-      .mutate({
-        mutation: inviteProjectUserMutation,
-        variables: { input: isArray(input) ? input : [input], projectId }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const isWorkspaceInput = (
+      input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
+    ): input is WorkspaceProjectInviteCreateInput[] => {
+      return input.some((i) => 'workspaceRole' in i)
+    }
 
-    if (!data?.projectMutations.invites.batchCreate.id) {
-      const err = getFirstErrorMessage(errors)
+    let res: Optional<
+      InviteProjectUserMutation['projectMutations']['invites']['batchCreate']
+    > = undefined
+    let err: Optional<string> = undefined
+    if (isWorkspaceInput(input)) {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteWorkspaceProjectUserMutation,
+          variables: { inputs: input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.createForWorkspace
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    } else {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteProjectUserMutation,
+          variables: { input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.batchCreate
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    }
+
+    if (err) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Invitation failed',
@@ -223,7 +320,7 @@ export function useInviteUserToProject() {
       })
     }
 
-    return data?.projectMutations.invites.batchCreate
+    return res
   }
 }
 

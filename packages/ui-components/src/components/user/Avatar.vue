@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'text-foreground-on-primary flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold uppercase transition',
+      'text-foreground-on-primary flex shrink-0 items-center justify-center overflow-hidden rounded-full uppercase transition',
       sizeClasses,
       bgClasses,
       borderClasses,
@@ -52,7 +52,7 @@ const props = withDefaults(
 const { sizeClasses, iconClasses } = useAvatarSizeClasses({ props: toRefs(props) })
 
 const initials = computed(() => {
-  if (!props.user?.name.length) return
+  if (!props.user?.name?.length) return
   const parts = props.user.name.split(' ')
   const firstLetter = parts[0]?.[0] || ''
   const secondLetter = parts[1]?.[0] || ''
@@ -68,7 +68,7 @@ const borderClasses = computed(() => {
 
 const bgClasses = computed(() => {
   if (props.noBg) return ''
-  return 'bg-primary'
+  return 'bg-info-darker'
 })
 
 const hoverClasses = computed(() => {

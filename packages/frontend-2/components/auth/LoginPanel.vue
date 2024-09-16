@@ -2,40 +2,39 @@
   <Component
     :is="concreteComponent"
     v-if="!isLoggedIn"
-    fancy-glow
     no-shadow
-    class="max-w-lg mx-auto w-full"
+    class="mx-auto w-full"
   >
     <div class="space-y-4">
-      <div class="flex flex-col items-center space-y-2">
-        <h1
-          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
-        >
+      <div v-if="!workspaceInvite" class="flex flex-col items-center gap-y-2 pb-4">
+        <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
         </h1>
-        <h2 class="text-center text-foreground-2">
+        <h2 class="text-body-sm text-center text-foreground-2">
           {{ subtitle }}
         </h2>
       </div>
+      <AuthWorkspaceInviteHeader v-else :invite="workspaceInvite" />
       <AuthThirdPartyLoginBlock
         v-if="hasThirdPartyStrategies && serverInfo"
         :server-info="serverInfo"
         :challenge="challenge"
         :app-id="appId"
+        :newsletter-consent="false"
       />
       <div>
         <div
           v-if="hasLocalStrategy"
-          class="text-center label text-foreground-2 mb-3 text-xs font-normal"
+          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal mt-2"
         >
-          {{
-            hasThirdPartyStrategies
-              ? 'Or login with your email'
-              : 'Login with your email'
-          }}
+          {{ hasThirdPartyStrategies ? 'Or login with your email' : '' }}
         </div>
-        <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
-        <div class="text-center">
+        <AuthLoginWithEmailBlock
+          v-if="hasLocalStrategy"
+          :challenge="challenge"
+          :workspace-invite="workspaceInvite || undefined"
+        />
+        <div v-if="!forcedInviteEmail" class="text-center text-body-sm">
           <span class="mr-2">Don't have an account?</span>
           <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
             Register
@@ -50,10 +49,13 @@
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
-import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
-import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+import { LayoutDialog } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
+import {
+  authLoginPanelQuery,
+  authLoginPanelWorkspaceInviteQuery
+} from '~/lib/auth/graphql/queries'
 
 const props = withDefaults(
   defineProps<{
@@ -68,9 +70,23 @@ const props = withDefaults(
   }
 )
 
+const { appId, challenge } = useLoginOrRegisterUtils()
 const { isLoggedIn } = useActiveUser()
 const { inviteToken } = useAuthManager()
 const router = useRouter()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result } = useQuery(authLoginPanelQuery)
+
+const { result: workspaceInviteResult } = useQuery(
+  authLoginPanelWorkspaceInviteQuery,
+  () => ({
+    token: inviteToken.value
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value
+  })
+)
 
 const finalRegisterRoute = computed(() => {
   const result = router.resolve({
@@ -81,11 +97,11 @@ const finalRegisterRoute = computed(() => {
 })
 
 const concreteComponent = computed(() => {
-  return props.dialogMode ? LayoutDialog : LayoutPanel
+  return props.dialogMode ? LayoutDialog : 'div'
 })
 
-const { result } = useQuery(loginServerInfoQuery)
-const { appId, challenge } = useLoginOrRegisterUtils()
+const workspaceInvite = computed(() => workspaceInviteResult.value?.workspaceInvite)
+const forcedInviteEmail = computed(() => workspaceInvite.value?.email)
 
 const serverInfo = computed(() => result.value?.serverInfo)
 const hasLocalStrategy = computed(() =>

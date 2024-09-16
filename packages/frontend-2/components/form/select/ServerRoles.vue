@@ -5,7 +5,8 @@
     :multiple="multiple"
     :disabled-item-predicate="disabledItemPredicate"
     name="serverRoles"
-    label="Server roles"
+    label="Role"
+    show-label
     class="min-w-[110px]"
     :fully-control-value="fullyControlValue"
     :label-id="labelId"

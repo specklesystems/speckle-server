@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import { gql } from 'graphql-tag'
 
 export const basicWorkspaceFragment = gql`
   fragment BasicWorkspace on Workspace {
@@ -27,6 +27,41 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
       name
     }
     token
+  }
+`
+
+export const workspaceBillingFragment = gql`
+  fragment WorkspaceBilling on Workspace {
+    billing {
+      versionsCount {
+        current
+        max
+      }
+      cost {
+        subTotal
+        currency
+        items {
+          count
+          name
+          cost
+          label
+        }
+        discount {
+          name
+          amount
+        }
+        total
+      }
+    }
+  }
+`
+export const workspaceProjectsFragment = gql`
+  fragment WorkspaceProjects on ProjectCollection {
+    items {
+      id
+    }
+    cursor
+    totalCount
   }
 `
 
@@ -86,6 +121,31 @@ export const getWorkspaceWithTeamQuery = gql`
   ${basicPendingWorkspaceCollaboratorFragment}
 `
 
+export const getWorkspaceWithBillingQuery = gql`
+  query GetWorkspaceWithBilling($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      ...WorkspaceBilling
+    }
+  }
+  ${basicWorkspaceFragment}
+  ${workspaceBillingFragment}
+`
+
+export const getWorkspaceWithProjectsQuery = gql`
+  query GetWorkspaceWithProjects($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      projects {
+        ...WorkspaceProjects
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${workspaceProjectsFragment}
+`
+
 export const cancelInviteMutation = gql`
   mutation CancelWorkspaceInvite($workspaceId: String!, $inviteId: String!) {
     workspaceMutations {
@@ -135,11 +195,64 @@ export const getMyWorkspaceInvitesQuery = gql`
   ${basicPendingWorkspaceCollaboratorFragment}
 `
 
-export const createWorkspaceProjectInviteMutation = gql`
+export const useWorkspaceProjectInviteMutation = gql`
   mutation UseWorkspaceProjectInvite($input: ProjectInviteUseInput!) {
     projectMutations {
       invites {
         use(input: $input)
+      }
+    }
+  }
+`
+
+export const createWorkspaceProjectInviteMutation = gql`
+  mutation CreateWorkspaceProjectInvite(
+    $projectId: ID!
+    $inputs: [WorkspaceProjectInviteCreateInput!]!
+  ) {
+    projectMutations {
+      invites {
+        createForWorkspace(projectId: $projectId, inputs: $inputs) {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const resendWorkspaceInviteMutation = gql`
+  mutation ResendWorkspaceInvite($input: WorkspaceInviteResendInput!) {
+    workspaceMutations {
+      invites {
+        resend(input: $input)
+      }
+    }
+  }
+`
+
+export const addWorkspaceDomainMutation = gql`
+  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
+    workspaceMutations {
+      addDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const deleteWorkspaceDomainMutation = gql`
+  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
+    workspaceMutations {
+      deleteDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+        domainBasedMembershipProtectionEnabled
+        discoverabilityEnabled
       }
     }
   }

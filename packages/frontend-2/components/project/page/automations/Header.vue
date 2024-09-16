@@ -2,7 +2,7 @@
   <div
     class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center"
   >
-    <h1 class="block h4 font-bold">Automations</h1>
+    <h1 class="block text-heading-xl">Automations</h1>
     <div v-if="!showEmptyState" class="flex flex-col gap-2 md:flex-row md:items-center">
       <FormTextInput
         name="search"
@@ -10,12 +10,12 @@
         placeholder="Search automations..."
         wrapper-classes="shrink-0"
         show-clear
-        :model-value="bind.modelValue.value"
+        v-bind="bind"
         v-on="on"
       />
       <FormButton
         :icon-left="ArrowTopRightOnSquareIcon"
-        color="secondary"
+        color="outline"
         class="shrink-0"
         :to="automationFunctionsRoute"
       >
