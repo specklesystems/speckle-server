@@ -11,7 +11,7 @@
             Still not using workspaces?
           </h5>
           <p class="text-body-2xs leading-5 md:text-body-xs text-foreground-2">
-            Be the first to reach higher data security, more data control, and better
+            Be the first to reach more security options, data control, and better
             project management with your team.
           </p>
           <div class="flex items-center gap-x-2 mt-2">
