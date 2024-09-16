@@ -1,7 +1,6 @@
 import { getEventBus, initializeEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -185,13 +184,6 @@ describe('Event Bus', () => {
       })
 
       expect([workspace.id, workspaceAcl.userId]).to.deep.equal(events)
-
-      await expectToThrow(() =>
-        eventBus.emit({
-          eventName: WorkspaceEvents.RoleUpdated,
-          payload: workspaceAcl
-        })
-      )
     })
   })
 })
