@@ -34,7 +34,12 @@ import {
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
-import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Roles,
+  StreamRoles,
+  WorkspaceRoles
+} from '@speckle/shared'
 
 export type BasicTestWorkspace = {
   /**
@@ -48,6 +53,7 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
+  defaultProjectRole?: StreamRoles
   discoverabilityEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
@@ -75,6 +81,8 @@ export const createTestWorkspace = async (
   })
 
   workspace.id = newWorkspace.id
+  workspace.ownerId = owner.id
+
   if (domain) {
     await addDomainToWorkspaceFactory({
       findEmailsByUserId: findEmailsByUserIdFactory({ db }),
@@ -90,14 +98,14 @@ export const createTestWorkspace = async (
     })
   }
 
+  const updateWorkspace = updateWorkspaceFactory({
+    getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+    upsertWorkspace: upsertWorkspaceFactory({ db }),
+    emitWorkspaceEvent: getEventBus().emit
+  })
+
   if (workspace.discoverabilityEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
-    const updateWorkspace = updateWorkspaceFactory({
-      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
-    })
-
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: {
@@ -108,17 +116,18 @@ export const createTestWorkspace = async (
 
   if (workspace.domainBasedMembershipProtectionEnabled) {
     if (!domain) throw new Error('Domain is needed for membership protection')
-    await updateWorkspaceFactory({
-      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit
-    })({
+    await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
   }
 
-  workspace.ownerId = owner.id
+  if (workspace.defaultProjectRole) {
+    await updateWorkspace({
+      workspaceId: newWorkspace.id,
+      workspaceInput: { defaultProjectRole: workspace.defaultProjectRole }
+    })
+  }
 }
 
 export const assignToWorkspace = async (
