@@ -63,8 +63,10 @@ generates:
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueSchema'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
+        ServerWorkspacesInfo: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

@@ -29,7 +29,6 @@
           label="Model name"
           placeholder="model/name/here"
           :rules="rules"
-          show-required
           auto-focus
           color="foundation"
           :disabled="loading"
@@ -41,7 +40,8 @@
           name="description"
           show-label
           label="Model description"
-          placeholder="Description (optional)"
+          show-optional
+          placeholder="Description"
           color="foundation"
           :disabled="loading"
         />

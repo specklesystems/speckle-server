@@ -432,11 +432,9 @@ describe('Workspaces GQL CRUD', () => {
 
         // first 10 users
         await createTestUsers(freeGuests)
-        await Promise.all(
-          freeGuests.map((guest) =>
-            assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
-          )
-        )
+        for (const guest of freeGuests) {
+          await assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
+        }
 
         await Promise.all([
           createTestUser(member),

@@ -11,10 +11,9 @@
         <CommonClipboardInputWithToast :value="props.token" />
       </div>
       <div
-        class="flex gap-4 items-center bg-highlight-1 border border-outline-3 rounded-lg py-2 pl-4 pr-8 text-foreground-2"
+        class="flex gap-4 items-center bg-foundation-2 border border-outline-3 rounded-lg p-3 text-foreground-2 mb-2"
       >
-        <ExclamationTriangleIcon class="h-8 w-8 mt-0.5" />
-        <div class="max-w-md text-body-xs">
+        <div class="max-w-md text-body-2xs">
           <p>
             <span class="font-medium">Note:</span>
             This is the first and last time you will be able to see the full token.
@@ -28,7 +27,6 @@
 
 <script setup lang="ts">
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   token: string
