@@ -243,7 +243,10 @@ onWorkspaceResult((result) => {
     const workspaceIds = result.data.activeUser.workspaces.items.map(
       (workspace) => workspace.id
     )
-    mixpanel.people.set('workspace_id', workspaceIds)
+
+    if (workspaceIds.length > 0) {
+      mixpanel.people.set('workspace_id', workspaceIds)
+    }
   }
 })
 </script>
