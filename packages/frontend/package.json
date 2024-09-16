@@ -39,7 +39,7 @@
     "@vueuse/core": "^9.13.0",
     "apexcharts": "^3.33.1",
     "apollo-upload-client": "^17.0.0",
-    "dompurify": "^2.3.6",
+    "dompurify": "^2.5.4",
     "graphql": "^15.0.0",
     "graphql-tag": "^2.12.6",
     "lodash": "^4.17.21",
