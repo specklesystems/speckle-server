@@ -212,13 +212,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       // user sends via "Update" button
       void trackEvent(
         'Send',
-        { expired: true, actionSource: actionSource.toLowerCase() },
+        {
+          expired: true,
+          actionSource: actionSource.toLowerCase(),
+          // eslint-disable-next-line camelcase
+          workspace_id: model.workspaceId
+        },
         model.accountId
       )
     } else {
       void trackEvent(
         'Send',
-        { expired: false, actionSource: actionSource.toLowerCase() },
+        {
+          expired: false,
+          actionSource: actionSource.toLowerCase(),
+          // eslint-disable-next-line camelcase
+          workspace_id: model.workspaceId
+        },
         model.accountId
       )
     }
@@ -295,7 +305,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         expired: model.expired,
         sourceHostApp: model.selectedVersionSourceApp,
         isMultiplayer: model.selectedVersionUserId !== account?.accountInfo.userInfo.id,
-        actionSource: actionSource.toLowerCase()
+        actionSource: actionSource.toLowerCase(),
+        // eslint-disable-next-line camelcase
+        workspace_id: model.workspaceId
       },
       model.accountId
     )

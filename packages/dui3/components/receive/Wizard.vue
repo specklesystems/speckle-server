@@ -181,6 +181,7 @@ const selectVersionAndAddModel = async (
 
   modelCard.projectId = selectedProject.value?.id as string
   modelCard.modelId = selectedModel.value?.id as string
+  modelCard.workspaceId = selectedProject.value?.workspaceId as string
 
   modelCard.projectName = selectedProject.value?.name as string
   modelCard.modelName = selectedModel.value?.name as string
