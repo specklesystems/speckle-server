@@ -83,6 +83,7 @@ export const projectListFragment = graphql(`
     name
     role
     updatedAt
+    workspaceId
     models {
       totalCount
     }

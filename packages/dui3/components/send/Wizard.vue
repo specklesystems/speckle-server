@@ -171,6 +171,7 @@ const addModel = async () => {
   model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
   model.projectId = selectedProject.value?.id as string
   model.modelId = selectedModel.value?.id as string
+  model.workspaceId = selectedProject.value?.workspaceId as string
   model.sendFilter = filter.value as ISendFilter
   model.settings = settings.value
   model.expired = false

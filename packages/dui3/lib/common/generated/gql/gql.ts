@@ -20,7 +20,7 @@ const documents = {
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
     "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
     "\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n": types.WorkspaceListQueryDocument,
-    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
+    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
     "\n  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.ProjectListQueryDocument,
     "\n  fragment ModelListModelItem on Model {\n    displayName\n    name\n    id\n    previewUrl\n    updatedAt\n    versions(limit: 1) {\n      totalCount\n      items {\n        ...VersionListItem\n      }\n    }\n  }\n": types.ModelListModelItemFragmentDoc,
     "\n  query ProjectModels(\n    $projectId: String!\n    $cursor: String\n    $limit: Int!\n    $filter: ProjectModelsFilter\n  ) {\n    project(id: $projectId) {\n      id\n      models(cursor: $cursor, limit: $limit, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ModelListModelItem\n        }\n      }\n    }\n  }\n": types.ProjectModelsDocument,
@@ -83,7 +83,7 @@ export function graphql(source: "\n  query WorkspaceListQuery(\n    $limit: Int!
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
