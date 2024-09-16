@@ -45,13 +45,7 @@
           Create&nbsp;
           <div class="truncate">"{{ searchText }}"</div>
         </FormButton>
-        <FormButton
-          v-else
-          color="card"
-          full-width
-          :disabled="hasReachedEnd"
-          @click="loadMore"
-        >
+        <FormButton v-else full-width :disabled="hasReachedEnd" @click="loadMore">
           {{ hasReachedEnd ? 'No more projects found' : 'Load older projects' }}
         </FormButton>
       </div>
@@ -64,9 +58,12 @@
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
+          class="mb-4"
           placeholder="A Beautiful Home, A Small Bridge..."
           autocomplete="off"
           name="name"
+          label="Project name"
+          show-label
           color="foundation"
           :show-clear="!!newProjectName"
           :rules="[
@@ -74,8 +71,36 @@
             ValidationHelpers.isStringOfLength({ minLength: 3 })
           ]"
           full-width
-          size="lg"
         />
+        <div v-if="hasWorkspace">
+          <FormSelectBase
+            key="name"
+            v-model="selectedWorkspace"
+            clearable
+            label="Workspaces"
+            placeholder="Nothing selected"
+            name="Workspaces"
+            show-label
+            :items="workspaces"
+            mount-menu-on-body
+          >
+            <template #something-selected="{ value }">
+              <span>{{ value.name }}</span>
+            </template>
+            <template #option="{ item }">
+              <div class="flex items-center">
+                <span class="truncate">{{ item.name }}</span>
+              </div>
+            </template>
+          </FormSelectBase>
+          <div
+            v-if="selectedWorkspace"
+            class="text-xs caption rounded p-2 bg-blue-500/10 my-2"
+          >
+            Project will be created in the selected workspace.
+          </div>
+        </div>
+
         <div class="mt-4 flex justify-center items-center space-x-2">
           <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
           <FormButton submit>Create</FormButton>
@@ -91,10 +116,14 @@ import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import {
   createProjectMutation,
-  projectsListQuery
+  projectsListQuery,
+  workspacesListQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
-import type { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
+import type {
+  ProjectListProjectItemFragment,
+  WorkspaceListWorkspaceItemFragment
+} from 'lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -117,6 +146,8 @@ const props = withDefaults(
   { showNewProject: true, disableNoWriteAccessProjects: false }
 )
 
+const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
+
 const searchText = ref<string>()
 const newProjectName = ref<string>()
 
@@ -138,6 +169,11 @@ const selectAccount = (account: DUIAccount) => {
   void trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
 }
 
+watch(showNewProjectDialog, () => {
+  selectedWorkspace.value = undefined
+  refetchWorkspaces()
+})
+
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmitCreateNewProject = handleSubmit(() => {
   // TODO: Chat with Fabians
@@ -156,17 +192,46 @@ const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   emit('next', accountId.value, project)
 }
 
-const createNewProject = async (name: string) => {
-  const account = accountStore.accounts.find(
+const account = computed(() => {
+  return accountStore.accounts.find(
     (acc) => acc.accountInfo.id === accountId.value
   ) as DUIAccount
+})
 
-  void trackEvent('DUI3 Action', { name: 'Project Create' }, account.accountInfo.id)
+const createNewProject = async (name: string) => {
+  if (selectedWorkspace.value) {
+    return createNewProjectInWorkspace(name)
+  }
 
-  const { mutate } = provideApolloClient(account.client)(() =>
+  void trackEvent(
+    'DUI3 Action',
+    { name: 'Project Create', workspace: false },
+    account.value.accountInfo.id
+  )
+  const { mutate } = provideApolloClient(account.value.client)(() =>
     useMutation(createProjectMutation)
   )
   const res = await mutate({ input: { name } })
+  if (res?.data?.projectMutations.create) {
+    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
+    emit('next', accountId.value, res?.data?.projectMutations.create)
+  } else {
+    // TODO: Error out
+  }
+}
+
+const createNewProjectInWorkspace = async (name: string) => {
+  void trackEvent(
+    'DUI3 Action',
+    { name: 'Project Create', workspace: true },
+    account.value.accountInfo.id
+  )
+  const { mutate } = provideApolloClient(account.value.client)(() =>
+    useMutation(createProjectMutation)
+  )
+  const res = await mutate({
+    input: { name, workspaceId: selectedWorkspace.value?.id }
+  })
   if (res?.data?.projectMutations.create) {
     refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
@@ -190,6 +255,21 @@ const {
   }),
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
+
+const { result: workspacesResult, refetch: refetchWorkspaces } = useQuery(
+  workspacesListQuery,
+  () => ({
+    limit: 5,
+    filter: {
+      search: (searchText.value || '').trim() || null
+    }
+  }),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
+
+const hasWorkspace = computed(() => workspaces.value?.length !== 0)
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasReachedEnd = ref(false)

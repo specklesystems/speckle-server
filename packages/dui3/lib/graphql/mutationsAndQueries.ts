@@ -46,6 +46,37 @@ export const requestProjectAccess = graphql(`
   }
 `)
 
+export const workspaceListFragment = graphql(`
+  fragment WorkspaceListWorkspaceItem on Workspace {
+    id
+    name
+    description
+    createdAt
+    updatedAt
+    logo
+    role
+  }
+`)
+
+export const workspacesListQuery = graphql(`
+  query WorkspaceListQuery(
+    $limit: Int!
+    $filter: UserWorkspacesFilter
+    $cursor: String
+  ) {
+    activeUser {
+      id
+      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...WorkspaceListWorkspaceItem
+        }
+      }
+    }
+  }
+`)
+
 export const projectListFragment = graphql(`
   fragment ProjectListProjectItem on Project {
     id
