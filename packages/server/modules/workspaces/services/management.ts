@@ -120,7 +120,7 @@ export const createWorkspaceFactory =
 
 type WorkspaceUpdateInput = Parameters<UpdateWorkspace>[0]['workspaceInput']
 
-const validateInput = (input: WorkspaceUpdateInput): void => {
+const isValidInput = (input: WorkspaceUpdateInput): input is Partial<Workspace> => {
   if (!!input.logo) {
     validateImageString(input.logo)
   }
@@ -135,12 +135,14 @@ const validateInput = (input: WorkspaceUpdateInput): void => {
     if (!validRoles.includes(input.defaultProjectRole))
       throw new WorkspaceInvalidUpdateError('Provided default project role is invalid')
   }
+
+  return true
 }
 
-const validateWorkspace = (
+const isValidWorkspace = (
   input: WorkspaceUpdateInput,
   workspace: WorkspaceWithDomains
-): void => {
+): boolean => {
   const hasVerifiedDomains = workspace.domains.find((domain) => domain.verified)
 
   if (input.discoverabilityEnabled && !workspace.discoverabilityEnabled) {
@@ -153,9 +155,11 @@ const validateWorkspace = (
   ) {
     if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
   }
+
+  return true
 }
 
-const sanitizeInput = (input: WorkspaceUpdateInput) => {
+const sanitizeInput = (input: Partial<Workspace>) => {
   const sanitizedInput = structuredClone(input)
 
   if (isEmpty(sanitizedInput.name)) {
@@ -184,8 +188,12 @@ export const updateWorkspaceFactory =
     }
 
     // Validate incoming changes
-    validateInput(workspaceInput)
-    validateWorkspace(workspaceInput, currentWorkspace)
+    if (
+      !isValidInput(workspaceInput) ||
+      !isValidWorkspace(workspaceInput, currentWorkspace)
+    ) {
+      throw new WorkspaceInvalidUpdateError()
+    }
 
     const workspace = {
       ...omit(currentWorkspace, 'domains'),

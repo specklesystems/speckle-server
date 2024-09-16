@@ -34,7 +34,6 @@ import { merge, omit } from 'lodash'
 import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Omit<Workspace, 'domains'>[]
@@ -452,9 +451,12 @@ const buildUpdateWorkspaceRoleAndTestContext = (
         case 'workspace.role-updated': {
           const workspaceRole =
             payload as WorkspaceEventsPayloads['workspace.role-updated']
-          const mapping = await mapWorkspaceRoleToInitialProjectRole({
-            workspaceId: workspaceRole.workspaceId
-          })
+          const mapping = {
+            [Roles.Workspace.Guest]: null,
+            [Roles.Workspace.Member]:
+              context.workspace.defaultProjectRole ?? Roles.Stream.Contributor,
+            [Roles.Workspace.Admin]: Roles.Stream.Owner
+          }
 
           for (const project of context.workspaceProjects) {
             const projectRole = mapping[workspaceRole.role]
@@ -1096,7 +1098,7 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           domains: [],
-          defaultProjectRole: 'stream:contributor',
+          defaultProjectRole: Roles.Stream.Contributor,
           defaultLogoIndex: 0
         }
 

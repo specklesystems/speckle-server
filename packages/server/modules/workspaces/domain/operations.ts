@@ -187,7 +187,11 @@ export type GetUserIdsWithRoleInWorkspace = (
 
 type WorkspaceUpdateArgs = {
   workspaceId: string
-  workspaceInput: PartialNullable<Omit<Workspace, 'id' | 'createdAt' | 'updatedAt'>>
+  workspaceInput: PartialNullable<
+    Omit<Workspace, 'id' | 'createdAt' | 'updatedAt' | 'defaultProjectRole'> & {
+      defaultProjectRole: string
+    }
+  >
 }
 
 export type UpdateWorkspace = ({
