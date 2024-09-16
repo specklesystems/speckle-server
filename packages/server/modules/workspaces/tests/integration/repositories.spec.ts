@@ -85,7 +85,7 @@ const createAndStoreTestWorkspace = async (
     domainBasedMembershipProtectionEnabled: false,
     discoverabilityEnabled: false,
     defaultLogoIndex: 0,
-    defaultProjectRole: 'stream:contributor',
+    defaultProjectRole: Roles.Stream.Contributor,
     ...workspaceOverrides
   }
 
