@@ -5,23 +5,20 @@
     :buttons="dialogButtons"
     title="Create Token"
   >
-    <div class="flex flex-col gap-6 text-sm text-foreground">
-      <div class="flex flex-col gap-3">
-        <h6 class="h6 font-medium text-center">Your new token:</h6>
+    <div class="flex flex-col gap-4 text-body-xs text-foreground">
+      <div class="flex flex-col gap-1">
+        <h6 class="font-medium">Your new token:</h6>
         <CommonClipboardInputWithToast :value="props.token" />
       </div>
       <div
-        class="flex gap-4 items-center bg-warning dark:bg-warning-lighter border-warning-darker dark:border-warning-lighter border rounded-lg py-2 pl-4 pr-8"
+        class="flex gap-4 items-center bg-foundation-2 border border-outline-3 rounded-lg p-3 text-foreground-2 mb-2"
       >
-        <ExclamationTriangleIcon
-          class="h-8 w-8 mt-0.5 text-warning-darker dark:text-warning-darker"
-        />
-        <div class="text-warning-darker max-w-md">
+        <div class="max-w-md text-body-2xs">
           <p>
-            <strong>Note:</strong>
+            <span class="font-medium">Note:</span>
             This is the first and last time you will be able to see the full token.
           </p>
-          <p><strong>Please copy paste it somewhere safe now.</strong></p>
+          <p class="font-medium">Please copy paste it somewhere safe now.</p>
         </div>
       </div>
     </div>
@@ -30,7 +27,6 @@
 
 <script setup lang="ts">
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   token: string
@@ -41,7 +37,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { fullWidth: true },
+    props: {},
     onClick: () => (isOpen.value = false)
   }
 ])

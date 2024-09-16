@@ -4,7 +4,7 @@ import { Roles, StreamRoles } from '@speckle/shared'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   onProjectCreatedFactory,
-  onWorkspaceJoinedFactory
+  onWorkspaceRoleUpdatedFactory
 } from '@/modules/workspaces/events/eventListener'
 import { expect } from 'chai'
 import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
@@ -61,16 +61,22 @@ describe('Event handlers', () => {
       expect(projectRoles.length).to.equal(2)
     })
   })
-  describe('onWorkspaceJoinedFactory creates a function, that', () => {
+  describe('onWorkspaceRoleUpdatedFactory creates a function, that', () => {
     it('assigns no project roles if the role mapping returns null', async () => {
-      await onWorkspaceJoinedFactory({
+      let isDeleteCalled = false
+
+      await onWorkspaceRoleUpdatedFactory({
         getDefaultWorkspaceProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: Roles.Stream.Contributor,
           [Roles.Workspace.Guest]: null
         }),
         async *queryAllWorkspaceProjects() {
-          expect.fail()
+          yield [{ id: 'test' } as StreamRecord]
+        },
+        deleteProjectRole: async () => {
+          isDeleteCalled = true
+          return undefined
         },
         upsertProjectRole: async () => {
           expect.fail()
@@ -80,6 +86,8 @@ describe('Event handlers', () => {
         userId: cryptoRandomString({ length: 10 }),
         workspaceId: cryptoRandomString({ length: 10 })
       })
+
+      expect(isDeleteCalled).to.be.true
     })
     it('assigns the mapped projects roles to all queried project', async () => {
       const projectIds = [
@@ -92,7 +100,7 @@ describe('Event handlers', () => {
       const projectRole = Roles.Stream.Reviewer
 
       const storedRoles: { userId: string; role: StreamRoles; projectId: string }[] = []
-      await onWorkspaceJoinedFactory({
+      await onWorkspaceRoleUpdatedFactory({
         getDefaultWorkspaceProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: projectRole,
@@ -102,6 +110,9 @@ describe('Event handlers', () => {
           for (const projIds of chunk(projectIds, 3)) {
             yield projIds.map((projId) => ({ id: projId } as unknown as StreamRecord))
           }
+        },
+        deleteProjectRole: async () => {
+          expect.fail()
         },
         upsertProjectRole: async (args) => {
           storedRoles.push(args)

@@ -28,8 +28,22 @@ import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
 import { buildApolloServer } from '@/app'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getUser } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 const createUserEmail = validateAndCreateUserEmailFactory({
   createUserEmail: createUserEmailFactory({ db }),

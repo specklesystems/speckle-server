@@ -23,7 +23,7 @@ const open = defineModel<boolean>('open', { required: true })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       open.value = false
     }
@@ -31,7 +31,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Learn more',
     props: {
-      fullWidth: true,
       iconRight: ArrowTopRightOnSquareIcon,
       to: 'https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/',
       external: true,

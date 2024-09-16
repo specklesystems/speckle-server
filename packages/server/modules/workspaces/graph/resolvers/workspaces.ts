@@ -4,9 +4,7 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
   getUserStreams,
-  getUserStreamsCount,
-  upsertProjectRoleFactory,
-  deleteProjectRoleFactory
+  getUserStreamsCount
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -111,7 +109,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
 import {
   getWorkspaceCostFactory,
@@ -122,8 +120,19 @@ import {
   isUserWorkspaceDomainPolicyCompliantFactory
 } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 const buildCollectAndValidateResourceTargets = () =>
   collectAndValidateWorkspaceTargetsFactory({
@@ -342,10 +351,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -364,13 +369,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              getDefaultWorkspaceProjectRoleMapping:
-                mapWorkspaceRoleToInitialProjectRole,
-              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -453,8 +451,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
             emitWorkspaceEvent: getEventBus().emit
           })
 
@@ -568,13 +564,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                upsertProjectRole: upsertProjectRoleFactory({ db }),
-                getDefaultWorkspaceProjectRoleMapping:
-                  mapWorkspaceRoleToInitialProjectRole,
-                deleteProjectRole: deleteProjectRoleFactory({ db }),
-                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                  getStreams
-                }),
                 emitWorkspaceEvent: getEventBus().emit
               })
             }),
@@ -889,6 +878,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
         }
+      },
+      ServerInfo: {
+        workspaces: () => ({})
+      },
+      ServerWorkspacesInfo: {
+        workspacesEnabled: () => true
       }
     } as Resolvers)
   : {}

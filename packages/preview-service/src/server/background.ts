@@ -15,7 +15,11 @@ import { insertPreviewFactory } from '@/repositories/previews.js'
 import { generateAndStore360PreviewFactory } from '@/services/360preview.js'
 import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
 import { forceExit, repeatedlyDoSomeWorkFactory } from '@/services/taskManager.js'
-import { getHealthCheckFilePath, serviceOrigin } from '@/utils/env.js'
+import {
+  getHealthCheckFilePath,
+  serviceOrigin,
+  getPreviewTimeout
+} from '@/utils/env.js'
 import type { Knex } from 'knex'
 
 export function startPreviewService(params: { db: Knex }) {
@@ -41,7 +45,10 @@ export function startPreviewService(params: { db: Knex }) {
       }),
       getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
       generateAndStore360Preview: generateAndStore360PreviewFactory({
-        generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
+        generatePreview: generatePreviewFactory({
+          serviceOrigin: serviceOrigin(),
+          timeout: getPreviewTimeout()
+        }),
         insertPreview: insertPreviewFactory({ db })
       }),
       updatePreviewMetadata: updatePreviewMetadataFactory({ db }),

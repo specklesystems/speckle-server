@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Invite to project</template>
-    <div class="flex flex-col gap-4 my-2">
+    <div class="flex flex-col gap-4 mb-2">
       <div v-if="!isWorkspaceMemberAndProjectOwner" class="flex flex-col gap-4">
         <FormSelectWorkspaceRoles
           v-if="project?.workspaceId"
@@ -218,7 +218,7 @@ const isWorkspaceMemberAndProjectOwner = computed(() => {
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }

@@ -3,12 +3,15 @@ import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelpe
 import { buildApp, truncateTables } from '@/test/hooks'
 import request from 'supertest'
 import { expect } from 'chai'
-import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import {
+  deleteOldAndInsertNewVerificationFactory,
+  deleteVerificationsFactory,
+  getPendingTokenFactory
+} from '@/modules/emails/repositories'
 import {
   getPendingEmailVerificationStatus,
   requestVerification
 } from '@/test/graphql/users'
-import { requestEmailVerification } from '@/modules/emails/services/verification/request'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
@@ -20,8 +23,26 @@ import {
   ServerAndContext
 } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 
 const mailerMock = EmailSendingServiceMock
+const getPendingToken = getPendingTokenFactory({ db })
+const deleteVerifications = deleteVerificationsFactory({ db })
+const requestEmailVerification = requestEmailVerificationFactory({
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+  sendEmail,
+  renderEmail
+})
 
 const cleanup = async () => {
   await truncateTables([Users.name, EmailVerifications.name, UserEmails.name])

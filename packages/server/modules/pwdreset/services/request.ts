@@ -6,48 +6,55 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { CreateToken, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
-import {
-  createToken,
-  getPendingToken,
-  PasswordResetTokenRecord
-} from '@/modules/pwdreset/repositories'
+import { PasswordResetTokenRecord } from '@/modules/pwdreset/repositories'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 const EMAIL_SUBJECT = 'Speckle Account Password Reset'
 
+type InitializeNewTokenDeps = {
+  getUserByEmail: typeof getUserByEmail
+  getPendingToken: GetPendingToken
+  createToken: CreateToken
+  getServerInfo: typeof getServerInfo
+}
+
 /**
  * Initialize and validate password reset request
  */
-async function initializeNewToken(email: string) {
-  if (!email) throw new InvalidPasswordRecoveryRequestError('E-mail address is empty')
+const initializeNewTokenFactory =
+  (deps: InitializeNewTokenDeps) => async (email: string) => {
+    if (!email) throw new InvalidPasswordRecoveryRequestError('E-mail address is empty')
 
-  const [user, tokenAlreadyExists] = await Promise.all([
-    getUserByEmail(email),
-    getPendingToken({ email }).then((t) => !!t)
-  ])
+    const [user, tokenAlreadyExists] = await Promise.all([
+      deps.getUserByEmail(email),
+      deps.getPendingToken({ email }).then((t) => !!t)
+    ])
 
-  if (!user) {
-    throw new InvalidPasswordRecoveryRequestError(
-      'No user with that e-mail address found'
-    )
+    if (!user) {
+      throw new InvalidPasswordRecoveryRequestError(
+        'No user with that e-mail address found'
+      )
+    }
+
+    if (tokenAlreadyExists) {
+      throw new InvalidPasswordRecoveryRequestError(
+        'Password reset already requested. Please try again in 1h, or check your email for the instructions we have sent.'
+      )
+    }
+
+    const [serverInfo, newToken] = await Promise.all([
+      deps.getServerInfo(),
+      deps.createToken(email)
+    ])
+
+    return { user, serverInfo, email, newToken }
   }
 
-  if (tokenAlreadyExists) {
-    throw new InvalidPasswordRecoveryRequestError(
-      'Password reset already requested. Please try again in 1h, or check your email for the instructions we have sent.'
-    )
-  }
-
-  const [serverInfo, newToken] = await Promise.all([
-    getServerInfo(),
-    createToken(email)
-  ])
-
-  return { user, serverInfo, email, newToken }
-}
-
-type PasswordRecoveryRequestState = Awaited<ReturnType<typeof initializeNewToken>>
+type PasswordRecoveryRequestState = Awaited<
+  ReturnType<ReturnType<typeof initializeNewTokenFactory>>
+>
 
 function buildResetLink(token: PasswordResetTokenRecord) {
   return new URL(
@@ -92,25 +99,32 @@ function buildEmailTemplateParams(
   }
 }
 
-async function sendResetEmail(state: PasswordRecoveryRequestState) {
-  const emailTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await renderEmail(
-    emailTemplateParams,
-    state.serverInfo,
-    state.user
-  )
-  await sendEmail({
-    to: state.email,
-    subject: EMAIL_SUBJECT,
-    text,
-    html
-  })
+type SendResetEmailDeps = {
+  renderEmail: typeof renderEmail
+  sendEmail: typeof sendEmail
 }
+
+const sendResetEmailFactory =
+  (deps: SendResetEmailDeps) => async (state: PasswordRecoveryRequestState) => {
+    const emailTemplateParams = buildEmailTemplateParams(state)
+    const { html, text } = await deps.renderEmail(
+      emailTemplateParams,
+      state.serverInfo,
+      state.user
+    )
+    await deps.sendEmail({
+      to: state.email,
+      subject: EMAIL_SUBJECT,
+      text,
+      html
+    })
+  }
 
 /**
  * Request a new password recovery and send out the e-mail if the request is valid
  */
-export async function requestPasswordRecovery(email: string) {
-  const state = await initializeNewToken(email)
-  await sendResetEmail(state)
-}
+export const requestPasswordRecoveryFactory =
+  (deps: InitializeNewTokenDeps & SendResetEmailDeps) => async (email: string) => {
+    const state = await initializeNewTokenFactory(deps)(email)
+    await sendResetEmailFactory(deps)(state)
+  }
