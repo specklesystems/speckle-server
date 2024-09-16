@@ -4,14 +4,16 @@ import {
   createWebhook,
   deleteWebhook,
   updateWebhook
-} from '@/modules/webhooks/services/webhooks-new'
+} from '@/modules/webhooks/services/webhooks'
 import { Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
   createWebhookFactory,
   deleteWebhookFactory,
+  getLastWebhookEventsFactory,
   getStreamWebhooksFactory,
   getWebhookByIdFactory,
+  getWebhookEventsCountFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { db } from '@/db/knex'
@@ -43,7 +45,18 @@ const streamWebhooksResolver = async (
 export = {
   Webhook: {
     projectId: (parent) => parent.streamId,
-    hasSecret: (parent) => !!parent.secret?.length
+    hasSecret: (parent) => !!parent.secret?.length,
+    history: async (parent, args) => {
+      const items = await getLastWebhookEventsFactory({ db })({
+        webhookId: parent.id,
+        limit: args.limit
+      })
+      const totalCount = await getWebhookEventsCountFactory({ db })({
+        webhookId: parent.id
+      })
+
+      return { items, totalCount }
+    }
   },
   Stream: {
     webhooks: streamWebhooksResolver

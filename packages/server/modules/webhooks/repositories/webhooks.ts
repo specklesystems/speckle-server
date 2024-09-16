@@ -1,12 +1,14 @@
 import { Knex } from 'knex'
-import { Webhook } from '@/modules/webhooks/domain/types'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 import {
   CountWebhooksByStreamId,
   CreateWebhook,
   CreateWebhookEvent,
   DeleteWebhook,
+  GetLastWebhookEvents,
   GetStreamWebhooks,
   GetWebhookById,
+  GetWebhookEventsCount,
   UpdateWebhook
 } from '@/modules/webhooks/domain/operations'
 
@@ -14,7 +16,7 @@ type WebhookConfig = Omit<Webhook, 'triggers'> & { triggers: Record<string, true
 
 const tables = (db: Knex) => ({
   webhooksConfigs: db<WebhookConfig>('webhooks_config'),
-  webhooksEvents: db('webhooks_events')
+  webhooksEvents: db<WebhookEvent>('webhooks_events')
 })
 
 const toTriggersObj = (triggers: string[]): Record<string, true> =>
@@ -100,4 +102,26 @@ export const createWebhookEventFactory =
   ({ db }: { db: Knex }): CreateWebhookEvent =>
   async (event) => {
     return await tables(db).webhooksEvents.insert(event).returning('id')
+  }
+
+export const getLastWebhookEventsFactory =
+  ({ db }: { db: Knex }): GetLastWebhookEvents =>
+  async ({ webhookId, limit }) => {
+    if (!limit) {
+      limit = 100
+    }
+
+    return await tables(db)
+      .webhooksEvents.select('*')
+      .where({ webhookId })
+      .orderBy('lastUpdate', 'desc')
+      .limit(limit)
+  }
+
+export const getWebhookEventsCountFactory =
+  ({ db }: { db: Knex }): GetWebhookEventsCount =>
+  async ({ webhookId }) => {
+    const [res] = await tables(db).webhooksEvents.count().where({ webhookId })
+
+    return parseInt(res.count.toString())
   }

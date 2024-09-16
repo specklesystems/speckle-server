@@ -2,7 +2,7 @@
 
 const knex = require('@/db/knex')
 
-const { dispatchStreamEvent } = require('../../webhooks/services/webhooks-new')
+const { dispatchStreamEvent } = require('../../webhooks/services/webhooks')
 const { getStream } = require('@/modules/core/repositories/streams')
 const {
   createWebhookEventFactory

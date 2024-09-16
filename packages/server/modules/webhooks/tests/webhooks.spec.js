@@ -9,7 +9,6 @@ const {
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { getLastWebhookEvents } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
@@ -20,7 +19,8 @@ const {
   updateWebhookFactory,
   deleteWebhookFactory,
   getStreamWebhooksFactory,
-  createWebhookEventFactory
+  createWebhookEventFactory,
+  getLastWebhookEventsFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
@@ -28,7 +28,7 @@ const {
   updateWebhook: updateWebhookService,
   deleteWebhook,
   dispatchStreamEvent
-} = require('@/modules/webhooks/services/webhooks-new')
+} = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { getStream } = require('@/modules/core/repositories/streams')
@@ -207,7 +207,7 @@ describe('Webhooks @webhooks', () => {
         event: 'commit_create',
         eventPayload: { test: 'payload123' }
       })
-      const lastEvents = await getLastWebhookEvents({ webhookId })
+      const lastEvents = await getLastWebhookEventsFactory({ db })({ webhookId })
       expect(lastEvents).to.have.lengthOf(1)
       expect(JSON.parse(lastEvents[0].payload).test).to.equal('payload123')
     })

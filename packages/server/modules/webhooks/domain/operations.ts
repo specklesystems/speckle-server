@@ -1,5 +1,4 @@
-import { Webhook } from '@/modules/webhooks/domain/types'
-import { WebhookEvent } from '@/test/graphql/generated/graphql'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 
 export type CreateWebhook = (
   webhook: Pick<
@@ -37,3 +36,17 @@ export type GetStreamWebhooks = ({
 export type CreateWebhookEvent = (
   event: Pick<WebhookEvent, 'id' | 'payload' | 'webhookId'>
 ) => Promise<string>
+
+export type GetLastWebhookEvents = ({
+  webhookId,
+  limit
+}: {
+  webhookId: string
+  limit?: number
+}) => Promise<WebhookEvent[]>
+
+export type GetWebhookEventsCount = ({
+  webhookId
+}: {
+  webhookId: string
+}) => Promise<number>
