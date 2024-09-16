@@ -3,7 +3,7 @@ import { logger } from '@/observability/logging.js'
 import { randomUUID } from 'crypto'
 import type { Request } from 'express'
 import type { IncomingHttpHeaders, IncomingMessage } from 'http'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import { pinoHttp } from 'pino-http'
 
 function determineRequestId(headers: IncomingHttpHeaders, uuidGenerator = randomUUID) {
