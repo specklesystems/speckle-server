@@ -44,9 +44,14 @@ import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { useTheme } from '~~/lib/core/composables/theme'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import imageLight from '~/assets/images/banners/workspace-promo-light.png'
 import imageDark from '~/assets/images/banners/workspace-promo-dark.png'
+import imageMobileLight from '~/assets/images/banners/workspace-promo-mobile-light.png'
+import imageMobileDark from '~/assets/images/banners/workspace-promo-mobile-dark.png'
 
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 const { isDarkTheme } = useTheme()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const mixpanel = useMixpanel()
@@ -61,8 +66,14 @@ const { result } = useQuery(settingsSidebarQuery, null, {
 })
 
 const showWorkspaceCreateDialog = ref(false)
+const isMobile = breakpoints.smaller('md')
 
-const bannerImage = computed(() => (isDarkTheme.value ? imageDark : imageLight))
+const bannerImage = computed(() => {
+  if (isMobile.value) {
+    return isDarkTheme.value ? imageMobileDark : imageMobileLight
+  }
+  return isDarkTheme.value ? imageDark : imageLight
+})
 const hasWorkspaces = computed(() =>
   result.value?.activeUser?.workspaces.items
     ? result.value.activeUser.workspaces.items.length > 0
