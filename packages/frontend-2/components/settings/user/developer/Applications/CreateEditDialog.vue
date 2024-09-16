@@ -4,14 +4,13 @@
       {{ props.application ? 'Edit application' : 'Create application' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-3 mb-2">
         <FormTextInput
           v-model="name"
           label="Name"
           help="The name of your app"
           color="foundation"
           name="hookName"
-          show-required
           :rules="[isRequired]"
           show-label
           type="text"
@@ -23,7 +22,6 @@
           label="Scopes"
           placeholder="Choose Scopes"
           help="It's good practice to limit the scopes of your token to the absolute minimum."
-          show-required
           :rules="[isItemSelected]"
           show-label
           :items="applicationScopes"
@@ -35,7 +33,6 @@
           v-model="redirectUrl"
           label="Redirect URL"
           help="After authentication, the users will be redirected (together with an access token) to this URL."
-          show-required
           name="redirectUrl"
           color="foundation"
           show-label
@@ -49,6 +46,7 @@
           help="A short description of your application."
           name="description"
           show-label
+          show-optional
           type="text"
         />
       </div>
@@ -199,14 +197,14 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.application ? 'Save' : 'Create',
-    props: { fullWidth: true },
+    props: {},
     onClick: onSubmit
   }
 ])

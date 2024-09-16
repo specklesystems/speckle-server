@@ -26,8 +26,9 @@
           color="foundation"
           name="description"
           show-label
+          show-optional
           label="Model description"
-          placeholder="Description (optional)"
+          placeholder="Description"
           size="lg"
           :disabled="anyMutationsLoading"
         />
@@ -99,14 +100,14 @@ watch(
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       openState.value = false
     }
   },
   {
     text: 'Create',
-    props: { fullWidth: true },
+    props: {},
     onClick: () => {
       onSubmit()
     },

@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     @fully-closed="$emit('fully-closed')"
   >
     <template #header>

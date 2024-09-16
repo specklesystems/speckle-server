@@ -1,7 +1,7 @@
-/* istanbul ignore file */
-const { moduleLogger } = require('@/logging/logging')
-const { readFile } = require('fs/promises')
-const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { moduleLogger } from '@/logging/logging'
+import { readFile } from 'fs/promises'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 async function getExplorerHtml() {
   const fileBaseContents = await readFile(
@@ -14,7 +14,7 @@ async function getExplorerHtml() {
   )
 }
 
-exports.init = (app) => {
+export const init: SpeckleModule['init'] = (app) => {
   moduleLogger.info('💅 Init graphql api explorer module')
 
   // sweet and simple
@@ -22,5 +22,3 @@ exports.init = (app) => {
     res.send(await getExplorerHtml())
   })
 }
-
-exports.finalize = () => {}

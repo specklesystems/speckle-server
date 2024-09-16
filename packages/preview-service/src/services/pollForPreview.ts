@@ -32,6 +32,12 @@ export const pollForAndCreatePreviewFactory =
       if (!task) {
         return WorkStatus.NOWORKFOUND
       }
+      const logger = deps.logger.child({
+        projectId: task.streamId,
+        objectId: task.objectId
+      })
+
+      logger.info('Found next preview task for {projectId}/{objectId}')
 
       let metricDurationEnd:
         | (<T extends string>(labels?: LabelValues<T>) => number)
@@ -48,15 +54,24 @@ export const pollForAndCreatePreviewFactory =
           streamId: task.streamId,
           objectId: task.objectId
         })
+        logger.info(
+          { previewStatus: 'succeeded' },
+          'Preview generation completed. Status: {previewStatus}'
+        )
 
         await deps.notifyUpdate({ streamId: task.streamId, objectId: task.objectId })
       } catch (err) {
+        logger.error(
+          { err, previewStatus: 'failed' },
+          'Preview generation completed. Status: {previewStatus}'
+        )
         await deps.updatePreviewMetadata({
           metadata: { err: err instanceof Error ? err.message : JSON.stringify(err) },
           streamId: task.streamId,
           objectId: task.objectId
         })
         metricOperationErrors?.labels('preview').inc()
+        return WorkStatus.FAILED
       }
       if (metricDurationEnd) {
         metricDurationEnd({ op: 'preview' })

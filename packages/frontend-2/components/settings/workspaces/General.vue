@@ -3,8 +3,42 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-      <div class="grid md:grid-cols-2 pt-4">
-        <div class="flex items-center justify-center">
+
+      <div class="pt-6">
+        <FormTextInput
+          v-model="name"
+          color="foundation"
+          label="Name"
+          name="name"
+          placeholder="Workspace name"
+          show-label
+          :disabled="!isAdmin"
+          label-position="left"
+          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+          validate-on-value-update
+          @change="save()"
+        />
+        <hr class="my-4 border-outline-3" />
+        <FormTextInput
+          v-model="description"
+          color="foundation"
+          label="Description"
+          name="description"
+          placeholder="Workspace description"
+          show-label
+          label-position="left"
+          :disabled="!isAdmin"
+          :rules="[isStringOfLength({ maxLength: 512 })]"
+          @change="save()"
+        />
+        <hr class="my-4 border-outline-3" />
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col">
+            <span class="text-body-xs font-medium text-foreground">Workspace logo</span>
+            <span class="text-body-2xs text-foreground-2 max-w-[230px]">
+              Upload your logo image or use one from our set of workspace icons.
+            </span>
+          </div>
           <SettingsWorkspacesGeneralEditAvatar
             v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
@@ -12,55 +46,30 @@
             size="xxl"
           />
         </div>
-        <div class="pt-6 md:pt-0">
-          <FormTextInput
-            v-model="name"
-            color="foundation"
-            label="Name"
-            name="name"
-            placeholder="Workspace name"
-            show-label
-            :disabled="!isAdmin"
-            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-            validate-on-value-update
-            @change="save()"
-          />
-          <hr class="mt-4 mb-2 border-outline-3" />
-          <FormTextInput
-            v-model="description"
-            color="foundation"
-            label="Description"
-            name="description"
-            placeholder="Workspace description"
-            show-label
-            :disabled="!isAdmin"
-            :rules="[isStringOfLength({ maxLength: 512 })]"
-            @change="save()"
-          />
-        </div>
       </div>
-      <hr class="my-6 md:my-8 border-outline-2" />
+      <hr class="my-6 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
         <CommonCard class="bg-foundation">
           By clicking the button below you will leave this workspace.
         </CommonCard>
         <div>
-          <FormButton color="danger" @click="showLeaveDialog = true">
+          <FormButton color="primary" @click="showLeaveDialog = true">
             Leave workspace
           </FormButton>
         </div>
       </div>
       <template v-if="isAdmin">
-        <hr class="my-6 md:my-8 border-outline-2" />
+        <hr class="mb-6 mt-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
           <CommonCard class="bg-foundation">
-            We will delete all content of this workspace, and any associated data. We
-            will ask you to type in your workspace name and press the delete button.
+            We will delete all projects where you are the sole owner, and any associated
+            data. We will ask you to type in your email address and press the delete
+            button.
           </CommonCard>
           <div>
-            <FormButton color="danger" @click="showDeleteDialog = true">
+            <FormButton color="primary" @click="showDeleteDialog = true">
               Delete workspace
             </FormButton>
           </div>
@@ -146,17 +155,18 @@ const save = handleSubmit(async () => {
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace updated'
+    })
+
     mixpanel.track('Workspace General Settings Updated', {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
+
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceId
-    })
-
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Workspace updated'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)

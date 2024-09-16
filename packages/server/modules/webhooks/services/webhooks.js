@@ -4,30 +4,12 @@ const knex = require('@/db/knex')
 const { getStream } = require('@/modules/core/repositories/streams')
 const crs = require('crypto-random-string')
 
-const WebhooksConfig = () => knex('webhooks_config')
 const WebhooksEvents = () => knex('webhooks_events')
 const Users = () => knex('users')
 
 const { getServerInfo } = require('../../core/services/generic')
 
 module.exports = {
-  async deleteWebhook({ id }) {
-    return await WebhooksConfig().where({ id }).del()
-  },
-
-  async getStreamWebhooks({ streamId }) {
-    const webhooks = await WebhooksConfig()
-      .select('*')
-      .where({ streamId })
-      .orderBy('updatedAt', 'desc')
-
-    for (const webhook of webhooks) {
-      webhook.triggers = Object.keys(webhook.triggers)
-    }
-
-    return webhooks
-  },
-
   async dispatchStreamEvent({ streamId, event, eventPayload }, { trx } = {}) {
     // Add server info
     eventPayload.server = await getServerInfo()
