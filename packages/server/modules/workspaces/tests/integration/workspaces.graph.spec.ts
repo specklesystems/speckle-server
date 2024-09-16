@@ -443,12 +443,14 @@ describe('Workspaces GQL CRUD', () => {
           createTestUser(viewer2)
         ])
 
-        await Promise.all([
-          assignToWorkspace(workspace, member, Roles.Workspace.Member),
-          assignToWorkspace(workspace, guestWithWritePermission, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
-        ])
+        await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+        await assignToWorkspace(
+          workspace,
+          guestWithWritePermission,
+          Roles.Workspace.Guest
+        )
+        await assignToWorkspace(workspace, viewer, Roles.Workspace.Guest)
+        await assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
 
         const resProject1 = await apollo.execute(CreateProjectDocument, {
           input: {
