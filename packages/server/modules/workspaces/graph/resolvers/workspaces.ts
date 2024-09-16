@@ -740,17 +740,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
         role: async (parent) => {
           return parent.workspaceRole
         },
-        projectRoles: async (parent, _args, ctx) => {
+        projectRoles: async (parent) => {
           const projectRoles = await getRolesByUserIdFactory({ db })({
             userId: parent.id,
             workspaceId: parent.workspaceId
           })
           return await Promise.all(
             projectRoles.map(({ role, resourceId }) => ({
-              project: ctx.loaders.streams.getStream.load(resourceId),
+              projectId: resourceId,
               role
             }))
           )
+        }
+      },
+      ProjectRole: {
+        project: async (parent, _args, ctx) => {
+          return await ctx.loaders.streams.getStream.load(parent.projectId)
         }
       },
       PendingWorkspaceCollaborator: {
