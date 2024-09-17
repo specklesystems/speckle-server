@@ -13,11 +13,11 @@ const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
-  createWebhookFactory,
+  createWebhookConfigFactory,
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
-  updateWebhookFactory,
-  deleteWebhookFactory,
+  updateWebhookConfigFactory,
+  deleteWebhookConfigFactory,
   getStreamWebhooksFactory,
   createWebhookEventFactory,
   getLastWebhookEventsFactory
@@ -35,7 +35,7 @@ const { getStream } = require('@/modules/core/repositories/streams')
 const { getUser } = require('@/modules/core/repositories/users')
 
 const updateWebhook = updateWebhookService({
-  updateWebhookConfig: updateWebhookFactory({ db })
+  updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
 
@@ -88,7 +88,7 @@ describe('Webhooks @webhooks', () => {
   describe('Create, Read, Update, Delete Webhooks', () => {
     it('Should create a webhook', async () => {
       webhookOne.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
       expect(webhookOne).to.have.property('id')
@@ -104,7 +104,7 @@ describe('Webhooks @webhooks', () => {
 
     it('Should update a webhook', async () => {
       const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
 
@@ -133,11 +133,11 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       await deleteWebhook({
-        deleteWebhookConfig: deleteWebhookFactory({ db }),
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(webhook)
       const webhookDeleted = await getWebhookByIdFactory({ db })({ id: webhook.id })
@@ -164,7 +164,7 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       streamWebhooks = await getStreamWebhooks({ streamId })
@@ -193,7 +193,7 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       await dispatchStreamEvent({
@@ -352,7 +352,7 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       const res = await sendRequest(userOne.token, {
@@ -402,14 +402,14 @@ describe('Webhooks @webhooks', () => {
       }
       for (let i = 0; i < limit; i++) {
         await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       }
 
       try {
         await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       } catch (err) {
