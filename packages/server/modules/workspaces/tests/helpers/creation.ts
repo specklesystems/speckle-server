@@ -32,6 +32,7 @@ import {
   updateWorkspaceFactory,
   addDomainToWorkspaceFactory
 } from '@/modules/workspaces/services/management'
+import { isWorkspaceDefaultProjectRole } from '@/modules/workspacesCore/domain/logic'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import {
@@ -122,7 +123,7 @@ export const createTestWorkspace = async (
     })
   }
 
-  if (workspace.defaultProjectRole) {
+  if (isWorkspaceDefaultProjectRole(workspace.defaultProjectRole)) {
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: { defaultProjectRole: workspace.defaultProjectRole }

@@ -27,11 +27,14 @@ export type Workspace = {
   updatedAt: Date
   logo: string | null
   defaultLogoIndex: number
-  defaultProjectRole: Exclude<StreamRoles, 'stream:owner'>
+  defaultProjectRole: WorkspaceDefaultProjectRole
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }
+
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
+
+export type WorkspaceDefaultProjectRole = Exclude<StreamRoles, 'stream:owner'>
 
 export type WorkspaceDomain = {
   id: string

@@ -32,9 +32,6 @@ input WorkspaceUpdateInput {
   """
   logo: String
   defaultLogoIndex: Int
-  """
-  stream:reviewer | stream:contributor
-  """
   defaultProjectRole: String
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
@@ -265,7 +262,7 @@ type Workspace {
   """
   The default role workspace members will receive for workspace projects.
   """
-  defaultProjectRole: String
+  defaultProjectRole: String!
   """
   Verified workspace domains
   """

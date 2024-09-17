@@ -130,12 +130,6 @@ const isValidInput = (input: WorkspaceUpdateInput): input is Partial<Workspace> 
       throw new WorkspaceInvalidUpdateError('Provided description is too long')
   }
 
-  if (!!input.defaultProjectRole) {
-    const validRoles = ['stream:reviewer', 'stream:contributor']
-    if (!validRoles.includes(input.defaultProjectRole))
-      throw new WorkspaceInvalidUpdateError('Provided default project role is invalid')
-  }
-
   return true
 }
 
