@@ -5,7 +5,6 @@ const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { logger } = require('@/logging/logging')
-const { getDefaultApp } = require('@/modules/auth/defaultApps')
 const { getAppFactory } = require('@/modules/auth/repositories/apps')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
@@ -14,35 +13,7 @@ const ServerAppsScopes = () => knex('server_apps_scopes')
 const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
-const addDefaultAppOverrides = (app) => {
-  const defaultApp = getDefaultApp({ id: app.id })
-  if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
-  return app
-}
-
 module.exports = {
-  async getAllAppsAuthorizedByUser({ userId }) {
-    const query = knex.raw(
-      `
-      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
-      FROM user_server_app_tokens a
-      LEFT JOIN server_apps sa ON sa.id = a."appId"
-      LEFT JOIN users u ON sa."authorId" = u.id
-      WHERE a."userId" = ?
-      `,
-      [userId]
-    )
-
-    const { rows } = await query
-    return rows.map((r) => {
-      const app = {
-        ...r,
-        author: r.author?.id ? r.author : null
-      }
-      return addDefaultAppOverrides(app)
-    })
-  },
-
   async createApp(app) {
     app.id = crs({ length: 10 })
     app.secret = crs({ length: 10 })

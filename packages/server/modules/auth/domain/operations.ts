@@ -14,6 +14,10 @@ export type GetAllAppsCreatedByUser = (params: {
   userId: string
 }) => Promise<UserServerApp[]>
 
+export type GetAllAppsAuthorizedByUser = (params: {
+  userId: string
+}) => Promise<ServerAppListItem[]>
+
 export type GetAllScopes = () => Promise<ScopeRecord[]>
 
 export type RegisterDefaultApp = (app: DefaultAppWithUnwrappedScopes) => Promise<void>

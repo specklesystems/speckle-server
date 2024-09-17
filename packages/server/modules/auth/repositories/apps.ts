@@ -1,6 +1,7 @@
 import { moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
+  GetAllAppsAuthorizedByUser,
   GetAllAppsCreatedByUser,
   GetAllPublicApps,
   GetAllScopes,
@@ -132,6 +133,30 @@ export const getAllAppsCreatedByUserFactory =
         app.authorId && app.authorName
           ? { name: app.authorName, id: app.authorId, avatar: null }
           : null
+    }))
+  }
+
+export const getAllAppsAuthorizedByUserFactory =
+  (deps: { db: Knex }): GetAllAppsAuthorizedByUser =>
+  async ({ userId }) => {
+    const query = deps.db.raw(
+      `
+      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
+      FROM user_server_app_tokens a
+      LEFT JOIN server_apps sa ON sa.id = a."appId"
+      LEFT JOIN users u ON sa."authorId" = u.id
+      WHERE a."userId" = ?
+      `,
+      [userId]
+    )
+
+    const { rows } = (await query) as {
+      rows: Array<ServerAppRecord & { author: Pick<UserRecord, 'name' | 'id'> }>
+    }
+    return rows.map((r) => ({
+      ...r,
+      redirectUrl: getAppRedirectUrl(r),
+      author: r.author?.id ? { ...r.author, avatar: null } : null
     }))
   }
 
