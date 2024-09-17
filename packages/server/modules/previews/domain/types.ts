@@ -6,7 +6,7 @@ export type ObjectPreview = {
   previewStatus: number
   priority: number
   lastUpdate: Date
-  preview: Nullable<string>
+  preview: Nullable<Record<string, string>>
 }
 
 export type Preview = {

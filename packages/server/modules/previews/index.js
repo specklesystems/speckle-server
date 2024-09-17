@@ -21,7 +21,8 @@ const httpErrorImage = (httpErrorCode) =>
 const cors = require('cors')
 const { db } = require('@/db/knex')
 const {
-  getObjectPreviewBufferOrFilepathFactory
+  getObjectPreviewBufferOrFilepathFactory,
+  sendObjectPreviewFactory
 } = require('@/modules/previews/services/management')
 const { getObject } = require('@/modules/core/services/objects')
 const {
@@ -39,59 +40,17 @@ exports.init = (app, isInitial) => {
     moduleLogger.info('📸 Init object preview module')
   }
 
-  const DEFAULT_ANGLE = '0'
-
-  const sendObjectPreview = async (req, res, streamId, objectId, angle) => {
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      getObject,
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
-      createObjectPreview: createObjectPreviewFactory({ db }),
-      getPreviewImage: getPreviewImageFactory({ db })
-    })
-    let previewBufferOrFile = await getObjectPreviewBufferOrFilepath({
-      streamId,
-      objectId,
-      angle
-    })
-
-    if (req.query.postprocess === 'og') {
-      const stream = await getStream({ streamId: req.params.streamId })
-      const streamName = stream.name
-
-      if (previewBufferOrFile.type === 'file') {
-        previewBufferOrFile = {
-          type: 'buffer',
-          buffer: await makeOgImage(previewBufferOrFile.file, streamName)
-        }
-      } else {
-        previewBufferOrFile = {
-          type: 'buffer',
-          buffer: await makeOgImage(previewBufferOrFile.buffer, streamName)
-        }
-      }
-    }
-    if (previewBufferOrFile.error) {
-      res.set('X-Preview-Error', 'true')
-    }
-    if (previewBufferOrFile.errorCode) {
-      res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
-    }
-    if (previewBufferOrFile.type === 'file') {
-      // we can't cache these cause they may switch to proper buffer previews in a sec
-      // at least if they're not in the error state which they will not get out of (and thus can be cached in that scenario)
-      if (previewBufferOrFile.error) {
-        res.set('Cache-Control', 'private, max-age=604800')
-      } else {
-        res.set('Cache-Control', 'no-cache, no-store')
-      }
-      res.sendFile(previewBufferOrFile.file)
-    } else {
-      res.contentType('image/png')
-      // If the preview is a buffer, it comes from the DB and can be cached on clients
-      res.set('Cache-Control', 'private, max-age=604800')
-      res.send(previewBufferOrFile.buffer)
-    }
-  }
+  const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+    getObject,
+    getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
+    createObjectPreview: createObjectPreviewFactory({ db }),
+    getPreviewImage: getPreviewImageFactory({ db })
+  })
+  const sendObjectPreview = sendObjectPreviewFactory({
+    getObject,
+    getObjectPreviewBufferOrFilepath,
+    makeOgImage
+  })
 
   const checkStreamPermissions = async (req) => {
     const stream = await getStream({
@@ -151,7 +110,7 @@ exports.init = (app, isInitial) => {
       res,
       req.params.streamId,
       lastCommit.referencedObject,
-      req.params.angle || DEFAULT_ANGLE
+      req.params.angle
     )
   })
 
@@ -187,7 +146,7 @@ exports.init = (app, isInitial) => {
         res,
         req.params.streamId,
         lastCommit.referencedObject,
-        req.params.angle || DEFAULT_ANGLE
+        req.params.angle
       )
     }
   )
@@ -211,7 +170,7 @@ exports.init = (app, isInitial) => {
       res,
       req.params.streamId,
       commit.referencedObject,
-      req.params.angle || DEFAULT_ANGLE
+      req.params.angle
     )
   })
 
@@ -227,7 +186,7 @@ exports.init = (app, isInitial) => {
       res,
       req.params.streamId,
       req.params.objectId,
-      req.params.angle || DEFAULT_ANGLE
+      req.params.angle
     )
   })
 
