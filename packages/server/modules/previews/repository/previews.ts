@@ -2,6 +2,11 @@
 import knex from '@/db/knex'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
+  CreateObjectPreview,
+  GetObjectPreviewInfo,
+  GetPreviewImage
+} from '@/modules/previews/domain/operations'
+import {
   ObjectPreview as ObjectPreviewRecord,
   Preview
 } from '@/modules/previews/domain/types'
@@ -24,7 +29,7 @@ const tables = {
 }
 
 export const getObjectPreviewInfoFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetObjectPreviewInfo =>
   async ({ streamId, objectId }: { streamId: string; objectId: string }) => {
     return await tables
       .objectPreview(deps.db)
@@ -34,7 +39,7 @@ export const getObjectPreviewInfoFactory =
   }
 
 export const createObjectPreviewFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): CreateObjectPreview =>
   async ({
     streamId,
     objectId,
@@ -55,7 +60,7 @@ export const createObjectPreviewFactory =
   }
 
 export const getPreviewImageFactory =
-  (deps: { db: Knex }) =>
+  (deps: { db: Knex }): GetPreviewImage =>
   async ({ previewId }: { previewId: string }) => {
     const previewRow = await tables
       .previews(deps.db)
