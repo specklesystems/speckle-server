@@ -17,6 +17,7 @@ declare module '@/modules/serverinvites/helpers/core' {
 
 export type WorkspaceTeamMember = UserWithRole<LimitedUserRecord> & {
   workspaceRole: WorkspaceRoles
+  workspaceId: string
 }
 
 export type WorkspaceTeam = WorkspaceTeamMember[]

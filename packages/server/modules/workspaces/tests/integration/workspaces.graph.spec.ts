@@ -370,6 +370,139 @@ describe('Workspaces GQL CRUD', () => {
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace.team.totalCount).to.equal(6)
       })
+
+      it('should return workspace team projectRoles', async () => {
+        const createRes = await apollo.execute(CreateWorkspaceDocument, {
+          input: { name: createRandomString() }
+        })
+        expect(createRes).to.not.haveGraphQLErrors()
+        const workspaceId = createRes.data!.workspaceMutations.create.id
+        const workspace = (await getWorkspaceFactory({ db })({
+          workspaceId
+        })) as unknown as BasicTestWorkspace
+
+        const member = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+        const guest = {
+          id: createRandomString(),
+          name: createRandomPassword(),
+          email: createRandomEmail()
+        }
+
+        await Promise.all([createTestUser(member), createTestUser(guest)])
+
+        await Promise.all([
+          assignToWorkspace(workspace, member, Roles.Workspace.Member),
+          assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
+        ])
+
+        const resProject1 = await apollo.execute(CreateProjectDocument, {
+          input: {
+            name: createRandomPassword(),
+            workspaceId
+          }
+        })
+        expect(resProject1).to.not.haveGraphQLErrors()
+        const project1Id = resProject1.data!.projectMutations.create.id
+        const project1Name = resProject1.data!.projectMutations.create.name
+
+        const resProject2 = await apollo.execute(CreateProjectDocument, {
+          input: {
+            name: createRandomPassword(),
+            workspaceId
+          }
+        })
+        expect(resProject2).to.not.haveGraphQLErrors()
+        const project2Id = resProject2.data!.projectMutations.create.id
+        const project2Name = resProject2.data!.projectMutations.create.name
+
+        await Promise.all([
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: member.id,
+            role: Roles.Stream.Contributor
+          }),
+          grantStreamPermissions({
+            streamId: project1Id,
+            userId: guest.id,
+            role: Roles.Stream.Reviewer
+          }),
+          grantStreamPermissions({
+            streamId: project2Id,
+            userId: guest.id,
+            role: Roles.Stream.Contributor
+          })
+        ])
+
+        const res = await apollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const items = res.data?.workspace!.team?.items ?? []
+        expect(items).to.have.length(3)
+
+        const adminRoles = items.find(
+          (item) => item.role === Roles.Workspace.Admin
+        )?.projectRoles
+        expect(adminRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Owner,
+            project: {
+              id: project1Id,
+              name: project1Name
+            }
+          },
+          {
+            role: Roles.Stream.Owner,
+            project: {
+              id: project2Id,
+              name: project2Name
+            }
+          }
+        ])
+        const memberRoles = items.find(
+          (item) => item.role === Roles.Workspace.Member
+        )?.projectRoles
+        expect(memberRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Contributor,
+            project: {
+              id: project1Id,
+              name: project1Name
+            }
+          },
+          {
+            role: Roles.Stream.Reviewer,
+            project: {
+              id: project2Id,
+              name: project2Name
+            }
+          }
+        ])
+        const guestRoles = items.find(
+          (item) => item.role === Roles.Workspace.Guest
+        )?.projectRoles
+        expect(guestRoles).to.have.deep.members([
+          {
+            role: Roles.Stream.Reviewer,
+            project: {
+              id: project1Id,
+              name: project1Name
+            }
+          },
+          {
+            role: Roles.Stream.Contributor,
+            project: {
+              id: project2Id,
+              name: project2Name
+            }
+          }
+        ])
+      })
     })
 
     describe('query workspace.billing', () => {
@@ -524,7 +657,7 @@ describe('Workspaces GQL CRUD', () => {
         const res = await apollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
         // TODO: this test depends on the previous tests
-        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(2)
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(3)
       })
     })
 
