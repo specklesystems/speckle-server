@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
-import { WorkspaceGraphQLReturn, WorkspaceBillingGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
+import { WorkspaceGraphQLReturn, WorkspaceBillingGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, ProjectRoleGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService';
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types';
@@ -2312,6 +2312,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+export type ProjectRole = {
+  __typename?: 'ProjectRole';
+  project: Project;
+  role: Scalars['String']['output'];
+};
+
 export type ProjectTestAutomationCreateInput = {
   functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
@@ -3927,6 +3933,7 @@ export type WorkspaceBilling = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   user: LimitedUser;
 };
@@ -4403,6 +4410,7 @@ export type ResolversTypes = {
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
   ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
+  ProjectRole: ResolverTypeWrapper<ProjectRoleGraphQLReturn >;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn>;
   ProjectTriggeredAutomationsStatusUpdatedMessageType: ProjectTriggeredAutomationsStatusUpdatedMessageType;
@@ -4425,7 +4433,7 @@ export type ResolversTypes = {
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItem>;
   ServerAutomateInfo: ResolverTypeWrapper<ServerAutomateInfo>;
   ServerConfiguration: ResolverTypeWrapper<ServerConfiguration>;
-  ServerInfo: ResolverTypeWrapper<ServerInfo>;
+  ServerInfo: ResolverTypeWrapper<Omit<ServerInfo, 'workspaces'> & { workspaces: ResolversTypes['ServerWorkspacesInfo'] }>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
@@ -4434,7 +4442,7 @@ export type ResolversTypes = {
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
   ServerStats: ResolverTypeWrapper<GraphQLEmptyReturn>;
-  ServerWorkspacesInfo: ResolverTypeWrapper<ServerWorkspacesInfo>;
+  ServerWorkspacesInfo: ResolverTypeWrapper<GraphQLEmptyReturn>;
   SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValueSchema>;
   SortDirection: SortDirection;
@@ -4653,6 +4661,7 @@ export type ResolversParentTypes = {
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
+  ProjectRole: ProjectRoleGraphQLReturn ;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -4670,7 +4679,7 @@ export type ResolversParentTypes = {
   ServerAppListItem: ServerAppListItem;
   ServerAutomateInfo: ServerAutomateInfo;
   ServerConfiguration: ServerConfiguration;
-  ServerInfo: ServerInfo;
+  ServerInfo: Omit<ServerInfo, 'workspaces'> & { workspaces: ResolversParentTypes['ServerWorkspacesInfo'] };
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
@@ -4678,7 +4687,7 @@ export type ResolversParentTypes = {
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: GraphQLEmptyReturn;
-  ServerWorkspacesInfo: ServerWorkspacesInfo;
+  ServerWorkspacesInfo: GraphQLEmptyReturn;
   SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
   SmartTextEditorValue: SmartTextEditorValueSchema;
   Stream: StreamGraphQLReturn;
@@ -5592,6 +5601,12 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectRole'] = ResolversParentTypes['ProjectRole']> = {
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage']> = {
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
@@ -6117,6 +6132,7 @@ export type WorkspaceBillingResolvers<ContextType = GraphQLContext, ParentType e
 
 export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceCollaborator'] = ResolversParentTypes['WorkspaceCollaborator']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  projectRoles?: Resolver<Array<ResolversTypes['ProjectRole']>, ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6280,6 +6296,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;
   ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
   ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
+  ProjectRole?: ProjectRoleResolvers<ContextType>;
   ProjectTriggeredAutomationsStatusUpdatedMessage?: ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;

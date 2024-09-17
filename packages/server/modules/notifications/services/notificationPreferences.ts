@@ -6,13 +6,14 @@ import {
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import {
   GetSavedUserNotificationPreferences,
+  GetUserNotificationPreferences,
   SaveUserNotificationPreferences
 } from '@/modules/notifications/domain/operations'
 
 export const getUserNotificationPreferencesFactory =
   (deps: {
     getSavedUserNotificationPreferences: GetSavedUserNotificationPreferences
-  }) =>
+  }): GetUserNotificationPreferences =>
   async (userId: string): Promise<NotificationPreferences> => {
     const savedPreferences = await deps.getSavedUserNotificationPreferences(userId)
     return addDefaultPreferenceValues(savedPreferences)

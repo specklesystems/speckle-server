@@ -333,6 +333,11 @@ type WorkspaceCollaboratorCollection {
   items: [WorkspaceCollaborator!]!
 }
 
+type ProjectRole {
+  role: String!
+  project: Project!
+}
+
 """
 Overridden by `WorkspaceCollaboratorGraphQLReturn`
 """
@@ -340,6 +345,7 @@ type WorkspaceCollaborator {
   id: ID!
   role: String!
   user: LimitedUser!
+  projectRoles: [ProjectRole!]!
 }
 
 type PendingWorkspaceCollaborator {
