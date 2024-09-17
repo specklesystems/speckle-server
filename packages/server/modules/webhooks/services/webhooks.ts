@@ -23,7 +23,7 @@ import { Knex } from 'knex'
 
 const MAX_STREAM_WEBHOOKS = 100
 
-export const createWebhook =
+export const createWebhookFactory =
   ({
     createWebhookConfig,
     countWebhooksByStreamId
@@ -58,7 +58,7 @@ export const createWebhook =
     })
   }
 
-export const updateWebhook =
+export const updateWebhookFactory =
   ({ updateWebhookConfig }: { updateWebhookConfig: UpdateWebhookConfig }) =>
   async (
     webhook: Pick<Webhook, 'id'> &
@@ -79,7 +79,7 @@ export const updateWebhook =
     })
   }
 
-export const deleteWebhook =
+export const deleteWebhookFactory =
   ({
     deleteWebhookConfig,
     getWebhookById
@@ -99,7 +99,7 @@ export const deleteWebhook =
     return id
   }
 
-export const dispatchStreamEvent =
+export const dispatchStreamEventFactory =
   ({
     db,
     getServerInfo,

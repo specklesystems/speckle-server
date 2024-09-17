@@ -1,9 +1,9 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  createWebhook,
-  deleteWebhook,
-  updateWebhook
+  createWebhookFactory,
+  deleteWebhookFactory,
+  updateWebhookFactory
 } from '@/modules/webhooks/services/webhooks'
 import { Roles } from '@speckle/shared'
 import {
@@ -73,7 +73,7 @@ export = {
         context.resourceAccessRules
       )
 
-      const id = await createWebhook({
+      const id = await createWebhookFactory({
         createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })({
@@ -101,7 +101,7 @@ export = {
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
-      const updated = await updateWebhook({
+      const updated = await updateWebhookFactory({
         updateWebhookConfig: updateWebhookConfigFactory({ db })
       })({
         id: args.webhook.id,
@@ -122,7 +122,7 @@ export = {
         context.resourceAccessRules
       )
 
-      return await deleteWebhook({
+      return await deleteWebhookFactory({
         deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(args.webhook)
