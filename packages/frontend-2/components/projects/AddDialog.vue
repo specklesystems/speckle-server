@@ -167,4 +167,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: onSubmit
   }
 ])
+
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    selectedWorkspace.value = undefined
+  }
+})
 </script>
