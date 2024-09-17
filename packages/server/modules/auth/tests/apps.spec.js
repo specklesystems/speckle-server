@@ -5,7 +5,6 @@ const { createUser } = require(`@/modules/core/services/users`)
 const { validateToken } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
 const {
-  getAllPublicApps,
   createApp,
   updateApp,
   deleteApp,
@@ -20,11 +19,13 @@ const knex = require('@/db/knex')
 const cryptoRandomString = require('crypto-random-string')
 const {
   getAppFactory,
-  updateDefaultAppFactory
+  updateDefaultAppFactory,
+  getAllPublicAppsFactory
 } = require('@/modules/auth/repositories/apps')
 
 const getApp = getAppFactory({ db: knex })
 const updateDefaultApp = updateDefaultAppFactory({ db: knex })
+const getAllPublicApps = getAllPublicAppsFactory({ db: knex })
 
 describe('Services @apps-services', () => {
   const actor = {

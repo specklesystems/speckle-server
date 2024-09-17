@@ -21,36 +21,6 @@ const addDefaultAppOverrides = (app) => {
 }
 
 module.exports = {
-  async getAllPublicApps() {
-    const apps = await ServerApps()
-      .select(
-        'server_apps.id',
-        'server_apps.name',
-        'server_apps.description',
-        'server_apps.trustByDefault',
-        'server_apps.redirectUrl',
-        'server_apps.logo',
-        'server_apps.termsAndConditionsLink',
-        'users.name as authorName',
-        'users.id as authorId'
-      )
-      .where({ public: true })
-      .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
-      .orderBy('server_apps.trustByDefault', 'DESC')
-
-    apps.forEach((app) => {
-      app = addDefaultAppOverrides(app)
-
-      if (app.authorName && app.authorId) {
-        app.author = { name: app.authorName, id: app.authorId }
-      }
-      delete app.authorName
-      delete app.authorId
-    })
-
-    return apps
-  },
-
   async getAllAppsCreatedByUser({ userId }) {
     const apps = await ServerApps()
       .select(
