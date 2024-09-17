@@ -66,7 +66,7 @@ export const getAppFactory =
     return {
       ...app,
       scopes: appScopes,
-      author: appAuthor!,
+      author: appAuthor || null,
       redirectUrl: getAppRedirectUrl(app)
     }
   }
@@ -84,7 +84,8 @@ export const getAllPublicAppsFactory =
         | 'redirectUrl'
         | 'logo'
         | 'termsAndConditionsLink'
-      > & { authorName: string; authorId: string }
+      > &
+        Partial<{ authorName: string; authorId: string }>
     > = await tables
       .serverApps(deps.db)
       .select(
@@ -105,7 +106,10 @@ export const getAllPublicAppsFactory =
     return apps.map((app) => ({
       ...app,
       redirectUrl: getAppRedirectUrl(app),
-      author: { name: app.authorName, id: app.authorId, avatar: null }
+      author:
+        app.authorId && app.authorName
+          ? { name: app.authorName, id: app.authorId, avatar: null }
+          : null
     }))
   }
 
