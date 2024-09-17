@@ -102,6 +102,12 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedUser: {
         workspaceDomainPolicyCompliant: async () => null
+      },
+      ServerInfo: {
+        workspaces: () => ({})
+      },
+      ServerWorkspacesInfo: {
+        workspacesEnabled: () => false
       }
     } as Resolvers)
   : {}

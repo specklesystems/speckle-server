@@ -5,8 +5,7 @@ import {
   getStream,
   getUserStreams,
   getUserStreamsCount,
-  upsertProjectRoleFactory,
-  deleteProjectRoleFactory
+  getRolesByUserIdFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -122,7 +121,6 @@ import {
   isUserWorkspaceDomainPolicyCompliantFactory
 } from '@/modules/workspaces/services/domains'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -354,10 +352,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -376,13 +370,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 db: trx
               }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              getDefaultWorkspaceProjectRoleMapping:
-                mapWorkspaceRoleToInitialProjectRole,
-              upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                getStreams
-              }),
               emitWorkspaceEvent: getEventBus().emit
             })
 
@@ -465,8 +452,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
             emitWorkspaceEvent: getEventBus().emit
           })
 
@@ -580,13 +565,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                upsertProjectRole: upsertProjectRoleFactory({ db }),
-                getDefaultWorkspaceProjectRoleMapping:
-                  mapWorkspaceRoleToInitialProjectRole,
-                deleteProjectRole: deleteProjectRoleFactory({ db }),
-                queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-                  getStreams
-                }),
                 emitWorkspaceEvent: getEventBus().emit
               })
             }),
@@ -761,6 +739,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         role: async (parent) => {
           return parent.workspaceRole
+        },
+        projectRoles: async (parent) => {
+          const projectRoles = await getRolesByUserIdFactory({ db })({
+            userId: parent.id,
+            workspaceId: parent.workspaceId
+          })
+          return projectRoles.map(({ role, resourceId }) => ({
+            projectId: resourceId,
+            role
+          }))
+        }
+      },
+      ProjectRole: {
+        project: async (parent, _args, ctx) => {
+          return await ctx.loaders.streams.getStream.load(parent.projectId)
         }
       },
       PendingWorkspaceCollaborator: {
@@ -901,6 +894,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
         }
+      },
+      ServerInfo: {
+        workspaces: () => ({})
+      },
+      ServerWorkspacesInfo: {
+        workspacesEnabled: () => true
       }
     } as Resolvers)
   : {}

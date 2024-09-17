@@ -24,7 +24,7 @@
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
-      <div ref="buttonContainer" class="flex w-full space-x-2 sm:space-x-3">
+      <div ref="buttonContainer" class="flex w-full space-x-4">
         <button
           v-for="item in items"
           :key="item.id"
@@ -43,7 +43,7 @@
             "
             class="absolute top-0 right-0 left-0 bottom-0"
           ></div>
-          <div class="flex space-x-2 items-center px-2">
+          <div class="flex space-x-2 items-center">
             <component
               :is="item.icon"
               v-if="item.icon"

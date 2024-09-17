@@ -3,7 +3,7 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader
         title="Notifications"
-        text="Manage your notification preferences"
+        text="Your notification preferences"
       />
       <table class="table-auto w-full rounded-t overflow-hidden">
         <thead class="text-foreground-1">

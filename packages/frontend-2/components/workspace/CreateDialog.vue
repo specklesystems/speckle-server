@@ -14,7 +14,6 @@
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
-        show-required
       />
       <FormTextInput
         v-model:model-value="workspaceDescription"
@@ -24,6 +23,7 @@
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
         show-label
+        show-optional
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -45,6 +45,8 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+
+const emit = defineEmits<(e: 'created') => void>()
 
 type FormValues = { name: string; description: string }
 
@@ -101,6 +103,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
   )
 
   if (newWorkspace) {
+    emit('created')
     isOpen.value = false
   }
 })

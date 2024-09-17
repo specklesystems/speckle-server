@@ -1,26 +1,48 @@
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
-const {
-  uploadFileStream,
-  getBlobMetadata,
-  getBlobMetadataCollection,
-  cursorFromRows,
-  decodeCursor,
-  blobCollectionSummary,
-  getFileStream,
-  deleteBlob,
-  markUploadOverFileSizeLimit,
-  markUploadSuccess
-} = require('@/modules/blobstorage/services')
-const {
-  NotFoundError,
-  ResourceMismatch,
-  BadRequestError
-} = require('@/modules/shared/errors')
+const { NotFoundError, BadRequestError } = require('@/modules/shared/errors')
 const { range } = require('lodash')
 const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
-
+const {
+  uploadFileStreamFactory,
+  getFileStreamFactory,
+  markUploadSuccessFactory,
+  markUploadOverFileSizeLimitFactory,
+  fullyDeleteBlobFactory
+} = require('@/modules/blobstorage/services/management')
+const {
+  upsertBlobFactory,
+  updateBlobFactory,
+  getBlobMetadataFactory,
+  getBlobMetadataCollectionFactory,
+  blobCollectionSummaryFactory,
+  deleteBlobFactory
+} = require('@/modules/blobstorage/repositories')
+const { db } = require('@/db/knex')
+const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/db')
+const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
+const cryptoRandomString = require('crypto-random-string')
+const { createTestUser } = require('@/test/authHelper')
 const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
+const upsertBlob = upsertBlobFactory({ db })
+const updateBlob = updateBlobFactory({ db })
+const uploadFileStream = uploadFileStreamFactory({
+  upsertBlob,
+  updateBlob
+})
+const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const blobCollectionSummary = blobCollectionSummaryFactory({ db })
+const getFileStream = getFileStreamFactory({ getBlobMetadata })
+const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
+const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+  getBlobMetadata,
+  updateBlob
+})
+const deleteBlob = fullyDeleteBlobFactory({
+  getBlobMetadata,
+  deleteBlob: deleteBlobFactory({ db })
+})
 
 describe('Blob storage @blobstorage', () => {
   before(async () => {
@@ -69,6 +91,38 @@ describe('Blob storage @blobstorage', () => {
   })
 
   describe('Get blob metadata', () => {
+    const testUser1 = {
+      name: 'Blob Test User #1',
+      email: 'testUser1@gmailll.com',
+      id: ''
+    }
+
+    const testStream1 = {
+      name: 'Blob Test Stream #1',
+      isPublic: false,
+      ownerId: '',
+      id: ''
+    }
+
+    /**
+     * @type {import('@/modules/blobstorage/domain/types').BlobStorageItem}
+     */
+    let testStreamBlob1
+
+    before(async () => {
+      // Insert blob
+      await createTestUser(testUser1)
+      await createTestStream(testStream1, testUser1)
+      testStreamBlob1 = await upsertBlob({
+        id: cryptoRandomString({ length: 10 }),
+        streamId: testStream1.id,
+        userId: testUser1.id,
+        objectKey: 'testObjectKey',
+        fileName: 'testFileName',
+        fileType: 'png'
+      })
+    })
+
     it('when no blob found throws NotFoundError', async () => {
       try {
         await getBlobMetadata({ streamId: 'foo', blobId: 'bar' })
@@ -79,33 +133,21 @@ describe('Blob storage @blobstorage', () => {
     })
     it('when no streamId throws ResourceMismatch', async () => {
       try {
-        const fakeBlobLookup = () => ({ first: async () => ({ a: 'random blob' }) })
-        await getBlobMetadata({ streamId: null, blobId: 'bar' }, fakeBlobLookup)
+        await getBlobMetadata({ streamId: null, blobId: 'bar' })
         throw new Error('This should have failed')
       } catch (err) {
         if (!(err instanceof BadRequestError)) throw err
       }
     })
-    it('when streamIds are not matching throws ResourceMismatch', async () => {
-      try {
-        const fakeBlobLookup = () => ({
-          first: async () => ({ streamId: 'def not THAT one' })
-        })
-        await getBlobMetadata({ streamId: 'this one', blobId: 'bar' }, fakeBlobLookup)
-        throw new Error('This should have failed')
-      } catch (err) {
-        if (!(err instanceof ResourceMismatch)) throw err
-      }
-    })
+
     it('for valid input return the data', async () => {
-      const streamId = 'the one im looking for'
-      const blobId = 'my dear blobbie'
-      const fakeBlobMetadata = { streamId, blobId }
-      const fakeBlobLookup = () => ({
-        first: async () => fakeBlobMetadata
+      const blobMetadata = await getBlobMetadata({
+        streamId: testStream1.id,
+        blobId: testStreamBlob1.id
       })
-      const blobMetadata = await getBlobMetadata({ streamId, blobId }, fakeBlobLookup)
-      expect(blobMetadata).to.deep.equal(fakeBlobMetadata)
+      expect(blobMetadata).to.be.ok
+      expect(blobMetadata.streamId).to.eq(testStream1.id)
+      expect(blobMetadata.id).to.eq(testStreamBlob1.id)
     })
   })
 

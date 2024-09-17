@@ -1863,7 +1863,7 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2297,6 +2297,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectRole = {
+  __typename?: 'ProjectRole';
+  project: Project;
+  role: Scalars['String']['output'];
+};
 
 export type ProjectTestAutomationCreateInput = {
   functionId: Scalars['String']['input'];
@@ -3913,6 +3919,7 @@ export type WorkspaceBilling = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   user: LimitedUser;
 };

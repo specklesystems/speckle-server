@@ -9,6 +9,7 @@ import {
   StreamActivitySummary
 } from '@/modules/activitystream/services/summary'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import {
   digestMostActiveStream,
   mostActiveComment,
@@ -19,10 +20,14 @@ import {
   digestActiveStreams,
   closingOverview,
   Digest,
-  prepareSummaryEmail
+  prepareSummaryEmailFactory
 } from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'
 import { range } from 'lodash'
+
+const prepareSummaryEmail = prepareSummaryEmailFactory({
+  renderEmail
+})
 
 describe('Activity digest notifications @notifications', () => {
   const user: UserRecord = {

@@ -56,6 +56,7 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { db as defaultKnexInstance } from '@/db/knex'
 import {
   DeleteProjectRole,
+  GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 
@@ -1155,3 +1156,17 @@ export async function getOnboardingBaseStream(version: string) {
 
   return await q
 }
+
+export const getRolesByUserIdFactory =
+  ({ db }: { db: Knex }): GetRolesByUserId =>
+  async ({ userId, workspaceId }) => {
+    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
+      StreamAcl.name
+    ).where({ userId })
+    if (workspaceId) {
+      query
+        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+        .where({ workspaceId })
+    }
+    return await query
+  }
