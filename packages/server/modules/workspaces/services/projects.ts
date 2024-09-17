@@ -1,8 +1,16 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import { getUserStreams } from '@/modules/core/repositories/streams'
-import { QueryAllWorkspaceProjects } from '@/modules/workspaces/domain/operations'
-import { WorkspaceQueryError } from '@/modules/workspaces/errors/workspace'
+import {
+  GetWorkspace,
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  QueryAllWorkspaceProjects
+} from '@/modules/workspaces/domain/operations'
+import {
+  WorkspaceNotFoundError,
+  WorkspaceQueryError
+} from '@/modules/workspaces/errors/workspace'
+import { Roles } from '@speckle/shared'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -71,5 +79,25 @@ export const getWorkspaceProjectsFactory =
     return {
       items: streams,
       cursor
+    }
+  }
+
+export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
+  ({
+    getWorkspace
+  }: {
+    getWorkspace: GetWorkspace
+  }): GetWorkspaceRoleToDefaultProjectRoleMapping =>
+  async ({ workspaceId }) => {
+    const workspace = await getWorkspace({ workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    return {
+      [Roles.Workspace.Guest]: null,
+      [Roles.Workspace.Member]: workspace.defaultProjectRole,
+      [Roles.Workspace.Admin]: Roles.Stream.Owner
     }
   }

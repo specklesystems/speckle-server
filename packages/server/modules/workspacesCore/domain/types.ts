@@ -1,6 +1,6 @@
 import { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { WorkspaceRoles } from '@speckle/shared'
+import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
 
 declare module '@/modules/serverinvites/domain/types' {
   interface InviteResourceTargetTypeMap {
@@ -27,10 +27,14 @@ export type Workspace = {
   updatedAt: Date
   logo: string | null
   defaultLogoIndex: number
+  defaultProjectRole: WorkspaceDefaultProjectRole
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }
+
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
+
+export type WorkspaceDefaultProjectRole = Exclude<StreamRoles, 'stream:owner'>
 
 export type WorkspaceDomain = {
   id: string

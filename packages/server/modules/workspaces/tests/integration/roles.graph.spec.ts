@@ -187,7 +187,8 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      name: 'Test Workspace'
+      name: 'Test Workspace',
+      defaultProjectRole: Roles.Stream.Reviewer
     }
 
     const workspaceAdminUser: BasicTestUser = {

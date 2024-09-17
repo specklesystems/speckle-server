@@ -476,7 +476,7 @@ describe('Workspaces GQL CRUD', () => {
             }
           },
           {
-            role: Roles.Stream.Reviewer,
+            role: Roles.Stream.Contributor,
             project: {
               id: project2Id,
               name: project2Name
@@ -576,12 +576,14 @@ describe('Workspaces GQL CRUD', () => {
           createTestUser(viewer2)
         ])
 
-        await Promise.all([
-          assignToWorkspace(workspace, member, Roles.Workspace.Member),
-          assignToWorkspace(workspace, guestWithWritePermission, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
-        ])
+        await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+        await assignToWorkspace(
+          workspace,
+          guestWithWritePermission,
+          Roles.Workspace.Guest
+        )
+        await assignToWorkspace(workspace, viewer, Roles.Workspace.Guest)
+        await assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
 
         const resProject1 = await apollo.execute(CreateProjectDocument, {
           input: {
@@ -893,6 +895,31 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(updateRes).to.haveGraphQLErrors('too long')
+      })
+
+      it('should require default project role to be a valid role', async () => {
+        const resA = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:contributor'
+          }
+        })
+        const resB = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:reviewer'
+          }
+        })
+        const resC = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:collaborator'
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
       })
     })
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
