@@ -11,10 +11,10 @@ const {
   getCommitById
 } = require('../core/services/commits')
 const {
-  getPreviewImage,
-  createObjectPreview,
-  getObjectPreviewInfo
-} = require('./services/previews')
+  getPreviewImageFactory,
+  createObjectPreviewFactory,
+  getObjectPreviewInfoFactory
+} = require('./repository/previews')
 
 const { makeOgImage } = require('./ogImage')
 const { moduleLogger, logger } = require('@/logging/logging')
@@ -27,6 +27,7 @@ const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
 const cors = require('cors')
+const { db } = require('@/db/knex')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -60,8 +61,10 @@ exports.init = (app, isInitial) => {
     }
 
     // Get existing preview metadata
+    const getObjectPreviewInfo = getObjectPreviewInfoFactory({ db })
     const previewInfo = await getObjectPreviewInfo({ streamId, objectId })
     if (!previewInfo) {
+      const createObjectPreview = createObjectPreviewFactory({ db })
       await createObjectPreview({ streamId, objectId, priority: 0 })
     }
 
@@ -81,6 +84,7 @@ exports.init = (app, isInitial) => {
         file: previewErrorImage
       }
     }
+    const getPreviewImage = getPreviewImageFactory({ db })
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
       logger.warn(`Preview image not found: ${previewImgId}`)
