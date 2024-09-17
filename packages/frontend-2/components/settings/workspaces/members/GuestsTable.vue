@@ -179,12 +179,22 @@ const guests = computed(() => {
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
-const actionItems: LayoutMenuItem[][] = [
-  [
-    { title: 'Change project permissions...', id: ActionTypes.ChangeProjectPermissions }
-  ],
-  [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
-]
+const actionItems = computed(() => {
+  const items: LayoutMenuItem[][] = [
+    [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
+  ]
+
+  if (guests.value.find((guest) => guest.projectRoles.length > 1)) {
+    items.unshift([
+      {
+        title: 'Change project permissions...',
+        id: ActionTypes.ChangeProjectPermissions
+      }
+    ])
+  }
+
+  return items
+})
 
 const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator) => {
   userToModify.value = user
