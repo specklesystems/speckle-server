@@ -476,7 +476,7 @@ describe('Workspaces GQL CRUD', () => {
             }
           },
           {
-            role: Roles.Stream.Reviewer,
+            role: Roles.Stream.Contributor,
             project: {
               id: project2Id,
               name: project2Name
