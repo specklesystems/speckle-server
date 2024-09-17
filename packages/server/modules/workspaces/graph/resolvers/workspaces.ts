@@ -43,7 +43,6 @@ import {
   WorkspaceAdminError,
   WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
-  WorkspaceInvalidUpdateError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
@@ -125,7 +124,7 @@ import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/manag
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { isWorkspaceDefaultProjectRole } from '@/modules/workspacesCore/domain/logic'
+import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -330,19 +329,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             emitWorkspaceEvent: getEventBus().emit
           })
 
-          const { defaultProjectRole } = args.input
-
-          if (!isWorkspaceDefaultProjectRole(defaultProjectRole)) {
-            throw new WorkspaceInvalidUpdateError(
-              'Provided default project role is invalid'
-            )
-          }
-
           const workspace = await updateWorkspace({
             workspaceId,
             workspaceInput: {
               ...workspaceInput,
-              defaultProjectRole
+              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
             }
           })
 
