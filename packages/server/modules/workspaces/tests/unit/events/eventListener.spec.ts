@@ -7,7 +7,6 @@ import {
   onWorkspaceRoleUpdatedFactory
 } from '@/modules/workspaces/events/eventListener'
 import { expect } from 'chai'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { chunk } from 'lodash'
 
 describe('Event handlers', () => {
@@ -41,7 +40,11 @@ describe('Event handlers', () => {
 
       const onProjectCreated = onProjectCreatedFactory({
         getWorkspaceRoles: async () => workspaceRoles,
-        getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
+          [Roles.Workspace.Admin]: Roles.Stream.Owner,
+          [Roles.Workspace.Member]: Roles.Stream.Contributor,
+          [Roles.Workspace.Guest]: null
+        }),
         upsertProjectRole: async ({ projectId, userId, role }) => {
           projectRoles.push({
             resourceId: projectId,
@@ -66,7 +69,7 @@ describe('Event handlers', () => {
       let isDeleteCalled = false
 
       await onWorkspaceRoleUpdatedFactory({
-        getDefaultWorkspaceProjectRoleMapping: async () => ({
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: Roles.Stream.Contributor,
           [Roles.Workspace.Guest]: null
@@ -101,7 +104,7 @@ describe('Event handlers', () => {
 
       const storedRoles: { userId: string; role: StreamRoles; projectId: string }[] = []
       await onWorkspaceRoleUpdatedFactory({
-        getDefaultWorkspaceProjectRoleMapping: async () => ({
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: projectRole,
           [Roles.Workspace.Guest]: null

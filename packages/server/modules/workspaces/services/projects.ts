@@ -2,6 +2,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import { getUserStreams } from '@/modules/core/repositories/streams'
 import {
+  GetWorkspace,
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   QueryAllWorkspaceProjects,
@@ -9,6 +10,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceInvalidProjectError,
+  WorkspaceNotFoundError,
   WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
 import {
@@ -173,4 +175,24 @@ export const moveProjectToWorkspaceFactory =
 
     // Assign project to workspace
     return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
+  }
+
+export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
+  ({
+    getWorkspace
+  }: {
+    getWorkspace: GetWorkspace
+  }): GetWorkspaceRoleToDefaultProjectRoleMapping =>
+  async ({ workspaceId }) => {
+    const workspace = await getWorkspace({ workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    return {
+      [Roles.Workspace.Guest]: null,
+      [Roles.Workspace.Member]: workspace.defaultProjectRole,
+      [Roles.Workspace.Admin]: Roles.Stream.Owner
+    }
   }

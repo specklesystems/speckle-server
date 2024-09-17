@@ -1,6 +1,5 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
@@ -10,6 +9,12 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+
+const getWorkspaceRoleToDefaultProjectRoleMapping = async () => ({
+  'workspace:admin': Roles.Stream.Owner,
+  'workspace:guest': null,
+  'workspace:member': Roles.Stream.Contributor
+})
 
 describe('Project retrieval services', () => {
   describe('queryAllWorkspaceProjectFactory returns a generator, that', () => {
@@ -156,8 +161,11 @@ describe('Project management services', () => {
             }
           ]
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping:
-          mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
+          'workspace:admin': Roles.Stream.Owner,
+          'workspace:guest': null,
+          'workspace:member': Roles.Stream.Contributor
+        }),
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -197,8 +205,7 @@ describe('Project management services', () => {
         getWorkspaceRoles: async () => {
           return []
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping:
-          mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -239,8 +246,7 @@ describe('Project management services', () => {
         getWorkspaceRoles: async () => {
           return []
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping:
-          mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -282,8 +288,7 @@ describe('Project management services', () => {
         getWorkspaceRoles: async () => {
           return []
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping:
-          mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
         updateWorkspaceRole: async () => {}
       })
 
