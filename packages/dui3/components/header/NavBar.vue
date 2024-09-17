@@ -26,7 +26,7 @@
             :icon-right="ArrowUpCircleIcon"
             size="sm"
             color="subtle"
-            class="flex min-w-0 transition text-primary py-1"
+            class="flex min-w-0 transition text-primary py-1 mr-1"
             @click.stop="hostAppStore.downloadLatestVersion()"
           >
             <span class="">Update</span>
