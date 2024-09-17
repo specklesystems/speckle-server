@@ -117,17 +117,21 @@ export const getAllPublicAppsFactory =
 export const getAllAppsCreatedByUserFactory =
   (deps: { db: Knex }): GetAllAppsCreatedByUser =>
   async ({ userId }) => {
-    const apps: Array<ServerAppRecord & { authorName: string; authorId: string }> =
-      await tables
-        .serverApps(deps.db)
-        .select('server_apps.*', 'users.name as authorName', 'users.id as authorId')
-        .where({ authorId: userId })
-        .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
+    const apps: Array<
+      ServerAppRecord & Partial<{ authorName: string; authorId: string }>
+    > = await tables
+      .serverApps(deps.db)
+      .select('server_apps.*', 'users.name as authorName', 'users.id as authorId')
+      .where({ authorId: userId })
+      .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
 
     return apps.map((app) => ({
       ...app,
       redirectUrl: getAppRedirectUrl(app),
-      author: { name: app.authorName, id: app.authorId, avatar: null }
+      author:
+        app.authorId && app.authorName
+          ? { name: app.authorName, id: app.authorId, avatar: null }
+          : null
     }))
   }
 
