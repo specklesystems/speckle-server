@@ -1,33 +1,28 @@
 <template>
   <ClientOnly>
-    <div class="position left-2 bottom-2 fixed z-[45]">
+    <div class="position left-2 sm:left-auto right-2 bottom-2 fixed z-[45]">
       <div
         v-if="showBanner"
-        class="rounded-lg flex flex-col gap-y-2 max-w-64 p-4 border border-outline-2 shadow-md bg-foundation-3 dark:bg-foundation"
+        class="rounded-lg flex flex-col w-full sm:max-w-96 border border-outline-2 shadow-md bg-foundation-3 dark:bg-foundation"
       >
-        <FormButton
-          color="subtle"
-          size="sm"
-          class="absolute top-2 right-2 !w-5 !h-5 !p-0"
-          @click="dismissedCookie = true"
-        >
-          <XMarkIcon class="h-5 w-5 text-foreground" />
-        </FormButton>
-        <h5 class="text-body-xs md:text-heading-sm text-foreground font-medium">
-          Still not using workspaces?
-        </h5>
-        <p class="text-body-2xs leading-5 md:text-body-xs text-foreground-2">
-          Be the first to reach better project management with your team
-        </p>
-        <FormButton
-          class="mt-2"
-          color="primary"
-          size="sm"
-          @click="openWorkspaceCreateDialog"
-        >
-          Start for free
-        </FormButton>
-
+        <img :src="bannerImage" class="w-full" alt="Try workspaces" />
+        <div class="px-5 py-6 flex flex-col gap-y-2">
+          <h5 class="text-body-xs md:text-heading-sm text-foreground font-medium">
+            Still not using workspaces?
+          </h5>
+          <p class="text-body-2xs leading-5 md:text-body-xs text-foreground-2">
+            Be the first to reach more security options, data control, and better
+            project management with your team.
+          </p>
+          <div class="flex items-center gap-x-2 mt-2">
+            <FormButton color="primary" size="sm" @click="openWorkspaceCreateDialog">
+              Start for free
+            </FormButton>
+            <FormButton color="subtle" size="sm" @click="dismissedCookie = true">
+              Dismiss
+            </FormButton>
+          </div>
+        </div>
         <WorkspaceCreateDialog
           v-model:open="showWorkspaceCreateDialog"
           navigate-on-success
@@ -48,8 +43,16 @@ import { CookieKeys } from '~/lib/common/helpers/constants'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { useTheme } from '~~/lib/core/composables/theme'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import imageLight from '~/assets/images/banners/workspace-promo-light.png'
+import imageDark from '~/assets/images/banners/workspace-promo-dark.png'
+import imageMobileLight from '~/assets/images/banners/workspace-promo-mobile-light.png'
+import imageMobileDark from '~/assets/images/banners/workspace-promo-mobile-dark.png'
 
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const { isDarkTheme } = useTheme()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const mixpanel = useMixpanel()
 const dismissedCookie = useSynchronizedCookie<boolean>(
@@ -63,7 +66,14 @@ const { result } = useQuery(settingsSidebarQuery, null, {
 })
 
 const showWorkspaceCreateDialog = ref(false)
+const isMobile = breakpoints.smaller('md')
 
+const bannerImage = computed(() => {
+  if (isMobile.value) {
+    return isDarkTheme.value ? imageMobileDark : imageMobileLight
+  }
+  return isDarkTheme.value ? imageDark : imageLight
+})
 const hasWorkspaces = computed(() =>
   result.value?.activeUser?.workspaces.items
     ? result.value.activeUser.workspaces.items.length > 0

@@ -77,9 +77,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     ]
 
     if (error.value) {
-      classParts.push(
-        'focus:border-danger focus:ring-danger border-2 border-danger text-danger-darker'
-      )
+      classParts.push('!border-danger')
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
     }
