@@ -8,8 +8,8 @@ import {
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import {
-  WorkspaceQueryError,
-  WorkspacesNotYetImplementedError
+  WorkspaceInvalidProjectError,
+  WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
 import {
   GetProject,
@@ -123,7 +123,9 @@ export const moveProjectToWorkspaceFactory =
 
     if (project.workspaceId?.length) {
       // We do not currently support moving projects between workspaces
-      throw new WorkspacesNotYetImplementedError()
+      throw new WorkspaceInvalidProjectError(
+        'Specified project already belongs to a workspace. Moving between workspaces is not yet supported.'
+      )
     }
 
     // Update roles for current project members

@@ -931,7 +931,11 @@ const isProjectUpdateInput = (
   i: StreamUpdateInput | ProjectUpdateInput
 ): i is ProjectUpdateInput => has(i, 'visibility')
 
-export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
+/** @deprecated Replace all calls with `updateProjectFacotry` */
+export async function updateStream(
+  update: StreamUpdateInput | ProjectUpdateInput,
+  db?: Knex
+) {
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
@@ -963,7 +967,8 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 
   if (!Object.keys(validUpdate).length) return null
 
-  const [updatedStream] = await Streams.knex()
+  const [updatedStream] = await tables
+    .streams(db ?? knex)
     .returning('*')
     .where({ id: streamId })
     .update<StreamRecord[]>({
@@ -975,9 +980,9 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 }
 
 export const updateProjectFactory =
-  (): UpdateProject =>
+  ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
-    const updatedStream = await updateStream(projectUpdate)
+    const updatedStream = await updateStream(projectUpdate, db)
 
     if (!updatedStream) {
       throw new StreamUpdateError()

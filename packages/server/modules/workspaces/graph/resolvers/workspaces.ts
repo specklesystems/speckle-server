@@ -672,24 +672,31 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
+          const trx = await db.transaction()
+
           const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
             getProject: getProjectFactory(),
-            updateProject: updateProjectFactory(),
-            upsertProjectRole: upsertProjectRoleFactory({ db }),
+            updateProject: updateProjectFactory({ db: trx }),
+            upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
             getProjectCollaborators: getProjectCollaboratorsFactory(),
-            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
             getWorkspaceRoleToDefaultProjectRoleMapping:
               mapWorkspaceRoleToInitialProjectRole,
             updateWorkspaceRole: updateWorkspaceRoleFactory({
-              getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
-              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db: trx
+              }),
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
               emitWorkspaceEvent: getEventBus().emit
             })
           })
 
-          return await moveProjectToWorkspace({ projectId, workspaceId })
+          return await withTransaction(
+            moveProjectToWorkspace({ projectId, workspaceId }),
+            trx
+          )
         }
       },
       Workspace: {
