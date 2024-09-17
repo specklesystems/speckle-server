@@ -32,7 +32,7 @@ export function useUpdateConnector() {
       const notification: ToastNotification = {
         type: ToastNotificationType.Success,
         title: `Update available`,
-        description: latestAvailableVersion.value?.Number.replace('+0', ''),
+        description: latestAvailableVersion.value?.Number.replace('+0', ''), // TODO: currently versions end with "+0" Alan will have a look
         cta: {
           title: `Download`,
           onClick: () => downloadLatestVersion()
@@ -68,7 +68,6 @@ export function useUpdateConnector() {
 
   return {
     checkUpdate,
-    getVersions,
     downloadLatestVersion,
     isUpToDate,
     latestAvailableVersion
