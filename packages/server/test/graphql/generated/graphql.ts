@@ -2486,6 +2486,8 @@ export type Query = {
    * The query looks for matches in name & email
    */
   userSearch: UserSearchResultCollection;
+  /** Validates the slug, to make sure it contains only valid characters and its not taken. */
+  validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
   /**
    * Look for an invitation to a workspace, for the current user (authed or not).
@@ -2618,6 +2620,11 @@ export type QueryUserSearchArgs = {
   emailOnly?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
   query: Scalars['String']['input'];
+};
+
+
+export type QueryValidateWorkspaceSlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3966,7 +3973,7 @@ export type WorkspaceCreateInput = {
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  slug: Scalars['String']['input'];
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDomain = {

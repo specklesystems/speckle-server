@@ -31,7 +31,9 @@ import {
   updateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
-  addDomainToWorkspaceFactory
+  addDomainToWorkspaceFactory,
+  validateSlugFactory,
+  generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
@@ -61,7 +63,12 @@ export const createTestWorkspace = async (
   domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
-    getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+    validateSlug: validateSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
+    generateValidSlug: generateValidSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
@@ -98,6 +105,9 @@ export const createTestWorkspace = async (
   if (workspace.discoverabilityEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
     const updateWorkspace = updateWorkspaceFactory({
+      validateSlug: validateSlugFactory({
+        getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+      }),
       getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
@@ -114,6 +124,9 @@ export const createTestWorkspace = async (
   if (workspace.domainBasedMembershipProtectionEnabled) {
     if (!domain) throw new Error('Domain is needed for membership protection')
     await updateWorkspaceFactory({
+      validateSlug: validateSlugFactory({
+        getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+      }),
       getWorkspace: getWorkspaceWithDomainsFactory({ db }),
       upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit

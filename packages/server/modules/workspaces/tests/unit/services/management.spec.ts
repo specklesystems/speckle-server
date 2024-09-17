@@ -8,11 +8,12 @@ import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
-  isSlugValid,
+  generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory
+  updateWorkspaceRoleFactory,
+  validateSlugFactory
 } from '@/modules/workspaces/services/management'
-import { Roles } from '@speckle/shared'
+import { Roles, validateWorkspaceSlug } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -70,7 +71,8 @@ const buildCreateWorkspaceWithTestContext = (
     }) => {
       context.storedWorkspaces.push(workspace)
     },
-    getWorkspaceBySlug: async () => null,
+    validateSlug: async () => {},
+    generateValidSlug: async () => cryptoRandomString({ length: 10 }),
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
@@ -103,35 +105,87 @@ const getCreateWorkspaceInput = () => {
 
 describe('Workspace services', () => {
   describe('isSlugValid', () => {
-    it('returns false for url unsafe characters', () => {
-      expect(isSlugValid('{')).to.be.false
+    it('throws for url unsafe characters', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('{{{}}}}}')
+      })
+      expect(err.message).to.contain('only lowercase letters, numbers')
     })
-    it('returns false if slug contains a character that needs encoding', () => {
-      expect(isSlugValid('asdf asdf')).to.be.false
+    it('throws for too short inputs', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('{')
+      })
+      expect(err.message).to.contain('characters long.')
+    })
+    it('throws for too long inputs', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug(cryptoRandomString({ length: 31 }))
+      })
+      expect(err.message).to.contain('slug must not exceed')
+    })
+    it('throws for invalid start', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('-asdfasdf-')
+      })
+      expect(err.message).to.contain('cannot start or end with a')
     })
     it('returns true for valid slugs', () => {
-      expect(isSlugValid('asdf-asdf')).to.be.true
+      validateWorkspaceSlug('asdf-asdf')
+      // if it did not throw, we're good
+      expect(true)
     })
   })
-  describe('createWorkspaceFactory creates a function, that', () => {
+  describe('validateSlugFactory creates a function, that', () => {
     it('throws WorkspaceSlugTakenError if the input slug clashes an existing workspace', async () => {
-      const { createWorkspace } = buildCreateWorkspaceWithTestContext({
+      const validateSlug = validateSlugFactory({
         getWorkspaceBySlug: async () =>
           ({ id: cryptoRandomString({ length: 10 }) } as Workspace)
       })
 
-      const { userId, workspaceInput } = getCreateWorkspaceInput()
       const err = await expectToThrow(async () => {
-        await createWorkspace({
-          userId,
-          workspaceInput,
-          userResourceAccessLimits: null
+        await validateSlug({
+          slug: cryptoRandomString({ length: 10 })
         })
       })
       expect(err.message).to.be.equal(new WorkspaceSlugTakenError().message)
     })
+    it('throws validation error for invalid slugs', async () => {
+      const validateSlug = validateSlugFactory({
+        getWorkspaceBySlug: async () => null
+      })
+
+      const err = await expectToThrow(async () => {
+        await validateSlug({
+          slug: '-----'
+        })
+      })
+      expect(err.message).to.contain('cannot start or end with a hyphen')
+    })
+  })
+
+  describe('generateValidSlugFactory creates a function, that', () => {
+    it('generates a slug from the input name', async () => {
+      const slug = await generateValidSlugFactory({
+        getWorkspaceBySlug: async () => null
+      })({ name: 'Foo bAr{ }baZ' })
+      expect(slug).to.be.equal('foo-bar-baz')
+    })
+    it('adds a random string to the generated slug if it clashes an existing one', async () => {
+      const slug = await generateValidSlugFactory({
+        getWorkspaceBySlug: async () =>
+          ({ id: cryptoRandomString({ length: 10 }) } as Workspace)
+      })({ name: 'FoobAr' })
+      expect(slug).contain('foobar-')
+      expect(slug.length).to.be.equal(12)
+    })
+  })
+  describe('createWorkspaceFactory creates a function, that', () => {
     it('throws WorkspaceSlugInvalidError if the input slug is not valid', async () => {
-      const { createWorkspace } = buildCreateWorkspaceWithTestContext({})
+      const { createWorkspace } = buildCreateWorkspaceWithTestContext({
+        validateSlug: async () => {
+          throw new WorkspaceSlugInvalidError()
+        }
+      })
 
       const { userId, workspaceInput } = getCreateWorkspaceInput()
       const err = await expectToThrow(async () => {
@@ -143,18 +197,24 @@ describe('Workspace services', () => {
       })
       expect(err.message).to.be.equal(new WorkspaceSlugInvalidError().message)
     })
-    it('stores the workspace', async () => {
-      const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
-
+    it('generates a workspace slug from the workspace name', async () => {
+      const generatedSlug = cryptoRandomString({ length: 10 })
       const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const { context, createWorkspace } = buildCreateWorkspaceWithTestContext({
+        generateValidSlug: async () => generatedSlug
+      })
+
       const workspace = await createWorkspace({
         userId,
-        workspaceInput,
+        workspaceInput: { ...workspaceInput, slug: null },
         userResourceAccessLimits: null
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal(omit(workspace, 'domains'))
+      expect(omit(context.storedWorkspaces[0], 'slug')).to.deep.equal(
+        omit(workspace, 'domains', 'slug')
+      )
+      expect(context.storedWorkspaces[0].slug).to.equal(generatedSlug)
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -213,6 +273,9 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => null,
+          validateSlug: async () => {
+            expect.fail()
+          },
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -234,24 +297,7 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
-          upsertWorkspace: async () => {
-            expect.fail()
-          }
-        })({
-          workspaceId: workspace.id,
-          workspaceInput: {
-            logo: 'a broken logo'
-          }
-        })
-      })
-      expect(err.message).to.be.equal('Provided logo is malformed')
-    })
-    it('validates description length', async () => {
-      const workspace = createTestWorkspaceWithDomainsData()
-      const err = await expectToThrow(async () => {
-        await updateWorkspaceFactory({
-          getWorkspace: async () => workspace,
-          emitWorkspaceEvent: async () => {
+          validateSlug: async () => {
             expect.fail()
           },
           upsertWorkspace: async () => {
@@ -273,6 +319,32 @@ describe('Workspace services', () => {
           getWorkspace: async () => workspace,
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          validateSlug: async () => {
+            expect.fail()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            logo: 'a broken logo'
+          }
+        })
+      })
+      expect(err.message).to.be.equal('Provided logo is malformed')
+    })
+    it('validates description length', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          validateSlug: async () => {
+            throw new WorkspaceSlugInvalidError()
           },
           upsertWorkspace: async () => {
             expect.fail()
@@ -294,6 +366,7 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
+          validateSlug: async () => {},
           upsertWorkspace: async () => {
             expect.fail()
           }
@@ -315,6 +388,7 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
+          validateSlug: async () => {},
           upsertWorkspace: async () => {
             expect.fail()
           }
@@ -337,6 +411,8 @@ describe('Workspace services', () => {
         emitWorkspaceEvent: async () => {
           return []
         },
+        validateSlug: async () => {},
+
         upsertWorkspace: async ({ workspace }) => {
           newWorkspaceName = workspace.name
         }
@@ -375,6 +451,7 @@ describe('Workspace services', () => {
         emitWorkspaceEvent: async () => {
           return []
         },
+        validateSlug: async () => {},
         upsertWorkspace: async ({ workspace }) => {
           updatedWorkspace = workspace
         }

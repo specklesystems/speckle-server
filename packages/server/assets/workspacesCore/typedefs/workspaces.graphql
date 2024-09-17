@@ -11,11 +11,15 @@ extend type Query {
   Either token or workspaceId must be specified, or both
   """
   workspaceInvite(workspaceId: String, token: String): PendingWorkspaceCollaborator
+  """
+  Validates the slug, to make sure it contains only valid characters and its not taken.
+  """
+  validateWorkspaceSlug(slug: String!): Boolean!
 }
 
 input WorkspaceCreateInput {
   name: String!
-  slug: String!
+  slug: String
   description: String
   defaultLogoIndex: Int
   """

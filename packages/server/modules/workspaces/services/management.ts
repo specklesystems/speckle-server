@@ -17,7 +17,12 @@ import {
   WorkspaceAcl,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import {
+  generateSlugFromName,
+  MaybeNullOrUndefined,
+  Roles,
+  validateWorkspaceSlug
+} from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
@@ -62,7 +67,7 @@ type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
-    slug: string
+    slug?: string | null
     description: string | null
     logo: string | null
     defaultLogoIndex: number
@@ -70,24 +75,58 @@ type WorkspaceCreateArgs = {
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
-export const isSlugValid = (slug: string): boolean => {
-  const urlString = `https://example.com/${slug}`
-  if (!URL.canParse(urlString)) return false
-  const url = new URL(urlString)
-  if (url.pathname !== `/${slug}`) return false
-  return true
-}
+type GenerateValidSlug = (args: { name: string }) => Promise<string>
+
+type ValidateWorkspaceSlug = (args: { slug: string }) => Promise<void>
+
+export const validateSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): ValidateWorkspaceSlug =>
+  async ({ slug }) => {
+    try {
+      validateWorkspaceSlug(slug)
+    } catch (err) {
+      if (err instanceof Error) throw new WorkspaceSlugInvalidError(err.message)
+      throw err
+    }
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: slug
+    })
+    if (maybeClashingWorkspace) throw new WorkspaceSlugTakenError()
+  }
+
+export const generateValidSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): GenerateValidSlug =>
+  async ({ name }) => {
+    const generatedSlug = generateSlugFromName({ name })
+
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: generatedSlug
+    })
+    return maybeClashingWorkspace
+      ? `${generatedSlug}-${cryptoRandomString({ length: 5 })}`
+      : generatedSlug
+  }
 
 export const createWorkspaceFactory =
   ({
-    getWorkspaceBySlug,
     upsertWorkspace,
     upsertWorkspaceRole,
+    generateValidSlug,
+    validateSlug,
     emitWorkspaceEvent
   }: {
-    getWorkspaceBySlug: GetWorkspaceBySlug
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
+    validateSlug: ValidateWorkspaceSlug
+    generateValidSlug: GenerateValidSlug
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({
@@ -104,14 +143,16 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
-    if (!isSlugValid(workspaceInput.slug)) throw new WorkspaceSlugInvalidError()
-
-    const maybeClashingWorkspace = await getWorkspaceBySlug({
-      workspaceSlug: workspaceInput.slug
-    })
-    if (maybeClashingWorkspace) throw new WorkspaceSlugTakenError()
+    let slug: string
+    if (workspaceInput.slug) {
+      await validateSlug({ slug: workspaceInput.slug })
+      slug = workspaceInput.slug
+    } else {
+      slug = await generateValidSlug(workspaceInput)
+    }
     const workspace = {
       ...workspaceInput,
+      slug,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -139,10 +180,12 @@ export const createWorkspaceFactory =
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
+    validateSlug,
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
     getWorkspace: GetWorkspaceWithDomains
+    validateSlug: ValidateWorkspaceSlug
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }): UpdateWorkspace =>
@@ -165,8 +208,7 @@ export const updateWorkspaceFactory =
       throw new WorkspaceInvalidDescriptionError()
     }
 
-    if (workspaceInput.slug && !isSlugValid(workspaceInput.slug))
-      throw new WorkspaceSlugInvalidError()
+    if (workspaceInput.slug) await validateSlug({ slug: workspaceInput.slug })
 
     if (
       workspaceInput.discoverabilityEnabled &&

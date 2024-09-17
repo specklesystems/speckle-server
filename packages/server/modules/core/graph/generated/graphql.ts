@@ -2499,6 +2499,8 @@ export type Query = {
    * The query looks for matches in name & email
    */
   userSearch: UserSearchResultCollection;
+  /** Validates the slug, to make sure it contains only valid characters and its not taken. */
+  validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
   /**
    * Look for an invitation to a workspace, for the current user (authed or not).
@@ -2631,6 +2633,11 @@ export type QueryUserSearchArgs = {
   emailOnly?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
   query: Scalars['String']['input'];
+};
+
+
+export type QueryValidateWorkspaceSlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3979,7 +3986,7 @@ export type WorkspaceCreateInput = {
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  slug: Scalars['String']['input'];
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDomain = {
@@ -5648,6 +5655,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
+  validateWorkspaceSlug?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryValidateWorkspaceSlugArgs, 'slug'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
   workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, Partial<QueryWorkspaceInviteArgs>>;
 };
