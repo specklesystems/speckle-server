@@ -6,13 +6,14 @@
         Projects {{ user?.user.name }} has access to:
       </p>
       <FormTextInput
-        v-model="searchTerm"
+        v-bind="searchBind"
         name="search"
         color="foundation"
         type="text"
         size="lg"
         :placeholder="`Search ${projectCount} projects...`"
         class="px-3 py-2 border border-outline-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        v-on="searchOn"
       />
       <div
         class="flex flex-col divide-y divide-outline-3 rounded-md border border-outline-3"
@@ -43,6 +44,7 @@ import type { StreamRoles } from '@speckle/shared'
 import { useUpdateUserRole } from '~~/lib/projects/composables/projectManagement'
 import type { WorkspaceCollaborator } from '~/lib/common/generated/gql/graphql'
 import type { ProjectRole } from '~~/lib/common/generated/gql/graphql'
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const props = defineProps<{
   user: WorkspaceCollaborator
@@ -53,6 +55,10 @@ const open = defineModel<boolean>('open', { required: true })
 
 const loading = ref(false)
 const searchTerm = ref('')
+const { on: searchOn, bind: searchBind } = useDebouncedTextInput({
+  model: searchTerm,
+  debouncedBy: 300
+})
 
 const project = computed(() => ({ workspaceId: props.workspaceId }))
 
