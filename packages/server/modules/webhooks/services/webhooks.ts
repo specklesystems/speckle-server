@@ -2,11 +2,11 @@ import { getServerInfo as getServerInfoFn } from '@/modules/core/services/generi
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
   CountWebhooksByStreamId,
-  CreateWebhook,
+  CreateWebhookConfig,
   CreateWebhookEvent,
-  DeleteWebhook,
+  DeleteWebhookConfig,
   GetWebhookById,
-  UpdateWebhook
+  UpdateWebhookConfig
 } from '@/modules/webhooks/domain/operations'
 import { Webhook } from '@/modules/webhooks/domain/types'
 import { SetValuesNullable } from '@speckle/shared'
@@ -28,7 +28,7 @@ export const createWebhook =
     createWebhookConfig,
     countWebhooksByStreamId
   }: {
-    createWebhookConfig: CreateWebhook
+    createWebhookConfig: CreateWebhookConfig
     countWebhooksByStreamId: CountWebhooksByStreamId
   }) =>
   async ({
@@ -59,7 +59,7 @@ export const createWebhook =
   }
 
 export const updateWebhook =
-  ({ updateWebhookConfig }: { updateWebhookConfig: UpdateWebhook }) =>
+  ({ updateWebhookConfig }: { updateWebhookConfig: UpdateWebhookConfig }) =>
   async (
     webhook: Pick<Webhook, 'id'> &
       Partial<SetValuesNullable<Omit<Webhook, 'id' | 'updatedAt'>>>
@@ -84,7 +84,7 @@ export const deleteWebhook =
     deleteWebhookConfig,
     getWebhookById
   }: {
-    deleteWebhookConfig: DeleteWebhook
+    deleteWebhookConfig: DeleteWebhookConfig
     getWebhookById: GetWebhookById
   }) =>
   async ({ id, streamId }: { id: string; streamId: string }) => {

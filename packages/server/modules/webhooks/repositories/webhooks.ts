@@ -2,14 +2,14 @@ import { Knex } from 'knex'
 import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 import {
   CountWebhooksByStreamId,
-  CreateWebhook,
+  CreateWebhookConfig,
   CreateWebhookEvent,
-  DeleteWebhook,
+  DeleteWebhookConfig,
   GetLastWebhookEvents,
   GetStreamWebhooks,
   GetWebhookById,
   GetWebhookEventsCount,
-  UpdateWebhook
+  UpdateWebhookConfig
 } from '@/modules/webhooks/domain/operations'
 
 type WebhookConfig = Omit<Webhook, 'triggers'> & { triggers: Record<string, true> }
@@ -25,8 +25,8 @@ const toTriggersObj = (triggers: string[]): Record<string, true> =>
 const toTriggersArray = (triggers: Record<string, true>): string[] =>
   Object.keys(triggers)
 
-export const createWebhookFactory =
-  ({ db }: { db: Knex }): CreateWebhook =>
+export const createWebhookConfigFactory =
+  ({ db }: { db: Knex }): CreateWebhookConfig =>
   async ({ id, streamId, url, description, secret, enabled, triggers }) => {
     const triggersObj = toTriggersObj(triggers)
 
@@ -62,8 +62,8 @@ export const getWebhookByIdFactory =
     return { ...webhook, triggers: toTriggersArray(webhook.triggers) }
   }
 
-export const updateWebhookFactory =
-  ({ db }: { db: Knex }): UpdateWebhook =>
+export const updateWebhookConfigFactory =
+  ({ db }: { db: Knex }): UpdateWebhookConfig =>
   async ({ webhookId, webhookInput }) => {
     const { triggers, ...update } = webhookInput
     let triggersObj: Record<string, true> | undefined
@@ -78,8 +78,8 @@ export const updateWebhookFactory =
     return webhookId
   }
 
-export const deleteWebhookFactory =
-  ({ db }: { db: Knex }): DeleteWebhook =>
+export const deleteWebhookConfigFactory =
+  ({ db }: { db: Knex }): DeleteWebhookConfig =>
   async ({ id }) => {
     return await tables(db).webhooksConfigs.where({ id }).del()
   }

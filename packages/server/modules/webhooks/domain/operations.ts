@@ -1,6 +1,6 @@
 import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 
-export type CreateWebhook = (
+export type CreateWebhookConfig = (
   webhook: Pick<
     Webhook,
     'id' | 'streamId' | 'url' | 'description' | 'secret' | 'enabled' | 'triggers'
@@ -13,7 +13,7 @@ export type CountWebhooksByStreamId = ({
 
 export type GetWebhookById = ({ id }: Pick<Webhook, 'id'>) => Promise<Webhook | null>
 
-export type UpdateWebhook = ({
+export type UpdateWebhookConfig = ({
   webhookId,
   webhookInput
 }: {
@@ -27,7 +27,7 @@ export type UpdateWebhook = ({
     >
 }) => Promise<string>
 
-export type DeleteWebhook = ({ id }: Pick<Webhook, 'id'>) => Promise<number>
+export type DeleteWebhookConfig = ({ id }: Pick<Webhook, 'id'>) => Promise<number>
 
 export type GetStreamWebhooks = ({
   streamId

@@ -8,13 +8,13 @@ import {
 import { Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
-  createWebhookFactory,
-  deleteWebhookFactory,
+  createWebhookConfigFactory,
+  deleteWebhookConfigFactory,
   getLastWebhookEventsFactory,
   getStreamWebhooksFactory,
   getWebhookByIdFactory,
   getWebhookEventsCountFactory,
-  updateWebhookFactory
+  updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { db } from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
@@ -74,7 +74,7 @@ export = {
       )
 
       const id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })({
         streamId: args.webhook.streamId,
@@ -102,7 +102,7 @@ export = {
         )
 
       const updated = await updateWebhook({
-        updateWebhookConfig: updateWebhookFactory({ db })
+        updateWebhookConfig: updateWebhookConfigFactory({ db })
       })({
         id: args.webhook.id,
         url: args.webhook.url,
@@ -123,7 +123,7 @@ export = {
       )
 
       return await deleteWebhook({
-        deleteWebhookConfig: deleteWebhookFactory({ db }),
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(args.webhook)
     }
