@@ -67,7 +67,5 @@ export function useUpdateConnector() {
     $openUrl(latestAvailableVersion.value?.Url as string)
   }
 
-  return {
-    checkUpdate
-  }
+  return { checkUpdate }
 }
