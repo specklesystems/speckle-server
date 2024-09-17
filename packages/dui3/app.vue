@@ -31,7 +31,7 @@ useHead({
   script: import.meta.dev ? ['http://localhost:8098'] : []
 })
 
-onMounted(() => {
+onMounted(async () => {
   const { trackEvent, addConnectorToProfile, identifyProfile } = useMixpanel()
   const { checkUpdate } = useUpdateConnector()
   // TODO: some host apps can open DUI3 automatically, with this case we shouldn't mark track event as `"type": "action"`,
@@ -39,7 +39,7 @@ onMounted(() => {
   trackEvent('DUI3 Action', { name: 'Launch' })
 
   // Checks whether new version available for the connector or not and throws a toast notification if any.
-  checkUpdate()
+  await checkUpdate()
 
   const { accounts } = useAccountStore()
 

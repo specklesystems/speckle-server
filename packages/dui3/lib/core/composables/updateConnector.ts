@@ -6,7 +6,7 @@ type Versions = {
   Versions: Version[]
 }
 
-type Version = {
+export type Version = {
   Number: string
   Url: string
   Os: number
@@ -60,19 +60,14 @@ export function useUpdateConnector() {
     })
     versions.value = sortedVersions
     latestAvailableVersion.value = sortedVersions[0]
+    hostApp.setLatestAvailableVersion(sortedVersions[0])
   }
 
-  async function downloadLatestVersion() {
-    await getVersions()
-    console.log(latestAvailableVersion.value?.Url) // FIXME: this returns undefined whenever it called from outside, why it doesn't persist?
-
+  function downloadLatestVersion() {
     $openUrl(latestAvailableVersion.value?.Url as string)
   }
 
   return {
-    checkUpdate,
-    downloadLatestVersion,
-    isUpToDate,
-    latestAvailableVersion
+    checkUpdate
   }
 }

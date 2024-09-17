@@ -21,13 +21,13 @@
 
         <div class="flex justify-between items-center">
           <FormButton
-            v-if="!isUpToDate"
-            v-tippy="latestAvailableVersion?.Number.replace('+0', '')"
+            v-if="!hostAppStore.isConnectorUpToDate"
+            v-tippy="hostAppStore.latestAvailableVersion?.Number.replace('+0', '')"
             :icon-right="ArrowUpCircleIcon"
             size="sm"
             color="subtle"
             class="flex min-w-0 transition text-primary py-1"
-            @click.stop="downloadLatestVersion()"
+            @click.stop="hostAppStore.downloadLatestVersion()"
           >
             <span class="">Update</span>
           </FormButton>
@@ -54,7 +54,6 @@
           <div v-else>
             <FormButton
               v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
-              size="xs"
               text
               @click="uiConfigStore.toggleTheme()"
             >
@@ -68,7 +67,6 @@
   <div v-else class="fixed top-1 right-2 z-100 flex items-center space-x-2">
     <FormButton
       v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
-      size="xs"
       text
       @click="uiConfigStore.toggleTheme()"
     >
@@ -106,15 +104,12 @@ import {
 } from '@heroicons/vue/24/solid'
 import { ArrowUpCircleIcon } from '@heroicons/vue/24/outline'
 import { useHostAppStore } from '~/store/hostApp'
-import { useUpdateConnector } from '~/lib/core/composables/updateConnector'
 const isDev = ref(import.meta.dev)
 const openConfigDialog = ref(false)
 // NOTE: make it true to test settings, it might be removed later. TBD
 const testSettings = ref(false)
 
 const uiConfigStore = useConfigStore()
-const { isUpToDate, downloadLatestVersion, latestAvailableVersion } =
-  useUpdateConnector()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
 
 const hostAppStore = useHostAppStore()

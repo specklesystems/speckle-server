@@ -17,6 +17,7 @@ import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
 import { useAccountStore } from '~/store/accounts'
+import type { Version } from '~/lib/core/composables/updateConnector'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -29,7 +30,10 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()
+  const { $openUrl } = useNuxtApp()
   const accountsStore = useAccountStore()
+
+  const latestAvailableVersion = ref<Version | null>(null)
 
   const currentNotification = ref<Nullable<ToastNotification>>(null)
   const showErrorDialog = ref<boolean>(false)
@@ -48,6 +52,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const setNotification = (notification: Nullable<ToastNotification>) => {
     currentNotification.value = notification
   }
+
+  const setLatestAvailableVersion = (version: Nullable<Version>) => {
+    latestAvailableVersion.value = version
+  }
+
+  function downloadLatestVersion() {
+    $openUrl(latestAvailableVersion.value?.Url as string)
+  }
+
+  const isConnectorUpToDate = computed(
+    () => connectorVersion.value === latestAvailableVersion.value?.Number
+  )
 
   const setHostAppError = (error: Nullable<HostAppError>) => {
     hostAppError.value = error
@@ -457,6 +473,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     hostAppName,
     hostAppVersion,
     connectorVersion,
+    isConnectorUpToDate,
+    latestAvailableVersion,
     documentInfo,
     projectModelGroups,
     models,
@@ -469,6 +487,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     hostAppError,
     setNotification,
     setModelError,
+    setLatestAvailableVersion,
+    downloadLatestVersion,
     dismissNotification,
     setHostAppError,
     addModel,
