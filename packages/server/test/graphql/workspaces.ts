@@ -19,6 +19,13 @@ export const workspaceCollaboratorFragment = gql`
     user {
       name
     }
+    projectRoles {
+      role
+      project {
+        id
+        name
+      }
+    }
   }
 `
 

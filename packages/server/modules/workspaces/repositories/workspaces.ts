@@ -29,7 +29,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -56,6 +56,7 @@ import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
+  streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
@@ -254,6 +255,7 @@ export const getWorkspaceCollaboratorsFactory =
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
+        DbWorkspaceAcl.col.workspaceId, // this field is necessary for projectRoles field resolver
         DbWorkspaceAcl.colAs('role', 'workspaceRole'),
         DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
       )
@@ -287,6 +289,7 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
+      workspaceId: i.workspaceId,
       role: i.role,
       createdAt: i.workspaceRoleCreatedAt
     }))

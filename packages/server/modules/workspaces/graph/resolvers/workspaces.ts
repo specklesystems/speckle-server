@@ -4,7 +4,8 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getStream,
   getUserStreams,
-  getUserStreamsCount
+  getUserStreamsCount,
+  getRolesByUserIdFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -761,6 +762,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         role: async (parent) => {
           return parent.workspaceRole
+        },
+        projectRoles: async (parent) => {
+          const projectRoles = await getRolesByUserIdFactory({ db })({
+            userId: parent.id,
+            workspaceId: parent.workspaceId
+          })
+          return projectRoles.map(({ role, resourceId }) => ({
+            projectId: resourceId,
+            role
+          }))
+        }
+      },
+      ProjectRole: {
+        project: async (parent, _args, ctx) => {
+          return await ctx.loaders.streams.getStream.load(parent.projectId)
         }
       },
       PendingWorkspaceCollaborator: {
