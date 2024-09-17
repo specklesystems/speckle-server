@@ -745,12 +745,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: parent.id,
             workspaceId: parent.workspaceId
           })
-          return await Promise.all(
-            projectRoles.map(({ role, resourceId }) => ({
-              projectId: resourceId,
-              role
-            }))
-          )
+          return projectRoles.map(({ role, resourceId }) => ({
+            projectId: resourceId,
+            role
+          }))
         }
       },
       ProjectRole: {
