@@ -38,6 +38,7 @@ onMounted(() => {
   // we need to get this info from source app. (TBD which apps: Rhino opens automatically, not sure acad, sketchup and revit needs trigger button to init)
   trackEvent('DUI3 Action', { name: 'Launch' })
 
+  // Checks whether new version available for the connector or not and throws a toast notification if any.
   checkUpdate()
 
   const { accounts } = useAccountStore()

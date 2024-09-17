@@ -18,34 +18,49 @@
             <PortalTarget name="navigation"></PortalTarget>
           </div>
         </div>
-        <div v-if="uiConfigStore.isDevMode" class="flex justify-between items-center">
-          <!-- ONLY FOR TESTS FOR NOW-->
-          <div v-if="testSettings && hasConfigBindings" class="flex justify-end">
-            <FormButton
-              v-tippy="'Settings'"
-              class="px-1"
-              text
-              hide-text
-              :icon-left="Cog6ToothIcon"
-              @click="openConfigDialog = true"
-            ></FormButton>
-            <LayoutDialog v-model:open="openConfigDialog" fullscreen="none">
-              <ConfigDialog @close="openConfigDialog = false" />
-            </LayoutDialog>
-          </div>
-          <div>
-            <HeaderUserMenu />
-          </div>
-        </div>
-        <div v-else>
+
+        <div class="flex justify-between items-center">
           <FormButton
-            v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
-            size="xs"
-            text
-            @click="uiConfigStore.toggleTheme()"
+            v-if="!isUpToDate"
+            v-tippy="latestAvailableVersion?.Number.replace('+0', '')"
+            :icon-right="ArrowUpCircleIcon"
+            size="sm"
+            color="subtle"
+            class="flex min-w-0 transition text-primary py-1"
+            @click.stop="downloadLatestVersion()"
           >
-            <Component :is="isDarkTheme ? SunIcon : MoonIcon" class="w-4" />
+            <span class="">Update</span>
           </FormButton>
+
+          <div v-if="uiConfigStore.isDevMode">
+            <!-- ONLY FOR TESTS FOR NOW-->
+            <div v-if="testSettings && hasConfigBindings" class="flex justify-end">
+              <FormButton
+                v-tippy="'Settings'"
+                class="px-1"
+                text
+                hide-text
+                :icon-left="Cog6ToothIcon"
+                @click="openConfigDialog = true"
+              ></FormButton>
+              <LayoutDialog v-model:open="openConfigDialog" fullscreen="none">
+                <ConfigDialog @close="openConfigDialog = false" />
+              </LayoutDialog>
+            </div>
+            <div>
+              <HeaderUserMenu />
+            </div>
+          </div>
+          <div v-else>
+            <FormButton
+              v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
+              size="xs"
+              text
+              @click="uiConfigStore.toggleTheme()"
+            >
+              <Component :is="isDarkTheme ? SunIcon : MoonIcon" class="w-4" />
+            </FormButton>
+          </div>
         </div>
       </div>
     </div>
@@ -89,13 +104,17 @@ import {
   MoonIcon,
   SunIcon
 } from '@heroicons/vue/24/solid'
+import { ArrowUpCircleIcon } from '@heroicons/vue/24/outline'
 import { useHostAppStore } from '~/store/hostApp'
+import { useUpdateConnector } from '~/lib/core/composables/updateConnector'
 const isDev = ref(import.meta.dev)
 const openConfigDialog = ref(false)
 // NOTE: make it true to test settings, it might be removed later. TBD
 const testSettings = ref(false)
 
 const uiConfigStore = useConfigStore()
+const { isUpToDate, downloadLatestVersion, latestAvailableVersion } =
+  useUpdateConnector()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
 
 const hostAppStore = useHostAppStore()

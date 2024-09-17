@@ -62,7 +62,10 @@ export function useUpdateConnector() {
     latestAvailableVersion.value = sortedVersions[0]
   }
 
-  function downloadLatestVersion() {
+  async function downloadLatestVersion() {
+    await getVersions()
+    console.log(latestAvailableVersion.value?.Url) // FIXME: this returns undefined whenever it called from outside, why it doesn't persist?
+
     $openUrl(latestAvailableVersion.value?.Url as string)
   }
 
