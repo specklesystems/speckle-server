@@ -4,3 +4,4 @@ export * as SpeckleViewer from './viewer/index.js'
 // export * as Environment from './environment/index.js' // Import from @speckle/shared/dist/...
 export * as Automate from './automate/index.js'
 export * from './core/index.js'
+export * from './workspaces/index.js'
