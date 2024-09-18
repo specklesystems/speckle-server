@@ -48,6 +48,27 @@
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-x-8 items-center">
+        <div class="flex flex-col w-full sm:w-6/12">
+          <span class="text-body-xs font-medium text-foreground">
+            Default project role
+          </span>
+          <span class="text-body-2xs text-foreground-2">
+            Role workspace members get when a new project is added to the workspace
+          </span>
+        </div>
+        <div class="w-full sm:w-6/12">
+          <FormSelectProjectRoles
+            v-model="defaultProjectRole"
+            disabled-items-tooltip="Use project settings to assign a member as project owner"
+            label="Project role"
+            size="md"
+            :disabled-items="[Roles.Stream.Owner]"
+            @update:model-value="save()"
+          />
+        </div>
+      </div>
+      <hr class="my-6 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
         <CommonCard class="bg-foundation">
@@ -92,7 +113,6 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
@@ -106,6 +126,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { Roles, type StreamRoles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -116,10 +137,11 @@ graphql(`
     description
     logo
     role
+    defaultProjectRole
   }
 `)
 
-type FormValues = { name: string; description: string }
+type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
 
 const props = defineProps<{
   workspaceId: string
@@ -129,14 +151,18 @@ const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
-const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
-  id: props.workspaceId
-}))
+const { result: workspaceResult, onResult } = useQuery(
+  settingsWorkspaceGeneralQuery,
+  () => ({
+    id: props.workspaceId
+  })
+)
 
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
 const showLeaveDialog = ref(false)
+const defaultProjectRole = ref<StreamRoles>()
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
@@ -151,6 +177,8 @@ const save = handleSubmit(async () => {
   if (name.value !== workspaceResult.value.workspace.name) input.name = name.value
   if (description.value !== workspaceResult.value.workspace.description)
     input.description = description.value
+  if (defaultProjectRole.value !== workspaceResult.value.workspace.defaultProjectRole)
+    input.defaultProjectRole = defaultProjectRole.value
 
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
@@ -188,4 +216,10 @@ watch(
   },
   { deep: true, immediate: true }
 )
+
+onResult((res) => {
+  if (res.data) {
+    defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
+  }
+})
 </script>

@@ -9,6 +9,8 @@
     class="min-w-[150px]"
     :label-id="labelId"
     :button-id="buttonId"
+    :disabled-item-tooltip="disabledItemsTooltip"
+    :disabled-item-predicate="disabledItemPredicate"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -54,11 +56,16 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
-const props = defineProps<{
-  multiple?: boolean
-  modelValue?: ValueType
-  clearable?: boolean
-}>()
+const props = defineProps({
+  multiple: Boolean,
+  modelValue: [String, Array] as PropType<ValueType>,
+  clearable: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<StreamRoles[]>
+  },
+  disabledItemsTooltip: String
+})
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
@@ -74,4 +81,9 @@ const { selectedValue, isArrayValue, isMultiItemArrayValue, hiddenSelectedItemCo
 
 const roleDisplayName = (role: StreamRoles) =>
   capitalize(Object.entries(Roles.Stream).find(([, val]) => val === role)?.[0] || role)
+
+const disabledItemPredicate = (item: StreamRoles) =>
+  props.disabledItems && props.disabledItems.length > 0
+    ? props.disabledItems.includes(item)
+    : false
 </script>

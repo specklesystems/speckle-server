@@ -12,6 +12,7 @@
           help="If target user does not have a role in the parent workspace, they will be assigned this role."
           :allow-unset="false"
         />
+        {{ role }}
         <FormTextInput
           v-model="search"
           name="search"
@@ -121,6 +122,8 @@ graphql(`
     id
     workspaceId
     workspace {
+      id
+      defaultProjectRole
       team {
         items {
           role
@@ -298,6 +301,16 @@ const disabledWorkspaceMemberRowMessage = (
     ? 'You cannot invite a workspace guest as a project owner.'
     : undefined
 }
+
+watch(
+  () => props.project?.workspace?.defaultProjectRole,
+  (newRole, oldRole) => {
+    if (newRole !== oldRole && newRole) {
+      role.value = newRole as StreamRoles
+    }
+  },
+  { immediate: true }
+)
 
 watch(workspaceRole, (newRole, oldRole) => {
   if (newRole === oldRole) return
