@@ -48,6 +48,8 @@ export type RevokeExistingAppCredentialsForUser = (params: {
   userId: string
 }) => Promise<number>
 
+export type RevokeRefreshToken = (params: { tokenId: string }) => Promise<boolean>
+
 export type UpdateApp = (params: {
   app: Partial<ServerAppRecord> & { id: string } & { scopes?: ServerScope[] }
 }) => Promise<string>
