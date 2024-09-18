@@ -8,7 +8,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { PartialNullable, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
@@ -187,14 +187,7 @@ export type GetUserIdsWithRoleInWorkspace = (
 
 type WorkspaceUpdateArgs = {
   workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
-    discoverabilityEnabled?: boolean | null
-    domainBasedMembershipProtectionEnabled?: boolean | null
-  }
+  workspaceInput: PartialNullable<Omit<Workspace, 'id' | 'createdAt' | 'updatedAt'>>
 }
 
 export type UpdateWorkspace = ({

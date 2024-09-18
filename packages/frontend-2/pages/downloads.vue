@@ -63,7 +63,7 @@ useHead({
 
 const spacesEndpoint = 'https://releases.speckle.dev'
 const cmsTagsEndpoint =
-  'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
+  'https://v1.speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
 
 const connectorTags = await useAppCached(
   'connector-downloads',

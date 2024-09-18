@@ -14,7 +14,8 @@ import {
 import {
   Workspace,
   WorkspaceAcl,
-  WorkspaceDomain
+  WorkspaceDomain,
+  WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -30,8 +31,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
-  WorkspaceInvalidDescriptionError,
-  WorkspaceNoVerifiedDomainsError
+  WorkspaceNoVerifiedDomainsError,
+  WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -95,6 +96,7 @@ export const createWorkspaceFactory =
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
+      defaultProjectRole: Roles.Stream.Contributor,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false
     }
@@ -116,6 +118,52 @@ export const createWorkspaceFactory =
     return { ...workspace }
   }
 
+type WorkspaceUpdateInput = Parameters<UpdateWorkspace>[0]['workspaceInput']
+
+const isValidInput = (input: WorkspaceUpdateInput): input is Partial<Workspace> => {
+  if (!!input.logo) {
+    validateImageString(input.logo)
+  }
+
+  if (!!input.description) {
+    if (input.description.length > 512)
+      throw new WorkspaceInvalidUpdateError('Provided description is too long')
+  }
+
+  return true
+}
+
+const isValidWorkspace = (
+  input: WorkspaceUpdateInput,
+  workspace: WorkspaceWithDomains
+): boolean => {
+  const hasVerifiedDomains = workspace.domains.find((domain) => domain.verified)
+
+  if (input.discoverabilityEnabled && !workspace.discoverabilityEnabled) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+
+  if (
+    input.domainBasedMembershipProtectionEnabled &&
+    !workspace.domainBasedMembershipProtectionEnabled
+  ) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+
+  return true
+}
+
+const sanitizeInput = (input: Partial<Workspace>) => {
+  const sanitizedInput = structuredClone(input)
+
+  if (isEmpty(sanitizedInput.name)) {
+    // Do not allow setting an empty name (empty descriptions allowed)
+    delete sanitizedInput.name
+  }
+
+  return removeNullOrUndefinedKeys(sanitizedInput)
+}
+
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
@@ -134,34 +182,16 @@ export const updateWorkspaceFactory =
     }
 
     // Validate incoming changes
-    if (!!workspaceInput.logo) {
-      validateImageString(workspaceInput.logo)
-    }
-    if (isEmpty(workspaceInput.name)) {
-      // Do not allow setting an empty name (empty descriptions allowed)
-      delete workspaceInput.name
-    }
-    if (!!workspaceInput.description && workspaceInput.description.length > 512) {
-      throw new WorkspaceInvalidDescriptionError()
-    }
-
     if (
-      workspaceInput.discoverabilityEnabled &&
-      !currentWorkspace.discoverabilityEnabled &&
-      !currentWorkspace.domains.find((domain) => domain.verified)
-    )
-      throw new WorkspaceNoVerifiedDomainsError()
-
-    if (
-      workspaceInput.domainBasedMembershipProtectionEnabled &&
-      !currentWorkspace.domainBasedMembershipProtectionEnabled &&
-      !currentWorkspace.domains.find((domain) => domain.verified)
-    )
-      throw new WorkspaceNoVerifiedDomainsError()
+      !isValidInput(workspaceInput) ||
+      !isValidWorkspace(workspaceInput, currentWorkspace)
+    ) {
+      throw new WorkspaceInvalidUpdateError()
+    }
 
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
-      ...removeNullOrUndefinedKeys(workspaceInput),
+      ...sanitizeInput(workspaceInput),
       updatedAt: new Date()
     }
 
