@@ -19,6 +19,7 @@ import {
 } from '@/modules/auth/services/mailchimp'
 import {
   createUser,
+  findOrCreateUser,
   getUserByEmail,
   getUserById,
   validatePasssword
@@ -166,6 +167,15 @@ const setupStrategies = async (app: Express) => {
 
   let strategyCount = 0
 
+  const validateServerInvite = validateServerInviteFactory({
+    findServerInvite: findServerInviteFactory({ db })
+  })
+  const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  })
+  const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
+
   if (process.env.STRATEGY_GOOGLE === 'true') {
     const googleStrategyBuilder = (await import('@/modules/auth/strategies/google'))
       .default
@@ -206,7 +216,16 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_OIDC === 'true') {
-    const oidcStrategyBuilder = (await import('@/modules/auth/strategies/oidc')).default
+    const oidcStrategyBuilderFactory = (await import('@/modules/auth/strategies/oidc'))
+      .default
+    const oidcStrategyBuilder = oidcStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const oidcStrategy = await oidcStrategyBuilder(
       app,
       sessionMiddleware,
@@ -228,15 +247,10 @@ const setupStrategies = async (app: Express) => {
       getUserByEmail,
       getServerInfo,
       getRateLimitResult,
-      validateServerInvite: validateServerInviteFactory({
-        findServerInvite: findServerInviteFactory({ db })
-      }),
+      validateServerInvite,
       createUser,
-      finalizeInvitedServerRegistration: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      resolveAuthRedirectPath: resolveAuthRedirectPathFactory()
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
     })
     const localStrategy = await localStrategyBuilder(
       app,
