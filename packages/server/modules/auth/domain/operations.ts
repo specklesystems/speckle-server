@@ -5,9 +5,14 @@ import {
   UserServerApp
 } from '@/modules/auth/domain/types'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
+import {
+  AuthorizationCodeRecord,
+  RefreshTokenRecord
+} from '@/modules/auth/repositories'
 import { ServerAppRecord } from '@/modules/core/helpers/types'
 import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
-import { ServerScope } from '@speckle/shared'
+import { Optional, ServerScope } from '@speckle/shared'
+import { SetOptional } from 'type-fest'
 
 export type GetApp = (params: { id: string }) => Promise<FullServerApp | null>
 
@@ -56,6 +61,16 @@ export type UpdateApp = (params: {
 
 export type DeleteApp = (params: { id: string }) => Promise<number>
 
+export type GetAuthorizationCode = (params: {
+  id: string
+}) => Promise<Optional<AuthorizationCodeRecord>>
+
+export type DeleteAuthorizationCode = (params: { id: string }) => Promise<number>
+
+export type CreateRefreshToken = (params: {
+  token: SetOptional<RefreshTokenRecord, 'createdAt' | 'lifespan'>
+}) => Promise<RefreshTokenRecord>
+
 export type CreateAuthorizationCode = (params: {
   appId: string
   userId: string
@@ -63,3 +78,13 @@ export type CreateAuthorizationCode = (params: {
 }) => Promise<string>
 
 export type InitializeDefaultApps = () => Promise<void>
+
+export type CreateAppTokenFromAccessCode = (params: {
+  appId: string
+  appSecret: string
+  accessCode: string
+  challenge: string
+}) => Promise<{
+  token: string
+  refreshToken: string
+}>
