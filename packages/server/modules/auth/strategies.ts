@@ -177,8 +177,17 @@ const setupStrategies = async (app: Express) => {
   const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
   if (process.env.STRATEGY_GOOGLE === 'true') {
-    const googleStrategyBuilder = (await import('@/modules/auth/strategies/google'))
-      .default
+    const googleStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/google')
+    ).default
+    const googleStrategyBuilder = googleStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const googStrategy = await googleStrategyBuilder(
       app,
       sessionMiddleware,
