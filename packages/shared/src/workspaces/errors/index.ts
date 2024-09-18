@@ -10,6 +10,13 @@ export class InvalidWorkspaceSlugError extends Error {
   }
 }
 
+export const generateSlugFromName = ({ name }: { name: string }): string => {
+  return name
+    .replace(/ /g, '-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+}
+
 export function validateWorkspaceSlug(slug: string): void {
   if (slug.length < MIN_SLUG_LENGTH) {
     throw new InvalidWorkspaceSlugError(

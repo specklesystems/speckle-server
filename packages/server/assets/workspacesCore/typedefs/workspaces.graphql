@@ -11,10 +11,15 @@ extend type Query {
   Either token or workspaceId must be specified, or both
   """
   workspaceInvite(workspaceId: String, token: String): PendingWorkspaceCollaborator
+  """
+  Validates the slug, to make sure it contains only valid characters and its not taken.
+  """
+  validateWorkspaceSlug(slug: String!): Boolean!
 }
 
 input WorkspaceCreateInput {
   name: String!
+  slug: String
   description: String
   defaultLogoIndex: Int
   """
@@ -26,6 +31,7 @@ input WorkspaceCreateInput {
 input WorkspaceUpdateInput {
   id: String!
   name: String
+  slug: String
   description: String
   """
   Logo image as base64-encoded string
@@ -248,6 +254,7 @@ type WorkspaceBilling {
 type Workspace {
   id: ID!
   name: String!
+  slug: String!
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
