@@ -56,4 +56,10 @@ export type UpdateApp = (params: {
 
 export type DeleteApp = (params: { id: string }) => Promise<number>
 
+export type CreateAuthorizationCode = (params: {
+  appId: string
+  userId: string
+  challenge: string
+}) => Promise<string>
+
 export type InitializeDefaultApps = () => Promise<void>

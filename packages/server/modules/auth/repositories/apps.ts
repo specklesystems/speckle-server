@@ -2,6 +2,7 @@ import { logger, moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
   CreateApp,
+  CreateAuthorizationCode,
   DeleteApp,
   GetAllAppsAuthorizedByUser,
   GetAllAppsCreatedByUser,
@@ -359,4 +360,20 @@ export const revokeRefreshTokenFactory =
     tokenId = tokenId.slice(0, 10)
     await tables.refreshTokens(deps.db).where({ id: tokenId }).del()
     return true
+  }
+
+export const createAuthorizationCodeFactory =
+  (deps: { db: Knex }): CreateAuthorizationCode =>
+  async ({ appId, userId, challenge }) => {
+    if (!challenge) throw new Error('Please provide a valid challenge.')
+
+    const ac = {
+      id: cryptoRandomString({ length: 42 }),
+      appId,
+      userId,
+      challenge
+    }
+
+    await tables.authorizationCodes(deps.db).insert(ac)
+    return ac.id
   }

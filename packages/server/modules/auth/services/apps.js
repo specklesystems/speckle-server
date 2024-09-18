@@ -1,6 +1,5 @@
 'use strict'
 const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
@@ -12,20 +11,6 @@ const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
-  async createAuthorizationCode({ appId, userId, challenge }) {
-    if (!challenge) throw new Error('Please provide a valid challenge.')
-
-    const ac = {
-      id: crs({ length: 42 }),
-      appId,
-      userId,
-      challenge
-    }
-
-    await AuthorizationCodes().insert(ac)
-    return ac.id
-  },
-
   async createAppTokenFromAccessCode({ appId, appSecret, accessCode, challenge }) {
     const code = await AuthorizationCodes().select().where({ id: accessCode }).first()
 
