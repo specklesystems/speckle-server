@@ -37,13 +37,24 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
-import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { ProjectsNewWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment ProjectsNewWorkspace_Workspace on Workspace {
+    id
+    name
+    defaultLogoIndex
+    logo
+    description
+  }
+`)
 
 type FormValues = { name: string; description: string }
 
 const emit = defineEmits<{
   (e: 'cancel'): void
-  (e: 'workspace-created', v: ProjectsAddDialog_WorkspaceFragment): void
+  (e: 'workspace-created', v: ProjectsNewWorkspace_WorkspaceFragment): void
 }>()
 
 const createWorkspace = useCreateWorkspace()

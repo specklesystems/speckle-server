@@ -53,7 +53,7 @@
               Workspace offers better project management and higher data security.
             </p>
           </div>
-          <ProjectsAddDialogNewWorkspace
+          <ProjectsNewWorkspace
             v-if="isCreatingWorkspace"
             @cancel="isCreatingWorkspace = false"
             @workspace-created="onWorkspaceCreated"
@@ -84,6 +84,7 @@ graphql(`
     name
     defaultLogoIndex
     logo
+    ...ProjectsNewWorkspace_Workspace
   }
 `)
 
