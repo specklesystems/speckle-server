@@ -5,7 +5,6 @@ const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { getAppFactory } = require('@/modules/auth/repositories/apps')
-const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
 const ServerAppsScopes = () => knex('server_apps_scopes')
 
@@ -17,18 +16,6 @@ module.exports = {
     tokenId = tokenId.slice(0, 10)
     await RefreshTokens().where({ id: tokenId }).del()
     return true
-  },
-
-  async revokeExistingAppCredentialsForUser({ appId, userId }) {
-    await AuthorizationCodes().where({ appId, userId }).del()
-    await RefreshTokens().where({ appId, userId }).del()
-    const resApiTokenDelete = await ApiTokens()
-      .whereIn('id', (qb) => {
-        qb.select('tokenId').from('user_server_app_tokens').where({ appId, userId })
-      })
-      .del()
-
-    return resApiTokenDelete
   },
 
   async createAuthorizationCode({ appId, userId, challenge }) {

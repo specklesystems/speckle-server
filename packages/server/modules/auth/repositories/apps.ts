@@ -10,6 +10,7 @@ import {
   GetApp,
   RegisterDefaultApp,
   RevokeExistingAppCredentials,
+  RevokeExistingAppCredentialsForUser,
   UpdateApp,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
@@ -286,11 +287,21 @@ export const createAppFactory =
   }
 
 export const revokeExistingAppCredentialsFactory =
-  (deps: { db: Knex }): RevokeExistingAppCredentials =>
+  (deps: {
+    db: Knex
+  }): RevokeExistingAppCredentials & RevokeExistingAppCredentialsForUser =>
   async (params) => {
     const { appId } = params
-    await tables.authorizationCodes(deps.db).where({ appId }).del()
-    await tables.refreshTokens(deps.db).where({ appId }).del()
+    const userId = 'userId' in params ? params.userId : undefined
+
+    await tables
+      .authorizationCodes(deps.db)
+      .where({ appId, ...(userId ? { userId } : {}) })
+      .del()
+    await tables
+      .refreshTokens(deps.db)
+      .where({ appId, ...(userId ? { userId } : {}) })
+      .del()
 
     const resApiTokenDelete = await tables
       .apiTokens(deps.db)
@@ -301,6 +312,10 @@ export const revokeExistingAppCredentialsFactory =
 
     return resApiTokenDelete
   }
+
+export const revokeExistingAppCredentialsForUserFactory = (deps: {
+  db: Knex
+}): RevokeExistingAppCredentialsForUser => revokeExistingAppCredentialsFactory(deps)
 
 export const updateAppFactory =
   (deps: { db: Knex }): UpdateApp =>

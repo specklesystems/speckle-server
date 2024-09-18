@@ -7,8 +7,7 @@ const { beforeEachContext } = require(`@/test/hooks`)
 const {
   createAuthorizationCode,
   createAppTokenFromAccessCode,
-  refreshAppToken,
-  revokeExistingAppCredentialsForUser
+  refreshAppToken
 } = require('../services/apps')
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
@@ -20,7 +19,8 @@ const {
   getAllPublicAppsFactory,
   createAppFactory,
   updateAppFactory,
-  deleteAppFactory
+  deleteAppFactory,
+  revokeExistingAppCredentialsForUserFactory
 } = require('@/modules/auth/repositories/apps')
 
 const getApp = getAppFactory({ db: knex })
@@ -29,6 +29,9 @@ const getAllPublicApps = getAllPublicAppsFactory({ db: knex })
 const createApp = createAppFactory({ db: knex })
 const updateApp = updateAppFactory({ db: knex })
 const deleteApp = deleteAppFactory({ db: knex })
+const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserFactory({
+  db: knex
+})
 
 describe('Services @apps-services', () => {
   const actor = {

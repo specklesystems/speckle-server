@@ -1,5 +1,4 @@
 const { ForbiddenError } = require('@/modules/shared/errors')
-const { revokeExistingAppCredentialsForUser } = require('../../services/apps')
 const { Roles } = require('@speckle/shared')
 const {
   getAppFactory,
@@ -8,7 +7,8 @@ const {
   getAllAppsAuthorizedByUserFactory,
   createAppFactory,
   updateAppFactory,
-  deleteAppFactory
+  deleteAppFactory,
+  revokeExistingAppCredentialsForUserFactory
 } = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
 
@@ -19,6 +19,9 @@ const getAllAppsAuthorizedByUser = getAllAppsAuthorizedByUserFactory({ db })
 const createApp = createAppFactory({ db })
 const updateApp = updateAppFactory({ db })
 const deleteApp = deleteAppFactory({ db })
+const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserFactory({
+  db
+})
 
 module.exports = {
   Query: {
