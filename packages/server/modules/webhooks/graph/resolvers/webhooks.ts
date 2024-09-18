@@ -1,18 +1,20 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  createWebhook,
-  deleteWebhook,
-  updateWebhook
-} from '@/modules/webhooks/services/webhooks-new'
+  createWebhookFactory,
+  deleteWebhookFactory,
+  updateWebhookFactory
+} from '@/modules/webhooks/services/webhooks'
 import { Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
-  createWebhookFactory,
-  deleteWebhookFactory,
+  createWebhookConfigFactory,
+  deleteWebhookConfigFactory,
+  getLastWebhookEventsFactory,
   getStreamWebhooksFactory,
   getWebhookByIdFactory,
-  updateWebhookFactory
+  getWebhookEventsCountFactory,
+  updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { db } from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
@@ -43,7 +45,18 @@ const streamWebhooksResolver = async (
 export = {
   Webhook: {
     projectId: (parent) => parent.streamId,
-    hasSecret: (parent) => !!parent.secret?.length
+    hasSecret: (parent) => !!parent.secret?.length,
+    history: async (parent, args) => {
+      const items = await getLastWebhookEventsFactory({ db })({
+        webhookId: parent.id,
+        limit: args.limit
+      })
+      const totalCount = await getWebhookEventsCountFactory({ db })({
+        webhookId: parent.id
+      })
+
+      return { items, totalCount }
+    }
   },
   Stream: {
     webhooks: streamWebhooksResolver
@@ -60,8 +73,8 @@ export = {
         context.resourceAccessRules
       )
 
-      const id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      const id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })({
         streamId: args.webhook.streamId,
@@ -88,8 +101,8 @@ export = {
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
-      const updated = await updateWebhook({
-        updateWebhookConfig: updateWebhookFactory({ db })
+      const updated = await updateWebhookFactory({
+        updateWebhookConfig: updateWebhookConfigFactory({ db })
       })({
         id: args.webhook.id,
         url: args.webhook.url,
@@ -109,8 +122,8 @@ export = {
         context.resourceAccessRules
       )
 
-      return await deleteWebhook({
-        deleteWebhookConfig: deleteWebhookFactory({ db }),
+      return await deleteWebhookFactory({
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(args.webhook)
     }

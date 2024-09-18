@@ -13,7 +13,7 @@ export type UserRecord = {
   company: Nullable<string>
   email: string
   verified: boolean
-  avatar: string
+  avatar: Nullable<string>
   profiles: Nullable<string>
   /**
    * Marked as optional, cause most queries delete it

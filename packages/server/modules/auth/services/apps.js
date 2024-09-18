@@ -6,11 +6,10 @@ const knex = require(`@/db/knex`)
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { logger } = require('@/logging/logging')
 const { getDefaultApp } = require('@/modules/auth/defaultApps')
-const Users = () => knex('users')
+const { getAppFactory } = require('@/modules/auth/repositories/apps')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
 const ServerAppsScopes = () => knex('server_apps_scopes')
-const Scopes = () => knex('scopes')
 
 const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
@@ -22,55 +21,6 @@ const addDefaultAppOverrides = (app) => {
 }
 
 module.exports = {
-  async getApp({ id }) {
-    const allScopes = await Scopes().select('*')
-
-    const app = await ServerApps().select('*').where({ id }).first()
-    if (!app) return null
-
-    const appScopeNames = (
-      await ServerAppsScopes().select('scopeName').where({ appId: id })
-    ).map((s) => s.scopeName)
-
-    app.scopes = allScopes.filter((scope) => appScopeNames.indexOf(scope.name) !== -1)
-    app.author = await Users()
-      .select('id', 'name', 'avatar')
-      .where({ id: app.authorId })
-      .first()
-
-    return addDefaultAppOverrides(app)
-  },
-
-  async getAllPublicApps() {
-    const apps = await ServerApps()
-      .select(
-        'server_apps.id',
-        'server_apps.name',
-        'server_apps.description',
-        'server_apps.trustByDefault',
-        'server_apps.redirectUrl',
-        'server_apps.logo',
-        'server_apps.termsAndConditionsLink',
-        'users.name as authorName',
-        'users.id as authorId'
-      )
-      .where({ public: true })
-      .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
-      .orderBy('server_apps.trustByDefault', 'DESC')
-
-    apps.forEach((app) => {
-      app = addDefaultAppOverrides(app)
-
-      if (app.authorName && app.authorId) {
-        app.author = { name: app.authorName, id: app.authorId }
-      }
-      delete app.authorName
-      delete app.authorId
-    })
-
-    return apps
-  },
-
   async getAllAppsCreatedByUser({ userId }) {
     const apps = await ServerApps()
       .select(
@@ -288,8 +238,8 @@ module.exports = {
     const valid = await bcrypt.compare(refreshTokenContent, refreshTokenDb.tokenDigest)
     if (!valid) throw new Error('Invalid token') // sneky hackstors
 
-    const app = await module.exports.getApp({ id: appId })
-    if (app.secret !== appSecret) throw new Error('Invalid request')
+    const app = await getAppFactory({ db: knex })({ id: appId })
+    if (!app || app.secret !== appSecret) throw new Error('Invalid request')
 
     // Create the new token
     const appToken = await createAppToken({

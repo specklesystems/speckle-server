@@ -8,7 +8,7 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { PartialNullable, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 
@@ -132,7 +132,22 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+/** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+
+/** Service-level change with protection against invalid role changes */
+export type UpdateWorkspaceRole = (
+  args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
+    /**
+     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
+     */
+    skipProjectRoleUpdatesFor?: string[]
+    /**
+     * Only add or upgrade role, prevent downgrades
+     */
+    preventRoleDowngrade?: boolean
+  }
+) => Promise<void>
 
 export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
@@ -187,14 +202,7 @@ export type GetUserIdsWithRoleInWorkspace = (
 
 type WorkspaceUpdateArgs = {
   workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
-    discoverabilityEnabled?: boolean | null
-    domainBasedMembershipProtectionEnabled?: boolean | null
-  }
+  workspaceInput: PartialNullable<Omit<Workspace, 'id' | 'createdAt' | 'updatedAt'>>
 }
 
 export type UpdateWorkspace = ({

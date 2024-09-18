@@ -12,21 +12,15 @@ export class WorkspaceAdminRequiredError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspaceInvalidDescriptionError extends BaseError {
-  static defaultMessage = 'Provided description is too long'
-  static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
+export class WorkspaceInvalidUpdateError extends BaseError {
+  static defaultMessage = 'Provided workspace update input is invalid or malformed'
+  static code = 'WORKSPACE_INVALID_UPDATE_ERROR'
   static statusCode = 400
 }
 
 export class WorkspaceInvalidRoleError extends BaseError {
   static defaultMessage = 'Invalid workspace role provided'
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'
-  static statusCode = 400
-}
-
-export class WorkspaceInvalidLogoError extends BaseError {
-  static defaultMessage = 'Provided logo is not valid'
-  static code = 'WORKSPACE_INVALID_LOGO_ERROR'
   static statusCode = 400
 }
 

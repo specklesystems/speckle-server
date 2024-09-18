@@ -32,6 +32,7 @@ input WorkspaceUpdateInput {
   """
   logo: String
   defaultLogoIndex: Int
+  defaultProjectRole: String
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
 }
@@ -121,14 +122,14 @@ type WorkspaceMutations {
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
-  projects: WorkspaceProjectMutations!
+  projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
 }
 
 type WorkspaceProjectMutations {
   updateRole(input: ProjectUpdateRoleInput!): Project!
-    @hasServerRole(role: SERVER_USER)
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
+  moveToWorkspace(projectId: String!, workspaceId: String!): Project!
 }
 
 input WorkspaceDomainDeleteInput {
@@ -258,6 +259,10 @@ type Workspace {
   Selected fallback when `logo` not set
   """
   defaultLogoIndex: Int!
+  """
+  The default role workspace members will receive for workspace projects.
+  """
+  defaultProjectRole: String!
   """
   Verified workspace domains
   """
