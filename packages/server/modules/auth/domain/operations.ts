@@ -47,4 +47,6 @@ export type UpdateApp = (params: {
   app: Partial<ServerAppRecord> & { id: string } & { scopes?: ServerScope[] }
 }) => Promise<string>
 
+export type DeleteApp = (params: { id: string }) => Promise<number>
+
 export type InitializeDefaultApps = () => Promise<void>

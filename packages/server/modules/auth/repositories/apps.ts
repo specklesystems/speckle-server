@@ -2,6 +2,7 @@ import { logger, moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
   CreateApp,
+  DeleteApp,
   GetAllAppsAuthorizedByUser,
   GetAllAppsCreatedByUser,
   GetAllPublicApps,
@@ -326,4 +327,12 @@ export const updateAppFactory =
       .update<ServerAppRecord[]>(updatableApp)
 
     return id
+  }
+
+export const deleteAppFactory =
+  (deps: { db: Knex }): DeleteApp =>
+  async ({ id }) => {
+    await revokeExistingAppCredentialsFactory({ db: deps.db })({ appId: id })
+
+    return await tables.serverApps(deps.db).where({ id }).del()
   }
