@@ -5,6 +5,9 @@ import {
   UserServerApp
 } from '@/modules/auth/domain/types'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
+import { ServerAppRecord } from '@/modules/core/helpers/types'
+import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
+import { ServerScope } from '@speckle/shared'
 
 export type GetApp = (params: { id: string }) => Promise<FullServerApp | null>
 
@@ -26,5 +29,14 @@ export type UpdateDefaultApp = (
   app: DefaultAppWithUnwrappedScopes,
   existingApp: FullServerApp
 ) => Promise<void>
+
+export type CreateApp = (
+  app: Omit<
+    MarkNullableOptional<ServerAppRecord>,
+    'id' | 'secret' | 'createdAt' | 'trustByDefault'
+  > & {
+    scopes: ServerScope[]
+  }
+) => Promise<{ id: string; secret: string }>
 
 export type InitializeDefaultApps = () => Promise<void>
