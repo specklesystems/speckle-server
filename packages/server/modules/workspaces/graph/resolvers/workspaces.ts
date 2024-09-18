@@ -128,6 +128,7 @@ import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/manag
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -351,7 +352,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput
+            workspaceInput: {
+              ...workspaceInput,
+              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
+            }
           })
 
           return workspace
