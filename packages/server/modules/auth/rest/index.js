@@ -1,7 +1,6 @@
 'use strict'
 const cors = require('cors')
 const {
-  getApp,
   createAuthorizationCode,
   createAppTokenFromAccessCode,
   refreshAppToken
@@ -12,6 +11,8 @@ const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
+const { getAppFactory } = require('@/modules/auth/repositories/apps')
+const { db } = require('@/db/knex')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -21,6 +22,7 @@ module.exports = (app) => {
    */
   app.get('/auth/accesscode', async (req, res) => {
     try {
+      const getApp = getAppFactory({ db })
       const preventRedirect = !!req.query.preventRedirect
       const appId = req.query.appId
       const app = await getApp({ id: appId })
