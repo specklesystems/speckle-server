@@ -1,6 +1,7 @@
 import { moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
+  GetAllPublicApps,
   GetAllScopes,
   GetApp,
   RegisterDefaultApp,
@@ -34,7 +35,7 @@ const tables = {
   tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name)
 }
 
-const getAppRedirectUrl = (app: ServerAppRecord) => {
+const getAppRedirectUrl = (app: Pick<ServerAppRecord, 'redirectUrl' | 'id'>) => {
   const defaultApp = getDefaultApp({ id: app.id })
   return defaultApp ? defaultApp.redirectUrl : app.redirectUrl
 }
@@ -65,9 +66,51 @@ export const getAppFactory =
     return {
       ...app,
       scopes: appScopes,
-      author: appAuthor!,
+      author: appAuthor || null,
       redirectUrl: getAppRedirectUrl(app)
     }
+  }
+
+export const getAllPublicAppsFactory =
+  (deps: { db: Knex }): GetAllPublicApps =>
+  async () => {
+    const apps: Array<
+      Pick<
+        ServerAppRecord,
+        | 'id'
+        | 'name'
+        | 'description'
+        | 'trustByDefault'
+        | 'redirectUrl'
+        | 'logo'
+        | 'termsAndConditionsLink'
+      > &
+        Partial<{ authorName: string; authorId: string }>
+    > = await tables
+      .serverApps(deps.db)
+      .select(
+        'server_apps.id',
+        'server_apps.name',
+        'server_apps.description',
+        'server_apps.trustByDefault',
+        'server_apps.redirectUrl',
+        'server_apps.logo',
+        'server_apps.termsAndConditionsLink',
+        'users.name as authorName',
+        'users.id as authorId'
+      )
+      .where({ public: true })
+      .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
+      .orderBy('server_apps.trustByDefault', 'DESC')
+
+    return apps.map((app) => ({
+      ...app,
+      redirectUrl: getAppRedirectUrl(app),
+      author:
+        app.authorId && app.authorName
+          ? { name: app.authorName, id: app.authorId, avatar: null }
+          : null
+    }))
   }
 
 export const getAllScopesFactory =
