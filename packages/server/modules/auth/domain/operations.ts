@@ -81,6 +81,12 @@ export type CreateAuthorizationCode = (params: {
   challenge: string
 }) => Promise<string>
 
+export type DeleteExistingUserAuthTokens = (userId: string) => Promise<void>
+
+export type GetAppScopes = (
+  appIds: string[]
+) => Promise<{ [appId: string]: Array<{ name: ServerScope; description: string }> }>
+
 export type InitializeDefaultApps = () => Promise<void>
 
 export type CreateAppTokenFromAccessCode = (params: {

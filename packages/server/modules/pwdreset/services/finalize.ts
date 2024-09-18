@@ -1,4 +1,4 @@
-import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
+import { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
@@ -35,7 +35,7 @@ type FinalizationState = Awaited<ReturnType<ReturnType<typeof initializeStateFac
 type FinalizeNewPasswordDeps = {
   deleteTokens: DeleteTokens
   updateUserPassword: typeof updateUserPassword
-  deleteExistingAuthTokens: typeof deleteExistingAuthTokens
+  deleteExistingAuthTokens: DeleteExistingUserAuthTokens
 }
 
 const finalizeNewPasswordFactory =
