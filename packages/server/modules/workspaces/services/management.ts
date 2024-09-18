@@ -9,7 +9,8 @@ import {
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
   GetWorkspaceDomains,
-  UpdateWorkspace
+  UpdateWorkspace,
+  UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -312,22 +313,13 @@ export const updateWorkspaceRoleFactory =
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-  }) =>
+  }): UpdateWorkspaceRole =>
   async ({
     workspaceId,
     userId,
     role: nextWorkspaceRole,
     skipProjectRoleUpdatesFor,
     preventRoleDowngrade
-  }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
-    /**
-     * Only add or upgrade role, prevent downgrades
-     */
-    preventRoleDowngrade?: boolean
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 

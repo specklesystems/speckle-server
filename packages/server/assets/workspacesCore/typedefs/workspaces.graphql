@@ -122,14 +122,14 @@ type WorkspaceMutations {
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
-  projects: WorkspaceProjectMutations!
+  projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
 }
 
 type WorkspaceProjectMutations {
   updateRole(input: ProjectUpdateRoleInput!): Project!
-    @hasServerRole(role: SERVER_USER)
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
+  moveToWorkspace(projectId: String!, workspaceId: String!): Project!
 }
 
 input WorkspaceDomainDeleteInput {
