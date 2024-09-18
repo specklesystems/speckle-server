@@ -4141,7 +4141,14 @@ export type WorkspaceProjectInviteCreateInput = {
 
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
+  moveToWorkspace: Project;
   updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsMoveToWorkspaceArgs = {
+  projectId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 
@@ -4181,7 +4188,6 @@ export type WorkspaceTeamFilter = {
 
 export type WorkspaceUpdateInput = {
   defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
-  /** stream:reviewer | stream:contributor */
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6215,6 +6221,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectMutations'] = ResolversParentTypes['WorkspaceProjectMutations']> = {
+  moveToWorkspace?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToWorkspaceArgs, 'projectId' | 'workspaceId'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

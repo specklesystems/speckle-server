@@ -2,9 +2,13 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
+  getProjectCollaboratorsFactory,
+  getProjectFactory,
   getStream,
   getUserStreams,
   getUserStreamsCount,
+  updateProjectFactory,
+  upsertProjectRoleFactory,
   getRolesByUserIdFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
@@ -94,6 +98,8 @@ import {
 } from '@/modules/workspaces/services/management'
 import {
   getWorkspaceProjectsFactory,
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
@@ -675,6 +681,50 @@ export = FF_WORKSPACES_MODULE_ENABLED
             { projectId, userId, role },
             context.userId!,
             context.resourceAccessRules
+          )
+        },
+        moveToWorkspace: async (_parent, args, context) => {
+          const { projectId, workspaceId } = args
+
+          await authorizeResolver(
+            context.userId,
+            projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          const trx = await db.transaction()
+
+          const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+            getProject: getProjectFactory(),
+            updateProject: updateProjectFactory({ db: trx }),
+            upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+            getProjectCollaborators: getProjectCollaboratorsFactory(),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            getWorkspaceRoleToDefaultProjectRoleMapping:
+              getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                getWorkspace: getWorkspaceFactory({ db })
+              }),
+            updateWorkspaceRole: updateWorkspaceRoleFactory({
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db: trx
+              }),
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit
+            })
+          })
+
+          return await withTransaction(
+            moveProjectToWorkspace({ projectId, workspaceId }),
+            trx
           )
         }
       },

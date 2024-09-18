@@ -1,4 +1,3 @@
-import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
@@ -6,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
     table
       .text('slug')
       .notNullable()
-      .defaultTo(cryptoRandomString({ length: 10 })) // lets generate a random thing here to make it not nullable
+      .defaultTo(knex.raw('substring(md5(random()::text), 0, 15)')) // lets generate a random thing here to make it not nullable
       .unique() // this also adds an index to the col
   })
 }
