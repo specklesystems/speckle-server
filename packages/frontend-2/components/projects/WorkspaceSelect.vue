@@ -9,6 +9,7 @@
     :button-id="buttonId"
     mount-menu-on-body
     fully-control-value
+    clearable
     :disabled-item-predicate="disabledItemPredicate"
     disabled-item-tooltip="You dont have rights to create projects in this workspace"
   >

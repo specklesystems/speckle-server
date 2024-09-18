@@ -2295,6 +2295,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+export type ProjectRole = {
+  __typename?: 'ProjectRole';
+  project: Project;
+  role: Scalars['String']['output'];
+};
+
 export type ProjectTestAutomationCreateInput = {
   functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
@@ -3910,6 +3916,7 @@ export type WorkspaceBilling = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   user: LimitedUser;
 };
@@ -6081,6 +6088,7 @@ export type AllObjectTypes = {
   ProjectMutations: ProjectMutations,
   ProjectPendingModelsUpdatedMessage: ProjectPendingModelsUpdatedMessage,
   ProjectPendingVersionsUpdatedMessage: ProjectPendingVersionsUpdatedMessage,
+  ProjectRole: ProjectRole,
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessage,
   ProjectUpdatedMessage: ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessage,
@@ -6779,6 +6787,10 @@ export type ProjectPendingVersionsUpdatedMessageFieldArgs = {
   type: {},
   version: {},
 }
+export type ProjectRoleFieldArgs = {
+  project: {},
+  role: {},
+}
 export type ProjectTriggeredAutomationsStatusUpdatedMessageFieldArgs = {
   model: {},
   project: {},
@@ -7206,6 +7218,7 @@ export type WorkspaceBillingFieldArgs = {
 }
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
+  projectRoles: {},
   role: {},
   user: {},
 }
@@ -7341,6 +7354,7 @@ export type AllObjectFieldArgTypes = {
   ProjectMutations: ProjectMutationsFieldArgs,
   ProjectPendingModelsUpdatedMessage: ProjectPendingModelsUpdatedMessageFieldArgs,
   ProjectPendingVersionsUpdatedMessage: ProjectPendingVersionsUpdatedMessageFieldArgs,
+  ProjectRole: ProjectRoleFieldArgs,
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageFieldArgs,
   ProjectUpdatedMessage: ProjectUpdatedMessageFieldArgs,
   ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessageFieldArgs,

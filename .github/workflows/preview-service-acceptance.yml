@@ -7,16 +7,65 @@ on:
       - .yarnrc.yml .
       - .yarn
       - package.json
-      - packages/frontend-2/type-augmentations/stubs/**
-      - packages/preview-service/**
-      - packages/viewer/**
-      - packages/objectloader/**
-      - packages/shared/**
+      - '.github/workflows/preview-service-acceptance.yml'
+      - 'packages/frontend-2/type-augmentations/stubs/**/*'
+      - 'packages/preview-service/**/*'
+      - 'packages/viewer/**/*'
+      - 'packages/objectloader/**/*'
+      - 'packages/shared/**/*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/speckle-preview-service
+  OUTPUT_FILE_PATH: 'preview-service-output/${{ github.sha }}.png'
 
 jobs:
+  build-preview-service:
+    name: Build Preview Service
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      packages: write # publishing container to GitHub registry
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          tags: type=sha,format=long
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and load preview-service Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./packages/preview-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+
   preview-service-acceptance:
     name: Preview Service Acceptance test
     runs-on: ubuntu-latest
+    needs: build-preview-service
+
+    permissions:
+      contents: write # to update the screenshot saved in the branch. This is a HACK as GitHub API does not yet support uploading attachments to a comment.
+      pull-requests: write # to write a comment on the PR
+      packages: read # to download the preview-service image
+
     services:
       postgres:
         # Docker Hub image
@@ -33,55 +82,38 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
-    permissions:
-      contents: write # to update the screenshot saved in the branch. This is a HACK as GitHub API does not yet support uploading attachments to a comment.
-      pull-requests: write # to write a comment on the PR
+      preview-service:
+        image: ${{ needs.build-preview-service.outputs.tags }}
+        env:
+          # note that the host is the postgres service name
+          PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@postgres:5432/preview_service_test
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          run_install: false
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'yarn'
       - name: Install dependencies
-        working-directory: utils/preview-service-acceptance
+        working-directory: packages/preview-service
         run: yarn install
-
-      #TODO load the docker image from a previous job
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build and load preview-service Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./packages/preview-service/Dockerfile
-          load: true
-          push: false
-          tags: speckle/preview-service:local
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Run the acceptance test
         working-directory: packages/preview-service
         run: yarn test:acceptance
         env:
-          PREVIEW_SERVICE_IMAGE: speckle/preview-service:local
-          OUTPUT_FILE_PATH: /tmp/preview-service-output.png
           NODE_ENV: test
+          TEST_DB: preview_service_test
+          # note that the host is localhost, but the port is the port mapped to the postgres service
           PG_CONNECTION_STRING: postgres://preview_service_test:preview_service_test@localhost:5432/preview_service_test
+          OUTPUT_FILE_PATH: ${{ env.OUTPUT_FILE_PATH }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_REGION: ${{ vars.S3_REGION }}
 
-      - uses: actions/upload-artifact@v4
-        name: Upload the output from the preview-service
-        id: upload-preview-service-output
-        with:
-          name: preview-service-output
-          path: /tmp/preview-service-output.png
       - uses: actions/github-script@v7
         with:
           script: |
@@ -89,5 +121,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '📸 Preview service has generated the following image:<br/><img src="${{ steps.upload-preview-service-output.outputs.artifact-url }}"/><br/>'
+              body: '📸 Preview service has generated <a href="${{ vars.S3_ENDPOINT }}/${{ vars.S3_BUCKET }}/${{ env.OUTPUT_FILE_PATH}}">an image.</a>'
             })
