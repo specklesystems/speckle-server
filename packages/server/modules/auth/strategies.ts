@@ -203,8 +203,17 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_AZURE_AD === 'true') {
-    const azureAdStrategyBuilder = (await import('@/modules/auth/strategies/azureAd'))
-      .default
+    const azureAdStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/azureAd')
+    ).default
+    const azureAdStrategyBuilder = azureAdStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const azureAdStrategy = await azureAdStrategyBuilder(
       app,
       sessionMiddleware,
