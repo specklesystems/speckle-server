@@ -1,20 +1,32 @@
 import knex from '@/db/knex'
-import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActivityRecord,
+  StreamScopeActivity
+} from '@/modules/activitystream/helpers/types'
 import { StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
+import { Knex } from 'knex'
 
-export const getActivity = async (
-  streamId: string,
-  start: Date,
-  end: Date,
-  filteredUser: string | null = null
-): Promise<StreamScopeActivity[]> => {
-  let query = StreamActivity.knex<StreamScopeActivity[]>()
-    .where(StreamActivity.col.streamId, '=', streamId)
-    .whereBetween(StreamActivity.col.time, [start, end])
-  if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
-  return await query
+const tables = {
+  streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
+    db<T>(StreamActivity.name)
 }
+
+export const getActivityFactory =
+  ({ db }: { db: Knex }) =>
+  async (
+    streamId: string,
+    start: Date,
+    end: Date,
+    filteredUser: string | null = null
+  ): Promise<StreamScopeActivity[]> => {
+    let query = tables
+      .streamActivity<StreamScopeActivity>(db)
+      .where(StreamActivity.col.streamId, '=', streamId)
+      .whereBetween(StreamActivity.col.time, [start, end])
+    if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
+    return await query
+  }
 
 export const getActiveUserStreams = async (
   start: Date,

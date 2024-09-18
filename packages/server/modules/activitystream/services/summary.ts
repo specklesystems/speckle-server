@@ -1,5 +1,5 @@
 import {
-  getActivity,
+  getActivityFactory,
   getActiveUserStreams,
   UserStreams
 } from '@/modules/activitystream/repositories'
@@ -11,6 +11,7 @@ import {
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { getUser } from '@/modules/core/repositories/users'
 import { getStream } from '@/modules/core/services/streams'
+import { db } from '@/db/knex'
 
 export type StreamActivitySummary = {
   stream: StreamRecord | null
@@ -33,7 +34,7 @@ export const createActivitySummary = async (
       streamIds.map(async (streamId) => {
         return {
           stream: (await getStream({ streamId, userId })) ?? null,
-          activity: await getActivity(streamId, start, end, null) //userId is null for now, to not filter out any activity
+          activity: await getActivityFactory({ db })(streamId, start, end, null) //userId is null for now, to not filter out any activity
         }
       })
     )
