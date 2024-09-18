@@ -12,6 +12,7 @@ import {
   GetAllScopes,
   GetApp,
   GetAuthorizationCode,
+  GetRefreshToken,
   RegisterDefaultApp,
   RevokeExistingAppCredentials,
   RevokeExistingAppCredentialsForUser,
@@ -398,4 +399,10 @@ export const createRefreshTokenFactory =
   async ({ token }) => {
     const [ret] = await tables.refreshTokens(deps.db).insert(token, '*')
     return ret
+  }
+
+export const getRefreshTokenFactory =
+  (deps: { db: Knex }): GetRefreshToken =>
+  async ({ id }) => {
+    return await tables.refreshTokens(deps.db).select('*').where({ id }).first()
   }

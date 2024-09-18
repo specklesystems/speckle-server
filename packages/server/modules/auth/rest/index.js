@@ -1,6 +1,5 @@
 'use strict'
 const cors = require('cors')
-const { refreshAppToken } = require('../services/apps')
 const {
   validateToken,
   revokeTokenById,
@@ -17,11 +16,13 @@ const {
   createAuthorizationCodeFactory,
   getAuthorizationCodeFactory,
   deleteAuthorizationCodeFactory,
-  createRefreshTokenFactory
+  createRefreshTokenFactory,
+  getRefreshTokenFactory
 } = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
 const {
-  createAppTokenFromAccessCodeFactory
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
 } = require('@/modules/auth/services/serverApps')
 
 // TODO: Secure these endpoints!
@@ -81,11 +82,21 @@ module.exports = (app) => {
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
     try {
+      const createRefreshToken = createRefreshTokenFactory({ db })
+      const getApp = getAppFactory({ db })
       const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
         getAuthorizationCode: getAuthorizationCodeFactory({ db }),
         deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
-        getApp: getAppFactory({ db }),
-        createRefreshToken: createRefreshTokenFactory({ db }),
+        getApp,
+        createRefreshToken,
+        createAppToken,
+        createBareToken
+      })
+      const refreshAppToken = refreshAppTokenFactory({
+        getRefreshToken: getRefreshTokenFactory({ db }),
+        revokeRefreshToken: revokeRefreshTokenFactory({ db }),
+        createRefreshToken,
+        getApp,
         createAppToken,
         createBareToken
       })

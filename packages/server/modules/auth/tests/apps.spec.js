@@ -8,7 +8,6 @@ const {
   createBareToken
 } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
-const { refreshAppToken } = require('../services/apps')
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
 const knex = require('@/db/knex')
@@ -24,10 +23,13 @@ const {
   createAuthorizationCodeFactory,
   getAuthorizationCodeFactory,
   deleteAuthorizationCodeFactory,
-  createRefreshTokenFactory
+  createRefreshTokenFactory,
+  getRefreshTokenFactory,
+  revokeRefreshTokenFactory
 } = require('@/modules/auth/repositories/apps')
 const {
-  createAppTokenFromAccessCodeFactory
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
 } = require('@/modules/auth/services/serverApps')
 
 const getApp = getAppFactory({ db: knex })
@@ -41,11 +43,21 @@ const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserF
 })
 const createAuthorizationCode = createAuthorizationCodeFactory({ db: knex })
 
+const createRefreshToken = createRefreshTokenFactory({ db: knex })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   getAuthorizationCode: getAuthorizationCodeFactory({ db: knex }),
   deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db: knex }),
   getApp,
-  createRefreshToken: createRefreshTokenFactory({ db: knex }),
+  createRefreshToken,
+  createAppToken,
+  createBareToken
+})
+
+const refreshAppToken = refreshAppTokenFactory({
+  getRefreshToken: getRefreshTokenFactory({ db: knex }),
+  revokeRefreshToken: revokeRefreshTokenFactory({ db: knex }),
+  createRefreshToken,
+  getApp,
   createAppToken,
   createBareToken
 })

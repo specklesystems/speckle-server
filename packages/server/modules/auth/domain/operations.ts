@@ -71,6 +71,10 @@ export type CreateRefreshToken = (params: {
   token: SetOptional<RefreshTokenRecord, 'createdAt' | 'lifespan'>
 }) => Promise<RefreshTokenRecord>
 
+export type GetRefreshToken = (params: {
+  id: string
+}) => Promise<Optional<RefreshTokenRecord>>
+
 export type CreateAuthorizationCode = (params: {
   appId: string
   userId: string
