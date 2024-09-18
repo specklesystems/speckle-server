@@ -12,7 +12,6 @@
           help="If target user does not have a role in the parent workspace, they will be assigned this role."
           :allow-unset="false"
         />
-        {{ role }}
         <FormTextInput
           v-model="search"
           name="search"
@@ -305,7 +304,7 @@ const disabledWorkspaceMemberRowMessage = (
 watch(
   () => props.project?.workspace?.defaultProjectRole,
   (newRole, oldRole) => {
-    if (newRole !== oldRole && newRole) {
+    if (newRole && newRole !== oldRole) {
       role.value = newRole as StreamRoles
     }
   },

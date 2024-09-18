@@ -56,16 +56,13 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
-const props = defineProps({
-  multiple: Boolean,
-  modelValue: [String, Array] as PropType<ValueType>,
-  clearable: Boolean,
-  disabledItems: {
-    required: false,
-    type: Array as PropType<StreamRoles[]>
-  },
-  disabledItemsTooltip: String
-})
+const props = defineProps<{
+  multiple?: boolean
+  modelValue?: ValueType
+  clearable?: boolean
+  disabledItems?: StreamRoles[]
+  disabledItemsTooltip?: string
+}>()
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
