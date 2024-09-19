@@ -1,7 +1,6 @@
 import {
   getActivityFactory,
-  getActiveUserStreams,
-  UserStreams
+  getActiveUserStreamsFactory
 } from '@/modules/activitystream/repositories'
 import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
 import {
@@ -12,6 +11,7 @@ import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { getUser } from '@/modules/core/repositories/users'
 import { getStream } from '@/modules/core/services/streams'
 import { db } from '@/db/knex'
+import { GetActiveUserStreams } from '@/modules/activitystream/domain/operations'
 
 export type StreamActivitySummary = {
   stream: StreamRecord | null
@@ -51,10 +51,7 @@ export const sendActivityNotifications = async (
   start: Date,
   end: Date,
   notificationPublisher: NotificationPublisher,
-  userActiveStreamsLookup: (
-    start: Date,
-    end: Date
-  ) => Promise<UserStreams[]> = getActiveUserStreams
+  userActiveStreamsLookup: GetActiveUserStreams = getActiveUserStreamsFactory({ db })
 ): Promise<void> => {
   const activeUserStreams = await userActiveStreamsLookup(start, end)
   await Promise.all(
