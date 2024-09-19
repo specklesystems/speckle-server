@@ -33,6 +33,7 @@ describe('Workspace project GQL CRUD', () => {
   const workspace: BasicTestWorkspace = {
     id: '',
     ownerId: '',
+    slug: cryptoRandomString({ length: 10 }),
     name: 'My Test Workspace'
   }
 
@@ -185,6 +186,7 @@ describe('Workspace project GQL CRUD', () => {
     const targetWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'Target Workspace'
     }
 

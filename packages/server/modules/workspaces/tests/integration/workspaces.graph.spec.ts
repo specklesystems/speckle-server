@@ -138,7 +138,8 @@ describe('Workspaces GQL CRUD', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      name: 'Workspace A'
+      name: 'Workspace A',
+      slug: cryptoRandomString({ length: 10 })
     }
 
     const testMemberUser: BasicTestUser = {
@@ -188,6 +189,7 @@ describe('Workspaces GQL CRUD', () => {
         id: '',
         ownerId: '',
         name: 'My Large Workspace',
+        slug: cryptoRandomString({ length: 10 }),
         description: 'A workspace with many users and roles to test pagination.'
       }
 
@@ -529,7 +531,10 @@ describe('Workspaces GQL CRUD', () => {
 
       it('should return workspace cost', async () => {
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: createRandomString() }
+          input: {
+            name: createRandomString(),
+            slug: cryptoRandomString({ length: 10 })
+          }
         })
         expect(createRes).to.not.haveGraphQLErrors()
         const workspaceId = createRes.data!.workspaceMutations.create.id
@@ -666,6 +671,7 @@ describe('Workspaces GQL CRUD', () => {
         const workspace = {
           id: '',
           name: 'test ws',
+          slug: cryptoRandomString({ length: 10 }),
           ownerId: ''
         }
         await createTestWorkspace(workspace, testMemberUser)
@@ -710,9 +716,10 @@ describe('Workspaces GQL CRUD', () => {
     describe('mutation workspaceMutations.create', () => {
       it('should create a workspace', async () => {
         const workspaceName = cryptoRandomString({ length: 6 })
+        const workspaceSlug = cryptoRandomString({ length: 10 })
 
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: workspaceName }
+          input: { name: workspaceName, slug: workspaceSlug }
         })
         const getRes = await apollo.execute(GetWorkspaceDocument, {
           workspaceId: createRes.data!.workspaceMutations.create.id
@@ -722,6 +729,7 @@ describe('Workspaces GQL CRUD', () => {
         expect(getRes).to.not.haveGraphQLErrors()
         expect(getRes.data?.workspace).to.exist
         expect(getRes.data?.workspace?.name).to.equal(workspaceName)
+        expect(getRes.data?.workspace?.slug).to.equal(workspaceSlug)
       })
     })
 
@@ -729,6 +737,7 @@ describe('Workspaces GQL CRUD', () => {
       const workspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
         name: 'My Test Workspace'
       }
 
@@ -825,7 +834,7 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation workspaceMutations.update', () => {
-      const workspace: BasicTestWorkspace = {
+      const workspace = {
         id: '',
         ownerId: '',
         name: cryptoRandomString({ length: 6 }),
@@ -927,7 +936,7 @@ describe('Workspaces GQL CRUD', () => {
         it('allows the active user to leave a workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
-            input: { name }
+            input: { name, slug: cryptoRandomString({ length: 10 }) }
           })
           expect(workspaceCreateResult).to.not.haveGraphQLErrors()
 
@@ -970,7 +979,7 @@ describe('Workspaces GQL CRUD', () => {
         it('stops the last workspace admin from leaving the workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
-            input: { name }
+            input: { name, slug: cryptoRandomString({ length: 10 }) }
           })
 
           const id = workspaceCreateResult.data?.workspaceMutations.create.id
@@ -1000,7 +1009,7 @@ describe('Workspaces GQL CRUD', () => {
         const workspaceName = cryptoRandomString({ length: 6 })
 
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: workspaceName }
+          input: { name: workspaceName, slug: cryptoRandomString({ length: 10 }) }
         })
         expect(createRes).to.not.haveGraphQLErrors()
         const workspaceId = createRes.data!.workspaceMutations.create.id

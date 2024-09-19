@@ -53,7 +53,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAppScopes } from '@/modules/auth/repositories'
 import {
   AutomateRevisionFunctionRecord,
   AutomationRecord,
@@ -85,10 +84,12 @@ import {
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { graphDataloadersBuilders } from '@/modules'
+import { getAppScopesFactory } from '@/modules/auth/repositories'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
+const getAppScopes = getAppScopesFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

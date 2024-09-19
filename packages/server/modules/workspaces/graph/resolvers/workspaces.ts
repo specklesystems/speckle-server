@@ -73,7 +73,8 @@ import {
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getUserIdsWithRoleInWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -90,8 +91,10 @@ import {
   createWorkspaceFactory,
   deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory
+  updateWorkspaceRoleFactory,
+  validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import {
   getWorkspaceProjectsFactory,
@@ -215,6 +218,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
             token: args.token,
             workspaceId: args.workspaceId
           })
+        },
+        validateWorkspaceSlug: async (_parent, args) => {
+          const validateSlug = validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+          })
+          await validateSlug({ slug: args.slug })
+          return true
         }
       },
       Mutation: {
@@ -277,9 +287,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo } = args.input
+          const { name, description, defaultLogoIndex, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
+            generateValidSlug: generateValidSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -289,6 +305,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
+              slug,
               description: description ?? null,
               logo: logo ?? null,
               defaultLogoIndex: defaultLogoIndex ?? 0
@@ -331,6 +348,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const updateWorkspace = updateWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             getWorkspace: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -430,6 +450,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
+              validateSlug: validateSlugFactory({
+                getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+              }),
               getWorkspace: getWorkspaceWithDomainsFactory({ db }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit

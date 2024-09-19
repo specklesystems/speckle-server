@@ -6,7 +6,7 @@
     :disabled-item-predicate="disabledItemPredicate"
     name="serverRoles"
     label="Role"
-    show-label
+    :show-label="showLabel"
     class="min-w-[110px]"
     :fully-control-value="fullyControlValue"
     :label-id="labelId"
@@ -66,7 +66,8 @@ const props = defineProps({
   allowGuest: Boolean,
   allowAdmin: Boolean,
   allowArchived: Boolean,
-  fullyControlValue: Boolean
+  fullyControlValue: Boolean,
+  showLabel: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

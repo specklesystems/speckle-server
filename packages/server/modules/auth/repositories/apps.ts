@@ -1,10 +1,23 @@
-import { moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
+  CreateApp,
+  CreateAuthorizationCode,
+  CreateRefreshToken,
+  DeleteApp,
+  DeleteAuthorizationCode,
+  GetAllAppsAuthorizedByUser,
+  GetAllAppsCreatedByUser,
   GetAllPublicApps,
   GetAllScopes,
   GetApp,
+  GetAuthorizationCode,
+  GetRefreshToken,
   RegisterDefaultApp,
+  RevokeExistingAppCredentials,
+  RevokeExistingAppCredentialsForUser,
+  RevokeRefreshToken,
+  UpdateApp,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
 import {
@@ -14,6 +27,14 @@ import {
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
 import {
+  ApiTokenRecord,
+  AuthorizationCodeRecord,
+  RefreshTokenRecord
+} from '@/modules/auth/repositories'
+import {
+  ApiTokens,
+  AuthorizationCodes,
+  RefreshTokens,
   Scopes,
   ServerApps,
   ServerAppsScopes,
@@ -22,6 +43,7 @@ import {
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
 import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
+import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { difference, omit } from 'lodash'
 
@@ -32,7 +54,11 @@ const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name)
+  tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name),
+  authorizationCodes: (db: Knex) =>
+    db<AuthorizationCodeRecord>(AuthorizationCodes.name),
+  refreshTokens: (db: Knex) => db<RefreshTokenRecord>(RefreshTokens.name),
+  apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name)
 }
 
 const getAppRedirectUrl = (app: Pick<ServerAppRecord, 'redirectUrl' | 'id'>) => {
@@ -110,6 +136,51 @@ export const getAllPublicAppsFactory =
         app.authorId && app.authorName
           ? { name: app.authorName, id: app.authorId, avatar: null }
           : null
+    }))
+  }
+
+export const getAllAppsCreatedByUserFactory =
+  (deps: { db: Knex }): GetAllAppsCreatedByUser =>
+  async ({ userId }) => {
+    const apps: Array<
+      ServerAppRecord & Partial<{ authorName: string; authorId: string }>
+    > = await tables
+      .serverApps(deps.db)
+      .select('server_apps.*', 'users.name as authorName', 'users.id as authorId')
+      .where({ authorId: userId })
+      .leftJoin('users', 'users.id', '=', 'server_apps.authorId')
+
+    return apps.map((app) => ({
+      ...app,
+      redirectUrl: getAppRedirectUrl(app),
+      author:
+        app.authorId && app.authorName
+          ? { name: app.authorName, id: app.authorId, avatar: null }
+          : null
+    }))
+  }
+
+export const getAllAppsAuthorizedByUserFactory =
+  (deps: { db: Knex }): GetAllAppsAuthorizedByUser =>
+  async ({ userId }) => {
+    const query = deps.db.raw(
+      `
+      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
+      FROM user_server_app_tokens a
+      LEFT JOIN server_apps sa ON sa.id = a."appId"
+      LEFT JOIN users u ON sa."authorId" = u.id
+      WHERE a."userId" = ?
+      `,
+      [userId]
+    )
+
+    const { rows } = (await query) as {
+      rows: Array<ServerAppRecord & { author: Pick<UserRecord, 'name' | 'id'> }>
+    }
+    return rows.map((r) => ({
+      ...r,
+      redirectUrl: getAppRedirectUrl(r),
+      author: r.author?.id ? { ...r.author, avatar: null } : null
     }))
   }
 
@@ -194,4 +265,144 @@ export const updateDefaultAppFactory =
         .update(omit(app, ['scopes', 'redirectUrl']))
         .transacting(trx)
     })
+  }
+
+export const createAppFactory =
+  (deps: { db: Knex }): CreateApp =>
+  async (app) => {
+    const id = cryptoRandomString({ length: 10 })
+    const secret = cryptoRandomString({ length: 10 })
+    const scopes = (app.scopes || []).filter((s) => !!s?.length)
+
+    if (!scopes.length) {
+      throw new Error('Cannot create an app with no scopes.')
+    }
+
+    const insertableApp = {
+      ...omit(app, ['scopes', 'firstparty', 'trustByDefault']),
+      id,
+      secret
+    }
+
+    await tables.serverApps(deps.db).insert(insertableApp)
+    await tables
+      .serverAppsScopes(deps.db)
+      .insert(scopes.map((s) => ({ appId: id, scopeName: s })))
+
+    return { id, secret }
+  }
+
+export const revokeExistingAppCredentialsFactory =
+  (deps: {
+    db: Knex
+  }): RevokeExistingAppCredentials & RevokeExistingAppCredentialsForUser =>
+  async (params) => {
+    const { appId } = params
+    const userId = 'userId' in params ? params.userId : undefined
+
+    await tables
+      .authorizationCodes(deps.db)
+      .where({ appId, ...(userId ? { userId } : {}) })
+      .del()
+    await tables
+      .refreshTokens(deps.db)
+      .where({ appId, ...(userId ? { userId } : {}) })
+      .del()
+
+    const resApiTokenDelete = await tables
+      .apiTokens(deps.db)
+      .whereIn('id', (qb) => {
+        qb.select('tokenId').from('user_server_app_tokens').where({ appId })
+      })
+      .del()
+
+    return resApiTokenDelete
+  }
+
+export const revokeExistingAppCredentialsForUserFactory = (deps: {
+  db: Knex
+}): RevokeExistingAppCredentialsForUser => revokeExistingAppCredentialsFactory(deps)
+
+export const updateAppFactory =
+  (deps: { db: Knex }): UpdateApp =>
+  async ({ app }) => {
+    // any app update should nuke everything and force users to re-authorize it.
+    await revokeExistingAppCredentialsFactory({ db: deps.db })({ appId: app.id })
+
+    if (app.scopes) {
+      logger.debug(app.scopes, app.id)
+      // Flush existing app scopes
+      await tables.serverAppsScopes(deps.db).where({ appId: app.id }).del()
+      // Update new scopes
+      await tables
+        .serverAppsScopes(deps.db)
+        .insert(app.scopes.map((s) => ({ appId: app.id, scopeName: s })))
+    }
+
+    const updatableApp = omit(app, ['secret', 'scopes'])
+
+    const [{ id }] = await tables
+      .serverApps(deps.db)
+      .returning('id')
+      .where({ id: app.id })
+      .update<ServerAppRecord[]>(updatableApp)
+
+    return id
+  }
+
+export const deleteAppFactory =
+  (deps: { db: Knex }): DeleteApp =>
+  async ({ id }) => {
+    await revokeExistingAppCredentialsFactory({ db: deps.db })({ appId: id })
+
+    return await tables.serverApps(deps.db).where({ id }).del()
+  }
+
+export const revokeRefreshTokenFactory =
+  (deps: { db: Knex }): RevokeRefreshToken =>
+  async ({ tokenId }) => {
+    tokenId = tokenId.slice(0, 10)
+    await tables.refreshTokens(deps.db).where({ id: tokenId }).del()
+    return true
+  }
+
+export const createAuthorizationCodeFactory =
+  (deps: { db: Knex }): CreateAuthorizationCode =>
+  async ({ appId, userId, challenge }) => {
+    if (!challenge) throw new Error('Please provide a valid challenge.')
+
+    const ac = {
+      id: cryptoRandomString({ length: 42 }),
+      appId,
+      userId,
+      challenge
+    }
+
+    await tables.authorizationCodes(deps.db).insert(ac)
+    return ac.id
+  }
+
+export const getAuthorizationCodeFactory =
+  (deps: { db: Knex }): GetAuthorizationCode =>
+  async ({ id }) => {
+    return await tables.authorizationCodes(deps.db).select().where({ id }).first()
+  }
+
+export const deleteAuthorizationCodeFactory =
+  (deps: { db: Knex }): DeleteAuthorizationCode =>
+  async ({ id }) => {
+    return await tables.authorizationCodes(deps.db).where({ id }).del()
+  }
+
+export const createRefreshTokenFactory =
+  (deps: { db: Knex }): CreateRefreshToken =>
+  async ({ token }) => {
+    const [ret] = await tables.refreshTokens(deps.db).insert(token, '*')
+    return ret
+  }
+
+export const getRefreshTokenFactory =
+  (deps: { db: Knex }): GetRefreshToken =>
+  async ({ id }) => {
+    return await tables.refreshTokens(deps.db).select('*').where({ id }).first()
   }

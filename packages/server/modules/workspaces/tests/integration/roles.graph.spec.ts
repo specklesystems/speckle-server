@@ -26,6 +26,7 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 import { isUndefined } from 'lodash'
 
 describe('Workspaces Roles GQL', () => {
@@ -64,6 +65,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'My Test Workspace'
     }
 
@@ -187,6 +189,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'Test Workspace',
       defaultProjectRole: Roles.Stream.Reviewer
     }
@@ -531,6 +534,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'Test Workspace w/ Projects'
     }
 

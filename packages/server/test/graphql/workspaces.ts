@@ -4,6 +4,7 @@ export const workspaceFragment = gql`
   fragment TestWorkspace on Workspace {
     id
     name
+    slug
     description
     createdAt
     updatedAt
