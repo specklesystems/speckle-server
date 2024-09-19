@@ -163,4 +163,13 @@ const onWorkspaceCreated = (
   isCreatingWorkspace.value = false
   selectedWorkspace.value = workspace
 }
+
+watch(
+  () => open.value,
+  (isOpen, oldIsOpen) => {
+    if (isOpen && isOpen !== oldIsOpen) {
+      selectedWorkspace.value = undefined
+    }
+  }
+)
 </script>
