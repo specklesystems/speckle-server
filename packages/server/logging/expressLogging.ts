@@ -45,6 +45,8 @@ export const LoggingExpressMiddleware = HttpLogger({
   genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
     const path = getRequestPath(req)
+    if (['/favicon.ico'].includes(path || '')) return 'debug'
+
     const shouldBeDebug =
       ['/metrics', '/readiness', '/liveness'].includes(path || '') ?? false
 

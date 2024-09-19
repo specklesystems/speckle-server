@@ -51,7 +51,7 @@ const scheduleWeeklyActivityNotifications = () => {
 }
 
 const activityModule: SpeckleModule = {
-  init: async (_, isInitial) => {
+  init: async ({ isInitial }) => {
     moduleLogger.info('🤺 Init activity module')
     if (isInitial) {
       initializeEventListener()

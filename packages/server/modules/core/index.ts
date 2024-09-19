@@ -27,7 +27,7 @@ let genericRedisClient: Optional<Redis> = undefined
 const coreModule: SpeckleModule<{
   getGenericRedis: () => Redis
 }> = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     moduleLogger.info('💥 Init core module')
 
     // Initialize the static route

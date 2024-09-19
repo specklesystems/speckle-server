@@ -93,7 +93,7 @@ const errorHandler = async (req, res, callback) => {
   }
 }
 
-exports.init = async (app) => {
+exports.init = async ({ app }) => {
   await ensureConditions()
   app.post(
     '/api/stream/:streamId/blob',

@@ -34,7 +34,7 @@ const { getObjectCommitsWithStreamIds } = require('@/modules/core/repositories/c
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
-exports.init = (app, isInitial) => {
+exports.init = ({ app, isInitial }) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {

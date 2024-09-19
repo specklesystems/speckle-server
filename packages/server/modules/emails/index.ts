@@ -18,7 +18,7 @@ import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 let quitVerificationListeners: Optional<() => void> = undefined
 
 const emailsModule: SpeckleModule = {
-  init: async (app, isInitial) => {
+  init: async ({ app, isInitial }) => {
     moduleLogger.info('📧 Init emails module')
 
     // init transporter

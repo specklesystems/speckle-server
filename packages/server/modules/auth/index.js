@@ -17,7 +17,7 @@ const initializeDefaultApps = initializeDefaultAppsFactory({
   registerDefaultApp: registerDefaultAppFactory({ db })
 })
 
-exports.init = async (app) => {
+exports.init = async ({ app }) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies

@@ -7,7 +7,7 @@ import { updateGendoAIRenderRequest } from '@/modules/gendo/services'
 const responseToken = getGendoAIResponseKey()
 
 export = {
-  async init(app) {
+  async init({ app }) {
     moduleLogger.info('🪞 Init Gendo AI render module')
 
     // Gendo api calls back in here with the result.

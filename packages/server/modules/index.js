@@ -58,7 +58,9 @@ const getEnabledModuleNames = () => {
     'cross-server-sync',
     'emails',
     'fileuploads',
+    'metrics',
     'notifications',
+    'openapi',
     'previews',
     'pwdreset',
     'serverinvites',
@@ -85,13 +87,13 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-exports.init = async (app) => {
+exports.init = async ({ app, openApiRegister }) => {
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
   // Stage 1: initialise all modules
   for (const module of modules) {
-    await module.init?.(app, isInitial)
+    await module.init?.({ app, openApiDocument: openApiRegister, isInitial })
   }
 
   // Stage 2: finalize init all modules

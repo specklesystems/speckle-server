@@ -16696,6 +16696,7 @@ __metadata:
     nodemailer: "npm:^6.5.0"
     nodemon: "npm:^2.0.20"
     nyc: "npm:^15.0.1"
+    openapi-types: "npm:^12.1.3"
     openid-client: "npm:^5.1.7"
     passport: "npm:^0.6.0"
     passport-azure-ad: "npm:^4.3.4"
@@ -41433,6 +41434,13 @@ __metadata:
     is-docker: "npm:^2.1.1"
     is-wsl: "npm:^2.2.0"
   checksum: 10/ccb8760068b48e277868423cdf21f4f4e5682ec86dbc3a5cf1c34ef0e8b49721ad98b3f001b4eb2cbd7df7921f84551ec5b9fecace3b3eced3e46dca1c785f03
+  languageName: node
+  linkType: hard
+
+"openapi-types@npm:^12.1.3":
+  version: 12.1.3
+  resolution: "openapi-types@npm:12.1.3"
+  checksum: 10/9d1d7ed848622b63d0a4c3f881689161b99427133054e46b8e3241e137f1c78bb0031c5d80b420ee79ac2e91d2e727ffd6fc13c553d1b0488ddc8ad389dcbef8
   languageName: node
   linkType: hard
 

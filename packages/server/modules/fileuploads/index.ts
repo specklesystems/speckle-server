@@ -50,7 +50,7 @@ const saveFileUploads = async ({
   )
 }
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return

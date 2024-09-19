@@ -8,7 +8,7 @@ import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 let quitListeners: Optional<() => void> = undefined
 
 const ServerAccessRequestsModule: SpeckleModule = {
-  init(_, isInitial) {
+  init({ isInitial }) {
     moduleLogger.info('🔐 Init access request module')
 
     if (isInitial) {

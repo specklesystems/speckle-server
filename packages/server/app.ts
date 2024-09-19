@@ -64,6 +64,9 @@ import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
+import { openApiJsonHandlerFactory, openApiJsonPath } from '@/modules/openapi'
+import { openApiDocument } from '@/modules/openapi/openAPIDocs'
+import { OpenAPIV2 } from 'openapi-types'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -382,8 +385,9 @@ export async function init() {
   )
   if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddleware)
 
+  const openApiRgstr = openApiDocument()
   // Initialize default modules, including rest api handlers
-  await ModulesSetup.init(app)
+  await ModulesSetup.init({ app, openApiRegister: openApiRgstr })
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
@@ -399,16 +403,21 @@ export async function init() {
       context: buildContext
     })
   )
-
-  // Expose prometheus metrics
-  app.get('/metrics', async (req, res) => {
-    try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
-    } catch (ex: unknown) {
-      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
+  openApiRgstr.registerOperation(GRAPHQL_PATH, OpenAPIV2.HttpMethods.POST, {
+    summary: 'GraphQL',
+    description: 'GraphQL endpoint',
+    responses: {
+      default: {
+        description: 'GraphQL endpoint'
+      }
     }
   })
+
+  // The last route to be added, after all paths are registered with OpenAPI documentation, is the OpenAPI JSON
+  const openApiJson = openApiJsonHandlerFactory({
+    openApiDoc: openApiRgstr.getDocument()
+  })
+  app.get(openApiJsonPath, openApiJson)
 
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
