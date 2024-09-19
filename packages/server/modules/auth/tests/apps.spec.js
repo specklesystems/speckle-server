@@ -5,7 +5,6 @@ const { createUser } = require(`@/modules/core/services/users`)
 const { validateToken } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
 const {
-  deleteApp,
   createAuthorizationCode,
   createAppTokenFromAccessCode,
   refreshAppToken,
@@ -20,7 +19,8 @@ const {
   updateDefaultAppFactory,
   getAllPublicAppsFactory,
   createAppFactory,
-  updateAppFactory
+  updateAppFactory,
+  deleteAppFactory
 } = require('@/modules/auth/repositories/apps')
 
 const getApp = getAppFactory({ db: knex })
@@ -28,6 +28,7 @@ const updateDefaultApp = updateDefaultAppFactory({ db: knex })
 const getAllPublicApps = getAllPublicAppsFactory({ db: knex })
 const createApp = createAppFactory({ db: knex })
 const updateApp = updateAppFactory({ db: knex })
+const deleteApp = deleteAppFactory({ db: knex })
 
 describe('Services @apps-services', () => {
   const actor = {

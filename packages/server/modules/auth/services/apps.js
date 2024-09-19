@@ -4,10 +4,7 @@ const crs = require('crypto-random-string')
 const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
-const {
-  getAppFactory,
-  revokeExistingAppCredentialsFactory
-} = require('@/modules/auth/repositories/apps')
+const { getAppFactory } = require('@/modules/auth/repositories/apps')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
 const ServerAppsScopes = () => knex('server_apps_scopes')
@@ -16,12 +13,6 @@ const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
-  async deleteApp({ id }) {
-    await revokeExistingAppCredentialsFactory({ db: knex })({ appId: id })
-
-    return await ServerApps().where({ id }).del()
-  },
-
   async revokeRefreshToken({ tokenId }) {
     tokenId = tokenId.slice(0, 10)
     await RefreshTokens().where({ id: tokenId }).del()
