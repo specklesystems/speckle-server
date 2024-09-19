@@ -54,7 +54,8 @@
             Default project role
           </span>
           <span class="text-body-2xs text-foreground-2">
-            Role workspace members get when a new project is added to the workspace
+            Role workspace members get when added to the workspace and in newly created
+            projects.
           </span>
         </div>
         <div class="w-full sm:w-6/12">
