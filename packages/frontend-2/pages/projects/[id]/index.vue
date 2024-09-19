@@ -62,7 +62,7 @@
 
     <ProjectsMoveToWorkspaceDialog
       v-if="project"
-      :open="showMoveDialog"
+      v-model:open="showMoveDialog"
       :project="project"
     />
   </div>

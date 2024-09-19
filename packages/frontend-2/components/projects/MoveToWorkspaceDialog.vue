@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Move project to workspace</template>
     <div class="flex flex-col space-y-4">
       <template v-if="!isCreatingWorkspace">
@@ -66,7 +66,6 @@ import type {
   ProjectsMoveToWorkspaceDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
-
 import { useQuery } from '@vue/apollo-composable'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
@@ -107,7 +106,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
 }>()
-const isOpen = defineModel<boolean>('open', { required: true })
+const open = defineModel<boolean>('open', { required: true })
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result } = useQuery(projectWorkspaceSelectQuery, null, () => ({
@@ -134,7 +133,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
       text: 'Cancel',
       props: { color: 'outline' },
       onClick: () => {
-        isOpen.value = false
+        open.value = false
       }
     },
     {
@@ -151,7 +150,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
             selectedWorkspace.value.name
           )
 
-          isOpen.value = false
+          open.value = false
         }
       }
     }
