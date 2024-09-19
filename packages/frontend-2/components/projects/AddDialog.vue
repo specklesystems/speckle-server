@@ -153,22 +153,25 @@ const workspaces = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
-const dialogButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Cancel',
-    props: { color: 'outline' },
-    onClick: () => {
-      open.value = false
-    }
-  },
-  {
-    text: 'Create',
-    props: {
-      submit: true
+const dialogButtons = computed((): LayoutDialogButton[] => {
+  if (isCreatingWorkspace.value) return []
+  return [
+    {
+      text: 'Cancel',
+      props: { color: 'outline' },
+      onClick: () => {
+        open.value = false
+      }
     },
-    onClick: onSubmit
-  }
-])
+    {
+      text: 'Create',
+      props: {
+        submit: true
+      },
+      onClick: onSubmit
+    }
+  ]
+})
 
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {

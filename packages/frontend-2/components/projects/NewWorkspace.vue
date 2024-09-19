@@ -12,7 +12,6 @@
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
-        show-required
       />
       <FormTextInput
         v-model:model-value="workspaceDescription"
@@ -21,6 +20,7 @@
         placeholder="Description"
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
+        show-optional
         show-label
       />
       <div class="flex justify-end gap-x-2">

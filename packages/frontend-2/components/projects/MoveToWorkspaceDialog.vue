@@ -126,33 +126,37 @@ const modelText = computed(() =>
 const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
-const dialogButtons = computed<LayoutDialogButton[]>(() => [
-  {
-    text: 'Cancel',
-    props: { color: 'outline' },
-    onClick: () => {
-      isOpen.value = false
-    }
-  },
-  {
-    text: 'Move',
-    props: {
-      color: 'primary',
-      disabled: !selectedWorkspace.value
-    },
-    onClick: () => {
-      if (props.project && selectedWorkspace.value) {
-        moveProject(
-          props.project.id,
-          selectedWorkspace.value.id,
-          selectedWorkspace.value.name
-        )
+const dialogButtons = computed<LayoutDialogButton[]>(() => {
+  if (isCreatingWorkspace.value) return []
 
+  return [
+    {
+      text: 'Cancel',
+      props: { color: 'outline' },
+      onClick: () => {
         isOpen.value = false
       }
+    },
+    {
+      text: 'Move',
+      props: {
+        color: 'primary',
+        disabled: !selectedWorkspace.value
+      },
+      onClick: () => {
+        if (props.project && selectedWorkspace.value) {
+          moveProject(
+            props.project.id,
+            selectedWorkspace.value.id,
+            selectedWorkspace.value.name
+          )
+
+          isOpen.value = false
+        }
+      }
     }
-  }
-])
+  ]
+})
 
 const onWorkspaceCreated = (
   workspace: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
