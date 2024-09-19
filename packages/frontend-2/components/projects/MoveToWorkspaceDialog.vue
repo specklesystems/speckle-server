@@ -22,6 +22,7 @@
       </template>
       <ProjectsNewWorkspace
         v-else
+        mixpanel-event-source="move-to-workspace-modal"
         @cancel="isCreatingWorkspace = false"
         @workspace-created="onWorkspaceCreated"
       />

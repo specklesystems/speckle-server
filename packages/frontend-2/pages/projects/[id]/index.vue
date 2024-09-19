@@ -161,7 +161,7 @@ const hasRole = computed(() => project.value?.role)
 const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
 const teamUsers = computed(() => project.value?.team.map((t) => t.user))
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
-  const items = [
+  const items: LayoutMenuItem[][] = [
     [
       {
         title: 'Copy link',

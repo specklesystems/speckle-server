@@ -30,7 +30,6 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
@@ -45,9 +44,9 @@ import {
   useProjectInviteMutation,
   useMoveProjectToWorkspaceMutation
 } from '~~/lib/projects/graphql/mutations'
-
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -544,6 +543,7 @@ export function useMoveProjectToWorkspace() {
   const apollo = useApolloClient().client
 
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   return async (projectId: string, workspaceId: string, workspaceName: string) => {
     const { data, errors } = await apollo
@@ -557,6 +557,12 @@ export function useMoveProjectToWorkspace() {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: `Moved project to ${workspaceName}`
+      })
+
+      mixpanel.track('Project Moved To Workspace', {
+        projectId,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)

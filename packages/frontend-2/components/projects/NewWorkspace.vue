@@ -57,6 +57,10 @@ const emit = defineEmits<{
   (e: 'workspace-created', v: ProjectsNewWorkspace_WorkspaceFragment): void
 }>()
 
+const props = defineProps<{
+  mixpanelEventSource: string
+}>()
+
 const createWorkspace = useCreateWorkspace()
 const { generateDefaultLogoIndex } = useWorkspacesAvatar()
 const { handleSubmit } = useForm<FormValues>()
@@ -77,7 +81,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
       navigateOnSuccess: false
     },
     {
-      source: 'create-project-modal'
+      source: props.mixpanelEventSource
     }
   )
 

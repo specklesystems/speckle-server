@@ -55,6 +55,7 @@
           </div>
           <ProjectsNewWorkspace
             v-if="isCreatingWorkspace"
+            mixpanel-event-source="create-project-modal"
             @cancel="isCreatingWorkspace = false"
             @workspace-created="onWorkspaceCreated"
           />
