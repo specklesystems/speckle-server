@@ -584,22 +584,6 @@ export const Automations = buildTableHelper('automations', [
   'isTestAutomation'
 ])
 
-export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
-  'id',
-  'userId',
-  'projectId',
-  'modelId',
-  'versionId',
-  'createdAt',
-  'updatedAt',
-  'gendoGenerationId',
-  'status',
-  'prompt',
-  'camera',
-  'baseImage',
-  'responseImage'
-])
-
 export const UserEmails = buildTableHelper('user_emails', [
   'id',
   'email',

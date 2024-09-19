@@ -10,11 +10,6 @@ function parseFeatureFlags() {
       schema: z.boolean(),
       defaults: { production: false, _: true }
     },
-    // Enables the gendo ai integration
-    FF_GENDOAI_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
     // Enables the workspaces module
     FF_WORKSPACES_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -37,7 +32,6 @@ let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
 
 export function getFeatureFlags(): {
   FF_AUTOMATE_MODULE_ENABLED: boolean
-  FF_GENDOAI_MODULE_ENABLED: boolean
   FF_NO_CLOSURE_WRITES: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
 } {

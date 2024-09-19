@@ -380,18 +380,6 @@ export function getAutomateEncryptionKeysPath() {
   return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
 }
 
-export function getGendoAIKey() {
-  return process.env.GENDOAI_KEY
-}
-
-export function getGendoAIResponseKey() {
-  return process.env.GENDOAI_KEY_RESPONSE
-}
-
-export function getGendoAIAPIEndpoint() {
-  return process.env.GENDOAI_API_ENDPOINT
-}
-
 export const getFeatureFlags = () => Environment.getFeatureFlags()
 
 export function getLicenseToken(): string | undefined {

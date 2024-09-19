@@ -42,11 +42,7 @@ function autoloadFromDirectory(dirPath) {
 }
 
 const getEnabledModuleNames = () => {
-  const {
-    FF_AUTOMATE_MODULE_ENABLED,
-    FF_GENDOAI_MODULE_ENABLED,
-    FF_WORKSPACES_MODULE_ENABLED
-  } = getFeatureFlags()
+  const { FF_AUTOMATE_MODULE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
   const moduleNames = [
     'accessrequests',
     'activitystream',
@@ -68,7 +64,6 @@ const getEnabledModuleNames = () => {
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
-  if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
   if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
   return moduleNames
 }

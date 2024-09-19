@@ -28,9 +28,6 @@ import {
   UserProjectsUpdatedMessage,
   ViewerResourceItem,
   ViewerUserActivityMessage,
-  GendoAiRender,
-  SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
-  SubscriptionProjectVersionGendoAiRenderCreatedArgs,
   CommentThreadActivityMessage,
   SubscriptionCommentThreadActivityArgs,
   MutationUserViewerActivityBroadcastArgs,
@@ -106,9 +103,7 @@ export enum ProjectSubscriptions {
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
   // old beta subscription:
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
-  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
-  ProjectVersionGendoAIRenderUpdated = 'PROJECT_VERSION_GENDO_AI_RENDER_UPDATED',
-  ProjectVersionGendoAIRenderCreated = 'PROJECT_VERSION_GENDO_AI_RENDER_CREATED'
+  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED'
 }
 
 export enum ViewerSubscriptions {
@@ -143,18 +138,6 @@ type SubscriptionTypeMap = {
       >
     }
     variables: SubscriptionProjectUpdatedArgs
-  }
-  [ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated]: {
-    payload: {
-      projectVersionGendoAIRenderUpdated: GendoAiRender
-    }
-    variables: SubscriptionProjectVersionGendoAiRenderUpdatedArgs
-  }
-  [ProjectSubscriptions.ProjectVersionGendoAIRenderCreated]: {
-    payload: {
-      projectVersionGendoAIRenderCreated: GendoAiRender
-    }
-    variables: SubscriptionProjectVersionGendoAiRenderCreatedArgs
   }
   [ProjectSubscriptions.ProjectModelsUpdated]: {
     payload: {

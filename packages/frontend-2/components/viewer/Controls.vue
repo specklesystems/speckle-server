@@ -130,21 +130,6 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
-
-          <!-- Gendo -->
-          <ViewerControlsButtonToggle
-            v-show="isGendoEnabled"
-            v-tippy="'Real time AI rendering powered by Gendo'"
-            :active="activeControl === 'gendo'"
-            class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
-            @click="toggleActiveControl('gendo')"
-          >
-            <img
-              src="~/assets/images/gendo/logo.svg"
-              alt="gendo Logo"
-              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
-            />
-          </ViewerControlsButtonToggle>
         </div>
         <!-- Standard viewer controls -->
       </div>
@@ -214,11 +199,6 @@
           @close="activeControl = 'none'"
         />
       </div>
-      <div
-        v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
-      >
-        <ViewerGendoPanel @close="activeControl = 'none'" />
-      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -281,8 +261,6 @@ import {
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
-const isGendoEnabled = useIsGendoModuleEnabled()
-
 enum ViewerKeyboardActions {
   ToggleModels = 'ToggleModels',
   ToggleExplorer = 'ToggleExplorer',
@@ -343,7 +321,6 @@ type ActiveControl =
   | 'automate'
   | 'measurements'
   | 'mobileOverflow'
-  | 'gendo'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()

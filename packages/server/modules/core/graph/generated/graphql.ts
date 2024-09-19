@@ -918,41 +918,6 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
-export type GendoAiRender = {
-  __typename?: 'GendoAIRender';
-  camera?: Maybe<Scalars['JSONObject']['output']>;
-  createdAt: Scalars['String']['output'];
-  gendoGenerationId?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  modelId: Scalars['String']['output'];
-  projectId: Scalars['String']['output'];
-  prompt: Scalars['String']['output'];
-  /** This is a blob id. */
-  responseImage?: Maybe<Scalars['String']['output']>;
-  status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  user?: Maybe<AvatarUser>;
-  userId: Scalars['String']['output'];
-  versionId: Scalars['String']['output'];
-};
-
-export type GendoAiRenderCollection = {
-  __typename?: 'GendoAIRenderCollection';
-  items: Array<Maybe<GendoAiRender>>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type GendoAiRenderInput = {
-  /** Base64 encoded image of the depthmap. */
-  baseImage: Scalars['String']['input'];
-  camera: Scalars['JSONObject']['input'];
-  modelId: Scalars['ID']['input'];
-  projectId: Scalars['ID']['input'];
-  /** The generation prompt. */
-  prompt: Scalars['String']['input'];
-  versionId: Scalars['ID']['input'];
-};
-
 export type JoinWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -3166,8 +3131,6 @@ export type Subscription = {
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
-  projectVersionGendoAIRenderCreated: GendoAiRender;
-  projectVersionGendoAIRenderUpdated: GendoAiRender;
   /** Subscribe to when a project's versions get their preview image fully generated. */
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
@@ -3288,18 +3251,6 @@ export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
 
 export type SubscriptionProjectUpdatedArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectVersionGendoAiRenderCreatedArgs = {
-  id: Scalars['String']['input'];
-  versionId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectVersionGendoAiRenderUpdatedArgs = {
-  id: Scalars['String']['input'];
-  versionId: Scalars['String']['input'];
 };
 
 
@@ -3679,8 +3630,6 @@ export type Version = {
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime']['output'];
-  gendoAIRender: GendoAiRender;
-  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID']['output'];
   message?: Maybe<Scalars['String']['output']>;
   model: Model;
@@ -3695,11 +3644,6 @@ export type Version = {
 export type VersionCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
-};
-
-
-export type VersionGendoAiRenderArgs = {
-  id: Scalars['String']['input'];
 };
 
 export type VersionCollection = {
@@ -3728,7 +3672,6 @@ export type VersionMutations = {
   delete: Scalars['Boolean']['output'];
   markReceived: Scalars['Boolean']['output'];
   moveToModel: Model;
-  requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
 };
 
@@ -3750,11 +3693,6 @@ export type VersionMutationsMarkReceivedArgs = {
 
 export type VersionMutationsMoveToModelArgs = {
   input: MoveVersionsInput;
-};
-
-
-export type VersionMutationsRequestGendoAiRenderArgs = {
-  input: GendoAiRenderInput;
 };
 
 
@@ -4367,9 +4305,6 @@ export type ResolversTypes = {
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
-  GendoAIRender: ResolverTypeWrapper<GendoAiRender>;
-  GendoAIRenderCollection: ResolverTypeWrapper<GendoAiRenderCollection>;
-  GendoAIRenderInput: GendoAiRenderInput;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
@@ -4624,9 +4559,6 @@ export type ResolversParentTypes = {
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: FileUploadGraphQLReturn;
   Float: Scalars['Float']['output'];
-  GendoAIRender: GendoAiRender;
-  GendoAIRenderCollection: GendoAiRenderCollection;
-  GendoAIRenderInput: GendoAiRenderInput;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   JSONObject: Scalars['JSONObject']['output'];
@@ -5232,29 +5164,6 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRender'] = ResolversParentTypes['GendoAIRender']> = {
-  camera?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  gendoGenerationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  prompt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  responseImage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  user?: Resolver<Maybe<ResolversTypes['AvatarUser']>, ParentType, ContextType>;
-  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type GendoAiRenderCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRenderCollection'] = ResolversParentTypes['GendoAIRenderCollection']> = {
-  items?: Resolver<Array<Maybe<ResolversTypes['GendoAIRender']>>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5895,8 +5804,6 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
   projectTriggeredAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'], "projectTriggeredAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
-  projectVersionGendoAIRenderCreated?: SubscriptionResolver<ResolversTypes['GendoAIRender'], "projectVersionGendoAIRenderCreated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionGendoAiRenderCreatedArgs, 'id' | 'versionId'>>;
-  projectVersionGendoAIRenderUpdated?: SubscriptionResolver<ResolversTypes['GendoAIRender'], "projectVersionGendoAIRenderUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionGendoAiRenderUpdatedArgs, 'id' | 'versionId'>>;
   projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
   projectVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectVersionsUpdatedMessage'], "projectVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsUpdatedArgs, 'id'>>;
   streamDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "streamDeleted", ParentType, ContextType, Partial<SubscriptionStreamDeletedArgs>>;
@@ -6017,8 +5924,6 @@ export type VersionResolvers<ContextType = GraphQLContext, ParentType extends Re
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  gendoAIRender?: Resolver<ResolversTypes['GendoAIRender'], ParentType, ContextType, RequireFields<VersionGendoAiRenderArgs, 'id'>>;
-  gendoAIRenders?: Resolver<ResolversTypes['GendoAIRenderCollection'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
@@ -6055,7 +5960,6 @@ export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType e
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
   markReceived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsMarkReceivedArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
-  requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsRequestGendoAiRenderArgs, 'input'>>;
   update?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -6280,8 +6184,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DateTime?: GraphQLScalarType;
   DiscoverableWorkspace?: DiscoverableWorkspaceResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
-  GendoAIRender?: GendoAiRenderResolvers<ContextType>;
-  GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;
