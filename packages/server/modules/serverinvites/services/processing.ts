@@ -29,9 +29,12 @@ import {
 import {
   CollectAndValidateResourceTargets,
   FinalizeInvite,
+  FinalizeInvitedServerRegistration,
   InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
-  ValidateResourceInviteBeforeFinalization
+  ResolveAuthRedirectPath,
+  ValidateResourceInviteBeforeFinalization,
+  ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { noop } from 'lodash'
@@ -111,32 +114,37 @@ export const convertToFinalizationValidation = (params: {
  * Note: Important auth query string params like the access_code are added separately
  * in auth middlewares
  */
-export const resolveAuthRedirectPathFactory = () => (invite?: ServerInviteRecord) => {
-  if (useNewFrontend()) {
-    // All post-auth redirects are handled by the frontend itself
+export const resolveAuthRedirectPathFactory =
+  (): ResolveAuthRedirectPath => (invite?: ServerInviteRecord) => {
+    if (useNewFrontend()) {
+      // All post-auth redirects are handled by the frontend itself
+      return getFrontendOrigin()
+    }
+
+    /**
+     * @deprecated Deprecated user flow, only relevant in FE1. Thus no need to update it w/ support for workspaces
+     * and other new features.
+     */
+    if (invite) {
+      const primaryTarget = invite.resource
+      if (isProjectResourceTarget(primaryTarget)) {
+        return `${getStreamRoute(primaryTarget.resourceId)}`
+      }
+    }
+
+    // Fall-back to base URL (for server invites)
     return getFrontendOrigin()
   }
-
-  /**
-   * @deprecated Deprecated user flow, only relevant in FE1. Thus no need to update it w/ support for workspaces
-   * and other new features.
-   */
-  if (invite) {
-    const primaryTarget = invite.resource
-    if (isProjectResourceTarget(primaryTarget)) {
-      return `${getStreamRoute(primaryTarget.resourceId)}`
-    }
-  }
-
-  // Fall-back to base URL (for server invites)
-  return getFrontendOrigin()
-}
 
 /**
  * Validate that the new user has a valid invite for registering to the server
  */
 export const validateServerInviteFactory =
-  ({ findServerInvite }: { findServerInvite: FindServerInvite }) =>
+  ({
+    findServerInvite
+  }: {
+    findServerInvite: FindServerInvite
+  }): ValidateServerInvite =>
   async (email?: string, token?: string): Promise<ServerInviteRecord> => {
     const invite = await findServerInvite(email, token)
     if (!invite) {
@@ -167,7 +175,7 @@ export const finalizeInvitedServerRegistrationFactory =
   }: {
     deleteServerOnlyInvites: DeleteServerOnlyInvites
     updateAllInviteTargets: UpdateAllInviteTargets
-  }) =>
+  }): FinalizeInvitedServerRegistration =>
   async (email: string, userId: string) => {
     // Delete all server-only invites for this email
     await deleteServerOnlyInvites(email)

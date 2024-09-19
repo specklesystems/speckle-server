@@ -73,7 +73,7 @@ export const buildAutomationRevisionCreate = (
     versionTag: faker.system.semver(),
     inputSchema: null,
     createdAt: new Date().toISOString(),
-    commitId: faker.git.shortSha(),
+    commitId: faker.git.commitSha({ length: 7 }),
     functionId: params.functionId
   })
 

@@ -19,7 +19,8 @@ import {
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
   getWorkspaceDomainsFactory,
-  storeWorkspaceDomainFactory
+  storeWorkspaceDomainFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -31,10 +32,13 @@ import {
   updateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
-  addDomainToWorkspaceFactory
+  addDomainToWorkspaceFactory,
+  validateSlugFactory,
+  generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
+import cryptoRandomString from 'crypto-random-string'
 import {
   MaybeNullOrUndefined,
   Roles,
@@ -51,6 +55,7 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
+  slug: string
   name: string
   description?: string
   logo?: string
@@ -60,11 +65,17 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: BasicTestWorkspace,
+  workspace: Omit<BasicTestWorkspace, 'slug'> & { slug?: string },
   owner: BasicTestUser,
   domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
+    validateSlug: validateSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
+    generateValidSlug: generateValidSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
@@ -74,6 +85,7 @@ export const createTestWorkspace = async (
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
+      slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
       logo: workspace.logo || null,
       defaultLogoIndex: 0
@@ -100,13 +112,17 @@ export const createTestWorkspace = async (
   }
 
   const updateWorkspace = updateWorkspaceFactory({
+    validateSlug: validateSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
     getWorkspace: getWorkspaceWithDomainsFactory({ db }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: getEventBus().emit
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
   if (workspace.discoverabilityEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
+
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: {

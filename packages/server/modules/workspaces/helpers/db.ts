@@ -3,6 +3,7 @@ import { buildTableHelper } from '@/modules/core/dbSchema'
 export const Workspaces = buildTableHelper('workspaces', [
   'id',
   'name',
+  'slug',
   'description',
   'createdAt',
   'updatedAt',
