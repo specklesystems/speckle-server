@@ -11,6 +11,7 @@ import {
   RegisterDefaultApp,
   RevokeExistingAppCredentials,
   RevokeExistingAppCredentialsForUser,
+  RevokeRefreshToken,
   UpdateApp,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
@@ -350,4 +351,12 @@ export const deleteAppFactory =
     await revokeExistingAppCredentialsFactory({ db: deps.db })({ appId: id })
 
     return await tables.serverApps(deps.db).where({ id }).del()
+  }
+
+export const revokeRefreshTokenFactory =
+  (deps: { db: Knex }): RevokeRefreshToken =>
+  async ({ tokenId }) => {
+    tokenId = tokenId.slice(0, 10)
+    await tables.refreshTokens(deps.db).where({ id: tokenId }).del()
+    return true
   }

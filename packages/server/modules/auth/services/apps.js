@@ -12,12 +12,6 @@ const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
-  async revokeRefreshToken({ tokenId }) {
-    tokenId = tokenId.slice(0, 10)
-    await RefreshTokens().where({ id: tokenId }).del()
-    return true
-  },
-
   async createAuthorizationCode({ appId, userId, challenge }) {
     if (!challenge) throw new Error('Please provide a valid challenge.')
 

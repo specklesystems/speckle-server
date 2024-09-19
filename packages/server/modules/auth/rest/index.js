@@ -6,12 +6,14 @@ const {
   refreshAppToken
 } = require('../services/apps')
 const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
-const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
-const { getAppFactory } = require('@/modules/auth/repositories/apps')
+const {
+  getAppFactory,
+  revokeRefreshTokenFactory
+} = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
 
 // TODO: Secure these endpoints!
@@ -111,6 +113,8 @@ module.exports = (app) => {
    */
   app.post('/auth/logout', async (req, res) => {
     try {
+      const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
