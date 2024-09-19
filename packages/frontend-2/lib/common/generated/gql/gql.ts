@@ -85,7 +85,7 @@ const documents = {
     "\n  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {\n    id\n    role\n    name\n    description\n  }\n": types.ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamDialog on Project {\n    id\n    name\n    role\n    allowPublicComments\n    visibility\n    team {\n      id\n      role\n      user {\n        ...LimitedUserAvatar\n        role\n      }\n    }\n    invitedTeam {\n      id\n      title\n      inviteId\n      role\n      user {\n        ...LimitedUserAvatar\n        role\n      }\n    }\n    ...ProjectsPageTeamDialogManagePermissions_Project\n  }\n": types.ProjectPageTeamDialogFragmentDoc,
     "\n  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {\n    id\n    visibility\n    role\n  }\n": types.ProjectsPageTeamDialogManagePermissions_ProjectFragmentDoc,
-    "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...ProjectsNewWorkspace_Workspace\n  }\n": types.ProjectsAddDialog_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    ...ProjectsWorkspaceSelect_Workspace\n    ...ProjectsNewWorkspace_Workspace\n  }\n": types.ProjectsAddDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsAddDialog_UserFragmentDoc,
     "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
@@ -95,6 +95,7 @@ const documents = {
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsNewWorkspace_Workspace on Workspace {\n    id\n    name\n    defaultLogoIndex\n    logo\n    description\n  }\n": types.ProjectsNewWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n": types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
     "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    role\n    name\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
@@ -636,7 +637,7 @@ export function graphql(source: "\n  fragment ProjectsPageTeamDialogManagePermis
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...ProjectsNewWorkspace_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...ProjectsNewWorkspace_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    ...ProjectsWorkspaceSelect_Workspace\n    ...ProjectsNewWorkspace_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    ...ProjectsWorkspaceSelect_Workspace\n    ...ProjectsNewWorkspace_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -673,6 +674,10 @@ export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Proj
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsNewWorkspace_Workspace on Workspace {\n    id\n    name\n    defaultLogoIndex\n    logo\n    description\n  }\n"): (typeof documents)["\n  fragment ProjectsNewWorkspace_Workspace on Workspace {\n    id\n    name\n    defaultLogoIndex\n    logo\n    description\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"): (typeof documents)["\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
