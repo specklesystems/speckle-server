@@ -9,28 +9,33 @@ const {
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { getLastWebhookEvents, dispatchStreamEvent } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
-  createWebhookFactory,
+  createWebhookConfigFactory,
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
-  updateWebhookFactory,
-  deleteWebhookFactory,
-  getStreamWebhooksFactory
+  updateWebhookConfigFactory,
+  deleteWebhookConfigFactory,
+  getStreamWebhooksFactory,
+  createWebhookEventFactory,
+  getLastWebhookEventsFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
-  createWebhook,
-  updateWebhook: updateWebhookService,
-  deleteWebhook
-} = require('@/modules/webhooks/services/webhooks-new')
+  createWebhookFactory,
+  updateWebhookFactory,
+  deleteWebhookFactory,
+  dispatchStreamEventFactory
+} = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { getStream } = require('@/modules/core/repositories/streams')
+const { getUser } = require('@/modules/core/repositories/users')
 
-const updateWebhook = updateWebhookService({
-  updateWebhookConfig: updateWebhookFactory({ db })
+const updateWebhook = updateWebhookFactory({
+  updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
 
@@ -82,8 +87,8 @@ describe('Webhooks @webhooks', () => {
 
   describe('Create, Read, Update, Delete Webhooks', () => {
     it('Should create a webhook', async () => {
-      webhookOne.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhookOne.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
       expect(webhookOne).to.have.property('id')
@@ -98,8 +103,8 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should update a webhook', async () => {
-      const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      const webhookId = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
 
@@ -127,12 +132,12 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhook.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
-      await deleteWebhook({
-        deleteWebhookConfig: deleteWebhookFactory({ db }),
+      await deleteWebhookFactory({
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(webhook)
       const webhookDeleted = await getWebhookByIdFactory({ db })({ id: webhook.id })
@@ -158,8 +163,8 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       streamWebhooks = await getStreamWebhooks({ streamId })
@@ -187,16 +192,22 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      const webhookId = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
-      await dispatchStreamEvent({
+      await dispatchStreamEventFactory({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId,
         event: 'commit_create',
         eventPayload: { test: 'payload123' }
       })
-      const lastEvents = await getLastWebhookEvents({ webhookId })
+      const lastEvents = await getLastWebhookEventsFactory({ db })({ webhookId })
       expect(lastEvents).to.have.lengthOf(1)
       expect(JSON.parse(lastEvents[0].payload).test).to.equal('payload123')
     })
@@ -259,7 +270,13 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should get stream webhooks and the previous events', async () => {
-      await dispatchStreamEvent({
+      await dispatchStreamEventFactory({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId: streamTwo.id,
         event: 'commit_create',
         eventPayload: { test: 'payload321' }
@@ -334,8 +351,8 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhook.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       const res = await sendRequest(userOne.token, {
@@ -384,15 +401,15 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       for (let i = 0; i < limit; i++) {
-        await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+        await createWebhookFactory({
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       }
 
       try {
-        await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+        await createWebhookFactory({
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       } catch (err) {

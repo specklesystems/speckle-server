@@ -4,6 +4,7 @@ export const basicWorkspaceFragment = gql`
   fragment BasicWorkspace on Workspace {
     id
     name
+    slug
     updatedAt
     createdAt
     role

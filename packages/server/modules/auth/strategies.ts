@@ -1,7 +1,6 @@
 import ExpressSession from 'express-session'
 import ConnectRedis from 'connect-redis'
 import passport from 'passport'
-import { createAuthorizationCode } from '@/modules/auth/services/apps'
 import {
   getFrontendOrigin,
   getMailchimpStatus,
@@ -18,7 +17,13 @@ import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
 } from '@/modules/auth/services/mailchimp'
-import { getUserById } from '@/modules/core/services/users'
+import {
+  createUser,
+  findOrCreateUser,
+  getUserByEmail,
+  getUserById,
+  validatePasssword
+} from '@/modules/core/services/users'
 import type { Express, RequestHandler } from 'express'
 import {
   AuthStrategyMetadata,
@@ -26,6 +31,20 @@ import {
 } from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
+import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory,
+  validateServerInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  findServerInviteFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 
 const setupStrategies = async (app: Express) => {
   const authStrategies: AuthStrategyMetadata[] = []
@@ -82,10 +101,11 @@ const setupStrategies = async (app: Express) => {
         throw new Error('Cannot finalize auth - No user attached to session')
       }
 
+      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
       const ac = await createAuthorizationCode({
         appId: 'spklwebapp',
         userId: req.user.id,
-        challenge: req.session.challenge
+        challenge: req.session.challenge!
       })
 
       let newsletterConsent = false
@@ -147,6 +167,15 @@ const setupStrategies = async (app: Express) => {
 
   let strategyCount = 0
 
+  const validateServerInvite = validateServerInviteFactory({
+    findServerInvite: findServerInviteFactory({ db })
+  })
+  const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  })
+  const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
+
   if (process.env.STRATEGY_GOOGLE === 'true') {
     const googleStrategyBuilder = (await import('@/modules/auth/strategies/google'))
       .default
@@ -161,8 +190,17 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_GITHUB === 'true') {
-    const githubStrategyBuilder = (await import('@/modules/auth/strategies/github'))
-      .default
+    const githubStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/github')
+    ).default
+    const githubStrategyBuilder = githubStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const githubStrategy = await githubStrategyBuilder(
       app,
       sessionMiddleware,
@@ -174,8 +212,17 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_AZURE_AD === 'true') {
-    const azureAdStrategyBuilder = (await import('@/modules/auth/strategies/azureAd'))
-      .default
+    const azureAdStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/azureAd')
+    ).default
+    const azureAdStrategyBuilder = azureAdStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const azureAdStrategy = await azureAdStrategyBuilder(
       app,
       sessionMiddleware,
@@ -187,7 +234,16 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_OIDC === 'true') {
-    const oidcStrategyBuilder = (await import('@/modules/auth/strategies/oidc')).default
+    const oidcStrategyBuilderFactory = (await import('@/modules/auth/strategies/oidc'))
+      .default
+    const oidcStrategyBuilder = oidcStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const oidcStrategy = await oidcStrategyBuilder(
       app,
       sessionMiddleware,
@@ -201,8 +257,19 @@ const setupStrategies = async (app: Express) => {
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if (process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0) {
-    const localStrategyBuilder = (await import('@/modules/auth/strategies/local'))
-      .default
+    const localStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/local')
+    ).default
+    const localStrategyBuilder = localStrategyBuilderFactory({
+      validatePassword: validatePasssword,
+      getUserByEmail,
+      getServerInfo,
+      getRateLimitResult,
+      validateServerInvite,
+      createUser,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const localStrategy = await localStrategyBuilder(
       app,
       sessionMiddleware,

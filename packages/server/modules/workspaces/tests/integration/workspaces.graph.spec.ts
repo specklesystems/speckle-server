@@ -138,7 +138,8 @@ describe('Workspaces GQL CRUD', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      name: 'Workspace A'
+      name: 'Workspace A',
+      slug: cryptoRandomString({ length: 10 })
     }
 
     const testMemberUser: BasicTestUser = {
@@ -188,6 +189,7 @@ describe('Workspaces GQL CRUD', () => {
         id: '',
         ownerId: '',
         name: 'My Large Workspace',
+        slug: cryptoRandomString({ length: 10 }),
         description: 'A workspace with many users and roles to test pagination.'
       }
 
@@ -476,7 +478,7 @@ describe('Workspaces GQL CRUD', () => {
             }
           },
           {
-            role: Roles.Stream.Reviewer,
+            role: Roles.Stream.Contributor,
             project: {
               id: project2Id,
               name: project2Name
@@ -529,7 +531,10 @@ describe('Workspaces GQL CRUD', () => {
 
       it('should return workspace cost', async () => {
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: createRandomString() }
+          input: {
+            name: createRandomString(),
+            slug: cryptoRandomString({ length: 10 })
+          }
         })
         expect(createRes).to.not.haveGraphQLErrors()
         const workspaceId = createRes.data!.workspaceMutations.create.id
@@ -576,12 +581,14 @@ describe('Workspaces GQL CRUD', () => {
           createTestUser(viewer2)
         ])
 
-        await Promise.all([
-          assignToWorkspace(workspace, member, Roles.Workspace.Member),
-          assignToWorkspace(workspace, guestWithWritePermission, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer, Roles.Workspace.Guest),
-          assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
-        ])
+        await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+        await assignToWorkspace(
+          workspace,
+          guestWithWritePermission,
+          Roles.Workspace.Guest
+        )
+        await assignToWorkspace(workspace, viewer, Roles.Workspace.Guest)
+        await assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
 
         const resProject1 = await apollo.execute(CreateProjectDocument, {
           input: {
@@ -664,6 +671,7 @@ describe('Workspaces GQL CRUD', () => {
         const workspace = {
           id: '',
           name: 'test ws',
+          slug: cryptoRandomString({ length: 10 }),
           ownerId: ''
         }
         await createTestWorkspace(workspace, testMemberUser)
@@ -708,9 +716,10 @@ describe('Workspaces GQL CRUD', () => {
     describe('mutation workspaceMutations.create', () => {
       it('should create a workspace', async () => {
         const workspaceName = cryptoRandomString({ length: 6 })
+        const workspaceSlug = cryptoRandomString({ length: 10 })
 
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: workspaceName }
+          input: { name: workspaceName, slug: workspaceSlug }
         })
         const getRes = await apollo.execute(GetWorkspaceDocument, {
           workspaceId: createRes.data!.workspaceMutations.create.id
@@ -720,6 +729,7 @@ describe('Workspaces GQL CRUD', () => {
         expect(getRes).to.not.haveGraphQLErrors()
         expect(getRes.data?.workspace).to.exist
         expect(getRes.data?.workspace?.name).to.equal(workspaceName)
+        expect(getRes.data?.workspace?.slug).to.equal(workspaceSlug)
       })
     })
 
@@ -727,6 +737,7 @@ describe('Workspaces GQL CRUD', () => {
       const workspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
         name: 'My Test Workspace'
       }
 
@@ -823,7 +834,7 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation workspaceMutations.update', () => {
-      const workspace: BasicTestWorkspace = {
+      const workspace = {
         id: '',
         ownerId: '',
         name: cryptoRandomString({ length: 6 }),
@@ -894,13 +905,38 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(updateRes).to.haveGraphQLErrors('too long')
       })
+
+      it('should require default project role to be a valid role', async () => {
+        const resA = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:contributor'
+          }
+        })
+        const resB = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:reviewer'
+          }
+        })
+        const resC = await apollo.execute(UpdateWorkspaceDocument, {
+          input: {
+            id: workspace.id,
+            defaultProjectRole: 'stream:collaborator'
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
+      })
     })
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
       describe('leave', () => {
         it('allows the active user to leave a workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
-            input: { name }
+            input: { name, slug: cryptoRandomString({ length: 10 }) }
           })
           expect(workspaceCreateResult).to.not.haveGraphQLErrors()
 
@@ -943,7 +979,7 @@ describe('Workspaces GQL CRUD', () => {
         it('stops the last workspace admin from leaving the workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {
-            input: { name }
+            input: { name, slug: cryptoRandomString({ length: 10 }) }
           })
 
           const id = workspaceCreateResult.data?.workspaceMutations.create.id
@@ -973,7 +1009,7 @@ describe('Workspaces GQL CRUD', () => {
         const workspaceName = cryptoRandomString({ length: 6 })
 
         const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: workspaceName }
+          input: { name: workspaceName, slug: cryptoRandomString({ length: 10 }) }
         })
         expect(createRes).to.not.haveGraphQLErrors()
         const workspaceId = createRes.data!.workspaceMutations.create.id

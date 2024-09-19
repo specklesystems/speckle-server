@@ -1,17 +1,29 @@
 'use strict'
 const cors = require('cors')
 const {
-  getApp,
-  createAuthorizationCode,
-  createAppTokenFromAccessCode,
-  refreshAppToken
-} = require('../services/apps')
-const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
-const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
+  validateToken,
+  revokeTokenById,
+  createAppToken,
+  createBareToken
+} = require(`@/modules/core/services/tokens`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
+const {
+  getAppFactory,
+  revokeRefreshTokenFactory,
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  createRefreshTokenFactory,
+  getRefreshTokenFactory
+} = require('@/modules/auth/repositories/apps')
+const { db } = require('@/db/knex')
+const {
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
+} = require('@/modules/auth/services/serverApps')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -21,6 +33,9 @@ module.exports = (app) => {
    */
   app.get('/auth/accesscode', async (req, res) => {
     try {
+      const getApp = getAppFactory({ db })
+      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+
       const preventRedirect = !!req.query.preventRedirect
       const appId = req.query.appId
       const app = await getApp({ id: appId })
@@ -67,6 +82,25 @@ module.exports = (app) => {
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
     try {
+      const createRefreshToken = createRefreshTokenFactory({ db })
+      const getApp = getAppFactory({ db })
+      const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+        getAuthorizationCode: getAuthorizationCodeFactory({ db }),
+        deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
+        getApp,
+        createRefreshToken,
+        createAppToken,
+        createBareToken
+      })
+      const refreshAppToken = refreshAppTokenFactory({
+        getRefreshToken: getRefreshTokenFactory({ db }),
+        revokeRefreshToken: revokeRefreshTokenFactory({ db }),
+        createRefreshToken,
+        getApp,
+        createAppToken,
+        createBareToken
+      })
+
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
@@ -109,6 +143,8 @@ module.exports = (app) => {
    */
   app.post('/auth/logout', async (req, res) => {
     try {
+      const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 

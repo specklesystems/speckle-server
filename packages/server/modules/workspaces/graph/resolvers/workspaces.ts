@@ -2,9 +2,13 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
+  getProjectCollaboratorsFactory,
+  getProjectFactory,
   getStream,
   getUserStreams,
   getUserStreamsCount,
+  updateProjectFactory,
+  upsertProjectRoleFactory,
   getRolesByUserIdFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
@@ -69,7 +73,8 @@ import {
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getUserIdsWithRoleInWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -86,11 +91,15 @@ import {
   createWorkspaceFactory,
   deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory
+  updateWorkspaceRoleFactory,
+  validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import {
   getWorkspaceProjectsFactory,
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
@@ -125,6 +134,7 @@ import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/manag
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -208,6 +218,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
             token: args.token,
             workspaceId: args.workspaceId
           })
+        },
+        validateWorkspaceSlug: async (_parent, args) => {
+          const validateSlug = validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+          })
+          await validateSlug({ slug: args.slug })
+          return true
         }
       },
       Mutation: {
@@ -270,9 +287,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo } = args.input
+          const { name, description, defaultLogoIndex, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
+            generateValidSlug: generateValidSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -282,6 +305,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
+              slug,
               description: description ?? null,
               logo: logo ?? null,
               defaultLogoIndex: defaultLogoIndex ?? 0
@@ -324,6 +348,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const updateWorkspace = updateWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             getWorkspace: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -331,7 +358,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput
+            workspaceInput: {
+              ...workspaceInput,
+              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
+            }
           })
 
           return workspace
@@ -420,6 +450,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
+              validateSlug: validateSlugFactory({
+                getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+              }),
               getWorkspace: getWorkspaceWithDomainsFactory({ db }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit
@@ -648,6 +681,50 @@ export = FF_WORKSPACES_MODULE_ENABLED
             { projectId, userId, role },
             context.userId!,
             context.resourceAccessRules
+          )
+        },
+        moveToWorkspace: async (_parent, args, context) => {
+          const { projectId, workspaceId } = args
+
+          await authorizeResolver(
+            context.userId,
+            projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          const trx = await db.transaction()
+
+          const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+            getProject: getProjectFactory(),
+            updateProject: updateProjectFactory({ db: trx }),
+            upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+            getProjectCollaborators: getProjectCollaboratorsFactory(),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            getWorkspaceRoleToDefaultProjectRoleMapping:
+              getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                getWorkspace: getWorkspaceFactory({ db })
+              }),
+            updateWorkspaceRole: updateWorkspaceRoleFactory({
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db: trx
+              }),
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit
+            })
+          })
+
+          return await withTransaction(
+            moveProjectToWorkspace({ projectId, workspaceId }),
+            trx
           )
         }
       },
