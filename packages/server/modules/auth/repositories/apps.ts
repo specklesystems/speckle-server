@@ -3,12 +3,15 @@ import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
   CreateApp,
   CreateAuthorizationCode,
+  CreateRefreshToken,
   DeleteApp,
+  DeleteAuthorizationCode,
   GetAllAppsAuthorizedByUser,
   GetAllAppsCreatedByUser,
   GetAllPublicApps,
   GetAllScopes,
   GetApp,
+  GetAuthorizationCode,
   RegisterDefaultApp,
   RevokeExistingAppCredentials,
   RevokeExistingAppCredentialsForUser,
@@ -376,4 +379,23 @@ export const createAuthorizationCodeFactory =
 
     await tables.authorizationCodes(deps.db).insert(ac)
     return ac.id
+  }
+
+export const getAuthorizationCodeFactory =
+  (deps: { db: Knex }): GetAuthorizationCode =>
+  async ({ id }) => {
+    return await tables.authorizationCodes(deps.db).select().where({ id }).first()
+  }
+
+export const deleteAuthorizationCodeFactory =
+  (deps: { db: Knex }): DeleteAuthorizationCode =>
+  async ({ id }) => {
+    return await tables.authorizationCodes(deps.db).where({ id }).del()
+  }
+
+export const createRefreshTokenFactory =
+  (deps: { db: Knex }): CreateRefreshToken =>
+  async ({ token }) => {
+    const [ret] = await tables.refreshTokens(deps.db).insert(token, '*')
+    return ret
   }

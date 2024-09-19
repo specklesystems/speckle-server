@@ -1,7 +1,12 @@
 'use strict'
 const cors = require('cors')
-const { createAppTokenFromAccessCode, refreshAppToken } = require('../services/apps')
-const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
+const { refreshAppToken } = require('../services/apps')
+const {
+  validateToken,
+  revokeTokenById,
+  createAppToken,
+  createBareToken
+} = require(`@/modules/core/services/tokens`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { Scopes } = require('@speckle/shared')
@@ -9,9 +14,15 @@ const { ForbiddenError } = require('@/modules/shared/errors')
 const {
   getAppFactory,
   revokeRefreshTokenFactory,
-  createAuthorizationCodeFactory
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  createRefreshTokenFactory
 } = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
+const {
+  createAppTokenFromAccessCodeFactory
+} = require('@/modules/auth/services/serverApps')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -70,6 +81,15 @@ module.exports = (app) => {
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
     try {
+      const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+        getAuthorizationCode: getAuthorizationCodeFactory({ db }),
+        deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
+        getApp: getAppFactory({ db }),
+        createRefreshToken: createRefreshTokenFactory({ db }),
+        createAppToken,
+        createBareToken
+      })
+
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)

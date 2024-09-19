@@ -5,18 +5,38 @@ const chai = require('chai')
 const expect = chai.expect
 
 const { createUser } = require('@/modules/core/services/users')
-const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
+const {
+  createPersonalAccessToken,
+  createAppToken,
+  createBareToken
+} = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { createAppTokenFromAccessCode } = require('../services/apps')
 const { Scopes } = require('@speckle/shared')
-const { createAuthorizationCodeFactory } = require('@/modules/auth/repositories/apps')
+const {
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  getAppFactory,
+  createRefreshTokenFactory
+} = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
+const {
+  createAppTokenFromAccessCodeFactory
+} = require('@/modules/auth/services/serverApps')
 
 let sendRequest
 let server
 let app
 
 const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+  getAuthorizationCode: getAuthorizationCodeFactory({ db }),
+  deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
+  getApp: getAppFactory({ db }),
+  createRefreshToken: createRefreshTokenFactory({ db }),
+  createAppToken,
+  createBareToken
+})
 
 describe('GraphQL @apps-api', () => {
   let testUser
