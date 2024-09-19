@@ -13,6 +13,8 @@ import { ServerAppRecord } from '@/modules/core/helpers/types'
 import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
 import { Optional, ServerScope } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
+import type { Handler } from 'express'
+import { Strategy, AuthenticateOptions } from 'passport'
 
 export type GetApp = (params: { id: string }) => Promise<FullServerApp | null>
 
@@ -98,3 +100,8 @@ export type CreateAppTokenFromAccessCode = (params: {
   token: string
   refreshToken: string
 }>
+
+export type PassportAuthenticateHandlerBuilder = (
+  strategy: Strategy | string,
+  options?: Optional<AuthenticateOptions>
+) => Handler
