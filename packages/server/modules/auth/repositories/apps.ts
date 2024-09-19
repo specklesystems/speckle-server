@@ -1,6 +1,7 @@
 import { moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
+  CreateApp,
   GetAllAppsAuthorizedByUser,
   GetAllAppsCreatedByUser,
   GetAllPublicApps,
@@ -24,6 +25,7 @@ import {
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
 import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
+import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { difference, omit } from 'lodash'
 
@@ -241,4 +243,29 @@ export const updateDefaultAppFactory =
         .update(omit(app, ['scopes', 'redirectUrl']))
         .transacting(trx)
     })
+  }
+
+export const createAppFactory =
+  (deps: { db: Knex }): CreateApp =>
+  async (app) => {
+    const id = cryptoRandomString({ length: 10 })
+    const secret = cryptoRandomString({ length: 10 })
+    const scopes = (app.scopes || []).filter((s) => !!s?.length)
+
+    if (!scopes.length) {
+      throw new Error('Cannot create an app with no scopes.')
+    }
+
+    const insertableApp = {
+      ...omit(app, ['scopes', 'firstparty', 'trustByDefault']),
+      id,
+      secret
+    }
+
+    await tables.serverApps(deps.db).insert(insertableApp)
+    await tables
+      .serverAppsScopes(deps.db)
+      .insert(scopes.map((s) => ({ appId: id, scopeName: s })))
+
+    return { id, secret }
   }

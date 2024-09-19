@@ -14,27 +14,6 @@ const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
-  async createApp(app) {
-    app.id = crs({ length: 10 })
-    app.secret = crs({ length: 10 })
-
-    const scopes = (app.scopes || []).filter((s) => !!s?.length)
-
-    if (!scopes.length) {
-      throw new Error('Cannot create an app with no scopes.')
-    }
-
-    delete app.scopes
-    delete app.firstparty
-    delete app.trustByDefault
-
-    await ServerApps().insert(app)
-    await ServerAppsScopes().insert(
-      scopes.map((s) => ({ appId: app.id, scopeName: s }))
-    )
-    return { id: app.id, secret: app.secret }
-  },
-
   async updateApp({ app }) {
     // any app update should nuke everything and force users to re-authorize it.
     await module.exports.revokeExistingAppCredentials({ appId: app.id })
