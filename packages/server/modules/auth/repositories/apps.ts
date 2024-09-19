@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
   CreateApp,
@@ -8,6 +8,8 @@ import {
   GetAllScopes,
   GetApp,
   RegisterDefaultApp,
+  RevokeExistingAppCredentials,
+  UpdateApp,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
 import {
@@ -17,6 +19,14 @@ import {
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
 import {
+  ApiTokenRecord,
+  AuthorizationCodeRecord,
+  RefreshTokenRecord
+} from '@/modules/auth/repositories'
+import {
+  ApiTokens,
+  AuthorizationCodes,
+  RefreshTokens,
   Scopes,
   ServerApps,
   ServerAppsScopes,
@@ -36,7 +46,11 @@ const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name)
+  tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name),
+  authorizationCodes: (db: Knex) =>
+    db<AuthorizationCodeRecord>(AuthorizationCodes.name),
+  refreshTokens: (db: Knex) => db<RefreshTokenRecord>(RefreshTokens.name),
+  apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name)
 }
 
 const getAppRedirectUrl = (app: Pick<ServerAppRecord, 'redirectUrl' | 'id'>) => {
@@ -268,4 +282,48 @@ export const createAppFactory =
       .insert(scopes.map((s) => ({ appId: id, scopeName: s })))
 
     return { id, secret }
+  }
+
+export const revokeExistingAppCredentialsFactory =
+  (deps: { db: Knex }): RevokeExistingAppCredentials =>
+  async (params) => {
+    const { appId } = params
+    await tables.authorizationCodes(deps.db).where({ appId }).del()
+    await tables.refreshTokens(deps.db).where({ appId }).del()
+
+    const resApiTokenDelete = await tables
+      .apiTokens(deps.db)
+      .whereIn('id', (qb) => {
+        qb.select('tokenId').from('user_server_app_tokens').where({ appId })
+      })
+      .del()
+
+    return resApiTokenDelete
+  }
+
+export const updateAppFactory =
+  (deps: { db: Knex }): UpdateApp =>
+  async ({ app }) => {
+    // any app update should nuke everything and force users to re-authorize it.
+    await revokeExistingAppCredentialsFactory({ db: deps.db })({ appId: app.id })
+
+    if (app.scopes) {
+      logger.debug(app.scopes, app.id)
+      // Flush existing app scopes
+      await tables.serverAppsScopes(deps.db).where({ appId: app.id }).del()
+      // Update new scopes
+      await tables
+        .serverAppsScopes(deps.db)
+        .insert(app.scopes.map((s) => ({ appId: app.id, scopeName: s })))
+    }
+
+    const updatableApp = omit(app, ['secret', 'scopes'])
+
+    const [{ id }] = await tables
+      .serverApps(deps.db)
+      .returning('id')
+      .where({ id: app.id })
+      .update<ServerAppRecord[]>(updatableApp)
+
+    return id
   }

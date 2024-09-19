@@ -1,6 +1,5 @@
 const { ForbiddenError } = require('@/modules/shared/errors')
 const {
-  updateApp,
   deleteApp,
   revokeExistingAppCredentialsForUser
 } = require('../../services/apps')
@@ -10,7 +9,8 @@ const {
   getAllPublicAppsFactory,
   getAllAppsCreatedByUserFactory,
   getAllAppsAuthorizedByUserFactory,
-  createAppFactory
+  createAppFactory,
+  updateAppFactory
 } = require('@/modules/auth/repositories/apps')
 const { db } = require('@/db/knex')
 
@@ -19,6 +19,7 @@ const getAllPublicApps = getAllPublicAppsFactory({ db })
 const getAllAppsCreatedByUser = getAllAppsCreatedByUserFactory({ db })
 const getAllAppsAuthorizedByUser = getAllAppsAuthorizedByUserFactory({ db })
 const createApp = createAppFactory({ db })
+const updateApp = updateAppFactory({ db })
 
 module.exports = {
   Query: {

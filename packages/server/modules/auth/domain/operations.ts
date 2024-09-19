@@ -39,4 +39,12 @@ export type CreateApp = (
   }
 ) => Promise<{ id: string; secret: string }>
 
+export type RevokeExistingAppCredentials = (params: {
+  appId: string
+}) => Promise<number>
+
+export type UpdateApp = (params: {
+  app: Partial<ServerAppRecord> & { id: string } & { scopes?: ServerScope[] }
+}) => Promise<string>
+
 export type InitializeDefaultApps = () => Promise<void>

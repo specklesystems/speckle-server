@@ -4,8 +4,10 @@ const crs = require('crypto-random-string')
 const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
-const { logger } = require('@/logging/logging')
-const { getAppFactory } = require('@/modules/auth/repositories/apps')
+const {
+  getAppFactory,
+  revokeExistingAppCredentialsFactory
+} = require('@/modules/auth/repositories/apps')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
 const ServerAppsScopes = () => knex('server_apps_scopes')
@@ -14,33 +16,8 @@ const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
-  async updateApp({ app }) {
-    // any app update should nuke everything and force users to re-authorize it.
-    await module.exports.revokeExistingAppCredentials({ appId: app.id })
-
-    if (app.scopes) {
-      logger.debug(app.scopes, app.id)
-      // Flush existing app scopes
-      await ServerAppsScopes().where({ appId: app.id }).del()
-      // Update new scopes
-      await ServerAppsScopes().insert(
-        app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
-      )
-    }
-
-    delete app.secret
-    delete app.scopes
-
-    const [{ id }] = await ServerApps()
-      .returning('id')
-      .where({ id: app.id })
-      .update(app)
-
-    return id
-  },
-
   async deleteApp({ id }) {
-    await module.exports.revokeExistingAppCredentials({ appId: id })
+    await revokeExistingAppCredentialsFactory({ db: knex })({ appId: id })
 
     return await ServerApps().where({ id }).del()
   },
@@ -49,19 +26,6 @@ module.exports = {
     tokenId = tokenId.slice(0, 10)
     await RefreshTokens().where({ id: tokenId }).del()
     return true
-  },
-
-  async revokeExistingAppCredentials({ appId }) {
-    await AuthorizationCodes().where({ appId }).del()
-    await RefreshTokens().where({ appId }).del()
-
-    const resApiTokenDelete = await ApiTokens()
-      .whereIn('id', (qb) => {
-        qb.select('tokenId').from('user_server_app_tokens').where({ appId })
-      })
-      .del()
-
-    return resApiTokenDelete
   },
 
   async revokeExistingAppCredentialsForUser({ appId, userId }) {
