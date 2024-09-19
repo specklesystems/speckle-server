@@ -104,13 +104,13 @@ const initializeEventListeners = () => {
 }
 
 const automateModule: SpeckleModule = {
-  async init({ app, isInitial }) {
+  async init({ app, openApiDocument, isInitial }) {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     moduleLogger.info('⚙️  Init automate module')
 
     await initScopes()
-    logStreamRest(app)
-    authGithubAppRest(app)
+    logStreamRest({ app, openApiDocument })
+    authGithubAppRest({ app, openApiDocument })
 
     if (isInitial) {
       quitListeners = initializeEventListeners()

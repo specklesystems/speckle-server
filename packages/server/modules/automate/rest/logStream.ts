@@ -13,11 +13,13 @@ import {
   validateServerRole,
   validateStreamRole
 } from '@/modules/shared/authz'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
-export default (app: Application) => {
+export default (params: { app: Application; openApiDocument: OpenApiDocument }) => {
+  const { app, openApiDocument } = params
   app.get(
     '/api/automate/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
@@ -77,6 +79,39 @@ export default (app: Application) => {
       }
 
       res.end()
+    }
+  )
+  openApiDocument.registerOperation(
+    '/api/automate/automations/:automationId/runs/:runId/logs',
+    HttpMethod.GET,
+    {
+      summary: 'Get Automation Run Logs',
+      description: 'Get the logs of an automation run',
+      parameters: [
+        {
+          in: 'path',
+          name: 'automationId',
+          required: true,
+          description: 'The automation id',
+          schema: {
+            type: 'string'
+          }
+        },
+        {
+          in: 'path',
+          name: 'runId',
+          required: true,
+          description: 'The run id',
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
+      responses: {
+        200: {
+          description: 'Logs of the automation run'
+        }
+      }
     }
   )
 }
