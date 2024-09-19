@@ -43,6 +43,11 @@ export type RevokeExistingAppCredentials = (params: {
   appId: string
 }) => Promise<number>
 
+export type RevokeExistingAppCredentialsForUser = (params: {
+  appId: string
+  userId: string
+}) => Promise<number>
+
 export type UpdateApp = (params: {
   app: Partial<ServerAppRecord> & { id: string } & { scopes?: ServerScope[] }
 }) => Promise<string>
