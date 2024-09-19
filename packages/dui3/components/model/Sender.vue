@@ -62,13 +62,13 @@
         :settings="modelCard.settings"
         @update:settings="updateSettings"
       ></SendSettings> -->
-      <div class="mt-2 flex">
+      <div class="mt-4 flex justify-center items-center space-x-2">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
-        <!-- <FormButton text @click.stop=";(openFilterDialog = false), saveFilter()">
-              Save
-            </FormButton> -->
+        <FormButton size="sm" @click.stop=";(openFilterDialog = false), saveFilter()">
+          Save
+        </FormButton>
         <FormButton
-          full-width
+          size="sm"
           @click.stop=";(openFilterDialog = false), saveFilterAndSend()"
         >
           Save & Publish
