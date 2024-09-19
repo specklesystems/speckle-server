@@ -269,6 +269,10 @@ export const useMoveProjectToWorkspaceMutation = graphql(`
       projects {
         moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {
           id
+          workspace {
+            id
+            ...ProjectsMoveToWorkspaceDialog_Workspace
+          }
         }
       }
     }
