@@ -1,7 +1,6 @@
 import ExpressSession from 'express-session'
 import ConnectRedis from 'connect-redis'
 import passport from 'passport'
-import { createAuthorizationCode } from '@/modules/auth/services/apps'
 import {
   getFrontendOrigin,
   getMailchimpStatus,
@@ -26,6 +25,8 @@ import {
 } from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
+import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
 
 const setupStrategies = async (app: Express) => {
   const authStrategies: AuthStrategyMetadata[] = []
@@ -82,10 +83,11 @@ const setupStrategies = async (app: Express) => {
         throw new Error('Cannot finalize auth - No user attached to session')
       }
 
+      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
       const ac = await createAuthorizationCode({
         appId: 'spklwebapp',
         userId: req.user.id,
-        challenge: req.session.challenge
+        challenge: req.session.challenge!
       })
 
       let newsletterConsent = false

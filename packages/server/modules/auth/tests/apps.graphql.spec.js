@@ -7,15 +7,16 @@ const expect = chai.expect
 const { createUser } = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const {
-  createAuthorizationCode,
-  createAppTokenFromAccessCode
-} = require('../services/apps')
+const { createAppTokenFromAccessCode } = require('../services/apps')
 const { Scopes } = require('@speckle/shared')
+const { createAuthorizationCodeFactory } = require('@/modules/auth/repositories/apps')
+const { db } = require('@/db/knex')
 
 let sendRequest
 let server
 let app
+
+const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 
 describe('GraphQL @apps-api', () => {
   let testUser

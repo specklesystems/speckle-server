@@ -4,11 +4,7 @@ const expect = require('chai').expect
 const { createUser } = require(`@/modules/core/services/users`)
 const { validateToken } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
-const {
-  createAuthorizationCode,
-  createAppTokenFromAccessCode,
-  refreshAppToken
-} = require('../services/apps')
+const { createAppTokenFromAccessCode, refreshAppToken } = require('../services/apps')
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
 const knex = require('@/db/knex')
@@ -20,7 +16,8 @@ const {
   createAppFactory,
   updateAppFactory,
   deleteAppFactory,
-  revokeExistingAppCredentialsForUserFactory
+  revokeExistingAppCredentialsForUserFactory,
+  createAuthorizationCodeFactory
 } = require('@/modules/auth/repositories/apps')
 
 const getApp = getAppFactory({ db: knex })
@@ -32,6 +29,7 @@ const deleteApp = deleteAppFactory({ db: knex })
 const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserFactory({
   db: knex
 })
+const createAuthorizationCode = createAuthorizationCodeFactory({ db: knex })
 
 describe('Services @apps-services', () => {
   const actor = {
