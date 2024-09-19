@@ -7,6 +7,8 @@
           v-if="hasWorkspaces"
           v-model="selectedWorkspace"
           :items="workspaces"
+          :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+          disabled-item-tooltip="Only workspace admins can move projects into a workspace."
           label="Select a workspace"
           help="Once a project is moved to a workspace, it cannot be moved out from it."
           show-label
@@ -69,6 +71,7 @@ import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
