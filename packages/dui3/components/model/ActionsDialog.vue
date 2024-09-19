@@ -12,6 +12,18 @@
       fullscreen="none"
     >
       <div class="-mx-1">
+        <SendSettingsDialog
+          v-if="isSender"
+          :model-card-id="props.modelCard.modelCardId"
+          :settings="props.modelCard.settings"
+        >
+          <template #activator="{ toggle }">
+            <button class="action action-normal" @click="toggle()">
+              <div class="truncate max-[275px]:text-xs">Settings</div>
+              <div><Cog6ToothIcon class="w-5 h-5" /></div>
+            </button>
+          </template>
+        </SendSettingsDialog>
         <ReportBase v-if="modelCard.report" :report="modelCard.report">
           <template #activator="{ toggle }">
             <button class="action action-normal" @click="toggle()">
@@ -51,10 +63,14 @@ const { trackEvent } = useMixpanel()
 const openModelCardActionsDialog = ref(false)
 const emit = defineEmits(['view', 'view-versions', 'copy-model-link', 'remove'])
 
-defineProps<{
+const props = defineProps<{
   modelName: string
   modelCard: IModelCard
 }>()
+
+const isSender = computed(() => {
+  return props.modelCard.typeDiscriminator === 'SenderModelCard'
+})
 
 const app = useNuxtApp()
 app.$baseBinding.on('documentChanged', () => {

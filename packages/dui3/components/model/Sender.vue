@@ -57,11 +57,11 @@
       fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
-      <SendSettings
+      <!-- <SendSettings
         v-if="hasSendSettings"
         :settings="modelCard.settings"
         @update:settings="updateSettings"
-      ></SendSettings>
+      ></SendSettings> -->
       <div class="mt-2 flex">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
         <!-- <FormButton text @click.stop=";(openFilterDialog = false), saveFilter()">
@@ -108,7 +108,6 @@ import type { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import type { ProjectModelGroup } from '~/store/hostApp'
 import { useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import type { CardSetting } from '~/lib/models/card/setting'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
@@ -139,14 +138,6 @@ const updateFilter = (filter: ISendFilter) => {
   newFilter = filter
 }
 
-let newSettings: CardSetting[]
-const updateSettings = (settings: CardSetting[]) => {
-  newSettings = settings
-}
-
-const hasSendSettings = computed(
-  () => store.sendSettings && store.sendSettings?.length > 0
-)
 const saveFilter = async () => {
   void trackEvent('DUI3 Action', {
     name: 'Publish Card Filter Change',
@@ -154,7 +145,6 @@ const saveFilter = async () => {
   })
   await store.patchModel(props.modelCard.modelCardId, {
     sendFilter: newFilter,
-    settings: newSettings,
     expired: true
   })
 }
