@@ -17,7 +17,12 @@ import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
 } from '@/modules/auth/services/mailchimp'
-import { getUserById } from '@/modules/core/services/users'
+import {
+  createUser,
+  getUserByEmail,
+  getUserById,
+  validatePasssword
+} from '@/modules/core/services/users'
 import type { Express, RequestHandler } from 'express'
 import {
   AuthStrategyMetadata,
@@ -27,6 +32,18 @@ import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory,
+  validateServerInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  findServerInviteFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 
 const setupStrategies = async (app: Express) => {
   const authStrategies: AuthStrategyMetadata[] = []
@@ -203,8 +220,24 @@ const setupStrategies = async (app: Express) => {
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if (process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0) {
-    const localStrategyBuilder = (await import('@/modules/auth/strategies/local'))
-      .default
+    const localStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/local')
+    ).default
+    const localStrategyBuilder = localStrategyBuilderFactory({
+      validatePassword: validatePasssword,
+      getUserByEmail,
+      getServerInfo,
+      getRateLimitResult,
+      validateServerInvite: validateServerInviteFactory({
+        findServerInvite: findServerInviteFactory({ db })
+      }),
+      createUser,
+      finalizeInvitedServerRegistration: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      resolveAuthRedirectPath: resolveAuthRedirectPathFactory()
+    })
     const localStrategy = await localStrategyBuilder(
       app,
       sessionMiddleware,
