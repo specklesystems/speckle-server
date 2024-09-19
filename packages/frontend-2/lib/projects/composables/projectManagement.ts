@@ -246,9 +246,6 @@ export function useUpdateUserRole(
           cache.evict({
             id: getCacheId('WorkspaceCollaborator', input.userId)
           })
-          cache.evict({
-            id: getCacheId('ProjectCollaborator', input.userId)
-          })
         }
       })
       .catch(convertThrowIntoFetchResult)
