@@ -7,7 +7,7 @@
       </p>
       <FormTextInput
         v-bind="searchBind"
-        name="search"
+        name="searchGuests"
         color="foundation"
         type="text"
         size="lg"
@@ -43,7 +43,6 @@
 import type { StreamRoles } from '@speckle/shared'
 import { useUpdateUserRole } from '~~/lib/projects/composables/projectManagement'
 import type { WorkspaceCollaborator } from '~/lib/common/generated/gql/graphql'
-import type { ProjectRole } from '~~/lib/common/generated/gql/graphql'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const props = defineProps<{
@@ -62,6 +61,14 @@ const { on: searchOn, bind: searchBind } = useDebouncedTextInput({
 
 const project = computed(() => ({ workspaceId: props.workspaceId }))
 
+const filteredProjectRoles = computed(() => {
+  const roles = props.user?.projectRoles
+  if (!searchTerm.value) return roles || []
+  return (roles || []).filter((projectRole) =>
+    projectRole.project.name.toLowerCase().includes(searchTerm.value.toLowerCase())
+  )
+})
+
 const updateRole = useUpdateUserRole(project)
 
 const updateProjectRole = async (projectId: string, newRole: StreamRoles | null) => {
@@ -75,14 +82,6 @@ const updateProjectRole = async (projectId: string, newRole: StreamRoles | null)
   })
   loading.value = false
 }
-
-const filteredProjectRoles = computed(() => {
-  const roles = props.user?.projectRoles as ProjectRole[] | undefined
-  if (!searchTerm.value) return roles || []
-  return (roles || []).filter((projectRole) =>
-    projectRole.project.name.toLowerCase().includes(searchTerm.value.toLowerCase())
-  )
-})
 
 const projectCount = computed(() => props.user?.projectRoles?.length)
 </script>

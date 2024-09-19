@@ -184,7 +184,7 @@ const actionItems = computed(() => {
     [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
   ]
 
-  if (guests.value.find((guest) => guest.projectRoles.length > 1)) {
+  if (guests.value.find((guest) => guest.projectRoles.length)) {
     items.unshift([
       {
         title: 'Change project permissions...',

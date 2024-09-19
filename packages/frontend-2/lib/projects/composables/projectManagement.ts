@@ -240,7 +240,16 @@ export function useUpdateUserRole(
     const { data, errors } = await apollo
       .mutate({
         mutation: updateWorkspaceProjectRoleMutation,
-        variables: { input }
+        variables: { input },
+        update: (cache) => {
+          cache.evict({ id: getCacheId('Project', input.projectId) })
+          cache.evict({
+            id: getCacheId('WorkspaceCollaborator', input.userId)
+          })
+          cache.evict({
+            id: getCacheId('ProjectCollaborator', input.userId)
+          })
+        }
       })
       .catch(convertThrowIntoFetchResult)
 

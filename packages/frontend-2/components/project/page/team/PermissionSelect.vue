@@ -25,7 +25,7 @@
     <template #option="{ item, selected }">
       <div
         :class="[
-          'opacity-80 hover:opacity-100',
+          'opacity-90 hover:opacity-100',
           selected ? 'text-foreground font-medium !opacity-100' : 'text-foreground-2',
           item.id === 'delete' ? '!text-danger' : ''
         ]"
