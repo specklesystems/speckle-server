@@ -3,14 +3,16 @@
     v-model="selectedValue"
     :items="items"
     name="workspaceSelect"
-    label="Workspace"
+    :label="labelText ? labelText : 'Workspace'"
     class="min-w-[110px]"
     :label-id="labelId"
     :button-id="buttonId"
+    :show-label="showLabel"
     mount-menu-on-body
     fully-control-value
     clearable
     :disabled-item-predicate="disabledItemPredicate"
+    :help="help"
     disabled-item-tooltip="You dont have rights to create projects in this workspace"
   >
     <template #nothing-selected>
@@ -66,7 +68,10 @@ const props = defineProps({
   disabledItems: {
     required: false,
     type: Array as PropType<ProjectsAddDialog_WorkspaceFragment[]>
-  }
+  },
+  showLabel: Boolean,
+  labelText: String,
+  help: String
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
