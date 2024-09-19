@@ -190,8 +190,17 @@ const setupStrategies = async (app: Express) => {
   }
 
   if (process.env.STRATEGY_GITHUB === 'true') {
-    const githubStrategyBuilder = (await import('@/modules/auth/strategies/github'))
-      .default
+    const githubStrategyBuilderFactory = (
+      await import('@/modules/auth/strategies/github')
+    ).default
+    const githubStrategyBuilder = githubStrategyBuilderFactory({
+      getServerInfo,
+      getUserByEmail,
+      findOrCreateUser,
+      validateServerInvite,
+      finalizeInvitedServerRegistration,
+      resolveAuthRedirectPath
+    })
     const githubStrategy = await githubStrategyBuilder(
       app,
       sessionMiddleware,
