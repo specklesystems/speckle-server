@@ -57,7 +57,22 @@
       />
       <slot name="input-right">
         <a
-          v-if="shouldShowClear"
+          v-if="rightIcon"
+          :title="rightIconTitle"
+          :class="sizeClasses"
+          class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer opacity-60 hover:opacity-100 text-foreground-2"
+          @click="onRightIconClick"
+          @keydown="onRightIconClick"
+        >
+          <span class="text-body-xs sr-only">{{ rightIconTitle }}</span>
+          <Component
+            :is="rightIcon"
+            class="h-4 w-4 text-foreground"
+            aria-hidden="true"
+          />
+        </a>
+        <a
+          v-else-if="shouldShowClear"
           title="Clear input"
           class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer"
           @click="clear"
@@ -67,8 +82,8 @@
           <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
         </a>
         <div
-          v-if="!showLabel && showRequired && !errorMessage"
-          class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
+          v-else-if="!showLabel && showRequired && !errorMessage"
+          class="pointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
@@ -243,6 +258,14 @@ const props = defineProps({
   labelPosition: {
     type: String as PropType<LabelPosition>,
     default: 'top'
+  },
+  rightIcon: {
+    type: [Object, Function] as PropType<Optional<PropAnyComponent>>,
+    default: undefined
+  },
+  rightIconTitle: {
+    type: String,
+    default: undefined
   }
 })
 
@@ -253,6 +276,7 @@ const emit = defineEmits<{
   (e: 'clear'): void
   (e: 'focus'): void
   (e: 'blur'): void
+  (e: 'rightIconClick'): void
 }>()
 
 const slots = useSlots()
@@ -300,12 +324,8 @@ const iconClasses = computed((): string => {
   }
 
   if (!slots['input-right']) {
-    if (errorMessage.value || shouldShowClear.value) {
-      if (errorMessage.value && shouldShowClear.value) {
-        classParts.push('pr-12')
-      } else {
-        classParts.push('pr-8')
-      }
+    if (props.rightIcon || errorMessage.value || shouldShowClear.value) {
+      classParts.push('pr-8')
     }
   }
 
@@ -340,6 +360,10 @@ const computedWrapperClasses = computed(() => {
   }
   return classes.join(' ')
 })
+
+const onRightIconClick = () => {
+  emit('rightIconClick')
+}
 
 defineExpose({ focus })
 </script>

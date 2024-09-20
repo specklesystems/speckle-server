@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
     title="Create a new workspace"
   >
@@ -9,21 +9,25 @@
       <FormTextInput
         v-model:model-value="workspaceName"
         name="name"
-        label="Name"
-        placeholder="Workspace name"
+        label="Workspace name"
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
+        auto-focus
+        @update:model-value="updateShortId"
       />
       <FormTextInput
-        v-model:model-value="workspaceDescription"
-        name="description"
-        label="Workspace description"
-        placeholder="Workspace description"
-        :rules="[isStringOfLength({ maxLength: 512 })]"
+        v-model:model-value="workspaceShortId"
+        name="shortId"
+        label="Short ID"
+        :help="getShortIdHelp"
         color="foundation"
+        :rules="[
+          isStringOfLength({ maxLength: 50, minLength: 3 }),
+          isValidWorkspaceSlug
+        ]"
         show-label
-        show-optional
+        @update:model-value="onShortIdInput"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -44,7 +48,13 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
-import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import {
+  isRequired,
+  isStringOfLength,
+  isValidWorkspaceSlug
+} from '~~/lib/common/helpers/validation'
+import { generateSlugFromName } from '@speckle/shared'
+import { debounce } from 'lodash'
 
 const emit = defineEmits<(e: 'created') => void>()
 
@@ -63,10 +73,14 @@ const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
 const { handleSubmit } = useForm<FormValues>()
 
 const workspaceName = ref<string>('')
-const workspaceDescription = ref<string>('')
+const workspaceShortId = ref<string>('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
 const defaultLogoIndex = ref<number>(0)
+const shortIdManuallyEdited = ref(false)
+const customShortIdError = ref<string>('')
+
+const baseUrl = useRuntimeConfig().public.baseUrl
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -79,18 +93,26 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      color: 'primary'
+      color: 'primary',
+      disabled: !workspaceName.value.trim() || !workspaceShortId.value.trim()
     },
     onClick: handleCreateWorkspace
   }
 ])
 const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
 
+const getShortIdHelp = computed(() => {
+  if (!workspaceShortId.value) {
+    return `Used after ${baseUrl}/workspaces/`
+  }
+  return `${baseUrl}/workspaces/${workspaceShortId.value}`
+})
+
 const handleCreateWorkspace = handleSubmit(async () => {
   const newWorkspace = await createWorkspace(
     {
       name: workspaceName.value,
-      description: workspaceDescription.value,
+      slug: workspaceShortId.value,
       defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
@@ -116,8 +138,31 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
 const reset = () => {
   defaultLogoIndex.value = generateDefaultLogoIndex()
   workspaceName.value = ''
-  workspaceDescription.value = ''
+  workspaceShortId.value = ''
   workspaceLogo.value = null
+  editAvatarMode.value = false
+  shortIdManuallyEdited.value = false
+}
+
+const debouncedUpdateShortId = debounce((newName: string) => {
+  if (!shortIdManuallyEdited.value) {
+    const generatedSlug = generateSlugFromName({ name: newName })
+    workspaceShortId.value = generatedSlug
+    const validationResult = isValidWorkspaceSlug(generatedSlug)
+    customShortIdError.value =
+      typeof validationResult === 'string' ? validationResult : ''
+  }
+}, 300)
+
+const updateShortId = (newName: string) => {
+  debouncedUpdateShortId(newName)
+}
+
+const onShortIdInput = (newValue: string) => {
+  shortIdManuallyEdited.value = true
+  const validationResult = isValidWorkspaceSlug(newValue)
+  customShortIdError.value =
+    typeof validationResult === 'string' ? validationResult : ''
 }
 
 watch(isOpen, (newVal) => {
