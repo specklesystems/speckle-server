@@ -1,4 +1,6 @@
+import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
 import {
+  AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationRunWithTriggersFunctionRuns,
@@ -45,6 +47,18 @@ export type GetLatestVersionAutomationRuns = (
   },
   options?: Partial<{ limit: number }>
 ) => Promise<AutomationRunWithTriggersFunctionRuns[]>
+
+export type GetFunctionRun = (functionRunId: string) => Promise<
+  | (AutomationFunctionRunRecord & {
+      automationId: string
+      automationRevisionId: string
+    })
+  | null
+>
+
+export type UpsertAutomationFunctionRun = (
+  automationFunctionRun: InsertableAutomationFunctionRun
+) => Promise<void>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>

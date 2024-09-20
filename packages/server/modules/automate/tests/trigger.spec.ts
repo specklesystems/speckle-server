@@ -35,16 +35,16 @@ import {
   InsertableAutomationRun,
   getFullAutomationRunById,
   getAutomationTriggerDefinitions,
-  getFunctionRun,
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
-  upsertAutomationFunctionRun,
   storeAutomationFactory,
   storeAutomationTokenFactory,
   storeAutomationRevisionFactory,
   getAutomationFactory,
-  updateAutomationFactory
+  updateAutomationFactory,
+  getFunctionRunFactory,
+  upsertAutomationFunctionRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -62,7 +62,7 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { reportFunctionRunStatus } from '@/modules/automate/services/runsManagement'
+import { reportFunctionRunStatusFactory } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {
   getEncryptionKeyPairFor,
@@ -72,6 +72,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { db } from '@/db/knex'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -80,6 +81,8 @@ const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
 const updateAutomation = updateAutomationFactory({ db })
+const getFunctionRun = getFunctionRunFactory({ db })
+const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -1172,10 +1175,11 @@ const updateAutomation = updateAutomationFactory({ db })
 
       describe('status update report', () => {
         const buildReportFunctionRunStatus = () => {
-          const report = reportFunctionRunStatus({
+          const report = reportFunctionRunStatusFactory({
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun
+            automationRunUpdater: updateAutomationRun,
+            runEventEmit: AutomateRunsEmitter.emit
           })
 
           return report

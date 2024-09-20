@@ -16,7 +16,7 @@ import {
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
   getFullAutomationRevisionMetadata,
-  getFunctionRun,
+  getFunctionRunFactory,
   getLatestAutomationRevision,
   getLatestVersionAutomationRunsFactory,
   getProjectAutomationsItems,
@@ -26,7 +26,7 @@ import {
   storeAutomationTokenFactory,
   updateAutomationFactory,
   updateAutomationRun,
-  upsertAutomationFunctionRun
+  upsertAutomationFunctionRunFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
@@ -66,7 +66,7 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
-  reportFunctionRunStatus,
+  reportFunctionRunStatusFactory,
   ReportFunctionRunStatusDeps
 } from '@/modules/automate/services/runsManagement'
 import {
@@ -105,6 +105,7 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -114,6 +115,8 @@ const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
 const updateDbAutomation = updateAutomationFactory({ db })
 const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({ db })
+const getFunctionRun = getFunctionRunFactory({ db })
+const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -706,7 +709,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const deps: ReportFunctionRunStatusDeps = {
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun
+            automationRunUpdater: updateAutomationRun,
+            runEventEmit: AutomateRunsEmitter.emit
           }
 
           const payload = {
@@ -718,7 +722,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             statusMessage: input.statusMessage ?? null
           }
 
-          const result = await reportFunctionRunStatus(deps)(payload)
+          const result = await reportFunctionRunStatusFactory(deps)(payload)
 
           return result
         },
