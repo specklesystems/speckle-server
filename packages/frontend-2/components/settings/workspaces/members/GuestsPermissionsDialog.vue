@@ -1,39 +1,46 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm">
     <template #header>Change project permissions</template>
-    <div class="flex flex-col gap-4 text-foreground mb-8">
-      <p class="font-medium text-body-xs">
-        Projects {{ user?.user.name }} has access to:
-      </p>
-      <FormTextInput
-        v-bind="searchBind"
-        name="searchGuests"
-        color="foundation"
-        type="text"
-        size="lg"
-        :placeholder="`Search ${projectCount} projects...`"
-        class="px-3 py-2 border border-outline-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        v-on="searchOn"
-      />
-      <div
-        class="flex flex-col divide-y divide-outline-3 rounded-md border border-outline-3"
-      >
+    <div class="text-foreground mb-8">
+      <div v-if="projectCount > 0" class="flex flex-col gap-4">
+        <p class="font-medium text-body-xs">
+          Projects {{ user?.user.name }} has access to:
+        </p>
+        <FormTextInput
+          v-bind="searchBind"
+          name="searchGuests"
+          color="foundation"
+          type="text"
+          size="lg"
+          :placeholder="`Search ${projectCount} project${
+            projectCount !== 1 ? 's' : ''
+          }...`"
+          class="px-3 py-2 border border-outline-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          v-on="searchOn"
+        />
         <div
-          v-for="projectRole in filteredProjectRoles"
-          :key="projectRole.project.id"
-          class="flex items-center justify-between p-4"
+          class="flex flex-col divide-y divide-outline-3 rounded-md border border-outline-3"
         >
-          <span class="text-body-sm">{{ projectRole.project.name }}</span>
-          <ProjectPageTeamPermissionSelect
-            :model-value="projectRole.role"
-            :disabled="false"
-            :hide-owner="false"
-            @update:model-value="
-              (newRole) => updateProjectRole(projectRole.project.id, newRole)
-            "
-            @delete="() => updateProjectRole(projectRole.project.id, null)"
-          />
+          <div
+            v-for="projectRole in filteredProjectRoles"
+            :key="projectRole.project.id"
+            class="flex items-center justify-between p-4"
+          >
+            <span class="text-body-sm">{{ projectRole.project.name }}</span>
+            <ProjectPageTeamPermissionSelect
+              :model-value="projectRole.role"
+              :disabled="false"
+              :hide-owner="false"
+              @update:model-value="
+                (newRole) => updateProjectRole(projectRole.project.id, newRole)
+              "
+              @delete="() => updateProjectRole(projectRole.project.id, null)"
+            />
+          </div>
         </div>
+      </div>
+      <div v-else>
+        This guest doesn't have access to any projects in this workspace.
       </div>
     </div>
   </LayoutDialog>
