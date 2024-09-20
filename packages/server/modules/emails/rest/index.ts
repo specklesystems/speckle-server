@@ -9,8 +9,10 @@ import {
 } from '@/modules/emails/repositories'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-export = (app: Express) => {
+export = (params: { app: Express; openApiDocument: OpenApiDocument }) => {
+  const { app, openApiDocument } = params
   app.get('/auth/verifyemail', async (req, res) => {
     try {
       const finalizeEmailVerification = finalizeEmailVerificationFactory({
@@ -33,6 +35,15 @@ export = (app: Express) => {
       return res.redirect(
         new URL(`/?emailverifiederror=${msg}`, getFrontendOrigin()).toString()
       )
+    }
+  })
+  openApiDocument.registerOperation('/auth/verifyemail', HttpMethod.GET, {
+    summary: 'Verify email',
+    description: 'Verifies an email address',
+    responses: {
+      302: {
+        description: 'Redirects to the home page.'
+      }
     }
   })
 }
