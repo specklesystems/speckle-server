@@ -143,6 +143,7 @@ export const getFunctionInputDecryptor =
       dispose: coreDecryptor.dispose
     }
   }
+export type FunctionInputDecryptor = ReturnType<typeof getFunctionInputDecryptor>
 
 export type GetFunctionInputsForFrontendDeps = {
   getEncryptionKeyPairFor: GetEncryptionKeyPairFor

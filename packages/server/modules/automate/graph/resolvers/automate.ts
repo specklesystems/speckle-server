@@ -30,7 +30,7 @@ import {
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
-  createAutomationRevision,
+  createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatus,
   validateAndUpdateAutomationFactory
@@ -498,14 +498,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createRevision(parent, { input }, ctx) {
-          const create = createAutomationRevision({
+          const create = createAutomationRevisionFactory({
             getAutomation,
             storeAutomationRevision,
             getBranchesByIds,
             getFunctionRelease,
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-            getFunctionReleases
+            getFunctionReleases,
+            automationsEventsEmit: AutomationsEmitter.emit,
+            validateStreamAccess
           })
 
           return await create({

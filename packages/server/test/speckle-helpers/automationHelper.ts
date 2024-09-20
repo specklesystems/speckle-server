@@ -7,7 +7,7 @@ import {
 import {
   CreateAutomationRevisionDeps,
   createAutomationFactory,
-  createAutomationRevision
+  createAutomationRevisionFactory
 } from '@/modules/automate/services/automationManagement'
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import { createInmemoryRedisClient } from '@/test/redisHelper'
@@ -87,7 +87,7 @@ export const buildAutomationRevisionCreate = (
     functionId: params.functionId
   })
 
-  const create = createAutomationRevision({
+  const create = createAutomationRevisionFactory({
     getAutomation,
     storeAutomationRevision,
     getBranchesByIds,
@@ -97,6 +97,8 @@ export const buildAutomationRevisionCreate = (
     getFunctionInputDecryptor: getFunctionInputDecryptor({
       buildDecryptor
     }),
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit,
     ...overrides
   })
 
