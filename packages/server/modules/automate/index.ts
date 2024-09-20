@@ -7,11 +7,11 @@ import {
 } from '@/modules/automate/services/trigger'
 import {
   getActiveTriggerDefinitions,
-  getFullAutomationRevisionMetadata,
   getAutomationRevision,
-  getFullAutomationRunById,
   getAutomationFactory,
-  getAutomationRunFullTriggersFactory
+  getAutomationRunFullTriggersFactory,
+  getFullAutomationRevisionMetadataFactory,
+  getFullAutomationRunByIdFactory
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -26,7 +26,7 @@ import {
   setupAutomationUpdateSubscriptionsFactory,
   setupStatusUpdateSubscriptionsFactory
 } from '@/modules/automate/services/subscriptions'
-import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
+import { setupRunFinishedTrackingFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getUserById } from '@/modules/core/services/users'
@@ -85,11 +85,12 @@ const initializeEventListeners = () => {
       automationsEmitterListen: AutomationsEmitter.listen,
       publish
     })
-  const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
-    getFullAutomationRevisionMetadata,
+  const setupRunFinishedTrackingInvoke = setupRunFinishedTrackingFactory({
+    getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({ db }),
     getUserById,
     getCommit,
-    getFullAutomationRunById
+    getFullAutomationRunById: getFullAutomationRunByIdFactory({ db }),
+    automateRunsEventListener: AutomateRunsEmitter.listen
   })
   const getAutomation = getAutomationFactory({ db })
 
