@@ -75,6 +75,7 @@ import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctio
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -983,6 +984,7 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
             getAutomationToken,
             upsertAutomationRun
           }),
+          validateStreamAccess,
           ...(overrides || {})
         })
         return trigger

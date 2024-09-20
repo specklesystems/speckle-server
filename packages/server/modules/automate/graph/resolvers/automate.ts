@@ -547,7 +547,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               automateRunsEmitter: AutomateRunsEmitter.emit,
               getAutomationToken,
               upsertAutomationRun
-            })
+            }),
+            validateStreamAccess
           })
 
           const { automationRunId } = await trigger({

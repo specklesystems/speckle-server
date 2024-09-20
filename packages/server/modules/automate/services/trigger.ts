@@ -465,6 +465,7 @@ export type ManuallyTriggerAutomationDeps = {
   getAutomation: GetAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
   triggerFunction: TriggerAutomationRevisionRun
+  validateStreamAccess: typeof validateStreamAccess
 }
 
 export const manuallyTriggerAutomationFactory =
@@ -480,7 +481,8 @@ export const manuallyTriggerAutomationFactory =
       getAutomationTriggerDefinitions,
       getAutomation,
       getBranchLatestCommits,
-      triggerFunction
+      triggerFunction,
+      validateStreamAccess
     } = deps
 
     const [automation, triggerDefs] = await Promise.all([
