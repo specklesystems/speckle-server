@@ -1,4 +1,4 @@
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import {
   handleAutomateFunctionCreatorAuthCallback,
   startAutomateFunctionCreatorAuth
@@ -20,7 +20,7 @@ export default (app: Application) => {
     ]),
     async (req, res) => {
       const startAuth = startAutomateFunctionCreatorAuth({
-        createStoredAuthCode: createStoredAuthCode({
+        createStoredAuthCode: createStoredAuthCodeFactory({
           redis: getGenericRedis()
         })
       })

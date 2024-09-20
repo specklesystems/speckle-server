@@ -1,4 +1,8 @@
 import {
+  StoreAutomation,
+  StoreAutomationToken
+} from '@/modules/automate/domain/operations'
+import {
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationTriggerDefinitionRecord,
@@ -47,8 +51,14 @@ import {
 } from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
 import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
+
+const tables = {
+  automations: (db: Knex) => db<AutomationRecord>(Automations.name),
+  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name)
+}
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
 
@@ -276,21 +286,27 @@ export async function getFullAutomationRunById(
     : null
 }
 
-export async function storeAutomation(automation: AutomationRecord) {
-  const [newAutomation] = await Automations.knex()
-    .insert(pick(automation, Automations.withoutTablePrefix.cols))
-    .returning<AutomationRecord[]>('*')
+export const storeAutomationFactory =
+  (deps: { db: Knex }): StoreAutomation =>
+  async (automation: AutomationRecord) => {
+    const [newAutomation] = await tables
+      .automations(deps.db)
+      .insert(pick(automation, Automations.withoutTablePrefix.cols))
+      .returning('*')
 
-  return newAutomation
-}
+    return newAutomation
+  }
 
-export async function storeAutomationToken(automationToken: AutomationTokenRecord) {
-  const [newToken] = await AutomationTokens.knex()
-    .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
-    .returning<AutomationTokenRecord[]>('*')
+export const storeAutomationTokenFactory =
+  (deps: { db: Knex }): StoreAutomationToken =>
+  async (automationToken: AutomationTokenRecord) => {
+    const [newToken] = await tables
+      .automationTokens(deps.db)
+      .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
+      .returning('*')
 
-  return newToken
-}
+    return newToken
+  }
 
 export type InsertableAutomationRevisionFunction = Omit<
   AutomateRevisionFunctionRecord,

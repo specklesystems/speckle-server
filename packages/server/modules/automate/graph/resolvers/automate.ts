@@ -21,15 +21,15 @@ import {
   getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
-  storeAutomation,
+  storeAutomationFactory,
   storeAutomationRevision,
-  storeAutomationToken,
+  storeAutomationTokenFactory,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
 import {
-  createAutomation,
+  createAutomationFactory,
   createAutomationRevision,
   createTestAutomation,
   getAutomationsStatus,
@@ -37,8 +37,8 @@ import {
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
-  createStoredAuthCode,
-  validateStoredAuthCode
+  createStoredAuthCodeFactory,
+  validateStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import {
   convertFunctionReleaseToGraphQLReturn,
@@ -103,8 +103,12 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import { db } from '@/db/knex'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -435,7 +439,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const create = createFunctionFromTemplate({
             createExecutionEngineFn: createFunction,
             getUser,
-            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
           })
 
           return (await create({ input: args.input, userId: ctx.userId! }))
@@ -445,15 +451,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const update = updateFunction({
             updateFunction: execEngineUpdateFunction,
             getFunction,
-            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
           })
           return await update({ input: args.input, userId: ctx.userId! })
         }
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
-          const create = createAutomation({
-            createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
+          const create = createAutomationFactory({
+            createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation,
             storeAutomationToken
@@ -555,7 +563,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Query: {
         async automateValidateAuthCode(_parent, args) {
-          const validate = validateStoredAuthCode({
+          const validate = validateStoredAuthCodeFactory({
             redis: getGenericRedis()
           })
           return await validate({
@@ -628,7 +636,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         availableGithubOrgs: async (parent, _args, ctx) => {
           const userId = parent.userId
-          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })({
+          const authCode = await createStoredAuthCodeFactory({
+            redis: getGenericRedis()
+          })({
             userId,
             action: AuthCodePayloadAction.GetAvailableGithubOrganizations
           })

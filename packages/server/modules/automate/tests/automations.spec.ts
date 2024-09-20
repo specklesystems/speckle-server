@@ -9,7 +9,7 @@ import {
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
-  createStoredAuthCode
+  createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
@@ -497,7 +497,7 @@ const buildAutomationUpdate = () => {
       })
 
       it('succeeds with valid code', async () => {
-        const storeCode = createStoredAuthCode({
+        const storeCode = createStoredAuthCodeFactory({
           redis: getGenericRedis()
         })
         const code = await storeCode({

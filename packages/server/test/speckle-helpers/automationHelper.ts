@@ -1,15 +1,15 @@
 import {
   getAutomation,
-  storeAutomation,
+  storeAutomationFactory,
   storeAutomationRevision,
-  storeAutomationToken
+  storeAutomationTokenFactory
 } from '@/modules/automate/repositories/automations'
 import {
   CreateAutomationRevisionDeps,
-  createAutomation,
+  createAutomationFactory,
   createAutomationRevision
 } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import { createInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
@@ -38,6 +38,10 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import { db } from '@/db/knex'
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })
@@ -47,8 +51,8 @@ export const buildAutomationCreate = (
     createDbAutomation: typeof clientCreateAutomation
   }>
 ) => {
-  const create = createAutomation({
-    createAuthCode: createStoredAuthCode({ redis: createInmemoryRedisClient() }),
+  const create = createAutomationFactory({
+    createAuthCode: createStoredAuthCodeFactory({ redis: createInmemoryRedisClient() }),
     automateCreateAutomation:
       overrides?.createDbAutomation ||
       (async () => ({
