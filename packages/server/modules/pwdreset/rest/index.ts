@@ -13,9 +13,11 @@ import {
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 import { Express } from 'express'
 
-export default function (app: Express) {
+export default function (params: { app: Express; openApiDocument: OpenApiDocument }) {
+  const { app, openApiDocument } = params
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
     try {
@@ -37,6 +39,14 @@ export default function (app: Express) {
       res.status(400).send(ensureError(e).message)
     }
   })
+  openApiDocument.registerOperation('/auth/pwdreset/request', HttpMethod.POST, {
+    description: 'Reset a password',
+    responses: {
+      200: {
+        description: 'The password reset workflow was successfully started.'
+      }
+    }
+  })
 
   // Finalizes password recovery.
   app.post('/auth/pwdreset/finalize', async (req, res) => {
@@ -56,6 +66,14 @@ export default function (app: Express) {
     } catch (e: unknown) {
       req.log.info({ err: e }, 'Error while finalizing password recovery.')
       res.status(400).send(ensureError(e).message)
+    }
+  })
+  openApiDocument.registerOperation('/auth/pwdreset/finalize', HttpMethod.GET, {
+    description: 'Finish resetting a password',
+    responses: {
+      200: {
+        description: 'The password was successfully reset.'
+      }
     }
   })
 }
