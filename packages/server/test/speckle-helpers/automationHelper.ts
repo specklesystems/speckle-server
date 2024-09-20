@@ -39,6 +39,8 @@ import {
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
@@ -60,7 +62,9 @@ export const buildAutomationCreate = (
         token: cryptoRandomString({ length: 10 })
       })),
     storeAutomation,
-    storeAutomationToken
+    storeAutomationToken,
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit
   })
 
   return create

@@ -104,6 +104,7 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -464,7 +465,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation,
-            storeAutomationToken
+            storeAutomationToken,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return (

@@ -47,7 +47,10 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import {
+  AutomationsEmitter,
+  AutomationsEventsEmit
+} from '@/modules/automate/events/automations'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
 import {
   CreateAutomation,
@@ -61,6 +64,8 @@ export type CreateAutomationDeps = {
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
 export const createAutomationFactory =
@@ -81,7 +86,9 @@ export const createAutomationFactory =
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
-      storeAutomationToken
+      storeAutomationToken,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     validateAutomationName(name)
@@ -124,7 +131,7 @@ export const createAutomationFactory =
       automateToken: token
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+    await automationsEventsEmit(AutomationsEmitter.events.Created, {
       automation: automationRecord
     })
 
