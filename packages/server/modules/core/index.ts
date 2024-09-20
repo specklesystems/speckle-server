@@ -27,22 +27,22 @@ let genericRedisClient: Optional<Redis> = undefined
 const coreModule: SpeckleModule<{
   getGenericRedis: () => Redis
 }> = {
-  async init({ app, isInitial }) {
+  async init({ app, openApiDocument, isInitial }) {
     moduleLogger.info('💥 Init core module')
 
     // Initialize the static route
-    staticRest(app)
+    staticRest({ app, openApiDocument })
 
     // Initialize the health check route
-    healthRest(app)
+    healthRest({ app, openApiDocument })
 
     // Initialises the two main bulk upload/download endpoints
-    uploadRest(app)
-    downloadRest(app)
+    uploadRest({ app, openApiDocument })
+    downloadRest({ app, openApiDocument })
 
     // Initialises the two diff-based upload/download endpoints
-    diffUpload(app)
-    diffDownload(app)
+    diffUpload({ app, openApiDocument })
+    diffDownload({ app, openApiDocument })
 
     const scopeRegisterFunc = registerOrUpdateScopeFactory({ db })
     // Register core-based scoeps

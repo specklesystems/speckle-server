@@ -10,12 +10,17 @@ import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
 import type { Knex } from 'knex'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
 type FreeConnectionsCalculator = {
   mean: () => number
 }
 
-export default (app: express.Application) => {
+export default (params: {
+  app: express.Application
+  openApiDocument: OpenApiDocument
+}) => {
+  const { app, openApiDocument } = params
   const knexFreeDbConnectionSamplerLiveness = knexFreeDbConnectionSamplerFactory({
     db,
     collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
@@ -31,6 +36,15 @@ export default (app: express.Application) => {
   knexFreeDbConnectionSamplerReadiness.start()
 
   app.options('/liveness')
+  openApiDocument.registerOperation('/liveness', HttpMethod.OPTIONS, {
+    description: 'Liveness options',
+    responses: {
+      200: {
+        description: 'Options for liveness endpoint.'
+      }
+    }
+  })
+
   app.get(
     '/liveness',
     handleLivenessFactory({
@@ -39,7 +53,25 @@ export default (app: express.Application) => {
       freeConnectionsCalculator: knexFreeDbConnectionSamplerLiveness
     })
   )
+  openApiDocument.registerOperation('/liveness', HttpMethod.GET, {
+    description: 'Indicates whether the application is alive.',
+    responses: {
+      200: {
+        description: 'The application is alive.'
+      }
+    }
+  })
+
   app.options('/readiness')
+  openApiDocument.registerOperation('/readiness', HttpMethod.OPTIONS, {
+    description: 'Readiness endpoint options',
+    responses: {
+      200: {
+        description: 'Options were retrieved.'
+      }
+    }
+  })
+
   app.get(
     '/readiness',
     handleReadinessFactory({
@@ -48,6 +80,14 @@ export default (app: express.Application) => {
       freeConnectionsCalculator: knexFreeDbConnectionSamplerReadiness
     })
   )
+  openApiDocument.registerOperation('/readiness', HttpMethod.GET, {
+    description: 'Indicates whether the application is ready to accept traffic',
+    responses: {
+      200: {
+        description: 'The application is ready.'
+      }
+    }
+  })
 }
 
 const handleLivenessFactory =

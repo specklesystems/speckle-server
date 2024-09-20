@@ -8,8 +8,21 @@ const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('@/logging/logging')
-module.exports = (app) => {
+const { HttpMethod } = require('@/modules/shared/helpers/typeHelper')
+module.exports = ({ app, openApiDocument }) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
+  openApiDocument.registerOperation(
+    '/objects/{streamId}/{objectId}',
+    HttpMethod.OPTIONS,
+    {
+      description: 'Options for downloading an object from a project (stream)',
+      responses: {
+        200: {
+          description: 'Options were retrieved.'
+        }
+      }
+    }
+  )
 
   app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
     const boundLogger = (req.log || logger).child({
@@ -69,8 +82,29 @@ module.exports = (app) => {
       }
     )
   })
+  openApiDocument.registerOperation('/objects/{streamId}/{objectId}', HttpMethod.GET, {
+    description: 'Download objects from a project (stream)',
+    responses: {
+      200: {
+        description: 'Objects were downloaded.'
+      }
+    }
+  })
 
   app.options('/objects/:streamId/:objectId/single', corsMiddleware())
+  openApiDocument.registerOperation(
+    '/objects/{streamId}/{objectId}/single',
+    HttpMethod.OPTIONS,
+    {
+      description: 'Options for downloading a single object from a project (stream)',
+      responses: {
+        200: {
+          description: 'Options were retrieved.'
+        }
+      }
+    }
+  )
+
   app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
     const boundLogger = (req.log || logger).child({
       requestId: req.id,
@@ -100,4 +134,16 @@ module.exports = (app) => {
 
     res.send(obj.data)
   })
+  openApiDocument.registerOperation(
+    '/objects/{streamId}/{objectId}/single',
+    HttpMethod.GET,
+    {
+      description: 'Options for downloading a single object from a project (stream)',
+      responses: {
+        200: {
+          description: 'An object was retrieved.'
+        }
+      }
+    }
+  )
 }

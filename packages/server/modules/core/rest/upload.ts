@@ -15,6 +15,7 @@ import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
 import { Logger } from 'pino'
 import { Router } from 'express'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
@@ -28,8 +29,17 @@ if (FF_NO_CLOSURE_WRITES) {
   objectInsertionService = createObjectsBatchedAndNoClosures
 }
 
-export default (app: Router) => {
+export default (params: { app: Router; openApiDocument: OpenApiDocument }) => {
+  const { app, openApiDocument } = params
   app.options('/objects/:streamId', corsMiddleware())
+  openApiDocument.registerOperation('/objects/{streamId}', HttpMethod.OPTIONS, {
+    description: 'The options for this endpoint',
+    responses: {
+      200: {
+        description: 'Options were retrieved.'
+      }
+    }
+  })
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
     const calculateLogMetadata = (params: {
@@ -412,5 +422,13 @@ export default (app: Router) => {
     })
 
     req.pipe(busboy)
+  })
+  openApiDocument.registerOperation('/objects/{streamId}', HttpMethod.POST, {
+    description: 'Upload objects to the project (stream)',
+    responses: {
+      200: {
+        description: 'Objects were successfully uploaded.'
+      }
+    }
   })
 }

@@ -5,9 +5,19 @@ import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { getObjectsStream } from '@/modules/core/services/objects'
 import { pipeline, PassThrough } from 'stream'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-export default (app: Application) => {
+export default (params: { app: Application; openApiDocument: OpenApiDocument }) => {
+  const { app, openApiDocument } = params
   app.options('/api/getobjects/:streamId', corsMiddleware())
+  openApiDocument.registerOperation('/api/getobjects/{streamId}', HttpMethod.OPTIONS, {
+    description: 'Options for the endpoint',
+    responses: {
+      200: {
+        description: 'Options were retrieved.'
+      }
+    }
+  })
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
@@ -93,6 +103,14 @@ export default (app: Application) => {
       speckleObjStream.emit('error', new Error('Database streaming error'))
     } finally {
       speckleObjStream.end()
+    }
+  })
+  openApiDocument.registerOperation('/api/getobjects/{streamId}', HttpMethod.POST, {
+    description: 'Get all objects for a project (stream)',
+    responses: {
+      200: {
+        description: 'All objects were successfully retrieved.'
+      }
     }
   })
 }

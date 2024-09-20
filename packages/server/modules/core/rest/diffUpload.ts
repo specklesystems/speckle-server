@@ -4,9 +4,19 @@ import { validatePermissionsWriteStream } from '@/modules/core/rest/authUtils'
 import { hasObjects } from '@/modules/core/services/objects'
 import { chunk } from 'lodash'
 import type { Application } from 'express'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-export default (app: Application) => {
+export default (params: { app: Application; openApiDocument: OpenApiDocument }) => {
+  const { app, openApiDocument } = params
   app.options('/api/diff/:streamId', corsMiddleware())
+  openApiDocument.registerOperation('/api/diff/{streamId}', HttpMethod.OPTIONS, {
+    description: 'Options for the endpoint',
+    responses: {
+      200: {
+        description: 'Options were retrieved.'
+      }
+    }
+  })
 
   app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
@@ -47,5 +57,13 @@ export default (app: Application) => {
     gzip.flush()
     gzip.end()
     gzip.pipe(res)
+  })
+  openApiDocument.registerOperation('/api/diff/{streamId}', HttpMethod.POST, {
+    description: 'Options for getting the diff of objects for a project (stream)',
+    responses: {
+      200: {
+        description: 'A diff was successfully computed.'
+      }
+    }
   })
 }
