@@ -54,3 +54,17 @@ spec:
             name: speckle-server
             port:
               name: web
+      - pathType: Exact
+        path: "/openapi/json"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Exact
+        path: "/openapi/html"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web

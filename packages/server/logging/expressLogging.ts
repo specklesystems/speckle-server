@@ -48,7 +48,13 @@ export const LoggingExpressMiddleware = HttpLogger({
     if (['/favicon.ico'].includes(path || '')) return 'debug'
 
     const shouldBeDebug =
-      ['/metrics', '/readiness', '/liveness'].includes(path || '') ?? false
+      [
+        '/metrics',
+        '/readiness',
+        '/liveness',
+        '/openapi/json',
+        '/openapi/html'
+      ].includes(path || '') ?? false
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
