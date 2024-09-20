@@ -1,7 +1,6 @@
 import {
   InsertableAutomationRun,
   getActiveTriggerDefinitions,
-  getAutomation,
   getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
@@ -43,10 +42,13 @@ import { automateLogger } from '@/logging/logging'
 import { getFunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { GetEncryptionKeyPairFor } from '@/modules/automate/domain/operations'
+import {
+  GetAutomation,
+  GetEncryptionKeyPairFor
+} from '@/modules/automate/domain/operations'
 
 export type OnModelVersionCreateDeps = {
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getAutomationRevision: typeof getAutomationRevision
   getTriggers: typeof getActiveTriggerDefinitions
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
@@ -440,7 +442,7 @@ async function composeTriggerData(params: {
 
 export type ManuallyTriggerAutomationDeps = {
   getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
 }
@@ -512,7 +514,7 @@ export const manuallyTriggerAutomation =
   }
 
 export type CreateTestAutomationRunDeps = {
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getLatestAutomationRevision: typeof getLatestAutomationRevision
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
 } & CreateAutomationRunDataDeps

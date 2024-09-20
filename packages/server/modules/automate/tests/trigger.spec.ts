@@ -33,18 +33,18 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  getAutomation,
   getFullAutomationRunById,
   getAutomationTriggerDefinitions,
   getFunctionRun,
-  updateAutomation,
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
   upsertAutomationFunctionRun,
   storeAutomationFactory,
   storeAutomationTokenFactory,
-  storeAutomationRevisionFactory
+  storeAutomationRevisionFactory,
+  getAutomationFactory,
+  updateAutomationFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -78,6 +78,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const updateAutomation = updateAutomationFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',

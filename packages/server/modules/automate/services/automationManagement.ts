@@ -2,9 +2,7 @@ import {
   InsertableAutomationRevision,
   InsertableAutomationRevisionFunction,
   InsertableAutomationRevisionTrigger,
-  getAutomation,
-  getLatestVersionAutomationRuns,
-  updateAutomation as updateDbAutomation
+  getLatestVersionAutomationRuns
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
@@ -51,10 +49,12 @@ import { validateAutomationName } from '@/modules/automate/utils/automationConfi
 import {
   CreateAutomation,
   CreateStoredAuthCode,
+  GetAutomation,
   GetEncryptionKeyPair,
   StoreAutomation,
   StoreAutomationRevision,
-  StoreAutomationToken
+  StoreAutomationToken,
+  UpdateAutomation
 } from '@/modules/automate/domain/operations'
 
 export type CreateAutomationDeps = {
@@ -243,13 +243,13 @@ export const createTestAutomationFactory =
     return automationRecord
   }
 
-export type UpdateAutomationDeps = {
-  getAutomation: typeof getAutomation
-  updateAutomation: typeof updateDbAutomation
+export type ValidateAndUpdateAutomationDeps = {
+  getAutomation: GetAutomation
+  updateAutomation: UpdateAutomation
 }
 
-export const updateAutomation =
-  (deps: UpdateAutomationDeps) =>
+export const validateAndUpdateAutomationFactory =
+  (deps: ValidateAndUpdateAutomationDeps) =>
   async (params: {
     input: ProjectAutomationUpdateInput
     userId: string
@@ -383,7 +383,7 @@ const validateNewRevisionFunctions =
   }
 
 export type CreateAutomationRevisionDeps = {
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   storeAutomationRevision: StoreAutomationRevision
   getEncryptionKeyPair: GetEncryptionKeyPair
   getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>

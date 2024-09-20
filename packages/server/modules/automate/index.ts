@@ -9,9 +9,9 @@ import {
   getActiveTriggerDefinitions,
   getAutomationRunFullTriggers,
   getFullAutomationRevisionMetadata,
-  getAutomation,
   getAutomationRevision,
-  getFullAutomationRunById
+  getFullAutomationRunById,
+  getAutomationFactory
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -80,6 +80,7 @@ const initializeEventListeners = () => {
     getCommit,
     getFullAutomationRunById
   })
+  const getAutomation = getAutomationFactory({ db })
 
   const quitters = [
     VersionsEmitter.listen(

@@ -7,6 +7,8 @@ import { InsertableAutomationRevision } from '@/modules/automate/repositories/au
 import { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import { Nullable } from '@speckle/shared'
+import { SetRequired } from 'type-fest'
 
 export type StoreAutomation = (
   automation: AutomationRecord
@@ -19,6 +21,20 @@ export type StoreAutomationToken = (
 export type StoreAutomationRevision = (
   revision: InsertableAutomationRevision
 ) => Promise<AutomationRevisionWithTriggersFunctions>
+
+export type GetAutomations = (params: {
+  automationIds: string[]
+  projectId?: string
+}) => Promise<AutomationRecord[]>
+
+export type GetAutomation = (params: {
+  automationId: string
+  projectId?: string
+}) => Promise<Nullable<AutomationRecord>>
+
+export type UpdateAutomation = (
+  automation: SetRequired<Partial<AutomationRecord>, 'id'>
+) => Promise<AutomationRecord>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
