@@ -1,9 +1,12 @@
 import {
   GetActiveTriggerDefinitions,
   GetAutomation,
+  GetAutomationProject,
+  GetAutomationProjects,
   GetAutomationRevision,
   GetAutomationRevisions,
   GetAutomationRunFullTriggers,
+  GetAutomationRunWithToken,
   GetAutomations,
   GetAutomationToken,
   GetAutomationTriggerDefinitions,
@@ -924,95 +927,94 @@ export const getLatestVersionAutomationRunsFactory =
     return formattedItems
   }
 
-export const getAutomationProjects = async (params: {
-  automationIds: string[]
-  userId?: string
-}) => {
-  const { automationIds, userId } = params
-  if (!automationIds.length) return {}
+export const getAutomationProjectsFactory =
+  (deps: { db: Knex }): GetAutomationProjects =>
+  async (params: { automationIds: string[]; userId?: string }) => {
+    const { automationIds, userId } = params
+    if (!automationIds.length) return {}
 
-  const q = Automations.knex()
-    .select<Array<StreamRecord & { automationId: string; role?: StreamRoles }>>([
-      ...Streams.cols,
-      Automations.colAs('id', 'automationId'),
-      ...(userId
-        ? [
-            // Getting first role from grouped results
-            knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
-          ]
-        : [])
-    ])
-    .whereIn(Automations.col.id, automationIds)
-    .innerJoin(Streams.name, Streams.col.id, Automations.col.projectId)
+    const q = tables
+      .automations(deps.db)
+      .select<Array<StreamRecord & { automationId: string; role?: StreamRoles }>>([
+        ...Streams.cols,
+        Automations.colAs('id', 'automationId'),
+        ...(userId
+          ? [
+              // Getting first role from grouped results
+              knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+            ]
+          : [])
+      ])
+      .whereIn(Automations.col.id, automationIds)
+      .innerJoin(Streams.name, Streams.col.id, Automations.col.projectId)
 
-  if (userId) {
-    q.leftJoin(StreamAcl.name, function () {
-      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
-        StreamAcl.col.userId,
-        userId
-      )
-    }).groupBy(Automations.col.id, Streams.col.id)
+    if (userId) {
+      q.leftJoin(StreamAcl.name, function () {
+        this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      }).groupBy(Automations.col.id, Streams.col.id)
+    }
+
+    const res = await q
+
+    return keyBy(res, (r) => r.automationId)
   }
 
-  const res = await q
+export const getAutomationProjectFactory =
+  (deps: { db: Knex }): GetAutomationProject =>
+  async (params: { automationId: string; userId?: string }) => {
+    const { automationId, userId } = params
+    const projects = await getAutomationProjectsFactory(deps)({
+      automationIds: [automationId],
+      userId
+    })
 
-  return keyBy(res, (r) => r.automationId)
-}
+    return (projects[automationId] || null) as Nullable<(typeof projects)[0]>
+  }
 
-export const getAutomationProject = async (params: {
-  automationId: string
-  userId?: string
-}) => {
-  const { automationId, userId } = params
-  const projects = await getAutomationProjects({
-    automationIds: [automationId],
-    userId
-  })
+export const getAutomationRunWithTokenFactory =
+  (deps: { db: Knex }): GetAutomationRunWithToken =>
+  async (params: { automationRunId: string; automationId: string }) => {
+    const { automationRunId, automationId } = params
+    const q = tables
+      .automationRuns(deps.db)
+      .select<
+        Array<
+          AutomationRunRecord & {
+            automationId: string
+            token: string
+            executionEngineAutomationId: string
+          }
+        >
+      >([
+        ...AutomationRuns.cols,
+        Automations.colAs('id', 'automationId'),
+        Automations.col.executionEngineAutomationId,
+        AutomationTokens.colAs('automateToken', 'token')
+      ])
+      .where(AutomationRuns.col.id, automationRunId)
+      .andWhere(Automations.col.id, automationId)
+      .innerJoin(
+        AutomationRevisions.name,
+        AutomationRevisions.col.id,
+        AutomationRuns.col.automationRevisionId
+      )
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
+      .innerJoin(
+        AutomationTokens.name,
+        AutomationTokens.col.automationId,
+        Automations.col.id
+      )
+      .first()
 
-  return (projects[automationId] || null) as Nullable<(typeof projects)[0]>
-}
-
-export const getAutomationRunWithToken = async (params: {
-  automationRunId: string
-  automationId: string
-}) => {
-  const { automationRunId, automationId } = params
-  const q = AutomationRuns.knex()
-    .select<
-      Array<
-        AutomationRunRecord & {
-          automationId: string
-          token: string
-          executionEngineAutomationId: string
-        }
-      >
-    >([
-      ...AutomationRuns.cols,
-      Automations.colAs('id', 'automationId'),
-      Automations.col.executionEngineAutomationId,
-      AutomationTokens.colAs('automateToken', 'token')
-    ])
-    .where(AutomationRuns.col.id, automationRunId)
-    .andWhere(Automations.col.id, automationId)
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
-    .innerJoin(
-      Automations.name,
-      Automations.col.id,
-      AutomationRevisions.col.automationId
-    )
-    .innerJoin(
-      AutomationTokens.name,
-      AutomationTokens.col.automationId,
-      Automations.col.id
-    )
-    .first()
-
-  return await q
-}
+    return await q
+  }
 
 export async function getAutomationRunsTriggers(params: {
   automationRunIds: string[]

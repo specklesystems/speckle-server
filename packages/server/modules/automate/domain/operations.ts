@@ -4,6 +4,7 @@ import {
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationRevisionWithTriggersFunctions,
+  AutomationRunRecord,
   AutomationRunWithTriggersFunctionRuns,
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord,
@@ -20,8 +21,8 @@ import {
 import { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { SetRequired } from 'type-fest'
 
 export type StoreAutomation = (
@@ -127,6 +128,41 @@ export type GetLatestAutomationRevisions = (params: {
 export type GetLatestAutomationRevision = (params: {
   automationId: string
 }) => Promise<Nullable<AutomationRevisionRecord>>
+
+export type GetAutomationRunWithToken = (params: {
+  automationRunId: string
+  automationId: string
+}) => Promise<
+  Optional<
+    AutomationRunRecord & {
+      automationId: string
+      token: string
+      executionEngineAutomationId: string
+    }
+  >
+>
+
+export type GetAutomationProjects = (params: {
+  automationIds: string[]
+  userId?: string
+}) => Promise<{
+  [automationId: string]: StreamRecord & {
+    automationId: string
+    role?: StreamRoles
+  }
+}>
+
+export type GetAutomationProject = (params: {
+  automationId: string
+  userId?: string
+}) => Promise<
+  Nullable<
+    StreamRecord & {
+      automationId: string
+      role?: StreamRoles
+    }
+  >
+>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
