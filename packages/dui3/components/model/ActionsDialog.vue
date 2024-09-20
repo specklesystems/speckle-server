@@ -13,7 +13,7 @@
     >
       <div class="-mx-1">
         <SendSettingsDialog
-          v-if="isSender"
+          v-if="hasSettings"
           :model-card-id="props.modelCard.modelCardId"
           :settings="props.modelCard.settings"
         >
@@ -68,8 +68,8 @@ const props = defineProps<{
   modelCard: IModelCard
 }>()
 
-const isSender = computed(() => {
-  return props.modelCard.typeDiscriminator === 'SenderModelCard'
+const hasSettings = computed(() => {
+  return !!props.modelCard.settings
 })
 
 const app = useNuxtApp()

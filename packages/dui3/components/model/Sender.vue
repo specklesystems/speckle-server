@@ -64,13 +64,8 @@
       ></SendSettings> -->
       <div class="mt-4 flex justify-center items-center space-x-2">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
-        <FormButton size="sm" @click.stop=";(openFilterDialog = false), saveFilter()">
-          Save
-        </FormButton>
-        <FormButton
-          size="sm"
-          @click.stop=";(openFilterDialog = false), saveFilterAndSend()"
-        >
+        <FormButton size="sm" @click.stop="saveFilter()">Save</FormButton>
+        <FormButton size="sm" @click.stop="saveFilterAndSend()">
           Save & Publish
         </FormButton>
       </div>
@@ -147,6 +142,7 @@ const saveFilter = async () => {
     sendFilter: newFilter,
     expired: true
   })
+  openFilterDialog.value = false
 }
 
 const hover = ref(false)
