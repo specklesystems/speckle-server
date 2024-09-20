@@ -149,7 +149,11 @@ const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
 const showDeleteUserRoleDialog = ref(false)
 const showGuestsPermissionsDialog = ref(false)
-const userToModify = ref<WorkspaceCollaborator>()
+const userIdToModify = ref<string | null>(null)
+
+const userToModify = computed(
+  () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
+)
 
 const mixpanel = useMixpanel()
 const updateUserRole = useWorkspaceUpdateRole()
@@ -197,31 +201,21 @@ const actionItems = computed(() => {
 })
 
 const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator) => {
-  userToModify.value = user
+  userIdToModify.value = user.id
 
   if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
-    openGuestsPermissionsDialog(user)
+    showGuestsPermissionsDialog.value = true
   }
   if (actionItem.id === ActionTypes.RemoveMember) {
-    openDeleteUserRoleDialog(user)
+    showDeleteUserRoleDialog.value = true
   }
-}
-
-const openDeleteUserRoleDialog = (user: WorkspaceCollaborator) => {
-  userToModify.value = user
-  showDeleteUserRoleDialog.value = true
-}
-
-const openGuestsPermissionsDialog = (user: WorkspaceCollaborator) => {
-  userToModify.value = user
-  showGuestsPermissionsDialog.value = true
 }
 
 const onRemoveUser = async () => {
-  if (!userToModify.value?.id) return
+  if (!userIdToModify.value) return
 
   await updateUserRole({
-    userId: userToModify.value.id,
+    userId: userIdToModify.value,
     role: null,
     workspaceId: props.workspaceId
   })
