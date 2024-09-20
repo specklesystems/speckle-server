@@ -1,19 +1,84 @@
 <template>
   <div class="flex flex-col space-y-2">
-    <Portal to="navigation">
-      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon" class="ml-2">
-        Back home
-      </FormButton>
-    </Portal>
-    <div>
-      <p class="text-sm text-foreground-2 py-2 px-2">
+    <div class="px-2 mt-2">
+      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon">Home</FormButton>
+      <p class="h5">Document info</p>
+      <p class="text-sm text-foreground-2 py-2">
+        Current document info. This should change on document swaps, closure, opening,
+        etc.
+      </p>
+      <div class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar">
+        <pre>{{ documentInfo }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5">Send Filters</p>
+      <p class="text-sm text-foreground-2 space-x-2">Available send filters:</p>
+      <div class="space-y-2 my-2">
+        <div v-for="filter in sendFilters" :key="filter.name">
+          <div>
+            <span
+              class="rounded-full text-xs px-2 bg-primary text-foreground-on-primary mr-2"
+            >
+              {{ filter.name }}
+            </span>
+            <span class="text-xs text-foreground-2">{{ filter.summary }}</span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-20"
+      >
+        <pre>{{ sendFilters }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5 mb-4">Chromium 65 Scrollable Dialogs Test</p>
+      <FormButton @click="showBigDialog = !showBigDialog">Show Big Dialog</FormButton>
+      <LayoutDialog v-model:open="showBigDialog" title="hello" fullscreen="none">
+        <div class="bg-purple-500" style="height: 2000px">
+          This is a test for chromium 65. If this is not scrollable, something is wrong!
+        </div>
+      </LayoutDialog>
+    </div>
+    <div class="px-2">
+      <p class="h5">Selection info</p>
+      <p class="text-sm text-foreground-2 py-2">
+        Selection info. This should change in real time based on user selection, but
+        there's an imperative method too in case that's impossible.
+      </p>
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
+      >
+        <div v-if="!hasSelectionBinding" class="text-danger mb-2">
+          No selection binding registered.
+        </div>
+        <pre>{{ selectionInfo }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5">Document State</p>
+      <p class="text-sm text-foreground-2 py-2">
+        What state is in this document (currently just model cards).
+      </p>
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
+      >
+        <div class="text-info mb-2">
+          There are currently {{ totalModelCount }} model card(s).
+        </div>
+        <pre>{{ projectModelGroups }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5">Binding tests</p>
+      <p class="text-sm text-foreground-2 py-2">
         Do not expect these to save the day. They are just some
         <b class="text-foreground-primary">minor sanity checks</b>
         .
       </p>
     </div>
     <FormButton
-      size="xl"
       color="card"
       full-width
       class="sticky top-10 top-16"
@@ -42,9 +107,33 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { ArrowLeftIcon, CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
+import { useHostAppStore } from '~/store/hostApp'
+import { useSelectionStore } from '~/store/selection'
+
+const showBigDialog = ref(false)
+
 const { $testBindings } = useNuxtApp()
+
+const store = useHostAppStore()
+
+const { documentInfo, sendFilters, projectModelGroups } = storeToRefs(store)
+
+const totalModelCount = computed(() => {
+  let count = 0
+  for (const pmg of projectModelGroups.value) {
+    count += pmg.senders.length
+    count += pmg.receivers.length
+  }
+  return count
+})
+
+const selectionStore = useSelectionStore()
+const { selectionInfo, hasBinding: hasSelectionBinding } = storeToRefs(selectionStore)
+
+await store.refreshSendFilters()
 
 const tests = ref([
   {
@@ -136,25 +225,21 @@ const runTests = async () => {
 
 $testBindings.on('emptyTestEvent', () => {
   setTimeout(() => {
-    console.log('sketchup sent event back', 'emptyTestEvent')
-
     const myTest = tests.value.find((t) => t.name === 'Simple event capture')
-    console.log(myTest, 'myTest')
 
     if (!myTest) return
     myTest.status = 1
     myTest.result = 'got an event back, we are okay'
-  }, 300)
+  }, 1000)
 })
 
 $testBindings.on('testEvent', (args: TestEventArgs) => {
   setTimeout(() => {
-    console.log(args, 'testEvent')
     const myTest = tests.value.find((t) => t.name === 'Event capture with args')
-    console.log(myTest, 'myTest')
+
     if (!myTest) return
     myTest.status = 1
     myTest.result = args
-  }, 300)
+  }, 1000)
 })
 </script>

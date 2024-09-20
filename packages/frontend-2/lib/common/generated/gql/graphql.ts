@@ -3705,6 +3705,15 @@ export type VersionCreatedTriggerDefinition = {
   type: AutomateRunTriggerType;
 };
 
+export type VersionCreateInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   create: Version;
