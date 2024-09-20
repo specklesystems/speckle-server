@@ -141,6 +141,8 @@ export type CreateTestAutomationDeps = {
   getFunction: typeof getFunction
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
 /**
@@ -165,7 +167,9 @@ export const createTestAutomationFactory =
       getEncryptionKeyPair,
       getFunction,
       storeAutomation,
-      storeAutomationRevision
+      storeAutomationRevision,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     validateAutomationName(name)
@@ -231,7 +235,7 @@ export const createTestAutomationFactory =
       publicKey: encryptionKeyPair.publicKey
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
       automation: automationRecord,
       revision: automationRevisionRecord
     })
