@@ -33,8 +33,6 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  updateAutomationRevision,
-  updateAutomationRun,
   storeAutomationFactory,
   storeAutomationTokenFactory,
   storeAutomationRevisionFactory,
@@ -46,7 +44,9 @@ import {
   upsertAutomationRunFactory,
   getAutomationTokenFactory,
   getAutomationTriggerDefinitionsFactory,
-  getFullAutomationRevisionMetadataFactory
+  getFullAutomationRevisionMetadataFactory,
+  updateAutomationRevisionFactory,
+  updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -94,6 +94,8 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
 const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
   db
 })
+const updateAutomationRevision = updateAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',

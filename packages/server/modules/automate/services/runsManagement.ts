@@ -1,5 +1,6 @@
 import {
   GetFunctionRun,
+  UpdateAutomationRun,
   UpsertAutomationFunctionRun
 } from '@/modules/automate/domain/operations'
 import {
@@ -15,7 +16,6 @@ import {
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
-import { updateAutomationRun } from '@/modules/automate/repositories/automations'
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
@@ -90,7 +90,7 @@ export const resolveStatusFromFunctionRunStatuses = (
 export type ReportFunctionRunStatusDeps = {
   getAutomationFunctionRunRecord: GetFunctionRun
   upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
-  automationRunUpdater: typeof updateAutomationRun
+  automationRunUpdater: UpdateAutomationRun
   runEventEmit: AutomateRunsEventsEmitter
 }
 

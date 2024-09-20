@@ -1,5 +1,6 @@
 import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
 import {
+  AutomateRevisionFunctionRecord,
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionRecord,
@@ -163,6 +164,22 @@ export type GetAutomationProject = (params: {
     }
   >
 >
+
+export type UpdateAutomationRun = (
+  run: SetRequired<Partial<AutomationRunRecord>, 'id'>
+) => Promise<AutomationRunRecord>
+
+export type GetRevisionsTriggerDefinitions = (params: {
+  automationRevisionIds: string[]
+}) => Promise<{ [automationRevisionId: string]: AutomationTriggerDefinitionRecord[] }>
+
+export type GetRevisionsFunctions = (params: {
+  automationRevisionIds: string[]
+}) => Promise<{ [automationRevisionId: string]: AutomateRevisionFunctionRecord[] }>
+
+export type GetFunctionAutomationCounts = (params: {
+  functionIds: string[]
+}) => Promise<{ [functionId: string]: number }>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>

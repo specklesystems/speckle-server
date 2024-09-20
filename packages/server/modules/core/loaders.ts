@@ -64,10 +64,10 @@ import {
   getAutomationRevisionsFactory,
   getAutomationRunsTriggers,
   getAutomationsFactory,
-  getFunctionAutomationCounts,
+  getFunctionAutomationCountsFactory,
   getLatestAutomationRevisionsFactory,
-  getRevisionsFunctions,
-  getRevisionsTriggerDefinitions
+  getRevisionsFunctionsFactory,
+  getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
   getFunction,
@@ -93,6 +93,9 @@ const getAppScopes = getAppScopesFactory({ db })
 const getAutomations = getAutomationsFactory({ db })
 const getAutomationRevisions = getAutomationRevisionsFactory({ db })
 const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
+const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
+const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
+const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

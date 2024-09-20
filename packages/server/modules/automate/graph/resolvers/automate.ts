@@ -26,7 +26,7 @@ import {
   storeAutomationRevisionFactory,
   storeAutomationTokenFactory,
   updateAutomationFactory,
-  updateAutomationRun,
+  updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
@@ -127,6 +127,7 @@ const getAutomationToken = getAutomationTokenFactory({ db })
 const upsertAutomationRun = upsertAutomationRunFactory({ db })
 const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
 const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
