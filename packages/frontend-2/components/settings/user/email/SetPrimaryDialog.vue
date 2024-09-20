@@ -2,10 +2,10 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Change primary email address"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
+    <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to make
       <span class="font-medium">{{ email }}</span>
       your primary email?
@@ -35,14 +35,14 @@ const { mutate: updateMutation } = useMutation(settingsSetPrimaryUserEmailMutati
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', outline: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Make primary',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       onSetPrimary()
       isOpen.value = false

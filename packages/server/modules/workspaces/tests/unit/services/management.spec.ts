@@ -8,13 +8,18 @@ import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory
+  updateWorkspaceRoleFactory,
+  validateSlugFactory
 } from '@/modules/workspaces/services/management'
-import { Roles } from '@speckle/shared'
+import { Roles, validateWorkspaceSlug } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import {
+  WorkspaceEvents,
+  WorkspaceEventsPayloads
+} from '@/modules/workspacesCore/domain/events'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
@@ -24,6 +29,8 @@ import {
   WorkspaceNotFoundError,
   WorkspaceNoVerifiedDomainsError,
   WorkspaceProtectedError,
+  WorkspaceSlugInvalidError,
+  WorkspaceSlugTakenError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
@@ -31,7 +38,6 @@ import { merge, omit } from 'lodash'
 import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 
 type WorkspaceTestContext = {
   storedWorkspaces: Omit<Workspace, 'domains'>[]
@@ -64,6 +70,8 @@ const buildCreateWorkspaceWithTestContext = (
     }) => {
       context.storedWorkspaces.push(workspace)
     },
+    validateSlug: async () => {},
+    generateValidSlug: async () => cryptoRandomString({ length: 10 }),
     upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
@@ -86,6 +94,7 @@ const getCreateWorkspaceInput = () => {
     userId: cryptoRandomString({ length: 10 }),
     workspaceInput: {
       description: 'foobar',
+      slug: cryptoRandomString({ length: 10 }),
       logo: null,
       name: cryptoRandomString({ length: 6 }),
       defaultLogoIndex: 0
@@ -94,19 +103,117 @@ const getCreateWorkspaceInput = () => {
 }
 
 describe('Workspace services', () => {
+  describe('isSlugValid', () => {
+    it('throws for url unsafe characters', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('{{{}}}}}')
+      })
+      expect(err.message).to.contain('only lowercase letters, numbers')
+    })
+    it('throws for too short inputs', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('{')
+      })
+      expect(err.message).to.contain('characters long.')
+    })
+    it('throws for too long inputs', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug(cryptoRandomString({ length: 31 }))
+      })
+      expect(err.message).to.contain('slug must not exceed')
+    })
+    it('throws for invalid start', async () => {
+      const err = await expectToThrow(() => {
+        validateWorkspaceSlug('-asdfasdf-')
+      })
+      expect(err.message).to.contain('cannot start or end with a')
+    })
+    it('returns true for valid slugs', () => {
+      validateWorkspaceSlug('asdf-asdf')
+      // if it did not throw, we're good
+      expect(true)
+    })
+  })
+  describe('validateSlugFactory creates a function, that', () => {
+    it('throws WorkspaceSlugTakenError if the input slug clashes an existing workspace', async () => {
+      const validateSlug = validateSlugFactory({
+        getWorkspaceBySlug: async () =>
+          ({ id: cryptoRandomString({ length: 10 }) } as Workspace)
+      })
+
+      const err = await expectToThrow(async () => {
+        await validateSlug({
+          slug: cryptoRandomString({ length: 10 })
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugTakenError().message)
+    })
+    it('throws validation error for invalid slugs', async () => {
+      const validateSlug = validateSlugFactory({
+        getWorkspaceBySlug: async () => null
+      })
+
+      const err = await expectToThrow(async () => {
+        await validateSlug({
+          slug: '-----'
+        })
+      })
+      expect(err.message).to.contain('cannot start or end with a hyphen')
+    })
+  })
+
+  describe('generateValidSlugFactory creates a function, that', () => {
+    it('generates a slug from the input name', async () => {
+      const slug = await generateValidSlugFactory({
+        getWorkspaceBySlug: async () => null
+      })({ name: 'Foo bAr{ }baZ' })
+      expect(slug).to.be.equal('foo-bar-baz')
+    })
+    it('adds a random string to the generated slug if it clashes an existing one', async () => {
+      const slug = await generateValidSlugFactory({
+        getWorkspaceBySlug: async () =>
+          ({ id: cryptoRandomString({ length: 10 }) } as Workspace)
+      })({ name: 'FoobAr' })
+      expect(slug).contain('foobar-')
+      expect(slug.length).to.be.equal(12)
+    })
+  })
   describe('createWorkspaceFactory creates a function, that', () => {
-    it('stores the workspace', async () => {
-      const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
+    it('throws WorkspaceSlugInvalidError if the input slug is not valid', async () => {
+      const { createWorkspace } = buildCreateWorkspaceWithTestContext({
+        validateSlug: async () => {
+          throw new WorkspaceSlugInvalidError()
+        }
+      })
 
       const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const err = await expectToThrow(async () => {
+        await createWorkspace({
+          userId,
+          workspaceInput: { ...workspaceInput, slug: 'asdf{{}}}' },
+          userResourceAccessLimits: null
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugInvalidError().message)
+    })
+    it('generates a workspace slug from the workspace name', async () => {
+      const generatedSlug = cryptoRandomString({ length: 10 })
+      const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const { context, createWorkspace } = buildCreateWorkspaceWithTestContext({
+        generateValidSlug: async () => generatedSlug
+      })
+
       const workspace = await createWorkspace({
         userId,
-        workspaceInput,
+        workspaceInput: { ...workspaceInput, slug: null },
         userResourceAccessLimits: null
       })
 
       expect(context.storedWorkspaces.length).to.equal(1)
-      expect(context.storedWorkspaces[0]).to.deep.equal(omit(workspace, 'domains'))
+      expect(omit(context.storedWorkspaces[0], 'slug')).to.deep.equal(
+        omit(workspace, 'domains', 'slug')
+      )
+      expect(context.storedWorkspaces[0].slug).to.equal(generatedSlug)
     })
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
@@ -148,6 +255,7 @@ describe('Workspace services', () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspace: WorkspaceWithDomains = {
         id: workspaceId,
+        slug: cryptoRandomString({ length: 10 }),
         name: cryptoRandomString({ length: 10 }),
         description: cryptoRandomString({ length: 20 }),
         createdAt: new Date(),
@@ -156,6 +264,7 @@ describe('Workspace services', () => {
         defaultLogoIndex: 0,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        defaultProjectRole: 'stream:contributor',
         domains: []
       }
       return merge(workspace, input)
@@ -164,6 +273,9 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => null,
+          validateSlug: async () => {
+            expect.fail()
+          },
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -183,6 +295,9 @@ describe('Workspace services', () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
           emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          validateSlug: async () => {
             expect.fail()
           },
           upsertWorkspace: async () => {
@@ -205,6 +320,9 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
+          validateSlug: async () => {
+            expect.fail()
+          },
           upsertWorkspace: async () => {
             expect.fail()
           }
@@ -217,6 +335,29 @@ describe('Workspace services', () => {
       })
       expect(err.message).to.be.equal('Provided logo is malformed')
     })
+    it('validates description length', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          validateSlug: async () => {
+            throw new WorkspaceSlugInvalidError()
+          },
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            slug: '{}{}{}{}'
+          }
+        })
+      })
+      expect(err.message).to.be.equal(new WorkspaceSlugInvalidError().message)
+    })
     it('does not allow turning on discoverability if the workspace has no verified domains', async () => {
       const workspace = createTestWorkspaceWithDomainsData()
       const err = await expectToThrow(async () => {
@@ -225,6 +366,7 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
+          validateSlug: async () => {},
           upsertWorkspace: async () => {
             expect.fail()
           }
@@ -246,6 +388,7 @@ describe('Workspace services', () => {
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
+          validateSlug: async () => {},
           upsertWorkspace: async () => {
             expect.fail()
           }
@@ -268,6 +411,8 @@ describe('Workspace services', () => {
         emitWorkspaceEvent: async () => {
           return []
         },
+        validateSlug: async () => {},
+
         upsertWorkspace: async ({ workspace }) => {
           newWorkspaceName = workspace.name
         }
@@ -306,6 +451,7 @@ describe('Workspace services', () => {
         emitWorkspaceEvent: async () => {
           return []
         },
+        validateSlug: async () => {},
         upsertWorkspace: async ({ workspace }) => {
           updatedWorkspace = workspace
         }
@@ -386,16 +532,20 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       context.eventData.eventName = eventName
       context.eventData.payload = payload
 
+      switch (eventName) {
+        case 'workspace.role-deleted': {
+          const { userId } =
+            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+          for (const project of context.workspaceProjects) {
+            context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+              (role) => role.resourceId !== project.id && role.userId !== userId
+            )
+          }
+          break
+        }
+      }
+
       return []
-    },
-    async *queryAllWorkspaceProjects() {
-      yield context.workspaceProjects
-    },
-    deleteProjectRole: async ({ projectId, userId }) => {
-      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-        (role) => role.resourceId !== projectId && role.userId !== userId
-      )
-      return {} as StreamRecord
     },
     ...dependencyOverrides
   }
@@ -430,32 +580,50 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       context.eventData.eventName = eventName
       context.eventData.payload = payload
 
-      return []
-    },
-    async *queryAllWorkspaceProjects() {
-      yield context.workspaceProjects
-    },
-    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
-    upsertProjectRole: async (role) => {
-      const streamAcl: StreamAclRecord = {
-        userId: role.userId,
-        role: role.role,
-        resourceId: role.projectId
+      switch (eventName) {
+        case 'workspace.role-deleted': {
+          const { userId } =
+            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+          for (const project of context.workspaceProjects) {
+            context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+              (role) => role.resourceId !== project.id && role.userId !== userId
+            )
+          }
+          break
+        }
+        case 'workspace.role-updated': {
+          const workspaceRole =
+            payload as WorkspaceEventsPayloads['workspace.role-updated']
+          const mapping = {
+            [Roles.Workspace.Guest]: null,
+            [Roles.Workspace.Member]:
+              context.workspace.defaultProjectRole ?? Roles.Stream.Contributor,
+            [Roles.Workspace.Admin]: Roles.Stream.Owner
+          }
+
+          for (const project of context.workspaceProjects) {
+            const projectRole = mapping[workspaceRole.role]
+
+            if (!projectRole) {
+              continue
+            }
+
+            const streamAcl: StreamAclRecord = {
+              userId: workspaceRole.userId,
+              role: projectRole,
+              resourceId: project.id
+            }
+
+            context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+              (acl) => acl.userId !== workspaceRole.userId
+            )
+            context.workspaceProjectRoles.push(streamAcl)
+          }
+          break
+        }
       }
 
-      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-        (acl) => acl.userId !== role.userId
-      )
-      context.workspaceProjectRoles.push(streamAcl)
-
-      return {} as StreamRecord
-    },
-    deleteProjectRole: async ({ userId }) => {
-      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-        (acl) => acl.userId !== userId
-      )
-
-      return {} as StreamRecord
+      return []
     },
     ...dependencyOverrides
   }
@@ -589,9 +757,15 @@ describe('Workspace role services', () => {
 
       await updateWorkspaceRole(role)
 
+      const payload = {
+        ...(context.eventData
+          .payload as WorkspaceEventsPayloads['workspace.role-updated'])
+      }
+      delete payload.flags
+
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
-      expect(context.eventData.payload).to.deep.equal(role)
+      expect(payload).to.deep.equal(role)
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -901,12 +1075,14 @@ describe('Workspace role services', () => {
                   userId,
                   id: workspaceId,
                   name: cryptoRandomString({ length: 10 }),
+                  slug: cryptoRandomString({ length: 10 }),
                   logo: null,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
+                  defaultProjectRole: 'stream:contributor',
                   defaultLogoIndex: 0
                 }
               },
@@ -943,12 +1119,14 @@ describe('Workspace role services', () => {
         const workspace: Workspace = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultProjectRole: 'stream:contributor',
           defaultLogoIndex: 0
         }
 
@@ -997,12 +1175,14 @@ describe('Workspace role services', () => {
         const workspace: Workspace = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultProjectRole: 'stream:contributor',
           defaultLogoIndex: 0
         }
 
@@ -1057,6 +1237,7 @@ describe('Workspace role services', () => {
         const workspaceWithoutDomains = {
           id: workspaceId,
           name: cryptoRandomString({ length: 10 }),
+          slug: cryptoRandomString({ length: 10 }),
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -1064,6 +1245,7 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           domains: [],
+          defaultProjectRole: Roles.Stream.Contributor,
           defaultLogoIndex: 0
         }
 

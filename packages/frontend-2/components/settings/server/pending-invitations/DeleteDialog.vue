@@ -1,16 +1,18 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="isOpen" max-width="xs" :buttons="dialogButtons">
     <template #header>Delete invitation</template>
-    <div class="flex flex-col gap-6 text-sm text-foreground">
+    <div class="flex flex-col gap-3 text-body-xs text-foreground mb-2">
       <p>Are you sure you want to delete the selected invitation?</p>
-      <div v-if="invite" class="flex flex-col gap-2">
+      <div
+        v-if="invite"
+        class="flex flex-col gap-1 bg-foundation-2 border border-outline-3 p-3 rounded-md text-body-2xs"
+      >
         <div class="flex gap-1">
           <div class="w-20">Email:</div>
-          <strong>{{ invite.email }}</strong>
+          <span class="font-medium">{{ invite.email }}</span>
         </div>
         <div class="flex items-center gap-1">
           <div class="w-20">Invited by:</div>
-          <UserAvatar :user="invite.invitedBy" />
           {{ invite.invitedBy.name }}
         </div>
       </div>
@@ -123,12 +125,12 @@ const deleteConfirmed = async () => {
 const dialogButtons: LayoutDialogButton[] = [
   {
     text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
+    props: { color: 'danger' },
     onClick: deleteConfirmed
   },
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => (isOpen.value = false)
   }
 ]

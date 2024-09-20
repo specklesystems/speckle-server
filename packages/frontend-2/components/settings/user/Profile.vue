@@ -1,7 +1,7 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader title="Profile" text="Manage your profile information" />
+      <SettingsSectionHeader title="Profile" text="Manage your profile" />
       <SettingsUserProfileDetails :user="user" />
       <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsUserProfileChangePassword :user="user" />

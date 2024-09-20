@@ -1,21 +1,16 @@
 import { db } from '@/db/knex'
-import {
-  deleteProjectRoleFactory,
-  getStream,
-  upsertProjectRoleFactory
-} from '@/modules/core/repositories/streams'
+import { getStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
-import { getStreams } from '@/modules/core/services/streams'
 import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
+import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -24,7 +19,8 @@ import {
   getWorkspaceFactory,
   getWorkspaceWithDomainsFactory,
   getWorkspaceDomainsFactory,
-  storeWorkspaceDomainFactory
+  storeWorkspaceDomainFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -36,12 +32,19 @@ import {
   updateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
-  addDomainToWorkspaceFactory
+  addDomainToWorkspaceFactory,
+  validateSlugFactory,
+  generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
-import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
+import {
+  MaybeNullOrUndefined,
+  Roles,
+  StreamRoles,
+  WorkspaceRoles
+} from '@speckle/shared'
 
 export type BasicTestWorkspace = {
   /**
@@ -52,19 +55,27 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
+  slug: string
   name: string
   description?: string
   logo?: string
+  defaultProjectRole?: StreamRoles
   discoverabilityEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
-  workspace: BasicTestWorkspace,
+  workspace: Omit<BasicTestWorkspace, 'slug'> & { slug?: string },
   owner: BasicTestUser,
   domain?: string
 ) => {
   const createWorkspace = createWorkspaceFactory({
+    validateSlug: validateSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
+    generateValidSlug: generateValidSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
@@ -74,6 +85,7 @@ export const createTestWorkspace = async (
     userId: owner.id,
     workspaceInput: {
       name: workspace.name,
+      slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
       logo: workspace.logo || null,
       defaultLogoIndex: 0
@@ -82,6 +94,8 @@ export const createTestWorkspace = async (
   })
 
   workspace.id = newWorkspace.id
+  workspace.ownerId = owner.id
+
   if (domain) {
     await addDomainToWorkspaceFactory({
       findEmailsByUserId: findEmailsByUserIdFactory({ db }),
@@ -97,13 +111,17 @@ export const createTestWorkspace = async (
     })
   }
 
+  const updateWorkspace = updateWorkspaceFactory({
+    validateSlug: validateSlugFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+    }),
+    getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+    upsertWorkspace: upsertWorkspaceFactory({ db }),
+    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
+  })
+
   if (workspace.discoverabilityEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
-    const updateWorkspace = updateWorkspaceFactory({
-      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
-    })
 
     await updateWorkspace({
       workspaceId: newWorkspace.id,
@@ -115,17 +133,20 @@ export const createTestWorkspace = async (
 
   if (workspace.domainBasedMembershipProtectionEnabled) {
     if (!domain) throw new Error('Domain is needed for membership protection')
-    await updateWorkspaceFactory({
-      getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit
-    })({
+    await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
   }
 
-  workspace.ownerId = owner.id
+  if (workspace.defaultProjectRole) {
+    await updateWorkspace({
+      workspaceId: newWorkspace.id,
+      workspaceInput: {
+        defaultProjectRole: parseDefaultProjectRole(workspace.defaultProjectRole)
+      }
+    })
+  }
 }
 
 export const assignToWorkspace = async (
@@ -138,10 +159,6 @@ export const assignToWorkspace = async (
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
-    upsertProjectRole: upsertProjectRoleFactory({ db }),
-    deleteProjectRole: deleteProjectRoleFactory({ db }),
-    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
@@ -159,8 +176,6 @@ export const unassignFromWorkspace = async (
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
-    deleteProjectRole: deleteProjectRoleFactory({ db }),
-    queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 

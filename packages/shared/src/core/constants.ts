@@ -150,6 +150,9 @@ export const AllScopes = flatMap(Scopes, (v) => Object.values(v))
 
 export type ServerScope = (typeof AllScopes)[number]
 
+export const isScope = (scope: unknown): scope is ServerScope =>
+  !!(scope && (AllScopes as unknown[]).includes(scope))
+
 export const SourceAppNames = [
   'Dynamo',
   'Revit',

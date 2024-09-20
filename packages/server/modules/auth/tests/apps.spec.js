@@ -2,24 +2,65 @@
 const expect = require('chai').expect
 
 const { createUser } = require(`@/modules/core/services/users`)
-const { validateToken } = require(`@/modules/core/services/tokens`)
-const { beforeEachContext } = require(`@/test/hooks`)
 const {
-  getApp,
-  getAllPublicApps,
-  createApp,
-  updateApp,
-  deleteApp,
-  createAuthorizationCode,
-  createAppTokenFromAccessCode,
-  refreshAppToken,
-  revokeExistingAppCredentialsForUser
-} = require('../services/apps')
+  validateToken,
+  createAppToken,
+  createBareToken
+} = require(`@/modules/core/services/tokens`)
+const { beforeEachContext } = require(`@/test/hooks`)
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const { updateDefaultApp } = require('@/modules/auth/manageDefaultApps')
 const knex = require('@/db/knex')
 const cryptoRandomString = require('crypto-random-string')
+const {
+  getAppFactory,
+  updateDefaultAppFactory,
+  getAllPublicAppsFactory,
+  createAppFactory,
+  updateAppFactory,
+  deleteAppFactory,
+  revokeExistingAppCredentialsForUserFactory,
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  createRefreshTokenFactory,
+  getRefreshTokenFactory,
+  revokeRefreshTokenFactory
+} = require('@/modules/auth/repositories/apps')
+const {
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
+} = require('@/modules/auth/services/serverApps')
+
+const getApp = getAppFactory({ db: knex })
+const updateDefaultApp = updateDefaultAppFactory({ db: knex })
+const getAllPublicApps = getAllPublicAppsFactory({ db: knex })
+const createApp = createAppFactory({ db: knex })
+const updateApp = updateAppFactory({ db: knex })
+const deleteApp = deleteAppFactory({ db: knex })
+const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserFactory({
+  db: knex
+})
+const createAuthorizationCode = createAuthorizationCodeFactory({ db: knex })
+
+const createRefreshToken = createRefreshTokenFactory({ db: knex })
+const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+  getAuthorizationCode: getAuthorizationCodeFactory({ db: knex }),
+  deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db: knex }),
+  getApp,
+  createRefreshToken,
+  createAppToken,
+  createBareToken
+})
+
+const refreshAppToken = refreshAppTokenFactory({
+  getRefreshToken: getRefreshTokenFactory({ db: knex }),
+  revokeRefreshToken: revokeRefreshTokenFactory({ db: knex }),
+  createRefreshToken,
+  getApp,
+  createAppToken,
+  createBareToken
+})
 
 describe('Services @apps-services', () => {
   const actor = {

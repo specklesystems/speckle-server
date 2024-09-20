@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4">
-    <div class="text-foreground normal text-sm sm:text-base">
+    <div class="text-foreground text-body-xs">
       Add objects from the current project by their IDs or an Object URL.
     </div>
     <form

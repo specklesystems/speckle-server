@@ -14,7 +14,6 @@
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
-          v-if="!invite.workspace"
           :size="buttonSize"
           color="subtle"
           text
@@ -22,7 +21,7 @@
           :disabled="loading"
           @click="onDeclineClick(token)"
         >
-          Decline
+          {{ declineMessage }}
         </FormButton>
         <FormButton
           :full-width="block"
@@ -33,7 +32,7 @@
           :disabled="loading"
           @click="onAcceptClick(token)"
         >
-          Accept
+          {{ acceptMessage }}
         </FormButton>
       </div>
       <template v-else>
@@ -126,6 +125,8 @@ const mainInfoBlockClasses = computed(() => {
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const isForRegisteredUser = computed(() => !!props.invite.user?.id)
+const acceptMessage = computed(() => (props.invite.workspace ? 'Join' : 'Accept'))
+const declineMessage = computed(() => (props.invite.workspace ? 'Dismiss' : 'Decline'))
 
 const onLoginSignupClick = async () => {
   postAuthRedirect.setCurrentRoute()
@@ -147,6 +148,8 @@ const onDeclineClick = (token?: string) => {
   if (props.invite.workspace) {
     mixpanel.track('Invite Action', {
       accepted: false,
+      type: 'workspace invite',
+      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
@@ -156,12 +159,18 @@ const onDeclineClick = (token?: string) => {
 const onAcceptClick = (token?: string) => {
   emit('processed', true, token)
   if (props.invite.workspace) {
-    mixpanel.track('Invite Action', {
-      accepted: true,
+    mixpanel.track('Workspace Joined', {
+      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
-    mixpanel.add_group('workspace_id', props.invite.workspace.id)
+
+    mixpanel.track('Invite Action', {
+      accepted: true,
+      type: 'workspace invite',
+      // eslint-disable-next-line camelcase
+      workspace_id: props.invite.workspace.id
+    })
   }
 }
 </script>

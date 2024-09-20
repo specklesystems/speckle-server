@@ -78,6 +78,7 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { ForbiddenError } from '@/modules/shared/errors'
+import cryptoRandomString from 'crypto-random-string'
 
 enum InviteByTarget {
   Email = 'email',
@@ -234,6 +235,7 @@ describe('Workspaces Invites GQL', () => {
     name: 'My First Workspace',
     id: '',
     ownerId: '',
+    slug: cryptoRandomString({ length: 10 }),
     domainBasedMembershipProtectionEnabled: false
   }
 
@@ -241,12 +243,14 @@ describe('Workspaces Invites GQL', () => {
     name: 'My Domain protected workspace',
     id: '',
     ownerId: '',
+    slug: cryptoRandomString({ length: 10 }),
     domainBasedMembershipProtectionEnabled: true
   }
 
   const otherGuysWorkspace: BasicTestWorkspace = {
     name: 'Other Guy Workspace',
     id: '',
+    slug: cryptoRandomString({ length: 10 }),
     ownerId: ''
   }
 
@@ -587,6 +591,7 @@ describe('Workspaces Invites GQL', () => {
       const myProjectInviteTargetWorkspace: BasicTestWorkspace = {
         name: 'My Project Invite Target Workspace #1',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
 
@@ -783,6 +788,7 @@ describe('Workspaces Invites GQL', () => {
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
 
@@ -908,6 +914,7 @@ describe('Workspaces Invites GQL', () => {
       const myInviteTargetWorkspace: BasicTestWorkspace = {
         name: 'My Invite Target Workspace',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
       const myInviteTargetWorkspaceStream1: BasicTestStream = {
@@ -1122,6 +1129,7 @@ describe('Workspaces Invites GQL', () => {
         const brokenWorkspace: BasicTestWorkspace = {
           name: 'Broken Workspace',
           id: 'a',
+          slug: cryptoRandomString({ length: 10 }),
           ownerId: ''
         }
         await createTestWorkspaces([[brokenWorkspace, me]])
@@ -1557,6 +1565,7 @@ describe('Workspaces Invites GQL', () => {
     const otherWorkspace: BasicTestWorkspace = {
       name: 'Other Workspace',
       id: '',
+      slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
     }
 

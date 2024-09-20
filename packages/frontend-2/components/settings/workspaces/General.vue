@@ -3,8 +3,42 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-      <div class="grid md:grid-cols-2 pt-4">
-        <div class="flex items-center justify-center">
+
+      <div class="pt-6">
+        <FormTextInput
+          v-model="name"
+          color="foundation"
+          label="Name"
+          name="name"
+          placeholder="Workspace name"
+          show-label
+          :disabled="!isAdmin"
+          label-position="left"
+          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+          validate-on-value-update
+          @change="save()"
+        />
+        <hr class="my-4 border-outline-3" />
+        <FormTextInput
+          v-model="description"
+          color="foundation"
+          label="Description"
+          name="description"
+          placeholder="Workspace description"
+          show-label
+          label-position="left"
+          :disabled="!isAdmin"
+          :rules="[isStringOfLength({ maxLength: 512 })]"
+          @change="save()"
+        />
+        <hr class="my-4 border-outline-3" />
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col">
+            <span class="text-body-xs font-medium text-foreground">Workspace logo</span>
+            <span class="text-body-2xs text-foreground-2 max-w-[230px]">
+              Upload your logo image or use one from our set of workspace icons.
+            </span>
+          </div>
           <SettingsWorkspacesGeneralEditAvatar
             v-if="workspaceResult?.workspace"
             :workspace="workspaceResult?.workspace"
@@ -12,55 +46,52 @@
             size="xxl"
           />
         </div>
-        <div class="pt-6 md:pt-0">
-          <FormTextInput
-            v-model="name"
-            color="foundation"
-            label="Name"
-            name="name"
-            placeholder="Workspace name"
-            show-label
-            :disabled="!isAdmin"
-            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-            validate-on-value-update
-            @change="save()"
-          />
-          <hr class="mt-4 mb-2 border-outline-3" />
-          <FormTextInput
-            v-model="description"
-            color="foundation"
-            label="Description"
-            name="description"
-            placeholder="Workspace description"
-            show-label
-            :disabled="!isAdmin"
-            :rules="[isStringOfLength({ maxLength: 512 })]"
-            @change="save()"
+      </div>
+      <hr class="my-6 border-outline-2" />
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-x-8 items-center">
+        <div class="flex flex-col w-full sm:w-6/12">
+          <span class="text-body-xs font-medium text-foreground">
+            Default project role
+          </span>
+          <span class="text-body-2xs text-foreground-2">
+            Role workspace members get when added to the workspace and in newly created
+            projects.
+          </span>
+        </div>
+        <div class="w-full sm:w-6/12">
+          <FormSelectProjectRoles
+            v-model="defaultProjectRole"
+            disabled-items-tooltip="Use project settings to assign a member as project owner"
+            label="Project role"
+            size="md"
+            :disabled-items="[Roles.Stream.Owner]"
+            @update:model-value="save()"
           />
         </div>
       </div>
-      <hr class="my-6 md:my-8 border-outline-2" />
+      <hr class="my-6 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
         <CommonCard class="bg-foundation">
           By clicking the button below you will leave this workspace.
         </CommonCard>
         <div>
-          <FormButton color="danger" @click="showLeaveDialog = true">
+          <FormButton color="primary" @click="showLeaveDialog = true">
             Leave workspace
           </FormButton>
         </div>
       </div>
       <template v-if="isAdmin">
-        <hr class="my-6 md:my-8 border-outline-2" />
+        <hr class="mb-6 mt-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
           <CommonCard class="bg-foundation">
-            We will delete all content of this workspace, and any associated data. We
-            will ask you to type in your workspace name and press the delete button.
+            We will delete all projects where you are the sole owner, and any associated
+            data. We will ask you to type in your email address and press the delete
+            button.
           </CommonCard>
           <div>
-            <FormButton color="danger" @click="showDeleteDialog = true">
+            <FormButton color="primary" @click="showDeleteDialog = true">
               Delete workspace
             </FormButton>
           </div>
@@ -83,7 +114,6 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useForm } from 'vee-validate'
 import { useQuery, useMutation } from '@vue/apollo-composable'
@@ -97,6 +127,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { Roles, type StreamRoles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -107,10 +138,11 @@ graphql(`
     description
     logo
     role
+    defaultProjectRole
   }
 `)
 
-type FormValues = { name: string; description: string }
+type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
 
 const props = defineProps<{
   workspaceId: string
@@ -120,14 +152,18 @@ const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
-const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
-  id: props.workspaceId
-}))
+const { result: workspaceResult, onResult } = useQuery(
+  settingsWorkspaceGeneralQuery,
+  () => ({
+    id: props.workspaceId
+  })
+)
 
 const name = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
 const showLeaveDialog = ref(false)
+const defaultProjectRole = ref<StreamRoles>()
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
@@ -142,21 +178,24 @@ const save = handleSubmit(async () => {
   if (name.value !== workspaceResult.value.workspace.name) input.name = name.value
   if (description.value !== workspaceResult.value.workspace.description)
     input.description = description.value
+  if (defaultProjectRole.value !== workspaceResult.value.workspace.defaultProjectRole)
+    input.defaultProjectRole = defaultProjectRole.value
 
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace updated'
+    })
+
     mixpanel.track('Workspace General Settings Updated', {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
+
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceId
-    })
-
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Workspace updated'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
@@ -178,4 +217,10 @@ watch(
   },
   { deep: true, immediate: true }
 )
+
+onResult((res) => {
+  if (res.data) {
+    defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
+  }
+})
 </script>

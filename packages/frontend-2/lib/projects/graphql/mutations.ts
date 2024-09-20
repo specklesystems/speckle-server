@@ -262,3 +262,19 @@ export const createTestAutomationMutation = graphql(`
     }
   }
 `)
+
+export const useMoveProjectToWorkspaceMutation = graphql(`
+  mutation MoveProjectToWorkspace($workspaceId: String!, $projectId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {
+          id
+          workspace {
+            id
+            ...ProjectsMoveToWorkspaceDialog_Workspace
+          }
+        }
+      }
+    }
+  }
+`)

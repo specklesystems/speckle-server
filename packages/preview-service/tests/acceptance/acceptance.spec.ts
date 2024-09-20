@@ -2,29 +2,36 @@ import { acceptanceTest } from '#/helpers/testExtensions.js'
 import { ObjectPreview, type ObjectPreviewRow } from '@/repositories/objectPreview.js'
 import { Previews } from '@/repositories/previews.js'
 import cryptoRandomString from 'crypto-random-string'
-import { afterEach, beforeEach, describe, expect, inject } from 'vitest'
+import { afterEach, beforeEach, describe, expect } from 'vitest'
 import { promises as fs } from 'fs'
-import { spawn } from 'child_process'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
+import { testLogger as logger } from '@/observability/logging.js'
+
+import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
+
+const getS3Config = () => {
+  return {
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY || '',
+      secretAccessKey: process.env.S3_SECRET_KEY || ''
+    },
+    endpoint: process.env.S3_ENDPOINT || '',
+    forcePathStyle: true,
+    // s3ForcePathStyle: true,
+    // signatureVersion: 'v4',
+    region: process.env.S3_REGION || 'us-east-1'
+  }
+}
 
 describe.sequential('Acceptance', () => {
   describe.sequential('Run the preview-service image in docker', () => {
     beforeEach(() => {
-      const dbName = inject('dbName')
-      //purposefully running in the background without waiting
-      void runProcess('docker', [
-        'run',
-        '--env',
-        `PG_CONNECTION_STRING=postgres://preview_service_test:preview_service_test@host.docker.internal:5432/${dbName}`,
-        '--rm',
-        '--name',
-        'preview-service',
-        'speckle/preview-service:local'
-      ])
+      // const dbName = inject('dbName')
+      logger.info('🤜 running acceptance test before-each')
     })
-    afterEach(async () => {
-      await runProcess('docker', ['stop', 'preview-service'])
+    afterEach(() => {
+      logger.info('🤛 running acceptance test after-each')
     })
 
     // we use integration test and not e2e test because we don't need the server
@@ -35,8 +42,6 @@ describe.sequential('Acceptance', () => {
       },
       async ({ context }) => {
         const { db } = context
-        const dbName = inject('dbName')
-        console.log('Running test in database: %s', dbName)
         // load data
         const streamId = cryptoRandomString({ length: 10 })
         const objectId = cryptoRandomString({ length: 10 })
@@ -72,6 +77,10 @@ describe.sequential('Acceptance', () => {
             .where('streamId', streamId)
             .andWhere('objectId', objectId)
 
+          logger.info(
+            { result: objectPreviewResult, streamId, objectId },
+            '🔍 Polled object preview for a result for {streamId} and {objectId}'
+          )
           // wait a second before polling again
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
@@ -80,6 +89,7 @@ describe.sequential('Acceptance', () => {
           .select(['data'])
           .where('id', objectPreviewResult[0].preview['all' as Angle])
           .first()
+        logger.info({ previewData }, '🔍 Retrieved preview data')
 
         if (!previewData) {
           expect(previewData).toBeDefined()
@@ -87,27 +97,52 @@ describe.sequential('Acceptance', () => {
           return //HACK to appease typescript
         }
 
-        //TODO use environment variable
-        const outputFilePath =
-          process.env.OUTPUT_FILE_PATH || '/tmp/preview-service-output.png'
-        await fs.writeFile(outputFilePath, previewData.data)
+        if (!process.env.OUTPUT_FILE_PATH)
+          throw new Error('OUTPUT_FILE_PATH environment variable not set')
+
+        const outputFilePath = process.env.OUTPUT_FILE_PATH
+
+        const s3Config = getS3Config()
+
+        if (s3Config.credentials.accessKeyId && s3Config.credentials.secretAccessKey) {
+          logger.info(
+            { outputFilePath },
+            'S3 credentials provided, saving to S3 at {outputFilePath}'
+          )
+          const s3Client = new S3Client(s3Config)
+
+          const params: PutObjectCommandInput = {
+            Bucket: 'github-action-speckle-preview-service-acceptance-test',
+            Key: outputFilePath,
+            Body: previewData.data,
+            ACL: 'public-read',
+            Metadata: {
+              // Defines metadata tags.
+              // 'x-amz-meta-my-key': 'your-value'
+            }
+          }
+
+          const uploadObject = async () => {
+            try {
+              const data = await s3Client.send(new PutObjectCommand(params))
+              logger.info(
+                'Successfully uploaded object: ' + params.Bucket + '/' + params.Key
+              )
+              return data
+            } catch (err) {
+              logger.error(err, 'Failed to upload object')
+            }
+          }
+
+          await uploadObject()
+        } else {
+          logger.info(
+            { outputFilePath },
+            'No S3 credentials provided, saving to local file system at {outputFilePath}'
+          )
+          await fs.writeFile(outputFilePath, previewData.data)
+        }
       }
     )
   })
 })
-
-function runProcess(cmd: string, cmdArgs: string[], extraEnv?: Record<string, string>) {
-  return new Promise((resolve, reject) => {
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
-    childProc.stdout.pipe(process.stdout)
-    childProc.stderr.pipe(process.stderr)
-
-    childProc.on('close', (code) => {
-      if (code === 0) {
-        resolve('success')
-      } else {
-        reject(`Parser exited with code ${code}`)
-      }
-    })
-  })
-}
