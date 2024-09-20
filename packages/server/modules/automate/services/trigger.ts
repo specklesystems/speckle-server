@@ -1,12 +1,12 @@
 import {
   InsertableAutomationRun,
   getActiveTriggerDefinitions,
-  getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
   upsertAutomationRun,
   getAutomationRevision,
-  getLatestAutomationRevision
+  getLatestAutomationRevision,
+  getFullAutomationRevisionMetadataFactory
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -46,6 +46,12 @@ import {
   GetAutomation,
   GetEncryptionKeyPairFor
 } from '@/modules/automate/domain/operations'
+import { db } from '@/db/knex'
+
+// TODO: Fixed in next PRs
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
