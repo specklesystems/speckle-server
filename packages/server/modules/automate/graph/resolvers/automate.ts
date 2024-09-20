@@ -537,7 +537,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getEncryptionKeyPair,
             getFunction,
             storeAutomation,
-            storeAutomationRevision
+            storeAutomationRevision,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await create({
