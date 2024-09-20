@@ -50,13 +50,10 @@ export const openApiJsonHandlerFactory: (params: {
     res.json(openApiDocument)
   }
 
-export const init: SpeckleModule['init'] = async ({
-  app,
-  openApiDocument: openApiRegister
-}) => {
+export const init: SpeckleModule['init'] = async ({ app, openApiDocument }) => {
   moduleLogger.info('📖 Init OpenAPI documentation module')
   app.get(openApiHtmlPath, openApiHtml)
-  openApiRegister.registerOperation(openApiHtmlPath, OpenAPIV2.HttpMethods.GET, {
+  openApiDocument.registerOperation(openApiHtmlPath, OpenAPIV2.HttpMethods.GET, {
     summary: 'OpenAPI HTML',
     description: 'Returns the OpenAPI documentation in HTML format',
     responses: {
@@ -65,7 +62,7 @@ export const init: SpeckleModule['init'] = async ({
       }
     }
   })
-  openApiRegister.registerOperation(openApiJsonPath, OpenAPIV2.HttpMethods.GET, {
+  openApiDocument.registerOperation(openApiJsonPath, OpenAPIV2.HttpMethods.GET, {
     summary: 'OpenAPI JSON',
     description: 'Returns the OpenAPI documentation in JSON format',
     responses: {

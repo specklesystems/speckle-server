@@ -31,10 +31,11 @@ const {
 } = require('@/modules/previews/repository/previews')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const { getObjectCommitsWithStreamIds } = require('@/modules/core/repositories/commits')
+const { HttpMethod } = require('../shared/helpers/typeHelper')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
-exports.init = ({ app, isInitial }) => {
+exports.init = ({ app, openApiDocument, isInitial }) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
@@ -58,6 +59,15 @@ exports.init = ({ app, isInitial }) => {
   })
 
   app.options('/preview/:streamId/:angle?', cors())
+  openApiDocument.registerOperation('/preview/{streamId}/{angle}', HttpMethod.OPTIONS, {
+    description: 'Options for the endpoint',
+    responses: {
+      200: {
+        description: 'Options successfully retrieved.'
+      }
+    }
+  })
+
   app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
@@ -83,8 +93,28 @@ exports.init = ({ app, isInitial }) => {
       req.params.angle
     )
   })
+  openApiDocument.registerOperation('/preview/{streamId}/{angle}', HttpMethod.GET, {
+    description: 'Retrieve a preview for the project (stream), at an optional angle',
+    responses: {
+      200: {
+        description: 'A preview was successfully retrieved.'
+      }
+    }
+  })
 
   app.options('/preview/:streamId/branches/:branchName/:angle?', cors())
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/branches/{branchName}/{angle}',
+    HttpMethod.OPTIONS,
+    {
+      description: 'Options for the endpoint',
+      responses: {
+        200: {
+          description: 'Options successfully retrieved.'
+        }
+      }
+    }
+  )
   app.get(
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
@@ -120,8 +150,33 @@ exports.init = ({ app, isInitial }) => {
       )
     }
   )
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/branches/{branchname}/{angle}',
+    HttpMethod.GET,
+    {
+      description:
+        'Retrieve a preview for the project (stream) and model (branch), at an optional angle',
+      responses: {
+        200: {
+          description: 'A preview was successfully retrieved.'
+        }
+      }
+    }
+  )
 
   app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/commits/{commitId}/{angle}',
+    HttpMethod.OPTIONS,
+    {
+      description: 'Options for the endpoint',
+      responses: {
+        200: {
+          description: 'Options successfully retrieved.'
+        }
+      }
+    }
+  )
   app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
@@ -143,8 +198,33 @@ exports.init = ({ app, isInitial }) => {
       req.params.angle
     )
   })
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/commits/{commitId}/{angle}',
+    HttpMethod.GET,
+    {
+      description:
+        'Retrieve a preview for the project (stream) and version (commit), at an optional angle',
+      responses: {
+        200: {
+          description: 'A preview was successfully retrieved.'
+        }
+      }
+    }
+  )
 
   app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/objects/{objectId}/{angle}',
+    HttpMethod.OPTIONS,
+    {
+      description: 'Options for the endpoint',
+      responses: {
+        200: {
+          description: 'Options successfully retrieved.'
+        }
+      }
+    }
+  )
   app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
@@ -159,6 +239,19 @@ exports.init = ({ app, isInitial }) => {
       req.params.angle
     )
   })
+  openApiDocument.registerOperation(
+    '/preview/{streamId}/objects/{objectId}/{angle}',
+    HttpMethod.GET,
+    {
+      description:
+        'Retrieve a preview for the project (stream) and object, at an optional angle',
+      responses: {
+        200: {
+          description: 'A preview was successfully retrieved.'
+        }
+      }
+    }
+  )
 
   if (isInitial) {
     const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
