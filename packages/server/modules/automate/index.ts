@@ -70,6 +70,9 @@ async function initScopes() {
 
 const initializeEventListeners = () => {
   const getAutomationRunFullTriggers = getAutomationRunFullTriggersFactory({ db })
+  const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+    db
+  })
 
   const triggerFn = triggerAutomationRevisionRunFactory({
     automateRunTrigger: triggerAutomationRun,
@@ -80,7 +83,8 @@ const initializeEventListeners = () => {
     createAppToken,
     automateRunsEmitter: AutomateRunsEmitter.emit,
     getAutomationToken: getAutomationTokenFactory({ db }),
-    upsertAutomationRun: upsertAutomationRunFactory({ db })
+    upsertAutomationRun: upsertAutomationRunFactory({ db }),
+    getFullAutomationRevisionMetadata
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
     getAutomationRunFullTriggers,
@@ -93,7 +97,7 @@ const initializeEventListeners = () => {
       publish
     })
   const setupRunFinishedTrackingInvoke = setupRunFinishedTrackingFactory({
-    getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({ db }),
+    getFullAutomationRevisionMetadata,
     getUserById,
     getCommit,
     getFullAutomationRunById: getFullAutomationRunByIdFactory({ db }),

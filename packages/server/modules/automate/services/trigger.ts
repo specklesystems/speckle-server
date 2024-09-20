@@ -1,8 +1,4 @@
-import {
-  InsertableAutomationRun,
-  getLatestAutomationRevision,
-  getFullAutomationRevisionMetadataFactory
-} from '@/modules/automate/repositories/automations'
+import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
   AutomationTriggerDefinitionRecord,
@@ -48,15 +44,10 @@ import {
   GetAutomationTriggerDefinitions,
   GetEncryptionKeyPairFor,
   GetFullAutomationRevisionMetadata,
+  GetLatestAutomationRevision,
   TriggerAutomationRevisionRun,
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
-import { db } from '@/db/knex'
-
-// TODO: Fixed in next PRs
-const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
-  db
-})
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -224,6 +215,7 @@ export type TriggerAutomationRevisionRunDeps = {
   createAppToken: typeof createAppToken
   upsertAutomationRun: UpsertAutomationRun
   automateRunsEmitter: AutomateRunsEventsEmitter
+  getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
 } & CreateAutomationRunDataDeps
 
 /**
@@ -241,7 +233,8 @@ export const triggerAutomationRevisionRunFactory =
       getAutomationToken,
       createAppToken,
       upsertAutomationRun,
-      automateRunsEmitter
+      automateRunsEmitter,
+      getFullAutomationRevisionMetadata
     } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
@@ -537,22 +530,26 @@ export const manuallyTriggerAutomationFactory =
 
 export type CreateTestAutomationRunDeps = {
   getAutomation: GetAutomation
-  getLatestAutomationRevision: typeof getLatestAutomationRevision
-  getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
+  getLatestAutomationRevision: GetLatestAutomationRevision
+  getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   upsertAutomationRun: UpsertAutomationRun
+  validateStreamAccess: typeof validateStreamAccess
+  getBranchLatestCommits: typeof getBranchLatestCommits
 } & CreateAutomationRunDataDeps
 
 /**
  * TODO: Reduce duplication w/ other fns in this service
  */
-export const createTestAutomationRun =
+export const createTestAutomationRunFactory =
   (deps: CreateTestAutomationRunDeps) =>
   async (params: { projectId: string; automationId: string; userId: string }) => {
     const {
       getAutomation,
       getLatestAutomationRevision,
       getFullAutomationRevisionMetadata,
-      upsertAutomationRun
+      upsertAutomationRun,
+      validateStreamAccess,
+      getBranchLatestCommits
     } = deps
     const { projectId, automationId, userId } = params
 

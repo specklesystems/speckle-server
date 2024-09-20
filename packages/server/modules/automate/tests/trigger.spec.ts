@@ -45,7 +45,8 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory,
   getAutomationTokenFactory,
-  getAutomationTriggerDefinitionsFactory
+  getAutomationTriggerDefinitionsFactory,
+  getFullAutomationRevisionMetadataFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -90,6 +91,9 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
 const upsertAutomationRun = upsertAutomationRunFactory({ db })
 const getAutomationToken = getAutomationTokenFactory({ db })
 const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -313,7 +317,8 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
             createAppToken,
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
-            upsertAutomationRun
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -404,7 +409,8 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
           createAppToken,
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
-          upsertAutomationRun
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -501,7 +507,8 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
           createAppToken,
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
-          upsertAutomationRun
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -982,7 +989,8 @@ const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({
             createAppToken,
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
-            upsertAutomationRun
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata
           }),
           validateStreamAccess,
           ...(overrides || {})

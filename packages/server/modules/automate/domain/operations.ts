@@ -120,6 +120,14 @@ export type GetAutomationTriggerDefinitions = <
   triggerType?: T
 }) => Promise<Array<AutomationTriggerDefinitionRecord<T> & { automationId: string }>>
 
+export type GetLatestAutomationRevisions = (params: {
+  automationIds: string[]
+}) => Promise<{ [automationId: string]: AutomationRevisionRecord }>
+
+export type GetLatestAutomationRevision = (params: {
+  automationId: string
+}) => Promise<Nullable<AutomationRevisionRecord>>
+
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
 ) => Promise<AuthCodePayload>
