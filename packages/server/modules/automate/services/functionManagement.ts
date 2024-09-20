@@ -122,7 +122,7 @@ export type CreateFunctionDeps = {
   getUser: typeof getUser
 }
 
-export const createFunctionFromTemplate =
+export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
   async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
     const { input, userId } = params
@@ -187,7 +187,7 @@ export type UpdateFunctionDeps = {
   createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const updateFunction =
+export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
     const { updateFunction, createStoredAuthCode } = deps
@@ -233,7 +233,7 @@ export type StartAutomateFunctionCreatorAuthDeps = {
   createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const startAutomateFunctionCreatorAuth =
+export const startAutomateFunctionCreatorAuthFactory =
   (deps: StartAutomateFunctionCreatorAuthDeps) =>
   async (params: { req: Request; res: Response }) => {
     const { createStoredAuthCode } = deps
@@ -260,7 +260,7 @@ export const startAutomateFunctionCreatorAuth =
     return res.redirect(redirectUrl.toString())
   }
 
-export const handleAutomateFunctionCreatorAuthCallback =
+export const handleAutomateFunctionCreatorAuthCallbackFactory =
   () => async (params: { req: Request; res: Response }) => {
     const { req, res } = params
     const {
