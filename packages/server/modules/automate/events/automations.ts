@@ -29,3 +29,4 @@ const { emit, listen } = initializeModuleEventEmitter<AutomationsEventsPayloads>
 export const AutomationsEmitter = { emit, listen, events: AutomationsEvents }
 
 export type AutomationsEventsEmit = (typeof AutomationsEmitter)['emit']
+export type AutomationsEventsListen = (typeof AutomationsEmitter)['listen']

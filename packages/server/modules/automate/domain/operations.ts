@@ -4,12 +4,14 @@ import {
   AutomationRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationRunWithTriggersFunctionRuns,
-  AutomationTokenRecord
+  AutomationTokenRecord,
+  AutomationTriggerType
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRevision } from '@/modules/automate/repositories/automations'
 import { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@speckle/shared'
 import { SetRequired } from 'type-fest'
 
@@ -59,6 +61,17 @@ export type GetFunctionRun = (functionRunId: string) => Promise<
 export type UpsertAutomationFunctionRun = (
   automationFunctionRun: InsertableAutomationFunctionRun
 ) => Promise<void>
+
+export type GetAutomationRunFullTriggers = (params: {
+  automationRunId: string
+}) => Promise<{
+  [type in AutomationTriggerType]: {
+    triggerType: type
+    triggeringId: string
+    version: CommitRecord
+    model: BranchRecord
+  }[]
+}>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
