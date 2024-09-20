@@ -41,6 +41,7 @@ const {
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
 } = require('@/modules/blobstorage/services/management')
+const { HttpMethod } = require('@/modules/shared/helpers/typeHelper')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
 const updateBlob = updateBlobFactory({ db })
@@ -93,7 +94,7 @@ const errorHandler = async (req, res, callback) => {
   }
 }
 
-exports.init = async ({ app }) => {
+exports.init = async ({ app, openApiDocument }) => {
   await ensureConditions()
   app.post(
     '/api/stream/:streamId/blob',
@@ -192,6 +193,21 @@ exports.init = async ({ app }) => {
       req.pipe(busboy)
     }
   )
+  openApiDocument.registerOperation('/api/stream/{streamId}/blob', HttpMethod.POST, {
+    description: 'Upload a new blob to a project (stream)',
+    parameters: [
+      {
+        in: 'path',
+        name: 'streamId',
+        required: true
+      }
+    ],
+    responses: {
+      200: {
+        description: 'Successfully uploaded a blob to the project'
+      }
+    }
+  })
 
   app.post(
     '/api/stream/:streamId/blob/diff',
@@ -215,6 +231,23 @@ exports.init = async ({ app }) => {
       res.send(unknownBlobIds)
     }
   )
+  openApiDocument.registerOperation('/api/stream/{streamId}/diff', HttpMethod.POST, {
+    description:
+      'Determine the difference (diff) between the provided array of blob Ids and those stored on the server',
+    parameters: [
+      {
+        in: 'path',
+        name: 'streamId',
+        required: true
+      }
+    ],
+    responses: {
+      200: {
+        description:
+          'The difference between the list of blob Ids provided in the body of the request and those stored on the server'
+      }
+    }
+  })
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
@@ -243,6 +276,30 @@ exports.init = async ({ app }) => {
       })
     }
   )
+  openApiDocument.registerOperation(
+    '/api/stream/{streamId}/blob/{blobId}',
+    HttpMethod.GET,
+    {
+      description: 'Gets a blob from a project (stream)',
+      parameters: [
+        {
+          in: 'path',
+          name: 'streamId',
+          required: true
+        },
+        {
+          in: 'path',
+          name: 'blobId',
+          required: true
+        }
+      ],
+      responses: {
+        200: {
+          description: 'Successfully retrieved a blob from the project'
+        }
+      }
+    }
+  )
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
@@ -256,6 +313,30 @@ exports.init = async ({ app }) => {
         })
         res.status(204).send()
       })
+    }
+  )
+  openApiDocument.registerOperation(
+    '/api/stream/{streamId}/blob/{blobId}',
+    HttpMethod.DELETE,
+    {
+      description: 'Deletes a blob from a project (stream)',
+      parameters: [
+        {
+          in: 'path',
+          name: 'streamId',
+          required: true
+        },
+        {
+          in: 'path',
+          name: 'blobId',
+          required: true
+        }
+      ],
+      responses: {
+        204: {
+          description: 'Successfully deleted a blob from the project'
+        }
+      }
     }
   )
 
@@ -275,9 +356,39 @@ exports.init = async ({ app }) => {
       })
     }
   )
+  openApiDocument.registerOperation('/api/stream/{streamId}/blobs', HttpMethod.GET, {
+    description: 'Gets all the blobs of a project (stream)',
+    parameters: [
+      {
+        in: 'path',
+        name: 'streamId',
+        required: true
+      }
+    ],
+    responses: {
+      200: {
+        description: 'Successfully retrieved all the blobs from the project'
+      }
+    }
+  })
 
   app.delete('/api/stream/:streamId/blobs', async (req, res) => {
     res.status(501).send('This method is not implemented yet.')
+  })
+  openApiDocument.registerOperation('/api/stream/{streamId}/blobs', HttpMethod.DELETE, {
+    description: 'Deletes all the blobs from a project (stream)',
+    parameters: [
+      {
+        in: 'path',
+        name: 'streamId',
+        required: true
+      }
+    ],
+    responses: {
+      501: {
+        description: 'Not implemented.'
+      }
+    }
   })
 }
 
