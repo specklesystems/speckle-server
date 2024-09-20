@@ -1,16 +1,16 @@
 'use strict'
-const cors = require('cors')
-const {
+import cors from 'cors'
+import {
   validateToken,
   revokeTokenById,
   createAppToken,
   createBareToken
-} = require(`@/modules/core/services/tokens`)
-const { validateScopes } = require(`@/modules/shared`)
-const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
-const { Scopes } = require('@speckle/shared')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const {
+} from '@/modules/core/services/tokens'
+import { validateScopes } from '@/modules/shared'
+import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
+import { ensureError, Optional, Scopes } from '@speckle/shared'
+import { ForbiddenError } from '@/modules/shared/errors'
+import {
   getAppFactory,
   revokeRefreshTokenFactory,
   createAuthorizationCodeFactory,
@@ -18,16 +18,18 @@ const {
   deleteAuthorizationCodeFactory,
   createRefreshTokenFactory,
   getRefreshTokenFactory
-} = require('@/modules/auth/repositories/apps')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
+import {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
-} = require('@/modules/auth/services/serverApps')
-const { HttpMethod } = require('@/modules/shared/helpers/typeHelper')
+} from '@/modules/auth/services/serverApps'
+import { Express } from 'express'
+import { HttpMethod, OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
 // TODO: Secure these endpoints!
-module.exports = ({ app, openApiDocument }) => {
+export default function (params: { app: Express; openApiDocument: OpenApiDocument }) {
+  const { app, openApiDocument } = params
   /*
   Generates an access code for an app.
   TODO: ensure same origin.
@@ -38,18 +40,25 @@ module.exports = ({ app, openApiDocument }) => {
       const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 
       const preventRedirect = !!req.query.preventRedirect
-      const appId = req.query.appId
+      const appId = req.query.appId as Optional<string>
+      if (!appId)
+        throw new InvalidAccessCodeRequestError('appId missing from querystring.')
+
       const app = await getApp({ id: appId })
 
       if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
 
-      const challenge = req.query.challenge
-      const userToken = req.query.token
+      const challenge = req.query.challenge as Optional<string>
+      const userToken = req.query.token as Optional<string>
       if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
       if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
       // 1. Validate token
-      const { valid, scopes, userId } = await validateToken(userToken)
+      const tokenValidationResult = await validateToken(userToken)
+      const { valid, scopes, userId } =
+        'scopes' in tokenValidationResult
+          ? tokenValidationResult
+          : { ...tokenValidationResult, scopes: [], userId: null }
       if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
       // 2. Validate token scopes
@@ -160,7 +169,7 @@ module.exports = ({ app, openApiDocument }) => {
       return res.send(authResponse)
     } catch (err) {
       req.log.info({ err }, 'Error while trying to generate a new token.')
-      return res.status(401).send({ err: err.message })
+      return res.status(401).send({ err: ensureError(err).message })
     }
   })
   openApiDocument.registerOperation('/auth/token', HttpMethod.POST, {
