@@ -4,7 +4,6 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 
-import { passportAuthenticate } from '@/modules/auth/services/passportService'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -24,6 +23,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -33,6 +33,7 @@ const googleStrategyBuilderFactory =
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    passportAuthenticateHandlerBuilder: PassportAuthenticateHandlerBuilder
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -150,14 +151,14 @@ const googleStrategyBuilderFactory =
       strategy.url,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      passportAuthenticate('google')
+      deps.passportAuthenticateHandlerBuilder('google')
     )
 
     // 2. Auth callback
     app.get(
       strategy.callbackUrl,
       sessionMiddleware,
-      passportAuthenticate('google'),
+      deps.passportAuthenticateHandlerBuilder('google'),
       finalizeAuthMiddleware
     )
 

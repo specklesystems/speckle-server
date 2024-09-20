@@ -10,7 +10,6 @@ import {
   getOidcName,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import { passportAuthenticate } from '@/modules/auth/services/passportService'
 import { UnverifiedEmailSSOLoginError } from '@/modules/core/errors/userinput'
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -24,6 +23,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 
 const oidcStrategyBuilderFactory =
   (deps: {
@@ -33,6 +33,7 @@ const oidcStrategyBuilderFactory =
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    passportAuthenticateHandlerBuilder: PassportAuthenticateHandlerBuilder
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -149,14 +150,14 @@ const oidcStrategyBuilderFactory =
       '/auth/oidc',
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      passportAuthenticate('oidc', { scope: 'openid profile email' })
+      deps.passportAuthenticateHandlerBuilder('oidc', { scope: 'openid profile email' })
     )
 
     // 2. Auth finalize
     app.get(
       '/auth/oidc/callback',
       sessionMiddleware,
-      passportAuthenticate('oidc', {
+      deps.passportAuthenticateHandlerBuilder('oidc', {
         failureRedirect: '/error?message=Failed to authenticate.'
       }),
       finalizeAuthMiddleware
