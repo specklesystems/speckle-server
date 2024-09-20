@@ -84,7 +84,7 @@ export type SetupStatusUpdateSubscriptionsDeps = {
   publish: PublishSubscription
 }
 
-export const setupStatusUpdateSubscriptions =
+export const setupStatusUpdateSubscriptionsFactory =
   (deps: SetupStatusUpdateSubscriptionsDeps) => () => {
     const { getAutomationRunFullTriggers, automateRunsEventsListener, publish } = deps
 

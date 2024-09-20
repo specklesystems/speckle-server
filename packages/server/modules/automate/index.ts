@@ -24,7 +24,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import {
   setupAutomationUpdateSubscriptionsFactory,
-  setupStatusUpdateSubscriptions
+  setupStatusUpdateSubscriptionsFactory
 } from '@/modules/automate/services/subscriptions'
 import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
@@ -75,7 +75,7 @@ const initializeEventListeners = () => {
       buildDecryptor
     })
   })
-  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
+  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
     getAutomationRunFullTriggers,
     publish,
     automateRunsEventsListener: AutomateRunsEmitter.listen
