@@ -24,7 +24,7 @@ exports.init = async ({ app, openApiDocument }) => {
   exports.authStrategies = await require('./strategies')({ app, openApiDocument })
 
   // Hoist auth routes
-  require('./rest')(app)
+  require('./rest')({ app, openApiDocument })
 
   // Register core-based scopes
   const scopes = require('./scopes.js')

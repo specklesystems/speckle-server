@@ -24,9 +24,10 @@ const {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
 } = require('@/modules/auth/services/serverApps')
+const { HttpMethod } = require('@/modules/shared/helpers/typeHelper')
 
 // TODO: Secure these endpoints!
-module.exports = (app) => {
+module.exports = ({ app, openApiDocument }) => {
   /*
   Generates an access code for an app.
   TODO: ensure same origin.
@@ -75,11 +76,36 @@ module.exports = (app) => {
       }
     }
   })
+  openApiDocument.registerOperation('/auth/accesscode', HttpMethod.GET, {
+    description: 'Generates an access code for an app.',
+    responses: {
+      200: {
+        description: 'Returns an access code in the body'
+      },
+      302: {
+        description: 'Redirects with access code in url query'
+      },
+      400: {
+        description: 'Invalid access code'
+      },
+      500: {
+        description: 'Internal error'
+      }
+    }
+  })
 
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
   app.options('/auth/token', cors())
+  openApiDocument.registerOperation('/auth/accesscode', HttpMethod.OPTIONS, {
+    description: 'Generates a new API token',
+    responses: {
+      default: {
+        description: 'Options for generating a new API token'
+      }
+    }
+  })
   app.post('/auth/token', cors(), async (req, res) => {
     try {
       const createRefreshToken = createRefreshTokenFactory({ db })
@@ -137,6 +163,14 @@ module.exports = (app) => {
       return res.status(401).send({ err: err.message })
     }
   })
+  openApiDocument.registerOperation('/auth/token', HttpMethod.POST, {
+    description: 'Generates a new API token',
+    responses: {
+      200: {
+        description: 'Generates a new API token'
+      }
+    }
+  })
 
   /*
   Ensures a user is logged out by invalidating their token and refresh token.
@@ -157,6 +191,17 @@ module.exports = (app) => {
     } catch (err) {
       req.log.info({ err }, 'Error while trying to logout.')
       return res.status(400).send('Something went wrong while trying to logout.')
+    }
+  })
+  openApiDocument.registerOperation('/auth/logout', HttpMethod.POST, {
+    description: 'Logs a user out by invalidating token and refresh token',
+    responses: {
+      200: {
+        description: 'Successfully logged out'
+      },
+      400: {
+        description: 'Error while logging out'
+      }
     }
   })
 }
