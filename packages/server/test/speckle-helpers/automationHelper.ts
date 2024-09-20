@@ -35,7 +35,7 @@ import {
 import { faker } from '@faker-js/faker'
 import {
   getEncryptionKeyPair,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { db } from '@/db/knex'
@@ -94,7 +94,7 @@ export const buildAutomationRevisionCreate = (
     getFunctionRelease: async (params) => fakeGetRelease(params),
     getFunctionReleases: async (params) => params.ids.map(fakeGetRelease),
     getEncryptionKeyPair,
-    getFunctionInputDecryptor: getFunctionInputDecryptor({
+    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
       buildDecryptor
     }),
     validateStreamAccess,

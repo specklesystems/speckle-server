@@ -84,8 +84,8 @@ import {
   getEncryptionKeyPair,
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
-  getFunctionInputDecryptor,
-  getFunctionInputsForFrontend
+  getFunctionInputDecryptorFactory,
+  getFunctionInputsForFrontendFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { keyBy } from 'lodash'
@@ -331,7 +331,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return triggers
         },
         async functions(parent, _args, ctx) {
-          const prepareInputs = getFunctionInputsForFrontend({
+          const prepareInputs = getFunctionInputsForFrontendFactory({
             getEncryptionKeyPairFor,
             buildDecryptor,
             redactWriteOnlyInputData
@@ -505,7 +505,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getBranchesByIds,
             getFunctionRelease,
             getEncryptionKeyPair,
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
             getFunctionReleases,
             automationsEventsEmit: AutomationsEmitter.emit,
             validateStreamAccess
@@ -526,7 +528,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             triggerFunction: triggerAutomationRevisionRun({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
-              getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
+              getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+                buildDecryptor
+              })
             })
           })
 
@@ -559,7 +563,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createTestAutomationRun(parent, { automationId }, ctx) {
           const create = createTestAutomationRun({
             getEncryptionKeyPairFor,
-            getFunctionInputDecryptor: getFunctionInputDecryptor({
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
             getAutomation,

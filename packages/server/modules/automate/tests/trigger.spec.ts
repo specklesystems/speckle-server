@@ -67,7 +67,7 @@ import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
@@ -296,7 +296,9 @@ const updateAutomation = updateAutomationFactory({ db })
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
             getEncryptionKeyPairFor
           })({
             revisionId: cryptoRandomString({ length: 10 }),
@@ -381,7 +383,9 @@ const updateAutomation = updateAutomationFactory({ db })
           automateRunTrigger: async () => {
             throw new Error(thrownError)
           },
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
           getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
@@ -472,7 +476,9 @@ const updateAutomation = updateAutomationFactory({ db })
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
           }),
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
           getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
@@ -947,7 +953,9 @@ const updateAutomation = updateAutomationFactory({ db })
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
             getEncryptionKeyPairFor
           }),
           ...(overrides || {})
