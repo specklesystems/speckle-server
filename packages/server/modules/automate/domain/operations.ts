@@ -1,6 +1,7 @@
 import {
   AutomationRecord,
   AutomationRevisionWithTriggersFunctions,
+  AutomationRunWithTriggersFunctionRuns,
   AutomationTokenRecord
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRevision } from '@/modules/automate/repositories/automations'
@@ -35,6 +36,15 @@ export type GetAutomation = (params: {
 export type UpdateAutomation = (
   automation: SetRequired<Partial<AutomationRecord>, 'id'>
 ) => Promise<AutomationRecord>
+
+export type GetLatestVersionAutomationRuns = (
+  params: {
+    projectId: string
+    modelId: string
+    versionId: string
+  },
+  options?: Partial<{ limit: number }>
+) => Promise<AutomationRunWithTriggersFunctionRuns[]>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
