@@ -39,7 +39,7 @@ export type UpdateDefaultApp = (
 
 export type CreateApp = (
   app: Omit<
-    MarkNullableOptional<ServerAppRecord>,
+    MarkNullableOptional<SetOptional<ServerAppRecord, 'public'>>,
     'id' | 'secret' | 'createdAt' | 'trustByDefault'
   > & {
     scopes: ServerScope[]
