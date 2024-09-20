@@ -7,13 +7,14 @@
         <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
       </div>
     </div>
-    <Teleport to="body">
+    <Teleport to="body" :disabled="!mountMenuOnBody">
       <MenuItems
         v-if="isMenuOpen"
         ref="menuItems"
         :class="[
-          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
-          menuDirection === HorizontalDirection.Left ? 'right-0' : ''
+          'mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
+          menuDirection === HorizontalDirection.Left ? 'right-0' : '',
+          mountMenuOnBody ? 'fixed' : 'absolute'
         ]"
         :style="menuItemsStyles"
       >
@@ -68,6 +69,7 @@ const props = defineProps<{
   items: LayoutMenuItem[][]
   menuId?: string
   menuPosition?: HorizontalDirection
+  mountMenuOnBody?: boolean
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
@@ -88,6 +90,8 @@ const menuButtonBounding = useElementBounding(menuButtonWrapper, {
 })
 
 const menuItemsStyles = computed(() => {
+  if (!props.mountMenuOnBody) return {}
+
   if (!menuButtonBounding.width.value) return {}
   let offsetPosition = menuButtonBounding.left.value
 
@@ -96,7 +100,7 @@ const menuItemsStyles = computed(() => {
   }
 
   return {
-    position: 'absolute',
+    position: 'fixed',
     top: `${menuButtonBounding.top.value + menuButtonBounding.height.value}px`,
     left: `${offsetPosition}px`,
     zIndex: 50
