@@ -485,7 +485,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async update(parent, { input }, ctx) {
           const update = validateAndUpdateAutomationFactory({
             getAutomation,
-            updateAutomation: updateDbAutomation
+            updateAutomation: updateDbAutomation,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await update({

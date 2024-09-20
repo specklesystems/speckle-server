@@ -246,6 +246,8 @@ export const createTestAutomationFactory =
 export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
 export const validateAndUpdateAutomationFactory =
@@ -259,7 +261,12 @@ export const validateAndUpdateAutomationFactory =
      */
     projectId?: string
   }) => {
-    const { getAutomation, updateAutomation } = deps
+    const {
+      getAutomation,
+      updateAutomation,
+      validateStreamAccess,
+      automationsEventsEmit
+    } = deps
     const { input, userId, userResourceAccessRules, projectId } = params
 
     const existingAutomation = await getAutomation({
@@ -290,7 +297,7 @@ export const validateAndUpdateAutomationFactory =
       id: input.id
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Updated, {
+    await automationsEventsEmit(AutomationsEmitter.events.Updated, {
       automation: res
     })
 

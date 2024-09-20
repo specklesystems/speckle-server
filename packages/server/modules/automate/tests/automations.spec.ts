@@ -15,7 +15,10 @@ import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} from '@/modules/core/services/streams/streamAccessService'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -43,6 +46,7 @@ import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
 
 /**
  * TODO: Extra test ideas
@@ -57,7 +61,9 @@ const buildAutomationUpdate = () => {
   const updateDbAutomation = updateAutomationFactory({ db })
   const update = validateAndUpdateAutomationFactory({
     getAutomation,
-    updateAutomation: updateDbAutomation
+    updateAutomation: updateDbAutomation,
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit
   })
 
   return update
