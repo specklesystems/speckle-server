@@ -1,5 +1,6 @@
 import {
   StoreAutomation,
+  StoreAutomationRevision,
   StoreAutomationToken
 } from '@/modules/automate/domain/operations'
 import {
@@ -57,7 +58,13 @@ import { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
   automations: (db: Knex) => db<AutomationRecord>(Automations.name),
-  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name)
+  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name),
+  automationRevisions: (db: Knex) =>
+    db<AutomationRevisionRecord>(AutomationRevisions.name),
+  automationRevisionFunctions: (db: Knex) =>
+    db<AutomateRevisionFunctionRecord>(AutomationRevisionFunctions.name),
+  automationTriggers: (db: Knex) =>
+    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name)
 }
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -337,57 +344,61 @@ export async function updateAutomationRevision(
   return ret
 }
 
-export type StoredInsertableAutomationRevision = Awaited<
-  ReturnType<typeof storeAutomationRevision>
->
+export type StoredInsertableAutomationRevision = AutomationRevisionWithTriggersFunctions
 
-export async function storeAutomationRevision(revision: InsertableAutomationRevision) {
-  const id = revision.id || generateRevisionId()
-  const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)
-  const [newRev] = await AutomationRevisions.knex()
-    .insert({
-      ...rev,
-      id
-    })
-    .returning<AutomationRevisionRecord[]>('*')
-  const [functions, triggers] = await Promise.all([
-    AutomationRevisionFunctions.knex()
-      .insert(
-        revision.functions.map(
-          (f): AutomateRevisionFunctionRecord => ({
-            ...f,
-            automationRevisionId: id
-          })
+export const storeAutomationRevisionFactory =
+  (deps: { db: Knex }): StoreAutomationRevision =>
+  async (revision: InsertableAutomationRevision) => {
+    const id = revision.id || generateRevisionId()
+    const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)
+    const [newRev] = await tables
+      .automationRevisions(deps.db)
+      .insert({
+        ...rev,
+        id
+      })
+      .returning('*')
+    const [functions, triggers] = await Promise.all([
+      tables
+        .automationRevisionFunctions(deps.db)
+        .insert(
+          revision.functions.map(
+            (f): AutomateRevisionFunctionRecord => ({
+              ...f,
+              automationRevisionId: id
+            })
+          )
         )
-      )
-      .returning<AutomateRevisionFunctionRecord[]>('*'),
-    AutomationTriggers.knex()
-      .insert(
-        revision.triggers.map(
-          (t): AutomationTriggerDefinitionRecord => ({
-            ...t,
-            automationRevisionId: id
-          })
+        .returning('*'),
+      tables
+        .automationTriggers(deps.db)
+        .insert(
+          revision.triggers.map(
+            (t): AutomationTriggerDefinitionRecord => ({
+              ...t,
+              automationRevisionId: id
+            })
+          )
         )
-      )
-      .returning<AutomationTriggerDefinitionRecord[]>('*'),
-    // Unset 'active in revision' for all other revisions
-    ...(revision.active
-      ? [
-          AutomationRevisions.knex()
-            .where(AutomationRevisions.col.automationId, newRev.automationId)
-            .andWhereNot(AutomationRevisions.col.id, newRev.id)
-            .update(AutomationRevisions.withoutTablePrefix.col.active, false)
-        ]
-      : [])
-  ])
+        .returning('*'),
+      // Unset 'active in revision' for all other revisions
+      ...(revision.active
+        ? [
+            tables
+              .automationRevisions(deps.db)
+              .where(AutomationRevisions.col.automationId, newRev.automationId)
+              .andWhereNot(AutomationRevisions.col.id, newRev.id)
+              .update(AutomationRevisions.withoutTablePrefix.col.active, false)
+          ]
+        : [])
+    ])
 
-  return {
-    ...newRev,
-    functions,
-    triggers
+    return {
+      ...newRev,
+      functions,
+      triggers
+    }
   }
-}
 
 export async function getAutomationToken(
   automationId: string
