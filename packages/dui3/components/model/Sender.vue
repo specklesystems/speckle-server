@@ -160,7 +160,7 @@ const expiredNotification = computed(() => {
   notification.level = props.modelCard.progress ? 'warning' : 'info'
   notification.text = props.modelCard.progress
     ? 'Model was changed while publishing'
-    : 'Model is out of sync with application.'
+    : 'Out of sync with application'
 
   const ctaType = props.modelCard.progress ? 'Restart' : 'Update'
   notification.cta = {
