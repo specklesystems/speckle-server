@@ -17,11 +17,11 @@ const initializeDefaultApps = initializeDefaultAppsFactory({
   registerDefaultApp: registerDefaultAppFactory({ db })
 })
 
-exports.init = async ({ app }) => {
+exports.init = async ({ app, openApiDocument }) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies
-  exports.authStrategies = await require('./strategies')(app)
+  exports.authStrategies = await require('./strategies')({ app, openApiDocument })
 
   // Hoist auth routes
   require('./rest')(app)

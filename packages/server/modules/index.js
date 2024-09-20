@@ -87,13 +87,13 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-exports.init = async ({ app, openApiRegister }) => {
+exports.init = async ({ app, openApiDocument }) => {
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
   // Stage 1: initialise all modules
   for (const module of modules) {
-    await module.init?.({ app, openApiDocument: openApiRegister, isInitial })
+    await module.init?.({ app, openApiDocument, isInitial })
   }
 
   // Stage 2: finalize init all modules

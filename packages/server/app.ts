@@ -385,9 +385,9 @@ export async function init() {
   )
   if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddleware)
 
-  const openApiRgstr = openApiDocument()
+  const openApiDoc = openApiDocument()
   // Initialize default modules, including rest api handlers
-  await ModulesSetup.init({ app, openApiRegister: openApiRgstr })
+  await ModulesSetup.init({ app, openApiDocument: openApiDoc })
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
@@ -403,7 +403,7 @@ export async function init() {
       context: buildContext
     })
   )
-  openApiRgstr.registerOperation(GRAPHQL_PATH, OpenAPIV2.HttpMethods.POST, {
+  openApiDoc.registerOperation(GRAPHQL_PATH, OpenAPIV2.HttpMethods.POST, {
     summary: 'GraphQL',
     description: 'GraphQL endpoint',
     responses: {
@@ -415,7 +415,7 @@ export async function init() {
 
   // The last route to be added, after all paths are registered with OpenAPI documentation, is the OpenAPI JSON
   const openApiJson = openApiJsonHandlerFactory({
-    openApiDoc: openApiRgstr.getDocument()
+    openApiDocument: openApiDoc.getDocument()
   })
   app.get(openApiJsonPath, openApiJson)
 

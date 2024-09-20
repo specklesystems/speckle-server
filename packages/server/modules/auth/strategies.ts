@@ -45,8 +45,13 @@ import {
   findServerInviteFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
+import type { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-const setupStrategies = async (app: Express) => {
+const setupStrategies = async (params: {
+  app: Express
+  openApiDocument: OpenApiDocument
+}) => {
+  const { app, openApiDocument } = params
   const authStrategies: AuthStrategyMetadata[] = []
 
   passport.serializeUser((user, done) => done(null, user))
@@ -192,7 +197,8 @@ const setupStrategies = async (app: Express) => {
       app,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware
+      finalizeAuthMiddleware,
+      openApiDocument
     )
     authStrategies.push(googStrategy)
     strategyCount++
@@ -214,7 +220,8 @@ const setupStrategies = async (app: Express) => {
       app,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware
+      finalizeAuthMiddleware,
+      openApiDocument
     )
     authStrategies.push(githubStrategy)
     strategyCount++
@@ -236,7 +243,8 @@ const setupStrategies = async (app: Express) => {
       app,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware
+      finalizeAuthMiddleware,
+      openApiDocument
     )
     authStrategies.push(azureAdStrategy)
     strategyCount++
@@ -257,7 +265,8 @@ const setupStrategies = async (app: Express) => {
       app,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware
+      finalizeAuthMiddleware,
+      openApiDocument
     )
     authStrategies.push(oidcStrategy)
     strategyCount++
@@ -283,7 +292,8 @@ const setupStrategies = async (app: Express) => {
       app,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware
+      finalizeAuthMiddleware,
+      openApiDocument
     )
     authStrategies.push(localStrategy)
   }

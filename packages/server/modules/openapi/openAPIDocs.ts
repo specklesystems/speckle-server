@@ -2,7 +2,7 @@ import { getServerVersion } from '@/modules/shared/helpers/envHelper'
 import type { OpenAPIV2 } from 'openapi-types'
 import { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-export const openAPIDoc: OpenAPIV2.Document = {
+const defaultOpenAPIDoc: OpenAPIV2.Document = {
   swagger: '2.0',
   basePath: '/',
   info: {
@@ -10,24 +10,13 @@ export const openAPIDoc: OpenAPIV2.Document = {
     version: getServerVersion()
   },
   definitions: {},
-  paths: {
-    '/metrics': {
-      get: {
-        operationId: 'getMetrics',
-        responses: {
-          default: {
-            description: 'Returns prometheus metrics'
-          }
-        }
-      }
-    }
-  }
+  paths: {}
 }
 
 export const openApiDocument: () => OpenApiDocument & {
   getDocument: () => OpenAPIV2.Document
 } = () => {
-  const _openApiDoc = openAPIDoc
+  const _openApiDoc = defaultOpenAPIDoc
 
   return {
     registerOperation: (path, httpMethod, operation) => {

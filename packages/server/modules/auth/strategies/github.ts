@@ -29,6 +29,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const githubStrategyBuilderFactory =
   (deps: {
@@ -43,7 +44,8 @@ const githubStrategyBuilderFactory =
     app,
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
-    finalizeAuthMiddleware
+    finalizeAuthMiddleware,
+    openApiDocument
   ) => {
     const strategy: AuthStrategyMetadata & { callbackUrl: string } = {
       id: 'github',
@@ -169,6 +171,15 @@ const githubStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       passportAuthenticate('github')
     )
+    openApiDocument.registerOperation(strategy.url, HttpMethod.GET, {
+      summary: 'Initiate Github OAuth flow',
+      description: 'Initiate Github OAuth flow',
+      responses: {
+        302: {
+          description: 'Redirects to Github to start authentication.'
+        }
+      }
+    })
 
     // 2. Auth finish
     app.get(
@@ -177,6 +188,15 @@ const githubStrategyBuilderFactory =
       passportAuthenticate('github'),
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation(strategy.callbackUrl, HttpMethod.GET, {
+      summary: 'Complete Github OAuth flow',
+      description: 'Complete Github OAuth flow',
+      responses: {
+        302: {
+          description: 'Redirects to the relevant page based on the Github response.'
+        }
+      }
+    })
 
     return strategy
   }

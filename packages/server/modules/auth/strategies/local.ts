@@ -23,6 +23,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -39,7 +40,8 @@ const localStrategyBuilderFactory =
     app,
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
-    finalizeAuthMiddleware
+    finalizeAuthMiddleware,
+    openApiDocument
   ) => {
     const strategy: AuthStrategyMetadata = {
       id: 'local',
@@ -75,6 +77,17 @@ const localStrategyBuilderFactory =
       },
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation('/auth/local/login', HttpMethod.POST, {
+      description: 'Login with email and password',
+      responses: {
+        200: {
+          description: 'User logged in successfully'
+        },
+        401: {
+          description: 'Invalid credentials'
+        }
+      }
+    })
 
     // POST Register
     app.post(
@@ -150,6 +163,20 @@ const localStrategyBuilderFactory =
       },
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation('/auth/local/register', HttpMethod.POST, {
+      description: 'Register with email and password',
+      responses: {
+        200: {
+          description: 'User registered successfully'
+        },
+        400: {
+          description: 'Invalid input'
+        },
+        500: {
+          description: 'Server error'
+        }
+      }
+    })
 
     return strategy
   }

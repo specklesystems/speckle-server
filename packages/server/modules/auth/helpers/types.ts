@@ -1,4 +1,5 @@
-import { MaybeAsync, ServerScope } from '@speckle/shared'
+import type { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
+import type { MaybeAsync, ServerScope } from '@speckle/shared'
 import type { Express, RequestHandler } from 'express'
 import type { Session, SessionData } from 'express-session'
 import type { TokenSet, UserinfoResponse } from 'openid-client'
@@ -98,5 +99,9 @@ export type AuthStrategyBuilder = (
    * Middleware that takes the User object that passport should've attached to the request
    * and finalizes the auth process by redirecting the user to the correct page
    */
-  finalizeAuthMiddleware: RequestHandler
+  finalizeAuthMiddleware: RequestHandler,
+  /**
+   * OpenAPI document instance to register auth routes
+   */
+  openApiDocument: OpenApiDocument
 ) => MaybeAsync<AuthStrategyMetadata>

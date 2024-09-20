@@ -28,6 +28,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const azureAdStrategyBuilderFactory =
   (deps: {
@@ -42,7 +43,8 @@ const azureAdStrategyBuilderFactory =
     app,
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
-    finalizeAuthMiddleware
+    finalizeAuthMiddleware,
+    openApiDocument
   ) => {
     const strategy = new OIDCStrategy(
       {
@@ -81,6 +83,15 @@ const azureAdStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       passportAuthenticate('azuread-openidconnect')
     )
+    openApiDocument.registerOperation('/auth/azure', HttpMethod.GET, {
+      summary: 'Start Azure AD OAuth flow',
+      description: 'Start Azure AD OAuth flow',
+      responses: {
+        302: {
+          description: 'Redirect'
+        }
+      }
+    })
 
     // 2. Auth finish callback
     app.post(
@@ -198,6 +209,15 @@ const azureAdStrategyBuilderFactory =
       },
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation('/auth/azure/callback', HttpMethod.POST, {
+      summary: 'Complete Azure AD OAuth flow',
+      description: 'Complete Azure AD OAuth flow',
+      responses: {
+        302: {
+          description: 'Redirects to the relevant page based on the Azure AD response.'
+        }
+      }
+    })
 
     return {
       id: 'azuread',

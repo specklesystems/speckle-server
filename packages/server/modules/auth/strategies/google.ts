@@ -24,6 +24,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -38,7 +39,8 @@ const googleStrategyBuilderFactory =
     app,
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
-    finalizeAuthMiddleware
+    finalizeAuthMiddleware,
+    openApiDocument
   ) => {
     const strategy: AuthStrategyMetadata & { callbackUrl: string } = {
       id: 'google',
@@ -152,6 +154,15 @@ const googleStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       passportAuthenticate('google')
     )
+    openApiDocument.registerOperation(strategy.url, HttpMethod.GET, {
+      summary: 'Google Auth',
+      description: 'Google Auth',
+      responses: {
+        default: {
+          description: 'Redirects to Google Auth'
+        }
+      }
+    })
 
     // 2. Auth callback
     app.get(
@@ -160,6 +171,15 @@ const googleStrategyBuilderFactory =
       passportAuthenticate('google'),
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation(strategy.callbackUrl, HttpMethod.GET, {
+      summary: 'Google Auth Callback',
+      description: 'Google Auth Callback',
+      responses: {
+        default: {
+          description: 'Redirects to the relevant page based on the Google response.'
+        }
+      }
+    })
 
     return strategy
   }

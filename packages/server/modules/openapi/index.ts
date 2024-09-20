@@ -43,11 +43,11 @@ const openApiHtml: RequestHandler = (_req, res) => {
 }
 
 export const openApiJsonHandlerFactory: (params: {
-  openApiDoc: OpenAPIV2.Document
+  openApiDocument: OpenAPIV2.Document
 }) => RequestHandler =
-  ({ openApiDoc }) =>
+  ({ openApiDocument }) =>
   (_req, res) => {
-    res.json(openApiDoc)
+    res.json(openApiDocument)
   }
 
 export const init: SpeckleModule['init'] = async ({

@@ -24,6 +24,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const oidcStrategyBuilderFactory =
   (deps: {
@@ -38,7 +39,8 @@ const oidcStrategyBuilderFactory =
     app,
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
-    finalizeAuthMiddleware
+    finalizeAuthMiddleware,
+    openApiDocument
   ) => {
     const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
     const redirectUrl = new URL('/auth/oidc/callback', getServerOrigin()).toString()
@@ -151,6 +153,14 @@ const oidcStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       passportAuthenticate('oidc', { scope: 'openid profile email' })
     )
+    openApiDocument.registerOperation('/auth/oidc', HttpMethod.GET, {
+      description: 'Initiate OIDC authentication flow',
+      responses: {
+        302: {
+          description: 'Redirect to OIDC provider for authentication'
+        }
+      }
+    })
 
     // 2. Auth finalize
     app.get(
@@ -161,6 +171,14 @@ const oidcStrategyBuilderFactory =
       }),
       finalizeAuthMiddleware
     )
+    openApiDocument.registerOperation('/auth/oidc/callback', HttpMethod.GET, {
+      description: 'Complete OIDC authentication flow',
+      responses: {
+        302: {
+          description: 'Redirects to the app after OIDC authentication'
+        }
+      }
+    })
 
     return {
       id: 'oidc',
