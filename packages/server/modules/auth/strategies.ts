@@ -17,288 +17,185 @@ import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
 } from '@/modules/auth/services/mailchimp'
-import {
-  createUser,
-  findOrCreateUser,
-  getUserByEmail,
-  getUserById,
-  validatePasssword
-} from '@/modules/core/services/users'
+import { getUserById } from '@/modules/core/services/users'
 import type { Express, RequestHandler } from 'express'
 import {
+  AuthStrategyBuilder,
   AuthStrategyMetadata,
   AuthStrategyPassportUser
 } from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
 import { ensureError } from '@speckle/shared'
-import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { db } from '@/db/knex'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  resolveAuthRedirectPathFactory,
-  validateServerInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  findServerInviteFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import type { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
+import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
+import { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-const setupStrategies = async (params: {
-  app: Express
-  openApiDocument: OpenApiDocument
-}) => {
-  const { app, openApiDocument } = params
-  const authStrategies: AuthStrategyMetadata[] = []
+const setupStrategiesFactory =
+  (deps: {
+    githubStrategyBuilder: AuthStrategyBuilder
+    azureAdStrategyBuilder: AuthStrategyBuilder
+    googleStrategyBuilder: AuthStrategyBuilder
+    localStrategyBuilder: AuthStrategyBuilder
+    oidcStrategyBuilder: AuthStrategyBuilder
+    createAuthorizationCode: CreateAuthorizationCode
+    getUserById: typeof getUserById
+  }) =>
+  async (params: { app: Express; openApiDocument: OpenApiDocument }) => {
+    const { app, openApiDocument } = params
+    passport.serializeUser((user, done) => done(null, user))
+    passport.deserializeUser((user, done) =>
+      done(null, user as AuthStrategyPassportUser)
+    )
 
-  passport.serializeUser((user, done) => done(null, user))
-  passport.deserializeUser((user, done) => done(null, user as AuthStrategyPassportUser))
+    app.use(passport.initialize())
 
-  app.use(passport.initialize())
+    const RedisStore = ConnectRedis(ExpressSession)
+    const redisClient = createRedisClient(getRedisUrl(), {})
+    const sessionMiddleware = ExpressSession({
+      store: new RedisStore({ client: redisClient }),
+      secret: getSessionSecret(),
+      saveUninitialized: false,
+      resave: false,
+      cookie: {
+        maxAge: 1000 * 60 * 3, // 3 minutes
+        secure: isSSLServer()
+      }
+    })
 
-  const RedisStore = ConnectRedis(ExpressSession)
-  const redisClient = createRedisClient(getRedisUrl(), {})
-  const sessionMiddleware = ExpressSession({
-    store: new RedisStore({ client: redisClient }),
-    secret: getSessionSecret(),
-    saveUninitialized: false,
-    resave: false,
-    cookie: {
-      maxAge: 1000 * 60 * 3, // 3 minutes
-      secure: isSSLServer()
-    }
-  })
+    /**
+     * Move incoming auth query params to session, for easier access
+     */
+    const moveAuthParamsToSessionMiddleware: RequestHandler = (req, res, next) => {
+      if (!req.query.challenge)
+        return res.status(400).send('Invalid request: no challenge detected.')
 
-  /**
-   * Move incoming auth query params to session, for easier access
-   */
-  const moveAuthParamsToSessionMiddleware: RequestHandler = (req, res, next) => {
-    if (!req.query.challenge)
-      return res.status(400).send('Invalid request: no challenge detected.')
+      req.session.challenge =
+        req.query.challenge && isString(req.query.challenge)
+          ? req.query.challenge
+          : undefined
 
-    req.session.challenge =
-      req.query.challenge && isString(req.query.challenge)
-        ? req.query.challenge
-        : undefined
-
-    const token = req.query.token || req.query.inviteId
-    if (token && isString(token)) {
-      req.session.token = token
-    }
-
-    const newsletterConsent = req.query.newsletter || null
-    if (newsletterConsent) {
-      req.session.newsletterConsent = true
-    }
-
-    next()
-  }
-
-  /**
-   * Finalizes authentication for the main frontend application.
-   */
-  const finalizeAuthMiddleware: RequestHandler = async (req, res) => {
-    try {
-      if (!req.user) {
-        throw new Error('Cannot finalize auth - No user attached to session')
+      const token = req.query.token || req.query.inviteId
+      if (token && isString(token)) {
+        req.session.token = token
       }
 
-      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
-      const ac = await createAuthorizationCode({
-        appId: 'spklwebapp',
-        userId: req.user.id,
-        challenge: req.session.challenge!
-      })
+      const newsletterConsent = req.query.newsletter || null
+      if (newsletterConsent) {
+        req.session.newsletterConsent = true
+      }
 
-      let newsletterConsent = false
-      if (req.session.newsletterConsent) newsletterConsent = true // NOTE: it's only set if it's true
+      next()
+    }
 
-      if (req.session) req.session.destroy(noop)
-
-      // Resolve redirect URL
-      const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
-      urlObj.searchParams.set('access_code', ac)
-
-      if (req.user.isNewUser) {
-        urlObj.searchParams.set('register', 'true')
-
-        // Send event to MP
-        const userEmail = req.user.email
-        const isInvite = !!req.user.isInvite
-        if (userEmail && enableMixpanel()) {
-          await mixpanel({ userEmail, req }).track('Sign Up', {
-            isInvite
-          })
+    /**
+     * Finalizes authentication for the main frontend application.
+     */
+    const finalizeAuthMiddleware: RequestHandler = async (req, res) => {
+      try {
+        if (!req.user) {
+          throw new Error('Cannot finalize auth - No user attached to session')
         }
 
-        if (getMailchimpStatus()) {
-          try {
-            const user = await getUserById({ userId: req.user.id })
-            if (!user)
-              throw new Error(
-                'Could not register user for mailchimp lists - no db user record found.'
-              )
-            const onboardingIds = getMailchimpOnboardingIds()
-            await triggerMailchimpCustomerJourney(user, onboardingIds)
+        const ac = await deps.createAuthorizationCode({
+          appId: 'spklwebapp',
+          userId: req.user.id,
+          challenge: req.session.challenge!
+        })
 
-            if (newsletterConsent) {
-              const { listId } = getMailchimpNewsletterIds()
-              await addToMailchimpAudience(user, listId)
+        let newsletterConsent = false
+        if (req.session.newsletterConsent) newsletterConsent = true // NOTE: it's only set if it's true
+
+        if (req.session) req.session.destroy(noop)
+
+        // Resolve redirect URL
+        const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
+        urlObj.searchParams.set('access_code', ac)
+
+        if (req.user.isNewUser) {
+          urlObj.searchParams.set('register', 'true')
+
+          // Send event to MP
+          const userEmail = req.user.email
+          const isInvite = !!req.user.isInvite
+          if (userEmail && enableMixpanel()) {
+            await mixpanel({ userEmail, req }).track('Sign Up', {
+              isInvite
+            })
+          }
+
+          if (getMailchimpStatus()) {
+            try {
+              const user = await deps.getUserById({ userId: req.user.id })
+              if (!user)
+                throw new Error(
+                  'Could not register user for mailchimp lists - no db user record found.'
+                )
+              const onboardingIds = getMailchimpOnboardingIds()
+              await triggerMailchimpCustomerJourney(user, onboardingIds)
+
+              if (newsletterConsent) {
+                const { listId } = getMailchimpNewsletterIds()
+                await addToMailchimpAudience(user, listId)
+              }
+            } catch (error) {
+              logger.warn(error, 'Failed to sign up user to mailchimp lists')
             }
-          } catch (error) {
-            logger.warn(error, 'Failed to sign up user to mailchimp lists')
           }
         }
+
+        const redirectUrl = urlObj.toString()
+
+        return res.redirect(redirectUrl)
+      } catch (err) {
+        authLogger.error(err, 'Could not finalize auth')
+        if (req.session) req.session.destroy(noop)
+        return res.status(401).send({
+          err: ensureError(err, 'Unexpected issue arose while finalizing auth').message
+        })
       }
-
-      const redirectUrl = urlObj.toString()
-
-      return res.redirect(redirectUrl)
-    } catch (err) {
-      authLogger.error(err, 'Could not finalize auth')
-      if (req.session) req.session.destroy(noop)
-      return res.status(401).send({
-        err: ensureError(err, 'Unexpected issue arose while finalizing auth').message
-      })
     }
-  }
 
-  /*
-   * Strategies initialisation & listing
-   */
+    /*
+     * Strategies initialisation & listing
+     */
 
-  let strategyCount = 0
+    const enabledBuilders: AuthStrategyBuilder[] = []
 
-  const validateServerInvite = validateServerInviteFactory({
-    findServerInvite: findServerInviteFactory({ db })
-  })
-  const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFactory({
-    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-  })
-  const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
+    if (process.env.STRATEGY_GOOGLE === 'true') {
+      enabledBuilders.push(deps.googleStrategyBuilder)
+    }
 
-  if (process.env.STRATEGY_GOOGLE === 'true') {
-    const googleStrategyBuilderFactory = (
-      await import('@/modules/auth/strategies/google')
-    ).default
-    const googleStrategyBuilder = googleStrategyBuilderFactory({
-      getServerInfo,
-      getUserByEmail,
-      findOrCreateUser,
-      validateServerInvite,
-      finalizeInvitedServerRegistration,
-      resolveAuthRedirectPath
-    })
-    const googStrategy = await googleStrategyBuilder(
-      app,
-      sessionMiddleware,
-      moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware,
-      openApiDocument
+    if (process.env.STRATEGY_GITHUB === 'true') {
+      enabledBuilders.push(deps.githubStrategyBuilder)
+    }
+
+    if (process.env.STRATEGY_AZURE_AD === 'true') {
+      enabledBuilders.push(deps.azureAdStrategyBuilder)
+    }
+
+    if (process.env.STRATEGY_OIDC === 'true') {
+      enabledBuilders.push(deps.oidcStrategyBuilder)
+    }
+
+    // Note: always leave the local strategy init for last so as to be able to
+    // force enable it in case no others are present.
+    if (process.env.STRATEGY_LOCAL === 'true' || !enabledBuilders.length) {
+      enabledBuilders.push(deps.localStrategyBuilder)
+    }
+
+    const authStrategies: AuthStrategyMetadata[] = await Promise.all(
+      enabledBuilders.map(
+        async (builder) =>
+          await builder(
+            app,
+            sessionMiddleware,
+            moveAuthParamsToSessionMiddleware,
+            finalizeAuthMiddleware,
+            openApiDocument
+          )
+      )
     )
-    authStrategies.push(googStrategy)
-    strategyCount++
+
+    return authStrategies
   }
 
-  if (process.env.STRATEGY_GITHUB === 'true') {
-    const githubStrategyBuilderFactory = (
-      await import('@/modules/auth/strategies/github')
-    ).default
-    const githubStrategyBuilder = githubStrategyBuilderFactory({
-      getServerInfo,
-      getUserByEmail,
-      findOrCreateUser,
-      validateServerInvite,
-      finalizeInvitedServerRegistration,
-      resolveAuthRedirectPath
-    })
-    const githubStrategy = await githubStrategyBuilder(
-      app,
-      sessionMiddleware,
-      moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware,
-      openApiDocument
-    )
-    authStrategies.push(githubStrategy)
-    strategyCount++
-  }
-
-  if (process.env.STRATEGY_AZURE_AD === 'true') {
-    const azureAdStrategyBuilderFactory = (
-      await import('@/modules/auth/strategies/azureAd')
-    ).default
-    const azureAdStrategyBuilder = azureAdStrategyBuilderFactory({
-      getServerInfo,
-      getUserByEmail,
-      findOrCreateUser,
-      validateServerInvite,
-      finalizeInvitedServerRegistration,
-      resolveAuthRedirectPath
-    })
-    const azureAdStrategy = await azureAdStrategyBuilder(
-      app,
-      sessionMiddleware,
-      moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware,
-      openApiDocument
-    )
-    authStrategies.push(azureAdStrategy)
-    strategyCount++
-  }
-
-  if (process.env.STRATEGY_OIDC === 'true') {
-    const oidcStrategyBuilderFactory = (await import('@/modules/auth/strategies/oidc'))
-      .default
-    const oidcStrategyBuilder = oidcStrategyBuilderFactory({
-      getServerInfo,
-      getUserByEmail,
-      findOrCreateUser,
-      validateServerInvite,
-      finalizeInvitedServerRegistration,
-      resolveAuthRedirectPath
-    })
-    const oidcStrategy = await oidcStrategyBuilder(
-      app,
-      sessionMiddleware,
-      moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware,
-      openApiDocument
-    )
-    authStrategies.push(oidcStrategy)
-    strategyCount++
-  }
-
-  // Note: always leave the local strategy init for last so as to be able to
-  // force enable it in case no others are present.
-  if (process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0) {
-    const localStrategyBuilderFactory = (
-      await import('@/modules/auth/strategies/local')
-    ).default
-    const localStrategyBuilder = localStrategyBuilderFactory({
-      validatePassword: validatePasssword,
-      getUserByEmail,
-      getServerInfo,
-      getRateLimitResult,
-      validateServerInvite,
-      createUser,
-      finalizeInvitedServerRegistration,
-      resolveAuthRedirectPath
-    })
-    const localStrategy = await localStrategyBuilder(
-      app,
-      sessionMiddleware,
-      moveAuthParamsToSessionMiddleware,
-      finalizeAuthMiddleware,
-      openApiDocument
-    )
-    authStrategies.push(localStrategy)
-  }
-
-  return authStrategies
-}
-
-export = setupStrategies
+export = setupStrategiesFactory

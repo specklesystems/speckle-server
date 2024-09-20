@@ -4,7 +4,6 @@ import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
 import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 
-import { passportAuthenticate } from '@/modules/auth/services/passportService'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -28,6 +27,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 import { HttpMethod } from '@/modules/shared/helpers/typeHelper'
 
 const azureAdStrategyBuilderFactory =
@@ -38,6 +38,7 @@ const azureAdStrategyBuilderFactory =
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    passportAuthenticateHandlerBuilder: PassportAuthenticateHandlerBuilder
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -81,7 +82,7 @@ const azureAdStrategyBuilderFactory =
       '/auth/azure',
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      passportAuthenticate('azuread-openidconnect')
+      deps.passportAuthenticateHandlerBuilder('azuread-openidconnect')
     )
     openApiDocument.registerOperation('/auth/azure', HttpMethod.GET, {
       summary: 'Start Azure AD OAuth flow',
@@ -97,7 +98,7 @@ const azureAdStrategyBuilderFactory =
     app.post(
       '/auth/azure/callback',
       sessionMiddleware,
-      passportAuthenticate('azuread-openidconnect'),
+      deps.passportAuthenticateHandlerBuilder('azuread-openidconnect'),
       async (req, _res, next) => {
         const serverInfo = await deps.getServerInfo()
         let logger = req.log.child({
