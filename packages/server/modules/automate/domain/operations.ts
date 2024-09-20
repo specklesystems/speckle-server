@@ -112,6 +112,14 @@ export type UpsertAutomationRun = (
   automationRun: InsertableAutomationRun
 ) => Promise<void>
 
+export type GetAutomationTriggerDefinitions = <
+  T extends AutomationTriggerType = AutomationTriggerType
+>(params: {
+  automationId: string
+  projectId?: string
+  triggerType?: T
+}) => Promise<Array<AutomationTriggerDefinitionRecord<T> & { automationId: string }>>
+
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
 ) => Promise<AuthCodePayload>
