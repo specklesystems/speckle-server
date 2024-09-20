@@ -11,8 +11,8 @@
         :settings="props.settings"
         @update:settings="updateSettings"
       ></SendSettings>
-      <div class="mt-4 flex justify-center items-center space-x-2">
-        <FormButton size="sm" text @click="showSettingsDialog = false">
+      <div class="mt-4 flex justify-end items-center space-x-2">
+        <FormButton size="sm" color="outline" @click="showSettingsDialog = false">
           Cancel
         </FormButton>
         <FormButton size="sm" @click="saveSettings()">Save</FormButton>

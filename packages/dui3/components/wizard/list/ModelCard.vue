@@ -3,7 +3,7 @@
     class="group text-left relative bg-foundation-2 rounded p-2 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
   >
     <div class="flex items-center space-x-4">
-      <div>
+      <div class="max-[275px]:hidden">
         <div v-if="model.previewUrl" class="h-12 w-12">
           <img
             :src="model.previewUrl"
