@@ -15,13 +15,10 @@ export const metricsRouteHandler: RequestHandler = async (req, res) => {
   }
 }
 
-export const init: SpeckleModule['init'] = async ({
-  app,
-  openApiDocument: openApiRegister
-}) => {
+export const init: SpeckleModule['init'] = async ({ app, openApiDocument }) => {
   moduleLogger.info('📈 Init metrics module')
   app.get(metricsPath, metricsRouteHandler)
-  openApiRegister.registerOperation(metricsPath, OpenAPIV2.HttpMethods.GET, {
+  openApiDocument.registerOperation(metricsPath, OpenAPIV2.HttpMethods.GET, {
     summary: 'Metrics',
     description: 'Returns Prometheus metrics',
     responses: {

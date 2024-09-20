@@ -12,7 +12,7 @@ import {
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { HttpMethod, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
   getStreamBranchByName,
@@ -50,7 +50,11 @@ const saveFileUploads = async ({
   )
 }
 
-export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
+export const init: SpeckleModule['init'] = async ({
+  app,
+  openApiDocument,
+  isInitial
+}) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
@@ -98,6 +102,18 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
           }
         )
       )
+    }
+  )
+  openApiDocument.registerOperation(
+    '/api/file/{fileType}/{streamId}/{branchName}',
+    HttpMethod.POST,
+    {
+      description: 'Uploads a file to a project (stream)',
+      responses: {
+        200: {
+          description: 'file successfully uploaded to the project (stream)'
+        }
+      }
     }
   )
 
