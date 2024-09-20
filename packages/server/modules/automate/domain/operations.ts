@@ -2,13 +2,21 @@ import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types
 import {
   AutomationFunctionRunRecord,
   AutomationRecord,
+  AutomationRevisionRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationRunWithTriggersFunctionRuns,
   AutomationTokenRecord,
+  AutomationTriggerDefinitionRecord,
+  AutomationTriggerRecordBase,
   AutomationTriggerType,
-  AutomationWithRevision
+  AutomationWithRevision,
+  BaseTriggerManifest,
+  RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { InsertableAutomationRevision } from '@/modules/automate/repositories/automations'
+import {
+  InsertableAutomationRevision,
+  InsertableAutomationRun
+} from '@/modules/automate/repositories/automations'
 import { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
@@ -82,6 +90,28 @@ export type GetFullAutomationRunById = (
   automationRunId: string
 ) => Promise<AutomationRunWithTriggersFunctionRuns | null>
 
+export type GetAutomationRevisions = (params: {
+  automationRevisionIds: string[]
+}) => Promise<AutomationRevisionRecord[]>
+
+export type GetAutomationRevision = (params: {
+  automationRevisionId: string
+}) => Promise<Nullable<AutomationRevisionRecord>>
+
+export type GetActiveTriggerDefinitions = <
+  T extends AutomationTriggerType = AutomationTriggerType
+>(
+  params: AutomationTriggerRecordBase<T>
+) => Promise<AutomationTriggerDefinitionRecord<T>[]>
+
+export type GetAutomationToken = (
+  automationId: string
+) => Promise<AutomationTokenRecord | null>
+
+export type UpsertAutomationRun = (
+  automationRun: InsertableAutomationRun
+) => Promise<void>
+
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
 ) => Promise<AuthCodePayload>
@@ -101,3 +131,11 @@ type KeyPair = {
 export type GetEncryptionKeyPair = () => Promise<KeyPair>
 
 export type GetEncryptionKeyPairFor = (publicKey: string) => Promise<KeyPair>
+
+export type TriggerAutomationRevisionRun = <
+  M extends BaseTriggerManifest = BaseTriggerManifest
+>(params: {
+  revisionId: string
+  manifest: M
+  source?: RunTriggerSource
+}) => Promise<{ automationRunId: string }>

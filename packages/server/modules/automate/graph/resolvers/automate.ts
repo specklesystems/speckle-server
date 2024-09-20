@@ -63,7 +63,7 @@ import {
 import {
   createTestAutomationRun,
   manuallyTriggerAutomation,
-  triggerAutomationRevisionRun
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
   reportFunctionRunStatusFactory,
@@ -531,7 +531,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomationTriggerDefinitions,
             getAutomation,
             getBranchLatestCommits,
-            triggerFunction: triggerAutomationRevisionRun({
+            triggerFunction: triggerAutomationRevisionRunFactory({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
               getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
