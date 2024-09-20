@@ -57,20 +57,17 @@
       fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
-      <SendSettings
+      <!-- <SendSettings
         v-if="hasSendSettings"
         :settings="modelCard.settings"
         @update:settings="updateSettings"
-      ></SendSettings>
-      <div class="mt-2 flex">
+      ></SendSettings> -->
+      <div class="mt-4 flex justify-end items-center space-x-2">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
-        <!-- <FormButton text @click.stop=";(openFilterDialog = false), saveFilter()">
-              Save
-            </FormButton> -->
-        <FormButton
-          full-width
-          @click.stop=";(openFilterDialog = false), saveFilterAndSend()"
-        >
+        <FormButton size="sm" color="outline" @click.stop="saveFilter()">
+          Save
+        </FormButton>
+        <FormButton size="sm" @click.stop="saveFilterAndSend()">
           Save & Publish
         </FormButton>
       </div>
@@ -108,7 +105,6 @@ import type { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import type { ProjectModelGroup } from '~/store/hostApp'
 import { useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import type { CardSetting } from '~/lib/models/card/setting'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
@@ -139,14 +135,6 @@ const updateFilter = (filter: ISendFilter) => {
   newFilter = filter
 }
 
-let newSettings: CardSetting[]
-const updateSettings = (settings: CardSetting[]) => {
-  newSettings = settings
-}
-
-const hasSendSettings = computed(
-  () => store.sendSettings && store.sendSettings?.length > 0
-)
 const saveFilter = async () => {
   void trackEvent('DUI3 Action', {
     name: 'Publish Card Filter Change',
@@ -154,9 +142,9 @@ const saveFilter = async () => {
   })
   await store.patchModel(props.modelCard.modelCardId, {
     sendFilter: newFilter,
-    settings: newSettings,
     expired: true
   })
+  openFilterDialog.value = false
 }
 
 const hover = ref(false)
@@ -174,7 +162,7 @@ const expiredNotification = computed(() => {
   notification.level = props.modelCard.progress ? 'warning' : 'info'
   notification.text = props.modelCard.progress
     ? 'Model was changed while publishing'
-    : 'Model is out of sync with application.'
+    : 'Out of sync with application'
 
   const ctaType = props.modelCard.progress ? 'Restart' : 'Update'
   notification.cta = {

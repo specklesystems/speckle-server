@@ -78,7 +78,7 @@
         </FormButton>
         <FormButton
           v-else
-          color="card"
+          color="outline"
           full-width
           :disabled="hasReachedEnd"
           @click="loadMore"

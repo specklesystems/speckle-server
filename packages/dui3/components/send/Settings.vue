@@ -1,6 +1,7 @@
 <template>
   <div class="p-0">
     <button
+      v-if="expandable"
       class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
       @click="showSettings = !showSettings"
     >
@@ -31,6 +32,7 @@ import { useHostAppStore } from '~/store/hostApp'
 
 const props = defineProps<{
   settings?: CardSetting[]
+  expandable: boolean
 }>()
 
 const emit = defineEmits<{ (e: 'update:settings', value: CardSetting[]): void }>()
@@ -42,7 +44,7 @@ const sendSettings = ref<CardSetting[] | undefined>(
   cloneDeep(props.settings ?? defaultSendSettings.value) // need to prevent mutation!
 )
 
-const showSettings = ref(false)
+const showSettings = ref(!props.expandable)
 
 const settingsJsonForms = computed(() => {
   if (sendSettings.value === undefined) return {}

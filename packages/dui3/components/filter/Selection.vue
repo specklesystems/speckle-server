@@ -3,7 +3,7 @@
     <div v-if="selectionStore.selectionInfo.selectedObjectIds?.length === 0">
       No objects selected, go ahead and select some!
     </div>
-    <div v-else>{{ selectionStore.selectionInfo.summary }}.</div>
+    <div v-else>{{ selectionStore.selectionInfo.summary }}</div>
   </div>
 </template>
 <script setup lang="ts">

@@ -45,7 +45,13 @@
           Create&nbsp;
           <div class="truncate">"{{ searchText }}"</div>
         </FormButton>
-        <FormButton v-else full-width :disabled="hasReachedEnd" @click="loadMore">
+        <FormButton
+          v-else
+          full-width
+          :disabled="hasReachedEnd"
+          color="outline"
+          @click="loadMore"
+        >
           {{ hasReachedEnd ? 'No more projects found' : 'Load older projects' }}
         </FormButton>
       </div>

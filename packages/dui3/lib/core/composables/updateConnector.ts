@@ -1,5 +1,6 @@
 import type { ToastNotification } from '@speckle/ui-components'
 import { ToastNotificationType } from '@speckle/ui-components'
+import { useConfigStore } from '~/store/config'
 import { useHostAppStore } from '~/store/hostApp'
 
 type Versions = {
@@ -17,6 +18,7 @@ export type Version = {
 
 export function useUpdateConnector() {
   const hostApp = useHostAppStore()
+  const config = useConfigStore()
   const { $openUrl } = useNuxtApp()
 
   const versions = ref<Version[]>([])
@@ -28,7 +30,7 @@ export function useUpdateConnector() {
 
   async function checkUpdate() {
     await getVersions()
-    if (!isUpToDate.value) {
+    if (!isUpToDate.value && !config.isDevMode) {
       const notification: ToastNotification = {
         type: ToastNotificationType.Success,
         title: `Update available`,

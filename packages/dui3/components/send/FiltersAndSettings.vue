@@ -3,6 +3,7 @@
     <FilterListSelect @update:filter="updateFilter" />
     <SendSettings
       v-if="hasSendSettings"
+      expandable
       @update:settings="updateSettings"
     ></SendSettings>
   </div>
