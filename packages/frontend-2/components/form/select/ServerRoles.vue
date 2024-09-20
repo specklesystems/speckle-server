@@ -67,10 +67,7 @@ const props = defineProps({
   allowAdmin: Boolean,
   allowArchived: Boolean,
   fullyControlValue: Boolean,
-  showLabel: {
-    type: Boolean,
-    default: false
-  }
+  showLabel: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

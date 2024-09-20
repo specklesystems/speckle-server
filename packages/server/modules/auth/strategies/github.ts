@@ -5,8 +5,6 @@ import type { VerifyCallback } from 'passport-oauth2'
 import { Strategy as GithubStrategy, type Profile } from 'passport-github2'
 import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-
-import { passportAuthenticate } from '@/modules/auth/services/passportService'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -29,6 +27,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 
 const githubStrategyBuilderFactory =
   (deps: {
@@ -38,6 +37,7 @@ const githubStrategyBuilderFactory =
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    passportAuthenticateHandlerBuilder: PassportAuthenticateHandlerBuilder
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -167,14 +167,14 @@ const githubStrategyBuilderFactory =
       strategy.url,
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
-      passportAuthenticate('github')
+      deps.passportAuthenticateHandlerBuilder('github')
     )
 
     // 2. Auth finish
     app.get(
       strategy.callbackUrl,
       sessionMiddleware,
-      passportAuthenticate('github'),
+      deps.passportAuthenticateHandlerBuilder('github'),
       finalizeAuthMiddleware
     )
 

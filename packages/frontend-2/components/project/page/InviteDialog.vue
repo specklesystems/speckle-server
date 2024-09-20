@@ -122,6 +122,8 @@ graphql(`
     id
     workspaceId
     workspace {
+      id
+      defaultProjectRole
       team {
         items {
           role
@@ -299,6 +301,16 @@ const disabledWorkspaceMemberRowMessage = (
     ? 'You cannot invite a workspace guest as a project owner.'
     : undefined
 }
+
+watch(
+  () => props.project?.workspace?.defaultProjectRole,
+  (newRole, oldRole) => {
+    if (newRole && newRole !== oldRole) {
+      role.value = newRole as StreamRoles
+    }
+  },
+  { immediate: true }
+)
 
 watch(workspaceRole, (newRole, oldRole) => {
   if (newRole === oldRole) return
