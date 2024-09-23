@@ -39,7 +39,7 @@ import {
   getCommentsResources,
   getCommentsViewedAt,
   getCommitCommentCounts,
-  getStreamCommentCounts
+  getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
   getBranchCommitCounts,
@@ -96,6 +96,7 @@ const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
 const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
 const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
 const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
 const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
 
 /**

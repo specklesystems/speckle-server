@@ -3,7 +3,6 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  getResourceCommentCount,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
@@ -15,6 +14,7 @@ import {
   deleteCommentFactory,
   getCommentFactory,
   getCommentsLegacyFactory,
+  getResourceCommentCountFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -119,6 +119,7 @@ const archiveComment = archiveCommentFactory({
   getStream,
   updateComment
 })
+const getResourceCommentCount = getResourceCommentCountFactory({ db })
 
 const getStreamComment = async (
   { streamId, commentId }: { streamId: string; commentId: string },

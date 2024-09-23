@@ -181,29 +181,32 @@ export const insertCommentLinksFactory =
     return await q
   }
 
-export async function getStreamCommentCounts(
-  streamIds: string[],
-  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
-) {
-  if (!streamIds?.length) return []
-  const { threadsOnly, includeArchived } = options || {}
-  const q = Comments.knex()
-    .select(Comments.col.streamId)
-    .whereIn(Comments.col.streamId, streamIds)
-    .count()
-    .groupBy(Comments.col.streamId)
+export const getStreamCommentCountsFactory =
+  (deps: { db: Knex }) =>
+  async (
+    streamIds: string[],
+    options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+  ) => {
+    if (!streamIds?.length) return []
+    const { threadsOnly, includeArchived } = options || {}
+    const q = tables
+      .comments(deps.db)
+      .select(Comments.col.streamId)
+      .whereIn(Comments.col.streamId, streamIds)
+      .count()
+      .groupBy(Comments.col.streamId)
 
-  if (threadsOnly) {
-    q.andWhere(Comments.col.parentComment, null)
+    if (threadsOnly) {
+      q.andWhere(Comments.col.parentComment, null)
+    }
+
+    if (!includeArchived) {
+      q.andWhere(Comments.col.archived, false)
+    }
+
+    const results = (await q) as { streamId: string; count: string }[]
+    return results.map((r) => ({ ...r, count: parseInt(r.count) }))
   }
-
-  if (!includeArchived) {
-    q.andWhere(Comments.col.archived, false)
-  }
-
-  const results = (await q) as { streamId: string; count: string }[]
-  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
-}
 
 export async function getCommitCommentCounts(
   commitIds: string[],
@@ -235,13 +238,15 @@ export async function getCommitCommentCounts(
   return results.map((r) => ({ commitId: r.resourceId, count: parseInt(r.count) }))
 }
 
-export async function getStreamCommentCount(
-  streamId: string,
-  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
-) {
-  const [res] = await getStreamCommentCounts([streamId], options)
-  return res?.count || 0
-}
+export const getStreamCommentCountFactory =
+  (deps: { db: Knex }) =>
+  async (
+    streamId: string,
+    options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+  ) => {
+    const [res] = await getStreamCommentCountsFactory(deps)([streamId], options)
+    return res?.count || 0
+  }
 
 export async function getBranchCommentCounts(
   branchIds: string[],
@@ -881,4 +886,20 @@ export const getCommentsLegacyFactory =
       cursor: nextCursor ? nextCursor.toISOString() : null,
       totalCount
     }
+  }
+
+export const getResourceCommentCountFactory =
+  (deps: { db: Knex }) =>
+  async ({ resourceId }: { resourceId: string }) => {
+    const [res] = await tables
+      .commentLinks(deps.db)
+      .count('commentId')
+      .where({ resourceId })
+      .join('comments', 'comments.id', '=', 'commentId')
+      .where('comments.archived', '=', false)
+
+    if (res && res.count) {
+      return parseInt(String(res.count))
+    }
+    return 0
   }
