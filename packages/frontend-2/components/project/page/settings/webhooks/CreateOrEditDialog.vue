@@ -16,7 +16,6 @@
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
           show-label
-          show-required
           :rules="[isRequired, isUrl]"
           type="text"
           color="foundation"
@@ -27,6 +26,7 @@
           help="An optional name to help you identify this webhook"
           name="hookName"
           show-label
+          show-optional
           type="text"
           color="foundation"
         />
@@ -37,6 +37,7 @@
           help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
           name="hookSecret"
           show-label
+          show-optional
           type="text"
           color="foundation"
         />
@@ -48,7 +49,6 @@
           placeholder="Choose events"
           mount-menu-on-body
           help="Choose what events will trigger this webhook."
-          show-required
           :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"

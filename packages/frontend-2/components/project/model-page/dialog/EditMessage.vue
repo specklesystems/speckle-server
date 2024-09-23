@@ -27,7 +27,6 @@
         name="newMessage"
         label="Version message"
         placeholder="Version message"
-        show-required
         show-label
         color="foundation"
         :rules="[isRequired]"

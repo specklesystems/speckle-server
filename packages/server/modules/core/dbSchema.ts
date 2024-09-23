@@ -186,7 +186,11 @@ export function buildTableHelper<
 /**
  * Create meta table schema helper
  */
-function buildMetaTableHelper<T extends string, C extends string, MK extends string>(
+export function buildMetaTableHelper<
+  T extends string,
+  C extends string,
+  MK extends string
+>(
   tableName: T,
   extraColumns: C[],
   metaKeys: MK[],

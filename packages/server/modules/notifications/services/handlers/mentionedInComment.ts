@@ -157,45 +157,73 @@ function buildEmailTemplateParams(
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
-const handler: NotificationHandler<MentionedInCommentMessage> = async (msg) => {
-  const {
-    targetUserId,
-    data: { threadId, authorId, streamId, commentId }
-  } = msg
+const mentionedInCommentHandlerFactory =
+  (deps: {
+    getUser: typeof getUser
+    getStream: typeof getStream
+    getComment: typeof getComment
+    getServerInfo: typeof getServerInfo
+    renderEmail: typeof renderEmail
+    sendEmail: typeof sendEmail
+  }): NotificationHandler<MentionedInCommentMessage> =>
+  async (msg) => {
+    const {
+      targetUserId,
+      data: { threadId, authorId, streamId, commentId }
+    } = msg
 
-  const isCommentAndThreadTheSame = threadId === commentId
+    const isCommentAndThreadTheSame = threadId === commentId
 
-  const [targetUser, author, stream, threadComment, comment, serverInfo] =
-    await Promise.all([
-      getUser(targetUserId),
-      getUser(authorId),
-      getStream({ streamId }),
-      getComment({ id: threadId }),
-      isCommentAndThreadTheSame ? null : getComment({ id: commentId }),
-      getServerInfo()
-    ])
+    const [targetUser, author, stream, threadComment, comment, serverInfo] =
+      await Promise.all([
+        deps.getUser(targetUserId),
+        deps.getUser(authorId),
+        deps.getStream({ streamId }),
+        deps.getComment({ id: threadId }),
+        isCommentAndThreadTheSame ? null : deps.getComment({ id: commentId }),
+        deps.getServerInfo()
+      ])
 
-  const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
+    const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
 
-  // Validate message
-  const state = validate({
-    targetUser,
-    author,
-    stream,
-    threadComment,
-    mentionComment,
-    msg,
-    serverInfo
+    // Validate message
+    const state = validate({
+      targetUser,
+      author,
+      stream,
+      threadComment,
+      mentionComment,
+      msg,
+      serverInfo
+    })
+
+    const templateParams = buildEmailTemplateParams(state)
+    const { text, html } = await deps.renderEmail(
+      templateParams,
+      serverInfo,
+      targetUser
+    )
+    await deps.sendEmail({
+      to: state.targetUser.email,
+      text,
+      html,
+      subject: "You've just been mentioned in a Speckle comment"
+    })
+  }
+
+/**
+ * Notification that is triggered when a user is mentioned in a comment
+ */
+const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
+  const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
+    getUser,
+    getStream,
+    getComment,
+    getServerInfo,
+    renderEmail,
+    sendEmail
   })
-
-  const templateParams = buildEmailTemplateParams(state)
-  const { text, html } = await renderEmail(templateParams, serverInfo, targetUser)
-  await sendEmail({
-    to: state.targetUser.email,
-    text,
-    html,
-    subject: "You've just been mentioned in a Speckle comment"
-  })
+  return mentionedInCommentHandler(...args)
 }
 
 export default handler
