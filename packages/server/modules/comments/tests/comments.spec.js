@@ -19,12 +19,12 @@ const {
   getComments,
   getComment,
   editComment,
-  createCommentReply,
   archiveComment,
   getResourceCommentCount,
   getStreamCommentCount,
   streamResourceCheckFactory,
-  createCommentFactory
+  createCommentFactory,
+  createCommentReplyFactory
 } = require('@/modules/comments/services/index')
 const {
   convertBasicStringToDocument
@@ -53,7 +53,8 @@ const {
   markCommentViewedFactory,
   insertCommentsFactory,
   insertCommentLinksFactory,
-  deleteCommentFactory
+  deleteCommentFactory,
+  markCommentUpdatedFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
@@ -63,15 +64,28 @@ const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
 const markCommentViewed = markCommentViewedFactory({ db })
+const validateInputAttachments = validateInputAttachmentsFactory({
+  getBlobs: getBlobsFactory({ db })
+})
+const insertComments = insertCommentsFactory({ db })
+const insertCommentLinks = insertCommentLinksFactory({ db })
+const deleteComment = deleteCommentFactory({ db })
 const createComment = createCommentFactory({
   checkStreamResourcesAccess: streamResourceCheck,
-  validateInputAttachments: validateInputAttachmentsFactory({
-    getBlobs: getBlobsFactory({ db })
-  }),
-  insertComments: insertCommentsFactory({ db }),
-  insertCommentLinks: insertCommentLinksFactory({ db }),
-  deleteComment: deleteCommentFactory({ db }),
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  deleteComment,
   markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const createCommentReply = createCommentReplyFactory({
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  checkStreamResourcesAccess: streamResourceCheck,
+  deleteComment,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit
 })
 
