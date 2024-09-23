@@ -5,6 +5,7 @@
         hide-divider
         title="Members"
         text="Manage users in your workspace"
+        class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">

@@ -2,9 +2,8 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    hide-closer
     :buttons="dialogButtons"
-    title="Create workspace"
+    title="Create a new workspace"
   >
     <div class="flex flex-col gap-4 w-full">
       <FormTextInput
@@ -15,16 +14,16 @@
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
-        show-required
       />
       <FormTextInput
         v-model:model-value="workspaceDescription"
         name="description"
-        label="Description"
+        label="Workspace description"
         placeholder="Workspace description"
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
         show-label
+        show-optional
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -46,6 +45,8 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+
+const emit = defineEmits<(e: 'created') => void>()
 
 type FormValues = { name: string; description: string }
 
@@ -70,7 +71,7 @@ const defaultLogoIndex = ref<number>(0)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -78,7 +79,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      fullWidth: true,
       color: 'primary'
     },
     onClick: handleCreateWorkspace
@@ -103,6 +103,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
   )
 
   if (newWorkspace) {
+    emit('created')
     isOpen.value = false
   }
 })

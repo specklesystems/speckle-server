@@ -11,9 +11,7 @@
         data. We will ask you to type in your email address and press the delete button.
       </CommonCard>
       <div>
-        <FormButton color="danger" @click="toggleDeleteDialog">
-          Delete account
-        </FormButton>
+        <FormButton @click="toggleDeleteDialog">Delete account</FormButton>
       </div>
     </div>
   </div>

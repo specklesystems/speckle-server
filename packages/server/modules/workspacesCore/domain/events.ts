@@ -20,7 +20,10 @@ type WorkspaceCreatedPayload = Workspace & {
 }
 type WorkspaceUpdatedPayload = Workspace
 type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-type WorkspaceRoleUpdatedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+type WorkspaceRoleUpdatedPayload = Pick<
+  WorkspaceAcl,
+  'userId' | 'workspaceId' | 'role'
+> & { flags?: { skipProjectRoleUpdatesFor: string[] } }
 type WorkspaceJoinedFromDiscoveryPayload = {
   userId: string
   workspaceId: string

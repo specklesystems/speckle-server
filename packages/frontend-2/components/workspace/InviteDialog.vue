@@ -4,7 +4,6 @@
     max-width="sm"
     title="Invite people to workspace"
     :buttons="buttons"
-    buttons-wrapper-classes="flex-row-reverse"
   >
     <div>
       <FormTextInput

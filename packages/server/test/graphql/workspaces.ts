@@ -4,6 +4,7 @@ export const workspaceFragment = gql`
   fragment TestWorkspace on Workspace {
     id
     name
+    slug
     description
     createdAt
     updatedAt
@@ -17,6 +18,13 @@ export const workspaceCollaboratorFragment = gql`
     role
     user {
       name
+    }
+    projectRoles {
+      role
+      project {
+        id
+        name
+      }
     }
   }
 `
@@ -187,6 +195,23 @@ export const getProjectWorkspaceQuery = gql`
           workspace {
             id
             name
+          }
+        }
+      }
+    }
+  }
+`
+
+export const moveProjectToWorkspaceMutation = gql`
+  mutation MoveProjectToWorkspace($projectId: String!, $workspaceId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
+          id
+          workspaceId
+          team {
+            id
+            role
           }
         }
       }

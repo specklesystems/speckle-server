@@ -7,8 +7,11 @@ import { cloneStream } from '@/modules/core/services/streams/clone'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
-import { updateStream } from '@/modules/core/repositories/streams'
+import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
+import {
+  getOnboardingBaseStream,
+  updateStream
+} from '@/modules/core/repositories/streams'
 import { getUser } from '@/modules/core/services/users'
 import {
   ContextResourceAccessRules,
@@ -30,7 +33,9 @@ export async function createOnboardingStream(
     )
   }
 
-  const sourceStream = await getOnboardingBaseProject()
+  const sourceStream = await getOnboardingBaseProjectFactory({
+    getOnboardingBaseStream
+  })()
   // clone from base
   let newStream: Optional<StreamRecord> = undefined
   if (sourceStream) {
