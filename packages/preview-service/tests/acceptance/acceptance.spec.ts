@@ -27,22 +27,6 @@ const getS3Config = () => {
   }
 }
 
-import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
-
-const getS3Config = () => {
-  return {
-    credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY || '',
-      secretAccessKey: process.env.S3_SECRET_KEY || ''
-    },
-    endpoint: process.env.S3_ENDPOINT || '',
-    forcePathStyle: true,
-    // s3ForcePathStyle: true,
-    // signatureVersion: 'v4',
-    region: process.env.S3_REGION || 'us-east-1'
-  }
-}
-
 describe.sequential('Acceptance', () => {
   describe.sequential('Trigger and wait for the preview-service', () => {
     beforeEach(() => {
