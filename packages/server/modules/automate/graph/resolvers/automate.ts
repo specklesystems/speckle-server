@@ -14,6 +14,7 @@ import {
   getAutomationFactory,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
+  getAutomationTokenFactory,
   getAutomationTriggerDefinitions,
   getFullAutomationRevisionMetadataFactory,
   getFunctionRunFactory,
@@ -26,7 +27,8 @@ import {
   storeAutomationTokenFactory,
   updateAutomationFactory,
   updateAutomationRun,
-  upsertAutomationFunctionRunFactory
+  upsertAutomationFunctionRunFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
@@ -63,7 +65,7 @@ import {
 import {
   createTestAutomationRun,
   manuallyTriggerAutomation,
-  triggerAutomationRevisionRun
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
   reportFunctionRunStatusFactory,
@@ -106,6 +108,7 @@ import {
 import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -120,6 +123,8 @@ const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
   db
 })
+const getAutomationToken = getAutomationTokenFactory({ db })
+const upsertAutomationRun = upsertAutomationRunFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -531,12 +536,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomationTriggerDefinitions,
             getAutomation,
             getBranchLatestCommits,
-            triggerFunction: triggerAutomationRevisionRun({
+            triggerFunction: triggerAutomationRevisionRunFactory({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
               getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
                 buildDecryptor
-              })
+              }),
+              createAppToken,
+              automateRunsEmitter: AutomateRunsEmitter.emit,
+              getAutomationToken,
+              upsertAutomationRun
             })
           })
 
@@ -574,7 +583,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             }),
             getAutomation,
             getLatestAutomationRevision,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            upsertAutomationRun
           })
 
           return await create({

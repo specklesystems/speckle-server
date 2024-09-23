@@ -61,7 +61,7 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
-  getAutomationRevisions,
+  getAutomationRevisionsFactory,
   getAutomationRunsTriggers,
   getAutomationsFactory,
   getFunctionAutomationCounts,
@@ -91,6 +91,7 @@ const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
 const getAutomations = getAutomationsFactory({ db })
+const getAutomationRevisions = getAutomationRevisionsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

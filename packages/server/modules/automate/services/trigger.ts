@@ -1,10 +1,6 @@
 import {
   InsertableAutomationRun,
-  getActiveTriggerDefinitions,
-  getAutomationToken,
   getAutomationTriggerDefinitions,
-  upsertAutomationRun,
-  getAutomationRevision,
   getLatestAutomationRevision,
   getFullAutomationRevisionMetadataFactory
 } from '@/modules/automate/repositories/automations'
@@ -39,12 +35,21 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
-import { getFunctionInputDecryptorFactory } from '@/modules/automate/services/encryption'
+import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import {
+  AutomateRunsEmitter,
+  AutomateRunsEventsEmitter
+} from '@/modules/automate/events/runs'
+import {
+  GetActiveTriggerDefinitions,
   GetAutomation,
-  GetEncryptionKeyPairFor
+  GetAutomationRevision,
+  GetAutomationToken,
+  GetEncryptionKeyPairFor,
+  GetFullAutomationRevisionMetadata,
+  TriggerAutomationRevisionRun,
+  UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
 import { db } from '@/db/knex'
 
@@ -55,15 +60,15 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
-  getAutomationRevision: typeof getAutomationRevision
-  getTriggers: typeof getActiveTriggerDefinitions
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  getAutomationRevision: GetAutomationRevision
+  getTriggers: GetActiveTriggerDefinitions
+  triggerFunction: TriggerAutomationRevisionRun
 }
 
 /**
  * This should hook into the model version create event
  */
-export const onModelVersionCreate =
+export const onModelVersionCreateFactory =
   (deps: OnModelVersionCreateDeps) =>
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
@@ -133,10 +138,10 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
 
 type CreateAutomationRunDataDeps = {
   getEncryptionKeyPairFor: GetEncryptionKeyPairFor
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptorFactory>
+  getFunctionInputDecryptor: FunctionInputDecryptor
 }
 
-const createAutomationRunData =
+const createAutomationRunDataFactory =
   (deps: CreateAutomationRunDataDeps) =>
   async (params: {
     manifests: BaseTriggerManifest[]
@@ -215,19 +220,29 @@ const createAutomationRunData =
 
 export type TriggerAutomationRevisionRunDeps = {
   automateRunTrigger: typeof triggerAutomationRun
+  getAutomationToken: GetAutomationToken
+  createAppToken: typeof createAppToken
+  upsertAutomationRun: UpsertAutomationRun
+  automateRunsEmitter: AutomateRunsEventsEmitter
 } & CreateAutomationRunDataDeps
 
 /**
  * This triggers a run for a specific automation revision
  */
-export const triggerAutomationRevisionRun =
-  (deps: TriggerAutomationRevisionRunDeps) =>
+export const triggerAutomationRevisionRunFactory =
+  (deps: TriggerAutomationRevisionRunDeps): TriggerAutomationRevisionRun =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
     source?: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
-    const { automateRunTrigger } = deps
+    const {
+      automateRunTrigger,
+      getAutomationToken,
+      createAppToken,
+      upsertAutomationRun,
+      automateRunsEmitter
+    } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
@@ -236,16 +251,15 @@ export const triggerAutomationRevisionRun =
       )
     }
 
-    const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
-      {
+    const { automationWithRevision, userId, automateToken } =
+      await ensureRunConditionsFactory({
         revisionGetter: getFullAutomationRevisionMetadata,
         versionGetter: getCommit,
         automationTokenGetter: getAutomationToken
-      }
-    )({
-      revisionId,
-      manifest
-    })
+      })({
+        revisionId,
+        manifest
+      })
 
     const triggerManifests = await composeTriggerData({
       manifest,
@@ -274,7 +288,7 @@ export const triggerAutomationRevisionRun =
       ]
     })
 
-    const automationRun = await createAutomationRunData(deps)({
+    const automationRun = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision
     })
@@ -306,7 +320,7 @@ export const triggerAutomationRevisionRun =
       await upsertAutomationRun(automationRun)
     }
 
-    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
+    await automateRunsEmitter(AutomateRunsEmitter.events.Created, {
       run: automationRun,
       manifests: triggerManifests,
       automation: automationWithRevision,
@@ -317,11 +331,11 @@ export const triggerAutomationRevisionRun =
     return { automationRunId: automationRun.id }
   }
 
-export const ensureRunConditions =
+export const ensureRunConditionsFactory =
   (deps: {
-    revisionGetter: typeof getFullAutomationRevisionMetadata
+    revisionGetter: GetFullAutomationRevisionMetadata
     versionGetter: typeof getCommit
-    automationTokenGetter: typeof getAutomationToken
+    automationTokenGetter: GetAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
@@ -450,7 +464,7 @@ export type ManuallyTriggerAutomationDeps = {
   getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
   getAutomation: GetAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  triggerFunction: ReturnType<typeof triggerAutomationRevisionRunFactory>
 }
 
 export const manuallyTriggerAutomation =
@@ -523,6 +537,7 @@ export type CreateTestAutomationRunDeps = {
   getAutomation: GetAutomation
   getLatestAutomationRevision: typeof getLatestAutomationRevision
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
+  upsertAutomationRun: UpsertAutomationRun
 } & CreateAutomationRunDataDeps
 
 /**
@@ -534,7 +549,8 @@ export const createTestAutomationRun =
     const {
       getAutomation,
       getLatestAutomationRevision,
-      getFullAutomationRevisionMetadata
+      getFullAutomationRevisionMetadata,
+      upsertAutomationRun
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -592,7 +608,7 @@ export const createTestAutomationRun =
       }
     })
 
-    const automationRunRecord = await createAutomationRunData(deps)({
+    const automationRunRecord = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision: automationRevisionRecord
     })

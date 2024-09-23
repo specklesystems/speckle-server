@@ -2,16 +2,18 @@ import { moduleLogger } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
-  onModelVersionCreate,
-  triggerAutomationRevisionRun
+  onModelVersionCreateFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
-  getActiveTriggerDefinitions,
-  getAutomationRevision,
+  getActiveTriggerDefinitionsFactory,
   getAutomationFactory,
+  getAutomationRevisionFactory,
   getAutomationRunFullTriggersFactory,
+  getAutomationTokenFactory,
   getFullAutomationRevisionMetadataFactory,
-  getFullAutomationRunByIdFactory
+  getFullAutomationRunByIdFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -36,6 +38,7 @@ import db from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -68,12 +71,16 @@ async function initScopes() {
 const initializeEventListeners = () => {
   const getAutomationRunFullTriggers = getAutomationRunFullTriggersFactory({ db })
 
-  const triggerFn = triggerAutomationRevisionRun({
+  const triggerFn = triggerAutomationRevisionRunFactory({
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,
     getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
       buildDecryptor
-    })
+    }),
+    createAppToken,
+    automateRunsEmitter: AutomateRunsEmitter.emit,
+    getAutomationToken: getAutomationTokenFactory({ db }),
+    upsertAutomationRun: upsertAutomationRunFactory({ db })
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
     getAutomationRunFullTriggers,
@@ -93,12 +100,14 @@ const initializeEventListeners = () => {
     automateRunsEventListener: AutomateRunsEmitter.listen
   })
   const getAutomation = getAutomationFactory({ db })
+  const getAutomationRevision = getAutomationRevisionFactory({ db })
+  const getActiveTriggerDefinitions = getActiveTriggerDefinitionsFactory({ db })
 
   const quitters = [
     VersionsEmitter.listen(
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation,
           getAutomationRevision,
           getTriggers: getActiveTriggerDefinitions,
