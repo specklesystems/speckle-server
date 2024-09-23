@@ -11,7 +11,6 @@ import {
   CommentsEventsEmit
 } from '@/modules/comments/events/emitter'
 import {
-  checkStreamResourceAccessFactory,
   getComment as repoGetComment,
   getStreamCommentCount as repoGetStreamCommentCount
 } from '@/modules/comments/repositories/comments'
@@ -31,6 +30,7 @@ import {
   DeleteComment,
   InsertCommentLinks,
   InsertComments,
+  MarkCommentUpdated,
   MarkCommentViewed,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
@@ -139,65 +139,71 @@ export const createCommentFactory =
 /**
  * @deprecated Use 'createCommentReplyAndNotify()' instead
  */
-export async function createCommentReply({
-  authorId,
-  parentCommentId,
-  streamId,
-  text,
-  data,
-  blobIds
-}: {
-  authorId: string
-  parentCommentId: string
-  streamId: string
-  text: SmartTextEditorValue
-  data: CommentRecord['data']
-  blobIds: string[]
-}) {
-  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
-    streamId,
-    blobIds
-  )
-  const comment = {
-    id: crs({ length: 10 }),
+export const createCommentReplyFactory =
+  (deps: {
+    validateInputAttachments: ValidateInputAttachments
+    insertComments: InsertComments
+    insertCommentLinks: InsertCommentLinks
+    checkStreamResourcesAccess: CheckStreamResourcesAccess
+    deleteComment: DeleteComment
+    markCommentUpdated: MarkCommentUpdated
+    commentsEventsEmit: CommentsEventsEmit
+  }) =>
+  async ({
     authorId,
-    text: buildCommentTextFromInput({ doc: text, blobIds }),
-    data,
+    parentCommentId,
     streamId,
-    parentComment: parentCommentId
-  }
-
-  const [newComment] = await Comments().insert(comment, '*')
-  try {
-    const commentLink: CommentLinkRecord = {
-      resourceId: parentCommentId,
-      resourceType: 'comment',
-      commentId: newComment.id
-    }
-    await streamResourceCheckFactory({
-      checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
-    })({
+    text,
+    data,
+    blobIds
+  }: {
+    authorId: string
+    parentCommentId: string
+    streamId: string
+    text: SmartTextEditorValue
+    data: CommentRecord['data']
+    blobIds: string[]
+  }) => {
+    await deps.validateInputAttachments(streamId, blobIds)
+    const comment = {
+      id: crs({ length: 10 }),
+      authorId,
+      text: buildCommentTextFromInput({ doc: text, blobIds }),
+      data,
       streamId,
-      resources: [
-        {
-          resourceType: commentLink.resourceType as ResourceType,
-          resourceId: commentLink.resourceId
-        }
-      ]
+      parentComment: parentCommentId
+    }
+
+    const [newComment] = await deps.insertComments([comment])
+    try {
+      const commentLink: CommentLinkRecord = {
+        resourceId: parentCommentId,
+        resourceType: 'comment',
+        commentId: newComment.id
+      }
+      await deps.checkStreamResourcesAccess({
+        streamId,
+        resources: [
+          {
+            resourceType: commentLink.resourceType as ResourceType,
+            resourceId: commentLink.resourceId
+          }
+        ]
+      })
+      await deps.insertCommentLinks([commentLink])
+    } catch (e) {
+      await deps.deleteComment({ commentId: comment.id }) // roll back
+      throw e // pass on to resolver
+    }
+
+    await deps.markCommentUpdated(parentCommentId)
+
+    await deps.commentsEventsEmit(CommentsEvents.Created, {
+      comment: newComment
     })
-    await CommentLinks().insert({ ...commentLink })
-  } catch (e) {
-    await Comments().where({ id: comment.id }).delete() // roll back
-    throw e // pass on to resolver
+
+    return newComment
   }
-  await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
-
-  await CommentsEmitter.emit(CommentsEvents.Created, {
-    comment: newComment
-  })
-
-  return newComment
-}
 
 /**
  * @deprecated Use 'editCommentAndNotify()'
