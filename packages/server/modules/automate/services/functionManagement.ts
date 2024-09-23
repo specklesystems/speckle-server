@@ -36,8 +36,7 @@ import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   AuthCodePayload,
-  AuthCodePayloadAction,
-  createStoredAuthCode
+  AuthCodePayloadAction
 } from '@/modules/automate/services/authCode'
 import {
   getServerOrigin,
@@ -46,6 +45,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
+import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -117,7 +117,7 @@ export const convertFunctionReleaseToGraphQLReturn = (
 }
 
 export type CreateFunctionDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
   getUser: typeof getUser
 }
@@ -184,7 +184,7 @@ export const createFunctionFromTemplate =
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: typeof getFunction
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
 export const updateFunction =
@@ -230,7 +230,7 @@ export const updateFunction =
   }
 
 export type StartAutomateFunctionCreatorAuthDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
 export const startAutomateFunctionCreatorAuth =

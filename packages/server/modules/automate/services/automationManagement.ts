@@ -4,9 +4,7 @@ import {
   InsertableAutomationRevisionTrigger,
   getAutomation,
   getLatestVersionAutomationRuns,
-  storeAutomation,
   storeAutomationRevision,
-  storeAutomationToken,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -19,10 +17,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
-import {
-  AuthCodePayloadAction,
-  createStoredAuthCode
-} from '@/modules/automate/services/authCode'
+import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
@@ -52,18 +47,29 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import {
+  AutomationsEmitter,
+  AutomationsEventsEmit
+} from '@/modules/automate/events/automations'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
+import {
+  CreateAutomation,
+  CreateStoredAuthCode,
+  StoreAutomation,
+  StoreAutomationToken
+} from '@/modules/automate/domain/operations'
 
 export type CreateAutomationDeps = {
-  createAuthCode: ReturnType<typeof createStoredAuthCode>
+  createAuthCode: CreateStoredAuthCode
   automateCreateAutomation: typeof clientCreateAutomation
-  storeAutomation: typeof storeAutomation
-  storeAutomationToken: typeof storeAutomationToken
+  storeAutomation: StoreAutomation
+  storeAutomationToken: StoreAutomationToken
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
-export const createAutomation =
-  (deps: CreateAutomationDeps) =>
+export const createAutomationFactory =
+  (deps: CreateAutomationDeps): CreateAutomation =>
   async (params: {
     input: ProjectAutomationCreateInput
     projectId: string
@@ -80,7 +86,9 @@ export const createAutomation =
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
-      storeAutomationToken
+      storeAutomationToken,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     validateAutomationName(name)
@@ -123,7 +131,7 @@ export const createAutomation =
       automateToken: token
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+    await automationsEventsEmit(AutomationsEmitter.events.Created, {
       automation: automationRecord
     })
 
@@ -133,7 +141,7 @@ export const createAutomation =
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: typeof getEncryptionKeyPair
   getFunction: typeof getFunction
-  storeAutomation: typeof storeAutomation
+  storeAutomation: StoreAutomation
   storeAutomationRevision: typeof storeAutomationRevision
 }
 

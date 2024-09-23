@@ -37,14 +37,14 @@ import {
   getFullAutomationRunById,
   getAutomationTriggerDefinitions,
   getFunctionRun,
-  storeAutomation,
   storeAutomationRevision,
   updateAutomation,
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
   upsertAutomationFunctionRun,
-  storeAutomationToken
+  storeAutomationFactory,
+  storeAutomationTokenFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -71,8 +71,12 @@ import {
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
+import { db } from '@/db/knex'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
