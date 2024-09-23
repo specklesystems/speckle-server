@@ -65,7 +65,7 @@ import {
   getAutomationRunsTriggers,
   getAutomationsFactory,
   getFunctionAutomationCounts,
-  getLatestAutomationRevisions,
+  getLatestAutomationRevisionsFactory,
   getRevisionsFunctions,
   getRevisionsTriggerDefinitions
 } from '@/modules/automate/repositories/automations'
@@ -92,6 +92,7 @@ const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
 const getAutomations = getAutomationsFactory({ db })
 const getAutomationRevisions = getAutomationRevisionsFactory({ db })
+const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

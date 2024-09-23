@@ -10,6 +10,8 @@ import {
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById,
   GetFunctionRun,
+  GetLatestAutomationRevision,
+  GetLatestAutomationRevisions,
   GetLatestVersionAutomationRuns,
   StoreAutomation,
   StoreAutomationRevision,
@@ -593,42 +595,45 @@ export const getAutomationRevisionFactory =
     return (revisions[0] || null) as Nullable<(typeof revisions)[0]>
   }
 
-export async function getLatestAutomationRevisions(params: {
-  automationIds: string[]
-}) {
-  const { automationIds } = params
-  if (!automationIds.length) return {}
+export const getLatestAutomationRevisionsFactory =
+  (deps: { db: Knex }): GetLatestAutomationRevisions =>
+  async (params: { automationIds: string[] }) => {
+    const { automationIds } = params
+    if (!automationIds.length) return {}
 
-  const innerQ = AutomationRevisions.knex()
-    .select([
-      AutomationRevisions.col.automationId,
-      knex.raw('max(??) as ??', [AutomationRevisions.col.createdAt, 'maxCreatedAt'])
-    ])
-    .whereIn(AutomationRevisions.col.automationId, automationIds)
-    .andWhere(AutomationRevisions.col.active, true)
-    .groupBy(AutomationRevisions.col.automationId)
+    const innerQ = tables
+      .automationRevisions(deps.db)
+      .select([
+        AutomationRevisions.col.automationId,
+        knex.raw('max(??) as ??', [AutomationRevisions.col.createdAt, 'maxCreatedAt'])
+      ])
+      .whereIn(AutomationRevisions.col.automationId, automationIds)
+      .andWhere(AutomationRevisions.col.active, true)
+      .groupBy(AutomationRevisions.col.automationId)
 
-  const outerQ = AutomationRevisions.knex<AutomationRevisionRecord[]>().innerJoin(
-    innerQ.as('q1'),
-    function () {
-      this.on(AutomationRevisions.col.automationId, '=', 'q1.automationId')
-      this.andOn(AutomationRevisions.col.createdAt, '=', 'q1.maxCreatedAt')
-    }
-  )
+    const outerQ = tables
+      .automationRevisions(deps.db)
+      .select<AutomationRevisionRecord[]>('*')
+      .innerJoin(innerQ.as('q1'), function () {
+        this.on(AutomationRevisions.col.automationId, '=', 'q1.automationId')
+        this.andOn(AutomationRevisions.col.createdAt, '=', 'q1.maxCreatedAt')
+      })
 
-  const res = await outerQ
-  return keyBy(res, (r) => r.automationId)
-}
+    const res = await outerQ
+    return keyBy(res, (r) => r.automationId)
+  }
 
-export async function getLatestAutomationRevision(params: { automationId: string }) {
-  const { automationId } = params
+export const getLatestAutomationRevisionFactory =
+  (deps: { db: Knex }): GetLatestAutomationRevision =>
+  async (params: { automationId: string }) => {
+    const { automationId } = params
 
-  const revisions = await getLatestAutomationRevisions({
-    automationIds: [automationId]
-  })
+    const revisions = await getLatestAutomationRevisionsFactory(deps)({
+      automationIds: [automationId]
+    })
 
-  return (revisions[automationId] ?? null) as Nullable<(typeof revisions)[0]>
-}
+    return (revisions[automationId] ?? null) as Nullable<(typeof revisions)[0]>
+  }
 
 export async function getRevisionsTriggerDefinitions(params: {
   automationRevisionIds: string[]

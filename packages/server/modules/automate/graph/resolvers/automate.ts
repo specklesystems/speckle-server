@@ -18,7 +18,7 @@ import {
   getAutomationTriggerDefinitionsFactory,
   getFullAutomationRevisionMetadataFactory,
   getFunctionRunFactory,
-  getLatestAutomationRevision,
+  getLatestAutomationRevisionFactory,
   getLatestVersionAutomationRunsFactory,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
@@ -63,7 +63,7 @@ import {
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
-  createTestAutomationRun,
+  createTestAutomationRunFactory,
   manuallyTriggerAutomationFactory,
   triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
@@ -126,6 +126,7 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 const getAutomationToken = getAutomationTokenFactory({ db })
 const upsertAutomationRun = upsertAutomationRunFactory({ db })
 const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -546,7 +547,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               createAppToken,
               automateRunsEmitter: AutomateRunsEmitter.emit,
               getAutomationToken,
-              upsertAutomationRun
+              upsertAutomationRun,
+              getFullAutomationRevisionMetadata
             }),
             validateStreamAccess
           })
@@ -578,7 +580,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createTestAutomationRun(parent, { automationId }, ctx) {
-          const create = createTestAutomationRun({
+          const create = createTestAutomationRunFactory({
             getEncryptionKeyPairFor,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
@@ -586,7 +588,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomation,
             getLatestAutomationRevision,
             getFullAutomationRevisionMetadata,
-            upsertAutomationRun
+            upsertAutomationRun,
+            getBranchLatestCommits,
+            validateStreamAccess
           })
 
           return await create({
