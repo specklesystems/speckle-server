@@ -968,19 +968,17 @@ export const getAutomationRunWithTokenFactory =
     return await q
   }
 
-export async function getAutomationRunsTriggers(params: {
-  automationRunIds: string[]
-}) {
-  const { automationRunIds } = params
-  if (!automationRunIds.length) return {}
+export const getAutomationRunsTriggersFactory =
+  (deps: { db: Knex }) => async (params: { automationRunIds: string[] }) => {
+    const { automationRunIds } = params
+    if (!automationRunIds.length) return {}
 
-  const q = AutomationRunTriggers.knex<AutomationRunTriggerRecord[]>().whereIn(
-    AutomationRunTriggers.col.automationRunId,
-    automationRunIds
-  )
-  const items = await q
-  return groupBy(items, (i) => i.automationRunId)
-}
+    const q = tables
+      .automationRunTriggers(deps.db)
+      .whereIn(AutomationRunTriggers.col.automationRunId, automationRunIds)
+    const items = await q
+    return groupBy(items, (i) => i.automationRunId)
+  }
 
 export const getAutomationRunFullTriggersFactory =
   (deps: { db: Knex }): GetAutomationRunFullTriggers =>
