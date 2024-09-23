@@ -23,7 +23,7 @@
     </div>
 
     <div
-      class="relative"
+      class="group relative"
       :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'"
     >
       <div
@@ -48,6 +48,7 @@
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
         :aria-describedby="helpTipId"
+        :readonly="readOnly"
         role="textbox"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
@@ -60,14 +61,14 @@
           v-if="rightIcon"
           :title="rightIconTitle"
           :class="sizeClasses"
-          class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer opacity-60 hover:opacity-100 text-foreground-2"
+          class="absolute top-0 bottom-0 right-0 hidden group-hover:flex items-center pr-1 cursor-pointer text-foreground-2"
           @click="onRightIconClick"
           @keydown="onRightIconClick"
         >
           <span class="text-body-xs sr-only">{{ rightIconTitle }}</span>
           <Component
             :is="rightIcon"
-            class="h-4 w-4 text-foreground"
+            class="h-6 w-6 text-foreground"
             aria-hidden="true"
           />
         </a>
@@ -178,6 +179,13 @@ const props = defineProps({
    * Whether to disable the component, blocking it from user input
    */
   disabled: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to disable editing the component, making it read only
+   */
+  readOnly: {
     type: Boolean,
     default: false
   },

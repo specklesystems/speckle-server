@@ -5,14 +5,14 @@
     max-width="sm"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground mb-4">
-      Changing the workspace short ID has important implications:
+    <p class="text-body-xs text-foreground mb-2">
+      Changing the workspace short ID has important implications.
     </p>
-    <ul class="list-disc list-inside text-body-xs text-foreground mb-4">
-      <li>All links generated using the old short ID will become invalid</li>
-      <li>This may break bookmarks, embeds, or previously shared links</li>
-    </ul>
-    <p class="text-body-xs text-foreground font-medium mb-4">
+    <p class="text-body-xs text-foreground mb-2">
+      All links generated using the old short ID will become invalid. This may break
+      bookmarks, embeds, or previously shared links.
+    </p>
+    <p class="text-body-xs text-foreground font-medium mb-2">
       Are you sure you want to proceed?
     </p>
     <FormTextInput

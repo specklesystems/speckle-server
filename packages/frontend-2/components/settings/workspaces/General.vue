@@ -27,9 +27,9 @@
           :help="slugHelp"
           show-label
           label-position="left"
-          disabled
-          :right-icon="isAdmin ? PencilIcon : undefined"
-          right-icon-title="Edit slug"
+          read-only
+          :right-icon="isAdmin ? IconEdit : undefined"
+          right-icon-title="Edit short ID"
           @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
@@ -149,7 +149,6 @@ import {
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
-import { PencilIcon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 
@@ -172,6 +171,8 @@ type FormValues = { name: string; description: string; defaultProjectRole: Strea
 const props = defineProps<{
   workspaceId: string
 }>()
+
+const IconEdit = resolveComponent('IconEdit')
 
 const mixpanel = useMixpanel()
 const router = useRouter()
