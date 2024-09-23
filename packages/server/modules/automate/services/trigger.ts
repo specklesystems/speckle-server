@@ -39,7 +39,7 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
-import { getFunctionInputDecryptor } from '@/modules/automate/services/encryption'
+import { getFunctionInputDecryptorFactory } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import {
@@ -127,7 +127,7 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
 
 type CreateAutomationRunDataDeps = {
   getEncryptionKeyPairFor: GetEncryptionKeyPairFor
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptorFactory>
 }
 
 const createAutomationRunData =

@@ -19,7 +19,7 @@ import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
   getEncryptionKeyPairFor,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import {
@@ -66,7 +66,7 @@ const initializeEventListeners = () => {
   const triggerFn = triggerAutomationRevisionRun({
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,
-    getFunctionInputDecryptor: getFunctionInputDecryptor({
+    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
       buildDecryptor
     })
   })
