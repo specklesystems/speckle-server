@@ -14,10 +14,11 @@ import {
   getAutomationFactory,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
-  getAutomationTriggerDefinitions,
+  getAutomationTokenFactory,
+  getAutomationTriggerDefinitionsFactory,
   getFullAutomationRevisionMetadataFactory,
   getFunctionRunFactory,
-  getLatestAutomationRevision,
+  getLatestAutomationRevisionFactory,
   getLatestVersionAutomationRunsFactory,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
@@ -25,8 +26,9 @@ import {
   storeAutomationRevisionFactory,
   storeAutomationTokenFactory,
   updateAutomationFactory,
-  updateAutomationRun,
-  upsertAutomationFunctionRunFactory
+  updateAutomationRunFactory,
+  upsertAutomationFunctionRunFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
@@ -61,9 +63,9 @@ import {
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
-  createTestAutomationRun,
-  manuallyTriggerAutomation,
-  triggerAutomationRevisionRun
+  createTestAutomationRunFactory,
+  manuallyTriggerAutomationFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
   reportFunctionRunStatusFactory,
@@ -106,6 +108,7 @@ import {
 import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -120,6 +123,11 @@ const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
   db
 })
+const getAutomationToken = getAutomationTokenFactory({ db })
+const upsertAutomationRun = upsertAutomationRunFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -527,17 +535,23 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async trigger(parent, { automationId }, ctx) {
-          const trigger = manuallyTriggerAutomation({
+          const trigger = manuallyTriggerAutomationFactory({
             getAutomationTriggerDefinitions,
             getAutomation,
             getBranchLatestCommits,
-            triggerFunction: triggerAutomationRevisionRun({
+            triggerFunction: triggerAutomationRevisionRunFactory({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
               getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
                 buildDecryptor
-              })
-            })
+              }),
+              createAppToken,
+              automateRunsEmitter: AutomateRunsEmitter.emit,
+              getAutomationToken,
+              upsertAutomationRun,
+              getFullAutomationRevisionMetadata
+            }),
+            validateStreamAccess
           })
 
           const { automationRunId } = await trigger({
@@ -567,14 +581,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createTestAutomationRun(parent, { automationId }, ctx) {
-          const create = createTestAutomationRun({
+          const create = createTestAutomationRunFactory({
             getEncryptionKeyPairFor,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
             getAutomation,
             getLatestAutomationRevision,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            upsertAutomationRun,
+            getBranchLatestCommits,
+            validateStreamAccess
           })
 
           return await create({

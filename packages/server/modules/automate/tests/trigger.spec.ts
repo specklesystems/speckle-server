@@ -4,10 +4,10 @@ import {
 } from '@/modules/automate/errors/runs'
 import {
   ManuallyTriggerAutomationDeps,
-  ensureRunConditions,
-  manuallyTriggerAutomation,
-  onModelVersionCreate,
-  triggerAutomationRevisionRun
+  ensureRunConditionsFactory,
+  manuallyTriggerAutomationFactory,
+  onModelVersionCreateFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
   AutomationRecord,
@@ -33,10 +33,6 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  getAutomationTriggerDefinitions,
-  updateAutomationRevision,
-  updateAutomationRun,
-  upsertAutomationRun,
   storeAutomationFactory,
   storeAutomationTokenFactory,
   storeAutomationRevisionFactory,
@@ -44,7 +40,13 @@ import {
   updateAutomationFactory,
   getFunctionRunFactory,
   upsertAutomationFunctionRunFactory,
-  getFullAutomationRunByIdFactory
+  getFullAutomationRunByIdFactory,
+  upsertAutomationRunFactory,
+  getAutomationTokenFactory,
+  getAutomationTriggerDefinitionsFactory,
+  getFullAutomationRevisionMetadataFactory,
+  updateAutomationRevisionFactory,
+  updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -73,6 +75,8 @@ import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -84,6 +88,14 @@ const updateAutomation = updateAutomationFactory({ db })
 const getFunctionRun = getFunctionRunFactory({ db })
 const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
+const upsertAutomationRun = upsertAutomationRunFactory({ db })
+const getAutomationToken = getAutomationTokenFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
+const updateAutomationRevision = updateAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -173,7 +185,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
     describe('On model version create', () => {
       it('No trigger no run', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
@@ -190,7 +202,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
       })
       it('Does not trigger test automations', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({ isTestAutomation: true } as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
@@ -224,7 +236,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
         const versionId = cryptoRandomString({ length: 10 })
         const projectId = cryptoRandomString({ length: 10 })
 
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
@@ -269,7 +281,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
         ]
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
@@ -296,14 +308,19 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
     describe('Triggering an automation revision run', () => {
       it('Throws if run conditions are not met', async () => {
         try {
-          await triggerAutomationRevisionRun({
+          await triggerAutomationRevisionRunFactory({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
-            getEncryptionKeyPairFor
+            getEncryptionKeyPairFor,
+            createAppToken,
+            automateRunsEmitter: AutomateRunsEmitter.emit,
+            getAutomationToken,
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -383,14 +400,19 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
           ]
         })
         const thrownError = 'trigger failed'
-        const { automationRunId } = await triggerAutomationRevisionRun({
+        const { automationRunId } = await triggerAutomationRevisionRunFactory({
           automateRunTrigger: async () => {
             throw new Error(thrownError)
           },
           getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
             buildDecryptor
           }),
-          getEncryptionKeyPairFor
+          getEncryptionKeyPairFor,
+          createAppToken,
+          automateRunsEmitter: AutomateRunsEmitter.emit,
+          getAutomationToken,
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -476,14 +498,19 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
           ]
         })
         const executionEngineRunId = cryptoRandomString({ length: 10 })
-        const { automationRunId } = await triggerAutomationRevisionRun({
+        const { automationRunId } = await triggerAutomationRevisionRunFactory({
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
           }),
           getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
             buildDecryptor
           }),
-          getEncryptionKeyPairFor
+          getEncryptionKeyPairFor,
+          createAppToken,
+          automateRunsEmitter: AutomateRunsEmitter.emit,
+          getAutomationToken,
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -509,7 +536,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
     describe('Run conditions are NOT met if', () => {
       it("the referenced revision doesn't exist", async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => null,
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
@@ -531,7 +558,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
       })
       it('the automation is not enabled', async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -574,7 +601,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
       })
       it('the revision is not active', async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -617,7 +644,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
       })
       it("the revision doesn't have the referenced trigger", async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               createdAt: new Date(),
@@ -667,7 +694,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -716,7 +743,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -766,7 +793,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -829,7 +856,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
           projectId: cryptoRandomString({ length: 10 })
         }
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -890,7 +917,7 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
           projectId: cryptoRandomString({ length: 10 })
         }
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -949,19 +976,25 @@ const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
       const buildManuallyTriggerAutomation = (
         overrides?: Partial<ManuallyTriggerAutomationDeps>
       ) => {
-        const trigger = manuallyTriggerAutomation({
+        const trigger = manuallyTriggerAutomationFactory({
           getAutomationTriggerDefinitions,
           getAutomation,
           getBranchLatestCommits,
-          triggerFunction: triggerAutomationRevisionRun({
+          triggerFunction: triggerAutomationRevisionRunFactory({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
-            getEncryptionKeyPairFor
+            getEncryptionKeyPairFor,
+            createAppToken,
+            automateRunsEmitter: AutomateRunsEmitter.emit,
+            getAutomationToken,
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata
           }),
+          validateStreamAccess,
           ...(overrides || {})
         })
         return trigger

@@ -2494,6 +2494,7 @@ export type Query = {
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
+  workspaceBySlug: Workspace;
   /**
    * Look for an invitation to a workspace, for the current user (authed or not).
    *
@@ -2635,6 +2636,11 @@ export type QueryValidateWorkspaceSlugArgs = {
 
 export type QueryWorkspaceArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryWorkspaceBySlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 

@@ -13,25 +13,24 @@
     :disabled-item-predicate="disabledItemPredicate"
     hide-checkmarks
     by="id"
-    class="min-w-[85px]"
+    class="w-28"
     mount-menu-on-body
+    size="sm"
   >
     <template #something-selected="{ value }">
-      <div class="text-normal text-right">
+      <div class="text-right text-foreground text-body-xs font-medium">
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
     <template #option="{ item, selected }">
-      <div class="flex flex-col">
-        <div
-          :class="[
-            'text-normal',
-            selected ? 'text-primary' : '',
-            item.id === 'delete' ? 'text-danger' : ''
-          ]"
-        >
-          {{ item.title }}
-        </div>
+      <div
+        :class="[
+          'opacity-90 hover:opacity-100',
+          selected ? 'text-foreground font-medium !opacity-100' : 'text-foreground-2',
+          item.id === 'delete' ? '!text-danger' : ''
+        ]"
+      >
+        {{ item.title }}
       </div>
     </template>
   </FormSelectBase>
