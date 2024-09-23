@@ -20,8 +20,8 @@ import {
   getFunctionRunFactory,
   getLatestAutomationRevisionFactory,
   getLatestVersionAutomationRunsFactory,
-  getProjectAutomationsItems,
-  getProjectAutomationsTotalCount,
+  getProjectAutomationsItemsFactory,
+  getProjectAutomationsTotalCountFactory,
   storeAutomationFactory,
   storeAutomationRevisionFactory,
   storeAutomationTokenFactory,
@@ -131,6 +131,9 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
 
 const getAutomationRunsTotalCount = getAutomationRunsTotalCountFactory({ db })
 const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
+
+const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
+const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {

@@ -754,55 +754,52 @@ export type GetProjectAutomationsParams = {
   args: ProjectAutomationsArgs
 }
 
-export const getProjectAutomationsBaseQuery = <Q = AutomationRecord[]>(
-  params: GetProjectAutomationsParams
-) => {
-  const { projectId, args } = params
+const getProjectAutomationsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetProjectAutomationsParams) => {
+    const { projectId, args } = params
 
-  const q = Automations.knex<Q>().where(Automations.col.projectId, projectId)
+    const q = tables.automations(deps.db).where(Automations.col.projectId, projectId)
 
-  if (args.filter?.length) {
-    q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)
+    if (args.filter?.length) {
+      q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)
+    }
+
+    return q
   }
 
-  return q
-}
+export const getProjectAutomationsTotalCountFactory =
+  (deps: { db: Knex }) => async (params: GetProjectAutomationsParams) => {
+    const q = getProjectAutomationsBaseQueryFactory(deps)(params).count<
+      [{ count: string }]
+    >(Automations.col.id)
 
-export const getProjectAutomationsTotalCount = async (
-  params: GetProjectAutomationsParams
-) => {
-  const q = getProjectAutomationsBaseQuery(params).count<[{ count: string }]>(
-    Automations.col.id
-  )
+    const [ret] = await q
 
-  const [ret] = await q
-
-  return parseInt(ret.count)
-}
-
-export const getProjectAutomationsItems = async (
-  params: GetProjectAutomationsParams
-) => {
-  const { args } = params
-  if (args.limit === 0) return { items: [], cursor: null }
-
-  const cursor = args.cursor ? decodeCursor(args.cursor) : null
-
-  const q = getProjectAutomationsBaseQuery(params)
-    .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
-    .orderBy(Automations.col.updatedAt, 'desc')
-
-  if (cursor?.length) {
-    q.andWhere(Automations.col.updatedAt, '<', cursor)
+    return parseInt(ret.count)
   }
 
-  const res = await q
+export const getProjectAutomationsItemsFactory =
+  (deps: { db: Knex }) => async (params: GetProjectAutomationsParams) => {
+    const { args } = params
+    if (args.limit === 0) return { items: [], cursor: null }
 
-  return {
-    items: res,
-    cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+
+    const q = getProjectAutomationsBaseQueryFactory(deps)(params)
+      .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
+      .orderBy(Automations.col.updatedAt, 'desc')
+
+    if (cursor?.length) {
+      q.andWhere(Automations.col.updatedAt, '<', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
+    }
   }
-}
 
 export const getLatestVersionAutomationRunsFactory =
   (deps: { db: Knex }): GetLatestVersionAutomationRuns =>
