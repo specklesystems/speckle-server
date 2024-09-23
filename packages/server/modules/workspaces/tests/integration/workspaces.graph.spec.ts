@@ -18,6 +18,7 @@ import {
   DeleteWorkspaceDocument,
   GetActiveUserWorkspacesDocument,
   GetWorkspaceDocument,
+  GetWorkspaceBySlugDocument,
   GetWorkspaceTeamDocument,
   UpdateWorkspaceDocument,
   UpdateWorkspaceRoleDocument,
@@ -161,6 +162,24 @@ describe('Workspaces GQL CRUD', () => {
 
       apollo = await testApolloServer({
         authUserId: testMemberUser.id
+      })
+    })
+
+    describe('query workspace by slug', () => {
+      it('should return a workspace that exists', async () => {
+        const res = await apollo.execute(GetWorkspaceBySlugDocument, {
+          workspaceSlug: workspace.slug
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceBySlug.id).to.equal(workspace.id)
+      })
+
+      it('throw a not found error if the workspace does not exist', async () => {
+        const res = await apollo.execute(GetWorkspaceBySlugDocument, {
+          workspaceSlug: cryptoRandomString({ length: 6 })
+        })
+        expect(res).to.haveGraphQLErrors('not found')
       })
     })
 

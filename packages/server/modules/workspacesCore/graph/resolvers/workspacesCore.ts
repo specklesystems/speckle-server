@@ -10,6 +10,10 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+
+        workspaceBySlug: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         workspaceInvite: async () => {
           throw new WorkspacesModuleDisabledError()
         }
