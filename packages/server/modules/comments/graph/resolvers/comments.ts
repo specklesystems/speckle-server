@@ -5,11 +5,11 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getComments,
   getResourceCommentCount,
-  archiveComment,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
-  editCommentFactory
+  editCommentFactory,
+  archiveCommentFactory
 } from '@/modules/comments/services/index'
 import {
   checkStreamResourceAccessFactory,
@@ -107,11 +107,17 @@ const createCommentReply = createCommentReplyFactory({
   commentsEventsEmit: CommentsEmitter.emit
 })
 const getComment = getCommentFactory({ db })
+const updateComment = updateCommentFactory({ db })
 const editComment = editCommentFactory({
   getComment,
   validateInputAttachments,
-  updateComment: updateCommentFactory({ db }),
+  updateComment,
   commentsEventsEmit: CommentsEmitter.emit
+})
+const archiveComment = archiveCommentFactory({
+  getComment,
+  getStream,
+  updateComment
 })
 
 const getStreamComment = async (
