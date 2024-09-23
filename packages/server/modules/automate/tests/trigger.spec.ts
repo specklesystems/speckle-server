@@ -5,7 +5,7 @@ import {
 import {
   ManuallyTriggerAutomationDeps,
   ensureRunConditionsFactory,
-  manuallyTriggerAutomation,
+  manuallyTriggerAutomationFactory,
   onModelVersionCreateFactory,
   triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
@@ -33,7 +33,6 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  getAutomationTriggerDefinitions,
   updateAutomationRevision,
   updateAutomationRun,
   storeAutomationFactory,
@@ -45,7 +44,8 @@ import {
   upsertAutomationFunctionRunFactory,
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory,
-  getAutomationTokenFactory
+  getAutomationTokenFactory,
+  getAutomationTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -75,6 +75,7 @@ import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctio
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -88,6 +89,7 @@ const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
 const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
 const upsertAutomationRun = upsertAutomationRunFactory({ db })
 const getAutomationToken = getAutomationTokenFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -965,7 +967,7 @@ const getAutomationToken = getAutomationTokenFactory({ db })
       const buildManuallyTriggerAutomation = (
         overrides?: Partial<ManuallyTriggerAutomationDeps>
       ) => {
-        const trigger = manuallyTriggerAutomation({
+        const trigger = manuallyTriggerAutomationFactory({
           getAutomationTriggerDefinitions,
           getAutomation,
           getBranchLatestCommits,
@@ -982,6 +984,7 @@ const getAutomationToken = getAutomationTokenFactory({ db })
             getAutomationToken,
             upsertAutomationRun
           }),
+          validateStreamAccess,
           ...(overrides || {})
         })
         return trigger

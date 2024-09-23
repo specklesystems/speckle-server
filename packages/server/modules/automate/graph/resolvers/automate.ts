@@ -15,7 +15,7 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTokenFactory,
-  getAutomationTriggerDefinitions,
+  getAutomationTriggerDefinitionsFactory,
   getFullAutomationRevisionMetadataFactory,
   getFunctionRunFactory,
   getLatestAutomationRevision,
@@ -64,7 +64,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   createTestAutomationRun,
-  manuallyTriggerAutomation,
+  manuallyTriggerAutomationFactory,
   triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
@@ -125,6 +125,7 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 })
 const getAutomationToken = getAutomationTokenFactory({ db })
 const upsertAutomationRun = upsertAutomationRunFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -532,7 +533,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async trigger(parent, { automationId }, ctx) {
-          const trigger = manuallyTriggerAutomation({
+          const trigger = manuallyTriggerAutomationFactory({
             getAutomationTriggerDefinitions,
             getAutomation,
             getBranchLatestCommits,
@@ -546,7 +547,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               automateRunsEmitter: AutomateRunsEmitter.emit,
               getAutomationToken,
               upsertAutomationRun
-            })
+            }),
+            validateStreamAccess
           })
 
           const { automationRunId } = await trigger({

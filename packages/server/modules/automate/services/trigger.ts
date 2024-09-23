@@ -1,6 +1,5 @@
 import {
   InsertableAutomationRun,
-  getAutomationTriggerDefinitions,
   getLatestAutomationRevision,
   getFullAutomationRevisionMetadataFactory
 } from '@/modules/automate/repositories/automations'
@@ -46,6 +45,7 @@ import {
   GetAutomation,
   GetAutomationRevision,
   GetAutomationToken,
+  GetAutomationTriggerDefinitions,
   GetEncryptionKeyPairFor,
   GetFullAutomationRevisionMetadata,
   TriggerAutomationRevisionRun,
@@ -461,13 +461,14 @@ async function composeTriggerData(params: {
 }
 
 export type ManuallyTriggerAutomationDeps = {
-  getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
+  getAutomationTriggerDefinitions: GetAutomationTriggerDefinitions
   getAutomation: GetAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRunFactory>
+  triggerFunction: TriggerAutomationRevisionRun
+  validateStreamAccess: typeof validateStreamAccess
 }
 
-export const manuallyTriggerAutomation =
+export const manuallyTriggerAutomationFactory =
   (deps: ManuallyTriggerAutomationDeps) =>
   async (params: {
     automationId: string
@@ -480,7 +481,8 @@ export const manuallyTriggerAutomation =
       getAutomationTriggerDefinitions,
       getAutomation,
       getBranchLatestCommits,
-      triggerFunction
+      triggerFunction,
+      validateStreamAccess
     } = deps
 
     const [automation, triggerDefs] = await Promise.all([

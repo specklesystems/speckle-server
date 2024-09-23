@@ -6,6 +6,7 @@ import {
   GetAutomationRunFullTriggers,
   GetAutomations,
   GetAutomationToken,
+  GetAutomationTriggerDefinitions,
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById,
   GetFunctionRun,
@@ -493,46 +494,51 @@ export const updateAutomationFactory =
     return ret
   }
 
-export async function getAutomationTriggerDefinitions<
-  T extends AutomationTriggerType = AutomationTriggerType
->(params: { automationId: string; projectId?: string; triggerType?: T }) {
-  const { automationId, projectId, triggerType } = params
+export const getAutomationTriggerDefinitionsFactory =
+  (deps: { db: Knex }): GetAutomationTriggerDefinitions =>
+  async <T extends AutomationTriggerType = AutomationTriggerType>(params: {
+    automationId: string
+    projectId?: string
+    triggerType?: T
+  }) => {
+    const { automationId, projectId, triggerType } = params
 
-  const revisionQuery = AutomationRevisions.knex()
-    .select([AutomationRevisions.col.id])
-    .where(AutomationRevisions.col.automationId, automationId)
-    .andWhere(AutomationRevisions.col.active, true)
-    .innerJoin(
-      AutomationTriggers.name,
-      AutomationTriggers.col.automationRevisionId,
-      AutomationRevisions.col.id
-    )
-    .limit(1)
-
-  if (projectId) {
-    revisionQuery
+    const revisionQuery = tables
+      .automationRevisions(deps.db)
+      .select([AutomationRevisions.col.id])
+      .where(AutomationRevisions.col.automationId, automationId)
+      .andWhere(AutomationRevisions.col.active, true)
       .innerJoin(
-        Automations.name,
-        Automations.col.id,
-        AutomationRevisions.col.automationId
+        AutomationTriggers.name,
+        AutomationTriggers.col.automationRevisionId,
+        AutomationRevisions.col.id
       )
-      .andWhere(Automations.col.projectId, projectId)
+      .limit(1)
+
+    if (projectId) {
+      revisionQuery
+        .innerJoin(
+          Automations.name,
+          Automations.col.id,
+          AutomationRevisions.col.automationId
+        )
+        .andWhere(Automations.col.projectId, projectId)
+    }
+
+    const mainQ = tables
+      .automationTriggers(deps.db)
+      .select<AutomationTriggerDefinitionRecord<T>[]>('*')
+      .where(AutomationTriggers.col.automationRevisionId, revisionQuery)
+
+    if (triggerType) {
+      mainQ.andWhere(AutomationTriggers.col.triggerType, triggerType)
+    }
+
+    return (await mainQ).map((r) => ({
+      ...r,
+      automationId
+    }))
   }
-
-  const mainQ = AutomationTriggers.knex<AutomationTriggerDefinitionRecord<T>[]>().where(
-    AutomationTriggers.col.automationRevisionId,
-    revisionQuery
-  )
-
-  if (triggerType) {
-    mainQ.andWhere(AutomationTriggers.col.triggerType, triggerType)
-  }
-
-  return (await mainQ).map((r) => ({
-    ...r,
-    automationId
-  }))
-}
 
 export async function updateFunctionRun(
   run: SetRequired<Partial<AutomationFunctionRunRecord>, 'id'>
