@@ -1,10 +1,3 @@
-// Hooking up comments/services/index.js mock
-const { mockRequireModule } = require('@/test/mockHelper')
-const commentsServiceMock = mockRequireModule(
-  ['@/modules/comments/services/index', require.resolve('../services/index')],
-  ['@/modules/comments/graph/resolvers/comments']
-)
-
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
@@ -44,7 +37,10 @@ const {
   purgeNotifications
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
-const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const {
+  EmailSendingServiceMock,
+  CommentsRepositoryMock
+} = require('@/test/mocks/global')
 const { createAuthedTestContext } = require('@/test/graphqlHelper')
 const {
   checkStreamResourceAccessFactory,
@@ -114,6 +110,7 @@ function generateRandomCommentText() {
 }
 
 const mailerMock = EmailSendingServiceMock
+const commentRepoMock = CommentsRepositoryMock
 
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
@@ -185,12 +182,12 @@ describe('Comments @comments', () => {
 
   after(() => {
     notificationsState.destroy()
-    commentsServiceMock.destroy()
+    commentRepoMock.destroy()
   })
 
   afterEach(() => {
-    commentsServiceMock.disable()
-    commentsServiceMock.resetMockedFunctions()
+    commentRepoMock.disable()
+    commentRepoMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -1150,9 +1147,9 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => {
-          return {
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => {
+          return () => ({
             items: [
               // Legacy
               {
@@ -1178,7 +1175,7 @@ describe('Comments @comments', () => {
             ],
             cursor: new Date().toISOString(),
             totalCount: 3
-          }
+          })
         })
 
         const { data, errors } = await readComments()
@@ -1193,8 +1190,8 @@ describe('Comments @comments', () => {
           text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa'
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1232,8 +1229,8 @@ describe('Comments @comments', () => {
           text: textParts.join('')
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1351,8 +1348,8 @@ describe('Comments @comments', () => {
             text: value
           }
 
-          commentsServiceMock.enable()
-          commentsServiceMock.mockFunction('getComments', () => ({
+          commentRepoMock.enable()
+          commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
             items: [item],
             cursor: new Date().toISOString(),
             totalCount: 1

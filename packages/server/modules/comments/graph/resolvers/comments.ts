@@ -119,7 +119,6 @@ const archiveComment = archiveCommentFactory({
   getStream,
   updateComment
 })
-const getComments = getCommentsLegacyFactory({ db })
 
 const getStreamComment = async (
   { streamId, commentId }: { streamId: string; commentId: string },
@@ -152,6 +151,7 @@ export = {
         projectId: args.streamId,
         authCtx: context
       })
+      const getComments = getCommentsLegacyFactory({ db })
       return {
         ...(await getComments({
           ...args,
@@ -173,6 +173,7 @@ export = {
       }
 
       const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
+      const getComments = getCommentsLegacyFactory({ db })
       return await getComments({
         resources,
         replies: true,
