@@ -148,7 +148,7 @@ export const WithClear = mergeStories(Default, {
 
 export const LabelLeft = mergeStories(Default, {
   args: {
-    name: generateRandomName('withclear'),
+    name: generateRandomName('labelleft'),
     label: 'With label left',
     labelPosition: 'left'
   }

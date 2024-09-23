@@ -14,7 +14,7 @@
         class="w-full md:w-56 lg:w-60 md:pb-4 md:px-2 md:pt-6 md:bg-foundation md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
-          <LayoutSidebarMenuGroup title="Account settings">
+          <LayoutSidebarMenuGroup title="User settings">
             <template #title-icon>
               <IconAccount class="size-4" />
             </template>
@@ -148,6 +148,7 @@ graphql(`
 
 graphql(`
   fragment SettingsDialog_User on User {
+    id
     workspaces {
       items {
         ...SettingsDialog_Workspace

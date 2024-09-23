@@ -102,7 +102,7 @@ const { isGuest } = useActiveUser()
 const openNewProject = ref(false)
 
 const ghostContentApi = new GhostContentAPI({
-  url: 'https://speckle.systems',
+  url: 'https://v1.speckle.systems',
   key: config.public.ghostApiKey,
   version: 'v5.0'
 })

@@ -6,9 +6,9 @@ import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
+import type { LabelPosition } from './input'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
-export type LabelPosition = 'top' | 'left'
 
 /**
  * Common setup for text input & textarea fields
@@ -49,7 +49,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex text-body-xs font-medium',
+      'flex text-body-xs font-medium gap-1 items-center',
       unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2',
       unref(props.labelPosition) !== 'left' ? 'pb-1' : null
     ]
@@ -77,9 +77,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     ]
 
     if (error.value) {
-      classParts.push(
-        'focus:border-danger focus:ring-danger border-2 border-danger text-danger-darker'
-      )
+      classParts.push('!border-danger')
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
     }
