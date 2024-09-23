@@ -63,7 +63,7 @@ import {
 import {
   getAutomationRevisions,
   getAutomationRunsTriggers,
-  getAutomations,
+  getAutomationsFactory,
   getFunctionAutomationCounts,
   getLatestAutomationRevisions,
   getRevisionsFunctions,
@@ -90,6 +90,7 @@ const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
+const getAutomations = getAutomationsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

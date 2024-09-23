@@ -1,13 +1,12 @@
 import {
   InsertableAutomationRun,
   getActiveTriggerDefinitions,
-  getAutomation,
-  getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
   upsertAutomationRun,
   getAutomationRevision,
-  getLatestAutomationRevision
+  getLatestAutomationRevision,
+  getFullAutomationRevisionMetadataFactory
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -40,15 +39,22 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
-import {
-  getEncryptionKeyPairFor,
-  getFunctionInputDecryptor
-} from '@/modules/automate/services/encryption'
+import { getFunctionInputDecryptorFactory } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import {
+  GetAutomation,
+  GetEncryptionKeyPairFor
+} from '@/modules/automate/domain/operations'
+import { db } from '@/db/knex'
+
+// TODO: Fixed in next PRs
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
 
 export type OnModelVersionCreateDeps = {
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getAutomationRevision: typeof getAutomationRevision
   getTriggers: typeof getActiveTriggerDefinitions
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
@@ -126,8 +132,8 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
 >
 
 type CreateAutomationRunDataDeps = {
-  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getEncryptionKeyPairFor: GetEncryptionKeyPairFor
+  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptorFactory>
 }
 
 const createAutomationRunData =
@@ -442,7 +448,7 @@ async function composeTriggerData(params: {
 
 export type ManuallyTriggerAutomationDeps = {
   getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
 }
@@ -514,7 +520,7 @@ export const manuallyTriggerAutomation =
   }
 
 export type CreateTestAutomationRunDeps = {
-  getAutomation: typeof getAutomation
+  getAutomation: GetAutomation
   getLatestAutomationRevision: typeof getLatestAutomationRevision
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
 } & CreateAutomationRunDataDeps

@@ -35,3 +35,6 @@ const { emit, listen } = initializeModuleEventEmitter<AutomateEventsPayloads>({
 })
 
 export const AutomateRunsEmitter = { emit, listen, events: AutomateRunsEvents }
+
+export type AutomateRunsEventsEmitter = (typeof AutomateRunsEmitter)['emit']
+export type AutomateRunsEventsListener = (typeof AutomateRunsEmitter)['listen']

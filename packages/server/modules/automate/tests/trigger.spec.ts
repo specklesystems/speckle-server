@@ -33,18 +33,18 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  getAutomation,
-  getFullAutomationRunById,
   getAutomationTriggerDefinitions,
-  getFunctionRun,
-  storeAutomation,
-  storeAutomationRevision,
-  updateAutomation,
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
-  upsertAutomationFunctionRun,
-  storeAutomationToken
+  storeAutomationFactory,
+  storeAutomationTokenFactory,
+  storeAutomationRevisionFactory,
+  getAutomationFactory,
+  updateAutomationFactory,
+  getFunctionRunFactory,
+  upsertAutomationFunctionRunFactory,
+  getFullAutomationRunByIdFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -62,17 +62,28 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { reportFunctionRunStatus } from '@/modules/automate/services/runsManagement'
+import { reportFunctionRunStatusFactory } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
+import { db } from '@/db/knex'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const updateAutomation = updateAutomationFactory({ db })
+const getFunctionRun = getFunctionRunFactory({ db })
+const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
+const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -289,7 +300,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
             getEncryptionKeyPairFor
           })({
             revisionId: cryptoRandomString({ length: 10 }),
@@ -374,7 +387,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           automateRunTrigger: async () => {
             throw new Error(thrownError)
           },
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
           getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
@@ -465,7 +480,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
           }),
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
           getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
@@ -940,7 +957,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
             getEncryptionKeyPairFor
           }),
           ...(overrides || {})
@@ -1157,10 +1176,11 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
       describe('status update report', () => {
         const buildReportFunctionRunStatus = () => {
-          const report = reportFunctionRunStatus({
+          const report = reportFunctionRunStatusFactory({
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun
+            automationRunUpdater: updateAutomationRun,
+            runEventEmit: AutomateRunsEmitter.emit
           })
 
           return report
