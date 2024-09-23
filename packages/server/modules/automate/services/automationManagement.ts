@@ -38,7 +38,7 @@ import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
-import { getFunctionInputDecryptor } from '@/modules/automate/services/encryption'
+import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
 import {
@@ -393,12 +393,14 @@ export type CreateAutomationRevisionDeps = {
   getAutomation: GetAutomation
   storeAutomationRevision: StoreAutomationRevision
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getFunctionInputDecryptor: FunctionInputDecryptor
   getFunctionReleases: typeof getFunctionReleases
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
-export const createAutomationRevision =
+export const createAutomationRevisionFactory =
   (deps: CreateAutomationRevisionDeps) =>
   async (params: {
     input: ProjectAutomationRevisionCreateInput
@@ -412,7 +414,9 @@ export const createAutomationRevision =
       getAutomation,
       getEncryptionKeyPair,
       getFunctionInputDecryptor,
-      getFunctionReleases
+      getFunctionReleases,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     const existingAutomation = await getAutomation({
@@ -534,7 +538,7 @@ export const createAutomationRevision =
     }
     const res = await storeAutomationRevision(revisionInput)
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
       automation: existingAutomation,
       revision: res
     })
