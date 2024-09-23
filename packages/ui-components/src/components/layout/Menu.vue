@@ -14,7 +14,8 @@
         :class="[
           'mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
           menuDirection === HorizontalDirection.Left ? 'right-0' : '',
-          mountMenuOnBody ? 'fixed' : 'absolute'
+          mountMenuOnBody ? 'fixed' : 'absolute',
+          size === 'lg' ? 'w-52' : 'w-44'
         ]"
         :style="menuItemsStyles"
       >
@@ -67,6 +68,7 @@ const props = defineProps<{
    * 2D array so that items can be grouped with dividers between them
    */
   items: LayoutMenuItem[][]
+  size?: 'base' | 'lg'
   menuId?: string
   menuPosition?: HorizontalDirection
   mountMenuOnBody?: boolean
@@ -96,7 +98,8 @@ const menuItemsStyles = computed(() => {
   let offsetPosition = menuButtonBounding.left.value
 
   if (props.menuPosition === HorizontalDirection.Left) {
-    offsetPosition = menuButtonBounding.left.value - 150
+    const menuWidth = props.size === 'lg' ? 175 : 143
+    offsetPosition = menuButtonBounding.left.value - menuWidth
   }
 
   return {
