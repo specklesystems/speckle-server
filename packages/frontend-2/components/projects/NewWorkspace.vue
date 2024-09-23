@@ -12,7 +12,6 @@
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
-        show-required
       />
       <FormTextInput
         v-model:model-value="workspaceDescription"
@@ -21,6 +20,7 @@
         placeholder="Description"
         :rules="[isStringOfLength({ maxLength: 512 })]"
         color="foundation"
+        show-optional
         show-label
       />
       <div class="flex justify-end gap-x-2">
@@ -37,13 +37,28 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
-import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { ProjectsNewWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment ProjectsNewWorkspace_Workspace on Workspace {
+    id
+    name
+    defaultLogoIndex
+    logo
+    description
+  }
+`)
 
 type FormValues = { name: string; description: string }
 
 const emit = defineEmits<{
   (e: 'cancel'): void
-  (e: 'workspace-created', v: ProjectsAddDialog_WorkspaceFragment): void
+  (e: 'workspace-created', v: ProjectsNewWorkspace_WorkspaceFragment): void
+}>()
+
+const props = defineProps<{
+  mixpanelEventSource: string
 }>()
 
 const createWorkspace = useCreateWorkspace()
@@ -66,7 +81,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
       navigateOnSuccess: false
     },
     {
-      source: 'create-project-modal'
+      source: props.mixpanelEventSource
     }
   )
 

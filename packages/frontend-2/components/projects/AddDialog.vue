@@ -35,6 +35,8 @@
                 <ProjectsWorkspaceSelect
                   v-model="selectedWorkspace"
                   :items="workspaces"
+                  :disabled-roles="[Roles.Workspace.Guest]"
+                  disabled-item-tooltip="You dont have rights to create projects in this workspace"
                   class="flex-1"
                 />
                 <FormButton
@@ -53,8 +55,9 @@
               Workspace offers better project management and higher data security.
             </p>
           </div>
-          <ProjectsAddDialogNewWorkspace
+          <ProjectsNewWorkspace
             v-if="isCreatingWorkspace"
+            mixpanel-event-source="create-project-modal"
             @cancel="isCreatingWorkspace = false"
             @workspace-created="onWorkspaceCreated"
           />
@@ -76,14 +79,13 @@ import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment ProjectsAddDialog_Workspace on Workspace {
     id
-    role
-    name
-    defaultLogoIndex
-    logo
+    ...ProjectsWorkspaceSelect_Workspace
+    ...ProjectsNewWorkspace_Workspace
   }
 `)
 
@@ -151,20 +153,29 @@ const workspaces = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
-const dialogButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Cancel',
-    props: { color: 'outline' },
-    onClick: () => {
-      open.value = false
-    }
-  },
-  {
-    text: 'Create',
-    props: {
-      submit: true
+const dialogButtons = computed((): LayoutDialogButton[] => {
+  if (isCreatingWorkspace.value) return []
+  return [
+    {
+      text: 'Cancel',
+      props: { color: 'outline' },
+      onClick: () => {
+        open.value = false
+      }
     },
-    onClick: onSubmit
+    {
+      text: 'Create',
+      props: {
+        submit: true
+      },
+      onClick: onSubmit
+    }
+  ]
+})
+
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    selectedWorkspace.value = undefined
   }
-])
+})
 </script>

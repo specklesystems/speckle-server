@@ -50,12 +50,20 @@ import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
+import {
+  StreamAccessUpdateError,
+  StreamNotFoundError,
+  StreamUpdateError
+} from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { db as defaultKnexInstance } from '@/db/knex'
 import {
   DeleteProjectRole,
+  GetProject,
+  GetProjectCollaborators,
+  UpdateProject,
+  GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 
@@ -166,6 +174,19 @@ export async function getStream(
   const streams = await getStreams([streamId], { userId, ...(options || {}) })
   return <Optional<StreamWithOptionalRole>>streams[0]
 }
+
+// TODO: Inject db
+export const getProjectFactory =
+  (): GetProject =>
+  async ({ projectId }) => {
+    const project = await getStream({ streamId: projectId })
+
+    if (!project) {
+      throw new StreamNotFoundError()
+    }
+
+    return project
+  }
 
 export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
 
@@ -644,6 +665,13 @@ export async function getStreamCollaborators(streamId: string, type?: StreamRole
   return items
 }
 
+// TODO: Inject db
+export const getProjectCollaboratorsFactory =
+  (): GetProjectCollaborators =>
+  async ({ projectId }) => {
+    return await getStreamCollaborators(projectId)
+  }
+
 type BaseUserStreamsQueryParams = {
   /**
    * User whose streams we wish to find
@@ -903,7 +931,11 @@ const isProjectUpdateInput = (
   i: StreamUpdateInput | ProjectUpdateInput
 ): i is ProjectUpdateInput => has(i, 'visibility')
 
-export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
+/** @deprecated Replace all calls with `updateProjectFacotry` */
+export async function updateStream(
+  update: StreamUpdateInput | ProjectUpdateInput,
+  db?: Knex
+) {
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
@@ -935,7 +967,8 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 
   if (!Object.keys(validUpdate).length) return null
 
-  const [updatedStream] = await Streams.knex()
+  const [updatedStream] = await tables
+    .streams(db ?? knex)
     .returning('*')
     .where({ id: streamId })
     .update<StreamRecord[]>({
@@ -945,6 +978,18 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 
   return updatedStream
 }
+
+export const updateProjectFactory =
+  ({ db }: { db: Knex }): UpdateProject =>
+  async ({ projectUpdate }) => {
+    const updatedStream = await updateStream(projectUpdate, db)
+
+    if (!updatedStream) {
+      throw new StreamUpdateError()
+    }
+
+    return updatedStream
+  }
 
 export async function markBranchStreamUpdated(branchId: string) {
   const q = Streams.knex()
@@ -1155,3 +1200,17 @@ export async function getOnboardingBaseStream(version: string) {
 
   return await q
 }
+
+export const getRolesByUserIdFactory =
+  ({ db }: { db: Knex }): GetRolesByUserId =>
+  async ({ userId, workspaceId }) => {
+    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
+      StreamAcl.name
+    ).where({ userId })
+    if (workspaceId) {
+      query
+        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+        .where({ workspaceId })
+    }
+    return await query
+  }

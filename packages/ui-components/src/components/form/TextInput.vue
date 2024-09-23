@@ -67,15 +67,6 @@
           <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
         </a>
         <div
-          v-if="errorMessage"
-          :class="[
-            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center h-8',
-            shouldShowClear ? 'pr-8' : 'pr-2'
-          ]"
-        >
-          <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-        </div>
-        <div
           v-if="!showLabel && showRequired && !errorMessage"
           class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
@@ -95,7 +86,7 @@
 </template>
 <script setup lang="ts">
 import type { RuleExpression } from 'vee-validate'
-import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed, ref, toRefs, useSlots } from 'vue'
 import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
