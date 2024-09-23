@@ -33,9 +33,9 @@ export interface GPass {
   update?(camera: PerspectiveCamera | OrthographicCamera | null): void
   render?(
     renderer: WebGLRenderer,
-    camera: PerspectiveCamera | OrthographicCamera | null,
+    camera?: PerspectiveCamera | OrthographicCamera | null,
     scene?: Scene
-  ): void
+  ): boolean
   setClippingPlanes?(planes: Plane[]): void
   setLayers?(layers: ObjectLayers[]): void
   setVisibility?(objectVisibility: ObjectVisibility): void
@@ -117,9 +117,9 @@ export abstract class BaseGPass implements GPass {
 
   abstract render(
     renderer: WebGLRenderer,
-    camera: PerspectiveCamera | OrthographicCamera | null,
+    camera?: PerspectiveCamera | OrthographicCamera | null,
     scene?: Scene
-  ): void
+  ): boolean
 
   public setSize(width: number, height: number) {
     this._outputTarget?.setSize(width, height)

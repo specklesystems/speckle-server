@@ -2,7 +2,7 @@ import { OrthographicCamera, PerspectiveCamera } from 'three'
 import { ObjectLayers } from '../../../index.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { GColorPass } from './GColorPass.js'
-import { GDepthPass } from './GDepthPass.js'
+import { DepthType, GDepthPass } from './GDepthPass.js'
 import { GPass, ObjectVisibility, ProgressiveGPass } from './GPass.js'
 import { GPipeline } from './GPipeline.js'
 import { GProgressiveAOPass } from './GProgressiveAOPass.js'
@@ -18,6 +18,7 @@ export class DefaultPipeline extends GPipeline {
     super(speckleRenderer)
 
     const depthPass = new GDepthPass()
+    depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
 
@@ -75,6 +76,9 @@ export class DefaultPipeline extends GPipeline {
       }
     })
     this.accumulationFrameIndex++
+
+    if (this.accumulationFrameIndex === this.accumulationFrameCount)
+      this.onAccumulationComplete()
   }
 
   public resize(width: number, height: number) {

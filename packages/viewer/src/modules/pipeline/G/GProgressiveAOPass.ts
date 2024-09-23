@@ -183,7 +183,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     this.accumulateMaterial.needsUpdate = true
   }
 
-  public render(renderer: WebGLRenderer) {
+  public render(renderer: WebGLRenderer): boolean {
     renderer.setRenderTarget(this._generationBuffer)
     renderer.setClearColor(0x000000)
     renderer.setClearAlpha(1)
@@ -200,6 +200,11 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
     this.fsQuad.material = this.accumulateMaterial
     this.fsQuad.render(renderer)
+
+    if (this._frameIndex >= this._accumulationFrames) {
+      return false
+    }
+    return true
   }
 
   public setSize(width: number, height: number) {

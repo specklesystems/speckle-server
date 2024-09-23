@@ -14,8 +14,8 @@ export class GColorPass extends BaseGPass {
     renderer: WebGLRenderer,
     camera: PerspectiveCamera | OrthographicCamera | null,
     scene?: Scene
-  ) {
-    if (!camera || !scene) return
+  ): boolean {
+    if (!camera || !scene) return false
 
     this.applyLayers(camera)
 
@@ -24,5 +24,7 @@ export class GColorPass extends BaseGPass {
     if (this.onBeforeRender) this.onBeforeRender()
     renderer.render(scene, camera)
     if (this.onAfterRender) this.onAfterRender()
+
+    return false
   }
 }

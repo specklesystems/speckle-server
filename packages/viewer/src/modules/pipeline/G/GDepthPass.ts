@@ -85,8 +85,8 @@ export class GDepthPass extends BaseGPass {
     renderer: WebGLRenderer,
     camera: PerspectiveCamera | OrthographicCamera | null,
     scene?: Scene
-  ) {
-    if (!camera || !scene) return
+  ): boolean {
+    if (!camera || !scene) return false
 
     if (this.onBeforeRender) this.onBeforeRender()
 
@@ -100,5 +100,7 @@ export class GDepthPass extends BaseGPass {
     renderer.render(scene, camera)
 
     if (this.onAfterRender) this.onAfterRender()
+
+    return false
   }
 }

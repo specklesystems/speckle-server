@@ -48,8 +48,10 @@ export abstract class GPipeline {
     this.speckleRenderer.renderer.setClearAlpha(0)
     this.speckleRenderer.renderer.clear(true, true, true)
 
+    let renderReturn: boolean = false
     this.passList.forEach((pass: GPass) => {
-      if (!pass.enabled) return
+      if (!pass.enabled || !pass.render) return
+
       if (pass.visibility)
         this.speckleRenderer.batcher.applyVisibility(visibilityMap[pass.visibility])
       if (pass.overrideMaterial)
@@ -58,11 +60,13 @@ export abstract class GPipeline {
           pass.overrideMaterial
         )
 
-      pass.render?.(
+      const ret = pass.render(
         this.speckleRenderer.renderer,
         this.speckleRenderer.renderingCamera,
         this.speckleRenderer.scene
       )
+      renderReturn ||= ret
+
       if (pass.visibility)
         this.speckleRenderer.batcher.applyVisibility(restoreVisibility)
       if (pass.overrideMaterial)
@@ -73,7 +77,7 @@ export abstract class GPipeline {
 
     this.onAfterPipelineRender()
 
-    return true
+    return renderReturn
   }
 
   public resize(width: number, height: number) {

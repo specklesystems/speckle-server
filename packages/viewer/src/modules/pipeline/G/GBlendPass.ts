@@ -59,20 +59,6 @@ export class GBlendPass extends ProgressiveGPass {
     return 'BLEND'
   }
 
-  //   setRenderType(type: RenderType) {
-  //     this.materialCopy.defines['PASSTHROUGH'] = 0
-
-  //     if (type === RenderType.NORMAL) {
-  //       this.materialCopy.defines['ACCUMULATE'] = 0
-  //       if (this.accumulatioFrames === this.frameIndex + 1)
-  //         this.materialCopy.defines['PASSTHROUGH'] = 1
-  //     } else {
-  //       this.materialCopy.defines['ACCUMULATE'] = 1
-  //       this.frameIndex = 0
-  //     }
-  //     this.materialCopy.needsUpdate = true
-  //   }
-
   public update(camera: PerspectiveCamera | OrthographicCamera) {
     camera
     this.materialCopy.defines['NUM_FRAMES'] = this.accumulationFrames
@@ -80,8 +66,13 @@ export class GBlendPass extends ProgressiveGPass {
     this.materialCopy.needsUpdate = true
   }
 
-  render(renderer: WebGLRenderer) {
+  public render(renderer: WebGLRenderer): boolean {
     renderer.setRenderTarget(this._outputTarget)
     this.fsQuad.render(renderer)
+
+    if (this._frameIndex >= this._accumulationFrames) {
+      return false
+    }
+    return true
   }
 }
