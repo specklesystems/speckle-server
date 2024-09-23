@@ -68,6 +68,7 @@ generates:
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
         ServerWorkspacesInfo: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ProjectRole: '@/modules/workspacesCore/helpers/graphTypes#ProjectRoleGraphQLReturn '
+        ActivityCollection: '@/modules/activitystream/helpers/graphTypes#ActivityCollectionGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'
