@@ -7,11 +7,11 @@ import {
 } from '@/modules/automate/services/trigger'
 import {
   getActiveTriggerDefinitions,
-  getAutomationRunFullTriggers,
   getFullAutomationRevisionMetadata,
   getAutomationRevision,
   getFullAutomationRunById,
-  getAutomationFactory
+  getAutomationFactory,
+  getAutomationRunFullTriggersFactory
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -23,8 +23,8 @@ import {
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import {
-  setupAutomationUpdateSubscriptions,
-  setupStatusUpdateSubscriptions
+  setupAutomationUpdateSubscriptionsFactory,
+  setupStatusUpdateSubscriptionsFactory
 } from '@/modules/automate/services/subscriptions'
 import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
@@ -33,6 +33,9 @@ import { getUserById } from '@/modules/core/services/users'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -63,6 +66,8 @@ async function initScopes() {
 }
 
 const initializeEventListeners = () => {
+  const getAutomationRunFullTriggers = getAutomationRunFullTriggersFactory({ db })
+
   const triggerFn = triggerAutomationRevisionRun({
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,
@@ -70,10 +75,16 @@ const initializeEventListeners = () => {
       buildDecryptor
     })
   })
-  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
-    getAutomationRunFullTriggers
+  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
+    getAutomationRunFullTriggers,
+    publish,
+    automateRunsEventsListener: AutomateRunsEmitter.listen
   })
-  const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
+  const setupAutomationUpdateSubscriptionsInvoke =
+    setupAutomationUpdateSubscriptionsFactory({
+      automationsEmitterListen: AutomationsEmitter.listen,
+      publish
+    })
   const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
     getFullAutomationRevisionMetadata,
     getUserById,

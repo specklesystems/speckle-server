@@ -1,5 +1,6 @@
 import {
   GetAutomation,
+  GetAutomationRunFullTriggers,
   GetAutomations,
   GetFunctionRun,
   GetLatestVersionAutomationRuns,
@@ -9,7 +10,10 @@ import {
   UpdateAutomation,
   UpsertAutomationFunctionRun
 } from '@/modules/automate/domain/operations'
-import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
+import {
+  AutomationRunFullTrigger,
+  InsertableAutomationFunctionRun
+} from '@/modules/automate/domain/types'
 import {
   AutomationRecord,
   AutomationRevisionRecord,
@@ -48,7 +52,7 @@ import {
   AutomationRunsArgs,
   ProjectAutomationsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
 
 import { LogicError } from '@/modules/shared/errors'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
@@ -73,6 +77,8 @@ const tables = {
   automationTriggers: (db: Knex) =>
     db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
   automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
+  automationRunTriggers: (db: Knex) =>
+    db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
     db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
 }
@@ -969,12 +975,6 @@ export const getAutomationRunWithToken = async (params: {
   return await q
 }
 
-type AutomationRunFullTrigger<T extends AutomationTriggerType = AutomationTriggerType> =
-  AutomationRunTriggerRecord<T> & {
-    versions: CommitRecord[]
-    models: BranchRecord[]
-  }
-
 export async function getAutomationRunsTriggers(params: {
   automationRunIds: string[]
 }) {
@@ -989,53 +989,54 @@ export async function getAutomationRunsTriggers(params: {
   return groupBy(items, (i) => i.automationRunId)
 }
 
-export async function getAutomationRunFullTriggers(params: {
-  automationRunId: string
-}) {
-  const { automationRunId } = params
+export const getAutomationRunFullTriggersFactory =
+  (deps: { db: Knex }): GetAutomationRunFullTriggers =>
+  async (params: { automationRunId: string }) => {
+    const { automationRunId } = params
 
-  const q = AutomationRunTriggers.knex()
-    .where(AutomationRunTriggers.col.automationRunId, automationRunId)
+    const q = tables
+      .automationRunTriggers(deps.db)
+      .where(AutomationRunTriggers.col.automationRunId, automationRunId)
 
-    // Join on relevant entities
-    .leftJoin(Commits.name, function () {
-      this.on(Commits.col.id, AutomationRunTriggers.col.triggeringId).andOnVal(
+      // Join on relevant entities
+      .leftJoin(Commits.name, function () {
+        this.on(Commits.col.id, AutomationRunTriggers.col.triggeringId).andOnVal(
+          AutomationRunTriggers.col.triggerType,
+          VersionCreationTriggerType
+        )
+      })
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+
+      .groupBy(
+        AutomationRunTriggers.col.automationRunId,
         AutomationRunTriggers.col.triggerType,
-        VersionCreationTriggerType
+        AutomationRunTriggers.col.triggeringId
       )
-    })
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
 
-    .groupBy(
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRunTriggers.col.triggerType,
-      AutomationRunTriggers.col.triggeringId
-    )
+      .select<AutomationRunFullTrigger[]>([
+        ...AutomationRunTriggers.cols,
+        Commits.groupArray('versions'),
+        Branches.groupArray('models')
+      ])
 
-    .select<AutomationRunFullTrigger[]>([
-      ...AutomationRunTriggers.cols,
-      Commits.groupArray('versions'),
-      Branches.groupArray('models')
-    ])
+    const res = await q
+    const formattedRes = res.map((r) => ({
+      ...r,
+      versions: formatJsonArrayRecords(r.versions),
+      models: formatJsonArrayRecords(r.models)
+    }))
 
-  const res = await q
-  const formattedRes = res.map((r) => ({
-    ...r,
-    versions: formatJsonArrayRecords(r.versions),
-    models: formatJsonArrayRecords(r.models)
-  }))
-
-  return {
-    [VersionCreationTriggerType]: formattedRes
-      .filter((r): r is AutomationRunFullTrigger<typeof VersionCreationTriggerType> =>
-        isVersionCreatedTrigger(r)
-      )
-      .map((r) => ({
-        triggerType: r.triggerType,
-        triggeringId: r.triggeringId,
-        version: r.versions[0],
-        model: r.models[0]
-      }))
+    return {
+      [VersionCreationTriggerType]: formattedRes
+        .filter((r): r is AutomationRunFullTrigger<typeof VersionCreationTriggerType> =>
+          isVersionCreatedTrigger(r)
+        )
+        .map((r) => ({
+          triggerType: r.triggerType,
+          triggeringId: r.triggeringId,
+          version: r.versions[0],
+          model: r.models[0]
+        }))
+    }
   }
-}
