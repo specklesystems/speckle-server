@@ -1,19 +1,9 @@
 import crs from 'crypto-random-string'
-import knex, { db } from '@/db/knex'
+import knex from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
-import {
-  buildCommentTextFromInput,
-  validateInputAttachmentsFactory
-} from '@/modules/comments/services/commentTextService'
-import {
-  CommentsEmitter,
-  CommentsEvents,
-  CommentsEventsEmit
-} from '@/modules/comments/events/emitter'
-import {
-  getComment as repoGetComment,
-  getStreamCommentCount as repoGetStreamCommentCount
-} from '@/modules/comments/repositories/comments'
+import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
+import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
+import { getStreamCommentCount as repoGetStreamCommentCount } from '@/modules/comments/repositories/comments'
 import { clamp } from 'lodash'
 import { isNonNullable, Roles } from '@speckle/shared'
 import {
@@ -28,13 +18,14 @@ import {
   CheckStreamResourceAccess,
   CheckStreamResourcesAccess,
   DeleteComment,
+  GetComment,
   InsertCommentLinks,
   InsertComments,
   MarkCommentUpdated,
   MarkCommentViewed,
+  UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
-import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceType } from '@/modules/comments/domain/types'
 
 const Comments = () => knex<CommentRecord>('comments')
@@ -208,45 +199,43 @@ export const createCommentReplyFactory =
 /**
  * @deprecated Use 'editCommentAndNotify()'
  */
-export async function editComment({
-  userId,
-  input,
-  matchUser = false
-}: {
-  userId: string
-  input: CommentEditInput
-  matchUser: boolean
-}) {
-  const editedComment = await Comments().where({ id: input.id }).first()
-  if (!editedComment) throw new Error("The comment doesn't exist")
+export const editCommentFactory =
+  (deps: {
+    getComment: GetComment
+    validateInputAttachments: ValidateInputAttachments
+    updateComment: UpdateComment
+    commentsEventsEmit: CommentsEventsEmit
+  }) =>
+  async ({
+    userId,
+    input,
+    matchUser = false
+  }: {
+    userId: string
+    input: CommentEditInput
+    matchUser: boolean
+  }) => {
+    const editedComment = await deps.getComment({ id: input.id })
+    if (!editedComment) throw new Error("The comment doesn't exist")
 
-  if (matchUser && editedComment.authorId !== userId)
-    throw new ForbiddenError("You cannot edit someone else's comments")
+    if (matchUser && editedComment.authorId !== userId)
+      throw new ForbiddenError("You cannot edit someone else's comments")
 
-  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
-    input.streamId,
-    input.blobIds
-  )
-  const newText = buildCommentTextFromInput({
-    doc: input.text,
-    blobIds: input.blobIds
-  })
-  const [updatedComment] = await Comments()
-    .where({ id: input.id })
-    .update({ text: newText }, '*')
+    await deps.validateInputAttachments(input.streamId, input.blobIds)
+    const newText = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
+    const updatedComment = await deps.updateComment(input.id, { text: newText })
 
-  await CommentsEmitter.emit(CommentsEvents.Updated, {
-    previousComment: editedComment,
-    newComment: updatedComment
-  })
+    await deps.commentsEventsEmit(CommentsEvents.Updated, {
+      previousComment: editedComment,
+      newComment: updatedComment!
+    })
 
-  return updatedComment
-}
+    return updatedComment
+  }
 
-/**
- * @deprecated Use repository method
- */
-export const getComment = repoGetComment
 /**
  * @deprecated Use 'archiveCommentAndNotify()'
  */

@@ -1,9 +1,14 @@
-import { ResourceIdentifier } from '@/modules/comments/domain/types'
+import { ExtendedComment, ResourceIdentifier } from '@/modules/comments/domain/types'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
+import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
+
+export type GetComment = (params: {
+  id: string
+  userId?: string
+}) => Promise<Optional<ExtendedComment>>
 
 export type CheckStreamResourceAccess = (
   res: ResourceIdentifier,
@@ -35,7 +40,7 @@ export type MarkCommentViewed = (commentId: string, userId: string) => Promise<b
 export type UpdateComment = (
   id: string,
   input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
-) => Promise<CommentRecord>
+) => Promise<Optional<CommentRecord>>
 
 export type MarkCommentUpdated = (commentId: string) => Promise<void>
 

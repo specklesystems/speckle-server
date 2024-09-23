@@ -35,6 +35,7 @@ import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import {
   CheckStreamResourceAccess,
   DeleteComment,
+  GetComment,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
@@ -43,6 +44,7 @@ import {
   UpdateComment
 } from '@/modules/comments/domain/operations'
 import { ObjectRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
+import { ExtendedComment } from '@/modules/comments/domain/types'
 
 const tables = {
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
@@ -54,41 +56,30 @@ const tables = {
 
 export const generateCommentId = () => crs({ length: 10 })
 
-export type ExtendedComment = CommentRecord & {
-  /**
-   * comment_links resources for the comment
-   */
-  resources: Array<Omit<CommentLinkRecord, 'commentId'>>
-
-  /**
-   * If userId was specified, this will contain the last time the user
-   * viewed this comment
-   */
-  viewedAt?: Date
-}
-
 /**
  * Get a single comment
  */
-export async function getComment(params: { id: string; userId?: string }) {
-  const { id, userId = null } = params
+export const getCommentFactory =
+  (deps: { db: Knex }): GetComment =>
+  async (params: { id: string; userId?: string }) => {
+    const { id, userId = null } = params
 
-  const query = Comments.knex().select('*').joinRaw(`
+    const query = tables.comments(deps.db).select<ExtendedComment>('*').joinRaw(`
         join(
           select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
           from comment_links cl
           join comments on comments.id = cl."commentId"
           group by cl."commentId"
         ) res using(id)`)
-  if (userId) {
-    query.leftOuterJoin('comment_views', (b) => {
-      b.on('comment_views.commentId', '=', 'comments.id')
-      b.andOn('comment_views.userId', '=', knex.raw('?', userId))
-    })
+    if (userId) {
+      query.leftOuterJoin('comment_views', (b) => {
+        b.on('comment_views.commentId', '=', 'comments.id')
+        b.andOn('comment_views.userId', '=', knex.raw('?', userId))
+      })
+    }
+    query.where({ id }).first()
+    return await query
   }
-  query.where({ id }).first()
-  return (await query) as Optional<ExtendedComment>
-}
 
 /**
  * Get resources array for the specified comments. Results object is keyed by comment ID.

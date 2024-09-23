@@ -4,7 +4,7 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
-  getComment,
+  getCommentFactory,
   insertComment,
   insertCommentLinksFactory,
   markCommentUpdatedFactory,
@@ -78,7 +78,10 @@ export async function authorizeCommentAccess(params: {
   requireProjectRole?: boolean
 }) {
   const { authCtx, commentId, requireProjectRole } = params
-  const comment = await getComment({ id: commentId, userId: authCtx.userId })
+  const comment = await getCommentFactory({ db })({
+    id: commentId,
+    userId: authCtx.userId
+  })
   if (!comment) {
     throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
   }
@@ -174,7 +177,7 @@ export async function createCommentReplyAndNotify(
   input: CreateCommentReplyInput,
   userId: string
 ) {
-  const thread = await getComment({ id: input.threadId, userId })
+  const thread = await getCommentFactory({ db })({ id: input.threadId, userId })
   if (!thread) {
     throw new CommentCreateError('Reply creation failed due to nonexistant thread')
   }
@@ -227,7 +230,7 @@ export async function createCommentReplyAndNotify(
 }
 
 export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
-  const comment = await getComment({ id: input.commentId, userId })
+  const comment = await getCommentFactory({ db })({ id: input.commentId, userId })
   if (!comment) {
     throw new CommentUpdateError('Comment update failed due to nonexistant comment')
   }
@@ -248,7 +251,7 @@ export async function editCommentAndNotify(input: EditCommentInput, userId: stri
   await Promise.all([
     CommentsEmitter.emit(CommentsEvents.Updated, {
       previousComment: comment,
-      newComment: updatedComment
+      newComment: updatedComment!
     })
   ])
 
@@ -260,7 +263,7 @@ export async function archiveCommentAndNotify(
   userId: string,
   archived = true
 ) {
-  const comment = await getComment({ id: commentId, userId })
+  const comment = await getCommentFactory({ db })({ id: commentId, userId })
   if (!comment) {
     throw new CommentUpdateError(
       "Specified comment doesn't exist and thus it's archival status can't be changed"
@@ -285,7 +288,7 @@ export async function archiveCommentAndNotify(
         streamId: stream.id,
         commentId
       },
-      comment: updatedComment
+      comment: updatedComment!
     })
   ])
 
