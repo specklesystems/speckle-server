@@ -7,7 +7,10 @@ import { promises as fs } from 'fs'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
 import { testLogger as logger } from '@/observability/logging.js'
-
+import { parse } from 'csv-parse'
+import { Transform } from 'stream'
+import { pipeline } from 'stream/promises'
+import { createReadStream } from 'fs'
 import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
 
 const getS3Config = () => {
@@ -25,7 +28,7 @@ const getS3Config = () => {
 }
 
 describe.sequential('Acceptance', () => {
-  describe.sequential('Run the preview-service image in docker', () => {
+  describe.sequential('Trigger and wait for the preview-service', () => {
     beforeEach(() => {
       // const dbName = inject('dbName')
       logger.info('🤜 running acceptance test before-each')
@@ -36,7 +39,7 @@ describe.sequential('Acceptance', () => {
 
     // we use integration test and not e2e test because we don't need the server
     acceptanceTest(
-      'loads data, runs docker image, extracts rendered image',
+      'loads data, waits for completion, extracts rendered image',
       {
         timeout: 300000 //5 minutes
       },
@@ -44,18 +47,51 @@ describe.sequential('Acceptance', () => {
         const { db } = context
         // load data
         const streamId = cryptoRandomString({ length: 10 })
-        const objectId = cryptoRandomString({ length: 10 })
 
-        //TODO load object rows from file or sqlite or similar
-        const objectRow = {
-          id: objectId,
-          streamId,
-          speckleType: 'Base',
-          totalChildrenCount: 0,
-          totalChildrenCountByDepth: {},
-          data: {}
+        // Initialize the parser
+        const parser = parse({
+          delimiter: ','
+        })
+        const fileStream = createReadStream('tests/data/deltas.csv')
+        const objectId = '19209772913efd1466ea217a1ed4cd84' //base object in tests/data/deltas.csv
+        const objectRows: Record<string, unknown>[] = []
+
+        const transformIntoObject = new Transform({
+          transform(chunk, _encoding, cb) {
+            if (!Array.isArray(chunk)) throw new Error('Invalid record')
+            if (chunk.length !== 7) throw new Error('Invalid record length')
+            const row = {
+              id: <unknown>chunk[0],
+              speckleType: <unknown>chunk[1],
+              totalChildrenCount: <unknown>chunk[2],
+              totalChildrenCountByDepth: <unknown>chunk[3],
+              createdAt: <unknown>chunk[4],
+              data: <unknown>JSON.parse(chunk[5] as string),
+              streamId //NOTE we override the stream ID to ensure it's loaded into the test stream
+            }
+            cb(null, row)
+          }
+        })
+        const cacheRowIntoArray = new Transform({
+          transform(row, _encoding, cb) {
+            if (!row) return
+            if (typeof row !== 'object') return
+            if (Array.isArray(row)) return
+            if (Object.getOwnPropertySymbols(row).length > 0) return
+
+            objectRows.push(<Record<string, unknown>>row)
+            cb(null, row)
+          }
+        })
+
+        try {
+          await pipeline(fileStream, parser, transformIntoObject, cacheRowIntoArray)
+        } catch (err) {
+          expect(err, 'Error parsing CSV file.').toBeUndefined()
         }
-        await db.batchInsert(OBJECTS_TABLE_NAME, [objectRow])
+
+        // "id","speckleType","totalChildrenCount","totalChildrenCountByDepth","createdAt","data","streamId"
+        await db.batchInsert(OBJECTS_TABLE_NAME, objectRows)
 
         const objectPreviewRow = {
           streamId,
