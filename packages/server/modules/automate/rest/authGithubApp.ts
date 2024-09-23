@@ -1,7 +1,7 @@
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import {
-  handleAutomateFunctionCreatorAuthCallback,
-  startAutomateFunctionCreatorAuth
+  handleAutomateFunctionCreatorAuthCallbackFactory,
+  startAutomateFunctionCreatorAuthFactory
 } from '@/modules/automate/services/functionManagement'
 import { getGenericRedis } from '@/modules/core'
 import { corsMiddleware } from '@/modules/core/configs/cors'
@@ -19,7 +19,7 @@ export default (app: Application) => {
       validateScope({ requiredScope: Scopes.AutomateFunctions.Write })
     ]),
     async (req, res) => {
-      const startAuth = startAutomateFunctionCreatorAuth({
+      const startAuth = startAutomateFunctionCreatorAuthFactory({
         createStoredAuthCode: createStoredAuthCodeFactory({
           redis: getGenericRedis()
         })
@@ -36,7 +36,7 @@ export default (app: Application) => {
       validateScope({ requiredScope: Scopes.AutomateFunctions.Write })
     ]),
     async (req, res) => {
-      const handleCallback = handleAutomateFunctionCreatorAuthCallback()
+      const handleCallback = handleAutomateFunctionCreatorAuthCallbackFactory()
       await handleCallback({ req, res })
     }
   )

@@ -43,8 +43,8 @@ import {
 import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
-  createFunctionFromTemplate,
-  updateFunction
+  createFunctionFromTemplateFactory,
+  updateFunctionFactory
 } from '@/modules/automate/services/functionManagement'
 import {
   Resolvers,
@@ -441,7 +441,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateMutations: {
         async createFunction(_parent, args, ctx) {
-          const create = createFunctionFromTemplate({
+          const create = createFunctionFromTemplateFactory({
             createExecutionEngineFn: createFunction,
             getUser,
             createStoredAuthCode: createStoredAuthCodeFactory({
@@ -453,7 +453,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             .graphqlReturn
         },
         async updateFunction(_parent, args, ctx) {
-          const update = updateFunction({
+          const update = updateFunctionFactory({
             updateFunction: execEngineUpdateFunction,
             getFunction,
             createStoredAuthCode: createStoredAuthCodeFactory({
