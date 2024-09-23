@@ -1,14 +1,8 @@
-import { ResourceType } from '@/modules/comments/domain/types'
 import { DataStruct, LegacyData } from '@/modules/comments/services/data'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 
-export type CommentLinkResourceType =
-  | 'stream'
-  | 'commit'
-  | 'object'
-  | 'comment'
-  | ResourceType
+export type CommentLinkResourceType = 'stream' | 'commit' | 'object' | 'comment'
 
 export interface CommentRecord {
   id: string

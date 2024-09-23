@@ -169,16 +169,21 @@ export async function createCommentReply({
 
   const [newComment] = await Comments().insert(comment, '*')
   try {
-    const commentLink: CommentLinkRecord & { resourceType: ResourceType } = {
+    const commentLink: CommentLinkRecord = {
       resourceId: parentCommentId,
-      resourceType: ResourceType.Comment,
+      resourceType: 'comment',
       commentId: newComment.id
     }
     await streamResourceCheckFactory({
       checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
     })({
       streamId,
-      resources: [commentLink]
+      resources: [
+        {
+          resourceType: commentLink.resourceType as ResourceType,
+          resourceId: commentLink.resourceId
+        }
+      ]
     })
     await CommentLinks().insert({ ...commentLink })
   } catch (e) {
