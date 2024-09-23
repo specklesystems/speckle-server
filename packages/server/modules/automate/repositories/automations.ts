@@ -1,7 +1,10 @@
 import {
+  GetAutomation,
+  GetAutomations,
   StoreAutomation,
   StoreAutomationRevision,
-  StoreAutomationToken
+  StoreAutomationToken,
+  UpdateAutomation
 } from '@/modules/automate/domain/operations'
 import {
   AutomationRecord,
@@ -409,47 +412,49 @@ export async function getAutomationToken(
   return token || null
 }
 
-export async function getAutomations(params: {
-  automationIds: string[]
-  projectId?: string
-}) {
-  const { automationIds, projectId } = params
-  if (!automationIds.length) return []
+export const getAutomationsFactory =
+  (deps: { db: Knex }): GetAutomations =>
+  async (params: { automationIds: string[]; projectId?: string }) => {
+    const { automationIds, projectId } = params
+    if (!automationIds.length) return []
 
-  const q = Automations.knex<AutomationRecord[]>()
-    .select()
-    .whereIn(Automations.col.id, automationIds)
+    const q = tables
+      .automations(deps.db)
+      .select()
+      .whereIn(Automations.col.id, automationIds)
 
-  if (projectId?.length) {
-    q.andWhere(Automations.col.projectId, projectId)
+    if (projectId?.length) {
+      q.andWhere(Automations.col.projectId, projectId)
+    }
+
+    return await q
   }
 
-  return await q
-}
+export const getAutomationFactory =
+  (deps: { db: Knex }): GetAutomation =>
+  async (params: { automationId: string; projectId?: string }) => {
+    const { automationId, projectId } = params
+    return (
+      (
+        await getAutomationsFactory(deps)({ automationIds: [automationId], projectId })
+      )?.[0] || null
+    )
+  }
 
-export async function getAutomation(params: {
-  automationId: string
-  projectId?: string
-}): Promise<Nullable<AutomationRecord>> {
-  const { automationId, projectId } = params
-  return (
-    (await getAutomations({ automationIds: [automationId], projectId }))?.[0] || null
-  )
-}
+export const updateAutomationFactory =
+  (deps: { db: Knex }): UpdateAutomation =>
+  async (automation: SetRequired<Partial<AutomationRecord>, 'id'>) => {
+    const [ret] = await tables
+      .automations(deps.db)
+      .where(Automations.col.id, automation.id)
+      .update({
+        ...pick(automation, Automations.withoutTablePrefix.cols),
+        [Automations.withoutTablePrefix.col.updatedAt]: new Date()
+      })
+      .returning('*')
 
-export async function updateAutomation(
-  automation: SetRequired<Partial<AutomationRecord>, 'id'>
-) {
-  const [ret] = await Automations.knex()
-    .where(Automations.col.id, automation.id)
-    .update({
-      ...pick(automation, Automations.withoutTablePrefix.cols),
-      [Automations.withoutTablePrefix.col.updatedAt]: new Date()
-    })
-    .returning<AutomationRecord[]>('*')
-
-  return ret
-}
+    return ret
+  }
 
 export async function getAutomationTriggerDefinitions<
   T extends AutomationTriggerType = AutomationTriggerType

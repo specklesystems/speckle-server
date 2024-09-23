@@ -11,7 +11,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
-  getAutomation,
+  getAutomationFactory,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
@@ -24,8 +24,8 @@ import {
   storeAutomationFactory,
   storeAutomationRevisionFactory,
   storeAutomationTokenFactory,
+  updateAutomationFactory,
   updateAutomationRun,
-  updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
 import {
@@ -33,7 +33,7 @@ import {
   createAutomationRevision,
   createTestAutomationFactory,
   getAutomationsStatus,
-  updateAutomation
+  validateAndUpdateAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -111,6 +111,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const updateDbAutomation = updateAutomationFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -481,9 +483,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           ).automation
         },
         async update(parent, { input }, ctx) {
-          const update = updateAutomation({
+          const update = validateAndUpdateAutomationFactory({
             getAutomation,
-            updateAutomation: updateDbAutomation
+            updateAutomation: updateDbAutomation,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await update({

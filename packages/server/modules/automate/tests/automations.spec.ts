@@ -3,10 +3,10 @@ import {
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
-  getAutomation,
-  updateAutomation as updateDbAutomation
+  getAutomationFactory,
+  updateAutomationFactory
 } from '@/modules/automate/repositories/automations'
-import { updateAutomation } from '@/modules/automate/services/automationManagement'
+import { validateAndUpdateAutomationFactory } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
   createStoredAuthCodeFactory
@@ -15,7 +15,10 @@ import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} from '@/modules/core/services/streams/streamAccessService'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -42,6 +45,8 @@ import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
 
 /**
  * TODO: Extra test ideas
@@ -52,9 +57,13 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const buildAutomationUpdate = () => {
-  const update = updateAutomation({
+  const getAutomation = getAutomationFactory({ db })
+  const updateDbAutomation = updateAutomationFactory({ db })
+  const update = validateAndUpdateAutomationFactory({
     getAutomation,
-    updateAutomation: updateDbAutomation
+    updateAutomation: updateDbAutomation,
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit
   })
 
   return update
