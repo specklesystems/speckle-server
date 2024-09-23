@@ -30,7 +30,7 @@
             <ProjectPageTeamPermissionSelect
               :model-value="projectRole.role"
               :disabled="false"
-              :hide-owner="false"
+              hide-owner
               @update:model-value="
                 (newRole) => updateProjectRole(projectRole.project.id, newRole)
               "
