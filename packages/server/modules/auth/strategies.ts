@@ -10,7 +10,7 @@ import {
   enableMixpanel
 } from '@/modules/shared/helpers/envHelper'
 import { isSSLServer, getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { authLogger, logger } from '@/logging/logging'
+import { authLogger as logger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import {
@@ -25,8 +25,9 @@ import {
   AuthStrategyPassportUser
 } from '@/modules/auth/helpers/types'
 import { isString, noop } from 'lodash'
-import { ensureError } from '@speckle/shared'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
+import { ensureError } from '@speckle/shared'
+import { UnauthorizedError } from '@/modules/shared/errors'
 
 const setupStrategiesFactory =
   (deps: {
@@ -144,10 +145,9 @@ const setupStrategiesFactory =
 
         return res.redirect(redirectUrl)
       } catch (err) {
-        authLogger.error(err, 'Could not finalize auth')
         if (req.session) req.session.destroy(noop)
-        return res.status(401).send({
-          err: ensureError(err, 'Unexpected issue arose while finalizing auth').message
+        throw new UnauthorizedError('Unexpected issue arose while finalizing auth', {
+          cause: ensureError(err)
         })
       }
     }

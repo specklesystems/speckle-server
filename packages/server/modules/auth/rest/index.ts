@@ -9,7 +9,7 @@ import {
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
 import { ensureError, Optional, Scopes } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   getAppFactory,
   revokeRefreshTokenFactory,
@@ -33,55 +33,40 @@ export default function (app: Express) {
   TODO: ensure same origin.
    */
   app.get('/auth/accesscode', async (req, res) => {
-    try {
-      const getApp = getAppFactory({ db })
-      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+    const getApp = getAppFactory({ db })
+    const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 
-      const preventRedirect = !!req.query.preventRedirect
-      const appId = req.query.appId as Optional<string>
-      if (!appId)
-        throw new InvalidAccessCodeRequestError('appId missing from querystring.')
+    const preventRedirect = !!req.query.preventRedirect
+    const appId = req.query.appId as Optional<string>
+    if (!appId)
+      throw new InvalidAccessCodeRequestError('appId missing from querystring.')
 
-      const app = await getApp({ id: appId })
+    const app = await getApp({ id: appId })
 
-      if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
+    if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
 
-      const challenge = req.query.challenge as Optional<string>
-      const userToken = req.query.token as Optional<string>
-      if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
-      if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
+    const challenge = req.query.challenge as Optional<string>
+    const userToken = req.query.token as Optional<string>
+    if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
+    if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
-      // 1. Validate token
-      const tokenValidationResult = await validateToken(userToken)
-      const { valid, scopes, userId } =
-        'scopes' in tokenValidationResult
-          ? tokenValidationResult
-          : { ...tokenValidationResult, scopes: [], userId: null }
-      if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
+    // 1. Validate token
+    const tokenValidationResult = await validateToken(userToken)
+    const { valid, scopes, userId } =
+      'scopes' in tokenValidationResult
+        ? tokenValidationResult
+        : { ...tokenValidationResult, scopes: [], userId: null }
+    if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
-      // 2. Validate token scopes
-      await validateScopes(scopes, Scopes.Tokens.Write)
+    // 2. Validate token scopes
+    await validateScopes(scopes, Scopes.Tokens.Write)
 
-      const ac = await createAuthorizationCode({ appId, userId, challenge })
+    const ac = await createAuthorizationCode({ appId, userId, challenge })
 
-      const redirectUrl = `${app.redirectUrl}?access_code=${ac}`
-      return preventRedirect
-        ? res.status(200).json({ redirectUrl })
-        : res.redirect(redirectUrl)
-    } catch (err) {
-      if (
-        err instanceof InvalidAccessCodeRequestError ||
-        err instanceof ForbiddenError
-      ) {
-        req.log.info({ err }, 'Invalid access code request error, or Forbidden error.')
-        return res.status(400).send(err.message)
-      } else {
-        req.log.error(err)
-        return res
-          .status(500)
-          .send('Something went wrong while processing your request')
-      }
-    }
+    const redirectUrl = `${app.redirectUrl}?access_code=${ac}`
+    return preventRedirect
+      ? res.status(200).json({ redirectUrl })
+      : res.redirect(redirectUrl)
   })
 
   /*
@@ -141,8 +126,9 @@ export default function (app: Express) {
       })
       return res.send(authResponse)
     } catch (err) {
-      req.log.info({ err }, 'Error while trying to generate a new token.')
-      return res.status(401).send({ err: ensureError(err).message })
+      throw new UnauthorizedError('Invalid request. Could not generate token.', {
+        cause: ensureError(err)
+      })
     }
   })
 
@@ -150,21 +136,16 @@ export default function (app: Express) {
   Ensures a user is logged out by invalidating their token and refresh token.
    */
   app.post('/auth/logout', async (req, res) => {
-    try {
-      const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+    const revokeRefreshToken = revokeRefreshTokenFactory({ db })
 
-      const token = req.body.token
-      const refreshToken = req.body.refreshToken
+    const token = req.body.token
+    const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request. No token provided.')
-      await revokeTokenById(token)
+    if (!token) throw new Error('Invalid request. No token provided.')
+    await revokeTokenById(token)
 
-      if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
+    if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
 
-      return res.status(200).send({ message: 'You have logged out.' })
-    } catch (err) {
-      req.log.info({ err }, 'Error while trying to logout.')
-      return res.status(400).send('Something went wrong while trying to logout.')
-    }
+    return res.status(200).send({ message: 'You have logged out.' })
   })
 }

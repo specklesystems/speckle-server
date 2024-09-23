@@ -23,7 +23,7 @@ import {
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
-import { Roles, Scopes } from '@speckle/shared'
+import { ensureError, Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
@@ -290,12 +290,12 @@ export const triggerAutomationRevisionRun =
       automationRun.executionEngineRunId = automationRunId
       await upsertAutomationRun(automationRun)
     } catch (error) {
-      const statusMessage = error instanceof Error ? error.message : `${error}`
+      const e = ensureError(error, 'Unknown error while triggering automation run')
       automationRun.status = 'exception'
       automationRun.functionRuns = automationRun.functionRuns.map((fr) => ({
         ...fr,
         status: 'exception',
-        statusMessage
+        statusMessage: e.message
       }))
       await upsertAutomationRun(automationRun)
     }

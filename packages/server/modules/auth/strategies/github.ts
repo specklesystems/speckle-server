@@ -74,12 +74,6 @@ const githubStrategyBuilderFactory =
         done: VerifyCallback
       ) => {
         const serverInfo = await deps.getServerInfo()
-        const logger = req.log.child({
-          authStrategy: 'github',
-          profileId: profile.id,
-          serverVersion: serverInfo.version
-        })
-
         try {
           const email = profile.emails?.[0].value
           if (!email) {
@@ -144,18 +138,10 @@ const githubStrategyBuilderFactory =
             isInvite: !!invite
           })
         } catch (err) {
-          const e = ensureError(
-            err,
-            'Unexpected issue occured while authenticating with GitHub'
-          )
-          switch (e.constructor) {
-            case UserInputError:
-              logger.info(err)
-              break
-            default:
-              logger.error(err)
-          }
-          return done(err, false, { message: e.message })
+          const e = ensureError(err, 'Authenticating with GitHub failed.')
+          return done(err, false, {
+            message: e.message
+          })
         }
       }
     )
