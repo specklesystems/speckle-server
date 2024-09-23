@@ -18,7 +18,7 @@ import {
   getFullAutomationRevisionMetadata,
   getFunctionRun,
   getLatestAutomationRevision,
-  getLatestVersionAutomationRuns,
+  getLatestVersionAutomationRunsFactory,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomationFactory,
@@ -32,7 +32,7 @@ import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
-  getAutomationsStatus,
+  getAutomationsStatusFactory,
   validateAndUpdateAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
@@ -113,6 +113,7 @@ const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
 const updateDbAutomation = updateAutomationFactory({ db })
+const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -200,7 +201,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Model: {
         async automationsStatus(parent, _args, ctx) {
-          const getStatus = getAutomationsStatus({
+          const getStatus = getAutomationsStatusFactory({
             getLatestVersionAutomationRuns
           })
 
@@ -222,7 +223,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Version: {
         async automationsStatus(parent, _args, ctx) {
-          const getStatus = getAutomationsStatus({
+          const getStatus = getAutomationsStatusFactory({
             getLatestVersionAutomationRuns
           })
 

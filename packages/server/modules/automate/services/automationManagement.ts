@@ -1,8 +1,7 @@
 import {
   InsertableAutomationRevision,
   InsertableAutomationRevisionFunction,
-  InsertableAutomationRevisionTrigger,
-  getLatestVersionAutomationRuns
+  InsertableAutomationRevisionTrigger
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
@@ -51,6 +50,7 @@ import {
   CreateStoredAuthCode,
   GetAutomation,
   GetEncryptionKeyPair,
+  GetLatestVersionAutomationRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
@@ -547,10 +547,10 @@ export const createAutomationRevisionFactory =
   }
 
 export type GetAutomationsStatusDeps = {
-  getLatestVersionAutomationRuns: typeof getLatestVersionAutomationRuns
+  getLatestVersionAutomationRuns: GetLatestVersionAutomationRuns
 }
 
-export const getAutomationsStatus =
+export const getAutomationsStatusFactory =
   (deps: GetAutomationsStatusDeps) =>
   async (params: {
     projectId: string

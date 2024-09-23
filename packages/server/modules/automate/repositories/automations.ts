@@ -1,6 +1,7 @@
 import {
   GetAutomation,
   GetAutomations,
+  GetLatestVersionAutomationRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
@@ -67,7 +68,8 @@ const tables = {
   automationRevisionFunctions: (db: Knex) =>
     db<AutomateRevisionFunctionRecord>(AutomationRevisionFunctions.name),
   automationTriggers: (db: Knex) =>
-    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name)
+    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
+  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name)
 }
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -795,87 +797,83 @@ export const getProjectAutomationsItems = async (
   }
 }
 
-export const getLatestVersionAutomationRuns = async (
-  params: {
-    projectId: string
-    modelId: string
-    versionId: string
-  },
-  options?: Partial<{ limit: number }>
-) => {
-  const { projectId, modelId, versionId } = params
-  const { limit = 20 } = options || {}
+export const getLatestVersionAutomationRunsFactory =
+  (deps: { db: Knex }): GetLatestVersionAutomationRuns =>
+  async (params, options) => {
+    const { projectId, modelId, versionId } = params
+    const { limit = 20 } = options || {}
 
-  const runsQ = AutomationRuns.knex()
-    .select<Array<AutomationRunRecord & { automationId: string }>>([
-      ...AutomationRuns.cols,
-      AutomationRevisions.col.automationId
-    ])
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
-    .innerJoin(
-      Automations.name,
-      Automations.col.id,
-      AutomationRevisions.col.automationId
-    )
-    .innerJoin(
-      AutomationRunTriggers.name,
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRuns.col.id
-    )
-    .innerJoin(
-      BranchCommits.name,
-      BranchCommits.col.commitId,
-      AutomationRunTriggers.col.triggeringId
-    )
-    .where(AutomationRunTriggers.col.triggerType, VersionCreationTriggerType)
-    .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
-    .andWhere(Automations.col.projectId, projectId)
-    .andWhere(BranchCommits.col.branchId, modelId)
-    .distinctOn(AutomationRevisions.col.automationId)
-    .orderBy([
-      { column: AutomationRevisions.col.automationId },
-      { column: AutomationRuns.col.createdAt, order: 'desc' }
-    ])
-    .limit(limit)
+    const runsQ = tables
+      .automationRuns(deps.db)
+      .select<Array<AutomationRunRecord & { automationId: string }>>([
+        ...AutomationRuns.cols,
+        AutomationRevisions.col.automationId
+      ])
+      .innerJoin(
+        AutomationRevisions.name,
+        AutomationRevisions.col.id,
+        AutomationRuns.col.automationRevisionId
+      )
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
+      .innerJoin(
+        AutomationRunTriggers.name,
+        AutomationRunTriggers.col.automationRunId,
+        AutomationRuns.col.id
+      )
+      .innerJoin(
+        BranchCommits.name,
+        BranchCommits.col.commitId,
+        AutomationRunTriggers.col.triggeringId
+      )
+      .where(AutomationRunTriggers.col.triggerType, VersionCreationTriggerType)
+      .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
+      .andWhere(Automations.col.projectId, projectId)
+      .andWhere(BranchCommits.col.branchId, modelId)
+      .distinctOn(AutomationRevisions.col.automationId)
+      .orderBy([
+        { column: AutomationRevisions.col.automationId },
+        { column: AutomationRuns.col.createdAt, order: 'desc' }
+      ])
+      .limit(limit)
 
-  const mainQ = knex()
-    .select<
-      Array<{
-        runs: Array<AutomationRunRecord & { automationId: string }>
-        functionRuns: AutomationFunctionRunRecord[]
-        triggers: AutomationRunTriggerRecord[]
-      }>
-    >([
-      // We will only have 1 run here, but we have to use an aggregation because of the grouping,
-      // so we just take the 1st array item later on
-      AutomationRuns.with({ withCustomTablePrefix: 'rq' }).groupArray('runs'),
-      AutomationFunctionRuns.groupArray('functionRuns'),
-      AutomationRunTriggers.groupArray('triggers')
-    ])
-    .from(runsQ.as('rq'))
-    .innerJoin(AutomationFunctionRuns.name, AutomationFunctionRuns.col.runId, 'rq.id')
-    .innerJoin(
-      AutomationRunTriggers.name,
-      AutomationRunTriggers.col.automationRunId,
-      'rq.id'
-    )
-    .orderBy([{ column: 'rq.updatedAt', order: 'desc' }])
-    .groupBy('rq.id', 'rq.updatedAt')
+    const mainQ = deps.db
+      .select<
+        Array<{
+          runs: Array<AutomationRunRecord & { automationId: string }>
+          functionRuns: AutomationFunctionRunRecord[]
+          triggers: AutomationRunTriggerRecord[]
+        }>
+      >([
+        // We will only have 1 run here, but we have to use an aggregation because of the grouping,
+        // so we just take the 1st array item later on
+        AutomationRuns.with({ withCustomTablePrefix: 'rq' }).groupArray('runs'),
+        AutomationFunctionRuns.groupArray('functionRuns'),
+        AutomationRunTriggers.groupArray('triggers')
+      ])
+      .from(runsQ.as('rq'))
+      .innerJoin(AutomationFunctionRuns.name, AutomationFunctionRuns.col.runId, 'rq.id')
+      .innerJoin(
+        AutomationRunTriggers.name,
+        AutomationRunTriggers.col.automationRunId,
+        'rq.id'
+      )
+      .orderBy([{ column: 'rq.updatedAt', order: 'desc' }])
+      .groupBy('rq.id', 'rq.updatedAt')
 
-  const res = await mainQ
-  const formattedItems: AutomationRunWithTriggersFunctionRuns[] = res.map(
-    (r): AutomationRunWithTriggersFunctionRuns => ({
-      ...formatJsonArrayRecords(r.runs)[0],
-      triggers: formatJsonArrayRecords(r.triggers),
-      functionRuns: formatJsonArrayRecords(r.functionRuns)
-    })
-  )
-  return formattedItems
-}
+    const res = await mainQ
+    const formattedItems: AutomationRunWithTriggersFunctionRuns[] = res.map(
+      (r): AutomationRunWithTriggersFunctionRuns => ({
+        ...formatJsonArrayRecords(r.runs)[0],
+        triggers: formatJsonArrayRecords(r.triggers),
+        functionRuns: formatJsonArrayRecords(r.functionRuns)
+      })
+    )
+    return formattedItems
+  }
 
 export const getAutomationProjects = async (params: {
   automationIds: string[]
