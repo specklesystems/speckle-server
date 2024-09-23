@@ -1,12 +1,15 @@
 import {
   GetAutomation,
   GetAutomations,
+  GetFunctionRun,
   GetLatestVersionAutomationRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
-  UpdateAutomation
+  UpdateAutomation,
+  UpsertAutomationFunctionRun
 } from '@/modules/automate/domain/operations'
+import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
 import {
   AutomationRecord,
   AutomationRevisionRecord,
@@ -69,7 +72,9 @@ const tables = {
     db<AutomateRevisionFunctionRecord>(AutomationRevisionFunctions.name),
   automationTriggers: (db: Knex) =>
     db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
-  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name)
+  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
+  automationFunctionRuns: (db: Knex) =>
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
 }
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -119,27 +124,23 @@ export async function getFullAutomationRevisionMetadata(
   }
 }
 
-export type InsertableAutomationFunctionRun = Pick<
-  AutomationFunctionRunRecord,
-  'id' | 'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
->
-
-export async function upsertAutomationFunctionRun(
-  automationFunctionRun: InsertableAutomationFunctionRun
-) {
-  await AutomationFunctionRuns.knex()
-    .insert(
-      _.pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols)
-    )
-    .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
-    .merge([
-      AutomationFunctionRuns.withoutTablePrefix.col.contextView,
-      AutomationFunctionRuns.withoutTablePrefix.col.elapsed,
-      AutomationFunctionRuns.withoutTablePrefix.col.results,
-      AutomationFunctionRuns.withoutTablePrefix.col.status,
-      AutomationFunctionRuns.withoutTablePrefix.col.statusMessage
-    ])
-}
+export const upsertAutomationFunctionRunFactory =
+  (deps: { db: Knex }): UpsertAutomationFunctionRun =>
+  async (automationFunctionRun: InsertableAutomationFunctionRun) => {
+    await tables
+      .automationFunctionRuns(deps.db)
+      .insert(
+        _.pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols)
+      )
+      .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
+      .merge([
+        AutomationFunctionRuns.withoutTablePrefix.col.contextView,
+        AutomationFunctionRuns.withoutTablePrefix.col.elapsed,
+        AutomationFunctionRuns.withoutTablePrefix.col.results,
+        AutomationFunctionRuns.withoutTablePrefix.col.status,
+        AutomationFunctionRuns.withoutTablePrefix.col.statusMessage
+      ] as Array<keyof AutomationFunctionRunRecord>)
+  }
 
 export type InsertableAutomationRun = AutomationRunRecord & {
   triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]
@@ -178,36 +179,39 @@ export async function upsertAutomationRun(automationRun: InsertableAutomationRun
   return
 }
 
-export async function getFunctionRun(functionRunId: string) {
-  const q = AutomationFunctionRuns.knex()
-    .select<
-      Array<
-        AutomationFunctionRunRecord & {
-          automationId: string
-          automationRevisionId: string
-        }
-      >
-    >([
-      ...AutomationFunctionRuns.cols,
-      AutomationRuns.col.automationRevisionId,
-      AutomationRevisions.col.automationId
-    ])
-    .where(AutomationFunctionRuns.col.id, functionRunId)
-    .innerJoin(
-      AutomationRuns.name,
-      AutomationRuns.col.id,
-      AutomationFunctionRuns.col.runId
-    )
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
+export const getFunctionRunFactory =
+  (deps: { db: Knex }): GetFunctionRun =>
+  async (functionRunId: string) => {
+    const q = tables
+      .automationFunctionRuns(deps.db)
+      .select<
+        Array<
+          AutomationFunctionRunRecord & {
+            automationId: string
+            automationRevisionId: string
+          }
+        >
+      >([
+        ...AutomationFunctionRuns.cols,
+        AutomationRuns.col.automationRevisionId,
+        AutomationRevisions.col.automationId
+      ])
+      .where(AutomationFunctionRuns.col.id, functionRunId)
+      .innerJoin(
+        AutomationRuns.name,
+        AutomationRuns.col.id,
+        AutomationFunctionRuns.col.runId
+      )
+      .innerJoin(
+        AutomationRevisions.name,
+        AutomationRevisions.col.id,
+        AutomationRuns.col.automationRevisionId
+      )
 
-  const runs = await q
+    const runs = await q
 
-  return (runs[0] ?? null) as (typeof runs)[0] | null
-}
+    return (runs[0] ?? null) as (typeof runs)[0] | null
+  }
 
 export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {
   automationRunStatus: AutomationRunStatus
