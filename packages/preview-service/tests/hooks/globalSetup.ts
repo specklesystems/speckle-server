@@ -47,7 +47,6 @@ export async function setup({ provide }: GlobalSetupContext) {
 
   // this provides the dbName to all tests, and can be accessed via inject('dbName'). NB: The test extensions already implement this, so use a test extension.
   provide('dbName', dbName)
-  console.log(dbName)
 
   const db = getTestDb(dbName)
   await up(db) //we need the migration to occur in our new database, so cannot use knex's built in migration functionality.
