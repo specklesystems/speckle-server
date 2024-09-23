@@ -4,12 +4,11 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
-  InsertCommentPayload,
   getComment,
-  markCommentViewed,
   insertComment,
-  insertCommentLinks,
+  insertCommentLinksFactory,
   markCommentUpdated,
+  markCommentViewedFactory,
   updateComment
 } from '@/modules/comments/repositories/comments'
 import {
@@ -21,7 +20,7 @@ import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import {
   buildCommentTextFromInput,
-  validateInputAttachments
+  validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
 import { knex } from '@/modules/core/dbSchema'
 import {
@@ -40,6 +39,9 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { db } from '@/db/knex'
+import { InsertCommentPayload } from '@/modules/comments/domain/operations'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -88,17 +90,16 @@ export async function authorizeCommentAccess(params: {
   })
 }
 
-export async function markViewed(commentId: string, userId: string) {
-  await markCommentViewed(commentId, userId)
-}
-
 export async function createCommentThreadAndNotify(
   input: CreateCommentInput,
   userId: string
 ) {
   const [resources] = await Promise.all([
     getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
-    validateInputAttachments(input.projectId, input.content.blobIds || [])
+    validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+      input.projectId,
+      input.content.blobIds || []
+    )
   ])
   if (!resources.length) {
     throw new CommentCreateError(
@@ -141,7 +142,7 @@ export async function createCommentThreadAndNotify(
           resourceType
         }
       })
-      await insertCommentLinks(links, { trx })
+      await insertCommentLinksFactory({ db })(links, { trx })
 
       return comment
     })
@@ -151,7 +152,7 @@ export async function createCommentThreadAndNotify(
 
   // Mark as viewed and emit events
   await Promise.all([
-    markViewed(comment.id, userId),
+    markCommentViewedFactory({ db })(comment.id, userId),
     CommentsEmitter.emit(CommentsEvents.Created, {
       comment
     }),
@@ -177,7 +178,10 @@ export async function createCommentReplyAndNotify(
   if (!thread) {
     throw new CommentCreateError('Reply creation failed due to nonexistant thread')
   }
-  await validateInputAttachments(thread.streamId, input.content.blobIds || [])
+  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+    thread.streamId,
+    input.content.blobIds || []
+  )
 
   const commentPayload: InsertCommentPayload = {
     streamId: thread.streamId,
@@ -197,7 +201,7 @@ export async function createCommentReplyAndNotify(
       const links: CommentLinkRecord[] = [
         { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
       ]
-      await insertCommentLinks(links, { trx })
+      await insertCommentLinksFactory({ db })(links, { trx })
 
       return reply
     })
@@ -231,7 +235,9 @@ export async function editCommentAndNotify(input: EditCommentInput, userId: stri
     throw new CommentUpdateError("You cannot edit someone else's comments")
   }
 
-  await validateInputAttachments(comment.streamId, input.content.blobIds || [])
+  await validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  })(comment.streamId, input.content.blobIds || [])
   const updatedComment = await updateComment(comment.id, {
     text: buildCommentTextFromInput({
       doc: input.content.doc,
