@@ -37,14 +37,14 @@ import {
   getFullAutomationRunById,
   getAutomationTriggerDefinitions,
   getFunctionRun,
-  storeAutomationRevision,
   updateAutomation,
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
   upsertAutomationFunctionRun,
   storeAutomationFactory,
-  storeAutomationTokenFactory
+  storeAutomationTokenFactory,
+  storeAutomationRevisionFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
@@ -77,6 +77,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',

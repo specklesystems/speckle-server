@@ -22,7 +22,7 @@ import {
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomationFactory,
-  storeAutomationRevision,
+  storeAutomationRevisionFactory,
   storeAutomationTokenFactory,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
@@ -31,7 +31,7 @@ import {
 import {
   createAutomationFactory,
   createAutomationRevision,
-  createTestAutomation,
+  createTestAutomationFactory,
   getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
@@ -110,6 +110,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -532,11 +533,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
-          const create = createTestAutomation({
+          const create = createTestAutomationFactory({
             getEncryptionKeyPair,
             getFunction,
             storeAutomation,
-            storeAutomationRevision
+            storeAutomationRevision,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await create({

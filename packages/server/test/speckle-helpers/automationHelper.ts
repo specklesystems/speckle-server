@@ -1,7 +1,7 @@
 import {
   getAutomation,
   storeAutomationFactory,
-  storeAutomationRevision,
+  storeAutomationRevisionFactory,
   storeAutomationTokenFactory
 } from '@/modules/automate/repositories/automations'
 import {
@@ -44,6 +44,7 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })

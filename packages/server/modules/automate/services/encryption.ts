@@ -18,6 +18,10 @@ import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { Merge } from 'type-fest'
 import { convertFunctionReleaseToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRedactor'
+import {
+  GetEncryptionKeyPair,
+  GetEncryptionKeyPairFor
+} from '@/modules/automate/domain/operations'
 
 type KeysFileContents = Array<KeyPair>
 
@@ -49,7 +53,7 @@ const getEncryptionKeys = async () => {
   return keys
 }
 
-export const getEncryptionKeyPair = async () => {
+export const getEncryptionKeyPair: GetEncryptionKeyPair = async () => {
   return (await getEncryptionKeys())[0]
 }
 
@@ -57,7 +61,9 @@ export const getEncryptionPublicKey = async () => {
   return (await getEncryptionKeyPair()).publicKey
 }
 
-export const getEncryptionKeyPairFor = async (publicKey: string) => {
+export const getEncryptionKeyPairFor: GetEncryptionKeyPairFor = async (
+  publicKey: string
+) => {
   const keyPairs = await getEncryptionKeys()
   const keyPair = keyPairs.find((keyPair) => keyPair.publicKey === publicKey)
   if (!keyPair) {
@@ -139,7 +145,7 @@ export const getFunctionInputDecryptor =
   }
 
 export type GetFunctionInputsForFrontendDeps = {
-  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
+  getEncryptionKeyPairFor: GetEncryptionKeyPairFor
   redactWriteOnlyInputData: typeof redactWriteOnlyInputData
 } & GetFunctionInputDecryptorDeps
 
