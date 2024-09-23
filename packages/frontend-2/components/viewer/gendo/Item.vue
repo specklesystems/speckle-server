@@ -60,7 +60,7 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
-import type { Vector3 } from '@speckle/viewer'
+import type { Vector3 } from 'three'
 
 const props = defineProps<{
   renderRequest: GendoAiRender

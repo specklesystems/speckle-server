@@ -1,4 +1,5 @@
 import { automateLogger } from '@/logging/logging'
+import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
@@ -28,8 +29,9 @@ const isPayload = (payload: unknown): payload is AuthCodePayload =>
     Object.values(AuthCodePayloadAction).includes(get(payload, 'action'))
   )
 
-export const createStoredAuthCode =
-  (deps: { redis: Redis }) => async (params: Omit<AuthCodePayload, 'code'>) => {
+export const createStoredAuthCodeFactory =
+  (deps: { redis: Redis }): CreateStoredAuthCode =>
+  async (params: Omit<AuthCodePayload, 'code'>) => {
     const { redis } = deps
 
     const payload: AuthCodePayload = {
@@ -41,7 +43,7 @@ export const createStoredAuthCode =
     return payload
   }
 
-export const validateStoredAuthCode =
+export const validateStoredAuthCodeFactory =
   (deps: { redis: Redis }) => async (payload: AuthCodePayload) => {
     const { redis } = deps
 

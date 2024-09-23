@@ -1,12 +1,6 @@
 import { UpdateFlags } from '@speckle/viewer'
-import {
-  Box3,
-  ObjectLayers,
-  SelectionEvent,
-  SelectionExtension,
-  Vector3
-} from '@speckle/viewer'
-import { Object3D } from 'three'
+import { ObjectLayers, SelectionEvent, SelectionExtension } from '@speckle/viewer'
+import { Object3D, Vector3, Box3 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 
 export class ExtendedSelection extends SelectionExtension {
