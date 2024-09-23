@@ -16,7 +16,6 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 const { createObject } = require('@/modules/core/services/objects')
 const {
-  getComments,
   getResourceCommentCount,
   getStreamCommentCount,
   streamResourceCheckFactory,
@@ -55,7 +54,8 @@ const {
   deleteCommentFactory,
   markCommentUpdatedFactory,
   getCommentFactory,
-  updateCommentFactory
+  updateCommentFactory,
+  getCommentsLegacyFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
@@ -103,6 +103,7 @@ const archiveComment = archiveCommentFactory({
   getStream,
   updateComment
 })
+const getComments = getCommentsLegacyFactory({ db })
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
