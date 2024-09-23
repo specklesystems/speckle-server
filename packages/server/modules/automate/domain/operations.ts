@@ -5,7 +5,8 @@ import {
   AutomationRevisionWithTriggersFunctions,
   AutomationRunWithTriggersFunctionRuns,
   AutomationTokenRecord,
-  AutomationTriggerType
+  AutomationTriggerType,
+  AutomationWithRevision
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRevision } from '@/modules/automate/repositories/automations'
 import { AuthCodePayload } from '@/modules/automate/services/authCode'
@@ -72,6 +73,14 @@ export type GetAutomationRunFullTriggers = (params: {
     model: BranchRecord
   }[]
 }>
+
+export type GetFullAutomationRevisionMetadata = (
+  revisionId: string
+) => Promise<AutomationWithRevision<AutomationRevisionWithTriggersFunctions> | null>
+
+export type GetFullAutomationRunById = (
+  automationRunId: string
+) => Promise<AutomationRunWithTriggersFunctionRuns | null>
 
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>

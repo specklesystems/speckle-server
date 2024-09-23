@@ -15,7 +15,7 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
-  getFullAutomationRevisionMetadata,
+  getFullAutomationRevisionMetadataFactory,
   getFunctionRunFactory,
   getLatestAutomationRevision,
   getLatestVersionAutomationRunsFactory,
@@ -117,6 +117,9 @@ const updateDbAutomation = updateAutomationFactory({ db })
 const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({ db })
 const getFunctionRun = getFunctionRunFactory({ db })
 const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
