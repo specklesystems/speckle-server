@@ -18,6 +18,18 @@ export class WorkspaceInvalidUpdateError extends BaseError {
   static statusCode = 400
 }
 
+export class WorkspaceSlugTakenError extends BaseError {
+  static defaultMessage = 'The given workspace slug is already taken'
+  static code = 'WORKSPACE_SLUG_TAKEN'
+  static statusCode = 400
+}
+
+export class WorkspaceSlugInvalidError extends BaseError {
+  static defaultMessage = 'The workspace slug is invalid'
+  static code = 'WORKSPACE_SLUG_INVALID'
+  static statusCode = 400
+}
+
 export class WorkspaceInvalidRoleError extends BaseError {
   static defaultMessage = 'Invalid workspace role provided'
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'

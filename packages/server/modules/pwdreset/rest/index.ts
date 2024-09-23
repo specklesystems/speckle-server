@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
+import { deleteExistingAuthTokensFactory } from '@/modules/auth/repositories'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { updateUserPassword } from '@/modules/core/services/users'
@@ -46,7 +46,7 @@ export default function (app: Express) {
         getPendingToken: getPendingTokenFactory({ db }),
         deleteTokens: deleteTokensFactory({ db }),
         updateUserPassword,
-        deleteExistingAuthTokens
+        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
       })
 
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')

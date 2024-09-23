@@ -9,7 +9,9 @@ import {
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
   GetWorkspaceDomains,
-  UpdateWorkspace
+  UpdateWorkspace,
+  GetWorkspaceBySlug,
+  UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -17,7 +19,12 @@ import {
   WorkspaceDomain,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import {
+  generateSlugFromName,
+  MaybeNullOrUndefined,
+  Roles,
+  validateWorkspaceSlug
+} from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { deleteStream } from '@/modules/core/repositories/streams'
 import {
@@ -32,6 +39,8 @@ import {
   WorkspaceProtectedError,
   WorkspaceUnverifiedDomainError,
   WorkspaceNoVerifiedDomainsError,
+  WorkspaceSlugTakenError,
+  WorkspaceSlugInvalidError,
   WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
@@ -60,6 +69,7 @@ type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
+    slug?: string | null
     description: string | null
     logo: string | null
     defaultLogoIndex: number
@@ -67,14 +77,58 @@ type WorkspaceCreateArgs = {
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
+type GenerateValidSlug = (args: { name: string }) => Promise<string>
+
+type ValidateWorkspaceSlug = (args: { slug: string }) => Promise<void>
+
+export const validateSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): ValidateWorkspaceSlug =>
+  async ({ slug }) => {
+    try {
+      validateWorkspaceSlug(slug)
+    } catch (err) {
+      if (err instanceof Error) throw new WorkspaceSlugInvalidError(err.message)
+      throw err
+    }
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: slug
+    })
+    if (maybeClashingWorkspace) throw new WorkspaceSlugTakenError()
+  }
+
+export const generateValidSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): GenerateValidSlug =>
+  async ({ name }) => {
+    const generatedSlug = generateSlugFromName({ name })
+
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: generatedSlug
+    })
+    return maybeClashingWorkspace
+      ? `${generatedSlug}-${cryptoRandomString({ length: 5 })}`
+      : generatedSlug
+  }
+
 export const createWorkspaceFactory =
   ({
     upsertWorkspace,
     upsertWorkspaceRole,
+    generateValidSlug,
+    validateSlug,
     emitWorkspaceEvent
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
+    validateSlug: ValidateWorkspaceSlug
+    generateValidSlug: GenerateValidSlug
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({
@@ -91,8 +145,16 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
+    let slug: string
+    if (workspaceInput.slug) {
+      await validateSlug({ slug: workspaceInput.slug })
+      slug = workspaceInput.slug
+    } else {
+      slug = await generateValidSlug(workspaceInput)
+    }
     const workspace = {
       ...workspaceInput,
+      slug,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -167,10 +229,12 @@ const sanitizeInput = (input: Partial<Workspace>) => {
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
+    validateSlug,
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
     getWorkspace: GetWorkspaceWithDomains
+    validateSlug: ValidateWorkspaceSlug
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
   }): UpdateWorkspace =>
@@ -181,13 +245,14 @@ export const updateWorkspaceFactory =
       throw new WorkspaceNotFoundError()
     }
 
-    // Validate incoming changes
     if (
       !isValidInput(workspaceInput) ||
       !isValidWorkspace(workspaceInput, currentWorkspace)
     ) {
       throw new WorkspaceInvalidUpdateError()
     }
+
+    if (workspaceInput.slug) await validateSlug({ slug: workspaceInput.slug })
 
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
@@ -312,22 +377,13 @@ export const updateWorkspaceRoleFactory =
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-  }) =>
+  }): UpdateWorkspaceRole =>
   async ({
     workspaceId,
     userId,
     role: nextWorkspaceRole,
     skipProjectRoleUpdatesFor,
     preventRoleDowngrade
-  }: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
-    /**
-     * Only add or upgrade role, prevent downgrades
-     */
-    preventRoleDowngrade?: boolean
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 

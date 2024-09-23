@@ -1,21 +1,33 @@
 'use strict'
-const cors = require('cors')
-const {
-  createAuthorizationCode,
-  createAppTokenFromAccessCode,
-  refreshAppToken
-} = require('../services/apps')
-const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
-const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
-const { validateScopes } = require(`@/modules/shared`)
-const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
-const { Scopes } = require('@speckle/shared')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { getAppFactory } = require('@/modules/auth/repositories/apps')
-const { db } = require('@/db/knex')
+import cors from 'cors'
+import {
+  validateToken,
+  revokeTokenById,
+  createAppToken,
+  createBareToken
+} from '@/modules/core/services/tokens'
+import { validateScopes } from '@/modules/shared'
+import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
+import { ensureError, Optional, Scopes } from '@speckle/shared'
+import { ForbiddenError } from '@/modules/shared/errors'
+import {
+  getAppFactory,
+  revokeRefreshTokenFactory,
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  createRefreshTokenFactory,
+  getRefreshTokenFactory
+} from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
+import {
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
+} from '@/modules/auth/services/serverApps'
+import { Express } from 'express'
 
 // TODO: Secure these endpoints!
-module.exports = (app) => {
+export default function (app: Express) {
   /*
   Generates an access code for an app.
   TODO: ensure same origin.
@@ -23,19 +35,28 @@ module.exports = (app) => {
   app.get('/auth/accesscode', async (req, res) => {
     try {
       const getApp = getAppFactory({ db })
+      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+
       const preventRedirect = !!req.query.preventRedirect
-      const appId = req.query.appId
+      const appId = req.query.appId as Optional<string>
+      if (!appId)
+        throw new InvalidAccessCodeRequestError('appId missing from querystring.')
+
       const app = await getApp({ id: appId })
 
       if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
 
-      const challenge = req.query.challenge
-      const userToken = req.query.token
+      const challenge = req.query.challenge as Optional<string>
+      const userToken = req.query.token as Optional<string>
       if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
       if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
       // 1. Validate token
-      const { valid, scopes, userId } = await validateToken(userToken)
+      const tokenValidationResult = await validateToken(userToken)
+      const { valid, scopes, userId } =
+        'scopes' in tokenValidationResult
+          ? tokenValidationResult
+          : { ...tokenValidationResult, scopes: [], userId: null }
       if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
       // 2. Validate token scopes
@@ -69,6 +90,25 @@ module.exports = (app) => {
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
     try {
+      const createRefreshToken = createRefreshTokenFactory({ db })
+      const getApp = getAppFactory({ db })
+      const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+        getAuthorizationCode: getAuthorizationCodeFactory({ db }),
+        deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
+        getApp,
+        createRefreshToken,
+        createAppToken,
+        createBareToken
+      })
+      const refreshAppToken = refreshAppTokenFactory({
+        getRefreshToken: getRefreshTokenFactory({ db }),
+        revokeRefreshToken: revokeRefreshTokenFactory({ db }),
+        createRefreshToken,
+        getApp,
+        createAppToken,
+        createBareToken
+      })
+
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
@@ -102,7 +142,7 @@ module.exports = (app) => {
       return res.send(authResponse)
     } catch (err) {
       req.log.info({ err }, 'Error while trying to generate a new token.')
-      return res.status(401).send({ err: err.message })
+      return res.status(401).send({ err: ensureError(err).message })
     }
   })
 
@@ -111,6 +151,8 @@ module.exports = (app) => {
    */
   app.post('/auth/logout', async (req, res) => {
     try {
+      const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 

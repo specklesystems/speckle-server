@@ -1,5 +1,16 @@
+import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { StreamRoles } from '@speckle/shared'
+
+export type GetProject = (args: { projectId: string }) => Promise<StreamRecord>
+
+export type GetProjectCollaborators = (args: {
+  projectId: string
+}) => Promise<ProjectTeamMember[]>
+
+export type UpdateProject = (args: {
+  projectUpdate: Pick<StreamRecord, 'id' | 'workspaceId'>
+}) => Promise<StreamRecord>
 
 export type UpsertProjectRole = (args: {
   projectId: string
