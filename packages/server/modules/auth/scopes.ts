@@ -1,8 +1,6 @@
-'use strict'
+import { Scopes } from '@speckle/shared'
 
-const { Scopes } = require('@speckle/shared')
-
-module.exports = [
+export default [
   {
     name: Scopes.Apps.Read,
     description: 'See created or authorized applications.',

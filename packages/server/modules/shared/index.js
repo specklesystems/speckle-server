@@ -22,7 +22,7 @@ const ServerAcl = () => ServerAclSchema.knex()
  * Validates the scope against a list of scopes of the current session.
  * @param  {string[]|undefined} scopes
  * @param  {string} scope
- * @return {void}
+ * @return {Promise<void>}
  */
 async function validateScopes(scopes, scope) {
   const errMsg = `Your auth token does not have the required scope${

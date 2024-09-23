@@ -30,7 +30,6 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
@@ -42,9 +41,12 @@ import {
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
   updateWorkspaceProjectRoleMutation,
-  useProjectInviteMutation
+  useProjectInviteMutation,
+  useMoveProjectToWorkspaceMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -238,7 +240,13 @@ export function useUpdateUserRole(
     const { data, errors } = await apollo
       .mutate({
         mutation: updateWorkspaceProjectRoleMutation,
-        variables: { input }
+        variables: { input },
+        update: (cache) => {
+          cache.evict({ id: getCacheId('Project', input.projectId) })
+          cache.evict({
+            id: getCacheId('WorkspaceCollaborator', input.userId)
+          })
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -534,5 +542,61 @@ export function useLeaveProject() {
         description: errMsg
       })
     }
+  }
+}
+
+export function useMoveProjectToWorkspace() {
+  const apollo = useApolloClient().client
+
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (projectId: string, workspaceId: string, workspaceName: string) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: useMoveProjectToWorkspaceMutation,
+        variables: { projectId, workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.workspaceMutations) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Moved project to ${workspaceName}`
+      })
+
+      mixpanel.track('Project Moved To Workspace', {
+        projectId,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't move project",
+        description: errMsg
+      })
+    }
+  }
+}
+
+export function useCopyProjectLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string) => {
+    if (import.meta.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = projectRoute(projectId)
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Project link copied to clipboard'
+    })
   }
 }

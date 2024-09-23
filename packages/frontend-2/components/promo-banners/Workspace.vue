@@ -51,6 +51,7 @@ import imageDark from '~/assets/images/banners/workspace-promo-dark.png'
 import imageMobileLight from '~/assets/images/banners/workspace-promo-mobile-light.png'
 import imageMobileDark from '~/assets/images/banners/workspace-promo-mobile-dark.png'
 
+const { isLoggedIn } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const { isDarkTheme } = useTheme()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -82,6 +83,7 @@ const hasWorkspaces = computed(() =>
 const showBanner = computed(
   () =>
     isWorkspacesEnabled.value &&
+    isLoggedIn.value &&
     !hasWorkspaces.value &&
     (import.meta.client ? !dismissedCookie.value : false)
 )
