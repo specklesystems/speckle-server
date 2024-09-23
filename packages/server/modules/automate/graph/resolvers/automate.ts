@@ -12,8 +12,8 @@ import {
 import {
   GetProjectAutomationsParams,
   getAutomationFactory,
-  getAutomationRunsItems,
-  getAutomationRunsTotalCount,
+  getAutomationRunsItemsFactory,
+  getAutomationRunsTotalCountFactory,
   getAutomationTokenFactory,
   getAutomationTriggerDefinitionsFactory,
   getFullAutomationRevisionMetadataFactory,
@@ -128,6 +128,9 @@ const upsertAutomationRun = upsertAutomationRunFactory({ db })
 const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
 const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
 const updateAutomationRun = updateAutomationRunFactory({ db })
+
+const getAutomationRunsTotalCount = getAutomationRunsTotalCountFactory({ db })
+const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
