@@ -16491,7 +16491,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     prettier: "npm:^2.5.1"
     regenerator-runtime: "npm:^0.13.7"
-    rollup: "npm:^2.70.1"
+    rollup: "npm:^3.29.5"
     rollup-plugin-delete: "npm:^2.0.0"
   languageName: unknown
   linkType: soft
@@ -16953,7 +16953,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     prettier: "npm:^2.5.1"
     regenerator-runtime: "npm:^0.13.7"
-    rollup: "npm:^2.70.1"
+    rollup: "npm:^3.29.5"
     rollup-plugin-delete: "npm:^2.0.0"
     rollup-plugin-terser: "npm:^7.0.2"
     rollup-plugin-typescript2: "npm:^0.36.0"
@@ -46378,20 +46378,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:^2.70.1":
-  version: 2.79.1
-  resolution: "rollup@npm:2.79.1"
-  dependencies:
-    fsevents: "npm:~2.3.2"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    rollup: dist/bin/rollup
-  checksum: 10/df087b701304432f30922bbee5f534ab189aa6938bd383b5686c03147e0d00cd1789ea10a462361326ce6b6ebe448ce272ad3f3cc40b82eeb3157df12f33663c
-  languageName: node
-  linkType: hard
-
 "rollup@npm:^3.21.0, rollup@npm:^3.25.3, rollup@npm:^3.27.1":
   version: 3.29.4
   resolution: "rollup@npm:3.29.4"
@@ -46403,6 +46389,20 @@ __metadata:
   bin:
     rollup: dist/bin/rollup
   checksum: 10/9e39d54e23731a4c4067e9c02910cdf7479a0f9a7584796e2dc6efaa34bb1e5e015c062c87d1e64d96038baca76cefd47681ff22604fae5827147f54123dc6d0
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^3.29.5":
+  version: 3.29.5
+  resolution: "rollup@npm:3.29.5"
+  dependencies:
+    fsevents: "npm:~2.3.2"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: 10/5ce0e5f1d9288d4954db93993477f894eb3042ec98a7c9c19980e53b1f58296481e3dc6c2b1a2a3680b20eb6c3fe64ed97942d5ff29df658a059647c33b3593c
   languageName: node
   linkType: hard
 
