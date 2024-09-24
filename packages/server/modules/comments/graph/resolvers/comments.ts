@@ -6,19 +6,20 @@ import {
   getComments,
   getResourceCommentCount,
   archiveComment,
-  editComment,
   streamResourceCheckFactory,
   createCommentFactory,
-  createCommentReplyFactory
+  createCommentReplyFactory,
+  editCommentFactory
 } from '@/modules/comments/services/index'
 import {
   checkStreamResourceAccessFactory,
   deleteCommentFactory,
-  getComment,
+  getCommentFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
-  markCommentViewedFactory
+  markCommentViewedFactory,
+  updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
   ensureCommentSchema,
@@ -103,6 +104,13 @@ const createCommentReply = createCommentReplyFactory({
   checkStreamResourcesAccess: streamResourceCheck,
   deleteComment,
   markCommentUpdated: markCommentUpdatedFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const getComment = getCommentFactory({ db })
+const editComment = editCommentFactory({
+  getComment,
+  validateInputAttachments,
+  updateComment: updateCommentFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit
 })
 
