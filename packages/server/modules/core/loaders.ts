@@ -36,10 +36,10 @@ import {
   getCommentParents,
   getCommentReplyAuthorIds,
   getCommentReplyCounts,
-  getCommentsResources,
+  getCommentsResourcesFactory,
   getCommentsViewedAt,
   getCommitCommentCounts,
-  getStreamCommentCounts
+  getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
   getBranchCommitCounts,
@@ -62,7 +62,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import {
   getAutomationRevisionsFactory,
-  getAutomationRunsTriggers,
+  getAutomationRunsTriggersFactory,
   getAutomationsFactory,
   getFunctionAutomationCountsFactory,
   getLatestAutomationRevisionsFactory,
@@ -96,6 +96,9 @@ const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
 const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
 const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
 const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
+const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
+const getCommentsResources = getCommentsResourcesFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

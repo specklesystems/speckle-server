@@ -2,11 +2,9 @@
 const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
 const {
   getUserActivity,
-  getStreamActivity,
   getResourceActivity,
   getUserTimeline,
   getActivityCountByResourceId,
-  getActivityCountByStreamId,
   getActivityCountByUserId,
   getTimelineCount
 } = require('../../services/index')
@@ -65,26 +63,6 @@ module.exports = {
 
     async timeline(parent, args) {
       return await userTimelineQueryCore(parent, args)
-    }
-  },
-  Stream: {
-    async activity(parent, args) {
-      const { items, cursor } = await getStreamActivity({
-        streamId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getActivityCountByStreamId({
-        streamId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before
-      })
-
-      return { items, cursor, totalCount }
     }
   },
 

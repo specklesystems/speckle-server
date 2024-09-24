@@ -12,7 +12,6 @@ const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
 const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
-const { createComment } = require('@/modules/comments/services')
 const { createCommitByBranchName } = require('@/modules/core/services/commits')
 const {
   convertBasicStringToDocument
@@ -22,6 +21,39 @@ const {
   createAuthedTestContext,
   executeOperation
 } = require('@/test/graphqlHelper')
+const {
+  streamResourceCheckFactory,
+  createCommentFactory
+} = require('@/modules/comments/services')
+const {
+  checkStreamResourceAccessFactory,
+  markCommentViewedFactory,
+  insertCommentsFactory,
+  insertCommentLinksFactory,
+  deleteCommentFactory
+} = require('@/modules/comments/repositories/comments')
+const { db } = require('@/db/knex')
+const {
+  validateInputAttachmentsFactory
+} = require('@/modules/comments/services/commentTextService')
+const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
+const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments: validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  }),
+  insertComments: insertCommentsFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  deleteComment: deleteCommentFactory({ db }),
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
