@@ -7,9 +7,9 @@ import {
   getComment,
   insertComment,
   insertCommentLinksFactory,
-  markCommentUpdated,
+  markCommentUpdatedFactory,
   markCommentViewedFactory,
-  updateComment
+  updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
   CreateCommentInput,
@@ -211,7 +211,7 @@ export async function createCommentReplyAndNotify(
 
   // Mark parent comment updated and emit events
   await Promise.all([
-    markCommentUpdated(thread.id),
+    markCommentUpdatedFactory({ db })(thread.id),
     CommentsEmitter.emit(CommentsEvents.Created, {
       comment: reply
     }),
@@ -238,7 +238,7 @@ export async function editCommentAndNotify(input: EditCommentInput, userId: stri
   await validateInputAttachmentsFactory({
     getBlobs: getBlobsFactory({ db })
   })(comment.streamId, input.content.blobIds || [])
-  const updatedComment = await updateComment(comment.id, {
+  const updatedComment = await updateCommentFactory({ db })(comment.id, {
     text: buildCommentTextFromInput({
       doc: input.content.doc,
       blobIds: input.content.blobIds || undefined
@@ -271,7 +271,7 @@ export async function archiveCommentAndNotify(
   if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
     throw new CommentUpdateError('You do not have permissions to archive this comment')
   }
-  const updatedComment = await updateComment(comment.id, {
+  const updatedComment = await updateCommentFactory({ db })(comment.id, {
     archived
   })
 

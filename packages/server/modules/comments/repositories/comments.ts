@@ -38,7 +38,9 @@ import {
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
-  MarkCommentViewed
+  MarkCommentUpdated,
+  MarkCommentViewed,
+  UpdateComment
 } from '@/modules/comments/domain/operations'
 import { ObjectRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
 
@@ -718,21 +720,26 @@ export async function insertComment(
   return res as CommentRecord
 }
 
-export async function markCommentUpdated(commentId: string) {
-  return await Comments.knex()
-    .where(Comments.col.id, commentId)
-    .update({
-      [Comments.withoutTablePrefix.col.updatedAt]: new Date()
+export const markCommentUpdatedFactory =
+  (deps: { db: Knex }): MarkCommentUpdated =>
+  async (commentId: string) => {
+    await updateCommentFactory(deps)(commentId, {
+      updatedAt: new Date()
     })
-}
+  }
 
-export async function updateComment(
-  id: string,
-  input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
-) {
-  const [res] = await Comments.knex().where(Comments.col.id, id).update(input, '*')
-  return res as CommentRecord
-}
+export const updateCommentFactory =
+  (deps: { db: Knex }): UpdateComment =>
+  async (
+    id: string,
+    input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
+  ) => {
+    const [res] = await tables
+      .comments(deps.db)
+      .where(Comments.col.id, id)
+      .update(input, '*')
+    return res as CommentRecord
+  }
 
 export const checkStreamResourceAccessFactory =
   (deps: { db: Knex }): CheckStreamResourceAccess =>

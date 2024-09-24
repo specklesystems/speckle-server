@@ -5,11 +5,11 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getComments,
   getResourceCommentCount,
-  createCommentReply,
   archiveComment,
   editComment,
   streamResourceCheckFactory,
-  createCommentFactory
+  createCommentFactory,
+  createCommentReplyFactory
 } from '@/modules/comments/services/index'
 import {
   checkStreamResourceAccessFactory,
@@ -17,6 +17,7 @@ import {
   getComment,
   insertCommentLinksFactory,
   insertCommentsFactory,
+  markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
 import {
@@ -80,15 +81,28 @@ const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
 const markCommentViewed = markCommentViewedFactory({ db })
+const validateInputAttachments = validateInputAttachmentsFactory({
+  getBlobs: getBlobsFactory({ db })
+})
+const insertComments = insertCommentsFactory({ db })
+const insertCommentLinks = insertCommentLinksFactory({ db })
+const deleteComment = deleteCommentFactory({ db })
 const createComment = createCommentFactory({
   checkStreamResourcesAccess: streamResourceCheck,
-  validateInputAttachments: validateInputAttachmentsFactory({
-    getBlobs: getBlobsFactory({ db })
-  }),
-  insertComments: insertCommentsFactory({ db }),
-  insertCommentLinks: insertCommentLinksFactory({ db }),
-  deleteComment: deleteCommentFactory({ db }),
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  deleteComment,
   markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const createCommentReply = createCommentReplyFactory({
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  checkStreamResourcesAccess: streamResourceCheck,
+  deleteComment,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit
 })
 

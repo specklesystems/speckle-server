@@ -3,6 +3,7 @@ import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/typ
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
 import { Knex } from 'knex'
+import { Merge } from 'type-fest'
 
 export type CheckStreamResourceAccess = (
   res: ResourceIdentifier,
@@ -30,6 +31,13 @@ export type InsertCommentLinks = (
 export type DeleteComment = (params: { commentId: string }) => Promise<boolean>
 
 export type MarkCommentViewed = (commentId: string, userId: string) => Promise<boolean>
+
+export type UpdateComment = (
+  id: string,
+  input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
+) => Promise<CommentRecord>
+
+export type MarkCommentUpdated = (commentId: string) => Promise<void>
 
 export type CheckStreamResourcesAccess = (params: {
   streamId: string
