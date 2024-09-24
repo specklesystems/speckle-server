@@ -12,11 +12,14 @@ export type UpdateProject = (args: {
   projectUpdate: Pick<StreamRecord, 'id' | 'workspaceId'>
 }) => Promise<StreamRecord>
 
-export type UpsertProjectRole = (args: {
-  projectId: string
-  userId: string
-  role: StreamRoles
-}) => Promise<StreamRecord>
+export type UpsertProjectRole = (
+  args: {
+    projectId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: { trackProjectUpdate?: boolean }
+) => Promise<StreamRecord>
 
 export type DeleteProjectRole = (args: {
   projectId: string
