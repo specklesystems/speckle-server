@@ -446,8 +446,68 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const refreshSendFilters = async () =>
     (sendFilters.value = await app.$sendBinding?.getSendFilters())
 
-  const getSendSettings = async () =>
-    (sendSettings.value = await app.$sendBinding.getSendSettings())
+  const getSendSettings = async () => {
+    sendSettings.value = await app.$sendBinding.getSendSettings()
+    tryToUpgradeSendSettings()
+  }
+
+  const tryToUpgradeSendSettings = () => {
+    if (documentModelStore.value.models.length === 0) {
+      return
+    }
+    const senderModelCards = documentModelStore.value.models.filter(
+      (m) => m.typeDiscriminator === 'SenderModelCard'
+    )
+    if (senderModelCards.length === 0) {
+      return
+    }
+    const sendSettingIds = sendSettings.value?.map((s) => s.id)
+    senderModelCards.forEach(async (senderModelCard) => {
+      const idsToUpgrade = [] as string[]
+      const idsToDrop = [] as string[]
+      senderModelCard.settings?.forEach((setting) => {
+        // Check for new settings
+        sendSettingIds?.forEach((id) => {
+          const isIdExist = senderModelCard.settings?.find((s) => s.id === id)
+          if (!isIdExist) {
+            idsToUpgrade.push(id)
+          }
+        })
+        // Check for existing settings need to upgraded or dropped
+        if (sendSettingIds?.includes(setting.id)) {
+          if (setting.type === 'string' && setting.enum) {
+            if (
+              setting.enum.length !==
+              sendSettings.value?.find((s) => s.id === setting.id)?.enum?.length
+            ) {
+              idsToUpgrade.push(setting.id)
+            }
+          }
+        } else {
+          idsToDrop.push(setting.id)
+        }
+      })
+
+      if (idsToUpgrade.length !== 0 && idsToDrop.length !== 0) {
+        // Prepare new settings by filtering the old ones and adding upgraded ones
+        const newSettings = senderModelCard.settings?.filter(
+          (setting) => !idsToDrop.includes(setting.id)
+        )
+
+        idsToUpgrade.forEach((id) => {
+          const upgradedSetting = sendSettings.value?.find((s) => s.id === id)
+          if (upgradedSetting) {
+            newSettings?.push(upgradedSetting)
+          }
+        })
+
+        // Patch the model with the new settings
+        await patchModel(senderModelCard.modelCardId, {
+          settings: newSettings
+        })
+      }
+    })
+  }
 
   app.$baseBinding.on(
     'documentChanged',
