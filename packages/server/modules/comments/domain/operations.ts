@@ -1,9 +1,17 @@
-import { ExtendedComment, ResourceIdentifier } from '@/modules/comments/domain/types'
+import {
+  ExtendedComment,
+  ResourceIdentifier,
+  ViewerResourceItem
+} from '@/modules/comments/domain/types'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
+import { LegacyCommentViewerData } from '@/test/graphql/generated/graphql'
+import { SpeckleViewer } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
+
+type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
 export type GetComment = (params: {
   id: string
@@ -44,6 +52,13 @@ export type UpdateComment = (
 
 export type MarkCommentUpdated = (commentId: string) => Promise<void>
 
+export type GetCommentsResources = (commentIds: string[]) => Promise<{
+  [commentId: string]: {
+    commentId: string
+    resources: ResourceIdentifier[]
+  }
+}>
+
 export type CheckStreamResourcesAccess = (params: {
   streamId: string
   resources: ResourceIdentifier[]
@@ -53,3 +68,23 @@ export type ValidateInputAttachments = (
   streamId: string,
   blobIds: string[]
 ) => Promise<void>
+
+export type GetViewerResourcesForComments = (
+  projectId: string,
+  commentIds: string[]
+) => Promise<ViewerResourceItem[]>
+
+export type GetViewerResourcesForComment = (
+  projectId: string,
+  commentId: string
+) => Promise<ViewerResourceItem[]>
+
+export type GetViewerResourcesFromLegacyIdentifiers = (
+  projectId: string,
+  resources: Array<ResourceIdentifier>
+) => Promise<ViewerResourceItem[]>
+
+export type ConvertLegacyDataToState = (
+  data: Partial<LegacyCommentViewerData>,
+  comment: CommentRecord
+) => Promise<SerializedViewerState>

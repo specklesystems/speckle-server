@@ -36,6 +36,7 @@ import {
   CheckStreamResourceAccess,
   DeleteComment,
   GetComment,
+  GetCommentsResources,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
@@ -84,22 +85,25 @@ export const getCommentFactory =
 /**
  * Get resources array for the specified comments. Results object is keyed by comment ID.
  */
-export async function getCommentsResources(commentIds: string[]) {
-  if (!commentIds.length) return {}
+export const getCommentsResourcesFactory =
+  (deps: { db: Knex }): GetCommentsResources =>
+  async (commentIds: string[]) => {
+    if (!commentIds.length) return {}
 
-  const q = CommentLinks.knex()
-    .select<{ commentId: string; resources: ResourceIdentifier[] }[]>([
-      CommentLinks.col.commentId,
-      knex.raw(
-        `JSON_AGG(json_build_object('resourceId', "resourceId", 'resourceType', "resourceType")) as resources`
-      )
-    ])
-    .whereIn(CommentLinks.col.commentId, commentIds)
-    .groupBy(CommentLinks.col.commentId)
+    const q = tables
+      .commentLinks(deps.db)
+      .select<{ commentId: string; resources: ResourceIdentifier[] }[]>([
+        CommentLinks.col.commentId,
+        knex.raw(
+          `JSON_AGG(json_build_object('resourceId', "resourceId", 'resourceType', "resourceType")) as resources`
+        )
+      ])
+      .whereIn(CommentLinks.col.commentId, commentIds)
+      .groupBy(CommentLinks.col.commentId)
 
-  const results = await q
-  return keyBy(results, 'commentId')
-}
+    const results = await q
+    return keyBy(results, 'commentId')
+  }
 
 export async function getCommentsViewedAt(commentIds: string[], userId: string) {
   if (!commentIds?.length || !userId) return []

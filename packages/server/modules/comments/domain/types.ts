@@ -1,4 +1,5 @@
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import { Nullable } from '@speckle/shared'
 
 export type ResourceIdentifier = {
   resourceId: string
@@ -23,4 +24,12 @@ export type ExtendedComment = CommentRecord & {
    * viewed this comment
    */
   viewedAt?: Date
+}
+
+export type ViewerResourceItem = {
+  /** Null if resource represents an object */
+  modelId?: Nullable<string>
+  objectId: string
+  /** Null if resource represents an object */
+  versionId?: Nullable<string>
 }

@@ -36,7 +36,7 @@ import {
   getCommentParents,
   getCommentReplyAuthorIds,
   getCommentReplyCounts,
-  getCommentsResources,
+  getCommentsResourcesFactory,
   getCommentsViewedAt,
   getCommitCommentCounts,
   getStreamCommentCountsFactory
@@ -98,6 +98,7 @@ const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
 const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
 const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
 const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
+const getCommentsResources = getCommentsResourcesFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
