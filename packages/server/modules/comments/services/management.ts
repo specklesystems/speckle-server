@@ -4,10 +4,6 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
-  getCommentFactory,
-  updateCommentFactory
-} from '@/modules/comments/repositories/comments'
-import {
   CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput
@@ -31,8 +27,8 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { db } from '@/db/knex'
 import {
+  ArchiveCommentAndNotify,
   CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify,
   EditCommentAndNotify,
@@ -290,28 +286,35 @@ export const editCommentAndNotifyFactory =
     return updatedComment
   }
 
-export async function archiveCommentAndNotify(
-  commentId: string,
-  userId: string,
-  archived = true
-) {
-  const comment = await getCommentFactory({ db })({ id: commentId, userId })
-  if (!comment) {
-    throw new CommentUpdateError(
-      "Specified comment doesn't exist and thus it's archival status can't be changed"
-    )
-  }
+export const archiveCommentAndNotifyFactory =
+  (deps: {
+    getComment: GetComment
+    getStream: typeof getStream
+    updateComment: UpdateComment
+    addCommentArchivedActivity: typeof addCommentArchivedActivity
+  }): ArchiveCommentAndNotify =>
+  async (commentId: string, userId: string, archived = true) => {
+    const comment = await deps.getComment({ id: commentId, userId })
+    if (!comment) {
+      throw new CommentUpdateError(
+        "Specified comment doesn't exist and thus it's archival status can't be changed"
+      )
+    }
 
-  const stream = await getStream({ streamId: comment.streamId, userId })
-  if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
-    throw new CommentUpdateError('You do not have permissions to archive this comment')
-  }
-  const updatedComment = await updateCommentFactory({ db })(comment.id, {
-    archived
-  })
+    const stream = await deps.getStream({ streamId: comment.streamId, userId })
+    if (
+      !stream ||
+      (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
+    ) {
+      throw new CommentUpdateError(
+        'You do not have permissions to archive this comment'
+      )
+    }
+    const updatedComment = await deps.updateComment(comment.id, {
+      archived
+    })
 
-  await Promise.all([
-    addCommentArchivedActivity({
+    await deps.addCommentArchivedActivity({
       streamId: stream.id,
       commentId,
       userId,
@@ -322,7 +325,6 @@ export async function archiveCommentAndNotify(
       },
       comment: updatedComment!
     })
-  ])
 
-  return updatedComment
-}
+    return updatedComment
+  }
