@@ -13,21 +13,14 @@ import {
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
-import {
-  buildCommentTextFromInput,
-  validateInputAttachmentsFactory
-} from '@/modules/comments/services/commentTextService'
+import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { knex } from '@/modules/core/dbSchema'
 import {
   CommentLinkRecord,
   CommentLinkResourceType,
   CommentRecord
 } from '@/modules/comments/helpers/types'
-import {
-  CommentsEmitter,
-  CommentsEvents,
-  CommentsEventsEmit
-} from '@/modules/comments/events/emitter'
+import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
 import {
   addCommentArchivedActivity,
   addCommentCreatedActivity,
@@ -38,11 +31,11 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
 import {
   CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify,
+  EditCommentAndNotify,
   GetComment,
   GetViewerResourceItemsUngrouped,
   InsertCommentLinks,
@@ -50,6 +43,7 @@ import {
   InsertComments,
   MarkCommentUpdated,
   MarkCommentViewed,
+  UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 
@@ -264,34 +258,37 @@ export const createCommentReplyAndNotifyFactory =
     return reply
   }
 
-export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
-  const comment = await getCommentFactory({ db })({ id: input.commentId, userId })
-  if (!comment) {
-    throw new CommentUpdateError('Comment update failed due to nonexistant comment')
-  }
-  if (comment.authorId !== userId) {
-    throw new CommentUpdateError("You cannot edit someone else's comments")
-  }
+export const editCommentAndNotifyFactory =
+  (deps: {
+    getComment: GetComment
+    validateInputAttachments: ValidateInputAttachments
+    updateComment: UpdateComment
+    commentsEventsEmit: CommentsEventsEmit
+  }): EditCommentAndNotify =>
+  async (input: EditCommentInput, userId: string) => {
+    const comment = await deps.getComment({ id: input.commentId, userId })
+    if (!comment) {
+      throw new CommentUpdateError('Comment update failed due to nonexistant comment')
+    }
+    if (comment.authorId !== userId) {
+      throw new CommentUpdateError("You cannot edit someone else's comments")
+    }
 
-  await validateInputAttachmentsFactory({
-    getBlobs: getBlobsFactory({ db })
-  })(comment.streamId, input.content.blobIds || [])
-  const updatedComment = await updateCommentFactory({ db })(comment.id, {
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
+    await deps.validateInputAttachments(comment.streamId, input.content.blobIds || [])
+    const updatedComment = await deps.updateComment(comment.id, {
+      text: buildCommentTextFromInput({
+        doc: input.content.doc,
+        blobIds: input.content.blobIds || undefined
+      })
     })
-  })
 
-  await Promise.all([
-    CommentsEmitter.emit(CommentsEvents.Updated, {
+    await deps.commentsEventsEmit(CommentsEvents.Updated, {
       previousComment: comment,
       newComment: updatedComment!
     })
-  ])
 
-  return updatedComment
-}
+    return updatedComment
+  }
 
 export async function archiveCommentAndNotify(
   commentId: string,
