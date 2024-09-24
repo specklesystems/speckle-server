@@ -16,22 +16,22 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 const { createObject } = require('@/modules/core/services/objects')
 const {
-  createComment,
   getComments,
-  getComment,
-  editComment,
-  viewComment,
-  createCommentReply,
   archiveComment,
   getResourceCommentCount,
-  getStreamCommentCount
-} = require('../services/index')
+  getStreamCommentCount,
+  streamResourceCheckFactory,
+  createCommentFactory,
+  createCommentReplyFactory,
+  editCommentFactory
+} = require('@/modules/comments/services/index')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
 const {
   ensureCommentSchema,
-  buildCommentTextFromInput
+  buildCommentTextFromInput,
+  validateInputAttachmentsFactory
 } = require('@/modules/comments/services/commentTextService')
 const { range } = require('lodash')
 const { buildApolloServer } = require('@/app')
@@ -47,6 +47,55 @@ const {
 const { NotificationType } = require('@/modules/notifications/helpers/types')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
 const { createAuthedTestContext } = require('@/test/graphqlHelper')
+const {
+  checkStreamResourceAccessFactory,
+  markCommentViewedFactory,
+  insertCommentsFactory,
+  insertCommentLinksFactory,
+  deleteCommentFactory,
+  markCommentUpdatedFactory,
+  getCommentFactory,
+  updateCommentFactory
+} = require('@/modules/comments/repositories/comments')
+const { db } = require('@/db/knex')
+const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
+const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const validateInputAttachments = validateInputAttachmentsFactory({
+  getBlobs: getBlobsFactory({ db })
+})
+const insertComments = insertCommentsFactory({ db })
+const insertCommentLinks = insertCommentLinksFactory({ db })
+const deleteComment = deleteCommentFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  deleteComment,
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const createCommentReply = createCommentReplyFactory({
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  checkStreamResourcesAccess: streamResourceCheck,
+  deleteComment,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const getComment = getCommentFactory({ db })
+const editComment = editCommentFactory({
+  getComment,
+  validateInputAttachments,
+  updateComment: updateCommentFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -410,7 +459,7 @@ describe('Comments @comments', () => {
     const commentOtherUser = await getComment({ id, userId: otherUser.id })
     expect(commentOtherUser.viewedAt).to.be.null
 
-    await viewComment({ userId: user.id, commentId: id })
+    await markCommentViewed(id, user.id)
 
     const viewedCommentOtherUser = await getComment({ id, userId: otherUser.id })
     expect(viewedCommentOtherUser).to.haveOwnProperty('viewedAt')

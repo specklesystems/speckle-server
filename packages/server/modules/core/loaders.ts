@@ -62,7 +62,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import {
   getAutomationRevisionsFactory,
-  getAutomationRunsTriggers,
+  getAutomationRunsTriggersFactory,
   getAutomationsFactory,
   getFunctionAutomationCountsFactory,
   getLatestAutomationRevisionsFactory,
@@ -96,6 +96,7 @@ const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
 const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
 const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
 const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

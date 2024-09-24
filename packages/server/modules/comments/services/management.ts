@@ -4,13 +4,12 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
-  InsertCommentPayload,
-  getComment,
-  markCommentViewed,
+  getCommentFactory,
   insertComment,
-  insertCommentLinks,
-  markCommentUpdated,
-  updateComment
+  insertCommentLinksFactory,
+  markCommentUpdatedFactory,
+  markCommentViewedFactory,
+  updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
   CreateCommentInput,
@@ -21,7 +20,7 @@ import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import {
   buildCommentTextFromInput,
-  validateInputAttachments
+  validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
 import { knex } from '@/modules/core/dbSchema'
 import {
@@ -40,6 +39,9 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { db } from '@/db/knex'
+import { InsertCommentPayload } from '@/modules/comments/domain/operations'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -76,7 +78,10 @@ export async function authorizeCommentAccess(params: {
   requireProjectRole?: boolean
 }) {
   const { authCtx, commentId, requireProjectRole } = params
-  const comment = await getComment({ id: commentId, userId: authCtx.userId })
+  const comment = await getCommentFactory({ db })({
+    id: commentId,
+    userId: authCtx.userId
+  })
   if (!comment) {
     throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
   }
@@ -88,17 +93,16 @@ export async function authorizeCommentAccess(params: {
   })
 }
 
-export async function markViewed(commentId: string, userId: string) {
-  await markCommentViewed(commentId, userId)
-}
-
 export async function createCommentThreadAndNotify(
   input: CreateCommentInput,
   userId: string
 ) {
   const [resources] = await Promise.all([
     getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
-    validateInputAttachments(input.projectId, input.content.blobIds || [])
+    validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+      input.projectId,
+      input.content.blobIds || []
+    )
   ])
   if (!resources.length) {
     throw new CommentCreateError(
@@ -141,7 +145,7 @@ export async function createCommentThreadAndNotify(
           resourceType
         }
       })
-      await insertCommentLinks(links, { trx })
+      await insertCommentLinksFactory({ db })(links, { trx })
 
       return comment
     })
@@ -151,7 +155,7 @@ export async function createCommentThreadAndNotify(
 
   // Mark as viewed and emit events
   await Promise.all([
-    markViewed(comment.id, userId),
+    markCommentViewedFactory({ db })(comment.id, userId),
     CommentsEmitter.emit(CommentsEvents.Created, {
       comment
     }),
@@ -173,11 +177,14 @@ export async function createCommentReplyAndNotify(
   input: CreateCommentReplyInput,
   userId: string
 ) {
-  const thread = await getComment({ id: input.threadId, userId })
+  const thread = await getCommentFactory({ db })({ id: input.threadId, userId })
   if (!thread) {
     throw new CommentCreateError('Reply creation failed due to nonexistant thread')
   }
-  await validateInputAttachments(thread.streamId, input.content.blobIds || [])
+  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+    thread.streamId,
+    input.content.blobIds || []
+  )
 
   const commentPayload: InsertCommentPayload = {
     streamId: thread.streamId,
@@ -197,7 +204,7 @@ export async function createCommentReplyAndNotify(
       const links: CommentLinkRecord[] = [
         { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
       ]
-      await insertCommentLinks(links, { trx })
+      await insertCommentLinksFactory({ db })(links, { trx })
 
       return reply
     })
@@ -207,7 +214,7 @@ export async function createCommentReplyAndNotify(
 
   // Mark parent comment updated and emit events
   await Promise.all([
-    markCommentUpdated(thread.id),
+    markCommentUpdatedFactory({ db })(thread.id),
     CommentsEmitter.emit(CommentsEvents.Created, {
       comment: reply
     }),
@@ -223,7 +230,7 @@ export async function createCommentReplyAndNotify(
 }
 
 export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
-  const comment = await getComment({ id: input.commentId, userId })
+  const comment = await getCommentFactory({ db })({ id: input.commentId, userId })
   if (!comment) {
     throw new CommentUpdateError('Comment update failed due to nonexistant comment')
   }
@@ -231,8 +238,10 @@ export async function editCommentAndNotify(input: EditCommentInput, userId: stri
     throw new CommentUpdateError("You cannot edit someone else's comments")
   }
 
-  await validateInputAttachments(comment.streamId, input.content.blobIds || [])
-  const updatedComment = await updateComment(comment.id, {
+  await validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  })(comment.streamId, input.content.blobIds || [])
+  const updatedComment = await updateCommentFactory({ db })(comment.id, {
     text: buildCommentTextFromInput({
       doc: input.content.doc,
       blobIds: input.content.blobIds || undefined
@@ -242,7 +251,7 @@ export async function editCommentAndNotify(input: EditCommentInput, userId: stri
   await Promise.all([
     CommentsEmitter.emit(CommentsEvents.Updated, {
       previousComment: comment,
-      newComment: updatedComment
+      newComment: updatedComment!
     })
   ])
 
@@ -254,7 +263,7 @@ export async function archiveCommentAndNotify(
   userId: string,
   archived = true
 ) {
-  const comment = await getComment({ id: commentId, userId })
+  const comment = await getCommentFactory({ db })({ id: commentId, userId })
   if (!comment) {
     throw new CommentUpdateError(
       "Specified comment doesn't exist and thus it's archival status can't be changed"
@@ -265,7 +274,7 @@ export async function archiveCommentAndNotify(
   if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
     throw new CommentUpdateError('You do not have permissions to archive this comment')
   }
-  const updatedComment = await updateComment(comment.id, {
+  const updatedComment = await updateCommentFactory({ db })(comment.id, {
     archived
   })
 
@@ -279,7 +288,7 @@ export async function archiveCommentAndNotify(
         streamId: stream.id,
         commentId
       },
-      comment: updatedComment
+      comment: updatedComment!
     })
   ])
 
