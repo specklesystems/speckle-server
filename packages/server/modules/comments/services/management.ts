@@ -44,6 +44,7 @@ import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
 import {
+  CreateCommentThreadAndNotify,
   GetComment,
   GetViewerResourceItemsUngrouped,
   InsertCommentLinks,
@@ -129,7 +130,7 @@ export const createCommentThreadAndNotifyFactory =
     markCommentViewed: MarkCommentViewed
     commentsEventsEmit: CommentsEventsEmit
     addCommentCreatedActivity: typeof addCommentCreatedActivity
-  }) =>
+  }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
     const [resources] = await Promise.all([
       deps.getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
