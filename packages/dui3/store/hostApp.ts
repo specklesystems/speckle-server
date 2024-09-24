@@ -452,43 +452,40 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   }
 
   const tryToUpgradeSendSettings = () => {
-    if (documentModelStore.value.models.length === 0) {
-      return
-    }
+    if (documentModelStore.value.models.length === 0) return
     const senderModelCards = documentModelStore.value.models.filter(
       (m) => m.typeDiscriminator === 'SenderModelCard'
     )
-    if (senderModelCards.length === 0) {
-      return
-    }
-    const sendSettingIds = sendSettings.value?.map((s) => s.id)
+    if (senderModelCards.length === 0) return
+
+    const sendSettingIds = sendSettings.value?.map((s) => s.id) || []
     senderModelCards.forEach(async (senderModelCard) => {
       const idsToUpgrade = [] as string[]
       const idsToDrop = [] as string[]
-      senderModelCard.settings?.forEach((setting) => {
-        // Check for new settings
-        sendSettingIds?.forEach((id) => {
-          const isIdExist = senderModelCard.settings?.find((s) => s.id === id)
-          if (!isIdExist) {
+
+      sendSettingIds?.forEach((id) => {
+        const existingSetting = senderModelCard.settings?.find((s) => s.id === id)
+
+        if (!existingSetting) {
+          // If the setting does not exist, it's a new one to upgrade
+          idsToUpgrade.push(id)
+        } else if (existingSetting.type === 'string' && existingSetting.enum) {
+          // Check if existing setting's enum needs upgrading
+          const currentEnum = sendSettings.value?.find((s) => s.id === id)?.enum
+          if (currentEnum && existingSetting.enum.length !== currentEnum.length) {
             idsToUpgrade.push(id)
           }
-        })
-        // Check for existing settings need to upgraded or dropped
-        if (sendSettingIds?.includes(setting.id)) {
-          if (setting.type === 'string' && setting.enum) {
-            if (
-              setting.enum.length !==
-              sendSettings.value?.find((s) => s.id === setting.id)?.enum?.length
-            ) {
-              idsToUpgrade.push(setting.id)
-            }
-          }
-        } else {
+        }
+      })
+
+      // Identify settings to drop (if they no longer exist in sendSettingIds)
+      senderModelCard.settings?.forEach((setting) => {
+        if (!sendSettingIds.includes(setting.id)) {
           idsToDrop.push(setting.id)
         }
       })
 
-      if (idsToUpgrade.length !== 0 && idsToDrop.length !== 0) {
+      if (idsToUpgrade.length !== 0 || idsToDrop.length !== 0) {
         // Prepare new settings by filtering the old ones and adding upgraded ones
         const newSettings = senderModelCard.settings?.filter(
           (setting) => !idsToDrop.includes(setting.id)
@@ -517,6 +514,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         void refreshDocumentInfo()
         void refreshDocumentModelStore()
         void refreshSendFilters()
+        tryToUpgradeSendSettings()
       }, 500) // timeout exists because of rhino
   )
 
