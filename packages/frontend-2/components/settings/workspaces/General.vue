@@ -25,6 +25,7 @@
           label="Short ID"
           name="shortId"
           :help="slugHelp"
+          :disabled="!isAdmin"
           show-label
           label-position="left"
           read-only
