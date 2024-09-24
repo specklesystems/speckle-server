@@ -8,11 +8,12 @@ import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/typ
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
+  EditCommentInput,
+  LegacyCommentViewerData,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
-import { LegacyCommentViewerData } from '@/test/graphql/generated/graphql'
 import { SpeckleViewer } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
@@ -112,3 +113,8 @@ export type CreateCommentReplyAndNotify = (
   input: CreateCommentReplyInput,
   userId: string
 ) => Promise<CommentRecord>
+
+export type EditCommentAndNotify = (
+  input: EditCommentInput,
+  userId: string
+) => Promise<Optional<CommentRecord>>
