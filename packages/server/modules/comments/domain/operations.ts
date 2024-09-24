@@ -14,7 +14,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
-import { SpeckleViewer } from '@speckle/shared'
+import { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 
@@ -65,6 +65,17 @@ export type GetCommentsResources = (commentIds: string[]) => Promise<{
     resources: ResourceIdentifier[]
   }
 }>
+
+export type GetPaginatedCommitCommentsPage = (
+  params: PaginatedCommitCommentsParams
+) => Promise<{
+  items: CommentRecord[]
+  cursor: string | null
+}>
+
+export type GetPaginatedCommitCommentsTotalCount = (
+  params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
+) => Promise<number>
 
 export type CheckStreamResourcesAccess = (params: {
   streamId: string
@@ -124,3 +135,21 @@ export type ArchiveCommentAndNotify = (
   userId: string,
   archived?: boolean
 ) => Promise<Optional<CommentRecord>>
+
+export type PaginatedCommitCommentsParams = {
+  commitId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+export type GetPaginatedCommitComments = (
+  params: PaginatedCommitCommentsParams
+) => Promise<{
+  totalCount: number
+  items: CommentRecord[]
+  cursor: string | null
+}>
