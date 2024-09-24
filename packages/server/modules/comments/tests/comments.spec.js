@@ -9,8 +9,6 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 const { createObject } = require('@/modules/core/services/objects')
 const {
-  getResourceCommentCount,
-  getStreamCommentCount,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
@@ -51,7 +49,9 @@ const {
   markCommentUpdatedFactory,
   getCommentFactory,
   updateCommentFactory,
-  getCommentsLegacyFactory
+  getCommentsLegacyFactory,
+  getResourceCommentCountFactory,
+  getStreamCommentCountFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
@@ -100,6 +100,8 @@ const archiveComment = archiveCommentFactory({
   updateComment
 })
 const getComments = getCommentsLegacyFactory({ db })
+const getResourceCommentCount = getResourceCommentCountFactory({ db })
+const getStreamCommentCount = getStreamCommentCountFactory({ db })
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -400,7 +402,7 @@ describe('Comments @comments', () => {
       archived: true
     })
 
-    const count = await getStreamCommentCount({ streamId: stream.id }) // should be 30
+    const count = await getStreamCommentCount(stream.id, { threadsOnly: true }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({ resourceId: obj.id })
@@ -422,7 +424,9 @@ describe('Comments @comments', () => {
       authorId: user.id
     })
 
-    const countOther = await getStreamCommentCount({ streamId: streamOther.id })
+    const countOther = await getStreamCommentCount(streamOther.id, {
+      threadsOnly: true
+    })
     expect(countOther).to.equal(0)
 
     const objCountOther = await getResourceCommentCount({

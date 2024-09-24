@@ -1,9 +1,7 @@
 import crs from 'crypto-random-string'
-import knex from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
-import { getStreamCommentCount as repoGetStreamCommentCount } from '@/modules/comments/repositories/comments'
 import { isNonNullable, Roles } from '@speckle/shared'
 import {
   ResourceIdentifier,
@@ -27,8 +25,6 @@ import {
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
 import { getStream } from '@/modules/core/repositories/streams'
-
-const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
 
 export const streamResourceCheckFactory =
   (deps: {
@@ -271,20 +267,3 @@ export const archiveCommentFactory =
     const updatedComment = await deps.updateComment(commentId, { archived })
     return updatedComment!
   }
-
-export async function getResourceCommentCount({ resourceId }: { resourceId: string }) {
-  const [res] = await CommentLinks()
-    .count('commentId')
-    .where({ resourceId })
-    .join('comments', 'comments.id', '=', 'commentId')
-    .where('comments.archived', '=', false)
-
-  if (res && res.count) {
-    return parseInt(String(res.count))
-  }
-  return 0
-}
-
-export async function getStreamCommentCount({ streamId }: { streamId: string }) {
-  return (await repoGetStreamCommentCount(streamId, { threadsOnly: true })) || 0
-}
