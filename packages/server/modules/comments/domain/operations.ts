@@ -77,6 +77,17 @@ export type GetPaginatedCommitCommentsTotalCount = (
   params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
 ) => Promise<number>
 
+export type GetPaginatedBranchCommentsPage = (
+  params: PaginatedBranchCommentsParams
+) => Promise<{
+  items: CommentRecord[]
+  cursor: string | null
+}>
+
+export type GetPaginatedBranchCommentsTotalCount = (
+  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
+) => Promise<number>
+
 export type CheckStreamResourcesAccess = (params: {
   streamId: string
   resources: ResourceIdentifier[]
@@ -148,6 +159,24 @@ export type PaginatedCommitCommentsParams = {
 
 export type GetPaginatedCommitComments = (
   params: PaginatedCommitCommentsParams
+) => Promise<{
+  totalCount: number
+  items: CommentRecord[]
+  cursor: string | null
+}>
+
+export type PaginatedBranchCommentsParams = {
+  branchId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+export type GetPaginatedBranchCommentsFactory = (
+  params: PaginatedBranchCommentsParams
 ) => Promise<{
   totalCount: number
   items: CommentRecord[]
