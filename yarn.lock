@@ -16439,7 +16439,7 @@ __metadata:
     unplugin-vue-components: "npm:^0.25.1"
     uuid: "npm:^8.3.2"
     v-tooltip: "npm:^2.0.3"
-    vite: "npm:^5.3.4"
+    vite: "npm:^4.5.5"
     vite-bundle-visualizer: "npm:^0.7.0"
     vite-plugin-simple-gql: "npm:^0.5.0"
     vue: "npm:^2.7.5"
@@ -16513,7 +16513,7 @@ __metadata:
     prettier: "npm:^3.3.2"
     reflect-metadata: "npm:^0.2.2"
     typescript: "npm:^5.2.2"
-    vite: "npm:^5.2.0"
+    vite: "npm:^4.5.5"
     vite-plugin-dts: "npm:^3.9.1"
     vitest: "npm:^1.6.0"
   languageName: unknown
@@ -16876,7 +16876,7 @@ __metadata:
     unplugin-vue-macros: "npm:^2.7.0"
     v3-infinite-loading: "npm:^1.2.2"
     vee-validate: "npm:^4.7.0"
-    vite: "npm:^4.5.2"
+    vite: "npm:^4.5.5"
     vite-plugin-dts: "npm:^3.6.3"
     vue: "npm:^3.3.8"
     vue-advanced-cropper: "npm:^2.8.8"
@@ -16900,7 +16900,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     tweakpane: "npm:^3.0.8"
     typescript: "npm:^4.5.4"
-    vite: "npm:^5.0.12"
+    vite: "npm:^4.5.5"
     wrangler: "npm:^3.51.2"
   languageName: unknown
   linkType: soft
@@ -43843,17 +43843,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.39":
-  version: 8.4.39
-  resolution: "postcss@npm:8.4.39"
-  dependencies:
-    nanoid: "npm:^3.3.7"
-    picocolors: "npm:^1.0.1"
-    source-map-js: "npm:^1.2.0"
-  checksum: 10/ad9c1add892c96433b9a5502878201ede4a20c4ce02d056251f61f8d9a3e5426dab3683fe5a086edfa78a1a19f2b4988c8cea02c5122136d29758cb5a17e2621
-  languageName: node
-  linkType: hard
-
 "postgres-array@npm:~2.0.0":
   version: 2.0.0
   resolution: "postgres-array@npm:2.0.0"
@@ -51697,7 +51686,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^3.0.0 || ^4.0.0, vite@npm:^4.5.2":
+"vite@npm:^3.0.0 || ^4.0.0":
   version: 4.5.2
   resolution: "vite@npm:4.5.2"
   dependencies:
@@ -51737,7 +51726,47 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^5.0.0, vite@npm:^5.0.12, vite@npm:^5.2.0, vite@npm:^5.3.1":
+"vite@npm:^4.5.5":
+  version: 4.5.5
+  resolution: "vite@npm:4.5.5"
+  dependencies:
+    esbuild: "npm:^0.18.10"
+    fsevents: "npm:~2.3.2"
+    postcss: "npm:^8.4.27"
+    rollup: "npm:^3.27.1"
+  peerDependencies:
+    "@types/node": ">= 14"
+    less: "*"
+    lightningcss: ^1.21.0
+    sass: "*"
+    stylus: "*"
+    sugarss: "*"
+    terser: ^5.4.0
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+    less:
+      optional: true
+    lightningcss:
+      optional: true
+    sass:
+      optional: true
+    stylus:
+      optional: true
+    sugarss:
+      optional: true
+    terser:
+      optional: true
+  bin:
+    vite: bin/vite.js
+  checksum: 10/2e8b39e004f2b2e72506b816700b3aafaf3f85bdcb9dd9392075bb234ce7333f859a0d2078a85ce5d0039f0f659ca564a7366af587848e5166f14b136cb0ad37
+  languageName: node
+  linkType: hard
+
+"vite@npm:^5.0.0, vite@npm:^5.3.1":
   version: 5.3.1
   resolution: "vite@npm:5.3.1"
   dependencies:
@@ -51774,46 +51803,6 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10/180ca1795389f1ebc0b09f2ce61846943d34df597c4719e68d1d5ecba3e6cbd5b3313a4a321119b18290de3ef543df433659ba8b678de84df152e0386342697f
-  languageName: node
-  linkType: hard
-
-"vite@npm:^5.3.4":
-  version: 5.3.4
-  resolution: "vite@npm:5.3.4"
-  dependencies:
-    esbuild: "npm:^0.21.3"
-    fsevents: "npm:~2.3.3"
-    postcss: "npm:^8.4.39"
-    rollup: "npm:^4.13.0"
-  peerDependencies:
-    "@types/node": ^18.0.0 || >=20.0.0
-    less: "*"
-    lightningcss: ^1.21.0
-    sass: "*"
-    stylus: "*"
-    sugarss: "*"
-    terser: ^5.4.0
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  peerDependenciesMeta:
-    "@types/node":
-      optional: true
-    less:
-      optional: true
-    lightningcss:
-      optional: true
-    sass:
-      optional: true
-    stylus:
-      optional: true
-    sugarss:
-      optional: true
-    terser:
-      optional: true
-  bin:
-    vite: bin/vite.js
-  checksum: 10/9eadb261be1f5f6335a67cb44a8803febd8b190202909385fd2ae7849991095ee13c5af914da53da48a421ee0901a8fedbb7519dc7d1b8ade3ea6e42bd9b2b39
   languageName: node
   linkType: hard
 
