@@ -19,11 +19,14 @@ import {
   getPaginatedBranchCommentsTotalCountFactory,
   getPaginatedCommitCommentsPageFactory,
   getPaginatedCommitCommentsTotalCountFactory,
+  getPaginatedProjectCommentsPageFactory,
+  getPaginatedProjectCommentsTotalCountFactory,
   getResourceCommentCountFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
   markCommentViewedFactory,
+  resolvePaginatedProjectCommentsLatestModelResourcesFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
@@ -38,7 +41,7 @@ import {
 import {
   getPaginatedBranchCommentsFactory,
   getPaginatedCommitCommentsFactory,
-  getPaginatedProjectComments
+  getPaginatedProjectCommentsFactory
 } from '@/modules/comments/services/retrieval'
 import {
   publish,
@@ -218,6 +221,14 @@ const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
 const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
   getPaginatedBranchCommentsPage: getPaginatedBranchCommentsPageFactory({ db }),
   getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCountFactory({
+    db
+  })
+})
+const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
+  resolvePaginatedProjectCommentsLatestModelResources:
+    resolvePaginatedProjectCommentsLatestModelResourcesFactory(),
+  getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({ db }),
+  getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCountFactory({
     db
   })
 })

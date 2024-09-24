@@ -12,6 +12,7 @@ import {
   LegacyCommentViewerData,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
+import { CommitRecord } from '@/modules/core/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
 import { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
@@ -87,6 +88,31 @@ export type GetPaginatedBranchCommentsPage = (
 export type GetPaginatedBranchCommentsTotalCount = (
   params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
 ) => Promise<number>
+
+type BranchLatestCommit = CommitRecord & {
+  branchId: string
+}
+
+export type GetPaginatedProjectCommentsPage = (
+  params: PaginatedProjectCommentsParams,
+  options?: {
+    preloadedModelLatestVersions?: BranchLatestCommit[]
+  }
+) => Promise<{
+  items: CommentRecord[]
+  cursor: string | null
+}>
+
+export type GetPaginatedProjectCommentsTotalCount = (
+  params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
+  options?: {
+    preloadedModelLatestVersions?: BranchLatestCommit[]
+  }
+) => Promise<number>
+
+export type ResolvePaginatedProjectCommentsLatestModelResources = (
+  resourceIdString: string | null | undefined
+) => Promise<BranchLatestCommit[]>
 
 export type CheckStreamResourcesAccess = (params: {
   streamId: string
@@ -179,6 +205,34 @@ export type GetPaginatedBranchCommentsFactory = (
   params: PaginatedBranchCommentsParams
 ) => Promise<{
   totalCount: number
+  items: CommentRecord[]
+  cursor: string | null
+}>
+
+export type PaginatedProjectCommentsParams = {
+  projectId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      threadsOnly: boolean | null
+      includeArchived: boolean | null
+      archivedOnly: boolean | null
+      resourceIdString: string | null
+      /**
+       * If true, will ignore the version parts of `model@version` identifiers and look for comments of
+       * all versions of any selected comments
+       */
+      allModelVersions: boolean | null
+    }>
+  >
+}
+
+export type GetPaginatedProjectComments = (
+  params: PaginatedProjectCommentsParams
+) => Promise<{
+  totalCount: number
+  totalArchivedCount: number
   items: CommentRecord[]
   cursor: string | null
 }>
