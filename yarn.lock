@@ -16677,6 +16677,7 @@ __metadata:
     graphql-subscriptions: "npm:^2.0.0"
     graphql-tag: "npm:^2.12.6"
     http-proxy-middleware: "npm:v3.0.0-beta.0"
+    iconv-lite: "npm:^0.6.3"
     ioredis: "npm:^5.2.2"
     ioredis-mock: "npm:^8.9.0"
     jose: "npm:^5.6.3"
@@ -34069,7 +34070,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.2":
+"iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.2, iconv-lite@npm:^0.6.3":
   version: 0.6.3
   resolution: "iconv-lite@npm:0.6.3"
   dependencies:

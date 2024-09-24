@@ -8,10 +8,10 @@ import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
 import { testLogger as logger } from '@/observability/logging.js'
 import { parse } from 'csv-parse'
-import { Transform } from 'stream'
-import { pipeline } from 'stream/promises'
+import iconv from 'iconv-lite'
 import { createReadStream } from 'fs'
 import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
+import { finished } from 'stream/promises'
 
 const getS3Config = () => {
   return {
@@ -48,50 +48,61 @@ describe.sequential('Acceptance', () => {
         // load data
         const streamId = cryptoRandomString({ length: 10 })
 
-        // Initialize the parser
-        const parser = parse({
-          delimiter: ','
-        })
-        const fileStream = createReadStream('tests/data/deltas.csv')
-        const objectId = '19209772913efd1466ea217a1ed4cd84' //base object in tests/data/deltas.csv
-        const objectRows: Record<string, unknown>[] = []
+        const processFile = async (csvFileName: string) => {
+          const objectRows: Record<string, unknown>[] = []
 
-        const transformIntoObject = new Transform({
-          transform(chunk, _encoding, cb) {
-            if (!Array.isArray(chunk)) throw new Error('Invalid record')
-            if (chunk.length !== 7) throw new Error('Invalid record length')
-            const row = {
-              id: <unknown>chunk[0],
-              speckleType: <unknown>chunk[1],
-              totalChildrenCount: <unknown>chunk[2],
-              totalChildrenCountByDepth: <unknown>chunk[3],
-              createdAt: <unknown>chunk[4],
-              data: <unknown>JSON.parse(chunk[5] as string),
-              streamId //NOTE we override the stream ID to ensure it's loaded into the test stream
+          // Initialize the parser
+          const parser = createReadStream(csvFileName)
+            .pipe(iconv.decodeStream('utf8'))
+            .pipe(
+              parse({
+                delimiter: ',',
+                quote: '"',
+                // escape: null,
+                // eslint-disable-next-line camelcase
+                skip_empty_lines: true,
+                // eslint-disable-next-line camelcase
+                auto_parse: true
+              })
+            )
+          parser.on('readable', () => {
+            let record: unknown
+            while ((record = parser.read()) !== null) {
+              if (!Array.isArray(record)) throw new Error('Invalid record')
+              if (record.length !== 7) throw new Error('Invalid record length')
+
+              // "id","speckleType","totalChildrenCount","totalChildrenCountByDepth","createdAt","data","streamId"
+              const row = {
+                id: <unknown>record[0],
+                speckleType: <unknown>record[1],
+                totalChildrenCount: <unknown>record[2],
+                totalChildrenCountByDepth: <unknown>record[3],
+                createdAt: <unknown>record[4],
+                data: <unknown>JSON.parse(record[5] as string),
+                streamId //NOTE we override the stream ID to ensure it's loaded into the test stream
+              }
+
+              objectRows.push(row)
             }
-            cb(null, row)
-          }
-        })
-        const cacheRowIntoArray = new Transform({
-          transform(row, _encoding, cb) {
-            if (!row) return
-            if (typeof row !== 'object') return
-            if (Array.isArray(row)) return
-            if (Object.getOwnPropertySymbols(row).length > 0) return
+          })
+          parser.on('end', () => {
+            console.log('end')
+          })
+          parser.on('error', (err) => {
+            console.log(err)
+          })
 
-            objectRows.push(<Record<string, unknown>>row)
-            cb(null, row)
-          }
-        })
+          await finished(parser)
+          return objectRows
+        }
 
+        const objectId = '19209772913efd1466ea217a1ed4cd84' //base object in tests/data/deltas.csv
         try {
-          await pipeline(fileStream, parser, transformIntoObject, cacheRowIntoArray)
+          const objectsToInsert = await processFile('tests/data/deltas.csv')
+          await db.batchInsert(OBJECTS_TABLE_NAME, objectsToInsert)
         } catch (err) {
           expect(err, 'Error parsing CSV file.').toBeUndefined()
         }
-
-        // "id","speckleType","totalChildrenCount","totalChildrenCountByDepth","createdAt","data","streamId"
-        await db.batchInsert(OBJECTS_TABLE_NAME, objectRows)
 
         const objectPreviewRow = {
           streamId,
