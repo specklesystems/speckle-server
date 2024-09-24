@@ -37,6 +37,7 @@ import {
   DeleteComment,
   GetComment,
   GetCommentsResources,
+  GetPaginatedBranchCommentsPage,
   GetPaginatedCommitCommentsPage,
   GetPaginatedCommitCommentsTotalCount,
   InsertCommentLinks,
@@ -44,10 +45,12 @@ import {
   InsertComments,
   MarkCommentUpdated,
   MarkCommentViewed,
+  PaginatedBranchCommentsParams,
   PaginatedCommitCommentsParams,
   UpdateComment
 } from '@/modules/comments/domain/operations'
 import {
+  BranchRecord,
   CommitRecord,
   ObjectRecord,
   StreamCommitRecord
@@ -60,7 +63,8 @@ const tables = {
   comments: (db: Knex) => db<CommentRecord>(Comments.name),
   commentLinks: (db: Knex) => db<CommentLinkRecord>(CommentLinks.name),
   commentViews: (db: Knex) => db<CommentViewRecord>(CommentViews.name),
-  commits: (db: Knex) => db<CommitRecord>(Commits.name)
+  commits: (db: Knex) => db<CommitRecord>(Commits.name),
+  branches: (db: Knex) => db<BranchRecord>(Branches.name)
 }
 
 export const generateCommentId = () => crs({ length: 10 })
@@ -408,79 +412,70 @@ export const getPaginatedCommitCommentsTotalCountFactory =
     return parseInt(row.count || '0')
   }
 
-export type PaginatedBranchCommentsParams = {
-  branchId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-  }>
-}
+const getPaginatedBranchCommentsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
+    const { branchId, filter } = params
 
-function getPaginatedBranchCommentsBaseQuery(
-  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
-) {
-  const { branchId, filter } = params
+    const q = tables
+      .branches(deps.db)
+      .distinct()
+      .select<CommentRecord[]>(Comments.cols)
+      .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .innerJoin(CommentLinks.name, function () {
+        this.on(CommentLinks.col.resourceId, BranchCommits.col.commitId).andOnVal(
+          CommentLinks.col.resourceType,
+          'commit' as CommentLinkResourceType
+        )
+      })
+      .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+      .where(Branches.col.id, branchId)
 
-  const q = Branches.knex()
-    .distinct()
-    .select(Comments.cols)
-    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .innerJoin(CommentLinks.name, function () {
-      this.on(CommentLinks.col.resourceId, BranchCommits.col.commitId).andOnVal(
-        CommentLinks.col.resourceType,
-        'commit' as CommentLinkResourceType
-      )
-    })
-    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
-    .where(Branches.col.id, branchId)
+    if (!filter?.includeArchived) {
+      q.andWhere(Comments.col.archived, false)
+    }
 
-  if (!filter?.includeArchived) {
-    q.andWhere(Comments.col.archived, false)
+    if (filter?.threadsOnly) {
+      q.whereNull(Comments.col.parentComment)
+    }
+
+    return q
   }
 
-  if (filter?.threadsOnly) {
-    q.whereNull(Comments.col.parentComment)
+export const getPaginatedBranchCommentsPageFactory =
+  (deps: { db: Knex }): GetPaginatedBranchCommentsPage =>
+  async (params: PaginatedBranchCommentsParams) => {
+    const { cursor } = params
+
+    const limit = clamp(params.limit, 0, 100)
+    if (!limit) return { items: [], cursor: null }
+
+    const q = getPaginatedBranchCommentsBaseQueryFactory(deps)(params)
+      .orderBy(Comments.col.createdAt, 'desc')
+      .limit(limit)
+
+    if (cursor) {
+      q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+    }
+
+    const items = await q
+    return {
+      items,
+      cursor: items.length
+        ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+        : null
+    }
   }
 
-  return q
-}
+export const getPaginatedBranchCommentsTotalCountFactory =
+  (deps: { db: Knex }) =>
+  async (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
+    const baseQ = getPaginatedBranchCommentsBaseQueryFactory(deps)(params)
+    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const [row] = await q
 
-export async function getPaginatedBranchComments(
-  params: PaginatedBranchCommentsParams
-) {
-  const { cursor } = params
-
-  const limit = clamp(params.limit, 0, 100)
-  if (!limit) return { items: [], cursor: null }
-
-  const q = getPaginatedBranchCommentsBaseQuery(params)
-    .orderBy(Comments.col.createdAt, 'desc')
-    .limit(limit)
-
-  if (cursor) {
-    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+    return parseInt(row.count || '0')
   }
-
-  const items = await q
-  return {
-    items,
-    cursor: items.length
-      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-      : null
-  }
-}
-
-export async function getPaginatedBranchCommentsTotalCount(
-  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
-) {
-  const baseQ = getPaginatedBranchCommentsBaseQuery(params)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-  const [row] = await q
-
-  return parseInt(row.count || '0')
-}
 
 export type PaginatedProjectCommentsParams = {
   projectId: string

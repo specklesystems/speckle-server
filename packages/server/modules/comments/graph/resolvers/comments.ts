@@ -15,6 +15,8 @@ import {
   getCommentFactory,
   getCommentsLegacyFactory,
   getCommentsResourcesFactory,
+  getPaginatedBranchCommentsPageFactory,
+  getPaginatedBranchCommentsTotalCountFactory,
   getPaginatedCommitCommentsPageFactory,
   getPaginatedCommitCommentsTotalCountFactory,
   getResourceCommentCountFactory,
@@ -34,7 +36,7 @@ import {
   SmartTextEditorValueSchema
 } from '@/modules/core/services/richTextEditorService'
 import {
-  getPaginatedBranchComments,
+  getPaginatedBranchCommentsFactory,
   getPaginatedCommitCommentsFactory,
   getPaginatedProjectComments
 } from '@/modules/comments/services/retrieval'
@@ -210,6 +212,12 @@ const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
 const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
   getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({ db }),
   getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCountFactory({
+    db
+  })
+})
+const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
+  getPaginatedBranchCommentsPage: getPaginatedBranchCommentsPageFactory({ db }),
+  getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCountFactory({
     db
   })
 })

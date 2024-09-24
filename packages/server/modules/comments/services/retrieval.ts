@@ -1,8 +1,5 @@
 import { Optional } from '@speckle/shared'
 import {
-  PaginatedBranchCommentsParams,
-  getPaginatedBranchComments as getPaginatedBranchCommentsDb,
-  getPaginatedBranchCommentsTotalCount,
   getPaginatedProjectComments as getPaginatedProjectCommentsDb,
   getPaginatedProjectCommentsTotalCount,
   PaginatedProjectCommentsParams,
@@ -11,9 +8,13 @@ import {
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { isUndefined } from 'lodash'
 import {
+  GetPaginatedBranchCommentsFactory,
+  GetPaginatedBranchCommentsPage,
+  GetPaginatedBranchCommentsTotalCount,
   GetPaginatedCommitComments,
   GetPaginatedCommitCommentsPage,
   GetPaginatedCommitCommentsTotalCount,
+  PaginatedBranchCommentsParams,
   PaginatedCommitCommentsParams
 } from '@/modules/comments/domain/operations'
 
@@ -34,19 +35,22 @@ export const getPaginatedCommitCommentsFactory =
     }
   }
 
-export async function getPaginatedBranchComments(
-  params: PaginatedBranchCommentsParams
-) {
-  const [result, totalCount] = await Promise.all([
-    getPaginatedBranchCommentsDb(params),
-    getPaginatedBranchCommentsTotalCount(params)
-  ])
+export const getPaginatedBranchCommentsFactory =
+  (deps: {
+    getPaginatedBranchCommentsPage: GetPaginatedBranchCommentsPage
+    getPaginatedBranchCommentsTotalCount: GetPaginatedBranchCommentsTotalCount
+  }): GetPaginatedBranchCommentsFactory =>
+  async (params: PaginatedBranchCommentsParams) => {
+    const [result, totalCount] = await Promise.all([
+      deps.getPaginatedBranchCommentsPage(params),
+      deps.getPaginatedBranchCommentsTotalCount(params)
+    ])
 
-  return {
-    ...result,
-    totalCount
+    return {
+      ...result,
+      totalCount
+    }
   }
-}
 
 export async function getPaginatedProjectComments(
   params: PaginatedProjectCommentsParams
