@@ -1,16 +1,21 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
-import { addCommentCreatedActivity } from '@/modules/activitystream/services/commentActivity'
+import {
+  addCommentCreatedActivity,
+  addReplyAddedActivity
+} from '@/modules/activitystream/services/commentActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
+  getCommentFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
+  markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import {
-  createCommentReplyAndNotify,
+  createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
@@ -73,6 +78,16 @@ const crossServerSyncModule: SpeckleModule = {
       commentsEventsEmit: CommentsEmitter.emit,
       addCommentCreatedActivity
     })
+    const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+      getComment: getCommentFactory({ db }),
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      commentsEventsEmit: CommentsEmitter.emit,
+      addReplyAddedActivity
+    })
+
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream,
       getFirstAdmin,

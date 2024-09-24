@@ -14,7 +14,6 @@ import { createCommitByBranchId } from '@/modules/core/services/commit/managemen
 import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
-import { createCommentReplyAndNotify } from '@/modules/comments/services/management'
 import {
   createApolloClient,
   assertValidGraphQLResult
@@ -28,7 +27,10 @@ import {
   CrossSyncProjectViewerResourcesQuery
 } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { DownloadCommit } from '@/modules/cross-server-sync/domain/operations'
-import { CreateCommentThreadAndNotify } from '@/modules/comments/domain/operations'
+import {
+  CreateCommentReplyAndNotify,
+  CreateCommentThreadAndNotify
+} from '@/modules/comments/domain/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -370,7 +372,7 @@ const cleanViewerState = (
 
 type SaveNewThreadsDeps = {
   createCommentThreadAndNotify: CreateCommentThreadAndNotify
-  createCommentReplyAndNotify: typeof createCommentReplyAndNotify
+  createCommentReplyAndNotify: CreateCommentReplyAndNotify
 }
 
 const saveNewThreadsFactory =
