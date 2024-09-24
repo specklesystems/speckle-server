@@ -29,3 +29,15 @@ export type GetStreamActivity = (args: {
   cursor?: Date
   limit?: number
 }) => Promise<{ items: StreamActivityRecord[]; cursor: string | null }>
+
+export type GetActivityCountByStreamId = ({
+  streamId,
+  actionType,
+  before,
+  after
+}: {
+  streamId: string
+  actionType?: StreamActionType
+  after?: Date
+  before?: Date
+}) => Promise<number>
