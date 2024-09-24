@@ -86,10 +86,10 @@ describe.sequential('Acceptance', () => {
             }
           })
           parser.on('end', () => {
-            console.log('end')
+            //no-op, completion of the stream is handled by the finished(parser) call.
           })
           parser.on('error', (err) => {
-            console.log(err)
+            expect(err).not.toBeDefined()
           })
 
           await finished(parser)
