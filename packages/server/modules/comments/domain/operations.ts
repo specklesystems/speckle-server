@@ -4,7 +4,11 @@ import {
   ViewerResourceGroup,
   ViewerResourceItem
 } from '@/modules/comments/domain/types'
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import {
+  CommentLinkRecord,
+  CommentRecord,
+  CommentViewRecord
+} from '@/modules/comments/helpers/types'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
@@ -109,6 +113,62 @@ export type GetPaginatedProjectCommentsTotalCount = (
     preloadedModelLatestVersions?: BranchLatestCommit[]
   }
 ) => Promise<number>
+
+export type GetUserCommentsViewedAt = (
+  commentIds: string[],
+  userId: string
+) => Promise<CommentViewRecord[]>
+
+export type GetCommitCommentCounts = (
+  commitIds: string[],
+  options?: Partial<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+) => Promise<
+  {
+    commitId: string
+    count: number
+  }[]
+>
+
+export type GetBranchCommentCounts = (
+  branchIds: string[],
+  options?: Partial<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+) => Promise<
+  {
+    count: number
+    id: string
+  }[]
+>
+
+export type GetCommentReplyCounts = (
+  threadIds: string[],
+  options?: Partial<{
+    includeArchived: boolean
+  }>
+) => Promise<
+  {
+    threadId: string
+    count: number
+  }[]
+>
+
+export type GetCommentReplyAuthorIds = (
+  threadIds: string[],
+  options?: Partial<{
+    includeArchived: boolean
+  }>
+) => Promise<{ [parentCommentId: string]: string[] }>
+
+export type GetCommentParents = (replyIds: string[]) => Promise<
+  (CommentRecord & {
+    replyId: string
+  })[]
+>
 
 export type ResolvePaginatedProjectCommentsLatestModelResources = (
   resourceIdString: string | null | undefined
