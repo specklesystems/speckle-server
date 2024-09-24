@@ -3,7 +3,6 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  getComments,
   getResourceCommentCount,
   streamResourceCheckFactory,
   createCommentFactory,
@@ -15,6 +14,7 @@ import {
   checkStreamResourceAccessFactory,
   deleteCommentFactory,
   getCommentFactory,
+  getCommentsLegacyFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -151,6 +151,7 @@ export = {
         projectId: args.streamId,
         authCtx: context
       })
+      const getComments = getCommentsLegacyFactory({ db })
       return {
         ...(await getComments({
           ...args,
@@ -172,6 +173,7 @@ export = {
       }
 
       const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
+      const getComments = getCommentsLegacyFactory({ db })
       return await getComments({
         resources,
         replies: true,
