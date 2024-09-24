@@ -14,6 +14,7 @@ import {
   deleteCommentFactory,
   getCommentFactory,
   getCommentsLegacyFactory,
+  getCommentsResourcesFactory,
   getResourceCommentCountFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
@@ -49,8 +50,10 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import {
   getViewerResourceItemsUngrouped,
-  getViewerResourcesForComment,
-  doViewerResourcesFit
+  doViewerResourcesFit,
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory,
+  getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
   authorizeProjectCommentsAccess,
@@ -65,18 +68,17 @@ import {
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
-  convertLegacyDataToState
+  convertLegacyDataToStateFactory
 } from '@/modules/comments/services/data'
-import {
-  Resolvers,
-  ResourceIdentifier,
-  ResourceType
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { ResourceIdentifier } from '@/modules/comments/domain/types'
+import { getCommitsAndTheirBranchIds } from '@/modules/core/repositories/commits'
+import { getStreamObjects } from '@/modules/core/repositories/objects'
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -120,6 +122,29 @@ const archiveComment = archiveCommentFactory({
   updateComment
 })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
+
+const getCommentsResources = getCommentsResourcesFactory({ db })
+const getViewerResourcesFromLegacyIdentifiers =
+  getViewerResourcesFromLegacyIdentifiersFactory({
+    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers: (...args) =>
+        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    }),
+    getCommitsAndTheirBranchIds,
+    getStreamObjects
+  })
+
+const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+  getCommentsResources,
+  getViewerResourcesFromLegacyIdentifiers
+})
+const convertLegacyDataToState = convertLegacyDataToStateFactory({
+  getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+    getCommentsResources,
+    getViewerResourcesFromLegacyIdentifiers
+  })
+})
 
 const getStreamComment = async (
   { streamId, commentId }: { streamId: string; commentId: string },
