@@ -451,11 +451,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     // TODO: tryToUpgradeSendSettings()
   }
 
-  const tryToUpgradeSendSettings = async () => {
+  const tryToUpgradeSettings = async (typeDiscriminator: string) => {
     await refreshDocumentModelStore() // if we do it without awaiting this, we are getting empty array here at first. TODO: TBD tmr
     if (documentModelStore.value.models.length === 0) return
     const senderModelCards = documentModelStore.value.models.filter(
-      (m) => m.typeDiscriminator === 'SenderModelCard'
+      (m) => m.typeDiscriminator === typeDiscriminator // 'SenderModelCard'
     )
     if (senderModelCards.length === 0) return
 
@@ -515,7 +515,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         void refreshDocumentInfo()
         void refreshDocumentModelStore()
         void refreshSendFilters()
-        void tryToUpgradeSendSettings()
+        void tryToUpgradeSettings('SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
@@ -524,7 +524,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getSendSettings()
-  void tryToUpgradeSendSettings()
+  void tryToUpgradeSettings('SenderModelCard')
   void getHostAppName()
   void getHostAppVersion()
   void getConnectorVersion()
