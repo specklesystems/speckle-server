@@ -118,3 +118,9 @@ export type EditCommentAndNotify = (
   input: EditCommentInput,
   userId: string
 ) => Promise<Optional<CommentRecord>>
+
+export type ArchiveCommentAndNotify = (
+  commentId: string,
+  userId: string,
+  archived?: boolean
+) => Promise<Optional<CommentRecord>>
