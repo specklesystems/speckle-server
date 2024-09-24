@@ -41,57 +41,74 @@ import {
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
-import { InsertCommentPayload } from '@/modules/comments/domain/operations'
+import { GetComment, InsertCommentPayload } from '@/modules/comments/domain/operations'
 
-export async function authorizeProjectCommentsAccess(params: {
-  projectId: string
-  authCtx: AuthContext
-  requireProjectRole?: boolean
-}) {
-  const { projectId, authCtx, requireProjectRole } = params
-  if (authCtx.role === Roles.Server.ArchivedUser) {
-    throw new ForbiddenError('You are not authorized')
-  }
-
-  const project = await getStream({ streamId: projectId, userId: authCtx.userId })
-  if (!project) {
-    throw new StreamInvalidAccessError('Stream not found')
-  }
-
-  let success = true
-  if (!project.isPublic && !authCtx.auth) success = false
-  if (!project.isPublic && !project.role) success = false
-  if (requireProjectRole && !project.role && !project.allowPublicComments)
-    success = false
-  if (adminOverrideEnabled() && authCtx.role === Roles.Server.Admin) success = true
-
-  if (!success) {
-    throw new StreamInvalidAccessError('You are not authorized')
-  }
-
-  return project
+type AuthorizeProjectCommentsAccessDeps = {
+  getStream: typeof getStream
+  adminOverrideEnabled: typeof adminOverrideEnabled
 }
 
-export async function authorizeCommentAccess(params: {
-  authCtx: AuthContext
-  commentId: string
-  requireProjectRole?: boolean
-}) {
-  const { authCtx, commentId, requireProjectRole } = params
-  const comment = await getCommentFactory({ db })({
-    id: commentId,
-    userId: authCtx.userId
-  })
-  if (!comment) {
-    throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
+export const authorizeProjectCommentsAccessFactory =
+  (deps: AuthorizeProjectCommentsAccessDeps) =>
+  async (params: {
+    projectId: string
+    authCtx: AuthContext
+    requireProjectRole?: boolean
+  }) => {
+    const { projectId, authCtx, requireProjectRole } = params
+    if (authCtx.role === Roles.Server.ArchivedUser) {
+      throw new ForbiddenError('You are not authorized')
+    }
+
+    const project = await deps.getStream({
+      streamId: projectId,
+      userId: authCtx.userId
+    })
+    if (!project) {
+      throw new StreamInvalidAccessError('Stream not found')
+    }
+
+    let success = true
+    if (!project.isPublic && !authCtx.auth) success = false
+    if (!project.isPublic && !project.role) success = false
+    if (requireProjectRole && !project.role && !project.allowPublicComments)
+      success = false
+    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
+      success = true
+
+    if (!success) {
+      throw new StreamInvalidAccessError('You are not authorized')
+    }
+
+    return project
   }
 
-  return authorizeProjectCommentsAccess({
-    projectId: comment.streamId,
-    authCtx,
-    requireProjectRole
-  })
-}
+export const authorizeCommentAccessFactory =
+  (
+    deps: {
+      getComment: GetComment
+    } & AuthorizeProjectCommentsAccessDeps
+  ) =>
+  async (params: {
+    authCtx: AuthContext
+    commentId: string
+    requireProjectRole?: boolean
+  }) => {
+    const { authCtx, commentId, requireProjectRole } = params
+    const comment = await deps.getComment({
+      id: commentId,
+      userId: authCtx.userId
+    })
+    if (!comment) {
+      throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
+    }
+
+    return authorizeProjectCommentsAccessFactory(deps)({
+      projectId: comment.streamId,
+      authCtx,
+      requireProjectRole
+    })
+  }
 
 export async function createCommentThreadAndNotify(
   input: CreateCommentInput,
