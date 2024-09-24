@@ -11,10 +11,19 @@ import {
   ProjectCommentsUpdatedMessageType,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { getCommitsAndTheirBranchIds } from '@/modules/core/repositories/commits'
+import {
+  getBranchLatestCommits,
+  getStreamBranchesByName
+} from '@/modules/core/repositories/branches'
+import {
+  getAllBranchCommits,
+  getCommitsAndTheirBranchIds,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import {
-  getViewerResourceItemsUngrouped,
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -54,6 +63,15 @@ export async function addCommentCreatedActivity(params: {
       getCommitsAndTheirBranchIds,
       getStreamObjects
     })
+  const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+    getViewerResourceGroups: getViewerResourceGroupsFactory({
+      getStreamObjects,
+      getBranchLatestCommits,
+      getStreamBranchesByName,
+      getSpecificBranchCommits,
+      getAllBranchCommits
+    })
+  })
 
   let resourceIds: string
   let resourceItems: ViewerResourceItem[]

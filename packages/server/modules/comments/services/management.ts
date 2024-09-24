@@ -8,7 +8,6 @@ import {
   insertComment,
   insertCommentLinksFactory,
   markCommentUpdatedFactory,
-  markCommentViewedFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
@@ -16,7 +15,6 @@ import {
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
-import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/viewerResources'
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import {
   buildCommentTextFromInput,
@@ -28,7 +26,11 @@ import {
   CommentLinkResourceType,
   CommentRecord
 } from '@/modules/comments/helpers/types'
-import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
+import {
+  CommentsEmitter,
+  CommentsEvents,
+  CommentsEventsEmit
+} from '@/modules/comments/events/emitter'
 import {
   addCommentArchivedActivity,
   addCommentCreatedActivity,
@@ -41,7 +43,15 @@ import {
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
-import { GetComment, InsertCommentPayload } from '@/modules/comments/domain/operations'
+import {
+  GetComment,
+  GetViewerResourceItemsUngrouped,
+  InsertCommentLinks,
+  InsertCommentPayload,
+  InsertComments,
+  MarkCommentViewed,
+  ValidateInputAttachments
+} from '@/modules/comments/domain/operations'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: typeof getStream
@@ -110,85 +120,89 @@ export const authorizeCommentAccessFactory =
     })
   }
 
-export async function createCommentThreadAndNotify(
-  input: CreateCommentInput,
-  userId: string
-) {
-  const [resources] = await Promise.all([
-    getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
-    validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
-      input.projectId,
-      input.content.blobIds || []
-    )
-  ])
-  if (!resources.length) {
-    throw new CommentCreateError(
-      "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
-    )
-  }
+export const createCommentThreadAndNotifyFactory =
+  (deps: {
+    getViewerResourceItemsUngrouped: GetViewerResourceItemsUngrouped
+    validateInputAttachments: ValidateInputAttachments
+    insertComments: InsertComments
+    insertCommentLinks: InsertCommentLinks
+    markCommentViewed: MarkCommentViewed
+    commentsEventsEmit: CommentsEventsEmit
+    addCommentCreatedActivity: typeof addCommentCreatedActivity
+  }) =>
+  async (input: CreateCommentInput, userId: string) => {
+    const [resources] = await Promise.all([
+      deps.getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
+      deps.validateInputAttachments(input.projectId, input.content.blobIds || [])
+    ])
+    if (!resources.length) {
+      throw new CommentCreateError(
+        "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
+      )
+    }
 
-  const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
-    ? formatSerializedViewerState(input.viewerState)
-    : null
-  const dataStruct = inputToDataStruct(state)
+    const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
+      ? formatSerializedViewerState(input.viewerState)
+      : null
+    const dataStruct = inputToDataStruct(state)
 
-  const commentPayload: InsertCommentPayload = {
-    streamId: input.projectId,
-    authorId: userId,
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    }),
-    screenshot: input.screenshot,
-    data: dataStruct
-  }
-
-  let comment: CommentRecord
-  try {
-    comment = await knex.transaction(async (trx) => {
-      const comment = await insertComment(commentPayload, { trx })
-
-      const links: CommentLinkRecord[] = resources.map((r) => {
-        let resourceId = r.objectId
-        let resourceType: CommentLinkResourceType = 'object'
-        if (r.versionId) {
-          resourceId = r.versionId
-          resourceType = 'commit'
-        }
-
-        return {
-          commentId: comment.id,
-          resourceId,
-          resourceType
-        }
-      })
-      await insertCommentLinksFactory({ db })(links, { trx })
-
-      return comment
-    })
-  } catch (e) {
-    throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
-  }
-
-  // Mark as viewed and emit events
-  await Promise.all([
-    markCommentViewedFactory({ db })(comment.id, userId),
-    CommentsEmitter.emit(CommentsEvents.Created, {
-      comment
-    }),
-    addCommentCreatedActivity({
+    const commentPayload: InsertCommentPayload = {
       streamId: input.projectId,
-      userId,
-      input: {
-        ...input,
-        resolvedResourceItems: resources
-      },
-      comment
-    })
-  ])
+      authorId: userId,
+      text: buildCommentTextFromInput({
+        doc: input.content.doc,
+        blobIds: input.content.blobIds || undefined
+      }),
+      screenshot: input.screenshot,
+      data: dataStruct
+    }
 
-  return comment
-}
+    let comment: CommentRecord
+    try {
+      comment = await knex.transaction(async (trx) => {
+        const [comment] = await deps.insertComments([commentPayload], { trx })
+
+        const links: CommentLinkRecord[] = resources.map((r) => {
+          let resourceId = r.objectId
+          let resourceType: CommentLinkResourceType = 'object'
+          if (r.versionId) {
+            resourceId = r.versionId
+            resourceType = 'commit'
+          }
+
+          return {
+            commentId: comment.id,
+            resourceId,
+            resourceType
+          }
+        })
+        await deps.insertCommentLinks(links, { trx })
+
+        return comment
+      })
+    } catch (e) {
+      throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
+    }
+
+    // Mark as viewed and emit events
+    await Promise.all([
+      deps.markCommentViewed(comment.id, userId),
+      deps.commentsEventsEmit(CommentsEvents.Created, {
+        comment
+      }),
+      deps.addCommentCreatedActivity({
+        streamId: input.projectId,
+        userId,
+        input: {
+          ...input,
+          resolvedResourceItems: resources
+        },
+        comment
+      })
+    ])
+
+    return comment
+  }
 
 export async function createCommentReplyAndNotify(
   input: CreateCommentReplyInput,

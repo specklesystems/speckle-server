@@ -1,9 +1,14 @@
 import {
   ExtendedComment,
   ResourceIdentifier,
+  ViewerResourceGroup,
   ViewerResourceItem
 } from '@/modules/comments/domain/types'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import {
+  CreateCommentInput,
+  ViewerUpdateTrackingTarget
+} from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
 import { LegacyCommentViewerData } from '@/test/graphql/generated/graphql'
@@ -84,7 +89,20 @@ export type GetViewerResourcesFromLegacyIdentifiers = (
   resources: Array<ResourceIdentifier>
 ) => Promise<ViewerResourceItem[]>
 
+export type GetViewerResourceGroups = (
+  target: ViewerUpdateTrackingTarget
+) => Promise<ViewerResourceGroup[]>
+
+export type GetViewerResourceItemsUngrouped = (
+  target: ViewerUpdateTrackingTarget
+) => Promise<ViewerResourceItem[]>
+
 export type ConvertLegacyDataToState = (
   data: Partial<LegacyCommentViewerData>,
   comment: CommentRecord
 ) => Promise<SerializedViewerState>
+
+export type CreateCommentThreadAndNotify = (
+  input: CreateCommentInput,
+  userId: string
+) => Promise<CommentRecord>

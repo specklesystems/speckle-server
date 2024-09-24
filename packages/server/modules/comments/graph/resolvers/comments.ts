@@ -49,19 +49,20 @@ import {
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import {
-  getViewerResourceItemsUngrouped,
   doViewerResourcesFit,
   getViewerResourcesForCommentFactory,
   getViewerResourcesFromLegacyIdentifiersFactory,
-  getViewerResourcesForCommentsFactory
+  getViewerResourcesForCommentsFactory,
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourceGroupsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
-  createCommentThreadAndNotify,
   createCommentReplyAndNotify,
   editCommentAndNotify,
   archiveCommentAndNotify,
   authorizeProjectCommentsAccessFactory,
-  authorizeCommentAccessFactory
+  authorizeCommentAccessFactory,
+  createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -77,9 +78,17 @@ import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
-import { getCommitsAndTheirBranchIds } from '@/modules/core/repositories/commits'
+import {
+  getAllBranchCommits,
+  getCommitsAndTheirBranchIds,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  getBranchLatestCommits,
+  getStreamBranchesByName
+} from '@/modules/core/repositories/branches'
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -155,6 +164,25 @@ const authorizeCommentAccess = authorizeCommentAccessFactory({
   getStream,
   adminOverrideEnabled,
   getComment
+})
+
+const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+  getViewerResourceGroups: getViewerResourceGroupsFactory({
+    getStreamObjects,
+    getBranchLatestCommits,
+    getStreamBranchesByName,
+    getSpecificBranchCommits,
+    getAllBranchCommits
+  })
+})
+const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+  getViewerResourceItemsUngrouped,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit,
+  addCommentCreatedActivity
 })
 
 const getStreamComment = async (
