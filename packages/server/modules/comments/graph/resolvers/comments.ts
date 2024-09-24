@@ -15,6 +15,8 @@ import {
   getCommentFactory,
   getCommentsLegacyFactory,
   getCommentsResourcesFactory,
+  getPaginatedCommitCommentsPageFactory,
+  getPaginatedCommitCommentsTotalCountFactory,
   getResourceCommentCountFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
@@ -32,8 +34,8 @@ import {
   SmartTextEditorValueSchema
 } from '@/modules/core/services/richTextEditorService'
 import {
-  getPaginatedCommitComments,
   getPaginatedBranchComments,
+  getPaginatedCommitCommentsFactory,
   getPaginatedProjectComments
 } from '@/modules/comments/services/retrieval'
 import {
@@ -204,6 +206,12 @@ const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
   getStream,
   updateComment,
   addCommentArchivedActivity
+})
+const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
+  getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({ db }),
+  getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCountFactory({
+    db
+  })
 })
 
 const getStreamComment = async (
