@@ -13,13 +13,16 @@ import { createCommitByBranchId } from '@/modules/core/services/commit/managemen
 import { createObject } from '@/modules/core/services/objects'
 import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
-  createCommentReplyAndNotify,
+  createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
-import { addCommentCreatedActivity } from '@/modules/activitystream/services/commentActivity'
+import {
+  addCommentCreatedActivity,
+  addReplyAddedActivity
+} from '@/modules/activitystream/services/commentActivity'
 import {
   getAllBranchCommits,
   getSpecificBranchCommits
@@ -30,8 +33,10 @@ import {
 } from '@/modules/core/services/commit/viewerResources'
 import { db } from '@/db/knex'
 import {
+  getCommentFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
+  markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
@@ -92,6 +97,15 @@ const command: CommandModule<
       markCommentViewed,
       commentsEventsEmit: CommentsEmitter.emit,
       addCommentCreatedActivity
+    })
+    const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+      getComment: getCommentFactory({ db }),
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      commentsEventsEmit: CommentsEmitter.emit,
+      addReplyAddedActivity
     })
 
     const downloadProject = downloadProjectFactory({

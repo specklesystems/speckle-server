@@ -7,6 +7,7 @@ import {
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import {
   CreateCommentInput,
+  CreateCommentReplyInput,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
@@ -104,5 +105,10 @@ export type ConvertLegacyDataToState = (
 
 export type CreateCommentThreadAndNotify = (
   input: CreateCommentInput,
+  userId: string
+) => Promise<CommentRecord>
+
+export type CreateCommentReplyAndNotify = (
+  input: CreateCommentReplyInput,
   userId: string
 ) => Promise<CommentRecord>

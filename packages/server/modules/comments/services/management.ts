@@ -5,9 +5,6 @@ import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   getCommentFactory,
-  insertComment,
-  insertCommentLinksFactory,
-  markCommentUpdatedFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
@@ -44,12 +41,14 @@ import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
 import {
+  CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify,
   GetComment,
   GetViewerResourceItemsUngrouped,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
+  MarkCommentUpdated,
   MarkCommentViewed,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
@@ -205,61 +204,65 @@ export const createCommentThreadAndNotifyFactory =
     return comment
   }
 
-export async function createCommentReplyAndNotify(
-  input: CreateCommentReplyInput,
-  userId: string
-) {
-  const thread = await getCommentFactory({ db })({ id: input.threadId, userId })
-  if (!thread) {
-    throw new CommentCreateError('Reply creation failed due to nonexistant thread')
-  }
-  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
-    thread.streamId,
-    input.content.blobIds || []
-  )
+export const createCommentReplyAndNotifyFactory =
+  (deps: {
+    getComment: GetComment
+    validateInputAttachments: ValidateInputAttachments
+    insertComments: InsertComments
+    insertCommentLinks: InsertCommentLinks
+    markCommentUpdated: MarkCommentUpdated
+    commentsEventsEmit: CommentsEventsEmit
+    addReplyAddedActivity: typeof addReplyAddedActivity
+  }): CreateCommentReplyAndNotify =>
+  async (input: CreateCommentReplyInput, userId: string) => {
+    const thread = await deps.getComment({ id: input.threadId, userId })
+    if (!thread) {
+      throw new CommentCreateError('Reply creation failed due to nonexistant thread')
+    }
+    await deps.validateInputAttachments(thread.streamId, input.content.blobIds || [])
 
-  const commentPayload: InsertCommentPayload = {
-    streamId: thread.streamId,
-    authorId: userId,
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    }),
-    parentComment: thread.id,
-    data: null
-  }
-
-  let reply: CommentRecord
-  try {
-    reply = await knex.transaction(async (trx) => {
-      const reply = await insertComment(commentPayload, { trx })
-      const links: CommentLinkRecord[] = [
-        { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
-      ]
-      await insertCommentLinksFactory({ db })(links, { trx })
-
-      return reply
-    })
-  } catch (e) {
-    throw new CommentCreateError('Reply creation failed', { cause: ensureError(e) })
-  }
-
-  // Mark parent comment updated and emit events
-  await Promise.all([
-    markCommentUpdatedFactory({ db })(thread.id),
-    CommentsEmitter.emit(CommentsEvents.Created, {
-      comment: reply
-    }),
-    addReplyAddedActivity({
+    const commentPayload: InsertCommentPayload = {
       streamId: thread.streamId,
-      input,
-      reply,
-      userId
-    })
-  ])
+      authorId: userId,
+      text: buildCommentTextFromInput({
+        doc: input.content.doc,
+        blobIds: input.content.blobIds || undefined
+      }),
+      parentComment: thread.id,
+      data: null
+    }
 
-  return reply
-}
+    let reply: CommentRecord
+    try {
+      reply = await knex.transaction(async (trx) => {
+        const [reply] = await deps.insertComments([commentPayload], { trx })
+        const links: CommentLinkRecord[] = [
+          { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
+        ]
+        await deps.insertCommentLinks(links, { trx })
+
+        return reply
+      })
+    } catch (e) {
+      throw new CommentCreateError('Reply creation failed', { cause: ensureError(e) })
+    }
+
+    // Mark parent comment updated and emit events
+    await Promise.all([
+      deps.markCommentUpdated(thread.id),
+      deps.commentsEventsEmit(CommentsEvents.Created, {
+        comment: reply
+      }),
+      deps.addReplyAddedActivity({
+        streamId: thread.streamId,
+        input,
+        reply,
+        userId
+      })
+    ])
+
+    return reply
+  }
 
 export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
   const comment = await getCommentFactory({ db })({ id: input.commentId, userId })

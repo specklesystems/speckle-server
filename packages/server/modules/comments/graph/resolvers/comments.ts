@@ -57,12 +57,12 @@ import {
   getViewerResourceGroupsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
-  createCommentReplyAndNotify,
   editCommentAndNotify,
   archiveCommentAndNotify,
   authorizeProjectCommentsAccessFactory,
   authorizeCommentAccessFactory,
-  createCommentThreadAndNotifyFactory
+  createCommentThreadAndNotifyFactory,
+  createCommentReplyAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -183,6 +183,15 @@ const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
   markCommentViewed,
   commentsEventsEmit: CommentsEmitter.emit,
   addCommentCreatedActivity
+})
+const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+  getComment,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit,
+  addReplyAddedActivity
 })
 
 const getStreamComment = async (
