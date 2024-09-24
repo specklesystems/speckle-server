@@ -67,6 +67,13 @@
           >
             Invite
           </FormButton>
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            color="subtle"
+            @click="$emit('show-move-projects-dialog')"
+          >
+            Move projects
+          </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -139,6 +146,7 @@ enum ActionTypes {
 const emit = defineEmits<{
   (e: 'show-invite-dialog'): void
   (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
+  (e: 'show-move-projects-dialog'): void
 }>()
 
 const props = defineProps<{
