@@ -56,12 +56,12 @@ import {
   getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
-  authorizeProjectCommentsAccess,
-  authorizeCommentAccess,
   createCommentThreadAndNotify,
   createCommentReplyAndNotify,
   editCommentAndNotify,
-  archiveCommentAndNotify
+  archiveCommentAndNotify,
+  authorizeProjectCommentsAccessFactory,
+  authorizeCommentAccessFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -79,6 +79,7 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import { getCommitsAndTheirBranchIds } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -144,6 +145,16 @@ const convertLegacyDataToState = convertLegacyDataToStateFactory({
     getCommentsResources,
     getViewerResourcesFromLegacyIdentifiers
   })
+})
+
+const authorizeProjectCommentsAccess = authorizeProjectCommentsAccessFactory({
+  getStream,
+  adminOverrideEnabled
+})
+const authorizeCommentAccess = authorizeCommentAccessFactory({
+  getStream,
+  adminOverrideEnabled,
+  getComment
 })
 
 const getStreamComment = async (
