@@ -96,7 +96,7 @@ describe.sequential('Acceptance', () => {
           return objectRows
         }
 
-        const objectId = '19209772913efd1466ea217a1ed4cd84' //base object in tests/data/deltas.csv
+        const objectId = 'b81d1d9295a995d9479186324b6f145a' //base object in tests/data/deltas.csv
         try {
           const objectsToInsert = await processFile('tests/data/deltas.csv')
           await db.batchInsert(OBJECTS_TABLE_NAME, objectsToInsert)
