@@ -27,8 +27,8 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
+import { getStream } from '@/modules/core/repositories/streams'
 
-const Comments = () => knex<CommentRecord>('comments')
 const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
 
 export const streamResourceCheckFactory =
@@ -239,36 +239,39 @@ export const editCommentFactory =
 /**
  * @deprecated Use 'archiveCommentAndNotify()'
  */
-export async function archiveComment({
-  commentId,
-  userId,
-  streamId,
-  archived = true
-}: {
-  commentId: string
-  userId: string
-  streamId: string
-  archived: boolean
-}) {
-  const comment = await Comments().where({ id: commentId }).first()
-  if (!comment)
-    throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+export const archiveCommentFactory =
+  (deps: {
+    getComment: GetComment
+    getStream: typeof getStream
+    updateComment: UpdateComment
+  }) =>
+  async ({
+    commentId,
+    userId,
+    streamId,
+    archived = true
+  }: {
+    commentId: string
+    userId: string
+    streamId: string
+    archived: boolean
+  }) => {
+    const comment = await deps.getComment({ id: commentId })
+    if (!comment)
+      throw new Error(
+        `No comment ${commentId} exists, cannot change its archival status`
+      )
 
-  const aclEntry = await knex('stream_acl')
-    .select()
-    .where({ resourceId: streamId, userId })
-    .first()
+    const streamWithRole = await deps.getStream({ streamId, userId })
 
-  if (comment.authorId !== userId) {
-    if (!aclEntry || aclEntry.role !== Roles.Stream.Owner)
-      throw new ForbiddenError("You don't have permission to archive the comment")
+    if (comment.authorId !== userId) {
+      if (!streamWithRole || streamWithRole.role !== Roles.Stream.Owner)
+        throw new ForbiddenError("You don't have permission to archive the comment")
+    }
+
+    const updatedComment = await deps.updateComment(commentId, { archived })
+    return updatedComment!
   }
-
-  const [updatedComment] = await Comments()
-    .where({ id: commentId })
-    .update({ archived }, '*')
-  return updatedComment
-}
 
 /**
  * One of `streamId` or `resources` expected. If both are provided, then

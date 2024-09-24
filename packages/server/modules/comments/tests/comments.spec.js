@@ -17,13 +17,13 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 const { createObject } = require('@/modules/core/services/objects')
 const {
   getComments,
-  archiveComment,
   getResourceCommentCount,
   getStreamCommentCount,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
-  editCommentFactory
+  editCommentFactory,
+  archiveCommentFactory
 } = require('@/modules/comments/services/index')
 const {
   convertBasicStringToDocument
@@ -60,6 +60,7 @@ const {
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
 const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+const { getStream } = require('@/modules/core/repositories/streams')
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -90,11 +91,17 @@ const createCommentReply = createCommentReplyFactory({
   commentsEventsEmit: CommentsEmitter.emit
 })
 const getComment = getCommentFactory({ db })
+const updateComment = updateCommentFactory({ db })
 const editComment = editCommentFactory({
   getComment,
   validateInputAttachments,
   updateComment: updateCommentFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit
+})
+const archiveComment = archiveCommentFactory({
+  getComment,
+  getStream,
+  updateComment
 })
 
 function buildCommentInputFromString(textString) {
