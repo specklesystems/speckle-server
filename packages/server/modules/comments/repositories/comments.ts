@@ -11,17 +11,15 @@ import {
   Comments,
   CommentViews,
   Commits,
-  knex
+  knex,
+  Objects,
+  StreamCommits
 } from '@/modules/core/dbSchema'
 import {
   ResourceIdentifier,
   ResourceType
 } from '@/modules/core/graph/generated/graphql'
-import {
-  MarkNullableOptional,
-  MaybeNullOrUndefined,
-  Optional
-} from '@/modules/shared/helpers/typeHelper'
+import { MaybeNullOrUndefined, Optional } from '@/modules/shared/helpers/typeHelper'
 import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
@@ -34,6 +32,23 @@ import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Merge } from 'type-fest'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import {
+  CheckStreamResourceAccess,
+  DeleteComment,
+  InsertCommentLinks,
+  InsertCommentPayload,
+  InsertComments,
+  MarkCommentViewed
+} from '@/modules/comments/domain/operations'
+import { ObjectRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
+
+const tables = {
+  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
+  comments: (db: Knex) => db<CommentRecord>(Comments.name),
+  commentLinks: (db: Knex) => db<CommentLinkRecord>(CommentLinks.name),
+  commentViews: (db: Knex) => db<CommentViewRecord>(CommentViews.name)
+}
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -151,23 +166,27 @@ export async function getCommentLinks(
   return await q
 }
 
-export async function insertComments(
-  comments: CommentRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = Comments.knex().insert(comments)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertCommentsFactory =
+  (deps: { db: Knex }): InsertComments =>
+  async (comments, options) => {
+    const q = tables.comments(deps.db).insert(
+      comments.map((c) => ({
+        ...c,
+        id: c.id || generateCommentId()
+      })),
+      '*'
+    )
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
-export async function insertCommentLinks(
-  commentLinks: CommentLinkRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = CommentLinks.knex().insert(commentLinks)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertCommentLinksFactory =
+  (deps: { db: Knex }): InsertCommentLinks =>
+  async (commentLinks, options) => {
+    const q = tables.commentLinks(deps.db).insert(commentLinks, '*')
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
 export async function getStreamCommentCounts(
   streamIds: string[],
@@ -676,26 +695,22 @@ export async function getCommentParents(replyIds: string[]) {
   return await q
 }
 
-export async function markCommentViewed(commentId: string, userId: string) {
-  const query = CommentViews.knex()
-    .insert({ commentId, userId, viewedAt: knex.fn.now() })
-    .onConflict(knex.raw('("commentId","userId")'))
-    .merge()
-  return await query
-}
-
-export type InsertCommentPayload = MarkNullableOptional<
-  Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt' | 'text' | 'archived'> & {
-    text: SmartTextEditorValueSchema
-    archived?: boolean
+export const markCommentViewedFactory =
+  (deps: { db: Knex }): MarkCommentViewed =>
+  async (commentId: string, userId: string) => {
+    const query = tables
+      .commentViews(deps.db)
+      .insert({ commentId, userId, viewedAt: knex.fn.now() })
+      .onConflict(knex.raw('("commentId","userId")'))
+      .merge()
+    return !!(await query)
   }
->
 
 export async function insertComment(
   input: InsertCommentPayload,
   options?: Partial<{ trx: Knex.Transaction }>
 ): Promise<CommentRecord> {
-  const finalInput = { ...input, id: generateCommentId() }
+  const finalInput = { ...input, id: input.id || generateCommentId() }
   const q = Comments.knex().insert(finalInput, '*')
   if (options?.trx) q.transacting(options.trx)
 
@@ -718,3 +733,58 @@ export async function updateComment(
   const [res] = await Comments.knex().where(Comments.col.id, id).update(input, '*')
   return res as CommentRecord
 }
+
+export const checkStreamResourceAccessFactory =
+  (deps: { db: Knex }): CheckStreamResourceAccess =>
+  async (res, streamId) => {
+    // The switch of doom: if something throws, we're out
+    switch (res.resourceType) {
+      case 'stream':
+        // Stream validity is already checked, so we can just go ahead.
+        break
+      case 'commit': {
+        const linkage = await tables
+          .streamCommits(deps.db)
+          .select()
+          .where({ commitId: res.resourceId, streamId })
+          .first()
+        if (!linkage) throw new Error('Commit not found')
+        if (linkage.streamId !== streamId)
+          throw new Error(
+            'Stop hacking - that commit id is not part of the specified stream.'
+          )
+        break
+      }
+      case 'object': {
+        const obj = await tables
+          .objects(deps.db)
+          .select()
+          .where({ id: res.resourceId, streamId })
+          .first()
+        if (!obj) throw new Error('Object not found')
+        break
+      }
+      case 'comment': {
+        const comment = await tables
+          .comments(deps.db)
+          .where({ id: res.resourceId })
+          .first()
+        if (!comment) throw new Error('Comment not found')
+        if (comment.streamId !== streamId)
+          throw new Error(
+            'Stop hacking - that comment is not part of the specified stream.'
+          )
+        break
+      }
+      default:
+        throw Error(
+          `resource type ${res.resourceType} is not supported as a comment target`
+        )
+    }
+  }
+
+export const deleteCommentFactory =
+  (deps: { db: Knex }): DeleteComment =>
+  async ({ commentId }) => {
+    return !!(await tables.comments(deps.db).where(Comments.col.id, commentId).del())
+  }

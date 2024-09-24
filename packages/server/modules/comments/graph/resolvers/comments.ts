@@ -5,15 +5,24 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getComments,
   getResourceCommentCount,
-  createComment,
   createCommentReply,
-  viewComment,
   archiveComment,
   editComment,
-  streamResourceCheck
+  streamResourceCheckFactory,
+  createCommentFactory
 } from '@/modules/comments/services/index'
-import { getComment } from '@/modules/comments/repositories/comments'
-import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
+import {
+  checkStreamResourceAccessFactory,
+  deleteCommentFactory,
+  getComment,
+  insertCommentLinksFactory,
+  insertCommentsFactory,
+  markCommentViewedFactory
+} from '@/modules/comments/repositories/comments'
+import {
+  ensureCommentSchema,
+  validateInputAttachmentsFactory
+} from '@/modules/comments/services/commentTextService'
 import { has } from 'lodash'
 import {
   documentToBasicString,
@@ -44,7 +53,6 @@ import {
 import {
   authorizeProjectCommentsAccess,
   authorizeCommentAccess,
-  markViewed,
   createCommentThreadAndNotify,
   createCommentReplyAndNotify,
   editCommentAndNotify,
@@ -64,6 +72,25 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { db } from '@/db/knex'
+import { CommentsEmitter } from '@/modules/comments/events/emitter'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments: validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  }),
+  insertComments: insertCommentsFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  deleteComment: deleteCommentFactory({ db }),
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
 
 const getStreamComment = async (
   { streamId, commentId }: { streamId: string; commentId: string },
@@ -308,7 +335,7 @@ export = {
         authCtx: ctx,
         commentId: args.commentId
       })
-      await markViewed(args.commentId, ctx.userId!)
+      await markCommentViewed(args.commentId, ctx.userId!)
       return true
     },
     async create(_parent, args, ctx) {
@@ -440,7 +467,7 @@ export = {
         projectId: args.streamId,
         authCtx: context
       })
-      await viewComment({ userId: context.userId!, commentId: args.commentId })
+      await markCommentViewed(args.commentId, context.userId!)
       return true
     },
 

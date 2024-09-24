@@ -1,18 +1,22 @@
 import crs from 'crypto-random-string'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
   buildCommentTextFromInput,
-  validateInputAttachments
+  validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
-import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import {
+  CommentsEmitter,
+  CommentsEvents,
+  CommentsEventsEmit
+} from '@/modules/comments/events/emitter'
+import {
+  checkStreamResourceAccessFactory,
   getComment as repoGetComment,
-  getStreamCommentCount as repoGetStreamCommentCount,
-  markCommentViewed
+  getStreamCommentCount as repoGetStreamCommentCount
 } from '@/modules/comments/repositories/comments'
 import { clamp } from 'lodash'
-import { Roles } from '@speckle/shared'
+import { isNonNullable, Roles } from '@speckle/shared'
 import {
   ResourceIdentifier,
   CommentCreateInput,
@@ -21,130 +25,116 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import {
+  CheckStreamResourceAccess,
+  CheckStreamResourcesAccess,
+  DeleteComment,
+  InsertCommentLinks,
+  InsertComments,
+  MarkCommentViewed,
+  ValidateInputAttachments
+} from '@/modules/comments/domain/operations'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { ResourceType } from '@/modules/comments/domain/types'
 
 const Comments = () => knex<CommentRecord>('comments')
 const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
 
-const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
-  // The switch of doom: if something throws, we're out
-  switch (res.resourceType) {
-    case 'stream':
-      // Stream validity is already checked, so we can just go ahead.
-      break
-    case 'commit': {
-      const linkage = await knex('stream_commits')
-        .select()
-        .where({ commitId: res.resourceId, streamId })
-        .first()
-      if (!linkage) throw new Error('Commit not found')
-      if (linkage.streamId !== streamId)
-        throw new Error(
-          'Stop hacking - that commit id is not part of the specified stream.'
-        )
-      break
-    }
-    case 'object': {
-      const obj = await knex('objects')
-        .select()
-        .where({ id: res.resourceId, streamId })
-        .first()
-      if (!obj) throw new Error('Object not found')
-      break
-    }
-    case 'comment': {
-      const comment = await Comments().where({ id: res.resourceId }).first()
-      if (!comment) throw new Error('Comment not found')
-      if (comment.streamId !== streamId)
-        throw new Error(
-          'Stop hacking - that comment is not part of the specified stream.'
-        )
-      break
-    }
-    default:
-      throw Error(
-        `resource type ${res.resourceType} is not supported as a comment target`
-      )
+export const streamResourceCheckFactory =
+  (deps: {
+    checkStreamResourceAccess: CheckStreamResourceAccess
+  }): CheckStreamResourcesAccess =>
+  async ({
+    streamId,
+    resources
+  }: {
+    streamId: string
+    resources: ResourceIdentifier[]
+  }) => {
+    // this itches - a for loop with queries... but okay let's hit the road now
+    await Promise.all(
+      resources.map((res) => deps.checkStreamResourceAccess(res, streamId))
+    )
   }
-}
-
-export async function streamResourceCheck({
-  streamId,
-  resources
-}: {
-  streamId: string
-  resources: ResourceIdentifier[]
-}) {
-  // this itches - a for loop with queries... but okay let's hit the road now
-  await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
-}
 
 /**
  * @deprecated Use 'createCommentThreadAndNotify()' instead
  */
-export async function createComment({
-  userId,
-  input
-}: {
-  userId: string
-  input: CommentCreateInput
-}) {
-  if (input.resources.length < 1)
-    throw Error('Must specify at least one resource as the comment target')
+export const createCommentFactory =
+  (deps: {
+    checkStreamResourcesAccess: CheckStreamResourcesAccess
+    validateInputAttachments: ValidateInputAttachments
+    insertComments: InsertComments
+    insertCommentLinks: InsertCommentLinks
+    deleteComment: DeleteComment
+    markCommentViewed: MarkCommentViewed
+    commentsEventsEmit: CommentsEventsEmit
+  }) =>
+  async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
+    if (input.resources.length < 1)
+      throw Error('Must specify at least one resource as the comment target')
 
-  const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
-  if (commentResource) throw new Error('Please use the comment reply mutation.')
+    const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
+    if (commentResource) throw new Error('Please use the comment reply mutation.')
 
-  // Stream checks
-  const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
-  if (streamResources.length > 1)
-    throw Error('Commenting on multiple streams is not supported')
+    // Stream checks
+    const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
+    if (streamResources.length > 1)
+      throw Error('Commenting on multiple streams is not supported')
 
-  const [stream] = streamResources
-  if (stream && stream.resourceId !== input.streamId)
-    throw Error("Input streamId doesn't match the stream resource.resourceId")
+    const [stream] = streamResources
+    if (stream && stream.resourceId !== input.streamId)
+      throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-  const comment: Partial<CommentRecord> = {
-    streamId: input.streamId,
-    text: input.text as SmartTextEditorValueSchema,
-    data: input.data,
-    screenshot: input.screenshot ?? null
-  }
-
-  comment.id = crs({ length: 10 })
-  comment.authorId = userId
-
-  await validateInputAttachments(input.streamId, input.blobIds)
-  comment.text = buildCommentTextFromInput({
-    doc: input.text,
-    blobIds: input.blobIds
-  }) as unknown as string
-
-  const [newComment] = await Comments().insert(comment, '*')
-  try {
-    await module.exports.streamResourceCheck({
+    const comment = {
       streamId: input.streamId,
-      resources: input.resources
-    })
-    for (const res of input.resources) {
-      if (!res) continue
-      await CommentLinks().insert({
-        commentId: comment.id,
-        resourceId: res.resourceId,
-        resourceType: res.resourceType
-      })
+      text: input.text as SmartTextEditorValueSchema,
+      data: input.data,
+      screenshot: input.screenshot ?? null
     }
-  } catch (e) {
-    await Comments().where({ id: comment.id }).delete() // roll back
-    throw e // pass on to resolver
+
+    await deps.validateInputAttachments(input.streamId, input.blobIds)
+    comment.text = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
+
+    const id = crs({ length: 10 })
+    const [newComment] = await deps.insertComments([
+      {
+        ...comment,
+        id,
+        authorId: userId
+      }
+    ])
+    try {
+      await deps.checkStreamResourcesAccess({
+        streamId: input.streamId,
+        resources: input.resources.filter(isNonNullable)
+      })
+      for (const res of input.resources) {
+        if (!res) continue
+        await deps.insertCommentLinks([
+          {
+            commentId: id,
+            resourceId: res.resourceId,
+            resourceType: res.resourceType
+          }
+        ])
+      }
+    } catch (e) {
+      await deps.deleteComment({ commentId: id }) // roll back
+      throw e // pass on to resolver
+    }
+
+    await deps.markCommentViewed(id, userId) // so we don't self mark a comment as unread the moment it's created
+
+    await deps.commentsEventsEmit(CommentsEvents.Created, {
+      comment: newComment
+    })
+
+    return newComment
   }
-  await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-
-  await CommentsEmitter.emit(CommentsEvents.Created, {
-    comment: newComment
-  })
-
-  return newComment
-}
 
 /**
  * @deprecated Use 'createCommentReplyAndNotify()' instead
@@ -164,7 +154,10 @@ export async function createCommentReply({
   data: CommentRecord['data']
   blobIds: string[]
 }) {
-  await validateInputAttachments(streamId, blobIds)
+  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+    streamId,
+    blobIds
+  )
   const comment = {
     id: crs({ length: 10 }),
     authorId,
@@ -176,15 +169,23 @@ export async function createCommentReply({
 
   const [newComment] = await Comments().insert(comment, '*')
   try {
-    const commentLink: Omit<CommentLinkRecord, 'commentId'> = {
+    const commentLink: CommentLinkRecord = {
       resourceId: parentCommentId,
-      resourceType: 'comment'
+      resourceType: 'comment',
+      commentId: newComment.id
     }
-    await module.exports.streamResourceCheck({
+    await streamResourceCheckFactory({
+      checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+    })({
       streamId,
-      resources: [commentLink]
+      resources: [
+        {
+          resourceType: commentLink.resourceType as ResourceType,
+          resourceId: commentLink.resourceId
+        }
+      ]
     })
-    await CommentLinks().insert({ commentId: comment.id, ...commentLink })
+    await CommentLinks().insert({ ...commentLink })
   } catch (e) {
     await Comments().where({ id: comment.id }).delete() // roll back
     throw e // pass on to resolver
@@ -216,7 +217,10 @@ export async function editComment({
   if (matchUser && editedComment.authorId !== userId)
     throw new ForbiddenError("You cannot edit someone else's comments")
 
-  await validateInputAttachments(input.streamId, input.blobIds)
+  await validateInputAttachmentsFactory({ getBlobs: getBlobsFactory({ db }) })(
+    input.streamId,
+    input.blobIds
+  )
   const newText = buildCommentTextFromInput({
     doc: input.text,
     blobIds: input.blobIds
@@ -233,18 +237,6 @@ export async function editComment({
   return updatedComment
 }
 
-/**
- * @deprecated Use 'markCommentViewed()'
- */
-export async function viewComment({
-  userId,
-  commentId
-}: {
-  userId: string
-  commentId: string
-}) {
-  await markCommentViewed(commentId, userId)
-}
 /**
  * @deprecated Use repository method
  */
