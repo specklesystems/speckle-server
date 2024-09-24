@@ -67,6 +67,7 @@
             @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
+        <span v-else />
       </template>
     </LayoutTable>
 
