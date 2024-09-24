@@ -150,16 +150,21 @@ export default function (app: Express) {
   Ensures a user is logged out by invalidating their token and refresh token.
    */
   app.post('/auth/logout', async (req, res) => {
-    const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+    try {
+      const revokeRefreshToken = revokeRefreshTokenFactory({ db })
 
-    const token = req.body.token
-    const refreshToken = req.body.refreshToken
+      const token = req.body.token
+      const refreshToken = req.body.refreshToken
 
-    if (!token) throw new Error('Invalid request. No token provided.')
-    await revokeTokenById(token)
+      if (!token) throw new Error('Invalid request. No token provided.')
+      await revokeTokenById(token)
 
-    if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
+      if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
 
-    return res.status(200).send({ message: 'You have logged out.' })
+      return res.status(200).send({ message: 'You have logged out.' })
+    } catch (err) {
+      req.log.info({ err }, 'Error while trying to logout.')
+      return res.status(400).send('Something went wrong while trying to logout.')
+    }
   })
 }
