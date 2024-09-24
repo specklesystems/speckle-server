@@ -31,6 +31,7 @@ export const projectDashboardItemFragment = graphql(`
     }
     workspace {
       id
+      slug
       name
       ...WorkspaceAvatar_Workspace
     }

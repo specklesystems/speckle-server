@@ -7,7 +7,7 @@ import {
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
-import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
+import { workspaceBySlugQuery } from '~/lib/workspaces/graphql/queries'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
@@ -56,7 +56,7 @@ export default defineNuxtPlugin(async (ctx) => {
       preload({
         queries: [
           {
-            query: workspaceAccessCheckQuery,
+            query: workspaceBySlugQuery,
             variables: { id: idParam },
             context: { skipLoggingErrors: true }
           }

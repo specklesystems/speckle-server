@@ -6,7 +6,7 @@
     <template v-else>
       <Portal to="navigation">
         <HeaderNavLink
-          :to="workspaceRoute(workspaceId)"
+          :to="workspaceRoute(workspaceSlug)"
           :name="workspace?.name"
           :separator="false"
         />
@@ -98,6 +98,7 @@ import type {
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { getWorkspaceIdFromSlug } from '~/lib/workspaces/helpers/slug'
 import { Roles } from '@speckle/shared'
 import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import {
@@ -130,7 +131,7 @@ const {
 })
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceSlug: string
 }>()
 
 const showInviteDialog = ref(false)
@@ -140,13 +141,14 @@ const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
 )
 
 const token = computed(() => route.query.token as Optional<string>)
+const workspaceId = getWorkspaceIdFromSlug(props.workspaceSlug)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
-    workspaceId: props.workspaceId,
+    workspaceId: workspaceId.value as string,
     filter: {
       search: (search.value || '').trim() || null
     },
@@ -163,7 +165,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 >({
   query: workspaceProjectsQuery,
   baseVariables: computed(() => ({
-    workspaceId: props.workspaceId,
+    workspaceId: workspaceId.value as string,
     filter: {
       search: (search.value || '').trim() || null
     }

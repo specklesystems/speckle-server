@@ -1,14 +1,15 @@
 <template>
   <div>
-    <WorkspaceProjectList :workspace-id="workspaceId" />
+    <WorkspaceProjectList :workspace-slug="workspaceSlug" />
   </div>
 </template>
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 
-const route = useRoute()
-const workspaceId = computed(() => route.params.id as string)
 definePageMeta({
   middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
 })
+
+const route = useRoute()
+const workspaceSlug = computed(() => route.params.slug as string)
 </script>
