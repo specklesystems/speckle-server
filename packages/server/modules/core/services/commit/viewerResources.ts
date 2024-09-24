@@ -1,5 +1,7 @@
 import {
   GetCommentsResources,
+  GetViewerResourceGroups,
+  GetViewerResourceItemsUngrouped,
   GetViewerResourcesForComment,
   GetViewerResourcesForComments,
   GetViewerResourcesFromLegacyIdentifiers
@@ -73,184 +75,210 @@ const getObjectResourceGroupsFactory =
     return results
   }
 
-async function getVersionResourceGroupsIncludingAllVersions(
-  projectId: string,
-  params: {
-    modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-    folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
-  }
-) {
-  // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
-  // specifically requested versions (if version isn't set in identifier, then latest version)
+type GetVersionResourceGroupsIncludingAllVersionsFactoryDeps = {
+  getStreamBranchesByName: typeof getStreamBranchesByName
+  getAllBranchCommits: typeof getAllBranchCommits
+}
 
-  const { modelResources = [], folderResources = [] } = params
-  const results: ViewerResourceGroup[] = []
+const getVersionResourceGroupsIncludingAllVersionsFactory =
+  (deps: GetVersionResourceGroupsIncludingAllVersionsFactoryDeps) =>
+  async (
+    projectId: string,
+    params: {
+      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
+      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
+    }
+  ) => {
+    // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
+    // specifically requested versions (if version isn't set in identifier, then latest version)
 
-  const foldersModels = await getStreamBranchesByName(
-    projectId,
-    folderResources.map((r) => r.folderName),
-    { startsWithName: true }
-  )
+    const { modelResources = [], folderResources = [] } = params
+    const results: ViewerResourceGroup[] = []
 
-  const allBranchIds = [
-    ...foldersModels.map((m) => m.id),
-    ...modelResources.map((m) => m.modelId)
-  ]
-
-  // get all versions of all referenced branches
-  const branchCommits = await getAllBranchCommits({ branchIds: allBranchIds })
-
-  for (const folderResource of folderResources) {
-    const prefix = folderResource.folderName
-    const folderModels = foldersModels.filter((m) =>
-      m.name.toLowerCase().startsWith(prefix)
+    const foldersModels = await deps.getStreamBranchesByName(
+      projectId,
+      folderResources.map((r) => r.folderName),
+      { startsWithName: true }
     )
-    if (!folderModels.length) continue
 
-    const items: ViewerResourceItem[] = []
-    for (const folderModel of folderModels) {
-      const modelVersions = branchCommits[folderModel.id]
-      if (!modelVersions?.length) continue
+    const allBranchIds = [
+      ...foldersModels.map((m) => m.id),
+      ...modelResources.map((m) => m.modelId)
+    ]
 
+    // get all versions of all referenced branches
+    const branchCommits = await deps.getAllBranchCommits({ branchIds: allBranchIds })
+
+    for (const folderResource of folderResources) {
+      const prefix = folderResource.folderName
+      const folderModels = foldersModels.filter((m) =>
+        m.name.toLowerCase().startsWith(prefix)
+      )
+      if (!folderModels.length) continue
+
+      const items: ViewerResourceItem[] = []
+      for (const folderModel of folderModels) {
+        const modelVersions = branchCommits[folderModel.id]
+        if (!modelVersions?.length) continue
+
+        for (const modelVersion of modelVersions) {
+          items.push({
+            modelId: folderModel.id,
+            versionId: modelVersion.id,
+            objectId: modelVersion.referencedObject
+          })
+        }
+      }
+
+      results.push({
+        identifier: folderResource.toString(),
+        items
+      })
+    }
+
+    for (const modelResource of modelResources) {
+      const modelVersions = branchCommits[modelResource.modelId] || []
+
+      const items: ViewerResourceItem[] = []
       for (const modelVersion of modelVersions) {
         items.push({
-          modelId: folderModel.id,
+          modelId: modelResource.modelId,
           versionId: modelVersion.id,
           objectId: modelVersion.referencedObject
         })
       }
-    }
 
-    results.push({
-      identifier: folderResource.toString(),
-      items
-    })
-  }
-
-  for (const modelResource of modelResources) {
-    const modelVersions = branchCommits[modelResource.modelId] || []
-
-    const items: ViewerResourceItem[] = []
-    for (const modelVersion of modelVersions) {
-      items.push({
-        modelId: modelResource.modelId,
-        versionId: modelVersion.id,
-        objectId: modelVersion.referencedObject
+      results.push({
+        identifier: modelResource.toString(),
+        items
       })
     }
 
-    results.push({
-      identifier: modelResource.toString(),
-      items
-    })
+    return results
   }
 
-  return results
+type GetVersionResourceGroupsLoadedVersionsOnlyDeps = {
+  getStreamBranchesByName: typeof getStreamBranchesByName
+  getSpecificBranchCommits: typeof getSpecificBranchCommits
+  getBranchLatestCommits: typeof getBranchLatestCommits
 }
 
-async function getVersionResourceGroupsLoadedVersionsOnly(
-  projectId: string,
-  params: {
-    modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-    folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
-  }
-) {
-  // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
-  // specifically requested versions (if version isn't set in identifier, then latest version)
-
-  const { modelResources = [], folderResources = [] } = params
-  const results: ViewerResourceGroup[] = []
-
-  const foldersModels = await getStreamBranchesByName(
-    projectId,
-    folderResources.map((r) => r.folderName),
-    { startsWithName: true }
-  )
-
-  const specificVersionPairs = modelResources
-    .filter(
-      (r): r is SpeckleViewer.ViewerRoute.ViewerModelResource & { versionId: string } =>
-        !!r.versionId
-    )
-    .map((r) => ({ branchId: r.modelId, commitId: r.versionId }))
-
-  const latestVersionModelIds = uniq([
-    ...modelResources.filter((r) => !r.versionId).map((r) => r.modelId),
-    ...foldersModels.map((m) => m.id)
-  ])
-
-  const [specificVersions, latestVersions] = await Promise.all([
-    getSpecificBranchCommits(specificVersionPairs),
-    getBranchLatestCommits(latestVersionModelIds)
-  ])
-  const modelLatestVersions = keyBy(latestVersions, 'branchId')
-
-  for (const folderResource of folderResources) {
-    const prefix = folderResource.folderName
-    const folderModels = foldersModels.filter((m) =>
-      m.name.toLowerCase().startsWith(prefix)
-    )
-    if (!folderModels.length) continue
-
-    const items: ViewerResourceItem[] = []
-    for (const folderModel of folderModels) {
-      const latestVersion = modelLatestVersions[folderModel.id]
-      if (!latestVersion) continue
-
-      items.push({
-        modelId: folderModel.id,
-        versionId: latestVersion.id,
-        objectId: latestVersion.referencedObject
-      })
+const getVersionResourceGroupsLoadedVersionsOnlyFactory =
+  (deps: GetVersionResourceGroupsLoadedVersionsOnlyDeps) =>
+  async (
+    projectId: string,
+    params: {
+      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
+      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
     }
+  ) => {
+    // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
+    // specifically requested versions (if version isn't set in identifier, then latest version)
 
-    results.push({
-      identifier: folderResource.toString(),
-      items
-    })
-  }
+    const { modelResources = [], folderResources = [] } = params
+    const results: ViewerResourceGroup[] = []
 
-  for (const modelResource of modelResources) {
-    let item: Optional<CommitRecord & { branchId: string }> = undefined
-    if (modelResource.versionId) {
-      item = specificVersions.find(
-        (v) => v.branchId === modelResource.modelId && v.id === modelResource.versionId
+    const foldersModels = await deps.getStreamBranchesByName(
+      projectId,
+      folderResources.map((r) => r.folderName),
+      { startsWithName: true }
+    )
+
+    const specificVersionPairs = modelResources
+      .filter(
+        (
+          r
+        ): r is SpeckleViewer.ViewerRoute.ViewerModelResource & { versionId: string } =>
+          !!r.versionId
       )
-    } else {
-      item = modelLatestVersions[modelResource.modelId]
+      .map((r) => ({ branchId: r.modelId, commitId: r.versionId }))
+
+    const latestVersionModelIds = uniq([
+      ...modelResources.filter((r) => !r.versionId).map((r) => r.modelId),
+      ...foldersModels.map((m) => m.id)
+    ])
+
+    const [specificVersions, latestVersions] = await Promise.all([
+      deps.getSpecificBranchCommits(specificVersionPairs),
+      deps.getBranchLatestCommits(latestVersionModelIds)
+    ])
+    const modelLatestVersions = keyBy(latestVersions, 'branchId')
+
+    for (const folderResource of folderResources) {
+      const prefix = folderResource.folderName
+      const folderModels = foldersModels.filter((m) =>
+        m.name.toLowerCase().startsWith(prefix)
+      )
+      if (!folderModels.length) continue
+
+      const items: ViewerResourceItem[] = []
+      for (const folderModel of folderModels) {
+        const latestVersion = modelLatestVersions[folderModel.id]
+        if (!latestVersion) continue
+
+        items.push({
+          modelId: folderModel.id,
+          versionId: latestVersion.id,
+          objectId: latestVersion.referencedObject
+        })
+      }
+
+      results.push({
+        identifier: folderResource.toString(),
+        items
+      })
     }
 
-    if (!item) continue
-    results.push({
-      identifier: modelResource.toString(),
-      items: [
-        {
-          modelId: item.branchId,
-          versionId: item.id,
-          objectId: item.referencedObject
-        }
-      ]
-    })
-  }
+    for (const modelResource of modelResources) {
+      let item: Optional<CommitRecord & { branchId: string }> = undefined
+      if (modelResource.versionId) {
+        item = specificVersions.find(
+          (v) =>
+            v.branchId === modelResource.modelId && v.id === modelResource.versionId
+        )
+      } else {
+        item = modelLatestVersions[modelResource.modelId]
+      }
 
-  return results
-}
-
-async function getAllModelsResourceGroup(
-  projectId: string
-): Promise<ViewerResourceGroup> {
-  const allBranchCommits = await getBranchLatestCommits(undefined, projectId)
-  return {
-    identifier: 'all',
-    items: allBranchCommits.map(
-      (c): ViewerResourceItem => ({
-        modelId: c.branchId,
-        versionId: c.id,
-        objectId: c.referencedObject
+      if (!item) continue
+      results.push({
+        identifier: modelResource.toString(),
+        items: [
+          {
+            modelId: item.branchId,
+            versionId: item.id,
+            objectId: item.referencedObject
+          }
+        ]
       })
-    )
+    }
+
+    return results
   }
+
+type GetAllModelsResourceGroupDeps = {
+  getBranchLatestCommits: typeof getBranchLatestCommits
 }
+
+const getAllModelsResourceGroupFactory =
+  (deps: GetAllModelsResourceGroupDeps) =>
+  async (projectId: string): Promise<ViewerResourceGroup> => {
+    const allBranchCommits = await deps.getBranchLatestCommits(undefined, projectId)
+    return {
+      identifier: 'all',
+      items: allBranchCommits.map(
+        (c): ViewerResourceItem => ({
+          modelId: c.branchId,
+          versionId: c.id,
+          objectId: c.referencedObject
+        })
+      )
+    }
+  }
+
+type GetVersionResourceGroupsDeps = GetAllModelsResourceGroupDeps &
+  GetVersionResourceGroupsLoadedVersionsOnlyDeps &
+  GetVersionResourceGroupsIncludingAllVersionsFactoryDeps
 
 /**
  * Version resources can be resolved 2 ways:
@@ -260,74 +288,83 @@ async function getAllModelsResourceGroup(
  * identifiers, or if none are specified then only the latest version is referenced (e.g. in folder
  * resources & model resources w/ an empty version ID)
  */
-async function getVersionResourceGroups(
-  projectId: string,
-  params: {
-    modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-    folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
-    allModelsResource?: SpeckleViewer.ViewerRoute.ViewerAllModelsResource
-  },
-  loadedVersionsOnly?: boolean
-) {
-  const allModelsGroup = params.allModelsResource
-    ? await getAllModelsResourceGroup(projectId)
-    : null
+const getVersionResourceGroupsFactory =
+  (deps: GetVersionResourceGroupsDeps) =>
+  async (
+    projectId: string,
+    params: {
+      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
+      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
+      allModelsResource?: SpeckleViewer.ViewerRoute.ViewerAllModelsResource
+    },
+    loadedVersionsOnly?: boolean
+  ) => {
+    const allModelsGroup = params.allModelsResource
+      ? await getAllModelsResourceGroupFactory(deps)(projectId)
+      : null
 
-  const groups = loadedVersionsOnly
-    ? await getVersionResourceGroupsLoadedVersionsOnly(projectId, params)
-    : await getVersionResourceGroupsIncludingAllVersions(projectId, params)
+    const groups = loadedVersionsOnly
+      ? await getVersionResourceGroupsLoadedVersionsOnlyFactory(deps)(projectId, params)
+      : await getVersionResourceGroupsIncludingAllVersionsFactory(deps)(
+          projectId,
+          params
+        )
 
-  return [...(allModelsGroup ? [allModelsGroup] : []), ...groups]
-}
+    return [...(allModelsGroup ? [allModelsGroup] : []), ...groups]
+  }
 
 /**
  * Validate requested resource identifiers and build viewer resource groups & items with
  * the metadata that the viewer needs to work with these
  */
-export async function getViewerResourceGroups(
-  target: ViewerUpdateTrackingTarget
-): Promise<ViewerResourceGroup[]> {
-  const { resourceIdString, projectId, loadedVersionsOnly } = target
-  if (!resourceIdString?.trim().length) return []
-  const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
+export const getViewerResourceGroupsFactory =
+  (
+    deps: GetObjectResourceGroupsDeps & GetVersionResourceGroupsDeps
+  ): GetViewerResourceGroups =>
+  async (target: ViewerUpdateTrackingTarget): Promise<ViewerResourceGroup[]> => {
+    const { resourceIdString, projectId, loadedVersionsOnly } = target
+    if (!resourceIdString?.trim().length) return []
+    const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
-  const allModelsResource = resources.find(
-    SpeckleViewer.ViewerRoute.isAllModelsResource
-  )
-  const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
-  const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
-  const folderResources = resources.filter(
-    SpeckleViewer.ViewerRoute.isModelFolderResource
-  )
+    const allModelsResource = resources.find(
+      SpeckleViewer.ViewerRoute.isAllModelsResource
+    )
+    const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
+    const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
+    const folderResources = resources.filter(
+      SpeckleViewer.ViewerRoute.isModelFolderResource
+    )
 
-  const results: ViewerResourceGroup[] = flatten(
-    await Promise.all([
-      getObjectResourceGroupsFactory({ getStreamObjects })(projectId, objectResources),
-      getVersionResourceGroups(
-        projectId,
-        { modelResources, folderResources, allModelsResource },
-        loadedVersionsOnly || false
-      )
-    ])
-  )
+    const results: ViewerResourceGroup[] = flatten(
+      await Promise.all([
+        getObjectResourceGroupsFactory(deps)(projectId, objectResources),
+        getVersionResourceGroupsFactory(deps)(
+          projectId,
+          { modelResources, folderResources, allModelsResource },
+          loadedVersionsOnly || false
+        )
+      ])
+    )
 
-  return results
-}
-
-export async function getViewerResourceItemsUngrouped(
-  target: ViewerUpdateTrackingTarget
-): Promise<ViewerResourceItem[]> {
-  const { resourceIdString } = target
-  if (!resourceIdString?.trim().length) return []
-
-  let results: ViewerResourceItem[] = []
-  const groups = await getViewerResourceGroups(target)
-  for (const group of groups) {
-    results = results.concat(group.items)
+    return results
   }
 
-  return uniqWith(results, isResourceItemEqual)
-}
+export const getViewerResourceItemsUngroupedFactory =
+  (deps: {
+    getViewerResourceGroups: GetViewerResourceGroups
+  }): GetViewerResourceItemsUngrouped =>
+  async (target: ViewerUpdateTrackingTarget): Promise<ViewerResourceItem[]> => {
+    const { resourceIdString } = target
+    if (!resourceIdString?.trim().length) return []
+
+    let results: ViewerResourceItem[] = []
+    const groups = await deps.getViewerResourceGroups(target)
+    for (const group of groups) {
+      results = results.concat(group.items)
+    }
+
+    return uniqWith(results, isResourceItemEqual)
+  }
 
 export const getViewerResourcesFromLegacyIdentifiersFactory =
   (
