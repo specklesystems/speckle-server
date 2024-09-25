@@ -8,18 +8,13 @@
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
-        <div
-          class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
-        >
+        <div class="flex gap-2 items-center">
           <NuxtLink :to="modelLink || undefined">
             <span class="text-heading text-foreground hover:text-primary">
               {{ name }}
             </span>
           </NuxtLink>
-          <span
-            v-if="model"
-            class="opacity-100 md:opacity-0 group-hover:opacity-100 transition"
-          >
+          <span v-if="model">
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
