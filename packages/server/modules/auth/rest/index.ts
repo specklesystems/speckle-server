@@ -8,12 +8,8 @@ import {
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
-import { Optional, Scopes } from '@speckle/shared'
-import {
-  BadRequestError,
-  ForbiddenError,
-  UnauthorizedError
-} from '@/modules/shared/errors'
+import { ensureError, Optional, Scopes } from '@speckle/shared'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
   revokeRefreshTokenFactory,
@@ -145,9 +141,8 @@ export default function (app: Express) {
       })
       return res.send(authResponse)
     } catch (err) {
-      throw new UnauthorizedError('Invalid request. Could not generate token.', {
-        cause: err instanceof Error ? err : new Error(JSON.stringify(err))
-      })
+      req.log.info({ err }, 'Error while trying to generate a new token.')
+      return res.status(401).send({ err: ensureError(err).message })
     }
   })
 
