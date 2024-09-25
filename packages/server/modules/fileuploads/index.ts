@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
-import { streamWritePermissions } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { moduleLogger } from '@/logging/logging'
 import { listenForImportUpdatesFactory } from '@/modules/fileuploads/services/resultListener'
@@ -13,6 +12,10 @@ import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
+import { getStream } from '@/modules/core/repositories/streams'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
   getStreamBranchByName,
@@ -60,7 +63,13 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getRoles: getRolesFactory({ db }),
+        getStream,
+        getAutomationProject: getAutomationProjectFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({

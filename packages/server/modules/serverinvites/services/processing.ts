@@ -3,7 +3,7 @@ import {
   InviteCreateValidationError,
   InviteFinalizedForNewEmail,
   InviteFinalizingError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -148,7 +148,7 @@ export const validateServerInviteFactory =
   async (email?: string, token?: string): Promise<ServerInviteRecord> => {
     const invite = await findServerInvite(email, token)
     if (!invite) {
-      throw new NoInviteFoundError(
+      throw new InviteNotFoundError(
         token
           ? "Wrong e-mail address or invite token. Make sure you're using the same e-mail address that received the invite."
           : "Wrong e-mail address. Make sure you're using the same e-mail address that received the invite.",
@@ -231,7 +231,7 @@ export const finalizeResourceInviteFactory =
       resourceFilter: resourceType ? { resourceType } : undefined
     })
     if (!invite) {
-      throw new NoInviteFoundError('Attempted to finalize nonexistant invite', {
+      throw new InviteNotFoundError('Attempted to finalize nonexistant invite', {
         info: params
       })
     }
@@ -372,7 +372,7 @@ export const cancelResourceInviteFactory =
       }
     })
     if (!invite) {
-      throw new NoInviteFoundError('Attempted to cancel nonexistant invite', {
+      throw new InviteNotFoundError('Attempted to cancel nonexistant invite', {
         info: {
           ...params
         }
@@ -402,7 +402,7 @@ export const deleteInviteFactory =
   async (inviteId: string) => {
     const invite = await findInvite({ inviteId })
     if (!invite) {
-      throw new NoInviteFoundError('Attempted to delete a nonexistant invite')
+      throw new InviteNotFoundError('Attempted to delete a nonexistant invite')
     }
 
     await deleteInvite(invite.id)

@@ -1,11 +1,5 @@
-import {
-  CameraController,
-  Extension,
-  GeometryType,
-  IViewer,
-  Vector3
-} from '@speckle/viewer'
-import { PerspectiveCamera } from 'three'
+import { CameraController, Extension, GeometryType, IViewer } from '@speckle/viewer'
+import { PerspectiveCamera, Vector3 } from 'three'
 
 export class CameraPlanes extends Extension {
   private camerController: CameraController

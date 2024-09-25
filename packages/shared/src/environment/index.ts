@@ -20,6 +20,11 @@ function parseFeatureFlags() {
       schema: z.boolean(),
       defaults: { production: false, _: true }
     },
+    // Enables using dynamic SSO on a per workspace basis
+    FF_WORKSPACES_SSO_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
     // Enables the multiple emails module
     FF_MULTIPLE_EMAILS_MODULE_ENABLED: {
       schema: z.boolean(),

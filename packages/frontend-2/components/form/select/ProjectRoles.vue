@@ -12,6 +12,7 @@
     :disabled-item-tooltip="disabledItemsTooltip"
     :disabled-item-predicate="disabledItemPredicate"
     :allow-unset="allowUnset"
+    :disabled="disabled"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -64,6 +65,7 @@ const props = defineProps<{
   disabledItems?: StreamRoles[]
   disabledItemsTooltip?: string
   allowUnset?: boolean
+  disabled?: boolean
 }>()
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

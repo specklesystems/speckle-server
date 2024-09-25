@@ -65,6 +65,7 @@
             label="Project role"
             size="md"
             :disabled-items="[Roles.Stream.Owner]"
+            :disabled="!isAdmin"
             @update:model-value="save()"
           />
         </div>
