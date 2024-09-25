@@ -5,6 +5,7 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
+import { obj as _obj, base64ToBytes } from './obj.js'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
@@ -54,9 +55,9 @@ export class SpeckleLoader extends Loader {
       throw new Error('Unexpected object url format.')
     }
 
-    const serverUrl = url.origin
-    const streamId = segments[2]
-    const objectId = segments[4]
+    const serverUrl = 'plm' //url.origin
+    const streamId = 'plm' //segments[2]
+    const objectId = 'plm' //segments[4]
 
     this.loader = new ObjectLoader({
       serverUrl,
@@ -74,14 +75,16 @@ export class SpeckleLoader extends Loader {
     const start = performance.now()
     let first = true
     let current = 0
-    const total = await this.loader.getTotalObjectCount()
+    const total = 10 //await this.loader.getTotalObjectCount()
     let viewerLoads = 0
     let firstObjectPromise = null
 
     Logger.warn('Downloading object ', this._resource)
 
     const pause = new AsyncPause()
-    for await (const obj of this.loader.getObjectIterator()) {
+    for await (const obj of this.loader.getObjectIterator2(
+      new TextDecoder().decode(base64ToBytes(_obj))
+    )) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)
         return Promise.resolve(false)

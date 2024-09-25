@@ -419,7 +419,8 @@ const getStream = () => {
     // Text with no material
     // 'https://latest.speckle.systems/projects/731c6e2fd1/models/bcd3a4a706'
 
-    'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
+    // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/49874f87a2ddd370bd2bf46b68c3660d'
   )
 }
 
