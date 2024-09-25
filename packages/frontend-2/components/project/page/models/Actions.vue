@@ -6,6 +6,7 @@
       :menu-id="menuId"
       :items="actionsItems"
       :menu-position="HorizontalDirection.Left"
+      mount-menu-on-body
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -49,6 +50,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { modelVersionsRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -68,6 +70,7 @@ enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
   Share = 'share',
+  ViewVersions = 'view-versions',
   UploadVersion = 'upload-version',
   CopyId = 'copy-id',
   Embed = 'embed'
@@ -91,6 +94,7 @@ const copyModelLink = useCopyModelLink()
 const { copy } = useClipboard()
 const menuId = useId()
 const { isLoggedIn } = useActiveUser()
+const router = useRouter()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
@@ -106,6 +110,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
             id: ActionTypes.Rename,
             disabled: !props.canEdit,
             disabledTooltip: 'Insufficient permissions'
+          },
+          {
+            title: 'View versions',
+            id: ActionTypes.ViewVersions
           },
           {
             title: 'Upload new version...',
@@ -157,6 +165,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })
       copyModelLink(props.project.id, props.model.id)
+      break
+    case ActionTypes.ViewVersions:
+      router.push(modelVersionsRoute(props.project.id, props.model.id))
       break
     case ActionTypes.UploadVersion:
       emit('upload-version')
