@@ -1018,14 +1018,18 @@ export async function markCommitStreamUpdated(commitId: string) {
 // TODO: Replace all calls to `grantStreamPermissions` with this
 export const upsertProjectRoleFactory =
   ({ db }: { db: Knex }): UpsertProjectRole =>
-  async ({ projectId, userId, role }) => {
+  async (
+    { projectId, userId, role },
+    { trackProjectUpdate } = { trackProjectUpdate: true }
+  ) => {
     return await grantStreamPermissions(
       {
         streamId: projectId,
         userId,
         role
       },
-      db
+      db,
+      { trackProjectUpdate }
     )
   }
 
@@ -1039,7 +1043,8 @@ export async function grantStreamPermissions(
     userId: string
     role: StreamRoles
   },
-  db: Knex = defaultKnexInstance
+  db: Knex = defaultKnexInstance,
+  options: { trackProjectUpdate?: boolean } = { trackProjectUpdate: true }
 ) {
   const { streamId, userId, role } = params
 
@@ -1073,12 +1078,13 @@ export async function grantStreamPermissions(
 
   await knex.raw(query)
 
-  // update stream updated at
-  const streams = await tables
-    .streams(db)
-    .where({ id: streamId })
-    .update({ updatedAt: knex.fn.now() }, '*')
+  const streamsQuery = tables.streams(db)
+  if (options.trackProjectUpdate) {
+    // update stream updated at
+    streamsQuery.update({ updatedAt: knex.fn.now() }, '*')
+  }
 
+  const streams = await streamsQuery.where({ id: streamId })
   return streams[0] as StreamRecord
 }
 

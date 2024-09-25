@@ -64,26 +64,6 @@ module.exports = {
     }
   },
 
-  async getStreamActivity({ streamId, actionType, after, before, cursor, limit }) {
-    if (!limit) {
-      limit = 200
-    }
-
-    const dbQuery = StreamActivity().where({ streamId })
-    if (actionType) dbQuery.andWhere({ actionType })
-    if (after) dbQuery.andWhere('time', '>', after)
-    if (before) dbQuery.andWhere('time', '<', before)
-    if (cursor) dbQuery.andWhere('time', '<', cursor)
-    dbQuery.orderBy('time', 'desc').limit(limit)
-
-    const results = await dbQuery.select('*')
-
-    return {
-      items: results,
-      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
-    }
-  },
-
   async getUserActivity({ userId, actionType, after, before, cursor, limit }) {
     if (!limit) {
       limit = 200
@@ -166,15 +146,6 @@ module.exports = {
 
   async getActivityCountByResourceId({ resourceId, actionType, after, before }) {
     const query = StreamActivity().count().where({ resourceId })
-    if (actionType) query.andWhere({ actionType })
-    if (after) query.andWhere('time', '>', after)
-    if (before) query.andWhere('time', '<', before)
-    const [res] = await query
-    return parseInt(res.count)
-  },
-
-  async getActivityCountByStreamId({ streamId, actionType, after, before }) {
-    const query = StreamActivity().count().where({ streamId })
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
