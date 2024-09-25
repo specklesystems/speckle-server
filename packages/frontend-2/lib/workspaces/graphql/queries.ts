@@ -18,6 +18,7 @@ export const workspacePageQuery = graphql(`
   ) {
     workspace(id: $workspaceId) {
       id
+      createdAt
       ...WorkspaceHeader_Workspace
       ...WorkspaceMixpanelUpdateGroup_Workspace
       projects(filter: $filter, cursor: $cursor, limit: 10) {
