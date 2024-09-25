@@ -450,19 +450,19 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendSettings.value = await app.$sendBinding.getSendSettings()
   }
 
-  const tryToUpgradeSettings = (typeDiscriminator: string) => {
+  const tryToUpgradeSettings = (settings: CardSetting[], typeDiscriminator: string) => {
     if (documentModelStore.value.models.length === 0) return
     const modelCards = documentModelStore.value.models.filter(
       (m) => m.typeDiscriminator === typeDiscriminator
     )
     if (modelCards.length === 0) return
 
-    const sendSettingIds = sendSettings.value?.map((s) => s.id) || []
+    const settingIds = settings?.map((s) => s.id) || []
     modelCards.forEach(async (modelCard) => {
       const idsToUpgrade = [] as string[]
       const idsToDrop = [] as string[]
 
-      sendSettingIds?.forEach((id) => {
+      settingIds?.forEach((id) => {
         const existingSetting = modelCard.settings?.find((s) => s.id === id)
 
         if (!existingSetting) {
@@ -479,7 +479,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
       // Identify settings to drop (if they no longer exist in sendSettingIds)
       modelCard.settings?.forEach((setting) => {
-        if (!sendSettingIds.includes(setting.id)) {
+        if (!settingIds.includes(setting.id)) {
           idsToDrop.push(setting.id)
         }
       })
@@ -513,7 +513,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         void refreshDocumentInfo()
         await refreshDocumentModelStore() // need to awaited since upgrading the card settings need documentModelStore in place
         void refreshSendFilters()
-        void tryToUpgradeSettings('SenderModelCard')
+        void tryToUpgradeSettings(sendSettings.value || [], 'SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
@@ -525,7 +525,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await refreshDocumentModelStore()
     await refreshSendFilters()
     await getSendSettings()
-    tryToUpgradeSettings('SenderModelCard')
+    tryToUpgradeSettings(sendSettings.value || [], 'SenderModelCard')
   }
 
   initializeApp()
