@@ -448,7 +448,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const getSendSettings = async () => {
     sendSettings.value = await app.$sendBinding.getSendSettings()
-    tryToUpgradeSettings('SenderModelCard')
   }
 
   const tryToUpgradeSettings = (typeDiscriminator: string) => {
@@ -512,20 +511,21 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       setTimeout(async () => {
         void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
-        await refreshDocumentModelStore() // need to awaited since upgradings settings need documentModelStore in place
+        await refreshDocumentModelStore() // need to awaited since upgrading the card settings need documentModelStore in place
         void refreshSendFilters()
         void tryToUpgradeSettings('SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
   const initializeApp = async () => {
+    await getHostAppName()
+    await getHostAppVersion()
+    await getConnectorVersion()
     await refreshDocumentInfo()
     await refreshDocumentModelStore()
     await refreshSendFilters()
     await getSendSettings()
-    await getHostAppName()
-    await getHostAppVersion()
-    await getConnectorVersion()
+    tryToUpgradeSettings('SenderModelCard')
   }
 
   initializeApp()
