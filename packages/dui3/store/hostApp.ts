@@ -450,7 +450,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendSettings.value = await app.$sendBinding.getSendSettings()
   }
 
-  const tryToUpgradeSettings = (settings: CardSetting[], typeDiscriminator: string) => {
+  const tryToUpgradeModelCardSettings = (
+    settings: CardSetting[],
+    typeDiscriminator: string
+  ) => {
     if (documentModelStore.value.models.length === 0) return
     const modelCards = documentModelStore.value.models.filter(
       (m) => m.typeDiscriminator === typeDiscriminator
@@ -513,7 +516,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         void refreshDocumentInfo()
         await refreshDocumentModelStore() // need to awaited since upgrading the card settings need documentModelStore in place
         void refreshSendFilters()
-        void tryToUpgradeSettings(sendSettings.value || [], 'SenderModelCard')
+        void tryToUpgradeModelCardSettings(sendSettings.value || [], 'SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
@@ -525,7 +528,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await refreshDocumentModelStore()
     await refreshSendFilters()
     await getSendSettings()
-    tryToUpgradeSettings(sendSettings.value || [], 'SenderModelCard')
+    tryToUpgradeModelCardSettings(sendSettings.value || [], 'SenderModelCard')
   }
 
   initializeApp()
