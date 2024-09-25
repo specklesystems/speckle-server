@@ -1,14 +1,11 @@
 'use strict'
 const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
+const { getUserActivity, getResourceActivity } = require('../../services/index')
 const {
-  getUserActivity,
-  getResourceActivity,
-  getUserTimeline,
-  getActivityCountByResourceId,
-  getTimelineCount
-} = require('../../services/index')
-const {
-  getActivityCountByUserIdFactory
+  getActivityCountByUserIdFactory,
+  getTimelineCountFactory,
+  getActivityCountByResourceIdFactory,
+  getUserTimelineFactory
 } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 
@@ -32,14 +29,14 @@ const userActivityQueryCore = async (parent, args) => {
 }
 
 const userTimelineQueryCore = async (parent, args) => {
-  const { items, cursor } = await getUserTimeline({
+  const { items, cursor } = await getUserTimelineFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before,
     cursor: args.cursor,
     limit: args.limit
   })
-  const totalCount = await getTimelineCount({
+  const totalCount = await getTimelineCountFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before
@@ -80,7 +77,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -102,7 +99,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
