@@ -8,13 +8,14 @@ import {
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStream } from '@/modules/core/repositories/streams'
 import {
-  contextRequiresStream,
+  validateRequiredStreamFactory,
   validateResourceAccess,
   validateScope,
-  validateServerRole,
-  validateStreamRole
+  validateServerRoleBuilderFactory,
+  validateStreamRoleBuilderFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
@@ -23,13 +24,17 @@ export default (app: Application) => {
     '/api/automate/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     authMiddlewareCreator([
-      validateServerRole({ requiredRole: Roles.Server.Guest }),
+      validateServerRoleBuilderFactory({
+        getRoles: getRolesFactory({ db })
+      })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
-      contextRequiresStream({
+      validateRequiredStreamFactory({
         getStream,
         getAutomationProject: getAutomationProjectFactory({ db })
       }),
-      validateStreamRole({ requiredRole: Roles.Stream.Owner }),
+      validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
+        requiredRole: Roles.Stream.Owner
+      }),
       validateResourceAccess
     ]),
     async (req, res) => {
