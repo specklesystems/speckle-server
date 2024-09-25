@@ -153,15 +153,6 @@ module.exports = {
     return parseInt(res.count)
   },
 
-  async getActivityCountByUserId({ userId, actionType, after, before }) {
-    const query = StreamActivity().count().where({ userId })
-    if (actionType) query.andWhere({ actionType })
-    if (after) query.andWhere('time', '>', after)
-    if (before) query.andWhere('time', '<', before)
-    const [res] = await query
-    return parseInt(res.count)
-  },
-
   async getTimelineCount({ userId, after, before }) {
     const query = StreamAcl()
       .count()

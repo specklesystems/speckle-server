@@ -41,3 +41,15 @@ export type GetActivityCountByStreamId = ({
   after?: Date
   before?: Date
 }) => Promise<number>
+
+export type GetActivityCountByUserId = ({
+  userId,
+  actionType,
+  before,
+  after
+}: {
+  userId: string
+  actionType?: StreamActionType
+  after?: Date
+  before?: Date
+}) => Promise<number>

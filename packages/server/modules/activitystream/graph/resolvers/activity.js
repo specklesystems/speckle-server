@@ -5,9 +5,12 @@ const {
   getResourceActivity,
   getUserTimeline,
   getActivityCountByResourceId,
-  getActivityCountByUserId,
   getTimelineCount
 } = require('../../services/index')
+const {
+  getActivityCountByUserIdFactory
+} = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
 
 const userActivityQueryCore = async (parent, args) => {
   const { items, cursor } = await getUserActivity({
@@ -18,7 +21,7 @@ const userActivityQueryCore = async (parent, args) => {
     cursor: args.cursor,
     limit: args.limit
   })
-  const totalCount = await getActivityCountByUserId({
+  const totalCount = await getActivityCountByUserIdFactory({ db })({
     userId: parent.id,
     actionType: args.actionType,
     after: args.after,
