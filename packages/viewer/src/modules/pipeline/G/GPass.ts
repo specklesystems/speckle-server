@@ -26,6 +26,7 @@ export interface GPass {
   set options(value: Record<string, unknown>)
   get visibility(): ObjectVisibility | null
   get overrideMaterial(): Material | null
+  get jitter(): boolean
 
   setSize?(width: number, height: number): void
   onBeforeRender?: () => void
@@ -39,6 +40,7 @@ export interface GPass {
   setClippingPlanes?(planes: Plane[]): void
   setLayers?(layers: ObjectLayers[]): void
   setVisibility?(objectVisibility: ObjectVisibility): void
+  setJitter(value: boolean): void
 }
 
 export abstract class BaseGPass implements GPass {
@@ -46,6 +48,7 @@ export abstract class BaseGPass implements GPass {
   protected layers: ObjectLayers[] | null = null
   protected _enabledLayers: ObjectLayers[] = []
   protected _objectVisibility: ObjectVisibility | null = null
+  protected _jitter: boolean = false
 
   protected _outputTarget: WebGLRenderTarget | null = null
 
@@ -85,6 +88,10 @@ export abstract class BaseGPass implements GPass {
     return null
   }
 
+  get jitter(): boolean {
+    return this._jitter
+  }
+
   public setLayers(layers: ObjectLayers[]) {
     this.layers = layers
     this._enabledLayers = layers.slice()
@@ -100,6 +107,10 @@ export abstract class BaseGPass implements GPass {
 
   public setVisibility(objectVisibility: ObjectVisibility) {
     this._objectVisibility = objectVisibility
+  }
+
+  public setJitter(value: boolean) {
+    this._jitter = value
   }
 
   protected applyLayers(camera: Camera | null) {

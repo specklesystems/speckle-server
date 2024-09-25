@@ -208,8 +208,8 @@ export class GProgressiveAOPass extends ProgressiveGPass {
   }
 
   public setSize(width: number, height: number) {
+    super.setSize(width, height)
     this._generationBuffer.setSize(width, height)
-    this._outputTarget?.setSize(width, height)
 
     this.generationMaterial.uniforms['size'].value.set(width, height)
     this.generationMaterial.needsUpdate = true

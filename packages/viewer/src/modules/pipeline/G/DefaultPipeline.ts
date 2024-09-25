@@ -27,6 +27,7 @@ export class DefaultPipeline extends GPipeline {
     const normalPass = new GNormalsPass()
     normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPass.setVisibility(ObjectVisibility.OPAQUE)
+    normalPass.setJitter(true)
 
     const outputPass = new GOutputPass()
     outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
@@ -69,13 +70,14 @@ export class DefaultPipeline extends GPipeline {
     this.dynamicStage.push(opaqueColorPass, transparentColorPass)
     this.progressiveStage.push(
       depthPass,
+      normalPass,
       opaqueColorPass,
       transparentColorPass,
       progressiveAOPass,
       blendPass
     )
 
-    this.passList = [normalPass, outputPass] //this.dynamicStage
+    this.passList = this.dynamicStage
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {
@@ -99,11 +101,11 @@ export class DefaultPipeline extends GPipeline {
 
   public onStationaryBegin() {
     this.accumulationFrameIndex = 0
-    // this.passList = this.progressiveStage
+    this.passList = this.progressiveStage
   }
 
   public onStationaryEnd() {
-    // this.passList = this.dynamicStage
+    this.passList = this.dynamicStage
   }
 
   public onAccumulationComplete() {

@@ -101,6 +101,6 @@ export class GDepthPass extends BaseGPass {
 
     if (this.onAfterRender) this.onAfterRender()
 
-    return true
+    return false
   }
 }

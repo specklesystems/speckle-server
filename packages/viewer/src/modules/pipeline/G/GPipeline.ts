@@ -1,4 +1,4 @@
-import { OrthographicCamera, PerspectiveCamera, Plane, Vector2 } from 'three'
+import { Matrix4, OrthographicCamera, PerspectiveCamera, Plane, Vector2 } from 'three'
 import { GPass, ObjectVisibility } from './GPass.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BatchUpdateRange } from '../../batching/Batch.js'
@@ -7,7 +7,11 @@ export abstract class GPipeline {
   protected speckleRenderer: SpeckleRenderer
   protected passList: Array<GPass> = []
 
-  private drawingSize: Vector2 = new Vector2()
+  protected drawingSize: Vector2 = new Vector2()
+  protected frameProjection: Matrix4 = new Matrix4()
+
+  protected jitterIndex: number = 0
+  protected jitterOffsets: number[][] = this.generateHaltonJiters(16)
 
   constructor(renderer: SpeckleRenderer) {
     this.speckleRenderer = renderer
@@ -32,6 +36,8 @@ export abstract class GPipeline {
     this.speckleRenderer.renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return false
 
+    const camera = this.speckleRenderer.renderingCamera
+
     const restoreVisibility: Record<string, BatchUpdateRange> =
       this.speckleRenderer.batcher.saveVisiblity()
     const visibilityMap = {
@@ -40,6 +46,8 @@ export abstract class GPipeline {
       [ObjectVisibility.DEPTH]: this.speckleRenderer.batcher.getDepth(),
       [ObjectVisibility.STENCIL]: this.speckleRenderer.batcher.getStencil()
     }
+
+    const [jitterX, jitterY] = this.jitterOffsets[this.jitterIndex]
 
     this.onBeforePipelineRender()
 
@@ -60,6 +68,12 @@ export abstract class GPipeline {
           pass.overrideMaterial
         )
 
+      if (pass.jitter && camera) {
+        this.frameProjection.copy(camera.projectionMatrix)
+        camera.projectionMatrix.elements[8] = jitterX / this.drawingSize.x
+        camera.projectionMatrix.elements[9] = jitterY / this.drawingSize.y
+      }
+
       const ret = pass.render(
         this.speckleRenderer.renderer,
         this.speckleRenderer.renderingCamera,
@@ -73,9 +87,12 @@ export abstract class GPipeline {
         this.speckleRenderer.batcher.restoreMaterial(
           pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility
         )
+      if (pass.jitter && camera) camera.projectionMatrix.copy(this.frameProjection)
     })
 
     this.onAfterPipelineRender()
+
+    this.jitterIndex = (this.jitterIndex + 1) % this.jitterOffsets.length
 
     return renderReturn
   }
@@ -89,4 +106,35 @@ export abstract class GPipeline {
   public onStationaryEnd() {}
 
   public onAccumulationComplete() {}
+
+  /**
+   * Generate a number in the Halton Sequence at a given index. This is
+   * shamelessly stolen from the pseudocode on the Wikipedia page
+   *
+   * @param base the base to use for the Halton Sequence
+   * @param index the index into the sequence
+   */
+  protected haltonNumber(base: number, index: number) {
+    let result = 0
+    let f = 1
+    while (index > 0) {
+      f /= base
+      result += f * (index % base)
+      index = Math.floor(index / base)
+    }
+
+    return result
+  }
+
+  protected generateHaltonJiters(length: number) {
+    const jitters = []
+
+    for (let i = 1; i <= length; i++)
+      jitters.push([
+        (this.haltonNumber(2, i) - 0.5) * 2,
+        (this.haltonNumber(3, i) - 0.5) * 2
+      ])
+
+    return jitters
+  }
 }
