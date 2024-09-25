@@ -448,14 +448,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const getSendSettings = async () => {
     sendSettings.value = await app.$sendBinding.getSendSettings()
-    // TODO: tryToUpgradeSendSettings()
+    tryToUpgradeSettings('SenderModelCard')
   }
 
-  const tryToUpgradeSettings = async (typeDiscriminator: string) => {
-    await refreshDocumentModelStore() // if we do it without awaiting this, we are getting empty array here at first. TODO: TBD tmr
+  const tryToUpgradeSettings = (typeDiscriminator: string) => {
     if (documentModelStore.value.models.length === 0) return
     const senderModelCards = documentModelStore.value.models.filter(
-      (m) => m.typeDiscriminator === typeDiscriminator // 'SenderModelCard'
+      (m) => m.typeDiscriminator === typeDiscriminator
     )
     if (senderModelCards.length === 0) return
 
@@ -510,24 +509,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$baseBinding.on(
     'documentChanged',
     () =>
-      setTimeout(() => {
+      setTimeout(async () => {
         void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
-        void refreshDocumentModelStore()
+        await refreshDocumentModelStore()
         void refreshSendFilters()
         void tryToUpgradeSettings('SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
-  // First initialization calls
-  void refreshDocumentInfo()
-  void refreshDocumentModelStore()
-  void refreshSendFilters()
-  void getSendSettings()
-  void tryToUpgradeSettings('SenderModelCard')
-  void getHostAppName()
-  void getHostAppVersion()
-  void getConnectorVersion()
+  const initializeApp = async () => {
+    await refreshDocumentInfo()
+    await refreshDocumentModelStore()
+    await refreshSendFilters()
+    await getSendSettings()
+
+    await getHostAppName()
+    await getHostAppVersion()
+    await getConnectorVersion()
+  }
+
+  initializeApp()
 
   return {
     hostAppName,
