@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { useQuery, useQueryLoading, useApolloClient } from '@vue/apollo-composable'
 import type { Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
@@ -105,6 +105,7 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
+import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -134,6 +135,27 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const { client } = useApolloClient()
+const preloadedWorkspaceId = ref<string | undefined>(undefined)
+
+// Try to read the preloaded data from the Apollo cache
+const cachedData = client.readQuery({
+  query: workspaceAccessCheckQuery,
+  variables: { slug: props.workspaceSlug }
+})
+
+if (cachedData?.workspaceBySlug?.id) {
+  preloadedWorkspaceId.value = cachedData.workspaceBySlug.id
+}
+
+const fetchedWorkspaceId = getWorkspaceIdFromSlug(props.workspaceSlug)
+
+// Combine preloaded (from 006-dataPreload.ts) and fetched workspaceId to ensure
+// smooth SSR to CSR transition and prevent hydration mismatches
+const workspaceId = computed(
+  () => preloadedWorkspaceId.value || fetchedWorkspaceId.value
+)
+
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
@@ -141,7 +163,6 @@ const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
 )
 
 const token = computed(() => route.query.token as Optional<string>)
-const workspaceId = getWorkspaceIdFromSlug(props.workspaceSlug)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
@@ -192,9 +213,16 @@ const showEmptyState = computed(() => {
 
   return projects.value && !projects.value?.items?.length
 })
+
 const showLoadingBar = computed(() => {
-  return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
+  const isLoading =
+    workspaceId.value === undefined ||
+    areQueriesLoading.value ||
+    (!!search.value && !projects.value?.items?.length)
+
+  return isLoading
 })
+
 const emptyStateItems = computed(() => [
   {
     title: 'Set up verified domains',

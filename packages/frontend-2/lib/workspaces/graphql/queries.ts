@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const workspaceAccessCheckQuery = graphql(`
+  query WorkspaceAccessCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      id
+    }
+  }
+`)
+
 export const workspaceBySlugQuery = graphql(`
   query WorkspaceBySlug($slug: String!) {
     workspaceBySlug(slug: $slug) {

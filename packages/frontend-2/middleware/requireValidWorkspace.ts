@@ -3,7 +3,7 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { workspaceBySlugQuery } from '~~/lib/workspaces/graphql/queries'
+import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
 
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data, errors } = await client
     .query({
-      query: workspaceBySlugQuery,
+      query: workspaceAccessCheckQuery,
       variables: { slug: workspaceSlug },
       context: {
         skipLoggingErrors: true
