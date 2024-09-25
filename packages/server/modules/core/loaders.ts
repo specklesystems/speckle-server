@@ -32,14 +32,14 @@ import {
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchCommentCounts,
-  getCommentParents,
-  getCommentReplyAuthorIds,
-  getCommentReplyCounts,
-  getCommentsResources,
-  getCommentsViewedAt,
-  getCommitCommentCounts,
-  getStreamCommentCounts
+  getBranchCommentCountsFactory,
+  getCommentParentsFactory,
+  getCommentReplyAuthorIdsFactory,
+  getCommentReplyCountsFactory,
+  getCommentsResourcesFactory,
+  getCommentsViewedAtFactory,
+  getCommitCommentCountsFactory,
+  getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
   getBranchCommitCounts,
@@ -61,13 +61,13 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
-  getAutomationRevisions,
-  getAutomationRunsTriggers,
-  getAutomations,
-  getFunctionAutomationCounts,
-  getLatestAutomationRevisions,
-  getRevisionsFunctions,
-  getRevisionsTriggerDefinitions
+  getAutomationRevisionsFactory,
+  getAutomationRunsTriggersFactory,
+  getAutomationsFactory,
+  getFunctionAutomationCountsFactory,
+  getLatestAutomationRevisionsFactory,
+  getRevisionsFunctionsFactory,
+  getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
   getFunction,
@@ -90,6 +90,21 @@ const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
+const getAutomations = getAutomationsFactory({ db })
+const getAutomationRevisions = getAutomationRevisionsFactory({ db })
+const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
+const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
+const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
+const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
+const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
+const getCommentsResources = getCommentsResourcesFactory({ db })
+const getCommentsViewedAt = getCommentsViewedAtFactory({ db })
+const getCommitCommentCounts = getCommitCommentCountsFactory({ db })
+const getBranchCommentCounts = getBranchCommentCountsFactory({ db })
+const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
+const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
+const getCommentParents = getCommentParentsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

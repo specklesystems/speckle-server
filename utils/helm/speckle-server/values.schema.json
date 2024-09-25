@@ -55,6 +55,11 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
+        "workspaceSsoEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces dynamic sso",
+          "default": false
+        },
         "multipleEmailsModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles multiple emails",

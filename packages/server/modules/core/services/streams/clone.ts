@@ -32,13 +32,15 @@ import {
   generateCommentId,
   getBatchedStreamComments,
   getCommentLinks,
-  insertCommentLinks,
-  insertComments
+  insertCommentLinksFactory,
+  insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
 import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
+import { InsertCommentPayload } from '@/modules/comments/domain/operations'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommentNotFoundError } from '@/modules/comments/errors'
 import { UserNotFoundError } from '@/modules/core/errors/user'
@@ -300,7 +302,7 @@ async function cloneComments(
       withParentCommentOnly: !threads,
       trx: state.trx
     })) {
-      commentsBatch.forEach((c) => {
+      const finalBatch = commentsBatch.map((c): InsertCommentPayload => {
         const oldId = c.id
         const newDate = getNewDate()
 
@@ -325,9 +327,13 @@ async function cloneComments(
         }
 
         commentIdMap.set(oldId, c.id)
+        return {
+          ...c,
+          text: c.text as SmartTextEditorValueSchema
+        }
       })
 
-      await insertComments(commentsBatch, { trx: state.trx })
+      await insertCommentsFactory({ db })(finalBatch, { trx: state.trx })
     }
   }
 
@@ -386,7 +392,7 @@ async function cloneCommentLinks(
       }
     })
 
-    await insertCommentLinks(commentLinks, { trx })
+    await insertCommentLinksFactory({ db })(commentLinks, { trx })
   }
 }
 

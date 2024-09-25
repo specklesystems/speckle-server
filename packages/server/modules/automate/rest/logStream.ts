@@ -1,8 +1,9 @@
+import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
 import {
-  getAutomationProject,
-  getAutomationRunWithToken
+  getAutomationProjectFactory,
+  getAutomationRunWithTokenFactory
 } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStream } from '@/modules/core/repositories/streams'
@@ -25,7 +26,10 @@ export default (app: Application) => {
     authMiddlewareCreator([
       validateServerRole({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
-      contextRequiresStream({ getStream, getAutomationProject }),
+      contextRequiresStream({
+        getStream,
+        getAutomationProject: getAutomationProjectFactory({ db })
+      }),
       validateStreamRole({ requiredRole: Roles.Stream.Owner }),
       validateResourceAccess
     ]),
@@ -33,6 +37,7 @@ export default (app: Application) => {
       const automationId = req.params.automationId
       const runId = req.params.runId
 
+      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({ db })
       const run = await getAutomationRunWithToken({
         automationId,
         automationRunId: runId

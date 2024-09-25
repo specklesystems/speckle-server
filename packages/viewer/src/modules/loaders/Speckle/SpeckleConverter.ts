@@ -176,8 +176,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(displayValue, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(displayValue, nestedNode)
           await callback()
         } catch (e) {
           Logger.warn(
@@ -196,8 +196,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(val, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(val, nestedNode)
           await callback()
         }
       }

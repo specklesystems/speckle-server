@@ -20,9 +20,10 @@ import {
 } from '@speckle/shared'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { getAutomationProject } from '@/modules/automate/repositories/automations'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
+import { GetAutomationProject } from '@/modules/automate/domain/operations'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 
 interface AuthResult {
   authorized: boolean
@@ -233,7 +234,7 @@ type StreamGetter = (params: {
 export const contextRequiresStream =
   (deps: {
     getStream: StreamGetter
-    getAutomationProject: typeof getAutomationProject
+    getAutomationProject: GetAutomationProject
   }): AuthPipelineFunction =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
@@ -324,14 +325,20 @@ export const authPipelineCreator = (
 export const streamWritePermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream({ getStream, getAutomationProject }),
+  contextRequiresStream({
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
 export const streamReadPermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
-  contextRequiresStream({ getStream, getAutomationProject }),
+  contextRequiresStream({
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
