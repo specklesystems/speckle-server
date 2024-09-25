@@ -21,7 +21,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { Optional } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   FinalizeInvitedServerRegistration,
@@ -91,87 +91,109 @@ const azureAdStrategyBuilderFactory =
       deps.passportAuthenticateHandlerBuilder('azuread-openidconnect'),
       async (req, _res, next) => {
         const serverInfo = await deps.getServerInfo()
+        const logger = req.log.child({
+          authStrategy: 'entraId',
+          serverVersion: serverInfo.version
+        })
 
-        // This is the only strategy that does its own type for req.user - easier to force type cast for now
-        // than to refactor everything
-        const profile = req.user as Optional<IProfile>
-        if (!profile) {
-          throw new EnvironmentResourceError('No profile provided by Entra ID')
-        }
+        try {
+          // This is the only strategy that does its own type for req.user - easier to force type cast for now
+          // than to refactor everything
+          const profile = req.user as Optional<IProfile>
+          if (!profile) {
+            throw new EnvironmentResourceError('No profile provided by Entra ID')
+          }
 
-        const user = {
-          email: profile._json.email,
-          name: profile._json.name || profile.displayName
-        }
+          const user = {
+            email: profile._json.email,
+            name: profile._json.name || profile.displayName
+          }
 
-        const existingUser = await deps.getUserByEmail({ email: user.email })
+          const existingUser = await deps.getUserByEmail({ email: user.email })
 
-        if (existingUser && !existingUser.verified) {
-          throw new UnverifiedEmailSSOLoginError(undefined, {
-            info: {
-              email: user.email
+          if (existingUser && !existingUser.verified) {
+            throw new UnverifiedEmailSSOLoginError(undefined, {
+              info: {
+                email: user.email
+              }
+            })
+          }
+
+          // if there is an existing user, go ahead and log them in (regardless of
+          // whether the server is invite only or not).
+          if (existingUser) {
+            const myUser = await deps.findOrCreateUser({
+              user
+            })
+            // ID is used later for verifying access token
+            req.user = {
+              ...profile,
+              id: myUser.id,
+              email: myUser.email
+            }
+            return next()
+          }
+
+          // if the server is invite only and we have no invite id, throw.
+          if (serverInfo.inviteOnly && !req.session.token) {
+            throw new UserInputError(
+              'This server is invite only. Please authenticate yourself through a valid invite link.'
+            )
+          }
+
+          // 2. if you have an invite it must be valid, both for invite only and public servers
+          let invite: Optional<ServerInviteRecord> = undefined
+          if (req.session.token) {
+            invite = await deps.validateServerInvite(user.email, req.session.token)
+          }
+
+          // create the user
+          const myUser = await deps.findOrCreateUser({
+            user: {
+              ...user,
+              role: invite
+                ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+                : undefined,
+              verified: !!invite
             }
           })
-        }
 
-        // if there is an existing user, go ahead and log them in (regardless of
-        // whether the server is invite only or not).
-        if (existingUser) {
-          const myUser = await deps.findOrCreateUser({
-            user
-          })
           // ID is used later for verifying access token
           req.user = {
             ...profile,
             id: myUser.id,
-            email: myUser.email
+            email: myUser.email,
+            isNewUser: myUser.isNewUser,
+            isInvite: !!invite
+          }
+
+          req.log = req.log.child({ userId: myUser.id })
+
+          // use the invite
+          await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
+
+          // Resolve redirect path
+          req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
+
+          // return to the auth flow
+          return next()
+        } catch (err) {
+          const e = ensureError(
+            err,
+            'Unexpected issue occured while authenticating with Entra ID'
+          )
+          switch (e.constructor) {
+            case UserInputError:
+              logger.info(
+                { e },
+                'User input error during Entra ID authentication callback.'
+              )
+              break
+            default:
+              logger.error(e, 'Error during Entra ID authentication callback.')
           }
           return next()
         }
-
-        // if the server is invite only and we have no invite id, throw.
-        if (serverInfo.inviteOnly && !req.session.token) {
-          throw new UserInputError(
-            'This server is invite only. Please authenticate yourself through a valid invite link.'
-          )
-        }
-
-        // 2. if you have an invite it must be valid, both for invite only and public servers
-        let invite: Optional<ServerInviteRecord> = undefined
-        if (req.session.token) {
-          invite = await deps.validateServerInvite(user.email, req.session.token)
-        }
-
-        // create the user
-        const myUser = await deps.findOrCreateUser({
-          user: {
-            ...user,
-            role: invite
-              ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
-              : undefined,
-            verified: !!invite
-          }
-        })
-
-        // ID is used later for verifying access token
-        req.user = {
-          ...profile,
-          id: myUser.id,
-          email: myUser.email,
-          isNewUser: myUser.isNewUser,
-          isInvite: !!invite
-        }
-
-        req.log = req.log.child({ userId: myUser.id })
-
-        // use the invite
-        await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
-
-        // Resolve redirect path
-        req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
-
-        // return to the auth flow
-        return next()
       },
       finalizeAuthMiddleware
     )
