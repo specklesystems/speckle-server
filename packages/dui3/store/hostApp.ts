@@ -453,18 +453,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const tryToUpgradeSettings = (typeDiscriminator: string) => {
     if (documentModelStore.value.models.length === 0) return
-    const senderModelCards = documentModelStore.value.models.filter(
+    const modelCards = documentModelStore.value.models.filter(
       (m) => m.typeDiscriminator === typeDiscriminator
     )
-    if (senderModelCards.length === 0) return
+    if (modelCards.length === 0) return
 
     const sendSettingIds = sendSettings.value?.map((s) => s.id) || []
-    senderModelCards.forEach(async (senderModelCard) => {
+    modelCards.forEach(async (modelCard) => {
       const idsToUpgrade = [] as string[]
       const idsToDrop = [] as string[]
 
       sendSettingIds?.forEach((id) => {
-        const existingSetting = senderModelCard.settings?.find((s) => s.id === id)
+        const existingSetting = modelCard.settings?.find((s) => s.id === id)
 
         if (!existingSetting) {
           // If the setting does not exist, it's a new one to upgrade
@@ -479,7 +479,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
 
       // Identify settings to drop (if they no longer exist in sendSettingIds)
-      senderModelCard.settings?.forEach((setting) => {
+      modelCard.settings?.forEach((setting) => {
         if (!sendSettingIds.includes(setting.id)) {
           idsToDrop.push(setting.id)
         }
@@ -487,7 +487,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
       if (idsToUpgrade.length !== 0 || idsToDrop.length !== 0) {
         // Prepare new settings by filtering the old ones and adding upgraded ones
-        const newSettings = senderModelCard.settings?.filter(
+        const newSettings = modelCard.settings?.filter(
           (setting) => !idsToDrop.includes(setting.id)
         )
 
@@ -499,7 +499,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         })
 
         // Patch the model with the new settings
-        await patchModel(senderModelCard.modelCardId, {
+        await patchModel(modelCard.modelCardId, {
           settings: newSettings
         })
       }
@@ -527,6 +527,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await getHostAppVersion()
     await getConnectorVersion()
   }
+
+  void getConnectorVersion()
 
   initializeApp()
 
