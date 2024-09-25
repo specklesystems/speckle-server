@@ -3,7 +3,8 @@ import {
   GetActiveUserStreams,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
-  GetStreamActivity
+  GetStreamActivity,
+  GetTimelineCount
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
@@ -100,6 +101,22 @@ export const getActivityCountByUserIdFactory =
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getTimelineCountFactory =
+  ({ db }: { db: Knex }): GetTimelineCount =>
+  async ({ userId, after, before }) => {
+    const query = tables
+      .streamAcl(db)
+      .count()
+      .innerJoin('stream_activity', {
+        'stream_acl.resourceId': 'stream_activity.streamId'
+      })
+      .where({ 'stream_acl.userId': userId })
+    if (after) query.andWhere('stream_activity.time', '>', after)
+    if (before) query.andWhere('stream_activity.time', '<', before)
     const [res] = await query
     return parseInt(res.count.toString())
   }

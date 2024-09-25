@@ -53,3 +53,13 @@ export type GetActivityCountByUserId = ({
   after?: Date
   before?: Date
 }) => Promise<number>
+
+export type GetTimelineCount = ({
+  userId,
+  before,
+  after
+}: {
+  userId: string
+  after?: Date
+  before?: Date
+}) => Promise<number>

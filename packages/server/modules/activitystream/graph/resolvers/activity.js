@@ -4,11 +4,11 @@ const {
   getUserActivity,
   getResourceActivity,
   getUserTimeline,
-  getActivityCountByResourceId,
-  getTimelineCount
+  getActivityCountByResourceId
 } = require('../../services/index')
 const {
-  getActivityCountByUserIdFactory
+  getActivityCountByUserIdFactory,
+  getTimelineCountFactory
 } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 
@@ -39,7 +39,7 @@ const userTimelineQueryCore = async (parent, args) => {
     cursor: args.cursor,
     limit: args.limit
   })
-  const totalCount = await getTimelineCount({
+  const totalCount = await getTimelineCountFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before

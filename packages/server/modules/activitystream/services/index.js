@@ -10,7 +10,6 @@ const {
 const { getUser } = require('@/modules/core/repositories/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const StreamActivity = () => knex('stream_activity')
-const StreamAcl = () => knex('stream_acl')
 
 module.exports = {
   /**
@@ -149,19 +148,6 @@ module.exports = {
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
-    const [res] = await query
-    return parseInt(res.count)
-  },
-
-  async getTimelineCount({ userId, after, before }) {
-    const query = StreamAcl()
-      .count()
-      .innerJoin('stream_activity', {
-        'stream_acl.resourceId': 'stream_activity.streamId'
-      })
-      .where({ 'stream_acl.userId': userId })
-    if (after) query.andWhere('stream_activity.time', '>', after)
-    if (before) query.andWhere('stream_activity.time', '<', before)
     const [res] = await query
     return parseInt(res.count)
   }
