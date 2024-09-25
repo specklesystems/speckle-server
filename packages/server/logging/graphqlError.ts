@@ -7,6 +7,7 @@ export const shouldLogAsInfoLevel = (err: unknown): boolean => {
   if (err instanceof GraphQLError) {
     if (isUserGraphqlError(err)) return true
     if (!!err.cause && shouldLogAsInfoLevel(err.cause)) return true
+    if (!!err.originalError && shouldLogAsInfoLevel(err.originalError)) return true
   }
 
   if (
