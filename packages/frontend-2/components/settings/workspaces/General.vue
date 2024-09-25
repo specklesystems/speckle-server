@@ -152,7 +152,6 @@ import {
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
-import { computed } from 'vue'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 
