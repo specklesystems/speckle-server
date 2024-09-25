@@ -33,7 +33,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import {
   isRequired,
@@ -47,6 +46,7 @@ const props = defineProps<{
     name: string
     slug: string
   }
+  baseUrl: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -55,10 +55,9 @@ const emit = defineEmits<{
 }>()
 
 const newSlug = ref(props.workspace.slug)
-const baseUrl = useRuntimeConfig().public.baseUrl
 
 const getSlugHelp = computed(() => {
-  return `${baseUrl}/workspaces/${newSlug.value}`
+  return `${props.baseUrl}/workspaces/${newSlug.value}`
 })
 
 const onSlugInput = (value: string) => {

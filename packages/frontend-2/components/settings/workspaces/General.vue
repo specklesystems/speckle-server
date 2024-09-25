@@ -130,6 +130,7 @@
     <SettingsWorkspacesGeneralEditSlugDialog
       v-if="workspaceResult && isAdmin"
       v-model:open="showEditSlugDialog"
+      :base-url="baseUrl"
       :workspace="workspaceResult.workspace"
       @update:slug="updateWorkspaceSlug"
     />
@@ -153,6 +154,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
 import { computed } from 'vue'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useRoute } from 'vue-router'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
@@ -178,6 +180,7 @@ const IconEdit = resolveComponent('IconEdit')
 
 const mixpanel = useMixpanel()
 const router = useRouter()
+const route = useRoute()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -189,12 +192,12 @@ const { result: workspaceResult, onResult } = useQuery(
 )
 
 const name = ref('')
+const slug = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
 const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
 const defaultProjectRole = ref<StreamRoles>()
-const slug = ref('')
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
@@ -268,7 +271,11 @@ const openSlugEditDialog = () => {
 }
 
 const updateWorkspaceSlug = async (newSlug: string) => {
-  if (!workspaceResult.value?.workspace) return
+  if (!workspaceResult.value?.workspace) {
+    return
+  }
+
+  const oldSlug = slug.value
 
   const result = await updateMutation({
     input: {
@@ -282,8 +289,12 @@ const updateWorkspaceSlug = async (newSlug: string) => {
       type: ToastNotificationType.Success,
       title: 'Workspace slug updated'
     })
+
     slug.value = newSlug
-    await router.push(workspaceRoute(slug.value))
+
+    if (route.params.slug === oldSlug) {
+      router.push(workspaceRoute(newSlug))
+    }
   } else {
     const errorMessage = getFirstErrorMessage(result && result.errors)
     triggerNotification({
