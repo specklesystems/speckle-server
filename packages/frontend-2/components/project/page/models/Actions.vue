@@ -5,7 +5,7 @@
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
-      :menu-position="HorizontalDirection.Left"
+      :menu-position="menuPosition ? menuPosition : HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -87,6 +87,7 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
   canEdit?: boolean
+  menuPosition?: HorizontalDirection
 }>()
 
 const copyModelLink = useCopyModelLink()

@@ -25,6 +25,11 @@
               :model="model"
               :project="project"
               :can-edit="canContribute"
+              :menu-position="
+                itemType === StructureItemType.EmptyModel
+                  ? HorizontalDirection.Right
+                  : HorizontalDirection.Left
+              "
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
@@ -230,6 +235,7 @@ import { has } from 'lodash-es'
 import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
