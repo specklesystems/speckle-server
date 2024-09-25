@@ -12,7 +12,12 @@ import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger, subscriptionLogger } from '@/logging/logging'
+import {
+  startupLogger,
+  shutdownLogger,
+  subscriptionLogger,
+  graphqlLogger
+} from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
   LoggingExpressMiddleware,
@@ -27,6 +32,7 @@ import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 
 import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
@@ -289,9 +295,11 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
  */
 export async function buildApolloServer(options?: {
   subscriptionServer?: SubscriptionServer
+  httpServer?: http.Server
 }): Promise<ApolloServer<GraphQLContext>> {
   const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
   const subscriptionServer = options?.subscriptionServer
+  const httpServer = options?.httpServer
   const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
@@ -323,14 +331,18 @@ export async function buildApolloServer(options?: {
               sendHeaders: { all: true }
             })
           ]
-        : [ApolloServerPluginUsageReportingDisabled()])
+        : [ApolloServerPluginUsageReportingDisabled()]),
+      ...(!!httpServer ? [ApolloServerPluginDrainHttpServer({ httpServer })] : [])
     ],
     introspection: true,
     cache: 'bounded',
     persistedQueries: false,
     csrfPrevention: true,
     formatError: buildErrorFormatter({ includeStacktraceInErrorResponses }),
-    includeStacktraceInErrorResponses
+    includeStacktraceInErrorResponses,
+    status400ForVariableCoercionErrors: true,
+    stopOnTerminationSignals: false, // handled by terminus and shutdown function
+    logger: graphqlLogger
   })
   await server.start()
 
@@ -395,6 +407,7 @@ export async function init() {
 
   // Initialize graphql server
   graphqlServer = await buildApolloServer({
+    httpServer: server,
     subscriptionServer
   })
   app.use(
@@ -425,8 +438,8 @@ export async function shutdown(params: {
   graphqlServer: ApolloServer<GraphQLContext>
 }): Promise<void> {
   const { graphqlServer } = params
-  graphqlServer.stop()
-  ModulesSetup.shutdown()
+  await graphqlServer.stop()
+  await ModulesSetup.shutdown()
 }
 
 const shouldUseFrontendProxy = () =>
