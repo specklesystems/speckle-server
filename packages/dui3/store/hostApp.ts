@@ -523,7 +523,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await refreshDocumentModelStore()
     await refreshSendFilters()
     await getSendSettings()
-
     await getHostAppName()
     await getHostAppVersion()
     await getConnectorVersion()
