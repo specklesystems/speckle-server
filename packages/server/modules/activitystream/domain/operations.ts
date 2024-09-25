@@ -3,6 +3,7 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
+import { StreamAclRecord } from '@/modules/core/helpers/types'
 
 export type GetActivity = (
   streamId: string,
@@ -75,3 +76,20 @@ export type GetActivityCountByResourceId = ({
   after?: Date
   before?: Date
 }) => Promise<number>
+
+export type GetUserTimeline = ({
+  userId,
+  before,
+  after,
+  cursor,
+  limit
+}: {
+  userId: string
+  after?: Date
+  before?: Date
+  cursor?: Date
+  limit?: number
+}) => Promise<{
+  cursor: string | null
+  items: (StreamActivityRecord & StreamAclRecord)[]
+}>
