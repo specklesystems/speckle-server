@@ -290,7 +290,7 @@ export function getServerMovedTo() {
 }
 
 export function adminOverrideEnabled() {
-  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
 }
 
 export function enableMixpanel() {
@@ -309,7 +309,7 @@ export function speckleAutomateUrl() {
 }
 
 export function weeklyEmailDigestEnabled() {
-  return process.env.WEEKLY_DIGEST_ENABLED === 'true'
+  return getBooleanFromEnv('WEEKLY_DIGEST_ENABLED')
 }
 
 /**
@@ -399,7 +399,7 @@ export function getLicenseToken(): string | undefined {
 }
 
 export function isEmailEnabled() {
-  return process.env.EMAIL === 'true'
+  return getBooleanFromEnv('EMAIL')
 }
 
 export function postgresMaxConnections() {
@@ -412,4 +412,42 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 
 export function maximumObjectUploadFileSizeMb() {
   return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
+}
+
+export function getS3AccessKey() {
+  if (!process.env.S3_ACCESS_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_ACCESS_KEY is missing'
+    )
+  return process.env.S3_ACCESS_KEY
+}
+
+export function getS3SecretKey() {
+  if (!process.env.S3_SECRET_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_SECRET_KEY is missing'
+    )
+  return process.env.S3_SECRET_KEY
+}
+
+export function getS3Endpoint() {
+  if (!process.env.S3_ENDPOINT)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_ENDPOINT is missing'
+    )
+  return process.env.S3_ENDPOINT
+}
+
+export function getS3Region(aDefault: string = 'us-east-1') {
+  return process.env.S3_REGION || aDefault
+}
+
+export function getS3BucketName() {
+  if (!process.env.S3_BUCKET)
+    throw new MisconfiguredEnvironmentError('Environment variable S3_BUCKET is missing')
+  return process.env.S3_BUCKET
+}
+
+export function createS3Bucket() {
+  return getBooleanFromEnv('S3_CREATE_BUCKET')
 }
