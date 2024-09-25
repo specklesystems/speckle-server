@@ -66,18 +66,18 @@ export const authorizeResolverFactory =
     }
 
     if (role.resourceTarget === RoleResourceTargets.Streams) {
-      try {
-        const stream = await deps.getStream({
-          userId: userId || undefined,
-          streamId: resourceId
-        })
-        const isPublic = !!stream?.isPublic
-        if (isPublic && role.weight < 200) return
-      } catch {
+      const stream = await deps.getStream({
+        userId: userId || undefined,
+        streamId: resourceId
+      })
+      if (!stream) {
         throw new ForbiddenError(
           `Resource of type ${role.resourceTarget} with ${resourceId} not found`
         )
       }
+
+      const isPublic = !!stream?.isPublic
+      if (isPublic && role.weight < 200) return
     }
 
     const userAclRole = userId
