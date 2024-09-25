@@ -362,17 +362,24 @@ class ObjectLoader {
     const rootObj = data[0]
     if (!rootObj.__closure) return
 
-    const childrenIds = Object.keys(rootObj.__closure)
-      .filter((id) => !id.includes('blob'))
-      .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
+    // const childrenIds = Object.keys(rootObj.__closure)
+    //   .filter((id) => !id.includes('blob'))
+    //   .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
 
-    for (const id of childrenIds) {
-      const obj = data.find((value) => value.id === id)
+    // for (const id of childrenIds) {
+    //   const obj = data.find((value) => value.id === id)
+    //   // Sleep 1 ms
+    //   await new Promise((resolve) => {
+    //     setTimeout(resolve, 1)
+    //   })
+    //   yield { id, obj }
+    // }
+    for (const item of data) {
       // Sleep 1 ms
       await new Promise((resolve) => {
         setTimeout(resolve, 1)
       })
-      yield { id, obj }
+      yield { id: item.id, obj: item }
     }
   }
 
