@@ -512,7 +512,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       setTimeout(async () => {
         void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
-        await refreshDocumentModelStore()
+        await refreshDocumentModelStore() // need to awaited since upgradings settings need documentModelStore in place
         void refreshSendFilters()
         void tryToUpgradeSettings('SenderModelCard')
       }, 500) // timeout exists because of rhino
