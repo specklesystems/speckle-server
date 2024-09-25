@@ -174,6 +174,7 @@ const importArea = ref(
   }>
 )
 const showActionsMenu = ref(false)
+const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
