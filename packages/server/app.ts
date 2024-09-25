@@ -420,7 +420,8 @@ export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
 }
 
-const shouldUseFrontendProxy = () => process.env.NODE_ENV === 'development'
+const shouldUseFrontendProxy = () =>
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'

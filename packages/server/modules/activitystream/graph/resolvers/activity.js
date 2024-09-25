@@ -1,15 +1,13 @@
 'use strict'
 const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
+const { getUserActivity, getResourceActivity } = require('../../services/index')
 const {
-  getUserActivity,
-  getStreamActivity,
-  getResourceActivity,
-  getUserTimeline,
-  getActivityCountByResourceId,
-  getActivityCountByStreamId,
-  getActivityCountByUserId,
-  getTimelineCount
-} = require('../../services/index')
+  getActivityCountByUserIdFactory,
+  getTimelineCountFactory,
+  getActivityCountByResourceIdFactory,
+  getUserTimelineFactory
+} = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
 
 const userActivityQueryCore = async (parent, args) => {
   const { items, cursor } = await getUserActivity({
@@ -20,7 +18,7 @@ const userActivityQueryCore = async (parent, args) => {
     cursor: args.cursor,
     limit: args.limit
   })
-  const totalCount = await getActivityCountByUserId({
+  const totalCount = await getActivityCountByUserIdFactory({ db })({
     userId: parent.id,
     actionType: args.actionType,
     after: args.after,
@@ -31,14 +29,14 @@ const userActivityQueryCore = async (parent, args) => {
 }
 
 const userTimelineQueryCore = async (parent, args) => {
-  const { items, cursor } = await getUserTimeline({
+  const { items, cursor } = await getUserTimelineFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before,
     cursor: args.cursor,
     limit: args.limit
   })
-  const totalCount = await getTimelineCount({
+  const totalCount = await getTimelineCountFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before
@@ -67,26 +65,6 @@ module.exports = {
       return await userTimelineQueryCore(parent, args)
     }
   },
-  Stream: {
-    async activity(parent, args) {
-      const { items, cursor } = await getStreamActivity({
-        streamId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getActivityCountByStreamId({
-        streamId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before
-      })
-
-      return { items, cursor, totalCount }
-    }
-  },
 
   Branch: {
     async activity(parent, args) {
@@ -99,7 +77,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -121,7 +99,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
