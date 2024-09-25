@@ -420,8 +420,13 @@ export async function init() {
   return { app, graphqlServer, server, subscriptionServer }
 }
 
-export async function shutdown(): Promise<void> {
-  await ModulesSetup.shutdown()
+export async function shutdown(params: {
+  app: Express
+  graphqlServer: ApolloServer<GraphQLContext>
+}): Promise<void> {
+  const { graphqlServer } = params
+  graphqlServer.stop()
+  ModulesSetup.shutdown()
 }
 
 const shouldUseFrontendProxy = () =>
@@ -447,11 +452,13 @@ async function createFrontendProxy() {
 /**
  * Starts a http server, hoisting the express app to it.
  */
-export async function startHttp(
-  server: http.Server,
-  app: Express,
+export async function startHttp(params: {
+  server: http.Server
+  app: Express
+  graphqlServer: ApolloServer<GraphQLContext>
   customPortOverride?: number
-) {
+}) {
+  const { server, app, graphqlServer, customPortOverride } = params
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
@@ -481,7 +488,7 @@ export async function startHttp(
       shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      await shutdown()
+      await shutdown({ app, graphqlServer })
     },
     onShutdown: () => {
       shutdownLogger.info('Shutdown completed')

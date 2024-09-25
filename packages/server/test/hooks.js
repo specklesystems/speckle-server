@@ -51,7 +51,7 @@ exports.truncateTables = async (tableNames) => {
  * @param {import('express').Express} app
  */
 const initializeTestServer = async (server, app) => {
-  await startHttp(server, app, 0)
+  await startHttp({ server, app, customPortOverride: 0 })
 
   await once(app, 'appStarted')
   const port = server.address().port
