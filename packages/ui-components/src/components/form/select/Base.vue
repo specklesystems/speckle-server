@@ -11,12 +11,13 @@
     >
       <ListboxLabel
         :id="labelId"
-        class="flex text-body-xs text-foreground font-medium"
-        :class="{ 'sr-only': !showLabel }"
+        class="flex text-body-xs text-foreground font-medium pb-1"
+        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
         :for="buttonId"
       >
         {{ label }}
         <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
@@ -139,6 +140,9 @@
                     :disabled="disabledItemPredicate?.(item) || false"
                   >
                     <li
+                      v-tippy="
+                        disabledItemPredicate?.(item) ? disabledItemTooltip : undefined
+                      "
                       :class="
                         listboxOptionClasses({
                           active,
@@ -390,6 +394,13 @@ const props = defineProps({
     default: false
   },
   /**
+   * Whether to show the optional text
+   */
+  showOptional: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * Whether to mount the menu on the body instead of inside the component. Useful when select box is mounted within
    * dialog windows and the menu causes unnecessary overflow.
    */
@@ -404,6 +415,13 @@ const props = defineProps({
   buttonId: {
     type: String,
     default: undefined
+  },
+  /**
+   * Tooltip shown on disabled items
+   */
+  disabledItemTooltip: {
+    required: false,
+    type: String
   }
 })
 
@@ -702,14 +720,14 @@ const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) =>
   const { hideCheckmarks } = props
 
   const classParts = [
-    'relative transition cursor-pointer select-none py-1.5 pl-3',
+    'relative transition select-none py-1.5 pl-3',
     !hideCheckmarks ? 'pr-9' : ''
   ]
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
   } else {
-    classParts.push(active ? 'text-primary' : 'text-foreground')
+    classParts.push(active ? 'text-primary' : 'text-foreground', 'cursor-pointer')
   }
 
   return classParts.join(' ')

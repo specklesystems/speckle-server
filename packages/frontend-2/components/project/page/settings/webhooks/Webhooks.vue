@@ -16,9 +16,7 @@
       >
         Docs
       </FormButton>
-      <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-        New
-      </FormButton>
+      <FormButton @click="openCreateWebhookDialog">New</FormButton>
     </template>
     <template v-if="webhooks.length !== 0">
       <LayoutTable
@@ -51,10 +49,8 @@
         <template #enabled="{ item }">
           <FormSwitch
             :model-value="!!item.enabled"
-            icons
             :name="'switch-' + item.id"
             :show-label="false"
-            class="scale-90"
             @update:model-value="(newValue) => onEnabledChange(item, newValue)"
           />
         </template>
@@ -124,7 +120,6 @@
 <script setup lang="ts">
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
-  PlusIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   XCircleIcon

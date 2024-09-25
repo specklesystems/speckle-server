@@ -1,6 +1,5 @@
 import { redisLogger } from '@/logging/logging'
 import Redis, { RedisOptions } from 'ioredis'
-import sentry from '@/logging/sentryHelper'
 import {
   EnvironmentResourceError,
   MisconfiguredEnvironmentError
@@ -19,7 +18,6 @@ export function createRedisClient(redisUrl: string, redisOptions: RedisOptions):
     })
   } catch (err) {
     redisLogger.error(err, 'Could not create Redis client')
-    sentry({ err, kind: null, extras: null })
     if (err instanceof Error) {
       throw new MisconfiguredEnvironmentError('Unable to connect to Redis.', err) //FIXME backoff and retry?
     }

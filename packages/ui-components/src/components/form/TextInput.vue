@@ -1,10 +1,17 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="computedWrapperClasses">
-    <div :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'">
+    <div
+      :class="
+        labelPosition === 'left'
+          ? 'w-full md:w-6/12 flex flex-col justify-center'
+          : 'w-full'
+      "
+    >
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
         <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </label>
       <p
         v-if="labelPosition === 'left' && helpTipId && !hideHelpTip"
@@ -60,15 +67,6 @@
           <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
         </a>
         <div
-          v-if="errorMessage"
-          :class="[
-            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
-            shouldShowClear ? 'pr-8' : 'pr-2'
-          ]"
-        >
-          <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-        </div>
-        <div
           v-if="!showLabel && showRequired && !errorMessage"
           class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
@@ -88,17 +86,17 @@
 </template>
 <script setup lang="ts">
 import type { RuleExpression } from 'vee-validate'
-import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed, ref, toRefs, useSlots } from 'vue'
 import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { InputColor } from '~~/src/composables/form/textInput'
+import type { LabelPosition } from '~~/src/composables/form/input'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
-type InputColor = 'page' | 'foundation' | 'transparent'
-type LabelPosition = 'top' | 'left'
 
 defineOptions({
   inheritAttrs: false
@@ -151,6 +149,13 @@ const props = defineProps({
    * Whether to show the red "required" asterisk
    */
   showRequired: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the "optional" text
+   */
+  showOptional: {
     type: Boolean,
     default: false
   },

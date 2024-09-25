@@ -66,15 +66,31 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+
+const buildCollectAndValidateResourceTargets = () =>
+  collectAndValidateCoreTargetsFactory({
+    getStream
+  })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
@@ -173,7 +189,8 @@ export = {
 
     async streamInviteCreate(_parent, args, context) {
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       await createProjectInvite({
@@ -240,7 +257,8 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       // Batch calls so that we don't kill the server
@@ -285,7 +303,10 @@ export = {
               updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             }),
             requestNewEmailVerification
-          })
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 
@@ -348,7 +369,8 @@ export = {
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       await createProjectInvite({
@@ -377,7 +399,8 @@ export = {
       }
 
       const createProjectInvite = createProjectInviteFactory({
-        createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
+        createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
+        getStream
       })
 
       const inputBatches = chunk(args.input, 10)
@@ -422,7 +445,10 @@ export = {
               updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             }),
             requestNewEmailVerification
-          })
+          }),
+          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+          getUser,
+          getServerInfo
         })
       })
 

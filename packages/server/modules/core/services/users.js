@@ -20,7 +20,8 @@ const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
-  getUsersBaseQuery
+  getUsersBaseQuery,
+  getUser
 } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -50,8 +51,13 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
-  requestNewEmailVerification
+  requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -68,6 +74,15 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
     }
   }
 }
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 module.exports = {
   /*
@@ -156,7 +171,7 @@ module.exports = {
   },
 
   /**
-   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles}, bio?: string}} param0
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,

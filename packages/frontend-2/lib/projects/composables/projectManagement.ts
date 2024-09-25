@@ -20,7 +20,8 @@ import type {
   WorkspaceProjectsArgs,
   Workspace,
   WorkspaceProjectInviteCreateInput,
-  InviteProjectUserMutation
+  InviteProjectUserMutation,
+  Project
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -29,7 +30,6 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
@@ -40,9 +40,13 @@ import {
   leaveProjectMutation,
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
-  useProjectInviteMutation
+  updateWorkspaceProjectRoleMutation,
+  useProjectInviteMutation,
+  useMoveProjectToWorkspaceMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -193,12 +197,15 @@ export function useCreateProject() {
   }
 }
 
-export function useUpdateUserRole() {
+export function useUpdateUserRole(
+  project?: Ref<Pick<Project, 'workspaceId'> | undefined>
+) {
   const apollo = useApolloClient().client
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (input: ProjectUpdateRoleInput) => {
+  const updateProjectRole = async (input: ProjectUpdateRoleInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -225,6 +232,39 @@ export function useUpdateUserRole() {
 
     return data?.projectMutations.updateRole
   }
+
+  const updateWorkspaceProjectRole = async (input: ProjectUpdateRoleInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateWorkspaceProjectRoleMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.workspaceMutations.projects.updateRole.id) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Permission update failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace project permissions updated'
+      })
+    }
+
+    return data?.workspaceMutations.projects
+  }
+
+  const isWorkspaceProject =
+    isWorkspacesEnabled.value && project?.value?.workspaceId?.length
+
+  return isWorkspaceProject ? updateWorkspaceProjectRole : updateProjectRole
 }
 
 export function useInviteUserToProject() {
@@ -496,5 +536,61 @@ export function useLeaveProject() {
         description: errMsg
       })
     }
+  }
+}
+
+export function useMoveProjectToWorkspace() {
+  const apollo = useApolloClient().client
+
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (projectId: string, workspaceId: string, workspaceName: string) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: useMoveProjectToWorkspaceMutation,
+        variables: { projectId, workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.workspaceMutations) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Moved project to ${workspaceName}`
+      })
+
+      mixpanel.track('Project Moved To Workspace', {
+        projectId,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't move project",
+        description: errMsg
+      })
+    }
+  }
+}
+
+export function useCopyProjectLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string) => {
+    if (import.meta.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = projectRoute(projectId)
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Project link copied to clipboard'
+    })
   }
 }

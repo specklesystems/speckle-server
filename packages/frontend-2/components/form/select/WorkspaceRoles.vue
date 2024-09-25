@@ -9,7 +9,11 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    :show-label="showLabel"
     :fully-control-value="fullyControlValue"
+    :disabled="disabled"
+    :disabled-item-predicate="disabledItemPredicate"
+    :clearable="clearable"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -67,7 +71,14 @@ const props = defineProps({
   label: {
     type: String,
     default: 'Workspace Roles'
-  }
+  },
+  disabled: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
+  showLabel: Boolean,
+  clearable: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
@@ -83,4 +94,9 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
   })
 
 const roles = computed(() => Object.values(Roles.Workspace))
+
+const disabledItemPredicate = (item: WorkspaceRoles) =>
+  props.disabledItems && props.disabledItems.length > 0
+    ? props.disabledItems.includes(item)
+    : false
 </script>

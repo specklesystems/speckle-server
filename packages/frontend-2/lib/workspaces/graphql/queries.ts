@@ -14,13 +14,20 @@ export const workspacePageQuery = graphql(`
     $filter: WorkspaceProjectsFilter
     $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
+    $token: String
   ) {
     workspace(id: $workspaceId) {
       id
       ...WorkspaceHeader_Workspace
+      ...WorkspaceMixpanelUpdateGroup_Workspace
       projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
+    }
+    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+      id
+      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
+      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
     }
   }
 `)

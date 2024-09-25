@@ -40,7 +40,7 @@
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(settingsQueries.user.profile)"
+              @click="toggleSettingsDialog(SettingMenuKeys.User.Profile)"
             >
               Settings
             </NuxtLink>
@@ -51,7 +51,7 @@
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(settingsQueries.server.general)"
+              @click="toggleSettingsDialog(SettingMenuKeys.Server.General)"
             >
               Server settings
             </NuxtLink>
@@ -107,7 +107,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'flex px-2 py-1 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                  'flex px-2 py-1 text-body-xs text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >
@@ -142,10 +142,14 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
+import { connectorsPageUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -173,7 +177,7 @@ const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
-const toggleSettingsDialog = (target: string) => {
+const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   showSettingsDialog.value = true
 
   // On mobile open the modal but dont set the target

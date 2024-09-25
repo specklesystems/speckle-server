@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ProjectPageSettingsBlock v-if="canLeaveProject" background title="Leave Project">
+    <ProjectPageSettingsBlock v-if="canLeaveProject" background title="Leave project">
       <p>
         Remove yourself from this project. To join again you will need to get invited.
       </p>
@@ -34,6 +34,9 @@ graphql(`
         ...LimitedUserAvatar
         role
       }
+    }
+    workspace {
+      id
     }
   }
 `)

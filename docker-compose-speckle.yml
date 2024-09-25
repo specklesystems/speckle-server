@@ -39,7 +39,7 @@ services:
     healthcheck:
       test:
         - CMD
-        - node
+        - /nodejs/bin/node
         - -e
         - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/readiness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
       interval: 10s
@@ -86,7 +86,8 @@ services:
     mem_limit: '3000m'
     memswap_limit: '3000m'
     environment:
-      HOST: '127.0.0.1'
+      HOST: '127.0.0.1' # Only accept connections from localhost, as preview service does not need to be exposed outside the container.
+      METRICS_HOST: '127.0.0.1' # Amend if you want to expose Prometheus metrics outside of the container
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 

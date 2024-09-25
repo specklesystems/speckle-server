@@ -1,6 +1,7 @@
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { GraphQLResponse } from 'apollo-server-core'
+import { ExecuteOperationResponse } from '@/test/graphqlHelper'
 import { AssertionError } from 'chai'
+import { isString } from 'lodash'
 
 type ChaiPluginThis<O = Record<string, unknown>> = {
   __flags: {
@@ -19,7 +20,21 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
   utils.addMethod(
     Assertion.prototype,
     'haveGraphQLErrors',
-    function (this: ChaiPluginThis<GraphQLResponse>, matchMessage?: string) {
+    function (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this: ChaiPluginThis<ExecuteOperationResponse<any>>,
+      messageOrOptions?: string | ({ message: string } | { code: string })
+    ) {
+      const message = isString(messageOrOptions)
+        ? messageOrOptions
+        : messageOrOptions && 'message' in messageOrOptions
+        ? messageOrOptions.message
+        : undefined
+      const code =
+        messageOrOptions && !isString(messageOrOptions) && 'code' in messageOrOptions
+          ? messageOrOptions.code
+          : undefined
+
       const { negate, object } = this.__flags
       const { errors } = object
 
@@ -35,15 +50,25 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
           new Assertion(errorsArr).to.have.lengthOf.greaterThanOrEqual(1)
         }
 
-        if (matchMessage) {
+        if (message) {
           if (shouldNotHaveErrors) {
             new Assertion(
               errorsArr.map((e) => e.message.toLowerCase()).join('\n')
-            ).to.not.contain(matchMessage.toLowerCase())
+            ).to.not.contain(message.toLowerCase())
           } else {
             new Assertion(
               errorsArr.map((e) => e.message.toLowerCase()).join('\n')
-            ).to.contain(matchMessage.toLowerCase())
+            ).to.contain(message.toLowerCase())
+          }
+        }
+
+        if (code) {
+          const errorCodes = errorsArr.map((e) => `${e.extensions?.code}`).join('\n')
+
+          if (shouldNotHaveErrors) {
+            new Assertion(errorCodes).to.not.contain(code)
+          } else {
+            new Assertion(errorCodes).to.contain(code)
           }
         }
       } catch (e) {
@@ -53,10 +78,11 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
 
         const getPrettyErrors = () => `\nErrors: ${JSON.stringify(errorsArr, null, 2)}`
 
+        const msgOrCode = message || code
         let msg = ''
         if (shouldHaveErrors) {
-          if (matchMessage) {
-            msg = `Expected GraphQL response to have errors containing "${matchMessage}", but`
+          if (msgOrCode) {
+            msg = `Expected GraphQL response to have errors containing "${msgOrCode}", but`
             msg += errorsArr.length
               ? ' only found others' + getPrettyErrors()
               : ' found none'
@@ -64,8 +90,8 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
             msg = 'Expected GraphQL response to have errors, but found none'
           }
         } else {
-          if (matchMessage) {
-            msg = `Expected GraphQL response to have no errors containing "${matchMessage}", but found some`
+          if (msgOrCode) {
+            msg = `Expected GraphQL response to have no errors containing "${msgOrCode}", but found some`
           } else {
             msg = 'Expected GraphQL response to have no errors, but found some'
           }

@@ -28,13 +28,14 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
+      ...ProjectsInviteBanners
       ...ProjectsDashboardHeaderProjects_User
     }
   }
 `)
 
-export const projectsDashboardWorkspaceInvitesQuery = graphql(`
-  query ProjectsDashboardWorkspaceInvitesQuery {
+export const projectsDashboardWorkspaceQuery = graphql(`
+  query ProjectsDashboardWorkspaceQuery {
     activeUser {
       id
       ...ProjectsDashboardHeaderWorkspaces_User
@@ -352,6 +353,15 @@ export const projectBlobInfoQuery = graphql(`
         fileSize
         createdAt
       }
+    }
+  }
+`)
+
+export const projectWorkspaceSelectQuery = graphql(`
+  query ProjectWorkspaceSelect {
+    activeUser {
+      id
+      ...ProjectsAddDialog_User
     }
   }
 `)

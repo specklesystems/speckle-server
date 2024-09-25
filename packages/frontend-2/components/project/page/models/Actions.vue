@@ -5,7 +5,7 @@
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
-      :menu-position="HorizontalDirection.Right"
+      :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -48,6 +48,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -89,6 +90,7 @@ const props = defineProps<{
 const copyModelLink = useCopyModelLink()
 const { copy } = useClipboard()
 const menuId = useId()
+const { isLoggedIn } = useActiveUser()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
@@ -96,30 +98,41 @@ const embedDialogOpen = ref(false)
 
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [
-    {
-      title: 'Edit...',
-      id: ActionTypes.Rename,
-      disabled: !props.canEdit
-    },
-    {
-      title: 'Upload new version...',
-      id: ActionTypes.UploadVersion,
-      disabled: !props.canEdit
-    }
-  ],
+  ...(isLoggedIn.value
+    ? [
+        [
+          {
+            title: 'Edit...',
+            id: ActionTypes.Rename,
+            disabled: !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
+          },
+          {
+            title: 'Upload new version...',
+            id: ActionTypes.UploadVersion,
+            disabled: !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
+          }
+        ]
+      ]
+    : []),
   [
     { title: 'Copy link', id: ActionTypes.Share },
     { title: 'Copy ID', id: ActionTypes.CopyId },
     { title: 'Embed model...', id: ActionTypes.Embed }
   ],
-  [
-    {
-      title: 'Delete...',
-      id: ActionTypes.Delete,
-      disabled: isMain.value || !props.canEdit
-    }
-  ]
+  ...(isLoggedIn.value
+    ? [
+        [
+          {
+            title: 'Delete...',
+            id: ActionTypes.Delete,
+            disabled: isMain.value || !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
+          }
+        ]
+      ]
+    : [])
 ])
 
 const isRenameDialogOpen = computed({

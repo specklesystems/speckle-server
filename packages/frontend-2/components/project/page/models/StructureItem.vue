@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
+  <div class="space-y-4 relative">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
       class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 items-stretch"
@@ -380,7 +380,9 @@ const modelLink = computed(() => {
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.project.id, `$${props.item.fullName}`)
+  const fullName = props.item.fullName
+  const encodedFullName = `$${fullName}`.replace(/\//g, '%2F')
+  return modelRoute(props.project.id, encodedFullName)
 })
 
 const {

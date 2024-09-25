@@ -2,22 +2,16 @@ import { moduleLogger } from '@/logging/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { workspaceRoles } from '@/modules/workspaces/roles'
 import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
-import {
-  getWorkspaceRolesFactory,
-  upsertWorkspaceRoleFactory
-} from '@/modules/workspaces/repositories/workspaces'
-import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
-import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getStreams } from '@/modules/core/services/streams'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
+let quitListeners: Optional<() => void> = undefined
 
 const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
@@ -43,21 +37,13 @@ const workspacesModule: SpeckleModule = {
     moduleLogger.info('⚒️  Init workspaces module')
 
     if (isInitial) {
-      initializeEventListenersFactory({
-        getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-        grantStreamPermissions,
-        getStream,
-        logger: moduleLogger,
-        updateWorkspaceRole: updateWorkspaceRoleFactory({
-          getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-          emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-          getStreams,
-          grantStreamPermissions
-        })
-      })()
+      quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])
+  },
+  shutdown() {
+    if (!FF_WORKSPACES_MODULE_ENABLED) return
+    quitListeners?.()
   }
 }
 

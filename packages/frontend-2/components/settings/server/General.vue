@@ -1,30 +1,33 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader title="General" text="Manage general server information" />
+      <SettingsSectionHeader title="General" text="Manage your server settings" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Server details" subheading />
         <form class="flex flex-col gap-2" @submit="onSubmit">
           <div class="flex flex-col gap-4">
             <FormTextInput
               v-model="name"
-              label="Public name"
+              label="Server public name"
               name="serverName"
               color="foundation"
               placeholder="Server name"
               show-label
-              :show-required="true"
+              label-position="left"
               :rules="requiredRule"
               type="text"
             />
-            <FormTextArea
+            <hr class="border-outline-3" />
+            <FormTextInput
               v-model="description"
               color="foundation"
               label="Description"
               name="description"
               placeholder="Description"
               show-label
+              label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="company"
               color="foundation"
@@ -32,7 +35,9 @@
               name="owner"
               placeholder="Owner"
               show-label
+              label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="adminContact"
               color="foundation"
@@ -41,35 +46,42 @@
               placeholder="Admin email"
               show-label
               type="email"
+              label-position="left"
             />
+            <hr class="border-outline-3" />
             <FormTextInput
               v-model="termsOfService"
               color="foundation"
               label="URL to the Terms of Service"
               name="terms"
               show-label
+              label-position="left"
             />
-            <div class="text-sm flex flex-col gap-2 mt-2">
-              <FormCheckbox
-                v-model="inviteOnly"
-                label="Invite only mode - Only users with an invitation will be able to join"
-                name="inviteOnly"
-                show-label
-              />
-              <FormCheckbox
-                v-model="guestModeEnabled"
-                label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
-                name="guestModeEnabled"
-                show-label
-              />
-            </div>
-            <div>
+            <hr class="border-outline-3" />
+            <FormCheckbox
+              v-model="inviteOnly"
+              label="Invite only mode"
+              description="Only users with an invitation will be able to join the server"
+              label-position="left"
+              name="inviteOnly"
+              show-label
+            />
+            <hr class="border-outline-3" />
+            <FormCheckbox
+              v-model="guestModeEnabled"
+              label="Guest mode"
+              description="Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+              label-position="left"
+              name="guestModeEnabled"
+              show-label
+            />
+            <div class="mt-6">
               <FormButton color="primary" @click="onSubmit">Save changes</FormButton>
             </div>
           </div>
         </form>
       </div>
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsServerGeneralVersion />
     </div>
   </section>
@@ -80,11 +92,7 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import {
-  FormTextInput,
-  FormTextArea,
-  useFormCheckboxModel
-} from '@speckle/ui-components'
+import { FormTextInput, useFormCheckboxModel } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
 import {
   ROOT_QUERY,

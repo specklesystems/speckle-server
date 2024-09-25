@@ -30,7 +30,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
-import { SpeckleViewer } from '@speckle/shared'
+import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Merge } from 'type-fest'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
@@ -462,7 +462,7 @@ export async function getPaginatedBranchCommentsTotalCount(
 
 export type PaginatedProjectCommentsParams = {
   projectId: string
-  limit: number
+  limit?: MaybeNullOrUndefined<number>
   cursor?: MaybeNullOrUndefined<string>
   filter?: MaybeNullOrUndefined<
     Partial<{
@@ -620,11 +620,23 @@ export async function getPaginatedProjectComments(
   }
 ) {
   const { cursor } = params
-  const limit = clamp(params.limit, 0, 100)
-  if (!limit) return { items: [], cursor: null }
+
+  let limit: Optional<number> = undefined
+
+  // If undefined limit, no limit at all - we need this for the viewer, where we kinda have to show all threads in the 3D space
+  if (!isNullOrUndefined(params.limit)) {
+    limit = Math.max(0, params.limit || 0)
+
+    // limit=0, return nothing (req probably only interested in totalCount)
+    if (!limit) return { items: [], cursor: null }
+  }
 
   const { baseQuery } = await getPaginatedProjectCommentsBaseQuery(params, options)
-  const q = baseQuery.orderBy(Comments.col.createdAt, 'desc').limit(limit)
+  const q = baseQuery.orderBy(Comments.col.createdAt, 'desc')
+
+  if (limit) {
+    q.limit(limit)
+  }
 
   if (cursor) {
     q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))

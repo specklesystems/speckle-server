@@ -31,6 +31,11 @@ export const validateProjectInviteBeforeFinalizationFactory =
       )
     }
 
+    // If decline, skip all further validation
+    if (action === InviteFinalizationAction.DECLINE) {
+      return
+    }
+
     const project = await getProject({
       streamId: invite.resource.resourceId,
       userId: finalizerUserId
@@ -81,6 +86,20 @@ export const processFinalizedProjectInviteFactory =
     const { invite, finalizerUserId, action } = params
 
     const project = await getProject({ streamId: invite.resource.resourceId })
+
+    if (action === InviteFinalizationAction.DECLINE) {
+      // Skip validation so user can get rid of the invite regardless
+      if (project) {
+        await addInviteDeclinedActivity({
+          streamId: invite.resource.resourceId,
+          inviteTargetId: finalizerUserId,
+          inviterId: invite.inviterId,
+          stream: project
+        })
+      }
+      return
+    }
+
     if (!project) {
       throw new InviteFinalizingError(
         'Attempting to finalize invite to a non-existant project'
@@ -106,12 +125,5 @@ export const processFinalizedProjectInviteFactory =
           'Original inviter no longer has the rights to invite you to this project'
         )
       }
-    } else if (action === InviteFinalizationAction.DECLINE) {
-      await addInviteDeclinedActivity({
-        streamId: invite.resource.resourceId,
-        inviteTargetId: finalizerUserId,
-        inviterId: invite.inviterId,
-        stream: project
-      })
     }
   }

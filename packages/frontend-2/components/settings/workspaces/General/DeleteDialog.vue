@@ -41,6 +41,8 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -58,9 +60,12 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const { mutate: deleteWorkspace } = useMutation(deleteWorkspaceMutation)
 const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
+const router = useRouter()
 const apollo = useApolloClient().client
+const mixpanel = useMixpanel()
 
 const onDelete = async () => {
+  router.push(homeRoute)
   isOpen.value = false
 
   const cache = apollo.cache
@@ -98,6 +103,11 @@ const onDelete = async () => {
       title: 'Workspace deleted',
       description: `The ${props.workspace.name} workspace has been deleted`
     })
+
+    mixpanel.track('Workspace Deleted', {
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspace.id
+    })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -111,7 +121,7 @@ const onDelete = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -119,7 +129,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Delete',
     props: {
-      fullWidth: true,
       color: 'danger'
     },
     onClick: onDelete

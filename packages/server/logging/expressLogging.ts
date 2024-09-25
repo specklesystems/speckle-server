@@ -1,12 +1,12 @@
 import { logger } from '@/logging/logging'
 import { randomUUID } from 'crypto'
 import HttpLogger from 'pino-http'
-import { IncomingMessage } from 'http'
-import { NextFunction, Response } from 'express'
-import pino, { SerializedResponse } from 'pino'
-import { GenReqId } from 'pino-http'
-import type { ServerResponse } from 'http'
-import { Optional } from '@speckle/shared'
+import type { NextFunction, Response } from 'express'
+import pino from 'pino'
+import type { SerializedResponse } from 'pino'
+import type { GenReqId } from 'pino-http'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { Optional } from '@speckle/shared'
 import { getRequestPath } from '@/modules/core/helpers/server'
 import { get } from 'lodash'
 
@@ -23,11 +23,31 @@ const DetermineRequestId = (
   return headers[0] || uuidGenerator()
 }
 
+export const sanitizeHeaders = (headers: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(headers).filter(
+      ([key]) =>
+        ![
+          'cookie',
+          'authorization',
+          'cf-connecting-ip',
+          'true-client-ip',
+          'x-real-ip',
+          'x-forwarded-for',
+          'x-original-forwarded-for'
+        ].includes(key.toLocaleLowerCase())
+    )
+  )
+
 export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: true,
   genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
+    const path = getRequestPath(req)
+    const shouldBeDebug =
+      ['/metrics', '/readiness', '/liveness'].includes(path || '') ?? false
+
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
     } else if (res.statusCode >= 500 || err) {
@@ -36,9 +56,21 @@ export const LoggingExpressMiddleware = HttpLogger({
       return 'info'
     }
 
-    if (req.url === '/readiness' || req.url === '/liveness') return 'debug'
-    if (req.url === '/metrics') return 'debug'
-    return 'info'
+    return shouldBeDebug ? 'debug' : 'info'
+  },
+
+  customReceivedMessage() {
+    return '{requestPath} request received'
+  },
+
+  customReceivedObject(req, res, loggableObject: Record<string, unknown>) {
+    const requestPath = getRequestPath(req) || 'unknown'
+    const country = req.headers['cf-ipcountry'] as Optional<string>
+    return {
+      ...loggableObject,
+      requestPath,
+      country
+    }
   },
 
   customSuccessMessage() {
@@ -85,20 +117,7 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: getRequestPath(req.raw),
         // Allowlist useful headers
-        headers: Object.fromEntries(
-          Object.entries(req.raw.headers).filter(
-            ([key]) =>
-              ![
-                'cookie',
-                'authorization',
-                'cf-connecting-ip',
-                'true-client-ip',
-                'x-real-ip',
-                'x-forwarded-for',
-                'x-original-forwarded-for'
-              ].includes(key.toLocaleLowerCase())
-          )
-        )
+        headers: sanitizeHeaders(req.raw.headers)
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {

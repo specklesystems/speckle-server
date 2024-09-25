@@ -26,7 +26,8 @@ import {
   LimitedUserRecord,
   StreamAclRecord,
   StreamFavoriteRecord,
-  StreamRecord
+  StreamRecord,
+  UserWithRole
 } from '@/modules/core/helpers/types'
 import {
   DiscoverableStreamsSortingInput,
@@ -49,10 +50,27 @@ import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
+import {
+  StreamAccessUpdateError,
+  StreamNotFoundError,
+  StreamUpdateError
+} from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { db as defaultKnexInstance } from '@/db/knex'
+import {
+  DeleteProjectRole,
+  GetProject,
+  GetProjectCollaborators,
+  UpdateProject,
+  GetRolesByUserId,
+  UpsertProjectRole
+} from '@/modules/core/domain/projects/operations'
+
+const tables = {
+  streams: (db: Knex) => db<StreamRecord>('streams'),
+  streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl')
+}
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -156,6 +174,19 @@ export async function getStream(
   const streams = await getStreams([streamId], { userId, ...(options || {}) })
   return <Optional<StreamWithOptionalRole>>streams[0]
 }
+
+// TODO: Inject db
+export const getProjectFactory =
+  (): GetProject =>
+  async ({ projectId }) => {
+    const project = await getStream({ streamId: projectId })
+
+    if (!project) {
+      throw new StreamNotFoundError()
+    }
+
+    return project
+  }
 
 export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
 
@@ -634,6 +665,13 @@ export async function getStreamCollaborators(streamId: string, type?: StreamRole
   return items
 }
 
+// TODO: Inject db
+export const getProjectCollaboratorsFactory =
+  (): GetProjectCollaborators =>
+  async ({ projectId }) => {
+    return await getStreamCollaborators(projectId)
+  }
+
 type BaseUserStreamsQueryParams = {
   /**
    * User whose streams we wish to find
@@ -662,6 +700,7 @@ type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
+  workspaceId?: string
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -688,11 +727,16 @@ function getUserStreamsQueryBase<
   forOtherUser,
   ownedOnly,
   withRoles,
-  streamIdWhitelist
+  streamIdWhitelist,
+  workspaceId
 }: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
     .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+
+  if (workspaceId) {
+    query.andWhere(Streams.col.workspaceId, workspaceId)
+  }
 
   if (ownedOnly || withRoles?.length) {
     const roles: StreamRoles[] = [
@@ -887,7 +931,11 @@ const isProjectUpdateInput = (
   i: StreamUpdateInput | ProjectUpdateInput
 ): i is ProjectUpdateInput => has(i, 'visibility')
 
-export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
+/** @deprecated Replace all calls with `updateProjectFacotry` */
+export async function updateStream(
+  update: StreamUpdateInput | ProjectUpdateInput,
+  db?: Knex
+) {
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
@@ -919,7 +967,8 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 
   if (!Object.keys(validUpdate).length) return null
 
-  const [updatedStream] = await Streams.knex()
+  const [updatedStream] = await tables
+    .streams(db ?? knex)
     .returning('*')
     .where({ id: streamId })
     .update<StreamRecord[]>({
@@ -929,6 +978,18 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
 
   return updatedStream
 }
+
+export const updateProjectFactory =
+  ({ db }: { db: Knex }): UpdateProject =>
+  async ({ projectUpdate }) => {
+    const updatedStream = await updateStream(projectUpdate, db)
+
+    if (!updatedStream) {
+      throw new StreamUpdateError()
+    }
+
+    return updatedStream
+  }
 
 export async function markBranchStreamUpdated(branchId: string) {
   const q = Streams.knex()
@@ -954,42 +1015,101 @@ export async function markCommitStreamUpdated(commitId: string) {
   return updates > 0
 }
 
+// TODO: Replace all calls to `grantStreamPermissions` with this
+export const upsertProjectRoleFactory =
+  ({ db }: { db: Knex }): UpsertProjectRole =>
+  async ({ projectId, userId, role }) => {
+    return await grantStreamPermissions(
+      {
+        streamId: projectId,
+        userId,
+        role
+      },
+      db
+    )
+  }
+
 /**
  * (Moved from services/streams.js, could be refactored into something better)
+ * @deprecated use return value from `grantStreamPermissionsFactory`
  */
-export async function grantStreamPermissions(params: {
-  streamId: string
-  userId: string
-  role: StreamRoles
-}) {
+export async function grantStreamPermissions(
+  params: {
+    streamId: string
+    userId: string
+    role: StreamRoles
+  },
+  db: Knex = defaultKnexInstance
+) {
   const { streamId, userId, role } = params
 
+  // assert we are not removing last admin from project
+  const existingRole = await tables
+    .streamAcl(db)
+    .where({
+      [StreamAcl.col.resourceId]: streamId,
+      [StreamAcl.col.userId]: userId
+    })
+    .first()
+
+  if (existingRole?.role === Roles.Stream.Owner && role !== Roles.Stream.Owner) {
+    const [countObj] = await tables
+      .streamAcl(db)
+      .where({
+        resourceId: streamId,
+        role: Roles.Stream.Owner
+      })
+      .count()
+    if (parseInt(countObj.count as string) === 1)
+      throw new StreamAccessUpdateError('Could not revoke permissions for last admin', {
+        info: { streamId, userId }
+      })
+  }
+
   // upserts the existing role (sets a new one!)
-  // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
   const query =
-    StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
+    tables.streamAcl(db).insert({ userId, resourceId: streamId, role }).toString() +
     ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
   await knex.raw(query)
 
   // update stream updated at
-  const streams = await Streams.knex()
+  const streams = await tables
+    .streams(db)
     .where({ id: streamId })
     .update({ updatedAt: knex.fn.now() }, '*')
 
   return streams[0] as StreamRecord
 }
 
+// TODO: Replace all calls of `revokeStreamPermissions` with this
+export const deleteProjectRoleFactory =
+  ({ db }: { db: Knex }): DeleteProjectRole =>
+  async ({ projectId, userId }) => {
+    return await revokeStreamPermissions(
+      {
+        streamId: projectId,
+        userId
+      },
+      db
+    )
+  }
+
 /**
  * (Moved from services/streams.js, could be refactored into something better)
+ * @deprecated Use return value from `revokeStreamPermissionsFactory`
  */
-export async function revokeStreamPermissions(params: {
-  streamId: string
-  userId: string
-}) {
+export async function revokeStreamPermissions(
+  params: {
+    streamId: string
+    userId: string
+  },
+  db: Knex = defaultKnexInstance
+) {
   const { streamId, userId } = params
 
-  const existingPermission = await StreamAcl.knex()
+  const existingPermission = await tables
+    .streamAcl(db)
     .where({
       [StreamAcl.col.resourceId]: streamId,
       [StreamAcl.col.userId]: userId
@@ -997,12 +1117,14 @@ export async function revokeStreamPermissions(params: {
     .first()
   if (!existingPermission) {
     // User already doesn't have permissions
-    return await Streams.knex<StreamRecord>()
+    return await tables
+      .streams(db)
       .where({ [Streams.col.id]: streamId })
       .first()
   }
 
-  const [streamAclEntriesCount] = await StreamAcl.knex()
+  const [streamAclEntriesCount] = await tables
+    .streamAcl(db)
     .where({ resourceId: streamId })
     .count<{ count: string }[]>()
 
@@ -1014,21 +1136,23 @@ export async function revokeStreamPermissions(params: {
 
   const aclEntry = existingPermission
   if (aclEntry?.role === Roles.Stream.Owner) {
-    const [countObj] = await StreamAcl.knex()
+    const [countObj] = await tables
+      .streamAcl(db)
       .where({
         resourceId: streamId,
         role: Roles.Stream.Owner
       })
       .count()
-    if (parseInt(countObj.count) === 1)
+    if (parseInt(countObj.count as string) === 1)
       throw new StreamAccessUpdateError('Could not revoke permissions for last admin', {
         info: { streamId, userId }
       })
     else {
-      await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
+      await tables.streamAcl(db).where({ resourceId: streamId, userId }).del()
     }
   } else {
-    const delCount = await StreamAcl.knex()
+    const delCount = await tables
+      .streamAcl(db)
       .where({ resourceId: streamId, userId })
       .del()
 
@@ -1039,7 +1163,8 @@ export async function revokeStreamPermissions(params: {
   }
 
   // update stream updated at
-  const [stream] = await Streams.knex()
+  const [stream] = await tables
+    .streams(db)
     .where({ id: streamId })
     .update({ updatedAt: knex.fn.now() }, '*')
 
@@ -1075,3 +1200,17 @@ export async function getOnboardingBaseStream(version: string) {
 
   return await q
 }
+
+export const getRolesByUserIdFactory =
+  ({ db }: { db: Knex }): GetRolesByUserId =>
+  async ({ userId, workspaceId }) => {
+    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
+      StreamAcl.name
+    ).where({ userId })
+    if (workspaceId) {
+      query
+        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+        .where({ workspaceId })
+    }
+    return await query
+  }

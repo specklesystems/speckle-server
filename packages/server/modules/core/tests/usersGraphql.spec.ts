@@ -2,11 +2,6 @@ import { Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { createUser } from '@/modules/core/services/users'
 import {
@@ -20,7 +15,12 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { before } from 'mocha'
-import { testApolloServer } from '@/test/graphqlHelper'
+import {
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext,
+  testApolloServer
+} from '@/test/graphqlHelper'
 import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
@@ -28,7 +28,22 @@ import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { buildApolloServer } from '@/app'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getUser } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 const createUserEmail = validateAndCreateUserEmailFactory({
   createUserEmail: createUserEmailFactory({ db }),
@@ -64,10 +79,13 @@ describe('Users (GraphQL)', () => {
   })
 
   describe('when unauthenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createTestContext()
+      }
     })
 
     it('activeUser returns null', async () => {
@@ -88,10 +106,13 @@ describe('Users (GraphQL)', () => {
   })
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
     })
 
     it('activeUser returns authenticated user info', async () => {
