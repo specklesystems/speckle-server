@@ -1,6 +1,7 @@
 import knex from '@/db/knex'
 import {
   GetActiveUserStreams,
+  GetActivityCountByStreamId,
   GetStreamActivity
 } from '@/modules/activitystream/domain/operations'
 import {
@@ -78,4 +79,15 @@ export const getStreamActivityFactory =
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
     }
+  }
+
+export const getActivityCountByStreamIdFactory =
+  ({ db }: { db: Knex }): GetActivityCountByStreamId =>
+  async ({ streamId, actionType, after, before }) => {
+    const query = tables.streamActivity(db).count().where({ streamId })
+    if (actionType) query.andWhere({ actionType })
+    if (after) query.andWhere('time', '>', after)
+    if (before) query.andWhere('time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
   }
