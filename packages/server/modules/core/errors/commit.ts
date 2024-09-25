@@ -12,12 +12,6 @@ export class CommitBatchUpdateError extends BaseError {
   static statusCode = 400
 }
 
-export class CommitBatchUpdateInternalError extends BaseError {
-  static defaultMessage = 'An issue occurred while batch updating commits'
-  static code = 'COMMIT_BATCH_UPDATE_INTERNAL_ERROR'
-  static statusCode = 500
-}
-
 export class CommitCreateError extends BaseError {
   static defaultMessage = 'An issue occured while creating a commit'
   static code = 'COMMIT_CREATE_ERROR'

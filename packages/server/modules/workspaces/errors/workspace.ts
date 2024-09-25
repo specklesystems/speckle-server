@@ -113,9 +113,3 @@ export class WorkspaceDomainsInvalidState extends BaseError {
   static code = 'WORKSPACE_NO_VERIFIED_DOMAINS'
   static statusCode = 500
 }
-
-export class InvalidWorkspaceLicenseError extends BaseError {
-  static defaultMessage = 'Invalid workspace license'
-  static code = 'INVALID_WORKSPACE_LICENSE'
-  static statusCode = 400
-}

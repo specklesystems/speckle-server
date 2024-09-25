@@ -12,12 +12,6 @@ export class AutomationNotFoundError extends BaseError {
   static statusCode = 404
 }
 
-export class AutomationRevisionNotFoundError extends BaseError {
-  static defaultMessage = 'Automation revision not found'
-  static code = 'AUTOMATION__REVISION_NOT_FOUND'
-  static statusCode = 404
-}
-
 export class AutomationCreationError extends BaseError {
   static defaultMessage = 'Error creating automation'
   static code = 'AUTOMATION_CREATION_ERROR'
