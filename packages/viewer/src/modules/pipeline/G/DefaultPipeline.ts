@@ -9,10 +9,11 @@ import { GProgressiveAOPass } from './GProgressiveAOPass.js'
 import { GBlendPass } from './GBlendPass.js'
 import { GNormalsPass } from './GNormalPass.js'
 import { GOutputPass, InputType } from './GOutputPass.js'
+import { GTAAPass } from './GTAAPass.js'
 
 export class DefaultPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
-  protected accumulationFrameCount: number = 16
+  protected accumulationFrameCount: number = 160
   protected dynamicStage: Array<GPass> = []
   protected progressiveStage: Array<GPass> = []
 
@@ -29,10 +30,6 @@ export class DefaultPipeline extends GPipeline {
     normalPass.setVisibility(ObjectVisibility.OPAQUE)
     normalPass.setJitter(true)
 
-    const outputPass = new GOutputPass()
-    outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
-    outputPass.setInputType(InputType.Normals)
-
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
       ObjectLayers.PROPS,
@@ -45,6 +42,7 @@ export class DefaultPipeline extends GPipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
+    opaqueColorPass.outputTarget = null
 
     const transparentColorPass = new GColorPass()
     transparentColorPass.setLayers([
@@ -58,6 +56,7 @@ export class DefaultPipeline extends GPipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
+    transparentColorPass.outputTarget = null
 
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -67,14 +66,59 @@ export class DefaultPipeline extends GPipeline {
     blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
+    const jitterOpaquePass = new GColorPass()
+    jitterOpaquePass.setLayers([
+      ObjectLayers.PROPS,
+      ObjectLayers.STREAM_CONTENT,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE,
+      ObjectLayers.STREAM_CONTENT_POINT,
+      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.SHADOWCATCHER
+    ])
+    jitterOpaquePass.setVisibility(ObjectVisibility.OPAQUE)
+    jitterOpaquePass.setJitter(true)
+    jitterOpaquePass.clear = true
+
+    const jitterTransparentPass = new GColorPass()
+    jitterTransparentPass.setLayers([
+      ObjectLayers.PROPS,
+      ObjectLayers.STREAM_CONTENT,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE,
+      ObjectLayers.STREAM_CONTENT_POINT,
+      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.SHADOWCATCHER
+    ])
+    jitterTransparentPass.setVisibility(ObjectVisibility.TRANSPARENT)
+    jitterTransparentPass.setJitter(true)
+    jitterTransparentPass.outputTarget = jitterOpaquePass.outputTarget
+
+    const taaPass = new GTAAPass()
+    taaPass.inputTexture = jitterTransparentPass.outputTarget?.texture
+    taaPass.accumulationFrames = this.accumulationFrameCount
+
+    const outputPass = new GOutputPass()
+    outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
+    outputPass.setInputType(InputType.Color)
+
+    // this.dynamicStage.push(opaqueColorPass, transparentColorPass)
+    // this.progressiveStage.push(
+    //   depthPass,
+    //   normalPass,
+    //   opaqueColorPass,
+    //   transparentColorPass,
+    //   progressiveAOPass,
+    //   blendPass
+    // )
     this.dynamicStage.push(opaqueColorPass, transparentColorPass)
     this.progressiveStage.push(
-      depthPass,
-      normalPass,
-      opaqueColorPass,
-      transparentColorPass,
-      progressiveAOPass,
-      blendPass
+      jitterOpaquePass,
+      jitterTransparentPass,
+      taaPass,
+      outputPass
     )
 
     this.passList = this.dynamicStage
@@ -96,7 +140,7 @@ export class DefaultPipeline extends GPipeline {
   public resize(width: number, height: number) {
     this.dynamicStage.forEach((pass: GPass) => pass.setSize?.(width, height))
     this.progressiveStage.forEach((pass: GPass) => pass.setSize?.(width, height))
-    this.passList.forEach((pass: GPass) => pass.setSize?.(width, height))
+    // this.passList.forEach((pass: GPass) => pass.setSize?.(width, height))
   }
 
   public onStationaryBegin() {

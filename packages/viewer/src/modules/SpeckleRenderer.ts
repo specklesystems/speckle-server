@@ -320,7 +320,7 @@ export default class SpeckleRenderer {
 
   public create(container: HTMLElement) {
     this._renderer = new SpeckleWebGLRenderer({
-      antialias: true,
+      antialias: false,
       alpha: true,
       preserveDrawingBuffer: true,
       stencil: true

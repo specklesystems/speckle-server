@@ -53,6 +53,11 @@ export class GOutputPass extends BaseGPass {
 
   public render(renderer: WebGLRenderer): boolean {
     renderer.setRenderTarget(this._outputTarget)
+
+    renderer.setClearColor(0xffffff)
+    renderer.setClearAlpha(0.0)
+    renderer.clear(true, true, true)
+
     this.fsQuad.render(renderer)
 
     return false
