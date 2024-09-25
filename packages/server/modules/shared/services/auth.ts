@@ -18,7 +18,7 @@ import { Roles } from '@speckle/shared'
 /**
  * Validates the scope against a list of scopes of the current session.
  */
-export const validateScopesFactory = (): ValidateScopes => (scopes, scope) => {
+export const validateScopesFactory = (): ValidateScopes => async (scopes, scope) => {
   const errMsg = `Your auth token does not have the required scope${
     scope?.length ? ': ' + scope + '.' : '.'
   }`

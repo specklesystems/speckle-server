@@ -18,7 +18,10 @@ export type GetUserServerRole = (params: {
   userId: string
 }) => Promise<Optional<ServerRoles>>
 
-export type ValidateScopes = (scopes: Optional<string[]>, scope: string) => void
+export type ValidateScopes = (
+  scopes: Optional<string[]>,
+  scope: string
+) => Promise<void>
 
 export type AuthorizeResolver = (
   userId: MaybeNullOrUndefined<string>,
