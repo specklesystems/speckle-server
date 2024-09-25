@@ -8,14 +8,6 @@ export const workspaceAccessCheckQuery = graphql(`
   }
 `)
 
-export const workspaceBySlugQuery = graphql(`
-  query WorkspaceBySlug($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      id
-    }
-  }
-`)
-
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
     $workspaceId: String!

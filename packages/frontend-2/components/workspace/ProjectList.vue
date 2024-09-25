@@ -98,7 +98,6 @@ import type {
   WorkspaceProjectsQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { getWorkspaceIdFromSlug } from '~/lib/workspaces/helpers/slug'
 import { Roles } from '@speckle/shared'
 import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import {
@@ -136,25 +135,16 @@ const props = defineProps<{
 }>()
 
 const { client } = useApolloClient()
-const preloadedWorkspaceId = ref<string | undefined>(undefined)
+const workspaceId = ref<string | undefined>(undefined)
 
-// Try to read the preloaded data from the Apollo cache
 const cachedData = client.readQuery({
   query: workspaceAccessCheckQuery,
   variables: { slug: props.workspaceSlug }
 })
 
 if (cachedData?.workspaceBySlug?.id) {
-  preloadedWorkspaceId.value = cachedData.workspaceBySlug.id
+  workspaceId.value = cachedData.workspaceBySlug.id
 }
-
-const fetchedWorkspaceId = getWorkspaceIdFromSlug(props.workspaceSlug)
-
-// Combine preloaded (from 006-dataPreload.ts) and fetched workspaceId to ensure
-// smooth SSR to CSR transition and prevent hydration mismatches
-const workspaceId = computed(
-  () => preloadedWorkspaceId.value || fetchedWorkspaceId.value
-)
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)

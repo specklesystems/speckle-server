@@ -315,7 +315,6 @@ const documents = {
     "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {\n    workspaceMutations {\n      invites {\n        use(input: $input)\n      }\n    }\n  }\n": types.ProcessWorkspaceInviteDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
-    "\n  query WorkspaceBySlug($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceBySlugDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n    $token: String\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceHeader_Workspace\n      ...WorkspaceMixpanelUpdateGroup_Workspace\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      id\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceId: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
     "\n  query WorkspaceInvite($workspaceId: String, $token: String) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
@@ -1555,10 +1554,6 @@ export function graphql(source: "\n  mutation ProcessWorkspaceInvite($input: Wor
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceBySlug($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceBySlug($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
