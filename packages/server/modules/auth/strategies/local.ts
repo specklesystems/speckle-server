@@ -83,7 +83,7 @@ const localStrategyBuilderFactory =
       sessionMiddleware,
       moveAuthParamsToSessionMiddleware,
       async (req, res, next) => {
-        const serverInfo = await getServerInfo()
+        const serverInfo = await deps.getServerInfo()
         try {
           if (!req.body.password) throw new UserInputError('Password missing')
 
@@ -91,7 +91,7 @@ const localStrategyBuilderFactory =
           const ip = getIpFromRequest(req)
           if (ip) user.ip = ip
           const source = ip ? ip : 'unknown'
-          const rateLimitResult = await getRateLimitResult('USER_CREATE', source)
+          const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
           if (isRateLimitBreached(rateLimitResult)) {
             return sendRateLimitResponse(res, rateLimitResult)
           }
