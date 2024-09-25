@@ -528,8 +528,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await getConnectorVersion()
   }
 
-  void getConnectorVersion()
-
   initializeApp()
 
   return {
