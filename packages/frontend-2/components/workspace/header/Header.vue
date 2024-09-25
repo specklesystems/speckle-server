@@ -108,6 +108,7 @@
 </template>
 
 <script setup lang="ts">
+import { useElementSize } from '@vueuse/core'
 import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -195,26 +196,18 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
 }
 
 const descriptionRef = ref<HTMLElement | null>(null)
-const hasOverflow = ref(false)
+const { height } = useElementSize(descriptionRef)
 
-const checkOverflow = () => {
+const hasOverflow = computed(() => {
   if (descriptionRef.value) {
-    hasOverflow.value =
-      descriptionRef.value.scrollHeight > descriptionRef.value.clientHeight
+    return descriptionRef.value.scrollHeight > height.value
   }
-}
+  return false
+})
 
 const isDescriptionDialogOpen = ref(false)
 
 const showDescriptionDialog = () => {
   isDescriptionDialogOpen.value = true
 }
-
-watch(
-  () => props.workspaceInfo,
-  () => {
-    nextTick(checkOverflow)
-  },
-  { immediate: true, deep: true }
-)
 </script>
