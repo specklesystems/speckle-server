@@ -51,6 +51,7 @@ export class WorkspaceNoVerifiedDomainsError extends BaseError {
 export class WorkspaceQueryError extends BaseError {
   static defaultMessage = 'Unexpected error during query operation'
   static code = 'WORKSPACE_QUERY_ERROR'
+  static statusCode = 500
 }
 
 export class WorkspacesNotAuthorizedError extends BaseError {
@@ -62,6 +63,7 @@ export class WorkspacesNotAuthorizedError extends BaseError {
 export class WorkspacesNotYetImplementedError extends BaseError {
   static defaultMessage = 'Not yet implemented'
   static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'
+  static statusCode = 501
 }
 
 export class WorkspaceNotFoundError extends BaseError {

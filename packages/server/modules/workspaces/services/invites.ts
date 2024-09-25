@@ -27,7 +27,7 @@ import {
 import {
   InviteCreateValidationError,
   InviteFinalizingError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -425,7 +425,7 @@ export const getUserPendingWorkspaceInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<

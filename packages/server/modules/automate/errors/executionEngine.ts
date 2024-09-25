@@ -21,6 +21,7 @@ export type ExecutionEngineErrorRequest = {
 export class ExecutionEngineFailedResponseError extends BaseError {
   static code = 'EXECUTION_ENGINE_FAILED_RESPONSE_ERROR'
   static defaultMessage = 'Request to automate execution engine failed'
+  static statusCode = 502
 
   public response: ExecutionEngineErrorResponse
   public request: ExecutionEngineErrorRequest
@@ -41,6 +42,7 @@ export class ExecutionEngineFailedResponseError extends BaseError {
 export class ExecutionEngineBadResponseBodyError extends BaseError {
   static code = 'EXECUTION_ENGINE_BAD_RESPONSE_BODY_ERROR'
   static defaultMessage = 'Automate API returned an unexpected response'
+  static statusCode = 502
 
   public request: ExecutionEngineErrorRequest
 
@@ -53,6 +55,7 @@ export class ExecutionEngineBadResponseBodyError extends BaseError {
 export class ExecutionEngineNetworkError extends BaseError {
   static code = 'EXECUTION_ENGINE_NETWORK_ERROR'
   static defaultMessage = 'Network error while communicating with Automate API'
+  static statusCode = 502
 
   public request: ExecutionEngineErrorRequest
   public networkError: Error
