@@ -1,5 +1,6 @@
 import { ServerAcl, StreamAcl } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { AuthContext } from '@/modules/shared/domain/authz/types'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 import {
   AvailableRoles,
@@ -29,3 +30,8 @@ export type AuthorizeResolver = (
   requiredRole: AvailableRoles,
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) => Promise<void>
+
+export type ValidateUserServerRole = (
+  context: AuthContext,
+  requiredRole: ServerRoles
+) => Promise<true>
