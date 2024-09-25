@@ -699,7 +699,7 @@ function prepInsertionObject(streamId, obj) {
   const objectMegabyteSize = estimateStringMegabyteSize(stringifiedObj)
   if (objectMegabyteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
-      `Object too large. Object ID: ${obj.id}. (${objectMegabyteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`, //TODO replace with message template and use variables in options.info
+      'Object too large. Object ID: {objectId}. ({objectMegabyteSize} MB is > than limit, {maxObjectMegabyteSize} MB)',
       {
         info: {
           objectId: obj.id,

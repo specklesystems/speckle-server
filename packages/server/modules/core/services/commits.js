@@ -155,10 +155,9 @@ module.exports = {
     })
 
     if (!myBranch)
-      throw new BranchNotFoundError(
-        `Failed to find branch with name ${branchName}.`, //TODO use message template and values from options.info
-        { info: { branch: branchName } }
-      )
+      throw new BranchNotFoundError('Failed to find branch with name {branch}.', {
+        info: { branch: branchName }
+      })
 
     return module.exports.getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
   },

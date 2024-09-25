@@ -120,13 +120,10 @@ const ensureStorageAccess = async () => {
         logger.error(err)
       }
     } else {
-      throw new EnvironmentResourceError(
-        `Can't open S3 bucket '${Bucket}'`, //TODO use message template and values from options.info
-        {
-          cause: err,
-          info: { bucket: Bucket }
-        }
-      )
+      throw new EnvironmentResourceError("Can't open S3 bucket '{bucket}'", {
+        cause: err,
+        info: { bucket: Bucket }
+      })
     }
   }
 }
