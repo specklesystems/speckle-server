@@ -141,14 +141,5 @@ module.exports = {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
     }
-  },
-
-  async getActivityCountByResourceId({ resourceId, actionType, after, before }) {
-    const query = StreamActivity().count().where({ resourceId })
-    if (actionType) query.andWhere({ actionType })
-    if (after) query.andWhere('time', '>', after)
-    if (before) query.andWhere('time', '<', before)
-    const [res] = await query
-    return parseInt(res.count)
   }
 }

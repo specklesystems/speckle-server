@@ -3,12 +3,12 @@ const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
 const {
   getUserActivity,
   getResourceActivity,
-  getUserTimeline,
-  getActivityCountByResourceId
+  getUserTimeline
 } = require('../../services/index')
 const {
   getActivityCountByUserIdFactory,
-  getTimelineCountFactory
+  getTimelineCountFactory,
+  getActivityCountByResourceIdFactory
 } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 
@@ -80,7 +80,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -102,7 +102,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      const totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceIdFactory({ db })({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,

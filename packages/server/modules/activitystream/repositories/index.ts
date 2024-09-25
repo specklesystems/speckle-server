@@ -1,6 +1,7 @@
 import knex from '@/db/knex'
 import {
   GetActiveUserStreams,
+  GetActivityCountByResourceId,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
   GetStreamActivity,
@@ -117,6 +118,17 @@ export const getTimelineCountFactory =
       .where({ 'stream_acl.userId': userId })
     if (after) query.andWhere('stream_activity.time', '>', after)
     if (before) query.andWhere('stream_activity.time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getActivityCountByResourceIdFactory =
+  ({ db }: { db: Knex }): GetActivityCountByResourceId =>
+  async ({ resourceId, actionType, after, before }) => {
+    const query = tables.streamActivity(db).count().where({ resourceId })
+    if (actionType) query.andWhere({ actionType })
+    if (after) query.andWhere('time', '>', after)
+    if (before) query.andWhere('time', '<', before)
     const [res] = await query
     return parseInt(res.count.toString())
   }

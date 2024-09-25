@@ -63,3 +63,15 @@ export type GetTimelineCount = ({
   after?: Date
   before?: Date
 }) => Promise<number>
+
+export type GetActivityCountByResourceId = ({
+  resourceId,
+  actionType,
+  before,
+  after
+}: {
+  resourceId: string
+  actionType?: StreamActionType
+  after?: Date
+  before?: Date
+}) => Promise<number>
