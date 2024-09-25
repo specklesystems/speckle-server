@@ -1,10 +1,9 @@
 'use strict'
 const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
-const { getUserActivity, getResourceActivity } = require('../../services/index')
+const { getUserActivity } = require('../../services/index')
 const {
   getActivityCountByUserIdFactory,
   getTimelineCountFactory,
-  getActivityCountByResourceIdFactory,
   getUserTimelineFactory
 } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
@@ -65,51 +64,6 @@ module.exports = {
       return await userTimelineQueryCore(parent, args)
     }
   },
-
-  Branch: {
-    async activity(parent, args) {
-      const { items, cursor } = await getResourceActivity({
-        resourceType: 'branch',
-        resourceId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getActivityCountByResourceIdFactory({ db })({
-        resourceId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before
-      })
-
-      return { items, cursor, totalCount }
-    }
-  },
-
-  Commit: {
-    async activity(parent, args) {
-      const { items, cursor } = await getResourceActivity({
-        resourceType: 'commit',
-        resourceId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getActivityCountByResourceIdFactory({ db })({
-        resourceId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before
-      })
-
-      return { items, cursor, totalCount }
-    }
-  },
-
   Activity: {
     /**
      * We need a unique ID to be able to properly cache stuff on the clientside

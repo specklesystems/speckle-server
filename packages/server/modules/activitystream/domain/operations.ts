@@ -1,4 +1,4 @@
-import { StreamActionType } from '@/modules/activitystream/domain/types'
+import { ResourceType, StreamActionType } from '@/modules/activitystream/domain/types'
 import {
   StreamActivityRecord,
   StreamScopeActivity
@@ -92,4 +92,25 @@ export type GetUserTimeline = ({
 }) => Promise<{
   cursor: string | null
   items: (StreamActivityRecord & StreamAclRecord)[]
+}>
+
+export type GetResourceActivity = ({
+  resourceType,
+  resourceId,
+  actionType,
+  before,
+  after,
+  cursor,
+  limit
+}: {
+  resourceType: ResourceType
+  resourceId: string
+  actionType: StreamActionType
+  after?: Date
+  before?: Date
+  cursor?: Date
+  limit?: number
+}) => Promise<{
+  cursor: string | null
+  items: StreamActivityRecord[]
 }>
