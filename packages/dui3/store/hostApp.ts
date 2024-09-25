@@ -446,28 +446,92 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const refreshSendFilters = async () =>
     (sendFilters.value = await app.$sendBinding?.getSendFilters())
 
-  const getSendSettings = async () =>
-    (sendSettings.value = await app.$sendBinding.getSendSettings())
+  const getSendSettings = async () => {
+    sendSettings.value = await app.$sendBinding.getSendSettings()
+  }
+
+  const tryToUpgradeModelCardSettings = (
+    settings: CardSetting[],
+    typeDiscriminator: string
+  ) => {
+    if (documentModelStore.value.models.length === 0) return
+    const modelCards = documentModelStore.value.models.filter(
+      (m) => m.typeDiscriminator === typeDiscriminator
+    )
+    if (modelCards.length === 0) return
+
+    const settingIds = settings?.map((s) => s.id) || []
+    modelCards.forEach(async (modelCard) => {
+      const idsToUpgrade = [] as string[]
+      const idsToDrop = [] as string[]
+
+      settingIds?.forEach((id) => {
+        const existingSetting = modelCard.settings?.find((s) => s.id === id)
+
+        if (!existingSetting) {
+          // If the setting does not exist, it's a new one to upgrade
+          idsToUpgrade.push(id)
+        } else if (existingSetting.type === 'string' && existingSetting.enum) {
+          // Check if existing setting's enum needs upgrading
+          const currentEnum = sendSettings.value?.find((s) => s.id === id)?.enum
+          if (currentEnum && existingSetting.enum.length !== currentEnum.length) {
+            idsToUpgrade.push(id)
+          }
+        }
+      })
+
+      // Identify settings to drop (if they no longer exist in sendSettingIds)
+      modelCard.settings?.forEach((setting) => {
+        if (!settingIds.includes(setting.id)) {
+          idsToDrop.push(setting.id)
+        }
+      })
+
+      if (idsToUpgrade.length !== 0 || idsToDrop.length !== 0) {
+        // Prepare new settings by filtering the old ones and adding upgraded ones
+        const newSettings = modelCard.settings?.filter(
+          (setting) => !idsToDrop.includes(setting.id)
+        )
+
+        idsToUpgrade.forEach((id) => {
+          const upgradedSetting = sendSettings.value?.find((s) => s.id === id)
+          if (upgradedSetting) {
+            newSettings?.push(upgradedSetting)
+          }
+        })
+
+        // Patch the model with the new settings
+        await patchModel(modelCard.modelCardId, {
+          settings: newSettings
+        })
+      }
+    })
+  }
 
   app.$baseBinding.on(
     'documentChanged',
     () =>
-      setTimeout(() => {
+      setTimeout(async () => {
         void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
-        void refreshDocumentModelStore()
+        await refreshDocumentModelStore() // need to awaited since upgrading the card settings need documentModelStore in place
         void refreshSendFilters()
+        void tryToUpgradeModelCardSettings(sendSettings.value || [], 'SenderModelCard')
       }, 500) // timeout exists because of rhino
   )
 
-  // First initialization calls
-  void refreshDocumentInfo()
-  void refreshDocumentModelStore()
-  void refreshSendFilters()
-  void getSendSettings()
-  void getHostAppName()
-  void getHostAppVersion()
-  void getConnectorVersion()
+  const initializeApp = async () => {
+    await getHostAppName()
+    await getHostAppVersion()
+    await getConnectorVersion()
+    await refreshDocumentInfo()
+    await refreshDocumentModelStore()
+    await refreshSendFilters()
+    await getSendSettings()
+    tryToUpgradeModelCardSettings(sendSettings.value || [], 'SenderModelCard')
+  }
+
+  initializeApp()
 
   return {
     hostAppName,
