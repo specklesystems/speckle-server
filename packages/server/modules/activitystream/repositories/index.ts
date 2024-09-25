@@ -5,7 +5,8 @@ import {
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
   GetStreamActivity,
-  GetTimelineCount
+  GetTimelineCount,
+  GetUserTimeline
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
@@ -131,4 +132,40 @@ export const getActivityCountByResourceIdFactory =
     if (before) query.andWhere('time', '<', before)
     const [res] = await query
     return parseInt(res.count.toString())
+  }
+
+export const getUserTimelineFactory =
+  ({ db }: { db: Knex }): GetUserTimeline =>
+  async ({ userId, after, before, cursor, limit }) => {
+    if (!limit) {
+      limit = 200
+    }
+
+    let sqlFilters = ''
+    const sqlVariables = []
+    if (after) {
+      sqlFilters += ' AND time > ?'
+      sqlVariables.push(after)
+    }
+    if (before || cursor) {
+      sqlFilters += ' AND time < ?'
+      sqlVariables.push(before || cursor)
+    }
+
+    const dbRawQuery = `
+      SELECT act.*
+      FROM stream_acl acl
+      INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
+      WHERE acl."userId" = ? ${sqlFilters}
+      ORDER BY time DESC
+      LIMIT ?
+    `
+
+    sqlVariables.unshift(userId)
+    sqlVariables.push(limit)
+    const results = (await db.raw(dbRawQuery, sqlVariables)).rows
+    return {
+      items: results,
+      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
+    }
   }

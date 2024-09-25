@@ -1,14 +1,11 @@
 'use strict'
 const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
-const {
-  getUserActivity,
-  getResourceActivity,
-  getUserTimeline
-} = require('../../services/index')
+const { getUserActivity, getResourceActivity } = require('../../services/index')
 const {
   getActivityCountByUserIdFactory,
   getTimelineCountFactory,
-  getActivityCountByResourceIdFactory
+  getActivityCountByResourceIdFactory,
+  getUserTimelineFactory
 } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 
@@ -32,7 +29,7 @@ const userActivityQueryCore = async (parent, args) => {
 }
 
 const userTimelineQueryCore = async (parent, args) => {
-  const { items, cursor } = await getUserTimeline({
+  const { items, cursor } = await getUserTimelineFactory({ db })({
     userId: parent.id,
     after: args.after,
     before: args.before,
