@@ -3,22 +3,30 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  getComments,
-  getResourceCommentCount,
-  archiveComment,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
-  editCommentFactory
+  editCommentFactory,
+  archiveCommentFactory
 } from '@/modules/comments/services/index'
 import {
   checkStreamResourceAccessFactory,
   deleteCommentFactory,
   getCommentFactory,
+  getCommentsLegacyFactory,
+  getCommentsResourcesFactory,
+  getPaginatedBranchCommentsPageFactory,
+  getPaginatedBranchCommentsTotalCountFactory,
+  getPaginatedCommitCommentsPageFactory,
+  getPaginatedCommitCommentsTotalCountFactory,
+  getPaginatedProjectCommentsPageFactory,
+  getPaginatedProjectCommentsTotalCountFactory,
+  getResourceCommentCountFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
   markCommentViewedFactory,
+  resolvePaginatedProjectCommentsLatestModelResourcesFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
 import {
@@ -31,9 +39,9 @@ import {
   SmartTextEditorValueSchema
 } from '@/modules/core/services/richTextEditorService'
 import {
-  getPaginatedCommitComments,
-  getPaginatedBranchComments,
-  getPaginatedProjectComments
+  getPaginatedBranchCommentsFactory,
+  getPaginatedCommitCommentsFactory,
+  getPaginatedProjectCommentsFactory
 } from '@/modules/comments/services/retrieval'
 import {
   publish,
@@ -48,35 +56,46 @@ import {
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import {
-  getViewerResourceItemsUngrouped,
-  getViewerResourcesForComment,
-  doViewerResourcesFit
+  doViewerResourcesFit,
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourceGroupsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
-  authorizeProjectCommentsAccess,
-  authorizeCommentAccess,
-  createCommentThreadAndNotify,
-  createCommentReplyAndNotify,
-  editCommentAndNotify,
-  archiveCommentAndNotify
+  authorizeProjectCommentsAccessFactory,
+  authorizeCommentAccessFactory,
+  createCommentThreadAndNotifyFactory,
+  createCommentReplyAndNotifyFactory,
+  editCommentAndNotifyFactory,
+  archiveCommentAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
-  convertLegacyDataToState
+  convertLegacyDataToStateFactory
 } from '@/modules/comments/services/data'
-import {
-  Resolvers,
-  ResourceIdentifier,
-  ResourceType
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { ResourceIdentifier } from '@/modules/comments/domain/types'
+import {
+  getAllBranchCommits,
+  getCommitsAndTheirBranchIds,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
+import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  getBranchLatestCommits,
+  getStreamBranchesByName
+} from '@/modules/core/repositories/branches'
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -107,11 +126,111 @@ const createCommentReply = createCommentReplyFactory({
   commentsEventsEmit: CommentsEmitter.emit
 })
 const getComment = getCommentFactory({ db })
+const updateComment = updateCommentFactory({ db })
 const editComment = editCommentFactory({
   getComment,
   validateInputAttachments,
-  updateComment: updateCommentFactory({ db }),
+  updateComment,
   commentsEventsEmit: CommentsEmitter.emit
+})
+const archiveComment = archiveCommentFactory({
+  getComment,
+  getStream,
+  updateComment
+})
+const getResourceCommentCount = getResourceCommentCountFactory({ db })
+
+const getCommentsResources = getCommentsResourcesFactory({ db })
+const getViewerResourcesFromLegacyIdentifiers =
+  getViewerResourcesFromLegacyIdentifiersFactory({
+    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers: (...args) =>
+        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    }),
+    getCommitsAndTheirBranchIds,
+    getStreamObjects
+  })
+
+const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+  getCommentsResources,
+  getViewerResourcesFromLegacyIdentifiers
+})
+const convertLegacyDataToState = convertLegacyDataToStateFactory({
+  getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+    getCommentsResources,
+    getViewerResourcesFromLegacyIdentifiers
+  })
+})
+
+const authorizeProjectCommentsAccess = authorizeProjectCommentsAccessFactory({
+  getStream,
+  adminOverrideEnabled
+})
+const authorizeCommentAccess = authorizeCommentAccessFactory({
+  getStream,
+  adminOverrideEnabled,
+  getComment
+})
+
+const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+  getViewerResourceGroups: getViewerResourceGroupsFactory({
+    getStreamObjects,
+    getBranchLatestCommits,
+    getStreamBranchesByName,
+    getSpecificBranchCommits,
+    getAllBranchCommits
+  })
+})
+const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+  getViewerResourceItemsUngrouped,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit,
+  addCommentCreatedActivity
+})
+const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+  getComment,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit,
+  addReplyAddedActivity
+})
+const editCommentAndNotify = editCommentAndNotifyFactory({
+  getComment,
+  validateInputAttachments,
+  updateComment,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
+  getComment,
+  getStream,
+  updateComment,
+  addCommentArchivedActivity
+})
+const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
+  getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({ db }),
+  getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCountFactory({
+    db
+  })
+})
+const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
+  getPaginatedBranchCommentsPage: getPaginatedBranchCommentsPageFactory({ db }),
+  getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCountFactory({
+    db
+  })
+})
+const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
+  resolvePaginatedProjectCommentsLatestModelResources:
+    resolvePaginatedProjectCommentsLatestModelResourcesFactory(),
+  getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({ db }),
+  getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCountFactory({
+    db
+  })
 })
 
 const getStreamComment = async (
@@ -145,6 +264,7 @@ export = {
         projectId: args.streamId,
         authCtx: context
       })
+      const getComments = getCommentsLegacyFactory({ db })
       return {
         ...(await getComments({
           ...args,
@@ -166,6 +286,7 @@ export = {
       }
 
       const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
+      const getComments = getCommentsLegacyFactory({ db })
       return await getComments({
         resources,
         replies: true,

@@ -1,10 +1,3 @@
-// Hooking up comments/services/index.js mock
-const { mockRequireModule } = require('@/test/mockHelper')
-const commentsServiceMock = mockRequireModule(
-  ['@/modules/comments/services/index', require.resolve('../services/index')],
-  ['@/modules/comments/graph/resolvers/comments']
-)
-
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
@@ -16,14 +9,11 @@ const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 const { createObject } = require('@/modules/core/services/objects')
 const {
-  getComments,
-  archiveComment,
-  getResourceCommentCount,
-  getStreamCommentCount,
   streamResourceCheckFactory,
   createCommentFactory,
   createCommentReplyFactory,
-  editCommentFactory
+  editCommentFactory,
+  archiveCommentFactory
 } = require('@/modules/comments/services/index')
 const {
   convertBasicStringToDocument
@@ -45,7 +35,10 @@ const {
   purgeNotifications
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
-const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const {
+  EmailSendingServiceMock,
+  CommentsRepositoryMock
+} = require('@/test/mocks/global')
 const { createAuthedTestContext } = require('@/test/graphqlHelper')
 const {
   checkStreamResourceAccessFactory,
@@ -55,11 +48,15 @@ const {
   deleteCommentFactory,
   markCommentUpdatedFactory,
   getCommentFactory,
-  updateCommentFactory
+  updateCommentFactory,
+  getCommentsLegacyFactory,
+  getResourceCommentCountFactory,
+  getStreamCommentCountFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
 const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+const { getStream } = require('@/modules/core/repositories/streams')
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -90,12 +87,21 @@ const createCommentReply = createCommentReplyFactory({
   commentsEventsEmit: CommentsEmitter.emit
 })
 const getComment = getCommentFactory({ db })
+const updateComment = updateCommentFactory({ db })
 const editComment = editCommentFactory({
   getComment,
   validateInputAttachments,
   updateComment: updateCommentFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit
 })
+const archiveComment = archiveCommentFactory({
+  getComment,
+  getStream,
+  updateComment
+})
+const getComments = getCommentsLegacyFactory({ db })
+const getResourceCommentCount = getResourceCommentCountFactory({ db })
+const getStreamCommentCount = getStreamCommentCountFactory({ db })
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -106,6 +112,7 @@ function generateRandomCommentText() {
 }
 
 const mailerMock = EmailSendingServiceMock
+const commentRepoMock = CommentsRepositoryMock
 
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
@@ -177,12 +184,12 @@ describe('Comments @comments', () => {
 
   after(() => {
     notificationsState.destroy()
-    commentsServiceMock.destroy()
+    commentRepoMock.destroy()
   })
 
   afterEach(() => {
-    commentsServiceMock.disable()
-    commentsServiceMock.resetMockedFunctions()
+    commentRepoMock.disable()
+    commentRepoMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -395,7 +402,7 @@ describe('Comments @comments', () => {
       archived: true
     })
 
-    const count = await getStreamCommentCount({ streamId: stream.id }) // should be 30
+    const count = await getStreamCommentCount(stream.id, { threadsOnly: true }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({ resourceId: obj.id })
@@ -417,7 +424,9 @@ describe('Comments @comments', () => {
       authorId: user.id
     })
 
-    const countOther = await getStreamCommentCount({ streamId: streamOther.id })
+    const countOther = await getStreamCommentCount(streamOther.id, {
+      threadsOnly: true
+    })
     expect(countOther).to.equal(0)
 
     const objCountOther = await getResourceCommentCount({
@@ -1142,9 +1151,9 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => {
-          return {
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => {
+          return () => ({
             items: [
               // Legacy
               {
@@ -1170,7 +1179,7 @@ describe('Comments @comments', () => {
             ],
             cursor: new Date().toISOString(),
             totalCount: 3
-          }
+          })
         })
 
         const { data, errors } = await readComments()
@@ -1185,8 +1194,8 @@ describe('Comments @comments', () => {
           text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa'
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1224,8 +1233,8 @@ describe('Comments @comments', () => {
           text: textParts.join('')
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1343,8 +1352,8 @@ describe('Comments @comments', () => {
             text: value
           }
 
-          commentsServiceMock.enable()
-          commentsServiceMock.mockFunction('getComments', () => ({
+          commentRepoMock.enable()
+          commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
             items: [item],
             cursor: new Date().toISOString(),
             totalCount: 1

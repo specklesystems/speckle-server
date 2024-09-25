@@ -1,7 +1,9 @@
 import { db } from '@/db/knex'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
-import { getStreamActivityFactory } from '@/modules/activitystream/repositories'
-import { getActivityCountByStreamId } from '@/modules/activitystream/services'
+import {
+  getActivityCountByStreamIdFactory,
+  getStreamActivityFactory
+} from '@/modules/activitystream/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { InvalidActionTypeError } from '@/modules/activitystream/errors/activityStream'
 import { StreamActionType } from '@/modules/activitystream/domain/types'
@@ -24,9 +26,9 @@ export = {
         cursor: args.cursor ?? undefined,
         limit: args.limit ?? undefined
       })
-      const totalCount = await getActivityCountByStreamId({
+      const totalCount = await getActivityCountByStreamIdFactory({ db })({
         streamId: parent.id,
-        actionType: args.actionType ?? undefined,
+        actionType: (args.actionType as StreamActionType) ?? undefined,
         after: args.after ?? undefined,
         before: args.before ?? undefined
       })

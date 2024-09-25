@@ -1,7 +1,12 @@
 import knex from '@/db/knex'
 import {
   GetActiveUserStreams,
-  GetStreamActivity
+  GetActivityCountByResourceId,
+  GetActivityCountByStreamId,
+  GetActivityCountByUserId,
+  GetStreamActivity,
+  GetTimelineCount,
+  GetUserTimeline
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
@@ -74,6 +79,91 @@ export const getStreamActivityFactory =
 
     const results = await dbQuery.select('*')
 
+    return {
+      items: results,
+      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
+    }
+  }
+
+export const getActivityCountByStreamIdFactory =
+  ({ db }: { db: Knex }): GetActivityCountByStreamId =>
+  async ({ streamId, actionType, after, before }) => {
+    const query = tables.streamActivity(db).count().where({ streamId })
+    if (actionType) query.andWhere({ actionType })
+    if (after) query.andWhere('time', '>', after)
+    if (before) query.andWhere('time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getActivityCountByUserIdFactory =
+  ({ db }: { db: Knex }): GetActivityCountByUserId =>
+  async ({ userId, actionType, after, before }) => {
+    const query = tables.streamActivity(db).count().where({ userId })
+    if (actionType) query.andWhere({ actionType })
+    if (after) query.andWhere('time', '>', after)
+    if (before) query.andWhere('time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getTimelineCountFactory =
+  ({ db }: { db: Knex }): GetTimelineCount =>
+  async ({ userId, after, before }) => {
+    const query = tables
+      .streamAcl(db)
+      .count()
+      .innerJoin('stream_activity', {
+        'stream_acl.resourceId': 'stream_activity.streamId'
+      })
+      .where({ 'stream_acl.userId': userId })
+    if (after) query.andWhere('stream_activity.time', '>', after)
+    if (before) query.andWhere('stream_activity.time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getActivityCountByResourceIdFactory =
+  ({ db }: { db: Knex }): GetActivityCountByResourceId =>
+  async ({ resourceId, actionType, after, before }) => {
+    const query = tables.streamActivity(db).count().where({ resourceId })
+    if (actionType) query.andWhere({ actionType })
+    if (after) query.andWhere('time', '>', after)
+    if (before) query.andWhere('time', '<', before)
+    const [res] = await query
+    return parseInt(res.count.toString())
+  }
+
+export const getUserTimelineFactory =
+  ({ db }: { db: Knex }): GetUserTimeline =>
+  async ({ userId, after, before, cursor, limit }) => {
+    if (!limit) {
+      limit = 200
+    }
+
+    let sqlFilters = ''
+    const sqlVariables = []
+    if (after) {
+      sqlFilters += ' AND time > ?'
+      sqlVariables.push(after)
+    }
+    if (before || cursor) {
+      sqlFilters += ' AND time < ?'
+      sqlVariables.push(before || cursor)
+    }
+
+    const dbRawQuery = `
+      SELECT act.*
+      FROM stream_acl acl
+      INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
+      WHERE acl."userId" = ? ${sqlFilters}
+      ORDER BY time DESC
+      LIMIT ?
+    `
+
+    sqlVariables.unshift(userId)
+    sqlVariables.push(limit)
+    const results = (await db.raw(dbRawQuery, sqlVariables)).rows
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
