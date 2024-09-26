@@ -15,31 +15,38 @@ import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import {
+  GenerateBranchId,
+  GetBranchById,
+  GetBranchesByIds
+} from '@/modules/core/domain/branches/operations'
 
-export const generateBranchId = () => crs({ length: 10 })
+const tables = {
+  branches: (db: Knex) => db<BranchRecord>(Branches.name)
+}
 
-export async function getBranchesByIds(
-  branchIds: string[],
-  options?: Partial<{ streamId: string }>
-) {
-  if (!branchIds?.length) return []
-  const { streamId } = options || {}
+export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
 
-  const q = Branches.knex<BranchRecord[]>().whereIn(Branches.col.id, branchIds)
-  if (streamId) {
-    q.andWhere(Branches.col.streamId, streamId)
+export const getBranchesByIdsFactory =
+  (deps: { db: Knex }): GetBranchesByIds =>
+  async (branchIds: string[], options?: Partial<{ streamId: string }>) => {
+    if (!branchIds?.length) return []
+    const { streamId } = options || {}
+
+    const q = tables.branches(deps.db).whereIn(Branches.col.id, branchIds)
+    if (streamId) {
+      q.andWhere(Branches.col.streamId, streamId)
+    }
+
+    return await q
   }
 
-  return await q
-}
-
-export async function getBranchById(
-  branchId: string,
-  options?: Partial<{ streamId: string }>
-) {
-  const [branch] = await getBranchesByIds([branchId], options)
-  return branch as Optional<BranchRecord>
-}
+export const getBranchByIdFactory =
+  (deps: { db: Knex }): GetBranchById =>
+  async (branchId: string, options?: Partial<{ streamId: string }>) => {
+    const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
+    return branch as Optional<BranchRecord>
+  }
 
 export async function getStreamBranchesByName(
   streamId: string,

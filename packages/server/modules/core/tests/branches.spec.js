@@ -14,7 +14,6 @@ const { createObject } = require('../services/objects')
 const {
   createBranch,
   updateBranch,
-  getBranchById,
   getBranchesByStreamId,
   getBranchByNameAndStreamId,
   deleteBranchById
@@ -22,8 +21,10 @@ const {
 const { createCommitByBranchName } = require('../services/commits')
 
 const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
+const { getBranchByIdFactory } = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
+const getBranchById = getBranchByIdFactory({ db: knex })
 
 describe('Branches @core-branches', () => {
   const user = {

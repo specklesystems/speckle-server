@@ -8,7 +8,7 @@ const {
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
-const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
+const { getBranchByNameAndStreamId } = require('@/modules/core/services/branches')
 const {
   createBranchAndNotify,
   updateBranchAndNotify,
@@ -20,11 +20,15 @@ const {
 
 const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
+const { getBranchByIdFactory } = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
+
+const getBranchById = getBranchByIdFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -47,7 +51,7 @@ module.exports = {
       })
       if (branchByName) return branchByName
 
-      const branchByIdRes = await getBranchById({ id: args.name })
+      const branchByIdRes = await getBranchById(args.name)
       if (!branchByIdRes) return null
 
       // Extra validation to check if it actually belongs to the stream

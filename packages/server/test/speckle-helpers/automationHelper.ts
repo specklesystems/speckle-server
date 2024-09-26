@@ -14,7 +14,7 @@ import { createInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
-  getBranchesByIds,
+  getBranchesByIdsFactory,
   getLatestStreamBranch
 } from '@/modules/core/repositories/branches'
 
@@ -90,7 +90,7 @@ export const buildAutomationRevisionCreate = (
   const create = createAutomationRevisionFactory({
     getAutomation,
     storeAutomationRevision,
-    getBranchesByIds,
+    getBranchesByIds: getBranchesByIdsFactory({ db }),
     getFunctionRelease: async (params) => fakeGetRelease(params),
     getFunctionReleases: async (params) => params.ids.map(fakeGetRelease),
     getEncryptionKeyPair,
