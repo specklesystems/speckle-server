@@ -18,7 +18,7 @@
       />
       <FormTextInput
         v-model:model-value="workspaceShortId"
-        name="shortId"
+        name="slug"
         label="Short ID"
         :help="getShortIdHelp"
         color="foundation"
@@ -58,8 +58,6 @@ import { debounce } from 'lodash'
 
 const emit = defineEmits<(e: 'created') => void>()
 
-type FormValues = { name: string; description: string }
-
 const props = defineProps<{
   navigateOnSuccess?: boolean
   // Used to send to Mixpanel to know where the modal was triggered from
@@ -70,17 +68,25 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
 const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit } = useForm<{ name: string; slug: string }>()
 
-const workspaceName = ref<string>('')
-const workspaceShortId = ref<string>('')
+const workspaceName = ref('')
+const workspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref<number>(0)
+const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
-const customShortIdError = ref<string>('')
+const customShortIdError = ref('')
 
 const baseUrl = useRuntimeConfig().public.baseUrl
+
+const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
+
+const getShortIdHelp = computed(() =>
+  workspaceShortId.value
+    ? `${baseUrl}/workspaces/${workspaceShortId.value}`
+    : `Used after ${baseUrl}/workspaces/`
+)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -94,19 +100,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Create',
     props: {
       color: 'primary',
-      disabled: !workspaceName.value.trim() || !workspaceShortId.value.trim()
+      disabled:
+        !workspaceName.value.trim() ||
+        !workspaceShortId.value.trim() ||
+        !!customShortIdError.value
     },
     onClick: handleCreateWorkspace
   }
 ])
-const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
-
-const getShortIdHelp = computed(() => {
-  if (!workspaceShortId.value) {
-    return `Used after ${baseUrl}/workspaces/`
-  }
-  return `${baseUrl}/workspaces/${workspaceShortId.value}`
-})
 
 const handleCreateWorkspace = handleSubmit(async () => {
   const newWorkspace = await createWorkspace(
@@ -116,12 +117,8 @@ const handleCreateWorkspace = handleSubmit(async () => {
       defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
-    {
-      navigateOnSuccess: props.navigateOnSuccess === true
-    },
-    {
-      source: props.eventSource
-    }
+    { navigateOnSuccess: props.navigateOnSuccess === true },
+    { source: props.eventSource }
   )
 
   if (newWorkspace) {
@@ -142,32 +139,29 @@ const reset = () => {
   workspaceLogo.value = null
   editAvatarMode.value = false
   shortIdManuallyEdited.value = false
+  customShortIdError.value = ''
 }
 
-const debouncedUpdateShortId = debounce((newName: string) => {
+const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     const generatedSlug = generateSlugFromName({ name: newName })
     workspaceShortId.value = generatedSlug
-    const validationResult = isValidWorkspaceSlug(generatedSlug)
-    customShortIdError.value =
-      typeof validationResult === 'string' ? validationResult : ''
+    validateShortId(generatedSlug)
   }
-}, 300)
+}, 600)
 
-const updateShortId = (newName: string) => {
-  debouncedUpdateShortId(newName)
-}
-
-const onShortIdInput = (newValue: string) => {
-  shortIdManuallyEdited.value = true
-  const validationResult = isValidWorkspaceSlug(newValue)
+const validateShortId = (value: string) => {
+  const validationResult = isValidWorkspaceSlug(value)
   customShortIdError.value =
     typeof validationResult === 'string' ? validationResult : ''
 }
 
+const onShortIdInput = (newValue: string) => {
+  shortIdManuallyEdited.value = true
+  validateShortId(newValue)
+}
+
 watch(isOpen, (newVal) => {
-  if (newVal) {
-    reset()
-  }
+  if (newVal) reset()
 })
 </script>
