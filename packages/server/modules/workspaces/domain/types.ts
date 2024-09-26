@@ -25,3 +25,4 @@ export type WorkspaceTeam = WorkspaceTeamMember[]
 export type WorkspaceRoleToDefaultProjectRoleMapping = {
   [key in WorkspaceRoles]: StreamRoles | null
 }
+
