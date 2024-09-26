@@ -6,9 +6,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import {
-  getModelTreeItemsFiltered,
   getModelTreeItems,
-  getModelTreeItemsFilteredTotalCount,
   getModelTreeItemsTotalCount
 } from '@/modules/core/repositories/branches'
 import { last } from 'lodash'
@@ -17,8 +15,11 @@ import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
+  GetModelTreeItemsFiltered,
+  GetModelTreeItemsFilteredTotalCount,
   GetPaginatedProjectModelsItems,
-  GetPaginatedProjectModelsTotalCount
+  GetPaginatedProjectModelsTotalCount,
+  GetProjectTopLevelModelsTree
 } from '@/modules/core/domain/branches/operations'
 
 export async function getPaginatedStreamBranches(
@@ -56,40 +57,47 @@ export const getPaginatedProjectModelsFactory =
     }
   }
 
-export async function getProjectTopLevelModelsTree(
-  projectId: string,
-  args: ProjectModelsTreeArgs,
-  options?: Partial<{ filterOutEmptyMain: boolean }>
-): Promise<Merge<ModelsTreeItemCollection, { items: ModelsTreeItemGraphQLReturn[] }>> {
-  let items: ModelsTreeItemGraphQLReturn[] = []
-  let totalCount = 0
+export const getProjectTopLevelModelsTreeFactory =
+  (deps: {
+    getModelTreeItemsFiltered: GetModelTreeItemsFiltered
+    getModelTreeItemsFilteredTotalCount: GetModelTreeItemsFilteredTotalCount
+  }): GetProjectTopLevelModelsTree =>
+  async (
+    projectId: string,
+    args: ProjectModelsTreeArgs,
+    options?: Partial<{ filterOutEmptyMain: boolean }>
+  ): Promise<
+    Merge<ModelsTreeItemCollection, { items: ModelsTreeItemGraphQLReturn[] }>
+  > => {
+    let items: ModelsTreeItemGraphQLReturn[] = []
+    let totalCount = 0
 
-  if (
-    args.filter?.search ||
-    args.filter?.contributors?.length ||
-    args.filter?.sourceApps?.length
-  ) {
-    const [filteredItems, filteredTotalCount] = await Promise.all([
-      getModelTreeItemsFiltered(projectId, args, options),
-      getModelTreeItemsFilteredTotalCount(projectId, args, options)
-    ])
+    if (
+      args.filter?.search ||
+      args.filter?.contributors?.length ||
+      args.filter?.sourceApps?.length
+    ) {
+      const [filteredItems, filteredTotalCount] = await Promise.all([
+        deps.getModelTreeItemsFiltered(projectId, args, options),
+        deps.getModelTreeItemsFilteredTotalCount(projectId, args, options)
+      ])
 
-    items = filteredItems
-    totalCount = filteredTotalCount
-  } else {
-    const [unfilteredItems, unfilteredTotalCount] = await Promise.all([
-      getModelTreeItems(projectId, args, options),
-      getModelTreeItemsTotalCount(projectId, options)
-    ])
+      items = filteredItems
+      totalCount = filteredTotalCount
+    } else {
+      const [unfilteredItems, unfilteredTotalCount] = await Promise.all([
+        getModelTreeItems(projectId, args, options),
+        getModelTreeItemsTotalCount(projectId, options)
+      ])
 
-    items = unfilteredItems
-    totalCount = unfilteredTotalCount
+      items = unfilteredItems
+      totalCount = unfilteredTotalCount
+    }
+
+    const lastItem = last(items)
+    return {
+      items,
+      totalCount,
+      cursor: lastItem ? lastItem.updatedAt.toISOString() : null
+    }
   }
-
-  const lastItem = last(items)
-  return {
-    items,
-    totalCount,
-    cursor: lastItem ? lastItem.updatedAt.toISOString() : null
-  }
-}
