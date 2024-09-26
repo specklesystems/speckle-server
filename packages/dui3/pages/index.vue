@@ -1,92 +1,129 @@
 <template>
-  <div v-if="accounts.length !== 0">
-    <div
-      v-if="hasNoModelCards"
-      class="fixed top-0 h-screen w-screen flex items-center pointer-events-none"
-    >
-      <LayoutPanel
-        fancy-glow
-        class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto"
+  <div v-if="store.hostAppName">
+    <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
+    <div v-if="accounts.length !== 0">
+      <div
+        v-if="hasNoModelCards"
+        class="fixed top-0 h-screen w-screen flex items-center pointer-events-none"
       >
-        <h1
-          class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+        <LayoutPanel
+          fancy-glow
+          class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto"
         >
-          Hello!
-        </h1>
-        <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
-        <div v-if="!!store.documentInfo?.id">
-          <div class="text-foreground-2">
-            There are no Speckle models being published or loaded in this file yet.
-          </div>
-          <div
-            class="flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0 mt-4"
+          <h1
+            class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
           >
-            <div v-if="app.$sendBinding" class="grow">
-              <FormButton
-                :icon-left="ArrowUpCircleIcon"
-                full-width
-                @click="handleSendClick"
-              >
-                Publish
-              </FormButton>
+            Hello!
+          </h1>
+          <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
+          <div v-if="!!store.documentInfo?.id">
+            <div class="text-foreground-2">
+              There are no Speckle models being published or loaded in this file yet.
             </div>
-            <div v-if="app.$receiveBinding" class="grow">
-              <FormButton
-                :icon-left="ArrowDownCircleIcon"
-                full-width
-                @click="handleReceiveClick"
-              >
-                Load
-              </FormButton>
+            <div
+              class="flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0 mt-4"
+            >
+              <div v-if="app.$sendBinding" class="grow">
+                <FormButton
+                  :icon-left="ArrowUpCircleIcon"
+                  full-width
+                  @click="handleSendClick"
+                >
+                  Publish
+                </FormButton>
+              </div>
+              <div v-if="app.$receiveBinding" class="grow">
+                <FormButton
+                  :icon-left="ArrowDownCircleIcon"
+                  full-width
+                  @click="handleReceiveClick"
+                >
+                  Load
+                </FormButton>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else>
-          <div v-if="store.documentInfo?.message" class="text-foreground-2">
-            {{ store.documentInfo?.message }}
+          <div v-else>
+            <div v-if="store.documentInfo?.message" class="text-foreground-2">
+              {{ store.documentInfo?.message }}
+            </div>
+            <div v-else class="text-foreground-2">
+              Welcome to Speckle! Please open a file to use this plugin.
+            </div>
           </div>
-          <div v-else class="text-foreground-2">
-            Welcome to Speckle! Please open a file to use this plugin.
-          </div>
+        </LayoutPanel>
+      </div>
+      <div v-if="accounts.length !== 0" class="space-y-2 mt-2 max-w-2/3 mb-16">
+        <div v-for="project in store.projectModelGroups" :key="project.projectId">
+          <CommonProjectModelGroup :project="project" />
         </div>
-      </LayoutPanel>
-    </div>
-    <div v-if="accounts.length !== 0" class="space-y-2 mt-2 max-w-2/3 mb-16">
-      <div v-for="project in store.projectModelGroups" :key="project.projectId">
-        <CommonProjectModelGroup :project="project" />
       </div>
-    </div>
-    <div
-      v-if="!hasNoModelCards"
-      class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
-    >
-      <div v-if="app.$sendBinding" class="grow">
-        <FormButton :icon-left="ArrowUpCircleIcon" full-width @click="handleSendClick">
-          Publish
-        </FormButton>
+      <div
+        v-if="!hasNoModelCards"
+        class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
+      >
+        <div v-if="app.$sendBinding" class="grow">
+          <FormButton
+            :icon-left="ArrowUpCircleIcon"
+            full-width
+            @click="handleSendClick"
+          >
+            Publish
+          </FormButton>
+        </div>
+        <div v-if="app.$receiveBinding" class="grow">
+          <FormButton
+            :icon-left="ArrowDownCircleIcon"
+            full-width
+            @click="handleReceiveClick"
+          >
+            Load
+          </FormButton>
+        </div>
       </div>
-      <div v-if="app.$receiveBinding" class="grow">
-        <FormButton
-          :icon-left="ArrowDownCircleIcon"
-          full-width
-          @click="handleReceiveClick"
-        >
-          Load
-        </FormButton>
-      </div>
-    </div>
 
-    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
-    <ReceiveWizard
-      v-model:open="showReceiveDialog"
-      @close="showReceiveDialog = false"
-    />
-    <!-- Triggered by "Show Details" button on Toast Notification -->
-    <ErrorDialog
-      v-model:open="store.showErrorDialog"
-      chromium65-compatibility
-      @close="store.showErrorDialog = false"
-    />
+      <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
+      <ReceiveWizard
+        v-model:open="showReceiveDialog"
+        @close="showReceiveDialog = false"
+      />
+      <!-- Triggered by "Show Details" button on Toast Notification -->
+      <ErrorDialog
+        v-model:open="store.showErrorDialog"
+        chromium65-compatibility
+        @close="store.showErrorDialog = false"
+      />
+    </div>
+    <div v-else>
+      <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
+        <LayoutPanel
+          fancy-glow
+          class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto w-full"
+        >
+          <h1
+            class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+          >
+            Hello!
+          </h1>
+
+          <div class="text-foreground-2 mt-2 mb-4">
+            You don't have a Speckle account just yet. Please open Speckle Manager and
+            sign in!
+          </div>
+          <FormButton text link small @click="accountStore.refreshAccounts()">
+            Refresh accounts
+          </FormButton>
+          <CommonLoadingBar :loading="isLoading" />
+          <!-- 
+          TODO: Either
+          - make an open manager button, or
+          - enable auth flow from here
+         -->
+          <!-- <FormButton full-width >Open Manager</FormButton> -->
+          <!-- Test chane -->
+        </LayoutPanel>
+      </div>
+    </div>
   </div>
   <div v-else>
     <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
@@ -97,31 +134,25 @@
         <h1
           class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
-          Hello!
+          Reload needed!
         </h1>
-
         <div class="text-foreground-2 mt-2 mb-4">
-          You don't have a Speckle account just yet. Please open Speckle Manager and
-          sign in!
+          Host application lost its communication with user interface for some reason.
         </div>
-        <FormButton text link small @click="accountStore.refreshAccounts()">
-          Refresh accounts
+        <FormButton :icon-left="ArrowPathIcon" full-width @click="reload()">
+          Reload
         </FormButton>
-        <CommonLoadingBar :loading="isLoading" />
-        <!-- 
-          TODO: Either
-          - make an open manager button, or
-          - enable auth flow from here
-         -->
-        <!-- <FormButton full-width >Open Manager</FormButton> -->
-        <!-- Test chane -->
       </LayoutPanel>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowUpCircleIcon,
+  ArrowDownCircleIcon,
+  ArrowPathIcon
+} from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -156,4 +187,8 @@ const handleReceiveClick = () => {
 }
 
 const hasNoModelCards = computed(() => store.projectModelGroups.length === 0)
+
+const reload = () => {
+  window.location.reload()
+}
 </script>
