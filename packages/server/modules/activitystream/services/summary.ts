@@ -1,7 +1,4 @@
-import {
-  getActivityFactory,
-  getActiveUserStreamsFactory
-} from '@/modules/activitystream/repositories'
+import { getActivityFactory } from '@/modules/activitystream/repositories'
 import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
 import {
   NotificationPublisher,
@@ -47,23 +44,26 @@ export const createActivitySummary = async (
   }
 }
 
-export const sendActivityNotifications = async (
-  start: Date,
-  end: Date,
-  notificationPublisher: NotificationPublisher,
-  userActiveStreamsLookup: GetActiveUserStreams = getActiveUserStreamsFactory({ db })
-): Promise<void> => {
-  const activeUserStreams = await userActiveStreamsLookup(start, end)
-  await Promise.all(
-    activeUserStreams.map((userStreams) =>
-      notificationPublisher(NotificationType.ActivityDigest, {
-        targetUserId: userStreams.userId,
-        data: {
-          streamIds: userStreams.streamIds,
-          start,
-          end
-        }
-      })
+export const sendActivityNotificationsFactory =
+  ({
+    publishNotification,
+    getActiveUserStreams
+  }: {
+    publishNotification: NotificationPublisher
+    getActiveUserStreams: GetActiveUserStreams
+  }) =>
+  async (start: Date, end: Date): Promise<void> => {
+    const activeUserStreams = await getActiveUserStreams(start, end)
+    await Promise.all(
+      activeUserStreams.map((userStreams) =>
+        publishNotification(NotificationType.ActivityDigest, {
+          targetUserId: userStreams.userId,
+          data: {
+            streamIds: userStreams.streamIds,
+            start,
+            end
+          }
+        })
+      )
     )
-  )
-}
+  }
