@@ -1,4 +1,4 @@
-import { moduleLogger, shutdownLogger } from '@/logging/logging'
+import { moduleLogger } from '@/logging/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { db } from '@/db/knex'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
@@ -49,6 +49,5 @@ export const init: SpeckleModule['init'] = async (_, isInitial) => {
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  shutdownLogger.info('💓 Shutting down health check module')
   //no-op
 }
