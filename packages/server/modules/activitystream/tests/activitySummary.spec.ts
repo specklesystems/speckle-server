@@ -7,7 +7,6 @@ import {
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
 import { createStream, deleteStream } from '@/modules/core/services/streams'
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
@@ -15,10 +14,14 @@ import {
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
 import { sleep } from '@/test/helpers'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
+
+const saveActivity = saveActivityFactory({ db })
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {

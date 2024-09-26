@@ -1,6 +1,6 @@
-import { saveActivity } from '@/modules/activitystream/services'
-
+import { db } from '@/db/knex'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 
 /**
  * Save a "stream access requested" activity
@@ -10,7 +10,7 @@ export async function addStreamAccessRequestedActivity(params: {
   requesterId: string
 }) {
   const { streamId, requesterId } = params
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Stream,
     resourceId: streamId,
@@ -30,7 +30,7 @@ export async function addStreamAccessRequestDeclinedActivity(params: {
   declinerId: string
 }) {
   const { streamId, requesterId, declinerId } = params
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Stream,
     resourceId: streamId,
