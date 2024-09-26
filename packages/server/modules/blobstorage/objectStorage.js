@@ -9,26 +9,29 @@ const {
   S3ServiceException
 } = require('@aws-sdk/client-s3')
 const { Upload } = require('@aws-sdk/lib-storage')
+const {
+  getS3AccessKey,
+  getS3SecretKey,
+  getS3Endpoint,
+  getS3Region,
+  getS3BucketName,
+  createS3Bucket
+} = require('@/modules/shared/helpers/envHelper')
 
 let s3Config = null
 
 const getS3Config = () => {
   if (!s3Config) {
-    if (!process.env.S3_ACCESS_KEY)
-      throw new Error('Config value S3_ACCESS_KEY is missing')
-    if (!process.env.S3_SECRET_KEY)
-      throw new Error('Config value S3_SECRET_KEY is missing')
-    if (!process.env.S3_ENDPOINT) throw new Error('Config value S3_ENDPOINT is missing')
     s3Config = {
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY,
-        secretAccessKey: process.env.S3_SECRET_KEY
+        accessKeyId: getS3AccessKey(),
+        secretAccessKey: getS3SecretKey()
       },
-      endpoint: process.env.S3_ENDPOINT,
+      endpoint: getS3Endpoint(),
       forcePathStyle: true,
       // s3ForcePathStyle: true,
       // signatureVersion: 'v4',
-      region: process.env.S3_REGION || 'us-east-1'
+      region: getS3Region()
     }
   }
   return s3Config
@@ -38,8 +41,7 @@ let storageBucket = null
 
 const getStorageBucket = () => {
   if (!storageBucket) {
-    if (!process.env.S3_BUCKET) throw new Error('Config value S3_BUCKET is missing')
-    storageBucket = process.env.S3_BUCKET
+    storageBucket = getS3BucketName()
   }
   return storageBucket
 }
@@ -47,7 +49,7 @@ const getStorageBucket = () => {
 const getObjectStorage = () => ({
   client: new S3Client(getS3Config()),
   Bucket: getStorageBucket(),
-  createBucket: process.env.S3_CREATE_BUCKET || false
+  createBucket: createS3Bucket()
 })
 
 const sendCommand = async (command) => {
