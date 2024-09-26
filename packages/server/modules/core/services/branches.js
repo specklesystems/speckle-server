@@ -1,25 +1,11 @@
 'use strict'
 const knex = require('@/db/knex')
 const { getStreamBranchCount } = require('@/modules/core/repositories/branches')
-const {
-  updateBranchAndNotify,
-  deleteBranchAndNotify
-} = require('@/modules/core/services/branch/management')
+const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
 
 const Branches = () => knex('branches')
 
 module.exports = {
-  /**
-   * @deprecated Use 'updateBranchAndNotify'
-   */
-  async updateBranch({ id, name, description, streamId, userId }) {
-    const newBranch = await updateBranchAndNotify(
-      { id, name, description, streamId },
-      userId
-    )
-    return newBranch ? 1 : 0
-  },
-
   /**
    * @returns {Promise<{
    *  items: import('@/modules/core/helpers/types').BranchRecord[],

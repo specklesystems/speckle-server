@@ -3,7 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createBranchAndNotifyFactory,
   deleteBranchAndNotify,
-  updateBranchAndNotify
+  updateBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
 import {
   getPaginatedProjectModelsFactory,
@@ -24,6 +24,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
+  getBranchByIdFactory,
   getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
@@ -32,7 +33,8 @@ import {
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory
+  getStreamBranchesByNameFactory,
+  updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
@@ -42,7 +44,10 @@ import {
   getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import {
+  addBranchCreatedActivity,
+  addBranchUpdatedActivity
+} from '@/modules/activitystream/services/branchActivity'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
@@ -71,6 +76,11 @@ const createBranchAndNotify = createBranchAndNotifyFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
   addBranchCreatedActivity
+})
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById: getBranchByIdFactory({ db }),
+  updateBranch: updateBranchFactory({ db }),
+  addBranchUpdatedActivity
 })
 
 export = {

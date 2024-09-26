@@ -2,10 +2,12 @@ import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import {
   BranchCreateInput,
+  BranchUpdateInput,
   CreateModelInput,
   ModelsTreeItemCollection,
   ProjectModelsArgs,
-  ProjectModelsTreeArgs
+  ProjectModelsTreeArgs,
+  UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { Nullable, Optional } from '@speckle/shared'
@@ -130,4 +132,14 @@ export type StoreBranch = (params: {
 export type CreateBranchAndNotify = (
   input: BranchCreateInput | CreateModelInput,
   creatorId: string
+) => Promise<Branch>
+
+export type UpdateBranch = (
+  branchId: string,
+  branch: Partial<Branch>
+) => Promise<Branch>
+
+export type UpdateBranchAndNotify = (
+  input: BranchUpdateInput | UpdateModelInput,
+  userId: string
 ) => Promise<Branch>

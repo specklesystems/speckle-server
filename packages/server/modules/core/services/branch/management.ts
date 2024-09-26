@@ -20,8 +20,7 @@ import {
 import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   deleteBranchById,
-  getBranchByIdFactory,
-  updateBranch
+  getBranchByIdFactory
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
@@ -30,8 +29,11 @@ import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { db } from '@/db/knex'
 import {
   CreateBranchAndNotify,
+  GetBranchById,
   GetStreamBranchByName,
-  StoreBranch
+  StoreBranch,
+  UpdateBranch,
+  UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
 
 const isBranchCreateInput = (
@@ -62,47 +64,50 @@ export const createBranchAndNotifyFactory =
     return branch
   }
 
-export async function updateBranchAndNotify(
-  input: BranchUpdateInput | UpdateModelInput,
-  userId: string
-) {
-  const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
-  const existingBranch = await getBranchByIdFactory({ db })(input.id)
-  if (!existingBranch) {
-    throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
-  }
-  if (existingBranch.streamId !== streamId) {
-    throw new BranchUpdateError(
-      'The branch ID and stream ID do not match, please check your inputs',
-      {
-        info: { ...input, userId }
-      }
-    )
-  }
+export const updateBranchAndNotifyFactory =
+  (deps: {
+    getBranchById: GetBranchById
+    updateBranch: UpdateBranch
+    addBranchUpdatedActivity: typeof addBranchUpdatedActivity
+  }): UpdateBranchAndNotify =>
+  async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
+    const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
+    const existingBranch = await deps.getBranchById(input.id)
+    if (!existingBranch) {
+      throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
+    }
+    if (existingBranch.streamId !== streamId) {
+      throw new BranchUpdateError(
+        'The branch ID and stream ID do not match, please check your inputs',
+        {
+          info: { ...input, userId }
+        }
+      )
+    }
 
-  const updates: Partial<BranchRecord> = {
-    ...(!isNullOrUndefined(input.description)
-      ? { description: input.description }
-      : {}),
-    ...(input.name?.length ? { name: input.name } : {})
-  }
-  if (!Object.values(updates).length) {
-    throw new BranchUpdateError('Please specify a property to update')
-  }
+    const updates: Partial<BranchRecord> = {
+      ...(!isNullOrUndefined(input.description)
+        ? { description: input.description }
+        : {}),
+      ...(input.name?.length ? { name: input.name } : {})
+    }
+    if (!Object.values(updates).length) {
+      throw new BranchUpdateError('Please specify a property to update')
+    }
 
-  const newBranch = await updateBranch(input.id, updates)
+    const newBranch = await deps.updateBranch(input.id, updates)
 
-  if (newBranch) {
-    await addBranchUpdatedActivity({
-      update: input,
-      userId,
-      oldBranch: existingBranch,
-      newBranch
-    })
+    if (newBranch) {
+      await deps.addBranchUpdatedActivity({
+        update: input,
+        userId,
+        oldBranch: existingBranch,
+        newBranch
+      })
+    }
+
+    return newBranch
   }
-
-  return newBranch
-}
 
 export async function deleteBranchAndNotify(
   input: BranchDeleteInput | DeleteModelInput,
