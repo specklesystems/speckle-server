@@ -142,6 +142,7 @@ const cachedData = client.readQuery({
   variables: { slug: props.workspaceSlug }
 })
 
+//Switch to immediate watcher. When prop changes, reread and update
 if (cachedData?.workspaceBySlug?.id) {
   workspaceId.value = cachedData.workspaceBySlug.id
 }

@@ -86,4 +86,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: updateSlug
   }
 ])
+
+// Add immediate watcher to replace newSlug with new slug
 </script>
