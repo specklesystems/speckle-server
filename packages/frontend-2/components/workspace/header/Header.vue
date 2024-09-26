@@ -13,10 +13,25 @@
           size="lg"
         />
       </div>
-      <div class="flex flex-col">
+      <div class="group flex flex-col">
         <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
-        <div class="text-body-xs text-foreground-2 line-clamp-2">
-          {{ workspaceInfo.description || 'No workspace description' }}
+        <div class="flex">
+          <div
+            ref="descriptionRef"
+            class="text-body-xs text-foreground-2 line-clamp-1 max-w-xs"
+          >
+            {{ workspaceInfo.description || 'No workspace description' }}
+          </div>
+          <FormButton
+            v-if="hasOverflow"
+            color="subtle"
+            size="sm"
+            class="md:hidden group-hover:flex items-center text-foreground text-body-2xs"
+            @click="showDescriptionDialog"
+          >
+            Read more
+            <IconTriangle class="text-foreground" />
+          </FormButton>
         </div>
       </div>
     </div>
@@ -85,10 +100,15 @@
         </div>
       </div>
     </div>
+    <DescriptionDialog
+      v-model:open="isDescriptionDialogOpen"
+      :description="workspaceInfo.description || 'No workspace description'"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useElementSize } from '@vueuse/core'
 import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -100,6 +120,7 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
+import DescriptionDialog from './DescriptionDialog.vue'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -172,5 +193,21 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       openSettingsDialog(SettingMenuKeys.Workspace.General)
       break
   }
+}
+
+const descriptionRef = ref<HTMLElement | null>(null)
+const { height } = useElementSize(descriptionRef)
+
+const hasOverflow = computed(() => {
+  if (descriptionRef.value) {
+    return descriptionRef.value.scrollHeight > height.value
+  }
+  return false
+})
+
+const isDescriptionDialogOpen = ref(false)
+
+const showDescriptionDialog = () => {
+  isDescriptionDialogOpen.value = true
 }
 </script>

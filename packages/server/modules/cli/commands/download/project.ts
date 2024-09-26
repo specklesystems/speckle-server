@@ -4,9 +4,9 @@ import { downloadProjectFactory } from '@/modules/cross-server-sync/services/pro
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  getBranchLatestCommits,
-  getStreamBranchByName,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
@@ -83,8 +83,8 @@ const command: CommandModule<
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits,
-        getStreamBranchesByName,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits
       })
@@ -108,6 +108,7 @@ const command: CommandModule<
       addReplyAddedActivity
     })
 
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const downloadProject = downloadProjectFactory({
       downloadCommit: downloadCommitFactory({
         getStream,

@@ -60,7 +60,7 @@ import {
   authContextMiddleware,
   buildContext,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddleware
+  mixpanelTrackerHelperMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -71,6 +71,7 @@ import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
+import { getUser } from '@/modules/core/repositories/users'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -404,7 +405,7 @@ export async function init() {
       next()
     }
   )
-  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddleware)
+  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)

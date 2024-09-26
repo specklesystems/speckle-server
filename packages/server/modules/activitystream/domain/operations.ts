@@ -114,3 +114,24 @@ export type GetResourceActivity = ({
   cursor: string | null
   items: StreamActivityRecord[]
 }>
+
+export type GetUserActivity = ({
+  userId,
+  actionType,
+  before,
+  after,
+  cursor,
+  limit
+}: {
+  userId: string
+  actionType: StreamActionType
+  after?: Date
+  before?: Date
+  cursor?: Date
+  limit?: number
+}) => Promise<{
+  cursor: string | null
+  items: StreamActivityRecord[]
+}>
+
+export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>

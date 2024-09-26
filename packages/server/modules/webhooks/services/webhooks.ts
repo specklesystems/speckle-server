@@ -20,6 +20,7 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { Knex } from 'knex'
+import { ServerInfo } from '@/modules/core/helpers/types'
 
 const MAX_STREAM_WEBHOOKS = 100
 
@@ -113,47 +114,48 @@ export const dispatchStreamEventFactory =
     createWebhookEvent: CreateWebhookEvent
     getUser: typeof getUserFn
   }) =>
-  async (
-    {
-      streamId,
-      event,
-      eventPayload
-    }: {
-      streamId: string
-      event: string
-      eventPayload: {
-        server: { id?: number; canonicalUrl?: string }
-        streamId?: string
-        stream?: StreamWithOptionalRole
-        userId?: string
-        user: Partial<UserWithOptionalRole> | null
-        webhook: Webhook
-      }
-    },
-    { trx }: { trx?: Knex.Transaction } = {}
-  ) => {
+  async ({
+    streamId,
+    event,
+    eventPayload
+  }: {
+    streamId: string
+    event: string
+    eventPayload: {
+      streamId?: string
+      stream?: StreamWithOptionalRole
+      userId?: string | null
+      user?: Partial<UserWithOptionalRole> | null
+    }
+  }) => {
+    const payload: typeof eventPayload & {
+      server: Partial<Omit<ServerInfo, 'secret'>>
+    } = {
+      ...eventPayload,
+      server: { ...(await getServerInfo()), canonicalUrl: process.env.CANONICAL_URL }
+    }
     // Add server info
-    eventPayload.server = await getServerInfo()
-    eventPayload.server.canonicalUrl = process.env.CANONICAL_URL
-    delete eventPayload.server.id
+    payload.server = await getServerInfo()
+    payload.server.canonicalUrl = process.env.CANONICAL_URL
+    delete payload.server.id
 
     // Add stream info
-    if (eventPayload.streamId) {
-      eventPayload.stream = await getStream(
+    if (payload.streamId) {
+      payload.stream = await getStream(
         {
-          streamId: eventPayload.streamId,
-          userId: eventPayload.userId
+          streamId: payload.streamId,
+          userId: payload.userId ?? undefined
         },
-        { trx }
+        { trx: db.isTransaction ? await db.transaction() : undefined }
       )
     }
 
     // Add user info (except email and pwd)
-    if (eventPayload.userId) {
-      eventPayload.user = await getUser(eventPayload.userId)
-      if (eventPayload.user) {
-        delete eventPayload.user.passwordDigest
-        delete eventPayload.user.email
+    if (payload.userId) {
+      payload.user = await getUser(payload.userId)
+      if (payload.user) {
+        delete payload.user.passwordDigest
+        delete payload.user.email
       }
     }
 
@@ -170,14 +172,13 @@ export const dispatchStreamEventFactory =
       if (!(event in wh.triggers)) continue
 
       // Add webhook info (the key `webhook` will be replaced for each webhook configured, before serializing the payload and storing it)
-      eventPayload.webhook = wh
-      eventPayload.webhook.triggers = Object.keys(eventPayload.webhook.triggers)
-      delete eventPayload.webhook.secret
+      wh.triggers = Object.keys(wh.triggers)
+      delete wh.secret
 
       await createWebhookEvent({
         id: crs({ length: 20 }),
         webhookId: wh.id,
-        payload: JSON.stringify(eventPayload)
+        payload: JSON.stringify({ ...payload, webhook: wh })
       })
     }
   }
