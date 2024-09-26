@@ -32,10 +32,6 @@ module.exports = {
     return newBranch ? 1 : 0
   },
 
-  async getBranchById({ id }) {
-    return await Branches().where({ id }).first().select('*')
-  },
-
   /**
    * @returns {Promise<{
    *  items: import('@/modules/core/helpers/types').BranchRecord[],

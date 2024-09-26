@@ -59,8 +59,8 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getBranchesByIds
+  getBranchesByIdsFactory,
+  getBranchLatestCommits
 } from '@/modules/core/repositories/branches'
 import {
   createTestAutomationRunFactory,
@@ -522,7 +522,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const create = createAutomationRevisionFactory({
             getAutomation,
             storeAutomationRevision,
-            getBranchesByIds,
+            getBranchesByIds: getBranchesByIdsFactory({ db }),
             getFunctionRelease,
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({

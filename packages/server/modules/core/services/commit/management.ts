@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import {
   addCommitCreatedActivity,
   addCommitDeletedActivity,
@@ -19,7 +20,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
-  getBranchById,
+  getBranchByIdFactory,
   getStreamBranchByName,
   markCommitBranchUpdated
 } from '@/modules/core/repositories/branches'
@@ -106,7 +107,7 @@ export async function createCommitByBranchId(
     totalChildrenCount = obj.totalChildrenCount || 1
   }
 
-  const branch = await getBranchById(branchId, { streamId })
+  const branch = await getBranchByIdFactory({ db })(branchId, { streamId })
   if (!branch) {
     throw new CommitCreateError(`Failed to find branch with id ${branchId}.`, {
       info: params
@@ -189,7 +190,7 @@ export async function createCommitByBranchName(
   const branchName = params.branchName.toLowerCase()
   let myBranch = await getStreamBranchByName(streamId, branchName)
   if (!myBranch) {
-    myBranch = (await getBranchById(branchName)) || null
+    myBranch = (await getBranchByIdFactory({ db })(branchName)) || null
   }
   if (!myBranch) {
     throw new CommitCreateError(
