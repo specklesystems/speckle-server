@@ -27,7 +27,7 @@
           isValidWorkspaceSlug
         ]"
         show-label
-        @update:model-value="onShortIdInput"
+        @update:model-value="shortIdManuallyEdited = true"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -144,22 +144,9 @@ const reset = () => {
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
-    const generatedSlug = generateSlugFromName({ name: newName })
-    workspaceShortId.value = generatedSlug
-    validateShortId(generatedSlug)
+    workspaceShortId.value = generateSlugFromName({ name: newName })
   }
 }, 600)
-
-const validateShortId = (value: string) => {
-  const validationResult = isValidWorkspaceSlug(value)
-  customShortIdError.value =
-    typeof validationResult === 'string' ? validationResult : ''
-}
-
-const onShortIdInput = (newValue: string) => {
-  shortIdManuallyEdited.value = true
-  validateShortId(newValue)
-}
 
 watch(isOpen, (newVal) => {
   if (newVal) reset()

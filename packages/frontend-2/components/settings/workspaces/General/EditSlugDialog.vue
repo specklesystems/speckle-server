@@ -16,28 +16,23 @@
       Are you sure you want to proceed?
     </p>
     <FormTextInput
-      v-model:model-value="newSlug"
-      name="newSlug"
+      v-model:model-value="workspaceShortId"
+      name="slug"
       label="Short ID"
-      :help="getSlugHelp"
+      :help="getShortIdHelp"
       color="foundation"
-      :rules="[
-        isRequired,
-        isStringOfLength({ maxLength: 50, minLength: 3 }),
-        isValidWorkspaceSlug
-      ]"
+      :rules="[isStringOfLength({ maxLength: 50, minLength: 3 }), isValidWorkspaceSlug]"
       show-label
-      @update:model-value="onSlugInput"
     />
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
+import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import {
-  isRequired,
   isStringOfLength,
   isValidWorkspaceSlug
 } from '~~/lib/common/helpers/validation'
@@ -60,20 +55,20 @@ const emit = defineEmits<{
   (e: 'update:slug', newSlug: string): void
 }>()
 
-const newSlug = ref(props.workspace.slug)
+const { handleSubmit } = useForm<{ slug: string }>()
 
-const getSlugHelp = computed(() => {
-  return `${props.baseUrl}/workspaces/${newSlug.value}`
+const workspaceShortId = ref(props.workspace.slug)
+
+const updateSlug = handleSubmit(() => {
+  emit('update:slug', workspaceShortId.value)
+  isOpen.value = false
 })
 
-const onSlugInput = (value: string) => {
-  newSlug.value = value
-}
-
-const updateSlug = () => {
-  emit('update:slug', newSlug.value)
-  isOpen.value = false
-}
+const getShortIdHelp = computed(() =>
+  workspaceShortId.value
+    ? `${props.baseUrl}/workspaces/${workspaceShortId.value}`
+    : `Used after ${props.baseUrl}/workspaces/`
+)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -87,7 +82,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Update',
     props: {
       color: 'primary',
-      disabled: newSlug.value === props.workspace.slug || !newSlug.value.trim()
+      disabled: workspaceShortId.value === props.workspace.slug
     },
     onClick: updateSlug
   }
@@ -96,7 +91,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 watch(
   () => props.workspace.slug,
   (newValue) => {
-    newSlug.value = newValue
+    workspaceShortId.value = newValue
   },
   { immediate: true }
 )
