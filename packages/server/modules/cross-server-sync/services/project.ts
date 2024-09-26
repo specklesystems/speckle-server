@@ -12,11 +12,11 @@ import { omit } from 'lodash'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotify } from '@/modules/core/services/branch/management'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -112,7 +112,7 @@ const getProjectMetadata = async (params: {
 }
 
 type EnsureBranchDeps = {
-  getStreamBranchByName: typeof getStreamBranchByName
+  getStreamBranchByName: GetStreamBranchByName
   createBranchAndNotify: typeof createBranchAndNotify
 }
 

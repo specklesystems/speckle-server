@@ -6,7 +6,7 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -15,71 +15,87 @@ import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import {
+  GenerateBranchId,
+  GetBranchById,
+  GetBranchesByIds,
+  GetBranchLatestCommits,
+  GetStreamBranchByName,
+  GetStreamBranchesByName
+} from '@/modules/core/domain/branches/operations'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 
-export const generateBranchId = () => crs({ length: 10 })
+const tables = {
+  branches: (db: Knex) => db<BranchRecord>(Branches.name)
+}
 
-export async function getBranchesByIds(
-  branchIds: string[],
-  options?: Partial<{ streamId: string }>
-) {
-  if (!branchIds?.length) return []
-  const { streamId } = options || {}
+export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
 
-  const q = Branches.knex<BranchRecord[]>().whereIn(Branches.col.id, branchIds)
-  if (streamId) {
-    q.andWhere(Branches.col.streamId, streamId)
+export const getBranchesByIdsFactory =
+  (deps: { db: Knex }): GetBranchesByIds =>
+  async (branchIds: string[], options?: Partial<{ streamId: string }>) => {
+    if (!branchIds?.length) return []
+    const { streamId } = options || {}
+
+    const q = tables.branches(deps.db).whereIn(Branches.col.id, branchIds)
+    if (streamId) {
+      q.andWhere(Branches.col.streamId, streamId)
+    }
+
+    return await q
   }
 
-  return await q
-}
+export const getBranchByIdFactory =
+  (deps: { db: Knex }): GetBranchById =>
+  async (branchId: string, options?: Partial<{ streamId: string }>) => {
+    const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
+    return branch as Optional<BranchRecord>
+  }
 
-export async function getBranchById(
-  branchId: string,
-  options?: Partial<{ streamId: string }>
-) {
-  const [branch] = await getBranchesByIds([branchId], options)
-  return branch as Optional<BranchRecord>
-}
+export const getStreamBranchesByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchesByName =>
+  async (
+    streamId: string,
+    names: string[],
+    options?: Partial<{
+      /**
+       * Set to true if you want to find branches that start with specified names as prefixes
+       */
+      startsWithName: boolean
+    }>
+  ): Promise<BranchRecord[]> => {
+    if (!streamId || !names?.length) return []
+    const { startsWithName } = options || {}
 
-export async function getStreamBranchesByName(
-  streamId: string,
-  names: string[],
-  options?: Partial<{
-    /**
-     * Set to true if you want to find branches that start with specified names as prefixes
-     */
-    startsWithName: boolean
-  }>
-): Promise<BranchRecord[]> {
-  if (!streamId || !names?.length) return []
-  const { startsWithName } = options || {}
+    const q = tables
+      .branches(deps.db)
+      .where(Branches.col.streamId, streamId)
+      .andWhere((w1) => {
+        w1.where(
+          knex.raw('LOWER(??) ilike ANY(?)', [
+            Branches.col.name,
+            names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
+          ])
+        )
 
-  const q = Branches.knex<BranchRecord[]>()
-    .where(Branches.col.streamId, streamId)
-    .andWhere((w1) => {
-      w1.where(
-        knex.raw('LOWER(??) ilike ANY(?)', [
-          Branches.col.name,
-          names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
-        ])
-      )
+        if (!options?.startsWithName) {
+          // There are some edge cases with branches that have backwards slashes in their name that break the query,
+          // hence the extra condition
+          w1.orWhereIn(Branches.col.name, names)
+        }
+      })
 
-      if (!options?.startsWithName) {
-        // There are some edge cases with branches that have backwards slashes in their name that break the query,
-        // hence the extra condition
-        w1.orWhereIn(Branches.col.name, names)
-      }
-    })
+    return await q
+  }
 
-  return await q
-}
+export const getStreamBranchByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchByName =>
+  async (streamId: string, name: string) => {
+    if (!streamId || !name) return null
 
-export async function getStreamBranchByName(streamId: string, name: string) {
-  if (!streamId || !name) return null
-
-  const [first] = await getStreamBranchesByName(streamId, [name])
-  return first || null
-}
+    const [first] = await getStreamBranchesByNameFactory(deps)(streamId, [name])
+    return first || null
+  }
 
 export function getBatchedStreamBranches(
   streamId: string,
@@ -168,43 +184,46 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(
-  branchIds?: string[],
-  streamId?: string,
-  options?: Partial<{
-    limit: number
-  }>
-) {
-  if (!branchIds?.length && !streamId) return []
-  const { limit } = options || {}
+export const getBranchLatestCommitsFactory =
+  (deps: { db: Knex }): GetBranchLatestCommits =>
+  async (
+    branchIds?: string[],
+    streamId?: string,
+    options?: Partial<{
+      limit: number
+    }>
+  ) => {
+    if (!branchIds?.length && !streamId) return []
+    const { limit } = options || {}
 
-  const q = Branches.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      knex.raw(`?? as "branchId"`, [Branches.col.id])
-    ])
-    .distinctOn(Branches.col.id)
-    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .orderBy([
-      { column: Branches.col.id },
-      { column: Commits.col.createdAt, order: 'desc' }
-    ])
+    const q = tables
+      .branches(deps.db)
+      .select<Array<BranchLatestCommit>>([
+        ...Commits.cols,
+        knex.raw(`?? as "branchId"`, [Branches.col.id])
+      ])
+      .distinctOn(Branches.col.id)
+      .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .orderBy([
+        { column: Branches.col.id },
+        { column: Commits.col.createdAt, order: 'desc' }
+      ])
 
-  if (branchIds?.length) {
-    q.whereIn(Branches.col.id, branchIds)
+    if (branchIds?.length) {
+      q.whereIn(Branches.col.id, branchIds)
+    }
+
+    if (streamId?.length) {
+      q.where(Branches.col.streamId, streamId)
+    }
+
+    if (!isUndefined(limit)) {
+      q.limit(limit)
+    }
+
+    return await q
   }
-
-  if (streamId?.length) {
-    q.where(Branches.col.streamId, streamId)
-  }
-
-  if (!isUndefined(limit)) {
-    q.limit(limit)
-  }
-
-  return await q
-}
 
 function getPaginatedProjectModelsBaseQuery<T>(
   projectId: string,

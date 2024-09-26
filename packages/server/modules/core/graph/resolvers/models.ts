@@ -23,9 +23,9 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getModelTreeItems,
-  getStreamBranchesByName
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
@@ -34,11 +34,12 @@ import {
   getAllBranchCommits,
   getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
+import { db } from '@/db/knex'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
-  getBranchLatestCommits,
-  getStreamBranchesByName,
+  getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+  getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
   getSpecificBranchCommits,
   getAllBranchCommits
 })

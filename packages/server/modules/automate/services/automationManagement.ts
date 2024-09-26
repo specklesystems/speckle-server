@@ -33,7 +33,6 @@ import {
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
-import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
@@ -56,6 +55,7 @@ import {
   StoreAutomationToken,
   UpdateAutomation
 } from '@/modules/automate/domain/operations'
+import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
@@ -305,7 +305,7 @@ export const validateAndUpdateAutomationFactory =
   }
 
 type ValidateNewTriggerDefinitionsDeps = {
-  getBranchesByIds: typeof getBranchesByIds
+  getBranchesByIds: GetBranchesByIds
 }
 
 const validateNewTriggerDefinitions =

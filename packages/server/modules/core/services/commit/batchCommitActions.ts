@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import {
   addCommitDeletedActivity,
   addCommitMovedActivity
@@ -15,7 +16,7 @@ import {
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   createBranch,
-  getStreamBranchByName
+  getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   deleteCommits,
@@ -104,7 +105,7 @@ async function validateCommitsMove(
   }
 
   const stream = streams[0]
-  const branch = await getStreamBranchByName(stream.id, targetBranch)
+  const branch = await getStreamBranchByNameFactory({ db })(stream.id, targetBranch)
 
   if (
     !branch &&
