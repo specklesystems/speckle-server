@@ -1,7 +1,8 @@
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { UserRecord } from '@/modules/core/helpers/types'
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
 
 export async function addUserUpdatedActivity(params: {
   oldUser: UserRecord
@@ -10,7 +11,7 @@ export async function addUserUpdatedActivity(params: {
 }) {
   const { oldUser, update, updaterId } = params
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId: null,
     resourceType: ResourceTypes.User,
     resourceId: oldUser.id,

@@ -14,16 +14,20 @@ const { createObject } = require('../services/objects')
 const {
   createBranch,
   updateBranch,
-  getBranchById,
   getBranchesByStreamId,
-  getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../services/branches')
 const { createCommitByBranchName } = require('../services/commits')
 
 const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
+const {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
+const getBranchById = getBranchByIdFactory({ db: knex })
+const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -129,22 +133,13 @@ describe('Branches @core-branches', () => {
       authorId: user.id
     })
 
-    const b = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'casesensitive'
-    })
+    const b = await getStreamBranchByName(stream.id, 'casesensitive')
     expect(b.name).to.equal('casesensitive')
 
-    const bb = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'CaseSensitive'
-    })
+    const bb = await getStreamBranchByName(stream.id, 'CaseSensitive')
     expect(bb.name).to.equal('casesensitive')
 
-    const bbb = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'CASESENSITIVE'
-    })
+    const bbb = await getStreamBranchByName(stream.id, 'CASESENSITIVE')
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
@@ -152,7 +147,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should get a branch', async () => {
-    const myBranch = await getBranchById({ id: branch.id })
+    const myBranch = await getBranchById(branch.id)
     expect(myBranch.authorId).to.equal(user.id)
     expect(myBranch.streamId).to.equal(stream.id)
   })
@@ -165,7 +160,7 @@ describe('Branches @core-branches', () => {
       userId: user.id
     })
 
-    const b1 = await getBranchById({ id: branch.id })
+    const b1 = await getBranchById(branch.id)
     expect(b1.description).to.equal('lorem ipsum')
   })
 
@@ -218,7 +213,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should NOT delete the main branch', async () => {
-    const b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'main' })
+    const b = await getStreamBranchByName(stream.id, 'main')
     try {
       await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
       assert.fail()

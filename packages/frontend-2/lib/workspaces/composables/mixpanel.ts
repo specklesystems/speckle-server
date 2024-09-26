@@ -45,7 +45,7 @@ export const useWorkspacesMixpanel = () => {
   const workspaceMixpanelUpdateGroup = (
     workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment
   ) => {
-    if (!workspace.id) return
+    if (!workspace.id || !import.meta.client) return
     const roleCount = {
       [Roles.Workspace.Admin]: 0,
       [Roles.Workspace.Member]: 0,
@@ -69,10 +69,8 @@ export const useWorkspacesMixpanel = () => {
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
-      ...(import.meta.client && {
-        // eslint-disable-next-line camelcase
-        server_id: resolveMixpanelServerId(window.location.hostname)
-      }),
+      // eslint-disable-next-line camelcase
+      server_id: resolveMixpanelServerId(window.location.hostname),
       ...(workspace.billing && {
         costTotal: workspace.billing.cost.total,
         versionsCountCurrent: workspace.billing.versionsCount.current,

@@ -19,9 +19,9 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getBranchLatestCommits,
-  getStreamBranchByName,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
@@ -63,8 +63,8 @@ const crossServerSyncModule: SpeckleModule = {
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits,
-        getStreamBranchesByName,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits
       })
@@ -88,6 +88,7 @@ const crossServerSyncModule: SpeckleModule = {
       addReplyAddedActivity
     })
 
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream,
       getFirstAdmin,

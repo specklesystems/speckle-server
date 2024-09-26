@@ -6,7 +6,7 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -15,71 +15,93 @@ import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import {
+  GenerateBranchId,
+  GetBranchById,
+  GetBranchesByIds,
+  GetBranchLatestCommits,
+  GetModelTreeItemsFiltered,
+  GetModelTreeItemsFilteredTotalCount,
+  GetPaginatedProjectModelsItems,
+  GetPaginatedProjectModelsTotalCount,
+  GetStreamBranchByName,
+  GetStreamBranchesByName,
+  GetStructuredProjectModels
+} from '@/modules/core/domain/branches/operations'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import { ModelTreeItem } from '@/modules/core/domain/branches/types'
 
-export const generateBranchId = () => crs({ length: 10 })
+const tables = {
+  branches: (db: Knex) => db<BranchRecord>(Branches.name)
+}
 
-export async function getBranchesByIds(
-  branchIds: string[],
-  options?: Partial<{ streamId: string }>
-) {
-  if (!branchIds?.length) return []
-  const { streamId } = options || {}
+export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
 
-  const q = Branches.knex<BranchRecord[]>().whereIn(Branches.col.id, branchIds)
-  if (streamId) {
-    q.andWhere(Branches.col.streamId, streamId)
+export const getBranchesByIdsFactory =
+  (deps: { db: Knex }): GetBranchesByIds =>
+  async (branchIds: string[], options?: Partial<{ streamId: string }>) => {
+    if (!branchIds?.length) return []
+    const { streamId } = options || {}
+
+    const q = tables.branches(deps.db).whereIn(Branches.col.id, branchIds)
+    if (streamId) {
+      q.andWhere(Branches.col.streamId, streamId)
+    }
+
+    return await q
   }
 
-  return await q
-}
+export const getBranchByIdFactory =
+  (deps: { db: Knex }): GetBranchById =>
+  async (branchId: string, options?: Partial<{ streamId: string }>) => {
+    const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
+    return branch as Optional<BranchRecord>
+  }
 
-export async function getBranchById(
-  branchId: string,
-  options?: Partial<{ streamId: string }>
-) {
-  const [branch] = await getBranchesByIds([branchId], options)
-  return branch as Optional<BranchRecord>
-}
+export const getStreamBranchesByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchesByName =>
+  async (
+    streamId: string,
+    names: string[],
+    options?: Partial<{
+      /**
+       * Set to true if you want to find branches that start with specified names as prefixes
+       */
+      startsWithName: boolean
+    }>
+  ): Promise<BranchRecord[]> => {
+    if (!streamId || !names?.length) return []
+    const { startsWithName } = options || {}
 
-export async function getStreamBranchesByName(
-  streamId: string,
-  names: string[],
-  options?: Partial<{
-    /**
-     * Set to true if you want to find branches that start with specified names as prefixes
-     */
-    startsWithName: boolean
-  }>
-): Promise<BranchRecord[]> {
-  if (!streamId || !names?.length) return []
-  const { startsWithName } = options || {}
+    const q = tables
+      .branches(deps.db)
+      .where(Branches.col.streamId, streamId)
+      .andWhere((w1) => {
+        w1.where(
+          knex.raw('LOWER(??) ilike ANY(?)', [
+            Branches.col.name,
+            names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
+          ])
+        )
 
-  const q = Branches.knex<BranchRecord[]>()
-    .where(Branches.col.streamId, streamId)
-    .andWhere((w1) => {
-      w1.where(
-        knex.raw('LOWER(??) ilike ANY(?)', [
-          Branches.col.name,
-          names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
-        ])
-      )
+        if (!options?.startsWithName) {
+          // There are some edge cases with branches that have backwards slashes in their name that break the query,
+          // hence the extra condition
+          w1.orWhereIn(Branches.col.name, names)
+        }
+      })
 
-      if (!options?.startsWithName) {
-        // There are some edge cases with branches that have backwards slashes in their name that break the query,
-        // hence the extra condition
-        w1.orWhereIn(Branches.col.name, names)
-      }
-    })
+    return await q
+  }
 
-  return await q
-}
+export const getStreamBranchByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchByName =>
+  async (streamId: string, name: string) => {
+    if (!streamId || !name) return null
 
-export async function getStreamBranchByName(streamId: string, name: string) {
-  if (!streamId || !name) return null
-
-  const [first] = await getStreamBranchesByName(streamId, [name])
-  return first || null
-}
+    const [first] = await getStreamBranchesByNameFactory(deps)(streamId, [name])
+    return first || null
+  }
 
 export function getBatchedStreamBranches(
   streamId: string,
@@ -168,279 +190,297 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(
-  branchIds?: string[],
-  streamId?: string,
-  options?: Partial<{
-    limit: number
-  }>
-) {
-  if (!branchIds?.length && !streamId) return []
-  const { limit } = options || {}
+export const getBranchLatestCommitsFactory =
+  (deps: { db: Knex }): GetBranchLatestCommits =>
+  async (
+    branchIds?: string[],
+    streamId?: string,
+    options?: Partial<{
+      limit: number
+    }>
+  ) => {
+    if (!branchIds?.length && !streamId) return []
+    const { limit } = options || {}
 
-  const q = Branches.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      knex.raw(`?? as "branchId"`, [Branches.col.id])
-    ])
-    .distinctOn(Branches.col.id)
-    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .orderBy([
-      { column: Branches.col.id },
-      { column: Commits.col.createdAt, order: 'desc' }
-    ])
+    const q = tables
+      .branches(deps.db)
+      .select<Array<BranchLatestCommit>>([
+        ...Commits.cols,
+        knex.raw(`?? as "branchId"`, [Branches.col.id])
+      ])
+      .distinctOn(Branches.col.id)
+      .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .orderBy([
+        { column: Branches.col.id },
+        { column: Commits.col.createdAt, order: 'desc' }
+      ])
 
-  if (branchIds?.length) {
-    q.whereIn(Branches.col.id, branchIds)
+    if (branchIds?.length) {
+      q.whereIn(Branches.col.id, branchIds)
+    }
+
+    if (streamId?.length) {
+      q.where(Branches.col.streamId, streamId)
+    }
+
+    if (!isUndefined(limit)) {
+      q.limit(limit)
+    }
+
+    return await q
   }
 
-  if (streamId?.length) {
-    q.where(Branches.col.streamId, streamId)
+const getPaginatedProjectModelsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  <T>(projectId: string, params: ProjectModelsArgs) => {
+    const { filter } = params
+
+    const q = tables
+      .branches(deps.db)
+      .select<T>(Branches.cols)
+      .where(Branches.col.streamId, projectId)
+      .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .groupBy(Branches.col.id)
+      .havingRaw(knex.raw(`?? != 'globals'`, [Branches.col.name]))
+
+    if (filter?.search) {
+      q.whereILike(Branches.col.name, `%${filter.search}%`)
+    }
+
+    if (filter?.contributors?.length) {
+      q.whereIn(Commits.col.author, filter.contributors)
+    }
+
+    if (filter?.sourceApps?.length) {
+      q.whereRaw(
+        knex.raw(`?? ~* ?`, [
+          Commits.col.sourceApplication,
+          filter.sourceApps.join('|')
+        ])
+      )
+    }
+
+    if (filter?.onlyWithVersions) {
+      q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
+    } else {
+      q.havingRaw(
+        knex.raw(`(?? != 'main' OR COUNT(??) > 0)`, [Branches.col.name, Commits.col.id])
+      )
+    }
+
+    if (filter?.ids?.length) {
+      q.whereIn(Branches.col.id, filter.ids)
+    }
+    if (filter?.excludeIds?.length) {
+      q.whereNotIn(Branches.col.id, filter.excludeIds)
+    }
+
+    return q
   }
 
-  if (!isUndefined(limit)) {
-    q.limit(limit)
-  }
-
-  return await q
-}
-
-function getPaginatedProjectModelsBaseQuery<T>(
-  projectId: string,
-  params: ProjectModelsArgs
-) {
-  const { filter } = params
-
-  const q = Branches.knex()
-    .select<T>(Branches.cols)
-    .where(Branches.col.streamId, projectId)
-    .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .groupBy(Branches.col.id)
-    .havingRaw(knex.raw(`?? != 'globals'`, [Branches.col.name]))
-
-  if (filter?.search) {
-    q.whereILike(Branches.col.name, `%${filter.search}%`)
-  }
-
-  if (filter?.contributors?.length) {
-    q.whereIn(Commits.col.author, filter.contributors)
-  }
-
-  if (filter?.sourceApps?.length) {
-    q.whereRaw(
-      knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, filter.sourceApps.join('|')])
+export const getStructuredProjectModelsFactory =
+  (deps: { db: Knex }): GetStructuredProjectModels =>
+  async (projectId: string) => {
+    const q = getPaginatedProjectModelsBaseQueryFactory(deps)<BranchRecord[]>(
+      projectId,
+      {}
     )
-  }
+    const results = await q
 
-  if (filter?.onlyWithVersions) {
-    q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
-  } else {
-    q.havingRaw(
-      knex.raw(`(?? != 'main' OR COUNT(??) > 0)`, [Branches.col.name, Commits.col.id])
-    )
-  }
+    type TreeItem = ModelTreeItem
 
-  if (filter?.ids?.length) {
-    q.whereIn(Branches.col.id, filter.ids)
-  }
-  if (filter?.excludeIds?.length) {
-    q.whereNotIn(Branches.col.id, filter.excludeIds)
-  }
+    const tree: TreeItem = { name: 'root', children: [], updatedAt: new Date(+0) }
 
-  return q
-}
-
-export async function getStructuredProjectModels(projectId: string) {
-  const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, {})
-  const results = await q
-
-  type TreeItem = {
-    name: string
-    updatedAt: Date // TODO: set to newest updated at from its children / model
-    model?: BranchRecord
-    children: TreeItem[]
-  }
-
-  const tree: TreeItem = { name: 'root', children: [], updatedAt: new Date(+0) }
-
-  for (const record of results) {
-    let currentLevel = tree
-    const nameParts = record.name.split('/').filter((n: string) => n !== '')
-    for (const part of nameParts) {
-      const existing = currentLevel.children.find((c) => c.name === part)
-      if (existing) {
-        currentLevel = existing
-      } else {
-        const newTreeItem = {
-          name: part,
-          children: [] as TreeItem[],
-          updatedAt: new Date(+0)
+    for (const record of results) {
+      let currentLevel = tree
+      const nameParts = record.name.split('/').filter((n: string) => n !== '')
+      for (const part of nameParts) {
+        const existing = currentLevel.children.find((c) => c.name === part)
+        if (existing) {
+          currentLevel = existing
+        } else {
+          const newTreeItem = {
+            name: part,
+            children: [] as TreeItem[],
+            updatedAt: new Date(+0)
+          }
+          currentLevel.children.push(newTreeItem)
+          currentLevel = newTreeItem
         }
-        currentLevel.children.push(newTreeItem)
-        currentLevel = newTreeItem
+      }
+      currentLevel.model = record
+      if (currentLevel.updatedAt < record.updatedAt)
+        currentLevel.updatedAt = record.updatedAt
+    }
+    return tree
+  }
+
+export const getPaginatedProjectModelsItemsFactory =
+  (deps: { db: Knex }): GetPaginatedProjectModelsItems =>
+  async (projectId: string, params: ProjectModelsArgs) => {
+    const { cursor, limit } = params
+    if ((params.filter?.ids && !params.filter.ids.length) || limit === 0) {
+      // empty ids: return empty array!
+      return { items: [], cursor: null }
+    }
+
+    const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+
+    const q = getPaginatedProjectModelsBaseQueryFactory(deps)<BranchRecord[]>(
+      projectId,
+      params
+    )
+    q.limit(clamp(limit || 25, 1, maxProjectModelsPerPage)).orderBy(
+      Branches.col.updatedAt,
+      'desc'
+    )
+
+    if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
+
+    const results = (await q) as BranchRecord[]
+    return {
+      items: results,
+      cursor:
+        results.length > 0 ? results[results.length - 1].updatedAt.toISOString() : null
+    }
+  }
+
+export const getPaginatedProjectModelsTotalCountFactory =
+  (deps: { db: Knex }): GetPaginatedProjectModelsTotalCount =>
+  async (projectId: string, params: ProjectModelsArgs) => {
+    if (params.filter?.ids && !params.filter.ids.length) {
+      // empty ids: return count 0
+      return 0
+    }
+
+    const baseQ = getPaginatedProjectModelsBaseQueryFactory(deps)(projectId, params)
+    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+
+    const [res] = await q
+    return parseInt(res?.count || '0')
+  }
+
+const getModelTreeItemsFilteredBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (
+    projectId: string,
+    args: ProjectModelsTreeArgs,
+    options?: Partial<{ filterOutEmptyMain: boolean }>
+  ) => {
+    const search = args.filter?.search || ''
+    const sourceApps = args.filter?.sourceApps || []
+    const contributors = args.filter?.contributors || []
+    const isFiltering = search.length || sourceApps.length || contributors.length
+    const filterOutEmptyMain = !isFiltering && (options?.filterOutEmptyMain ?? true)
+
+    const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
+
+    const q = tables
+      .branches(deps.db)
+      .select<Array<{ name: string; updatedAt: Date; hasChildren: boolean }>>([
+        Branches.col.name,
+        Branches.col.updatedAt,
+        knex.raw(`COUNT(??) > 0 as "hasChildren"`, [BranchesJoin.col.id])
+      ])
+      .leftJoin(BranchesJoin.name, (lj) => {
+        lj.on(
+          BranchesJoin.col.name,
+          'ilike',
+          knex.raw(`(?? || '/%')`, [Branches.col.name])
+        )
+          .andOn(BranchesJoin.col.name, '!=', Branches.col.name)
+          .andOn(BranchesJoin.col.streamId, '=', Branches.col.streamId)
+      })
+      .where(Branches.col.streamId, projectId)
+      .groupBy(Branches.col.id)
+      .orderBy(Branches.col.updatedAt, 'desc')
+
+    if (filterOutEmptyMain) {
+      q.andWhere((w) => {
+        w.whereNot(Branches.col.name, 'main').orWhere(
+          0,
+          '<',
+          BranchCommits.knex()
+            .count()
+            .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
+        )
+      })
+    }
+
+    if (search.length) {
+      q.andWhereILike(Branches.col.name, `%${search}%`)
+    }
+
+    if (sourceApps.length || contributors.length) {
+      q.leftJoin(
+        BranchCommits.name,
+        BranchCommits.col.branchId,
+        Branches.col.id
+      ).leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+
+      if (contributors.length) {
+        q.whereIn(Commits.col.author, contributors)
+      }
+
+      if (sourceApps.length) {
+        q.whereRaw(
+          knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, sourceApps.join('|')])
+        )
       }
     }
-    currentLevel.model = record
-    if (currentLevel.updatedAt < record.updatedAt)
-      currentLevel.updatedAt = record.updatedAt
-  }
-  return tree
-}
 
-export async function getPaginatedProjectModelsItems(
-  projectId: string,
-  params: ProjectModelsArgs
-) {
-  const { cursor, limit } = params
-  if ((params.filter?.ids && !params.filter.ids.length) || limit === 0) {
-    // empty ids: return empty array!
-    return { items: [], cursor: null }
+    return q
   }
 
-  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+export const getModelTreeItemsFilteredFactory =
+  (deps: { db: Knex }): GetModelTreeItemsFiltered =>
+  async (
+    projectId: string,
+    args: ProjectModelsTreeArgs,
+    options?: Partial<{ filterOutEmptyMain: boolean }>
+  ) => {
+    const limit = clamp(args.limit || 25, 0, 100)
+    const q = getModelTreeItemsFilteredBaseQueryFactory(deps)(projectId, args, options)
+    q.limit(limit)
 
-  const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
-  q.limit(clamp(limit || 25, 1, maxProjectModelsPerPage)).orderBy(
-    Branches.col.updatedAt,
-    'desc'
-  )
-
-  if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
-
-  const results = (await q) as BranchRecord[]
-  return {
-    items: results,
-    cursor:
-      results.length > 0 ? results[results.length - 1].updatedAt.toISOString() : null
-  }
-}
-
-export async function getPaginatedProjectModelsTotalCount(
-  projectId: string,
-  params: ProjectModelsArgs
-) {
-  if (params.filter?.ids && !params.filter.ids.length) {
-    // empty ids: return count 0
-    return 0
-  }
-
-  const baseQ = getPaginatedProjectModelsBaseQuery(projectId, params)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-
-  const [res] = await q
-  return parseInt(res?.count || '0')
-}
-
-function getModelTreeItemsFilteredBaseQuery(
-  projectId: string,
-  args: ProjectModelsTreeArgs,
-  options?: Partial<{ filterOutEmptyMain: boolean }>
-) {
-  const search = args.filter?.search || ''
-  const sourceApps = args.filter?.sourceApps || []
-  const contributors = args.filter?.contributors || []
-  const isFiltering = search.length || sourceApps.length || contributors.length
-  const filterOutEmptyMain = !isFiltering && (options?.filterOutEmptyMain ?? true)
-
-  const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
-
-  const q = Branches.knex()
-    .select<Array<{ name: string; updatedAt: Date; hasChildren: boolean }>>([
-      Branches.col.name,
-      Branches.col.updatedAt,
-      knex.raw(`COUNT(??) > 0 as "hasChildren"`, [BranchesJoin.col.id])
-    ])
-    .leftJoin(BranchesJoin.name, (lj) => {
-      lj.on(
-        BranchesJoin.col.name,
-        'ilike',
-        knex.raw(`(?? || '/%')`, [Branches.col.name])
-      )
-        .andOn(BranchesJoin.col.name, '!=', Branches.col.name)
-        .andOn(BranchesJoin.col.streamId, '=', Branches.col.streamId)
-    })
-    .where(Branches.col.streamId, projectId)
-    .groupBy(Branches.col.id)
-    .orderBy(Branches.col.updatedAt, 'desc')
-
-  if (filterOutEmptyMain) {
-    q.andWhere((w) => {
-      w.whereNot(Branches.col.name, 'main').orWhere(
-        0,
-        '<',
-        BranchCommits.knex()
-          .count()
-          .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
-      )
-    })
-  }
-
-  if (search.length) {
-    q.andWhereILike(Branches.col.name, `%${search}%`)
-  }
-
-  if (sourceApps.length || contributors.length) {
-    q.leftJoin(
-      BranchCommits.name,
-      BranchCommits.col.branchId,
-      Branches.col.id
-    ).leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-
-    if (contributors.length) {
-      q.whereIn(Commits.col.author, contributors)
+    if (args.cursor) {
+      q.andWhere(Branches.col.updatedAt, '<', args.cursor)
     }
 
-    if (sourceApps.length) {
-      q.whereRaw(
-        knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, sourceApps.join('|')])
-      )
-    }
+    const res = await q
+    const items = res.map((i): ModelsTreeItemGraphQLReturn => {
+      const displayName = last(i.name.split('/')) as string
+      return {
+        id: `${projectId}-${i.name}`,
+        projectId,
+        name: displayName,
+        fullName: i.name,
+        updatedAt: i.updatedAt,
+        hasChildren: i.hasChildren
+      }
+    })
+
+    return items
   }
 
-  return q
-}
-
-export async function getModelTreeItemsFiltered(
-  projectId: string,
-  args: ProjectModelsTreeArgs,
-  options?: Partial<{ filterOutEmptyMain: boolean }>
-) {
-  const limit = clamp(args.limit || 25, 0, 100)
-  const q = getModelTreeItemsFilteredBaseQuery(projectId, args, options)
-  q.limit(limit)
-
-  if (args.cursor) {
-    q.andWhere(Branches.col.updatedAt, '<', args.cursor)
-  }
-
-  const res = await q
-  const items = res.map((i): ModelsTreeItemGraphQLReturn => {
-    const displayName = last(i.name.split('/')) as string
-    return {
-      id: `${projectId}-${i.name}`,
+export const getModelTreeItemsFilteredTotalCountFactory =
+  (deps: { db: Knex }): GetModelTreeItemsFilteredTotalCount =>
+  async (
+    projectId: string,
+    args: ProjectModelsTreeArgs,
+    options?: Partial<{ filterOutEmptyMain: boolean }>
+  ) => {
+    const baseQ = getModelTreeItemsFilteredBaseQueryFactory(deps)(
       projectId,
-      name: displayName,
-      fullName: i.name,
-      updatedAt: i.updatedAt,
-      hasChildren: i.hasChildren
-    }
-  })
-
-  return items
-}
-
-export async function getModelTreeItemsFilteredTotalCount(
-  projectId: string,
-  args: ProjectModelsTreeArgs,
-  options?: Partial<{ filterOutEmptyMain: boolean }>
-) {
-  const baseQ = getModelTreeItemsFilteredBaseQuery(projectId, args, options)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-  const [row] = await q
-  return parseInt(row.count || '0')
-}
+      args,
+      options
+    )
+    const q = deps.db().count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const [row] = await q
+    return parseInt(row.count || '0')
+  }
 
 function getModelTreeItemsBaseQuery(
   projectId: string,

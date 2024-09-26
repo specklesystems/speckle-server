@@ -1,10 +1,10 @@
-const { scalarSchemas } = require('@/modules/core/graph/scalars')
+import { scalarSchemas } from '@/modules/core/graph/scalars'
 
 /**
  * Initial/base schema definition
  */
 
-module.exports = `
+const baseTypeDefs = `
   ${scalarSchemas}
 
   type Query {
@@ -25,3 +25,5 @@ module.exports = `
     """
     _: String
   }`
+
+export default baseTypeDefs

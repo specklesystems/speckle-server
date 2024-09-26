@@ -1,10 +1,9 @@
 'use strict'
 const knex = require('@/db/knex')
+const { getStreamBranchByNameFactory } = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
-
-const { getBranchByNameAndStreamId } = require('./branches')
 
 const {
   getStreamCommitCount,
@@ -128,10 +127,8 @@ module.exports = {
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
     branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+    const myBranch = await getStreamBranchByName(streamId, branchName)
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
@@ -147,10 +144,8 @@ module.exports = {
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {
     branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+    const myBranch = await getStreamBranchByName(streamId, branchName)
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 

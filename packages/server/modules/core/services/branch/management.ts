@@ -21,14 +21,15 @@ import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   createBranch,
   deleteBranchById,
-  getBranchById,
-  getStreamBranchByName,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
   updateBranch
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { db } from '@/db/knex'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -39,7 +40,10 @@ export async function createBranchAndNotify(
   creatorId: string
 ) {
   const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
-  const existingBranch = await getStreamBranchByName(streamId, input.name)
+  const existingBranch = await getStreamBranchByNameFactory({ db })(
+    streamId,
+    input.name
+  )
   if (existingBranch) {
     throw new BranchCreateError('A branch with this name already exists')
   }
@@ -60,7 +64,7 @@ export async function updateBranchAndNotify(
   userId: string
 ) {
   const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
-  const existingBranch = await getBranchById(input.id)
+  const existingBranch = await getBranchByIdFactory({ db })(input.id)
   if (!existingBranch) {
     throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
   }
@@ -103,7 +107,7 @@ export async function deleteBranchAndNotify(
 ) {
   const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
   const [existingBranch, stream] = await Promise.all([
-    getBranchById(input.id),
+    getBranchByIdFactory({ db })(input.id),
     getStream({ streamId, userId })
   ])
   if (!existingBranch) {

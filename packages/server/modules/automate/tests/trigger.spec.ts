@@ -52,7 +52,7 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getLatestStreamBranch
 } from '@/modules/core/repositories/branches'
 import {
@@ -96,6 +96,7 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 })
 const updateAutomationRevision = updateAutomationRevisionFactory({ db })
 const updateAutomationRun = updateAutomationRunFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -320,7 +321,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
             upsertAutomationRun,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -412,7 +414,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
           upsertAutomationRun,
-          getFullAutomationRevisionMetadata
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -510,7 +513,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
           upsertAutomationRun,
-          getFullAutomationRevisionMetadata
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -992,7 +996,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
             upsertAutomationRun,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits
           }),
           validateStreamAccess,
           ...(overrides || {})
