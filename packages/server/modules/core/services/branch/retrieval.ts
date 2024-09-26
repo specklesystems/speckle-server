@@ -6,9 +6,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import {
-  getStructuredProjectModels,
-  getPaginatedProjectModelsItems,
-  getPaginatedProjectModelsTotalCount,
   getModelTreeItemsFiltered,
   getModelTreeItems,
   getModelTreeItemsFilteredTotalCount,
@@ -19,10 +16,10 @@ import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import { BadRequestError } from '@/modules/shared/errors'
-
-export async function getStructuredStreamModels(streamId: string) {
-  return getStructuredProjectModels(streamId)
-}
+import {
+  GetPaginatedProjectModelsItems,
+  GetPaginatedProjectModelsTotalCount
+} from '@/modules/core/domain/branches/operations'
 
 export async function getPaginatedStreamBranches(
   streamId: string,
@@ -42,20 +39,22 @@ export async function getPaginatedStreamBranches(
   return { totalCount, cursor, items }
 }
 
-export async function getPaginatedProjectModels(
-  projectId: string,
-  params: ProjectModelsArgs
-) {
-  const [totalCount, itemsStruct] = await Promise.all([
-    getPaginatedProjectModelsTotalCount(projectId, params),
-    getPaginatedProjectModelsItems(projectId, params)
-  ])
+export const getPaginatedProjectModelsFactory =
+  (deps: {
+    getPaginatedProjectModelsItems: GetPaginatedProjectModelsItems
+    getPaginatedProjectModelsTotalCount: GetPaginatedProjectModelsTotalCount
+  }) =>
+  async (projectId: string, params: ProjectModelsArgs) => {
+    const [totalCount, itemsStruct] = await Promise.all([
+      deps.getPaginatedProjectModelsTotalCount(projectId, params),
+      deps.getPaginatedProjectModelsItems(projectId, params)
+    ])
 
-  return {
-    ...itemsStruct,
-    totalCount
+    return {
+      ...itemsStruct,
+      totalCount
+    }
   }
-}
 
 export async function getProjectTopLevelModelsTree(
   projectId: string,

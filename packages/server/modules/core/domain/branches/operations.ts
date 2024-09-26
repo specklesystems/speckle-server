@@ -1,5 +1,6 @@
-import { Branch } from '@/modules/core/domain/branches/types'
+import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@speckle/shared'
 
 export type GenerateBranchId = () => string
@@ -38,3 +39,27 @@ export type GetBranchLatestCommits = (
     limit: number
   }>
 ) => Promise<BranchLatestCommit[]>
+
+export type GetStructuredProjectModels = (projectId: string) => Promise<ModelTreeItem>
+
+export type GetPaginatedProjectModelsItems = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<{
+  items: Branch[]
+  cursor: string | null
+}>
+
+export type GetPaginatedProjectModelsTotalCount = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<number>
+
+export type GetPaginatedProjectModels = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<{
+  totalCount: number
+  items: Branch[]
+  cursor: string | null
+}>
