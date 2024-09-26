@@ -61,51 +61,5 @@ module.exports = {
         { trx }
       )
     }
-  },
-
-  async getUserActivity({ userId, actionType, after, before, cursor, limit }) {
-    if (!limit) {
-      limit = 200
-    }
-
-    const dbQuery = StreamActivity().where({ userId })
-    if (actionType) dbQuery.andWhere({ actionType })
-    if (after) dbQuery.andWhere('time', '>', after)
-    if (before) dbQuery.andWhere('time', '<', before)
-    if (cursor) dbQuery.andWhere('time', '<', cursor)
-    dbQuery.orderBy('time', 'desc').limit(limit)
-
-    const results = await dbQuery.select('*')
-    return {
-      items: results,
-      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
-    }
-  },
-
-  async getResourceActivity({
-    resourceType,
-    resourceId,
-    actionType,
-    after,
-    before,
-    cursor,
-    limit
-  }) {
-    if (!limit) {
-      limit = 200
-    }
-
-    const dbQuery = StreamActivity().where({ resourceType, resourceId })
-    if (actionType) dbQuery.andWhere({ actionType })
-    if (after) dbQuery.andWhere('time', '>', after)
-    if (before) dbQuery.andWhere('time', '<', before)
-    if (cursor) dbQuery.andWhere('time', '<', cursor)
-    dbQuery.orderBy('time', 'desc').limit(limit)
-
-    const results = await dbQuery.select('*')
-    return {
-      items: results,
-      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
-    }
   }
 }
