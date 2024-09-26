@@ -5,18 +5,16 @@ import {
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
-import {
-  getModelTreeItems,
-  getModelTreeItemsTotalCount
-} from '@/modules/core/repositories/branches'
 import { last } from 'lodash'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
+  GetModelTreeItems,
   GetModelTreeItemsFiltered,
   GetModelTreeItemsFilteredTotalCount,
+  GetModelTreeItemsTotalCount,
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetProjectTopLevelModelsTree
@@ -61,6 +59,8 @@ export const getProjectTopLevelModelsTreeFactory =
   (deps: {
     getModelTreeItemsFiltered: GetModelTreeItemsFiltered
     getModelTreeItemsFilteredTotalCount: GetModelTreeItemsFilteredTotalCount
+    getModelTreeItems: GetModelTreeItems
+    getModelTreeItemsTotalCount: GetModelTreeItemsTotalCount
   }): GetProjectTopLevelModelsTree =>
   async (
     projectId: string,
@@ -86,8 +86,8 @@ export const getProjectTopLevelModelsTreeFactory =
       totalCount = filteredTotalCount
     } else {
       const [unfilteredItems, unfilteredTotalCount] = await Promise.all([
-        getModelTreeItems(projectId, args, options),
-        getModelTreeItemsTotalCount(projectId, options)
+        deps.getModelTreeItems(projectId, args, options),
+        deps.getModelTreeItemsTotalCount(projectId, options)
       ])
 
       items = unfilteredItems
