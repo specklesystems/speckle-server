@@ -159,6 +159,7 @@ graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace
     id
     name
     slug

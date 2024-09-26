@@ -33,19 +33,25 @@
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import type { SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import {
   isRequired,
   isStringOfLength,
   isValidWorkspaceSlug
 } from '~~/lib/common/helpers/validation'
 
-const props = defineProps<{
-  workspace: {
-    id: string
-    name: string
-    slug: string
+graphql(`
+  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {
+    id
+    name
+    slug
   }
+`)
+
+const props = defineProps<{
+  workspace: SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment
   baseUrl: string
 }>()
 
@@ -87,5 +93,11 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 
-// Add immediate watcher to replace newSlug with new slug
+watch(
+  () => props.workspace.slug,
+  (newValue) => {
+    newSlug.value = newValue
+  },
+  { immediate: true }
+)
 </script>
