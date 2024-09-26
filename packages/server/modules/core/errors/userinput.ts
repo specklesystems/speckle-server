@@ -4,6 +4,7 @@ import { Options } from 'verror'
 export class UserInputError<I extends Info = Info> extends BaseError<I> {
   static defaultMessage = 'Invalid user input.'
   static code = 'USER_INPUT_ERROR'
+  static statusCode = 400
 }
 
 export class PasswordTooShortError extends UserInputError {

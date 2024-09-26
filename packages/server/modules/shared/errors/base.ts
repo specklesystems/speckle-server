@@ -25,6 +25,18 @@ export class BaseError<I extends Info = Info> extends VError {
    */
   static statusCode = 500
 
+  /**
+   *
+   * @param message A string, which can use templates.
+   * Templates require the property to be within curly brackets, e.g. `{property}`.
+   * Templates can include simple if conditionals, e.g. `{if property}some string{end}`.
+   * Properties should be passed to the options.info property.
+   * Properties within options.info can be nested, e.g. `{property.subProperty}`.
+   * @param options If an Error is passed, it will be used as the cause.
+   * If an object is passed, it will be used as the options.
+   * If message template format is used in the message,
+   * the info property of the options must contain the properties to use. e.g. `{info: {property: 'value'}}`.
+   */
   constructor(
     message?: string | null | undefined,
     options: ExtendedOptions<I> | Error | undefined = undefined

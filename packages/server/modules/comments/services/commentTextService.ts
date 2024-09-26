@@ -10,21 +10,23 @@ import {
 import { isString, uniq } from 'lodash'
 import { InvalidAttachmentsError } from '@/modules/comments/errors'
 import { JSONContent } from '@tiptap/core'
-import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { db } from '@/db/knex'
+import { ValidateInputAttachments } from '@/modules/comments/domain/operations'
+import { GetBlobs } from '@/modules/blobstorage/domain/operations'
 
 const COMMENT_SCHEMA_VERSION = '1.0.0'
 const COMMENT_SCHEMA_TYPE = 'stream_comment'
 
-export async function validateInputAttachments(streamId: string, blobIds: string[]) {
-  blobIds = uniq(blobIds || [])
-  if (!blobIds.length) return
+export const validateInputAttachmentsFactory =
+  (deps: { getBlobs: GetBlobs }): ValidateInputAttachments =>
+  async (streamId: string, blobIds: string[]) => {
+    blobIds = uniq(blobIds || [])
+    if (!blobIds.length) return
 
-  const blobs = await getBlobsFactory({ db })({ blobIds, streamId })
-  if (!blobs || blobs.length !== blobIds.length) {
-    throw new InvalidAttachmentsError('Attempting to attach invalid blobs to comment')
+    const blobs = await deps.getBlobs({ blobIds, streamId })
+    if (!blobs || blobs.length !== blobIds.length) {
+      throw new InvalidAttachmentsError('Attempting to attach invalid blobs to comment')
+    }
   }
-}
 
 /**
  * Build comment.text value from a ProseMirror doc

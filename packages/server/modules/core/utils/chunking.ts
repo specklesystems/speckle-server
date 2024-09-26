@@ -11,6 +11,7 @@ export class ArgumentError extends BaseError {
   constructor(message?: string | undefined, options?: Options | Error | undefined) {
     super(message, options)
   }
+  static statusCode = 400
 }
 
 // since we're mostly using this for an artificial limit calculation

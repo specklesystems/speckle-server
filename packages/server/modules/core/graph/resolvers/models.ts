@@ -13,7 +13,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
 
-import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
+import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommits,
   getPaginatedStreamCommits
@@ -22,9 +22,26 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import {
+  getBranchLatestCommits,
+  getModelTreeItems,
+  getStreamBranchesByName
+} from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { getStreamObjects } from '@/modules/core/repositories/objects'
+import {
+  getAllBranchCommits,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
+
+const getViewerResourceGroups = getViewerResourceGroupsFactory({
+  getStreamObjects,
+  getBranchLatestCommits,
+  getStreamBranchesByName,
+  getSpecificBranchCommits,
+  getAllBranchCommits
+})
 
 export = {
   User: {

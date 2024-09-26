@@ -5,7 +5,7 @@ export type StreamActivityRecord = {
   time: Date
   resourceType: Nullable<(typeof ResourceTypes)[keyof typeof ResourceTypes]>
   resourceId: Nullable<string>
-  actionType: Nullable<AllActivityTypes>
+  actionType: AllActivityTypes
   userId: Nullable<string>
   info: Nullable<Record<string, unknown>>
   message: Nullable<string>
