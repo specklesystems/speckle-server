@@ -229,7 +229,7 @@ export const getBranchLatestCommitsFactory =
     return await q
   }
 
-export const getPaginatedProjectModelsBaseQueryFactory =
+const getPaginatedProjectModelsBaseQueryFactory =
   (deps: { db: Knex }) =>
   <T>(projectId: string, params: ProjectModelsArgs) => {
     const { filter } = params
