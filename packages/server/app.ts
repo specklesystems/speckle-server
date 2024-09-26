@@ -32,7 +32,6 @@ import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
 
 import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
@@ -72,6 +71,7 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUser } from '@/modules/core/repositories/users'
+import { isAlive, isReady } from '@/modules/healthchecks'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -301,7 +301,6 @@ export async function buildApolloServer(options?: {
 }): Promise<ApolloServer<GraphQLContext>> {
   const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
   const subscriptionServer = options?.subscriptionServer
-  const httpServer = options?.httpServer
   const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
@@ -333,15 +332,7 @@ export async function buildApolloServer(options?: {
               sendHeaders: { all: true }
             })
           ]
-        : [ApolloServerPluginUsageReportingDisabled()]),
-      ...(!!httpServer
-        ? [
-            ApolloServerPluginDrainHttpServer({
-              httpServer,
-              stopGracePeriodMillis: shutdownTimeoutSeconds() * 1000
-            })
-          ]
-        : [])
+        : [ApolloServerPluginUsageReportingDisabled()])
     ],
     introspection: true,
     cache: 'bounded',
@@ -416,7 +407,6 @@ export async function init() {
 
   // Initialize graphql server
   graphqlServer = await buildApolloServer({
-    httpServer: server,
     subscriptionServer
   })
   app.use(
@@ -472,10 +462,9 @@ async function createFrontendProxy() {
 export async function startHttp(params: {
   server: http.Server
   app: Express
-  graphqlServer: ApolloServer<GraphQLContext>
   customPortOverride?: number
 }) {
-  const { server, app, graphqlServer, customPortOverride } = params
+  const { server, app, customPortOverride } = params
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
@@ -498,20 +487,23 @@ export async function startHttp(params: {
   app.set('port', port)
 
   // large timeout to allow large downloads on slow connections to finish
-  createTerminus(null, {
+  createTerminus(server, {
     signals: ['SIGTERM', 'SIGINT'],
     timeout: shutdownTimeoutSeconds() * 1000,
     beforeShutdown: async () => {
       shutdownLogger.info('Shutting down (signal received)...')
-      await graphqlServer.stop() //handles draining of connections on the server
     },
     onSignal: async () => {
-      // called after server.stop() resolves
       await shutdown()
     },
     onShutdown: () => {
       shutdownLogger.info('Shutdown completed')
       process.exit(0)
+    },
+    healthChecks: {
+      '/readiness': isReady,
+      '/liveness': isAlive,
+      verbatim: true
     },
     logger: (message, err) => {
       if (err) {

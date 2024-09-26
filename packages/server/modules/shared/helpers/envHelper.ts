@@ -453,5 +453,5 @@ export function createS3Bucket() {
 }
 
 export function shutdownTimeoutSeconds() {
-  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', `${5 * 60}`)
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
 }
