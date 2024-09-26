@@ -2,10 +2,10 @@
 import prometheusClient from 'prom-client'
 import { graphqlLogger } from '@/logging/logging'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
-import { FieldNode, GraphQLError, SelectionNode } from 'graphql'
+import { FieldNode, SelectionNode } from 'graphql'
 import { ApolloServerPlugin } from '@apollo/server'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
+import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 
 type ApolloLoggingPluginTransaction = {
   start: number
@@ -110,7 +110,7 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
               graphql_variables: variables
             })
           }
-          if (err instanceof GraphQLError && isUserGraphqlError(err)) {
+          if (shouldLogAsInfoLevel(err)) {
             logger.info(
               { err },
               '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'

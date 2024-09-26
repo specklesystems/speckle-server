@@ -1,12 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="relative z-30">
+  <div class="relative">
     <LayoutMenu
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
-      :menu-position="HorizontalDirection.Left"
-      mount-menu-on-body
+      :menu-position="menuPosition ? menuPosition : HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
@@ -88,6 +87,7 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
   canEdit?: boolean
+  menuPosition?: HorizontalDirection
 }>()
 
 const copyModelLink = useCopyModelLink()
@@ -106,24 +106,26 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
     ? [
         [
           {
-            title: 'Edit...',
+            title: 'Edit model...',
             id: ActionTypes.Rename,
-            disabled: !props.canEdit,
-            disabledTooltip: 'Insufficient permissions'
-          },
-          {
-            title: 'View versions',
-            id: ActionTypes.ViewVersions
-          },
-          {
-            title: 'Upload new version...',
-            id: ActionTypes.UploadVersion,
             disabled: !props.canEdit,
             disabledTooltip: 'Insufficient permissions'
           }
         ]
       ]
     : []),
+  [
+    {
+      title: 'View versions',
+      id: ActionTypes.ViewVersions
+    },
+    {
+      title: 'Upload new version...',
+      id: ActionTypes.UploadVersion,
+      disabled: !props.canEdit,
+      disabledTooltip: 'Insufficient permissions'
+    }
+  ],
   [
     { title: 'Copy link', id: ActionTypes.Share },
     { title: 'Copy ID', id: ActionTypes.CopyId },

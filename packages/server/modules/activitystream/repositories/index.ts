@@ -4,8 +4,10 @@ import {
   GetActivityCountByResourceId,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
+  GetResourceActivity,
   GetStreamActivity,
   GetTimelineCount,
+  GetUserActivity,
   GetUserTimeline
 } from '@/modules/activitystream/domain/operations'
 import {
@@ -164,6 +166,48 @@ export const getUserTimelineFactory =
     sqlVariables.unshift(userId)
     sqlVariables.push(limit)
     const results = (await db.raw(dbRawQuery, sqlVariables)).rows
+    return {
+      items: results,
+      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
+    }
+  }
+
+export const getResourceActivityFactory =
+  ({ db }: { db: Knex }): GetResourceActivity =>
+  async ({ resourceType, resourceId, actionType, after, before, cursor, limit }) => {
+    if (!limit) {
+      limit = 200
+    }
+
+    const dbQuery = tables.streamActivity(db).where({ resourceType, resourceId })
+    if (actionType) dbQuery.andWhere({ actionType })
+    if (after) dbQuery.andWhere('time', '>', after)
+    if (before) dbQuery.andWhere('time', '<', before)
+    if (cursor) dbQuery.andWhere('time', '<', cursor)
+    dbQuery.orderBy('time', 'desc').limit(limit)
+
+    const results = await dbQuery.select('*')
+    return {
+      items: results,
+      cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
+    }
+  }
+
+export const getUserActivityFactory =
+  ({ db }: { db: Knex }): GetUserActivity =>
+  async ({ userId, actionType, after, before, cursor, limit }) => {
+    if (!limit) {
+      limit = 200
+    }
+
+    const dbQuery = tables.streamActivity(db).where({ userId })
+    if (actionType) dbQuery.andWhere({ actionType })
+    if (after) dbQuery.andWhere('time', '>', after)
+    if (before) dbQuery.andWhere('time', '<', before)
+    if (cursor) dbQuery.andWhere('time', '<', cursor)
+    dbQuery.orderBy('time', 'desc').limit(limit)
+
+    const results = await dbQuery.select('*')
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
