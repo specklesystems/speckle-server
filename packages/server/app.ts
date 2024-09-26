@@ -75,8 +75,6 @@ import { isAlive, isReady } from '@/modules/healthchecks'
 
 const GRAPHQL_PATH = '/graphql'
 
-let graphqlServer: ApolloServer<GraphQLContext>
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
 
@@ -406,7 +404,7 @@ export async function init() {
   const subscriptionServer = buildApolloSubscriptionServer(server)
 
   // Initialize graphql server
-  graphqlServer = await buildApolloServer({
+  const graphqlServer = await buildApolloServer({
     subscriptionServer
   })
   app.use(
@@ -432,7 +430,10 @@ export async function init() {
   return { app, graphqlServer, server, subscriptionServer }
 }
 
-export async function shutdown(): Promise<void> {
+export async function shutdown(params: {
+  graphqlServer: ApolloServer<GraphQLContext>
+}): Promise<void> {
+  await params.graphqlServer.stop()
   await ModulesSetup.shutdown()
 }
 
@@ -462,9 +463,10 @@ async function createFrontendProxy() {
 export async function startHttp(params: {
   server: http.Server
   app: Express
+  graphqlServer: ApolloServer<GraphQLContext>
   customPortOverride?: number
 }) {
-  const { server, app, customPortOverride } = params
+  const { server, app, graphqlServer, customPortOverride } = params
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
@@ -494,11 +496,12 @@ export async function startHttp(params: {
       shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      await shutdown()
+      await shutdown({ graphqlServer })
     },
     onShutdown: () => {
       shutdownLogger.info('Shutdown completed')
-      process.exit(0)
+      shutdownLogger.flush()
+      return Promise.resolve()
     },
     healthChecks: {
       '/readiness': isReady,
