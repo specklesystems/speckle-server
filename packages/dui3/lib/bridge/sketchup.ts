@@ -72,7 +72,7 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 5000 // 2s
+  private TIMEOUT_MS = 1000 * 60 // 60 sec
   private NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
