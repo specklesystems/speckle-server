@@ -93,7 +93,7 @@ import {
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 
@@ -176,7 +176,7 @@ const authorizeCommentAccess = authorizeCommentAccessFactory({
 const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
   getViewerResourceGroups: getViewerResourceGroupsFactory({
     getStreamObjects,
-    getBranchLatestCommits,
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
     getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
     getSpecificBranchCommits,
     getAllBranchCommits
@@ -226,7 +226,7 @@ const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
 })
 const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
   resolvePaginatedProjectCommentsLatestModelResources:
-    resolvePaginatedProjectCommentsLatestModelResourcesFactory(),
+    resolvePaginatedProjectCommentsLatestModelResourcesFactory({ db }),
   getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({ db }),
   getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCountFactory({
     db

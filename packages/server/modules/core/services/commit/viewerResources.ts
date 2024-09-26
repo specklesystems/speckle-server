@@ -6,7 +6,10 @@ import {
   GetViewerResourcesForComments,
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
-import { GetStreamBranchesByName } from '@/modules/core/domain/branches/operations'
+import {
+  GetBranchLatestCommits,
+  GetStreamBranchesByName
+} from '@/modules/core/domain/branches/operations'
 import {
   ResourceIdentifier,
   ResourceIdentifierInput,
@@ -16,7 +19,6 @@ import {
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
   getCommitsAndTheirBranchIds,
@@ -158,7 +160,7 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
 type GetVersionResourceGroupsLoadedVersionsOnlyDeps = {
   getStreamBranchesByName: GetStreamBranchesByName
   getSpecificBranchCommits: typeof getSpecificBranchCommits
-  getBranchLatestCommits: typeof getBranchLatestCommits
+  getBranchLatestCommits: GetBranchLatestCommits
 }
 
 const getVersionResourceGroupsLoadedVersionsOnlyFactory =
@@ -255,7 +257,7 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
   }
 
 type GetAllModelsResourceGroupDeps = {
-  getBranchLatestCommits: typeof getBranchLatestCommits
+  getBranchLatestCommits: GetBranchLatestCommits
 }
 
 const getAllModelsResourceGroupFactory =

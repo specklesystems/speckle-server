@@ -1,4 +1,5 @@
 import { Branch } from '@/modules/core/domain/branches/types'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { Nullable, Optional } from '@speckle/shared'
 
 export type GenerateBranchId = () => string
@@ -29,3 +30,11 @@ export type GetStreamBranchByName = (
   streamId: string,
   name: string
 ) => Promise<Nullable<Branch>>
+
+export type GetBranchLatestCommits = (
+  branchIds?: string[],
+  streamId?: string,
+  options?: Partial<{
+    limit: number
+  }>
+) => Promise<BranchLatestCommit[]>

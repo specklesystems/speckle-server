@@ -3,7 +3,7 @@ import { downloadCommitFactory } from '@/modules/cross-server-sync/services/comm
 import { cliLogger } from '@/logging/logging'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -82,6 +82,7 @@ const command: CommandModule<
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })
     })
+    const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
     const insertComments = insertCommentsFactory({ db })
     const insertCommentLinks = insertCommentLinksFactory({ db })
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({

@@ -6,7 +6,7 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -19,9 +19,11 @@ import {
   GenerateBranchId,
   GetBranchById,
   GetBranchesByIds,
+  GetBranchLatestCommits,
   GetStreamBranchByName,
   GetStreamBranchesByName
 } from '@/modules/core/domain/branches/operations'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>(Branches.name)
@@ -182,43 +184,46 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(
-  branchIds?: string[],
-  streamId?: string,
-  options?: Partial<{
-    limit: number
-  }>
-) {
-  if (!branchIds?.length && !streamId) return []
-  const { limit } = options || {}
+export const getBranchLatestCommitsFactory =
+  (deps: { db: Knex }): GetBranchLatestCommits =>
+  async (
+    branchIds?: string[],
+    streamId?: string,
+    options?: Partial<{
+      limit: number
+    }>
+  ) => {
+    if (!branchIds?.length && !streamId) return []
+    const { limit } = options || {}
 
-  const q = Branches.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      knex.raw(`?? as "branchId"`, [Branches.col.id])
-    ])
-    .distinctOn(Branches.col.id)
-    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .orderBy([
-      { column: Branches.col.id },
-      { column: Commits.col.createdAt, order: 'desc' }
-    ])
+    const q = tables
+      .branches(deps.db)
+      .select<Array<BranchLatestCommit>>([
+        ...Commits.cols,
+        knex.raw(`?? as "branchId"`, [Branches.col.id])
+      ])
+      .distinctOn(Branches.col.id)
+      .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .orderBy([
+        { column: Branches.col.id },
+        { column: Commits.col.createdAt, order: 'desc' }
+      ])
 
-  if (branchIds?.length) {
-    q.whereIn(Branches.col.id, branchIds)
+    if (branchIds?.length) {
+      q.whereIn(Branches.col.id, branchIds)
+    }
+
+    if (streamId?.length) {
+      q.where(Branches.col.streamId, streamId)
+    }
+
+    if (!isUndefined(limit)) {
+      q.limit(limit)
+    }
+
+    return await q
   }
-
-  if (streamId?.length) {
-    q.where(Branches.col.streamId, streamId)
-  }
-
-  if (!isUndefined(limit)) {
-    q.limit(limit)
-  }
-
-  return await q
-}
 
 function getPaginatedProjectModelsBaseQuery<T>(
   projectId: string,
