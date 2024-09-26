@@ -413,3 +413,7 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 export function maximumObjectUploadFileSizeMb() {
   return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
 }
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', `${5 * 60}`)
+}

@@ -47,7 +47,8 @@ import {
   isTestEnv,
   useNewFrontend,
   isApolloMonitoringEnabled,
-  enableMixpanel
+  enableMixpanel,
+  shutdownTimeoutSeconds
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -332,7 +333,14 @@ export async function buildApolloServer(options?: {
             })
           ]
         : [ApolloServerPluginUsageReportingDisabled()]),
-      ...(!!httpServer ? [ApolloServerPluginDrainHttpServer({ httpServer })] : [])
+      ...(!!httpServer
+        ? [
+            ApolloServerPluginDrainHttpServer({
+              httpServer,
+              stopGracePeriodMillis: shutdownTimeoutSeconds() * 1000
+            })
+          ]
+        : [])
     ],
     introspection: true,
     cache: 'bounded',
@@ -433,12 +441,7 @@ export async function init() {
   return { app, graphqlServer, server, subscriptionServer }
 }
 
-export async function shutdown(params: {
-  app: Express
-  graphqlServer: ApolloServer<GraphQLContext>
-}): Promise<void> {
-  const { graphqlServer } = params
-  await graphqlServer.stop()
+export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
 }
 
@@ -494,18 +497,27 @@ export async function startHttp(params: {
   app.set('port', port)
 
   // large timeout to allow large downloads on slow connections to finish
-  createTerminus(server, {
+  createTerminus(null, {
     signals: ['SIGTERM', 'SIGINT'],
-    timeout: 5 * 60 * 1000,
+    timeout: shutdownTimeoutSeconds() * 1000,
     beforeShutdown: async () => {
       shutdownLogger.info('Shutting down (signal received)...')
+      await graphqlServer.stop() //handles draining of connections on the server
     },
     onSignal: async () => {
-      await shutdown({ app, graphqlServer })
+      // called after server.stop() resolves
+      await shutdown()
     },
     onShutdown: () => {
       shutdownLogger.info('Shutdown completed')
       process.exit(0)
+    },
+    logger: (message, err) => {
+      if (err) {
+        shutdownLogger.error({ err }, message)
+      } else {
+        shutdownLogger.info(message)
+      }
     }
   })
 
