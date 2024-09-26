@@ -293,7 +293,6 @@ const updateWorkspaceSlug = async (newSlug: string) => {
     slug.value = newSlug
 
     if (route.params.slug === oldSlug) {
-      // Try router replace
       router.replace(workspaceRoute(newSlug))
     }
   } else {
