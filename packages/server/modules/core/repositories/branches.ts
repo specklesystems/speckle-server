@@ -18,7 +18,9 @@ import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelp
 import {
   GenerateBranchId,
   GetBranchById,
-  GetBranchesByIds
+  GetBranchesByIds,
+  GetStreamBranchByName,
+  GetStreamBranchesByName
 } from '@/modules/core/domain/branches/operations'
 
 const tables = {
@@ -48,45 +50,50 @@ export const getBranchByIdFactory =
     return branch as Optional<BranchRecord>
   }
 
-export async function getStreamBranchesByName(
-  streamId: string,
-  names: string[],
-  options?: Partial<{
-    /**
-     * Set to true if you want to find branches that start with specified names as prefixes
-     */
-    startsWithName: boolean
-  }>
-): Promise<BranchRecord[]> {
-  if (!streamId || !names?.length) return []
-  const { startsWithName } = options || {}
+export const getStreamBranchesByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchesByName =>
+  async (
+    streamId: string,
+    names: string[],
+    options?: Partial<{
+      /**
+       * Set to true if you want to find branches that start with specified names as prefixes
+       */
+      startsWithName: boolean
+    }>
+  ): Promise<BranchRecord[]> => {
+    if (!streamId || !names?.length) return []
+    const { startsWithName } = options || {}
 
-  const q = Branches.knex<BranchRecord[]>()
-    .where(Branches.col.streamId, streamId)
-    .andWhere((w1) => {
-      w1.where(
-        knex.raw('LOWER(??) ilike ANY(?)', [
-          Branches.col.name,
-          names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
-        ])
-      )
+    const q = tables
+      .branches(deps.db)
+      .where(Branches.col.streamId, streamId)
+      .andWhere((w1) => {
+        w1.where(
+          knex.raw('LOWER(??) ilike ANY(?)', [
+            Branches.col.name,
+            names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
+          ])
+        )
 
-      if (!options?.startsWithName) {
-        // There are some edge cases with branches that have backwards slashes in their name that break the query,
-        // hence the extra condition
-        w1.orWhereIn(Branches.col.name, names)
-      }
-    })
+        if (!options?.startsWithName) {
+          // There are some edge cases with branches that have backwards slashes in their name that break the query,
+          // hence the extra condition
+          w1.orWhereIn(Branches.col.name, names)
+        }
+      })
 
-  return await q
-}
+    return await q
+  }
 
-export async function getStreamBranchByName(streamId: string, name: string) {
-  if (!streamId || !name) return null
+export const getStreamBranchByNameFactory =
+  (deps: { db: Knex }): GetStreamBranchByName =>
+  async (streamId: string, name: string) => {
+    if (!streamId || !name) return null
 
-  const [first] = await getStreamBranchesByName(streamId, [name])
-  return first || null
-}
+    const [first] = await getStreamBranchesByNameFactory(deps)(streamId, [name])
+    return first || null
+  }
 
 export function getBatchedStreamBranches(
   streamId: string,

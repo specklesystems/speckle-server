@@ -1,7 +1,6 @@
 'use strict'
 const knex = require('@/db/knex')
 const {
-  getStreamBranchByName,
   getStreamBranchCount,
   createBranch: createBranchInDb
 } = require('@/modules/core/repositories/branches')
@@ -57,10 +56,6 @@ module.exports = {
 
   async getBranchesByStreamIdTotalCount({ streamId }) {
     return await getStreamBranchCount(streamId)
-  },
-
-  async getBranchByNameAndStreamId({ streamId, name }) {
-    return await getStreamBranchByName(streamId, name)
   },
 
   /**

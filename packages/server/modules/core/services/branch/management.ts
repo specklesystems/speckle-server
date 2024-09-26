@@ -22,7 +22,7 @@ import {
   createBranch,
   deleteBranchById,
   getBranchByIdFactory,
-  getStreamBranchByName,
+  getStreamBranchByNameFactory,
   updateBranch
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
@@ -40,7 +40,10 @@ export async function createBranchAndNotify(
   creatorId: string
 ) {
   const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
-  const existingBranch = await getStreamBranchByName(streamId, input.name)
+  const existingBranch = await getStreamBranchByNameFactory({ db })(
+    streamId,
+    input.name
+  )
   if (existingBranch) {
     throw new BranchCreateError('A branch with this name already exists')
   }

@@ -15,16 +15,19 @@ const {
   createBranch,
   updateBranch,
   getBranchesByStreamId,
-  getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../services/branches')
 const { createCommitByBranchName } = require('../services/commits')
 
 const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
-const { getBranchByIdFactory } = require('@/modules/core/repositories/branches')
+const {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
 const getBranchById = getBranchByIdFactory({ db: knex })
+const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -130,22 +133,13 @@ describe('Branches @core-branches', () => {
       authorId: user.id
     })
 
-    const b = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'casesensitive'
-    })
+    const b = await getStreamBranchByName(stream.id, 'casesensitive')
     expect(b.name).to.equal('casesensitive')
 
-    const bb = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'CaseSensitive'
-    })
+    const bb = await getStreamBranchByName(stream.id, 'CaseSensitive')
     expect(bb.name).to.equal('casesensitive')
 
-    const bbb = await getBranchByNameAndStreamId({
-      streamId: stream.id,
-      name: 'CASESENSITIVE'
-    })
+    const bbb = await getStreamBranchByName(stream.id, 'CASESENSITIVE')
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
@@ -219,7 +213,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should NOT delete the main branch', async () => {
-    const b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'main' })
+    const b = await getStreamBranchByName(stream.id, 'main')
     try {
       await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
       assert.fail()
