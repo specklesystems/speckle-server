@@ -1,7 +1,13 @@
 import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
-import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
+import {
+  ModelsTreeItemCollection,
+  ProjectModelsArgs,
+  ProjectModelsTreeArgs
+} from '@/modules/core/graph/generated/graphql'
+import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { Nullable, Optional } from '@speckle/shared'
+import { Merge } from 'type-fest'
 
 export type GenerateBranchId = () => string
 
@@ -63,3 +69,34 @@ export type GetPaginatedProjectModels = (
   items: Branch[]
   cursor: string | null
 }>
+
+export type GetModelTreeItemsFiltered = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<ModelsTreeItemGraphQLReturn[]>
+
+export type GetModelTreeItemsFilteredTotalCount = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<number>
+
+export type GetProjectTopLevelModelsTree = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<
+  Merge<
+    ModelsTreeItemCollection,
+    {
+      items: ModelsTreeItemGraphQLReturn[]
+    }
+  >
+>

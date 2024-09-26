@@ -7,7 +7,7 @@ import {
 } from '@/modules/core/services/branch/management'
 import {
   getPaginatedProjectModelsFactory,
-  getProjectTopLevelModelsTree
+  getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -25,6 +25,8 @@ import {
 import {
   getBranchLatestCommitsFactory,
   getModelTreeItems,
+  getModelTreeItemsFilteredFactory,
+  getModelTreeItemsFilteredTotalCountFactory,
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchesByNameFactory
@@ -49,6 +51,12 @@ const getViewerResourceGroups = getViewerResourceGroupsFactory({
 const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
   getPaginatedProjectModelsItems: getPaginatedProjectModelsItemsFactory({ db }),
   getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory({
+    db
+  })
+})
+const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
+  getModelTreeItemsFiltered: getModelTreeItemsFilteredFactory({ db }),
+  getModelTreeItemsFilteredTotalCount: getModelTreeItemsFilteredTotalCountFactory({
     db
   })
 })
