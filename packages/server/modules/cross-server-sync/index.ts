@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   addCommentCreatedActivity,
   addReplyAddedActivity
@@ -19,6 +20,7 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
+  createBranchFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
@@ -35,7 +37,7 @@ import {
   markOnboardingBaseStream
 } from '@/modules/core/repositories/streams'
 import { getFirstAdmin, getUser } from '@/modules/core/repositories/users'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import {
   getViewerResourceGroupsFactory,
@@ -107,7 +109,11 @@ const crossServerSyncModule: SpeckleModule = {
         createStreamReturnRecord,
         getUser,
         getStreamBranchByName,
-        createBranchAndNotify
+        createBranchAndNotify: createBranchAndNotifyFactory({
+          createBranch: createBranchFactory({ db }),
+          getStreamBranchByName,
+          addBranchCreatedActivity
+        })
       }),
       markOnboardingBaseStream
     })

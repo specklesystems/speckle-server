@@ -1,7 +1,7 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  createBranchAndNotify,
+  createBranchAndNotifyFactory,
   deleteBranchAndNotify,
   updateBranchAndNotify
 } from '@/modules/core/services/branch/management'
@@ -23,6 +23,7 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
+  createBranchFactory,
   getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
@@ -30,6 +31,7 @@ import {
   getModelTreeItemsTotalCountFactory,
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
+  getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
@@ -40,6 +42,7 @@ import {
   getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
@@ -63,6 +66,11 @@ const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
   }),
   getModelTreeItems,
   getModelTreeItemsTotalCount: getModelTreeItemsTotalCountFactory({ db })
+})
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
 })
 
 export = {
