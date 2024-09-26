@@ -6,7 +6,7 @@ import {
   updateBranchAndNotify
 } from '@/modules/core/services/branch/management'
 import {
-  getPaginatedProjectModels,
+  getPaginatedProjectModelsFactory,
   getProjectTopLevelModelsTree
 } from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
@@ -25,6 +25,8 @@ import {
 import {
   getBranchLatestCommitsFactory,
   getModelTreeItems,
+  getPaginatedProjectModelsItemsFactory,
+  getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
@@ -42,6 +44,13 @@ const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
   getSpecificBranchCommits,
   getAllBranchCommits
+})
+
+const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
+  getPaginatedProjectModelsItems: getPaginatedProjectModelsItemsFactory({ db }),
+  getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory({
+    db
+  })
 })
 
 export = {
