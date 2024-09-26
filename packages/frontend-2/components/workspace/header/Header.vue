@@ -77,6 +77,7 @@
           </button>
           <FormButton
             v-if="isWorkspaceAdmin"
+            class="hidden md:block"
             color="outline"
             @click="$emit('show-invite-dialog')"
           >
@@ -164,7 +165,8 @@ graphql(`
 enum ActionTypes {
   Settings = 'settings',
   CopyLink = 'copy-link',
-  MoveProjects = 'move-projects'
+  MoveProjects = 'move-projects',
+  Invite = 'invite'
 }
 
 const emit = defineEmits<{
@@ -190,7 +192,10 @@ const isWorkspaceAdmin = computed(
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     ...(isMobile.value
-      ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
+      ? [
+          { title: 'Move projects', id: ActionTypes.MoveProjects },
+          { title: 'Invite', id: ActionTypes.Invite }
+        ]
       : []),
     { title: 'Copy link', id: ActionTypes.CopyLink }
   ],
@@ -210,6 +215,12 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Settings:
       openSettingsDialog(SettingMenuKeys.Workspace.General)
+      break
+    case ActionTypes.MoveProjects:
+      emit('show-move-projects-dialog')
+      break
+    case ActionTypes.Invite:
+      emit('show-invite-dialog')
       break
   }
 }

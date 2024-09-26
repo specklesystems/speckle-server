@@ -112,7 +112,6 @@ const moveableProjects = computed(() =>
   )
 )
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
-
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Done',
