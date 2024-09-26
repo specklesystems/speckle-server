@@ -19,7 +19,7 @@
       v-model:model-value="workspaceShortId"
       name="slug"
       label="Short ID"
-      :help="getShortIdHelp"
+      :help="`${baseUrl}/workspaces/${workspaceShortId}`"
       color="foundation"
       :rules="[isStringOfLength({ maxLength: 50, minLength: 3 }), isValidWorkspaceSlug]"
       show-label
@@ -63,12 +63,6 @@ const updateSlug = handleSubmit(() => {
   emit('update:slug', workspaceShortId.value)
   isOpen.value = false
 })
-
-const getShortIdHelp = computed(() =>
-  workspaceShortId.value
-    ? `${props.baseUrl}/workspaces/${workspaceShortId.value}`
-    : `Used after ${props.baseUrl}/workspaces/`
-)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
