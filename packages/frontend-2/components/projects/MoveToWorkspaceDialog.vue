@@ -66,10 +66,6 @@
 </template>
 
 <script setup lang="ts">
-// Workspace creation/selection will be moved out of this component in a following
-// task. It will only be responsible for moving the project to the selected
-// workspace. This will simplify the component.
-
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   ProjectsMoveToWorkspaceDialog_WorkspaceFragment,
@@ -117,6 +113,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
   workspace?: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
+  eventSource?: string // Used for mixpanel tracking
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -161,7 +158,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
           const workspaceName =
             selectedWorkspace.value?.name || (props.workspace?.name as string)
 
-          moveProject(props.project.id, workspaceId, workspaceName)
+          moveProject(props.project.id, workspaceId, workspaceName, props.eventSource)
 
           open.value = false
         }

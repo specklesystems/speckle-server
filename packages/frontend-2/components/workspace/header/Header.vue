@@ -84,6 +84,7 @@
           </FormButton>
           <FormButton
             v-if="isWorkspaceAdmin"
+            class="hidden md:block"
             color="subtle"
             @click="$emit('show-move-projects-dialog')"
           >
@@ -115,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useBreakpoints } from '@vueuse/core'
 import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -128,6 +129,7 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import DescriptionDialog from './DescriptionDialog.vue'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -161,7 +163,8 @@ graphql(`
 
 enum ActionTypes {
   Settings = 'settings',
-  CopyLink = 'copy-link'
+  CopyLink = 'copy-link',
+  MoveProjects = 'move-projects'
 }
 
 const emit = defineEmits<{
@@ -175,6 +178,9 @@ const props = defineProps<{
 }>()
 
 const menuId = useId()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+
+const isMobile = breakpoints.smaller('md')
 const showActionsMenu = ref(false)
 
 const team = computed(() => props.workspaceInfo.team.items || [])
@@ -182,7 +188,12 @@ const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Copy link', id: ActionTypes.CopyLink }],
+  [
+    ...(isMobile.value
+      ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
+      : []),
+    { title: 'Copy link', id: ActionTypes.CopyLink }
+  ],
   [{ title: 'Settings...', id: ActionTypes.Settings }]
 ])
 

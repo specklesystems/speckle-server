@@ -5,7 +5,10 @@
     title="Move projects to workspace"
     :buttons="buttons"
   >
-    <div class="flex flex-col mt-2 border rounded-md border-outline-3">
+    <div
+      v-if="hasMoveableProjects"
+      class="flex flex-col mt-2 border rounded-md border-outline-3"
+    >
       <div
         v-for="project in moveableProjects"
         :key="project.id"
@@ -31,11 +34,16 @@
         </span>
       </div>
     </div>
+    <p v-else class="py-4 text-body-xs text-foreground-2">
+      You don't have any projects that are moveable to this workspace
+    </p>
+
     <ProjectsMoveToWorkspaceDialog
       v-if="selectedProject"
+      v-model:open="showMoveToWorkspaceDialog"
       :workspace="workspace"
       :project="selectedProject"
-      :open="showMoveToWorkspaceDialog"
+      event-source="move-projects-dialog"
     />
   </LayoutDialog>
 </template>
@@ -103,6 +111,7 @@ const moveableProjects = computed(() =>
       !projectsWithWorkspace.value.includes(project.id)
   )
 )
+const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
 const buttons = computed((): LayoutDialogButton[] => [
   {
