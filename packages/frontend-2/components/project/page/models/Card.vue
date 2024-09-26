@@ -1,7 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
+  <div
+    v-keyboard-clickable
+    :class="containerClasses"
+    @click="onCardClick"
+    @mouseleave=";(showActionsMenu = false), (hovered = false)"
+    @mouseenter="hovered = true"
+  >
     <div class="relative p-2 h-full flex flex-col">
       <NuxtLink
         v-if="!defaultLinkDisabled"
@@ -167,6 +174,7 @@ const importArea = ref(
   }>
 )
 const showActionsMenu = ref(false)
+const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
