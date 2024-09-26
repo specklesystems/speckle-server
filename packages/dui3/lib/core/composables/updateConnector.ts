@@ -33,10 +33,10 @@ export function useUpdateConnector() {
     if (!isUpToDate.value && !config.isDevMode) {
       const notification: ToastNotification = {
         type: ToastNotificationType.Success,
-        title: `Update available`,
+        title: `New connector update available`,
         description: latestAvailableVersion.value?.Number.replace('+0', ''), // TODO: currently versions end with "+0" Alan will have a look
         cta: {
-          title: `Download`,
+          title: `Update`,
           onClick: () => downloadLatestVersion()
         }
       }
