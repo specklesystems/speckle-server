@@ -153,7 +153,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should get a branch', async () => {
-    const myBranch = await getBranchById({ id: branch.id })
+    const myBranch = await getBranchById(branch.id)
     expect(myBranch.authorId).to.equal(user.id)
     expect(myBranch.streamId).to.equal(stream.id)
   })
@@ -166,7 +166,7 @@ describe('Branches @core-branches', () => {
       userId: user.id
     })
 
-    const b1 = await getBranchById({ id: branch.id })
+    const b1 = await getBranchById(branch.id)
     expect(b1.description).to.equal('lorem ipsum')
   })
 
