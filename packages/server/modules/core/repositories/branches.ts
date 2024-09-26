@@ -610,7 +610,7 @@ export const getModelTreeItemsTotalCountFactory =
     options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
   ) => {
     const { query } = getModelTreeItemsBaseQueryFactory(deps)(projectId, options)
-    const q = knex.count<{ count: string }[]>().from(query.as('sq1'))
+    const q = deps.db().count<{ count: string }[]>().from(query.as('sq1'))
     const [row] = await q
     return parseInt(row.count || '0')
   }
