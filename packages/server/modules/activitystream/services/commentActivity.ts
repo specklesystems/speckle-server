@@ -13,7 +13,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchLatestCommits,
-  getStreamBranchesByName
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
@@ -67,7 +67,7 @@ export async function addCommentCreatedActivity(params: {
     getViewerResourceGroups: getViewerResourceGroupsFactory({
       getStreamObjects,
       getBranchLatestCommits,
-      getStreamBranchesByName,
+      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
       getSpecificBranchCommits,
       getAllBranchCommits
     })

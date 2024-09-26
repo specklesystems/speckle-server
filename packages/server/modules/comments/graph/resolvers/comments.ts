@@ -94,7 +94,7 @@ import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
-  getStreamBranchesByName
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 
 const streamResourceCheck = streamResourceCheckFactory({
@@ -177,7 +177,7 @@ const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
   getViewerResourceGroups: getViewerResourceGroupsFactory({
     getStreamObjects,
     getBranchLatestCommits,
-    getStreamBranchesByName,
+    getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
     getSpecificBranchCommits,
     getAllBranchCommits
   })

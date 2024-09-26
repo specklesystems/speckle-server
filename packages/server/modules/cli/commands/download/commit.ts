@@ -4,8 +4,8 @@ import { cliLogger } from '@/logging/logging'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
   getBranchLatestCommits,
-  getStreamBranchByName,
-  getStreamBranchesByName
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
@@ -88,7 +88,7 @@ const command: CommandModule<
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
         getBranchLatestCommits,
-        getStreamBranchesByName,
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits
       })
@@ -115,7 +115,7 @@ const command: CommandModule<
 
     const downloadCommit = downloadCommitFactory({
       getStream,
-      getStreamBranchByName,
+      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
       getStreamCollaborators,
       getUser,
       createCommitByBranchId,

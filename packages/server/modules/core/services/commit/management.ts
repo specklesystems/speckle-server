@@ -21,7 +21,7 @@ import {
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
   getBranchByIdFactory,
-  getStreamBranchByName,
+  getStreamBranchByNameFactory,
   markCommitBranchUpdated
 } from '@/modules/core/repositories/branches'
 import {
@@ -188,7 +188,7 @@ export async function createCommitByBranchName(
   const { notify = true } = options || {}
 
   const branchName = params.branchName.toLowerCase()
-  let myBranch = await getStreamBranchByName(streamId, branchName)
+  let myBranch = await getStreamBranchByNameFactory({ db })(streamId, branchName)
   if (!myBranch) {
     myBranch = (await getBranchByIdFactory({ db })(branchName)) || null
   }
@@ -272,7 +272,7 @@ export async function updateCommitAndNotify(
   if (newBranchName) {
     try {
       const [newBranch, oldBranch] = await Promise.all([
-        getStreamBranchByName(streamId, newBranchName),
+        getStreamBranchByNameFactory({ db })(streamId, newBranchName),
         getCommitBranch(commitId)
       ])
 

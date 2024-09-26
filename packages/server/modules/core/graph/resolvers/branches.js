@@ -8,7 +8,6 @@ const {
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
-const { getBranchByNameAndStreamId } = require('@/modules/core/services/branches')
 const {
   createBranchAndNotify,
   updateBranchAndNotify,
@@ -20,7 +19,10 @@ const {
 
 const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
-const { getBranchByIdFactory } = require('@/modules/core/repositories/branches')
+const {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 
 // subscription events
@@ -29,6 +31,7 @@ const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 const getBranchById = getBranchByIdFactory({ db })
+const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -45,10 +48,7 @@ module.exports = {
       // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
       // and get it by id as well (this would be coming from a FE2 url).
 
-      const branchByName = await getBranchByNameAndStreamId({
-        streamId: parent.id,
-        name: args.name
-      })
+      const branchByName = await getStreamBranchByName(parent.id, args.name)
       if (branchByName) return branchByName
 
       const branchByIdRes = await getBranchById(args.name)

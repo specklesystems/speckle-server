@@ -46,7 +46,7 @@ import {
   getBranchesByIdsFactory,
   getBranchLatestCommits,
   getStreamBranchCounts,
-  getStreamBranchesByName
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -106,6 +106,7 @@ const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
 const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
 const getCommentParents = getCommentParentsFactory({ db })
 const getBranchesByIds = getBranchesByIdsFactory({ db })
+const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

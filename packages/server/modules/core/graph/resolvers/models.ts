@@ -25,7 +25,7 @@ import {
 import {
   getBranchLatestCommits,
   getModelTreeItems,
-  getStreamBranchesByName
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
@@ -34,11 +34,12 @@ import {
   getAllBranchCommits,
   getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
+import { db } from '@/db/knex'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
   getBranchLatestCommits,
-  getStreamBranchesByName,
+  getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
   getSpecificBranchCommits,
   getAllBranchCommits
 })
