@@ -156,6 +156,7 @@ export function buildRequestLoaders(
   const loaders = {
     ...(Object.assign(
       {},
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       ...modulesLoaders.map((l) => l({ ctx, createLoader }))
     ) as Record<string, unknown>),
     streams: {
