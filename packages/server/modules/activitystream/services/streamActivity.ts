@@ -1,4 +1,3 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
@@ -22,6 +21,8 @@ import {
   publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
 
 /**
  * Save "stream updated" activity
@@ -36,7 +37,7 @@ export async function addStreamUpdatedActivity(params: {
   const { streamId, updaterId, oldStream, update, newStream } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -109,7 +110,7 @@ export async function addStreamDeletedActivity(params: {
     )
   }
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Stream,
     resourceId: streamId,
@@ -146,18 +147,15 @@ export async function addStreamClonedActivity(
     })
 
   await Promise.all([
-    saveActivity(
-      {
-        streamId: newStreamId,
-        resourceType: ResourceTypes.Stream,
-        resourceId: newStreamId,
-        actionType: ActionTypes.Stream.Clone,
-        userId: clonerId,
-        info: { sourceStreamId, newStreamId, clonerId },
-        message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-      },
-      { trx }
-    ),
+    saveActivityFactory({ db })({
+      streamId: newStreamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: newStreamId,
+      actionType: ActionTypes.Stream.Clone,
+      userId: clonerId,
+      info: { sourceStreamId, newStreamId, clonerId },
+      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+    }),
     !trx ? publishSubscriptions() : null
   ])
 
@@ -179,7 +177,7 @@ export async function addStreamCreatedActivity(params: {
   const { streamId, creatorId, input, stream } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -215,7 +213,7 @@ export async function addStreamPermissionsAddedActivity(params: {
 }) {
   const { streamId, activityUserId, targetUserId, role, stream } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -261,7 +259,7 @@ export async function addStreamInviteAcceptedActivity(params: {
 }) {
   const { streamId, inviteTargetId, inviterId, role, stream } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -308,7 +306,7 @@ export async function addStreamPermissionsRevokedActivity(params: {
   const isVoluntaryLeave = activityUserId === removedUserId
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -358,7 +356,7 @@ export async function addStreamInviteSentOutActivity(params: {
   const targetDisplay = inviteTargetId || inviteTargetEmail
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -388,7 +386,7 @@ export async function addStreamInviteDeclinedActivity(params: {
 }) {
   const { streamId, inviteTargetId, inviterId, stream } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -418,7 +416,7 @@ export async function addStreamCommentMentionActivity(params: {
   threadId: string
 }) {
   const { streamId, mentionAuthorId, mentionTargetId, commentId, threadId } = params
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Comment,
     resourceId: commentId,

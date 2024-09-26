@@ -133,3 +133,5 @@ export type GetUserActivity = ({
   cursor: string | null
   items: StreamActivityRecord[]
 }>
+
+export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>
