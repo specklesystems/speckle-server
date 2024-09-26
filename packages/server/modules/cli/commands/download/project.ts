@@ -4,7 +4,7 @@ import { downloadProjectFactory } from '@/modules/cross-server-sync/services/pro
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -83,7 +83,7 @@ const command: CommandModule<
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits

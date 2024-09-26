@@ -9,6 +9,7 @@ import {
   CommentRecord,
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
@@ -16,7 +17,6 @@ import {
   LegacyCommentViewerData,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
-import { CommitRecord } from '@/modules/core/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
 import { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
@@ -92,10 +92,6 @@ export type GetPaginatedBranchCommentsPage = (
 export type GetPaginatedBranchCommentsTotalCount = (
   params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
 ) => Promise<number>
-
-type BranchLatestCommit = CommitRecord & {
-  branchId: string
-}
 
 export type GetPaginatedProjectCommentsPage = (
   params: PaginatedProjectCommentsParams,

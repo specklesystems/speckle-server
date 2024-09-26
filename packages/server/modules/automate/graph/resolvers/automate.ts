@@ -60,7 +60,7 @@ import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shar
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchesByIdsFactory,
-  getBranchLatestCommits
+  getBranchLatestCommitsFactory
 } from '@/modules/core/repositories/branches'
 import {
   createTestAutomationRunFactory,
@@ -134,6 +134,7 @@ const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
 
 const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
 const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -555,7 +556,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               automateRunsEmitter: AutomateRunsEmitter.emit,
               getAutomationToken,
               upsertAutomationRun,
-              getFullAutomationRevisionMetadata
+              getFullAutomationRevisionMetadata,
+              getBranchLatestCommits
             }),
             validateStreamAccess
           })

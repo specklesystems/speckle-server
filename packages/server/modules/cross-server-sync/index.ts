@@ -19,7 +19,7 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -63,7 +63,7 @@ const crossServerSyncModule: SpeckleModule = {
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits

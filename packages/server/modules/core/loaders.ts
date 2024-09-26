@@ -44,7 +44,7 @@ import {
 import {
   getBranchCommitCounts,
   getBranchesByIdsFactory,
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getStreamBranchCounts,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -107,6 +107,7 @@ const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
 const getCommentParents = getCommentParentsFactory({ db })
 const getBranchesByIds = getBranchesByIdsFactory({ db })
 const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

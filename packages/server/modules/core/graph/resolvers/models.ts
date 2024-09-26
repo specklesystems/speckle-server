@@ -23,7 +23,7 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  getBranchLatestCommits,
+  getBranchLatestCommitsFactory,
   getModelTreeItems,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -38,7 +38,7 @@ import { db } from '@/db/knex'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
-  getBranchLatestCommits,
+  getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
   getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
   getSpecificBranchCommits,
   getAllBranchCommits
