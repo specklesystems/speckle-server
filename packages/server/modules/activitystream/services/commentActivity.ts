@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { saveActivity } from '@/modules/activitystream/services'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
@@ -96,7 +96,7 @@ export async function addCommentCreatedActivity(params: {
   }
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       resourceId: comment.id,
       streamId,
       resourceType: ResourceTypes.Comment,
@@ -156,7 +156,7 @@ export async function addCommentArchivedActivity(params: {
   })
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Comment,
       resourceId: commentId,
@@ -221,7 +221,7 @@ export async function addReplyAddedActivity(params: {
     ? input.parentComment
     : input.threadId
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Comment,
       resourceId: parentCommentId,

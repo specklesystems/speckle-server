@@ -1,4 +1,3 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import {
@@ -14,6 +13,8 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
 
 /**
  * Save "branch created" activity
@@ -22,7 +23,7 @@ export async function addBranchCreatedActivity(params: { branch: BranchRecord })
   const { branch } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId: branch.streamId,
       resourceType: ResourceTypes.Branch,
       resourceId: branch.id,
@@ -56,7 +57,7 @@ export async function addBranchUpdatedActivity(params: {
 
   const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Branch,
       resourceId: update.id,
@@ -90,7 +91,7 @@ export async function addBranchDeletedActivity(params: {
 
   const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Branch,
       resourceId: input.id,
