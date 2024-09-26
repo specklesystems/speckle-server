@@ -295,7 +295,6 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
  */
 export async function buildApolloServer(options?: {
   subscriptionServer?: SubscriptionServer
-  httpServer?: http.Server
 }): Promise<ApolloServer<GraphQLContext>> {
   const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
   const subscriptionServer = options?.subscriptionServer
