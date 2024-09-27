@@ -21,7 +21,6 @@ import {
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
-import { Express } from 'express'
 import { db } from '@/db/knex'
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
@@ -92,8 +91,7 @@ describe('Server stats services @stats-services', function () {
 
 describe('Server stats api @stats-api', function () {
   let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest'],
-    app: Express
+    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -130,8 +128,19 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const {
+      app,
+      server: tmpServer,
+      graphqlServer,
+      readinessCheck
+    } = await beforeEachContext()
+    server = tmpServer
+    ;({ sendRequest } = await initializeTestServer({
+      server,
+      app,
+      graphqlServer,
+      readinessCheck
+    }))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(

@@ -442,7 +442,7 @@ export async function init() {
 export async function shutdown(params: {
   graphqlServer: ApolloServer<GraphQLContext>
 }): Promise<void> {
-  await params.graphqlServer?.stop()
+  await params.graphqlServer.stop()
   await ModulesSetup.shutdown()
 }
 

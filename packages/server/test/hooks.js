@@ -46,12 +46,8 @@ exports.truncateTables = async (tableNames) => {
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
-/**
- * @param {import('http').Server} server
- * @param {import('express').Express} app
- */
-const initializeTestServer = async (server, app) => {
-  await startHttp({ server, app, customPortOverride: 0 })
+const initializeTestServer = async ({ server, app, graphqlServer, readinessCheck }) => {
+  await startHttp({ server, app, graphqlServer, readinessCheck, customPortOverride: 0 })
 
   await once(app, 'appStarted')
   const port = server.address().port

@@ -43,8 +43,20 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app, server } = await beforeEachContext())
-      ;({ sendRequest } = await initializeTestServer(server, app))
+      const {
+        app: tmpApp,
+        server: tmpServer,
+        graphqlServer,
+        readinessCheck
+      } = await beforeEachContext()
+      server = tmpServer
+      app = tmpApp
+      ;({ sendRequest } = await initializeTestServer({
+        server,
+        app,
+        graphqlServer,
+        readinessCheck
+      }))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))
