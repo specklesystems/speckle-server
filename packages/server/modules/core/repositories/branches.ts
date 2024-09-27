@@ -29,7 +29,8 @@ import {
   GetStreamBranchByName,
   GetStreamBranchesByName,
   GetStructuredProjectModels,
-  StoreBranch
+  StoreBranch,
+  UpdateBranch
 } from '@/modules/core/domain/branches/operations'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { ModelTreeItem } from '@/modules/core/domain/branches/types'
@@ -667,17 +668,20 @@ export const createBranchFactory =
     return newBranch
   }
 
-export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
-  if (branch.name) {
-    validateBranchName(branch.name)
-    branch.name = branch.name.toLowerCase()
-  }
+export const updateBranchFactory =
+  (deps: { db: Knex }): UpdateBranch =>
+  async (branchId: string, branch: Partial<BranchRecord>) => {
+    if (branch.name) {
+      validateBranchName(branch.name)
+      branch.name = branch.name.toLowerCase()
+    }
 
-  const [newBranch] = (await Branches.knex()
-    .where(Branches.col.id, branchId)
-    .update(branch, '*')) as BranchRecord[]
-  return newBranch
-}
+    const [newBranch] = (await tables
+      .branches(deps.db)
+      .where(Branches.col.id, branchId)
+      .update(branch, '*')) as BranchRecord[]
+    return newBranch
+  }
 
 export async function deleteBranchById(branchId: string) {
   // this needs to happen before deleting the branch, otherwise the
