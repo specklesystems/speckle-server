@@ -58,7 +58,7 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
-import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { addStreamInviteDeclinedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import {
   createUserEmailFactory,
@@ -71,6 +71,8 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -287,7 +289,10 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
+              saveActivity: saveActivityFactory({ db }),
+              publish
+            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
@@ -429,7 +434,10 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
+              saveActivity: saveActivityFactory({ db }),
+              publish
+            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),

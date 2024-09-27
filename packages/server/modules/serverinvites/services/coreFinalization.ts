@@ -1,4 +1,4 @@
-import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { AddStreamInviteDeclinedActivity } from '@/modules/activitystream/domain/operations'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getStream } from '@/modules/core/repositories/streams'
@@ -75,7 +75,7 @@ export const validateProjectInviteBeforeFinalizationFactory =
 
 type ProcessFinalizedProjectInviteFactoryDeps = {
   getProject: typeof getStream
-  addInviteDeclinedActivity: typeof addStreamInviteDeclinedActivity
+  addInviteDeclinedActivity: AddStreamInviteDeclinedActivity
   addProjectRole: typeof addOrUpdateStreamCollaborator
 }
 
