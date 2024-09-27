@@ -10,7 +10,6 @@ import {
   LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -48,6 +47,7 @@ import {
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
 import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -216,6 +216,7 @@ export type TriggerAutomationRevisionRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   automateRunsEmitter: AutomateRunsEventsEmitter
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
+  getCommit: GetCommit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -235,7 +236,8 @@ export const triggerAutomationRevisionRunFactory =
       createAppToken,
       upsertAutomationRun,
       automateRunsEmitter,
-      getFullAutomationRevisionMetadata
+      getFullAutomationRevisionMetadata,
+      getCommit
     } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
@@ -328,7 +330,7 @@ export const triggerAutomationRevisionRunFactory =
 export const ensureRunConditionsFactory =
   (deps: {
     revisionGetter: GetFullAutomationRevisionMetadata
-    versionGetter: typeof getCommit
+    versionGetter: GetCommit
     automationTokenGetter: GetAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {

@@ -3,7 +3,7 @@ import { db } from '@/db/knex'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { getCommits } from '@/modules/core/repositories/commits'
+import { getCommitsFactory } from '@/modules/core/repositories/commits'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
@@ -25,6 +25,7 @@ enum BatchActionType {
 }
 
 const createBranch = createBranchFactory({ db })
+const getCommits = getCommitsFactory({ db })
 
 const cleanup = async () => {
   await truncateTables([Streams.name, Users.name, Commits.name])

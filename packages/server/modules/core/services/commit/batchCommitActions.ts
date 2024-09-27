@@ -20,7 +20,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   deleteCommits,
-  getCommits,
+  getCommitsFactory,
   moveCommitsToBranch
 } from '@/modules/core/repositories/commits'
 import { getStreams } from '@/modules/core/repositories/streams'
@@ -48,7 +48,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
     throw new CommitBatchUpdateError('No commits specified')
   }
 
-  const commits = await getCommits(commitIds)
+  const commits = await getCommitsFactory({ db })(commitIds)
   const foundCommitIds = commits.map((c) => c.id)
   if (
     commitIds.length !== foundCommitIds.length ||

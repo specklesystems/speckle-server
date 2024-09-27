@@ -24,7 +24,7 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
-  getCommits,
+  getCommitsFactory,
   getSpecificBranchCommits,
   getStreamCommitCounts,
   getUserAuthoredCommitCounts,
@@ -110,6 +110,7 @@ const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
 const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
+const getCommits = getCommitsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
