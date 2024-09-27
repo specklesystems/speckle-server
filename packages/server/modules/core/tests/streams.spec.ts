@@ -8,7 +8,6 @@ import {
   grantPermissionsStream
 } from '@/modules/core/services/streams'
 
-import { deleteBranchById } from '@/modules/core/services/branches'
 import { createObject } from '@/modules/core/services/objects'
 import { createCommitByBranchName } from '@/modules/core/services/commits'
 
@@ -31,6 +30,7 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import {
   StreamWithOptionalRole,
+  markBranchStreamUpdated,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
@@ -52,12 +52,25 @@ import {
 import { buildApolloServer } from '@/app'
 import {
   createBranchFactory,
+  deleteBranchByIdFactory,
+  getBranchByIdFactory,
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
+import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
 
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -333,11 +346,13 @@ describe('Streams @core-streams', () => {
       // await sleep(100)
 
       const b = await getStreamBranchByName(updatableStream.id, 'dim/lol')
-      await deleteBranchById({
-        id: b!.id,
-        streamId: updatableStream.id,
-        userId: userOne.id
-      })
+      await deleteBranchAndNotify(
+        {
+          id: b!.id,
+          streamId: updatableStream.id
+        },
+        userOne.id
+      )
 
       const su2 = await getStream({ streamId: updatableStream.id })
       expect(su2?.updatedAt).to.be.ok

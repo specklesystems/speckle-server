@@ -2,7 +2,7 @@ import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createBranchAndNotifyFactory,
-  deleteBranchAndNotify,
+  deleteBranchAndNotifyFactory,
   updateBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
 import {
@@ -24,6 +24,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
+  deleteBranchByIdFactory,
   getBranchByIdFactory,
   getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
@@ -46,8 +47,11 @@ import {
 import { db } from '@/db/knex'
 import {
   addBranchCreatedActivity,
+  addBranchDeletedActivity,
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
+import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
@@ -81,6 +85,14 @@ const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   updateBranch: updateBranchFactory({ db }),
   addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
 export = {

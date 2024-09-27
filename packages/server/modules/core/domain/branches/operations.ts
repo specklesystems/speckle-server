@@ -2,8 +2,10 @@ import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import {
   BranchCreateInput,
+  BranchDeleteInput,
   BranchUpdateInput,
   CreateModelInput,
+  DeleteModelInput,
   ModelsTreeItemCollection,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
@@ -143,3 +145,8 @@ export type UpdateBranchAndNotify = (
   input: BranchUpdateInput | UpdateModelInput,
   userId: string
 ) => Promise<Branch>
+
+export type DeleteBranchAndNotify = (
+  input: BranchDeleteInput | DeleteModelInput,
+  userId: string
+) => Promise<boolean>

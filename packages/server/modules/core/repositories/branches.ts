@@ -6,7 +6,7 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -16,6 +16,7 @@ import { Knex } from 'knex'
 import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import {
+  DeleteBranchById,
   GenerateBranchId,
   GetBranchById,
   GetBranchesByIds,
@@ -36,7 +37,8 @@ import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { ModelTreeItem } from '@/modules/core/domain/branches/types'
 
 const tables = {
-  branches: (db: Knex) => db<BranchRecord>(Branches.name)
+  branches: (db: Knex) => db<BranchRecord>(Branches.name),
+  commits: (db: Knex) => db<CommitRecord>(Commits.name)
 }
 
 export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
@@ -683,15 +685,18 @@ export const updateBranchFactory =
     return newBranch
   }
 
-export async function deleteBranchById(branchId: string) {
-  // this needs to happen before deleting the branch, otherwise the
-  // branch_commits table doesn't have the needed rows
-  await Commits.knex()
-    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
-    .where('branch_commits.branchId', branchId)
-    .del()
-  return await Branches.knex().where(Branches.col.id, branchId).del()
-}
+export const deleteBranchByIdFactory =
+  (deps: { db: Knex }): DeleteBranchById =>
+  async (branchId: string) => {
+    // this needs to happen before deleting the branch, otherwise the
+    // branch_commits table doesn't have the needed rows
+    await tables
+      .commits(deps.db)
+      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+      .where('branch_commits.branchId', branchId)
+      .del()
+    return await tables.branches(deps.db).where(Branches.col.id, branchId).del()
+  }
 
 export async function markCommitBranchUpdated(commitId: string) {
   const q = Branches.knex()
