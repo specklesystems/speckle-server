@@ -27,8 +27,8 @@ import {
 import {
   createCommit,
   deleteCommit,
-  getCommit,
   getCommitBranch,
+  getCommitFactory,
   insertBranchCommits,
   insertStreamCommits,
   switchCommitBranch,
@@ -58,7 +58,9 @@ export async function markCommitReceivedAndNotify(params: {
         }
       : input
 
-  const commit = await getCommit(oldInput.commitId, { streamId: oldInput.streamId })
+  const commit = await getCommitFactory({ db })(oldInput.commitId, {
+    streamId: oldInput.streamId
+  })
   if (!commit) {
     throw new CommitReceiveError(
       `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
@@ -247,7 +249,7 @@ export async function updateCommitAndNotify(
   }
 
   const [commit, stream] = await Promise.all([
-    getCommit(commitId),
+    getCommitFactory({ db })(commitId),
     streamId ? getStream({ streamId, userId }) : getCommitStream({ commitId, userId })
   ])
   if (!commit) {
@@ -321,7 +323,7 @@ export async function deleteCommitAndNotify(
   streamId: string,
   userId: string
 ) {
-  const commit = await getCommit(commitId)
+  const commit = await getCommitFactory({ db })(commitId)
   if (!commit) {
     throw new CommitDeleteError("Couldn't delete nonexistant commit", {
       info: { commitId, streamId, userId }
