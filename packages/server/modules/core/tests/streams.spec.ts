@@ -8,11 +8,7 @@ import {
   grantPermissionsStream
 } from '@/modules/core/services/streams'
 
-import {
-  createBranch,
-  getBranchByNameAndStreamId,
-  deleteBranchById
-} from '@/modules/core/services/branches'
+import { deleteBranchById } from '@/modules/core/services/branches'
 import { createObject } from '@/modules/core/services/objects'
 import { createCommitByBranchName } from '@/modules/core/services/commits'
 
@@ -54,6 +50,14 @@ import {
   ServerAndContext
 } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
+import {
+  createBranchFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
+import { db } from '@/db/knex'
+
+const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranch = createBranchFactory({ db })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -328,10 +332,7 @@ describe('Streams @core-streams', () => {
 
       // await sleep(100)
 
-      const b = await getBranchByNameAndStreamId({
-        streamId: updatableStream.id,
-        name: 'dim/lol'
-      })
+      const b = await getStreamBranchByName(updatableStream.id, 'dim/lol')
       await deleteBranchById({
         id: b!.id,
         streamId: updatableStream.id,

@@ -3,17 +3,46 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import {
+  createBranchFactory,
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
+} from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
+import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
-  createCommentReplyAndNotify,
-  createCommentThreadAndNotify
+  createCommentReplyAndNotifyFactory,
+  createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import { CommentsEmitter } from '@/modules/comments/events/emitter'
+import {
+  addCommentCreatedActivity,
+  addReplyAddedActivity
+} from '@/modules/activitystream/services/commentActivity'
+import {
+  getAllBranchCommits,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/core/services/commit/viewerResources'
+import { db } from '@/db/knex'
+import {
+  getCommentFactory,
+  insertCommentLinksFactory,
+  insertCommentsFactory,
+  markCommentUpdatedFactory,
+  markCommentViewedFactory
+} from '@/modules/comments/repositories/comments'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 
 const command: CommandModule<
   unknown,
@@ -47,6 +76,41 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const markCommentViewed = markCommentViewedFactory({ db })
+    const validateInputAttachments = validateInputAttachmentsFactory({
+      getBlobs: getBlobsFactory({ db })
+    })
+    const insertComments = insertCommentsFactory({ db })
+    const insertCommentLinks = insertCommentLinksFactory({ db })
+    const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+      getViewerResourceGroups: getViewerResourceGroupsFactory({
+        getStreamObjects,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+        getSpecificBranchCommits,
+        getAllBranchCommits
+      })
+    })
+    const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+      getViewerResourceItemsUngrouped,
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentViewed,
+      commentsEventsEmit: CommentsEmitter.emit,
+      addCommentCreatedActivity
+    })
+    const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+      getComment: getCommentFactory({ db }),
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      commentsEventsEmit: CommentsEmitter.emit,
+      addReplyAddedActivity
+    })
+
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const downloadProject = downloadProjectFactory({
       downloadCommit: downloadCommitFactory({
         getStream,
@@ -62,7 +126,11 @@ const command: CommandModule<
       createStreamReturnRecord,
       getUser,
       getStreamBranchByName,
-      createBranchAndNotify
+      createBranchAndNotify: createBranchAndNotifyFactory({
+        getStreamBranchByName,
+        createBranch: createBranchFactory({ db }),
+        addBranchCreatedActivity
+      })
     })
     await downloadProject(argv, { logger: cliLogger })
   }

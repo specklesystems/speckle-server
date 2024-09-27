@@ -20,7 +20,6 @@ import {
   getStream,
   updateStream
 } from '@/modules/core/repositories/streams'
-import { createBranch } from '@/modules/core/services/branches'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   StreamInvalidAccessError,
@@ -55,6 +54,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -80,7 +80,7 @@ export async function createStreamReturnRecord(
   const streamId = stream.id
 
   // Create a default main branch
-  await createBranch({
+  await createBranchFactory({ db })({
     name: 'main',
     description: 'default branch',
     streamId,

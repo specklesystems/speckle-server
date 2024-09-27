@@ -39,6 +39,7 @@ import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
+import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -84,7 +85,8 @@ const initializeEventListeners = () => {
     automateRunsEmitter: AutomateRunsEmitter.emit,
     getAutomationToken: getAutomationTokenFactory({ db }),
     upsertAutomationRun: upsertAutomationRunFactory({ db }),
-    getFullAutomationRevisionMetadata
+    getFullAutomationRevisionMetadata,
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db })
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
     getAutomationRunFullTriggers,

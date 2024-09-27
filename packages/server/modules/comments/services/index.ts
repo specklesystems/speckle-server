@@ -1,10 +1,7 @@
 import crs from 'crypto-random-string'
-import knex from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
-import { getStreamCommentCount as repoGetStreamCommentCount } from '@/modules/comments/repositories/comments'
-import { clamp } from 'lodash'
 import { isNonNullable, Roles } from '@speckle/shared'
 import {
   ResourceIdentifier,
@@ -27,9 +24,7 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
-
-const Comments = () => knex<CommentRecord>('comments')
-const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
+import { getStream } from '@/modules/core/repositories/streams'
 
 export const streamResourceCheckFactory =
   (deps: {
@@ -239,144 +234,36 @@ export const editCommentFactory =
 /**
  * @deprecated Use 'archiveCommentAndNotify()'
  */
-export async function archiveComment({
-  commentId,
-  userId,
-  streamId,
-  archived = true
-}: {
-  commentId: string
-  userId: string
-  streamId: string
-  archived: boolean
-}) {
-  const comment = await Comments().where({ id: commentId }).first()
-  if (!comment)
-    throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+export const archiveCommentFactory =
+  (deps: {
+    getComment: GetComment
+    getStream: typeof getStream
+    updateComment: UpdateComment
+  }) =>
+  async ({
+    commentId,
+    userId,
+    streamId,
+    archived = true
+  }: {
+    commentId: string
+    userId: string
+    streamId: string
+    archived: boolean
+  }) => {
+    const comment = await deps.getComment({ id: commentId })
+    if (!comment)
+      throw new Error(
+        `No comment ${commentId} exists, cannot change its archival status`
+      )
 
-  const aclEntry = await knex('stream_acl')
-    .select()
-    .where({ resourceId: streamId, userId })
-    .first()
+    const streamWithRole = await deps.getStream({ streamId, userId })
 
-  if (comment.authorId !== userId) {
-    if (!aclEntry || aclEntry.role !== Roles.Stream.Owner)
-      throw new ForbiddenError("You don't have permission to archive the comment")
+    if (comment.authorId !== userId) {
+      if (!streamWithRole || streamWithRole.role !== Roles.Stream.Owner)
+        throw new ForbiddenError("You don't have permission to archive the comment")
+    }
+
+    const updatedComment = await deps.updateComment(commentId, { archived })
+    return updatedComment!
   }
-
-  const [updatedComment] = await Comments()
-    .where({ id: commentId })
-    .update({ archived }, '*')
-  return updatedComment
-}
-
-/**
- * One of `streamId` or `resources` expected. If both are provided, then
- * `resources` takes precedence.
- */
-type GetCommentsParams = {
-  limit?: number | null
-  cursor?: string | null
-  userId?: string | null
-  replies?: boolean | null
-  archived?: boolean | null
-} & (
-  | {
-      resources: ResourceIdentifier[]
-      streamId?: null
-    }
-  | {
-      resources?: ResourceIdentifier[] | null
-      streamId: string
-    }
-)
-
-/**
- * @deprecated Use `getPaginatedProjectComments()` instead
- */
-export async function getComments({
-  resources,
-  limit,
-  cursor,
-  userId = null,
-  replies = false,
-  streamId,
-  archived = false
-}: GetCommentsParams) {
-  const query = knex.with('comms', (cte) => {
-    cte.select().distinctOn('id').from('comments')
-    cte.join('comment_links', 'comments.id', '=', 'commentId')
-
-    if (userId) {
-      // link viewed At
-      cte.leftOuterJoin('comment_views', (b) => {
-        b.on('comment_views.commentId', '=', 'comments.id')
-        b.andOn('comment_views.userId', '=', knex.raw('?', userId))
-      })
-    }
-
-    if (resources && resources.length !== 0) {
-      cte.where((q) => {
-        // link resources
-        for (const res of resources) {
-          q.orWhere('comment_links.resourceId', '=', res.resourceId)
-        }
-      })
-    } else {
-      cte.where({ streamId })
-    }
-    if (!replies) {
-      cte.whereNull('parentComment')
-    }
-    cte.where('archived', '=', archived)
-  })
-
-  query.select().from('comms')
-
-  // total count coming from our cte
-  query.joinRaw('right join (select count(*) from comms) c(total_count) on true')
-
-  // get comment's all linked resources
-  query.joinRaw(`
-      join(
-        select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
-        from comment_links cl
-        join comms on comms.id = cl."commentId"
-        group by cl."commentId"
-      ) res using(id)`)
-
-  if (cursor) {
-    query.where('createdAt', '<', cursor)
-  }
-
-  limit = clamp(limit ?? 10, 0, 100)
-  query.orderBy('createdAt', 'desc')
-  query.limit(limit || 1) // need at least 1 row to get totalCount
-
-  const rows = await query
-  const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
-  const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
-
-  return {
-    items: !limit ? [] : rows,
-    cursor: nextCursor ? nextCursor.toISOString() : null,
-    totalCount
-  }
-}
-
-export async function getResourceCommentCount({ resourceId }: { resourceId: string }) {
-  const [res] = await CommentLinks()
-    .count('commentId')
-    .where({ resourceId })
-    .join('comments', 'comments.id', '=', 'commentId')
-    .where('comments.archived', '=', false)
-
-  if (res && res.count) {
-    return parseInt(String(res.count))
-  }
-  return 0
-}
-
-export async function getStreamCommentCount({ streamId }: { streamId: string }) {
-  return (await repoGetStreamCommentCount(streamId, { threadsOnly: true })) || 0
-}
