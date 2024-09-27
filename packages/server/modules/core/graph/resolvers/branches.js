@@ -9,9 +9,9 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  deleteBranchAndNotify,
   createBranchAndNotifyFactory,
-  updateBranchAndNotifyFactory
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
@@ -23,13 +23,20 @@ const {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
   createBranchFactory,
-  updateBranchFactory
+  updateBranchFactory,
+  deleteBranchByIdFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
   addBranchCreatedActivity,
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
 } = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStream,
+  markBranchStreamUpdated
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -47,6 +54,14 @@ const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById,
   updateBranch: updateBranchFactory({ db }),
   addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */

@@ -1,7 +1,6 @@
 'use strict'
 const knex = require('@/db/knex')
 const { getStreamBranchCount } = require('@/modules/core/repositories/branches')
-const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
 
 const Branches = () => knex('branches')
 
@@ -31,12 +30,5 @@ module.exports = {
 
   async getBranchesByStreamIdTotalCount({ streamId }) {
     return await getStreamBranchCount(streamId)
-  },
-
-  /**
-   * @deprecated Use 'deleteBranchAndNotify'
-   */
-  async deleteBranchById({ id, streamId, userId }) {
-    return await deleteBranchAndNotify({ id, streamId }, userId)
   }
 }

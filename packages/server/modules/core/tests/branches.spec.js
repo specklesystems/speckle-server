@@ -11,22 +11,29 @@ const knex = require('@/db/knex')
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
-const { getBranchesByStreamId, deleteBranchById } = require('../services/branches')
+const { getBranchesByStreamId } = require('../services/branches')
 const { createCommitByBranchName } = require('../services/commits')
 
 const {
-  deleteBranchAndNotify,
-  updateBranchAndNotifyFactory
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
   createBranchFactory,
-  updateBranchFactory
+  updateBranchFactory,
+  deleteBranchByIdFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
 } = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStream,
+  markBranchStreamUpdated
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 
 const Commits = () => knex('commits')
 const getBranchById = getBranchByIdFactory({ db: knex })
@@ -37,7 +44,14 @@ const updateBranchAndNotify = updateBranchAndNotifyFactory({
   updateBranch: updateBranchFactory({ db: knex }),
   addBranchUpdatedActivity
 })
-
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db: knex }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db: knex })
+})
 describe('Branches @core-branches', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
@@ -160,7 +174,7 @@ describe('Branches @core-branches', () => {
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
-    await deleteBranchById({ id, streamId: stream.id, userId: user.id })
+    await deleteBranchAndNotify({ id, streamId: stream.id }, user.id)
   })
 
   it('Should get a branch', async () => {
@@ -203,7 +217,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should delete a branch', async () => {
-    await deleteBranchById({ id: branch.id, streamId: stream.id, userId: user.id })
+    await deleteBranchAndNotify({ id: branch.id, streamId: stream.id }, user.id)
     const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items).to.have.lengthOf(4)
   })
@@ -236,7 +250,7 @@ describe('Branches @core-branches', () => {
   it('Should NOT delete the main branch', async () => {
     const b = await getStreamBranchByName(stream.id, 'main')
     try {
-      await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
+      await deleteBranchAndNotify({ id: b.id, streamId: stream.id }, user.id)
       assert.fail()
     } catch {
       // pass
