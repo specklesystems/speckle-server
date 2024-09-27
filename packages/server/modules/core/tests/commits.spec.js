@@ -6,7 +6,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
-const { createBranch } = require('../services/branches')
 
 const {
   createCommitByBranchName,
@@ -19,8 +18,25 @@ const {
   getCommitsTotalCountByStreamId,
   getCommitsByUserId
 } = require('../services/commits')
-const { createBranchAndNotify } = require('@/modules/core/services/branch/management')
+const {
+  createBranchAndNotifyFactory
+} = require('@/modules/core/services/branch/management')
 const cryptoRandomString = require('crypto-random-string')
+const {
+  createBranchFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+
+const createBranch = createBranchFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  createBranch,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  addBranchCreatedActivity
+})
 
 describe('Commits @core-commits', () => {
   const user = {

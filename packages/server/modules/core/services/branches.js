@@ -1,9 +1,6 @@
 'use strict'
 const knex = require('@/db/knex')
-const {
-  getStreamBranchCount,
-  createBranch: createBranchInDb
-} = require('@/modules/core/repositories/branches')
+const { getStreamBranchCount } = require('@/modules/core/repositories/branches')
 const {
   updateBranchAndNotify,
   deleteBranchAndNotify
@@ -12,14 +9,6 @@ const {
 const Branches = () => knex('branches')
 
 module.exports = {
-  /**
-   * @deprecated Use `createBranchAndNotify` or use the repository function directly
-   */
-  async createBranch({ name, description, streamId, authorId }) {
-    const branch = await createBranchInDb({ name, description, streamId, authorId })
-    return branch.id
-  },
-
   /**
    * @deprecated Use 'updateBranchAndNotify'
    */

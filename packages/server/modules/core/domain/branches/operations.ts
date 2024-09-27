@@ -1,6 +1,15 @@
-import { Branch } from '@/modules/core/domain/branches/types'
+import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import {
+  BranchCreateInput,
+  CreateModelInput,
+  ModelsTreeItemCollection,
+  ProjectModelsArgs,
+  ProjectModelsTreeArgs
+} from '@/modules/core/graph/generated/graphql'
+import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { Nullable, Optional } from '@speckle/shared'
+import { Merge } from 'type-fest'
 
 export type GenerateBranchId = () => string
 
@@ -38,3 +47,87 @@ export type GetBranchLatestCommits = (
     limit: number
   }>
 ) => Promise<BranchLatestCommit[]>
+
+export type GetStructuredProjectModels = (projectId: string) => Promise<ModelTreeItem>
+
+export type GetPaginatedProjectModelsItems = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<{
+  items: Branch[]
+  cursor: string | null
+}>
+
+export type GetPaginatedProjectModelsTotalCount = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<number>
+
+export type GetPaginatedProjectModels = (
+  projectId: string,
+  params: ProjectModelsArgs
+) => Promise<{
+  totalCount: number
+  items: Branch[]
+  cursor: string | null
+}>
+
+export type GetModelTreeItemsFiltered = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<ModelsTreeItemGraphQLReturn[]>
+
+export type GetModelTreeItemsFilteredTotalCount = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<number>
+
+export type GetProjectTopLevelModelsTree = (
+  projectId: string,
+  args: ProjectModelsTreeArgs,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+  }>
+) => Promise<
+  Merge<
+    ModelsTreeItemCollection,
+    {
+      items: ModelsTreeItemGraphQLReturn[]
+    }
+  >
+>
+
+export type GetModelTreeItems = (
+  projectId: string,
+  args: Omit<ProjectModelsTreeArgs, 'filter'>,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<ModelsTreeItemGraphQLReturn[]>
+
+export type GetModelTreeItemsTotalCount = (
+  projectId: string,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<number>
+
+export type StoreBranch = (params: {
+  name: string
+  description: string | null
+  streamId: string
+  authorId: string
+}) => Promise<Branch>
+
+export type CreateBranchAndNotify = (
+  input: BranchCreateInput | CreateModelInput,
+  creatorId: string
+) => Promise<Branch>

@@ -19,10 +19,8 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import {
-  createBranch,
   deleteBranchById,
   getBranchByIdFactory,
-  getStreamBranchByNameFactory,
   updateBranch
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
@@ -30,34 +28,39 @@ import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { db } from '@/db/knex'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName,
+  StoreBranch
+} from '@/modules/core/domain/branches/operations'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
 ): i is BranchCreateInput => has(i, 'streamId')
 
-export async function createBranchAndNotify(
-  input: BranchCreateInput | CreateModelInput,
-  creatorId: string
-) {
-  const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
-  const existingBranch = await getStreamBranchByNameFactory({ db })(
-    streamId,
-    input.name
-  )
-  if (existingBranch) {
-    throw new BranchCreateError('A branch with this name already exists')
+export const createBranchAndNotifyFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    createBranch: StoreBranch
+    addBranchCreatedActivity: typeof addBranchCreatedActivity
+  }): CreateBranchAndNotify =>
+  async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
+    const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
+    const existingBranch = await deps.getStreamBranchByName(streamId, input.name)
+    if (existingBranch) {
+      throw new BranchCreateError('A branch with this name already exists')
+    }
+
+    const branch = await deps.createBranch({
+      name: input.name,
+      description: input.description ?? null,
+      streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
+      authorId: creatorId
+    })
+    await deps.addBranchCreatedActivity({ branch })
+
+    return branch
   }
-
-  const branch = await createBranch({
-    name: input.name,
-    description: input.description ?? null,
-    streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
-    authorId: creatorId
-  })
-  await addBranchCreatedActivity({ branch })
-
-  return branch
-}
 
 export async function updateBranchAndNotify(
   input: BranchUpdateInput | UpdateModelInput,

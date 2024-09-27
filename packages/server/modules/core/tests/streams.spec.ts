@@ -8,7 +8,7 @@ import {
   grantPermissionsStream
 } from '@/modules/core/services/streams'
 
-import { createBranch, deleteBranchById } from '@/modules/core/services/branches'
+import { deleteBranchById } from '@/modules/core/services/branches'
 import { createObject } from '@/modules/core/services/objects'
 import { createCommitByBranchName } from '@/modules/core/services/commits'
 
@@ -50,10 +50,14 @@ import {
   ServerAndContext
 } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import {
+  createBranchFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranch = createBranchFactory({ db })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {

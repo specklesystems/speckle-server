@@ -12,7 +12,6 @@ const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
 const {
-  createBranch,
   updateBranch,
   getBranchesByStreamId,
   deleteBranchById
@@ -22,12 +21,14 @@ const { createCommitByBranchName } = require('../services/commits')
 const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory
 } = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
 const getBranchById = getBranchByIdFactory({ db: knex })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+const createBranch = createBranchFactory({ db: knex })
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -57,11 +58,13 @@ describe('Branches @core-branches', () => {
   const branch = { name: 'dim/dev' }
 
   it('Should create a branch', async () => {
-    branch.id = await createBranch({
-      ...branch,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    branch.id = (
+      await createBranch({
+        ...branch,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
     expect(branch.id).to.be.not.null
     expect(branch.id).to.be.a.string
   })
@@ -127,11 +130,13 @@ describe('Branches @core-branches', () => {
   })
 
   it('Branch names should be case insensitive (always lowercase)', async () => {
-    const id = await createBranch({
-      name: 'CaseSensitive',
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const id = (
+      await createBranch({
+        name: 'CaseSensitive',
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
     const b = await getStreamBranchByName(stream.id, 'casesensitive')
     expect(b.name).to.equal('casesensitive')
@@ -192,11 +197,13 @@ describe('Branches @core-branches', () => {
   it('Deleting a branch should delete the commit', async () => {
     const branchName = 'pasta'
 
-    const branchId = await createBranch({
-      name: branchName,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const branchId = (
+      await createBranch({
+        name: branchName,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
     const tempCommit = await createCommitByBranchName({
       streamId: stream.id,
