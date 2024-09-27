@@ -1,4 +1,5 @@
-import { createBranch } from '@/modules/core/services/branches'
+import { db } from '@/db/knex'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { omit } from 'lodash'
@@ -30,10 +31,13 @@ export async function createTestBranch(params: {
   branch.streamId = stream.id
   branch.authorId = owner.id
 
-  const id = await createBranch({
-    ...omit(branch, ['id']),
-    description: branch.description || null
-  })
+  const createBranch = createBranchFactory({ db })
+  const id = (
+    await createBranch({
+      ...omit(branch, ['id']),
+      description: branch.description || null
+    })
+  ).id
   branch.id = id
 }
 

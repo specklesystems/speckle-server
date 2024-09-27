@@ -4,6 +4,7 @@ import { downloadProjectFactory } from '@/modules/cross-server-sync/services/pro
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
+  createBranchFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory
@@ -17,7 +18,7 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivity,
@@ -41,6 +42,7 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 
 const command: CommandModule<
   unknown,
@@ -124,7 +126,11 @@ const command: CommandModule<
       createStreamReturnRecord,
       getUser,
       getStreamBranchByName,
-      createBranchAndNotify
+      createBranchAndNotify: createBranchAndNotifyFactory({
+        getStreamBranchByName,
+        createBranch: createBranchFactory({ db }),
+        addBranchCreatedActivity
+      })
     })
     await downloadProject(argv, { logger: cliLogger })
   }

@@ -15,7 +15,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  createBranch,
+  createBranchFactory,
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
@@ -150,7 +150,7 @@ export async function batchMoveCommits(
   try {
     const finalBranch =
       branch ||
-      (await createBranch({
+      (await createBranchFactory({ db })({
         name: targetBranch,
         streamId: stream.id,
         authorId: userId,

@@ -11,23 +11,32 @@ const knex = require('@/db/knex')
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
-const {
-  createBranch,
-  updateBranch,
-  getBranchesByStreamId,
-  deleteBranchById
-} = require('../services/branches')
+const { getBranchesByStreamId, deleteBranchById } = require('../services/branches')
 const { createCommitByBranchName } = require('../services/commits')
 
-const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
+const {
+  deleteBranchAndNotify,
+  updateBranchAndNotifyFactory
+} = require('@/modules/core/services/branch/management')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory,
+  updateBranchFactory
 } = require('@/modules/core/repositories/branches')
+const {
+  addBranchUpdatedActivity
+} = require('@/modules/activitystream/services/branchActivity')
 
 const Commits = () => knex('commits')
 const getBranchById = getBranchByIdFactory({ db: knex })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+const createBranch = createBranchFactory({ db: knex })
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById: getBranchByIdFactory({ db: knex }),
+  updateBranch: updateBranchFactory({ db: knex }),
+  addBranchUpdatedActivity
+})
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -57,11 +66,13 @@ describe('Branches @core-branches', () => {
   const branch = { name: 'dim/dev' }
 
   it('Should create a branch', async () => {
-    branch.id = await createBranch({
-      ...branch,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    branch.id = (
+      await createBranch({
+        ...branch,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
     expect(branch.id).to.be.not.null
     expect(branch.id).to.be.a.string
   })
@@ -91,24 +102,28 @@ describe('Branches @core-branches', () => {
     }
 
     try {
-      await updateBranch({
-        id: branch.id,
-        name: '/super/part/two',
-        streamId: stream.id,
-        userId: user.id
-      })
+      await updateBranchAndNotify(
+        {
+          id: branch.id,
+          name: '/super/part/two',
+          streamId: stream.id
+        },
+        user.id
+      )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
       expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
-      await updateBranch({
-        id: branch.id,
-        name: '#super#part#three',
-        streamId: stream.id,
-        userId: user.id
-      })
+      await updateBranchAndNotify(
+        {
+          id: branch.id,
+          name: '#super#part#three',
+          streamId: stream.id
+        },
+        user.id
+      )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
       expect(err.message).to.contain('Branch names cannot start with')
@@ -127,11 +142,13 @@ describe('Branches @core-branches', () => {
   })
 
   it('Branch names should be case insensitive (always lowercase)', async () => {
-    const id = await createBranch({
-      name: 'CaseSensitive',
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const id = (
+      await createBranch({
+        name: 'CaseSensitive',
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
     const b = await getStreamBranchByName(stream.id, 'casesensitive')
     expect(b.name).to.equal('casesensitive')
@@ -153,12 +170,14 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should update a branch', async () => {
-    await updateBranch({
-      id: branch.id,
-      description: 'lorem ipsum',
-      streamId: stream.id,
-      userId: user.id
-    })
+    await updateBranchAndNotify(
+      {
+        id: branch.id,
+        description: 'lorem ipsum',
+        streamId: stream.id
+      },
+      user.id
+    )
 
     const b1 = await getBranchById(branch.id)
     expect(b1.description).to.equal('lorem ipsum')
@@ -192,11 +211,13 @@ describe('Branches @core-branches', () => {
   it('Deleting a branch should delete the commit', async () => {
     const branchName = 'pasta'
 
-    const branchId = await createBranch({
-      name: branchName,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const branchId = (
+      await createBranch({
+        name: branchName,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
     const tempCommit = await createCommitByBranchName({
       streamId: stream.id,
