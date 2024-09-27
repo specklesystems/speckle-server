@@ -12,8 +12,8 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchLatestCommits,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
@@ -66,8 +66,8 @@ export async function addCommentCreatedActivity(params: {
   const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getViewerResourceGroups: getViewerResourceGroupsFactory({
       getStreamObjects,
-      getBranchLatestCommits,
-      getStreamBranchesByName,
+      getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
       getSpecificBranchCommits,
       getAllBranchCommits
     })

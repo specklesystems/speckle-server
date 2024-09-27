@@ -1,5 +1,4 @@
 import { Optional } from '@speckle/shared'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { isUndefined } from 'lodash'
 import {
   GetPaginatedBranchCommentsFactory,
@@ -16,6 +15,7 @@ import {
   PaginatedProjectCommentsParams,
   ResolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/domain/operations'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 
 export const getPaginatedCommitCommentsFactory =
   (deps: {
@@ -58,9 +58,7 @@ export const getPaginatedProjectCommentsFactory =
     getPaginatedProjectCommentsTotalCount: GetPaginatedProjectCommentsTotalCount
   }): GetPaginatedProjectComments =>
   async (params: PaginatedProjectCommentsParams) => {
-    let preloadedModelLatestVersions: Optional<
-      Awaited<ReturnType<typeof getBranchLatestCommits>>
-    > = undefined
+    let preloadedModelLatestVersions: Optional<BranchLatestCommit[]> = undefined
     // optimization to ensure we don't request this stuff twice
     if (!params.filter?.allModelVersions && params.filter?.resourceIdString) {
       preloadedModelLatestVersions =

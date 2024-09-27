@@ -1,6 +1,6 @@
 overwrite: true
 schema:
-  - 'modules/schema.js'
+  - 'modules/schema.ts'
 documents: null
 generates:
   modules/core/graph/generated/graphql.ts:

@@ -3,9 +3,9 @@ import { downloadCommitFactory } from '@/modules/cross-server-sync/services/comm
 import { cliLogger } from '@/logging/logging'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  getBranchLatestCommits,
-  getStreamBranchByName,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
@@ -82,13 +82,14 @@ const command: CommandModule<
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })
     })
+    const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
     const insertComments = insertCommentsFactory({ db })
     const insertCommentLinks = insertCommentLinksFactory({ db })
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
         getBranchLatestCommits,
-        getStreamBranchesByName,
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits,
         getAllBranchCommits
       })
@@ -115,7 +116,7 @@ const command: CommandModule<
 
     const downloadCommit = downloadCommitFactory({
       getStream,
-      getStreamBranchByName,
+      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
       getStreamCollaborators,
       getUser,
       createCommitByBranchId,
