@@ -26,7 +26,8 @@ import {
   DeleteCommit,
   DeleteCommits,
   GetCommit,
-  GetCommits
+  GetCommits,
+  GetSpecificBranchCommits
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -114,20 +115,6 @@ export const deleteCommitFactory =
     const delCount = await deleteCommitsFactory(deps)([commitId])
     return !!delCount
   }
-
-export async function getStreamCommitsWithBranchId(streamId: string) {
-  const baseQuery = Commits.knex<CommitRecord[]>()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .where(StreamCommits.col.streamId, streamId)
-    .orderBy(Commits.col.createdAt)
-
-  return await baseQuery
-}
 
 export function getBatchedStreamCommits(
   streamId: string,
@@ -228,37 +215,38 @@ export async function getCommitsAndTheirBranchIds(commitIds: string[]) {
     .whereIn(Commits.col.id, commitIds)
 }
 
-export async function getSpecificBranchCommits(
-  pairs: { branchId: string; commitId: string }[]
-) {
-  if (!pairs?.length) return []
+export const getSpecificBranchCommitsFactory =
+  (deps: { db: Knex }): GetSpecificBranchCommits =>
+  async (pairs: { branchId: string; commitId: string }[]) => {
+    if (!pairs?.length) return []
 
-  const commitIds = uniq(pairs.map((p) => p.commitId))
-  const branchIds = uniq(pairs.map((p) => p.branchId))
+    const commitIds = uniq(pairs.map((p) => p.commitId))
+    const branchIds = uniq(pairs.map((p) => p.branchId))
 
-  const q = Commits.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .whereIn(Commits.col.id, commitIds)
-    .whereIn(BranchCommits.col.branchId, branchIds)
+    const q = tables
+      .commits(deps.db)
+      .select<Array<CommitRecord & { branchId: string }>>([
+        ...Commits.cols,
+        BranchCommits.col.branchId
+      ])
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .whereIn(Commits.col.id, commitIds)
+      .whereIn(BranchCommits.col.branchId, branchIds)
 
-  const queryResults = await q
-  const results: Array<CommitRecord & { branchId: string }> = []
+    const queryResults = await q
+    const results: Array<CommitRecord & { branchId: string }> = []
 
-  for (const pair of pairs) {
-    const commit = queryResults.find(
-      (r) => r.id === pair.commitId && r.branchId === pair.branchId
-    )
-    if (commit) {
-      results.push(commit)
+    for (const pair of pairs) {
+      const commit = queryResults.find(
+        (r) => r.id === pair.commitId && r.branchId === pair.branchId
+      )
+      if (commit) {
+        results.push(commit)
+      }
     }
-  }
 
-  return results
-}
+    return results
+  }
 
 export type PaginatedBranchCommitsBaseParams = {
   branchId: string

@@ -10,6 +10,7 @@ import {
   GetBranchLatestCommits,
   GetStreamBranchesByName
 } from '@/modules/core/domain/branches/operations'
+import { GetSpecificBranchCommits } from '@/modules/core/domain/commits/operations'
 import {
   ResourceIdentifier,
   ResourceIdentifierInput,
@@ -21,8 +22,7 @@ import {
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
   getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getCommitsAndTheirBranchIds
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { Optional, SpeckleViewer } from '@speckle/shared'
@@ -159,7 +159,7 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
 
 type GetVersionResourceGroupsLoadedVersionsOnlyDeps = {
   getStreamBranchesByName: GetStreamBranchesByName
-  getSpecificBranchCommits: typeof getSpecificBranchCommits
+  getSpecificBranchCommits: GetSpecificBranchCommits
   getBranchLatestCommits: GetBranchLatestCommits
 }
 

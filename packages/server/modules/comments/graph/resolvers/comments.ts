@@ -88,7 +88,7 @@ import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
   getAllBranchCommits,
   getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
@@ -178,7 +178,7 @@ const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getStreamObjects,
     getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
     getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-    getSpecificBranchCommits,
+    getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
     getAllBranchCommits
   })
 })

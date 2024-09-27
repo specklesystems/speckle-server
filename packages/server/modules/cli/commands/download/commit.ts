@@ -21,7 +21,7 @@ import {
 } from '@/modules/core/services/commit/viewerResources'
 import {
   getAllBranchCommits,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getCommentFactory,
@@ -90,7 +90,7 @@ const command: CommandModule<
         getStreamObjects,
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-        getSpecificBranchCommits,
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits
       })
     })

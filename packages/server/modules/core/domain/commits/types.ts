@@ -4,6 +4,7 @@ export type Commit = CommitRecord
 export type BranchLatestCommit = Commit & {
   branchId: string
 }
+export type BranchCommit = BranchLatestCommit
 
 export type CommitWithStreamBranchMetadata = Commit & {
   streamId: string
