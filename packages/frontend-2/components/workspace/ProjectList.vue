@@ -258,7 +258,10 @@ const invokeSurvicateEvent = () => {
 onResult((queryResult) => {
   if (queryResult.data?.workspace) {
     workspaceMixpanelUpdateGroup(queryResult.data.workspace)
-    invokeSurvicateEvent()
+
+    if (workspace.value?.role === Roles.Workspace.Admin) {
+      invokeSurvicateEvent()
+    }
   }
 })
 </script>
