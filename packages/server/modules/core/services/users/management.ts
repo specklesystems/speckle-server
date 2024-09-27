@@ -1,4 +1,6 @@
-import { addUserUpdatedActivity } from '@/modules/activitystream/services/userActivity'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
@@ -35,7 +37,9 @@ export async function updateUserAndNotify(userId: string, update: UserUpdateInpu
     throw new UserUpdateError("Couldn't update user")
   }
 
-  await addUserUpdatedActivity({
+  await addUserUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db })
+  })({
     oldUser: existingUser,
     update,
     updaterId: userId

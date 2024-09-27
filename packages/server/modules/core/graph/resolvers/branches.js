@@ -9,9 +9,9 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  createBranchAndNotify,
-  updateBranchAndNotify,
-  deleteBranchAndNotify
+  createBranchAndNotifyFactory,
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
@@ -21,9 +21,22 @@ const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory,
+  updateBranchFactory,
+  deleteBranchByIdFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity,
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStream,
+  markBranchStreamUpdated
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -32,6 +45,24 @@ const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 const getBranchById = getBranchByIdFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName,
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
+})
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById,
+  updateBranch: updateBranchFactory({ db }),
+  addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

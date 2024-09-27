@@ -6,7 +6,7 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -16,23 +16,29 @@ import { Knex } from 'knex'
 import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import {
+  DeleteBranchById,
   GenerateBranchId,
   GetBranchById,
   GetBranchesByIds,
   GetBranchLatestCommits,
+  GetModelTreeItems,
   GetModelTreeItemsFiltered,
   GetModelTreeItemsFilteredTotalCount,
+  GetModelTreeItemsTotalCount,
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetStreamBranchByName,
   GetStreamBranchesByName,
-  GetStructuredProjectModels
+  GetStructuredProjectModels,
+  StoreBranch,
+  UpdateBranch
 } from '@/modules/core/domain/branches/operations'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { ModelTreeItem } from '@/modules/core/domain/branches/types'
 
 const tables = {
-  branches: (db: Knex) => db<BranchRecord>(Branches.name)
+  branches: (db: Knex) => db<BranchRecord>(Branches.name),
+  commits: (db: Knex) => db<CommitRecord>(Commits.name)
 }
 
 export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
@@ -482,125 +488,136 @@ export const getModelTreeItemsFilteredTotalCountFactory =
     return parseInt(row.count || '0')
   }
 
-function getModelTreeItemsBaseQuery(
-  projectId: string,
-  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
-) {
-  const cleanInput = (
-    input: string | null | undefined,
-    options?: Partial<{ escapeRegexp: boolean }>
+const getModelTreeItemsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (
+    projectId: string,
+    options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
   ) => {
-    let clean = (input || '').toLowerCase()
-    clean = trim(trim(clean), '/')
-    clean = options?.escapeRegexp ? clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : clean
-    return clean
-  }
+    const cleanInput = (
+      input: string | null | undefined,
+      options?: Partial<{ escapeRegexp: boolean }>
+    ) => {
+      let clean = (input || '').toLowerCase()
+      clean = trim(trim(clean), '/')
+      clean = options?.escapeRegexp
+        ? clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        : clean
+      return clean
+    }
 
-  const { filterOutEmptyMain = true, parentModelName } = options || {}
-  const cleanModelName = cleanInput(parentModelName, { escapeRegexp: true })
-  const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
+    const { filterOutEmptyMain = true, parentModelName } = options || {}
+    const cleanModelName = cleanInput(parentModelName, { escapeRegexp: true })
+    const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
-  const regExp = cleanModelName.length
-    ? // only direct children of parentModelName
-      `^${cleanModelName}\\/(${branchPartPattern})`
-    : // only first branch part (top level item)
-      `^${branchPartPattern}`
+    const regExp = cleanModelName.length
+      ? // only direct children of parentModelName
+        `^${cleanModelName}\\/(${branchPartPattern})`
+      : // only first branch part (top level item)
+        `^${branchPartPattern}`
 
-  const branchPartMatcher = `(regexp_match("branches"."name", '${regExp}', 'i'))[1]`
+    const branchPartMatcher = `(regexp_match("branches"."name", '${regExp}', 'i'))[1]`
 
-  const baseQuery = Branches.knex()
-    .select<{ updatedAt: Date; branchPart: string; longestFullName: string }[]>([
-      // for sorting by updatedAt (of any of the children)
-      knex.raw('MAX(??) as "updatedAt"', [Branches.col.updatedAt]),
-      // for allowing filtering by parent branch name
-      knex.raw(`${branchPartMatcher} as "branchPart"`),
-      // for checking for children + checking if returned row represents 'main' if filterOutEmptyMain
-      knex.raw(`MAX(??) as "longestFullName"`, [Branches.col.name])
-    ])
-    .where(Branches.col.streamId, projectId)
-    .andWhere(knex.raw(`${branchPartMatcher} IS NOT NULL`))
-    .groupBy('branchPart')
-    .orderBy('updatedAt', 'desc')
+    const baseQuery = tables
+      .branches(deps.db)
+      .select<{ updatedAt: Date; branchPart: string; longestFullName: string }[]>([
+        // for sorting by updatedAt (of any of the children)
+        knex.raw('MAX(??) as "updatedAt"', [Branches.col.updatedAt]),
+        // for allowing filtering by parent branch name
+        knex.raw(`${branchPartMatcher} as "branchPart"`),
+        // for checking for children + checking if returned row represents 'main' if filterOutEmptyMain
+        knex.raw(`MAX(??) as "longestFullName"`, [Branches.col.name])
+      ])
+      .where(Branches.col.streamId, projectId)
+      .andWhere(knex.raw(`${branchPartMatcher} IS NOT NULL`))
+      .groupBy('branchPart')
+      .orderBy('updatedAt', 'desc')
 
-  let finalQuery = baseQuery
-  if (filterOutEmptyMain) {
-    // Select branch id to check for attached commits
-    // And count to ensure that there's only "main" and no children
-    baseQuery.select([
-      knex.raw(`(ARRAY_AGG(??))[1] as "lastId"`, [Branches.col.id]),
-      knex.raw(`COUNT(??) as "branchCount"`, [Branches.col.id])
-    ])
+    let finalQuery = baseQuery
+    if (filterOutEmptyMain) {
+      // Select branch id to check for attached commits
+      // And count to ensure that there's only "main" and no children
+      baseQuery.select([
+        knex.raw(`(ARRAY_AGG(??))[1] as "lastId"`, [Branches.col.id]),
+        knex.raw(`COUNT(??) as "branchCount"`, [Branches.col.id])
+      ])
 
-    // Wrap base query and filter out empty main
-    finalQuery = knex
-      .select<{ updatedAt: Date; branchPart: string; longestFullName: string }[]>('*')
-      .from(baseQuery.as('sq1'))
-      .where((w1) => {
-        // Either there are children branches, or the branch name isn't 'main'
-        // Or the branch has more than 0 commits
-        w1.where((w2) => {
-          w2.whereNot('branchCount', 1)
-            .orWhereNot('branchPart', knex.raw('"longestFullName"'))
-            .orWhereNot('longestFullName', 'main')
-        }).orWhere(
-          knex.raw(
-            `(SELECT COUNT(*) FROM "branch_commits" WHERE "branch_commits"."branchId" = "lastId")`
-          ),
-          '>',
-          0
-        )
-      })
-  }
-
-  return {
-    query: finalQuery,
-    parentModelName: cleanInput(parentModelName)
-  }
-}
-
-export async function getModelTreeItems(
-  projectId: string,
-  args: Omit<ProjectModelsTreeArgs, 'filter'>,
-  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
-) {
-  const limit = clamp(args.limit || 25, 0, 100)
-  const { query, parentModelName } = getModelTreeItemsBaseQuery(projectId, options)
-
-  const finalQuery = knex.from(query.as('sq1'))
-  finalQuery.limit(limit)
-
-  if (args.cursor) {
-    finalQuery.andWhere('updatedAt', '<', args.cursor)
-  }
-
-  const res = await finalQuery
-  const items = res.map((i): ModelsTreeItemGraphQLReturn => {
-    const fullName = parentModelName
-      ? `${parentModelName}/${i.branchPart}`
-      : i.branchPart
+      // Wrap base query and filter out empty main
+      finalQuery = (deps.db().from(baseQuery.as('sq1')) as typeof baseQuery)
+        .select<{ updatedAt: Date; branchPart: string; longestFullName: string }[]>('*')
+        .where((w1) => {
+          // Either there are children branches, or the branch name isn't 'main'
+          // Or the branch has more than 0 commits
+          w1.where((w2) => {
+            w2.whereNot('branchCount', 1)
+              .orWhereNot('branchPart', knex.raw('"longestFullName"'))
+              .orWhereNot('longestFullName', 'main')
+          }).orWhere(
+            knex.raw(
+              `(SELECT COUNT(*) FROM "branch_commits" WHERE "branch_commits"."branchId" = "lastId")`
+            ),
+            '>',
+            0
+          )
+        })
+    }
 
     return {
-      id: `${projectId}-${fullName}`,
-      projectId,
-      name: i.branchPart,
-      fullName,
-      updatedAt: i.updatedAt,
-      hasChildren: fullName.length < i.longestFullName.length
+      query: finalQuery,
+      parentModelName: cleanInput(parentModelName)
     }
-  })
+  }
 
-  return items
-}
+export const getModelTreeItemsFactory =
+  (deps: { db: Knex }): GetModelTreeItems =>
+  async (
+    projectId: string,
+    args: Omit<ProjectModelsTreeArgs, 'filter'>,
+    options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
+  ) => {
+    const limit = clamp(args.limit || 25, 0, 100)
+    const { query, parentModelName } = getModelTreeItemsBaseQueryFactory(deps)(
+      projectId,
+      options
+    )
 
-export async function getModelTreeItemsTotalCount(
-  projectId: string,
-  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
-) {
-  const { query } = getModelTreeItemsBaseQuery(projectId, options)
-  const q = knex.count<{ count: string }[]>().from(query.as('sq1'))
-  const [row] = await q
-  return parseInt(row.count || '0')
-}
+    const finalQuery = knex.from(query.as('sq1'))
+    finalQuery.limit(limit)
+
+    if (args.cursor) {
+      finalQuery.andWhere('updatedAt', '<', args.cursor)
+    }
+
+    const res = await finalQuery
+    const items = res.map((i): ModelsTreeItemGraphQLReturn => {
+      const fullName = parentModelName
+        ? `${parentModelName}/${i.branchPart}`
+        : i.branchPart
+
+      return {
+        id: `${projectId}-${fullName}`,
+        projectId,
+        name: i.branchPart,
+        fullName,
+        updatedAt: i.updatedAt,
+        hasChildren: fullName.length < i.longestFullName.length
+      }
+    })
+
+    return items
+  }
+
+export const getModelTreeItemsTotalCountFactory =
+  (deps: { db: Knex }): GetModelTreeItemsTotalCount =>
+  async (
+    projectId: string,
+    options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
+  ) => {
+    const { query } = getModelTreeItemsBaseQueryFactory(deps)(projectId, options)
+    const q = deps.db().count<{ count: string }[]>().from(query.as('sq1'))
+    const [row] = await q
+    return parseInt(row.count || '0')
+  }
 
 export const validateBranchName = (name: string) => {
   name = (name || '').trim()
@@ -627,51 +644,59 @@ export const validateBranchName = (name: string) => {
     )
 }
 
-export async function createBranch(params: {
-  name: string
-  description: string | null
-  streamId: string
-  authorId: string
-}) {
-  const { streamId, authorId, name, description } = params
+export const createBranchFactory =
+  (deps: { db: Knex }): StoreBranch =>
+  async (params: {
+    name: string
+    description: string | null
+    streamId: string
+    authorId: string
+  }) => {
+    const { streamId, authorId, name, description } = params
 
-  const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
-    id: generateBranchId(),
-    streamId,
-    authorId,
-    name: name.toLowerCase(),
-    description
-  }
+    const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
+      id: generateBranchId(),
+      streamId,
+      authorId,
+      name: name.toLowerCase(),
+      description
+    }
 
-  validateBranchName(branch.name)
-
-  const results = await Branches.knex().insert(branch, '*')
-  const newBranch = results[0] as BranchRecord
-
-  return newBranch
-}
-
-export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
-  if (branch.name) {
     validateBranchName(branch.name)
-    branch.name = branch.name.toLowerCase()
+
+    const results = await tables.branches(deps.db).insert(branch, '*')
+    const newBranch = results[0] as BranchRecord
+
+    return newBranch
   }
 
-  const [newBranch] = (await Branches.knex()
-    .where(Branches.col.id, branchId)
-    .update(branch, '*')) as BranchRecord[]
-  return newBranch
-}
+export const updateBranchFactory =
+  (deps: { db: Knex }): UpdateBranch =>
+  async (branchId: string, branch: Partial<BranchRecord>) => {
+    if (branch.name) {
+      validateBranchName(branch.name)
+      branch.name = branch.name.toLowerCase()
+    }
 
-export async function deleteBranchById(branchId: string) {
-  // this needs to happen before deleting the branch, otherwise the
-  // branch_commits table doesn't have the needed rows
-  await Commits.knex()
-    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
-    .where('branch_commits.branchId', branchId)
-    .del()
-  return await Branches.knex().where(Branches.col.id, branchId).del()
-}
+    const [newBranch] = (await tables
+      .branches(deps.db)
+      .where(Branches.col.id, branchId)
+      .update(branch, '*')) as BranchRecord[]
+    return newBranch
+  }
+
+export const deleteBranchByIdFactory =
+  (deps: { db: Knex }): DeleteBranchById =>
+  async (branchId: string) => {
+    // this needs to happen before deleting the branch, otherwise the
+    // branch_commits table doesn't have the needed rows
+    await tables
+      .commits(deps.db)
+      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+      .where('branch_commits.branchId', branchId)
+      .del()
+    return await tables.branches(deps.db).where(Branches.col.id, branchId).del()
+  }
 
 export async function markCommitBranchUpdated(commitId: string) {
   const q = Branches.knex()

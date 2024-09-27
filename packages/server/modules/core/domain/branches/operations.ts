@@ -1,9 +1,15 @@
 import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import {
+  BranchCreateInput,
+  BranchDeleteInput,
+  BranchUpdateInput,
+  CreateModelInput,
+  DeleteModelInput,
   ModelsTreeItemCollection,
   ProjectModelsArgs,
-  ProjectModelsTreeArgs
+  ProjectModelsTreeArgs,
+  UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { Nullable, Optional } from '@speckle/shared'
@@ -100,3 +106,49 @@ export type GetProjectTopLevelModelsTree = (
     }
   >
 >
+
+export type GetModelTreeItems = (
+  projectId: string,
+  args: Omit<ProjectModelsTreeArgs, 'filter'>,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<ModelsTreeItemGraphQLReturn[]>
+
+export type GetModelTreeItemsTotalCount = (
+  projectId: string,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<number>
+
+export type StoreBranch = (params: {
+  name: string
+  description: string | null
+  streamId: string
+  authorId: string
+}) => Promise<Branch>
+
+export type CreateBranchAndNotify = (
+  input: BranchCreateInput | CreateModelInput,
+  creatorId: string
+) => Promise<Branch>
+
+export type UpdateBranch = (
+  branchId: string,
+  branch: Partial<Branch>
+) => Promise<Branch>
+
+export type DeleteBranchById = (branchId: string) => Promise<number>
+
+export type UpdateBranchAndNotify = (
+  input: BranchUpdateInput | UpdateModelInput,
+  userId: string
+) => Promise<Branch>
+
+export type DeleteBranchAndNotify = (
+  input: BranchDeleteInput | DeleteModelInput,
+  userId: string
+) => Promise<boolean>
