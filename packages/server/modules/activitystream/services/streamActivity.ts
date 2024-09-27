@@ -1,6 +1,7 @@
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  PublishSubscription,
   pubsub,
   StreamSubscriptions as StreamPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
@@ -382,32 +383,44 @@ export async function addStreamInviteSentOutActivity(params: {
 /**
  * Save "user declined an invite" activity item
  */
-export async function addStreamInviteDeclinedActivity(params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, stream } = params
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteDeclined,
-      userId: inviteTargetId,
-      message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
-      info: { targetId: inviteTargetId, inviterId }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamInviteDeclinedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async ({
+    streamId,
+    inviteTargetId,
+    inviterId,
+    stream
+  }: {
+    streamId: string
+    inviteTargetId: string
+    inviterId: string
+    stream: StreamRecord
+  }) => {
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteDeclined,
+        userId: inviteTargetId,
+        message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
+        info: { targetId: inviteTargetId, inviterId }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user mentioned in stream comment" activity item
