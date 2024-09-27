@@ -7,7 +7,6 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  getCommitById,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByUserId
@@ -139,7 +138,7 @@ module.exports = {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent, args) {
+    async commit(parent, args, ctx) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -150,7 +149,9 @@ module.exports = {
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
-      const c = await getCommitById({ streamId: parent.id, id: args.id })
+      const c = await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
       return c
     }
   },
