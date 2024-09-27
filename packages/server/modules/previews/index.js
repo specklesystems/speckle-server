@@ -3,8 +3,7 @@
 const { validateScopes, authorizeResolver } = require('@/modules/shared')
 const {
   getCommitsByStreamId,
-  getCommitsByBranchName,
-  getCommitById
+  getCommitsByBranchName
 } = require('../core/services/commits')
 
 const { makeOgImage } = require('./ogImage')
@@ -30,7 +29,10 @@ const {
   getPreviewImageFactory
 } = require('@/modules/previews/repository/previews')
 const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getObjectCommitsWithStreamIds } = require('@/modules/core/repositories/commits')
+const {
+  getObjectCommitsWithStreamIds,
+  getCommitFactory
+} = require('@/modules/core/repositories/commits')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
@@ -129,9 +131,9 @@ exports.init = (app, isInitial) => {
       return res.sendFile(httpErrorImage(httpErrorCode))
     }
 
-    const commit = await getCommitById({
-      streamId: req.params.streamId,
-      id: req.params.commitId
+    const getCommit = getCommitFactory({ db })
+    const commit = await getCommit(req.params.commitId, {
+      streamId: req.params.streamId
     })
     if (!commit) return res.sendFile(noPreviewImage)
 

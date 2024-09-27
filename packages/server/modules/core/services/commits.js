@@ -86,31 +86,6 @@ module.exports = {
     return true
   },
 
-  async getCommitById({ streamId, id }) {
-    const query = await Commits()
-      .columns([
-        { id: 'commits.id' },
-        'message',
-        'referencedObject',
-        'sourceApplication',
-        'totalChildrenCount',
-        'parents',
-        'commits.createdAt',
-        { branchName: 'branches.name' },
-        { authorName: 'users.name' },
-        { authorId: 'users.id' },
-        { authorAvatar: 'users.avatar' }
-      ])
-      .select()
-      .join('stream_commits', 'commits.id', 'stream_commits.commitId')
-      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .leftJoin('users', 'commits.author', 'users.id')
-      .where({ 'stream_commits.streamId': streamId, 'commits.id': id })
-      .first()
-    return await query
-  },
-
   /**
    * @deprecated Use 'deleteCommitAndNotify()'
    */

@@ -10,7 +10,6 @@ const { createObject } = require('../services/objects')
 const {
   createCommitByBranchName,
   updateCommit,
-  getCommitById,
   deleteCommit,
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
@@ -30,6 +29,7 @@ const { db } = require('@/db/knex')
 const {
   addBranchCreatedActivity
 } = require('@/modules/activitystream/services/branchActivity')
+const { getCommitFactory } = require('@/modules/core/repositories/commits')
 
 const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
@@ -37,6 +37,7 @@ const createBranchAndNotify = createBranchAndNotifyFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   addBranchCreatedActivity
 })
+const getCommit = getCommitFactory({ db })
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -224,9 +225,9 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should get a commit by id', async () => {
-    const cm = await getCommitById({ streamId: stream.id, id: commitId1 })
+    const cm = await getCommit(commitId1, { streamId: stream.id })
     expect(cm.message).to.equal('FIRST COMMIT YOOOOOO')
-    expect(cm.authorId).to.equal(user.id)
+    expect(cm.author).to.equal(user.id)
   })
 
   it('Should get the commits and their total count from a branch', async () => {
@@ -322,7 +323,7 @@ describe('Commits @core-commits', () => {
     })
     const branchCommit = branchCommits[0]
 
-    const idCommit = await getCommitById({ streamId: stream.id, id: commitId3 })
+    const idCommit = await getCommit(commitId3, { streamId: stream.id })
 
     for (const commit of [userCommit, serverCommit, branchCommit, idCommit]) {
       expect(commit).to.have.property('sourceApplication')
@@ -340,8 +341,8 @@ describe('Commits @core-commits', () => {
 
   it('Should have an array of parents', async () => {
     const commits = [
-      await getCommitById({ streamId: stream.id, id: commitId3 }),
-      await getCommitById({ streamId: stream.id, id: commitId2 })
+      await getCommit(commitId3, { streamId: stream.id }),
+      await getCommit(commitId2, { streamId: stream.id })
     ]
 
     for (const commit of commits) {
