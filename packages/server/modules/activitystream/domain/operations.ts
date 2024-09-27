@@ -161,3 +161,11 @@ export type AddStreamInviteDeclinedActivity = (params: {
   inviterId: string
   stream: StreamRecord
 }) => Promise<void>
+
+export type AddStreamInviteSentOutActivity = (params: {
+  streamId: string
+  inviteTargetId: string | null
+  inviterId: string
+  inviteTargetEmail: string | null
+  stream: StreamRecord
+}) => Promise<void>
