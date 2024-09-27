@@ -24,9 +24,10 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import {
   getBranchLatestCommitsFactory,
-  getModelTreeItems,
+  getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
   getModelTreeItemsFilteredTotalCountFactory,
+  getModelTreeItemsTotalCountFactory,
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchesByNameFactory
@@ -54,11 +55,14 @@ const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
     db
   })
 })
+const getModelTreeItems = getModelTreeItemsFactory({ db })
 const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
   getModelTreeItemsFiltered: getModelTreeItemsFilteredFactory({ db }),
   getModelTreeItemsFilteredTotalCount: getModelTreeItemsFilteredTotalCountFactory({
     db
-  })
+  }),
+  getModelTreeItems,
+  getModelTreeItemsTotalCount: getModelTreeItemsTotalCountFactory({ db })
 })
 
 export = {

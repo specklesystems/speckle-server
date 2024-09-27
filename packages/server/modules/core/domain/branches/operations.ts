@@ -100,3 +100,20 @@ export type GetProjectTopLevelModelsTree = (
     }
   >
 >
+
+export type GetModelTreeItems = (
+  projectId: string,
+  args: Omit<ProjectModelsTreeArgs, 'filter'>,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<ModelsTreeItemGraphQLReturn[]>
+
+export type GetModelTreeItemsTotalCount = (
+  projectId: string,
+  options?: Partial<{
+    filterOutEmptyMain: boolean
+    parentModelName: string
+  }>
+) => Promise<number>
