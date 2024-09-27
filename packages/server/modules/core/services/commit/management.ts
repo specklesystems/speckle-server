@@ -22,7 +22,7 @@ import { CommitRecord } from '@/modules/core/helpers/types'
 import {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
-  markCommitBranchUpdated
+  markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import {
   createCommit,
@@ -133,7 +133,7 @@ export async function createCommitByBranchId(
 
   await Promise.all([
     markCommitStreamUpdated(id),
-    markCommitBranchUpdated(id),
+    markCommitBranchUpdatedFactory({ db })(id),
     VersionsEmitter.emit(VersionEvents.Created, {
       projectId: streamId,
       modelId: branchId,
@@ -309,7 +309,7 @@ export async function updateCommitAndNotify(
 
     await Promise.all([
       markCommitStreamUpdated(commit.id),
-      markCommitBranchUpdated(commit.id)
+      markCommitBranchUpdatedFactory({ db })(commit.id)
     ])
   }
 
@@ -336,7 +336,7 @@ export async function deleteCommitAndNotify(
 
   const [, updatedBranch] = await Promise.all([
     markCommitStreamUpdated(commit.id),
-    markCommitBranchUpdated(commit.id)
+    markCommitBranchUpdatedFactory({ db })(commit.id)
   ])
 
   const isDeleted = await deleteCommit(commitId)

@@ -53,7 +53,7 @@ import { Automate } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
-  getLatestStreamBranch
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 import {
   buildAutomationCreate,
@@ -148,7 +148,7 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
       ])
 
       const [projectModel, newAutomation] = await Promise.all([
-        getLatestStreamBranch(testUserStream.id),
+        getLatestStreamBranchFactory({ db })(testUserStream.id),
         createAutomation({
           userId: testUser.id,
           projectId: testUserStream.id,
