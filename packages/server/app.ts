@@ -71,7 +71,8 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUser } from '@/modules/core/repositories/users'
-import { isAlive, isReady } from '@/modules/healthchecks'
+import { initFactory as healthchecksInitFactory } from '@/healthchecks'
+import type { ReadinessHandler } from '@/healthchecks/health'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -398,6 +399,9 @@ export async function init() {
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
 
+  // Initialize healthchecks
+  const healthchecks = await healthchecksInitFactory()(app, true)
+
   // Init HTTP server & subscription server
   const server = http.createServer(app)
   const subscriptionServer = buildApolloSubscriptionServer(server)
@@ -426,13 +430,19 @@ export async function init() {
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
 
-  return { app, graphqlServer, server, subscriptionServer }
+  return {
+    app,
+    graphqlServer,
+    server,
+    subscriptionServer,
+    readinessCheck: healthchecks.isReady
+  }
 }
 
 export async function shutdown(params: {
   graphqlServer: ApolloServer<GraphQLContext>
 }): Promise<void> {
-  await params.graphqlServer.stop()
+  await params.graphqlServer?.stop()
   await ModulesSetup.shutdown()
 }
 
@@ -463,9 +473,10 @@ export async function startHttp(params: {
   server: http.Server
   app: Express
   graphqlServer: ApolloServer<GraphQLContext>
+  readinessCheck: ReadinessHandler
   customPortOverride?: number
 }) {
-  const { server, app, graphqlServer, customPortOverride } = params
+  const { server, app, graphqlServer, readinessCheck, customPortOverride } = params
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
@@ -503,8 +514,9 @@ export async function startHttp(params: {
       return Promise.resolve()
     },
     healthChecks: {
-      '/readiness': isReady,
-      '/liveness': isAlive,
+      '/readiness': readinessCheck,
+      // '/liveness' should return true even if in shutdown phase, so app does not get restarted while draining connections
+      // therefore we cannot use terminus to handle liveness checks.
       verbatim: true
     },
     logger: (message, err) => {

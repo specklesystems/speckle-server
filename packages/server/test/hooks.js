@@ -77,6 +77,7 @@ const initializeTestServer = async (server, app) => {
   }
 }
 
+let graphqlServer = undefined
 exports.mochaHooks = {
   beforeAll: async () => {
     logger.info('running before all')
@@ -84,18 +85,19 @@ exports.mochaHooks = {
     await exports.truncateTables()
     await knex.migrate.rollback()
     await knex.migrate.latest()
-    await init()
+    const initValues = await init()
+    graphqlServer = initValues.graphqlServer
   },
   afterAll: async () => {
     logger.info('running after all')
     await unlock()
-    await shutdown()
+    await shutdown({ graphqlServer })
   }
 }
 
 exports.buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  const { app, graphqlServer, server, readinessCheck } = await init()
+  return { app, graphqlServer, server, readinessCheck }
 }
 
 exports.beforeEachContext = async () => {

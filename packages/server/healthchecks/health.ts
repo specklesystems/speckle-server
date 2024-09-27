@@ -8,7 +8,9 @@ import type { Knex } from 'knex'
 import { BaseError } from '@/modules/shared/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
-type FreeConnectionsCalculator = {
+export type ReadinessHandler = () => Promise<{ details: Record<string, string> }>
+
+export type FreeConnectionsCalculator = {
   mean: () => number
 }
 
@@ -73,7 +75,7 @@ export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
   isPostgresAlive: DBCheck
   freeConnectionsCalculator: FreeConnectionsCalculator
-}) => {
+}): ReadinessHandler => {
   return async () => {
     const postgres = await deps.isPostgresAlive()
     if (!postgres.isAlive) {
