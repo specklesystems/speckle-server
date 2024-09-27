@@ -9,9 +9,9 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  createBranchAndNotify,
   updateBranchAndNotify,
-  deleteBranchAndNotify
+  deleteBranchAndNotify,
+  createBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
@@ -21,9 +21,13 @@ const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity
+} = require('@/modules/activitystream/services/branchActivity')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -32,6 +36,11 @@ const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 const getBranchById = getBranchByIdFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName,
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

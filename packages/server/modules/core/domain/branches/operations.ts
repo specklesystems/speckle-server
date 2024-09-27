@@ -1,6 +1,8 @@
 import { Branch, ModelTreeItem } from '@/modules/core/domain/branches/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import {
+  BranchCreateInput,
+  CreateModelInput,
   ModelsTreeItemCollection,
   ProjectModelsArgs,
   ProjectModelsTreeArgs
@@ -117,3 +119,15 @@ export type GetModelTreeItemsTotalCount = (
     parentModelName: string
   }>
 ) => Promise<number>
+
+export type StoreBranch = (params: {
+  name: string
+  description: string | null
+  streamId: string
+  authorId: string
+}) => Promise<Branch>
+
+export type CreateBranchAndNotify = (
+  input: BranchCreateInput | CreateModelInput,
+  creatorId: string
+) => Promise<Branch>

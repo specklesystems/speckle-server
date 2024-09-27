@@ -28,7 +28,8 @@ import {
   GetPaginatedProjectModelsTotalCount,
   GetStreamBranchByName,
   GetStreamBranchesByName,
-  GetStructuredProjectModels
+  GetStructuredProjectModels,
+  StoreBranch
 } from '@/modules/core/domain/branches/operations'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { ModelTreeItem } from '@/modules/core/domain/branches/types'
@@ -640,29 +641,31 @@ export const validateBranchName = (name: string) => {
     )
 }
 
-export async function createBranch(params: {
-  name: string
-  description: string | null
-  streamId: string
-  authorId: string
-}) {
-  const { streamId, authorId, name, description } = params
+export const createBranchFactory =
+  (deps: { db: Knex }): StoreBranch =>
+  async (params: {
+    name: string
+    description: string | null
+    streamId: string
+    authorId: string
+  }) => {
+    const { streamId, authorId, name, description } = params
 
-  const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
-    id: generateBranchId(),
-    streamId,
-    authorId,
-    name: name.toLowerCase(),
-    description
+    const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
+      id: generateBranchId(),
+      streamId,
+      authorId,
+      name: name.toLowerCase(),
+      description
+    }
+
+    validateBranchName(branch.name)
+
+    const results = await tables.branches(deps.db).insert(branch, '*')
+    const newBranch = results[0] as BranchRecord
+
+    return newBranch
   }
-
-  validateBranchName(branch.name)
-
-  const results = await Branches.knex().insert(branch, '*')
-  const newBranch = results[0] as BranchRecord
-
-  return newBranch
-}
 
 export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
   if (branch.name) {
