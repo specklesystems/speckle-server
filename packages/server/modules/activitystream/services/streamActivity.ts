@@ -23,6 +23,10 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
+import {
+  AddStreamCommentMentionActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 
 /**
  * Save "stream updated" activity
@@ -408,26 +412,21 @@ export async function addStreamInviteDeclinedActivity(params: {
 /**
  * Save "user mentioned in stream comment" activity item
  */
-export async function addStreamCommentMentionActivity(params: {
-  streamId: string
-  mentionAuthorId: string
-  mentionTargetId: string
-  commentId: string
-  threadId: string
-}) {
-  const { streamId, mentionAuthorId, mentionTargetId, commentId, threadId } = params
-  await saveActivityFactory({ db })({
-    streamId,
-    resourceType: ResourceTypes.Comment,
-    resourceId: commentId,
-    actionType: ActionTypes.Comment.Mention,
-    userId: mentionAuthorId,
-    message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
-    info: {
-      mentionAuthorId,
-      mentionTargetId,
-      commentId,
-      threadId
-    }
-  })
-}
+export const addStreamCommentMentionActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamCommentMentionActivity =>
+  async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
+    await saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Comment,
+      resourceId: commentId,
+      actionType: ActionTypes.Comment.Mention,
+      userId: mentionAuthorId,
+      message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+      info: {
+        mentionAuthorId,
+        mentionTargetId,
+        commentId,
+        threadId
+      }
+    })
+  }

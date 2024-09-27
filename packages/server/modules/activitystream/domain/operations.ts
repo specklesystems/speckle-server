@@ -146,3 +146,11 @@ export type CreateActivitySummary = (args: {
   start: Date
   end: Date
 }) => Promise<ActivitySummary | null>
+
+export type AddStreamCommentMentionActivity = (params: {
+  streamId: string
+  mentionAuthorId: string
+  mentionTargetId: string
+  commentId: string
+  threadId: string
+}) => Promise<void>

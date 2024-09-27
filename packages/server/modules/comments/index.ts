@@ -1,5 +1,7 @@
+import { db } from '@/db/knex'
 import { moduleLogger } from '@/logging/logging'
-import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addStreamCommentMentionActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { notifyUsersOnCommentEventsFactory } from '@/modules/comments/services/notifications'
 import { publishNotification } from '@/modules/notifications/services/publication'
@@ -15,7 +17,9 @@ const commentsModule: SpeckleModule = {
       const notifyUsersOnCommentEvents = notifyUsersOnCommentEventsFactory({
         commentsEventsListen: CommentsEmitter.listen,
         publish: publishNotification,
-        addStreamCommentMentionActivity
+        addStreamCommentMentionActivity: addStreamCommentMentionActivityFactory({
+          saveActivity: saveActivityFactory({ db })
+        })
       })
       unsubFromEvents = await notifyUsersOnCommentEvents()
     }
