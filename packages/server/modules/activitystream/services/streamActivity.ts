@@ -26,6 +26,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
   AddStreamCommentMentionActivity,
+  AddStreamInviteDeclinedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 
@@ -390,18 +391,8 @@ export const addStreamInviteDeclinedActivityFactory =
   }: {
     saveActivity: SaveActivity
     publish: PublishSubscription
-  }) =>
-  async ({
-    streamId,
-    inviteTargetId,
-    inviterId,
-    stream
-  }: {
-    streamId: string
-    inviteTargetId: string
-    inviterId: string
-    stream: StreamRecord
-  }) => {
+  }): AddStreamInviteDeclinedActivity =>
+  async ({ streamId, inviteTargetId, inviterId, stream }) => {
     await Promise.all([
       saveActivity({
         streamId,
