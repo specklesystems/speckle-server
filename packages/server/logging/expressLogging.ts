@@ -74,7 +74,7 @@ export const LoggingExpressMiddleware = HttpLogger({
   },
 
   customSuccessMessage() {
-    return '{requestPath} request {requestStatus} in {responseTime} ms'
+    return '{requestPath} request {requestStatus} with status code {responseStatusCode} in {responseTime} ms'
   },
 
   customSuccessObject(req, res, val: Record<string, unknown>) {
@@ -83,22 +83,25 @@ export const LoggingExpressMiddleware = HttpLogger({
     const requestStatus = isCompleted ? (isError ? 'errored' : 'completed') : 'aborted'
     const requestPath = getRequestPath(req) || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
+    const responseStatusCode = res.statusCode
 
     return {
       ...val,
       requestStatus,
       requestPath,
+      responseStatusCode,
       country,
       err: req.context?.err
     }
   },
 
   customErrorMessage() {
-    return '{requestPath} request {requestStatus} in {responseTime} ms'
+    return '{requestPath} request {requestStatus} with status code {responseStatusCode} in {responseTime} ms'
   },
-  customErrorObject(req, _res, err, val: Record<string, unknown>) {
+  customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
     const requestPath = getRequestPath(req) || 'unknown'
+    const responseStatusCode = res.statusCode
     const country = req.headers['cf-ipcountry'] as Optional<string>
     let e: Error | undefined = undefined
     if (err) e = ensureError(err)
@@ -108,6 +111,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       ...val,
       requestStatus,
       requestPath,
+      responseStatusCode,
       country,
       err: e
     }
