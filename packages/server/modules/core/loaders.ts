@@ -25,7 +25,7 @@ import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
   getCommitsFactory,
-  getSpecificBranchCommits,
+  getSpecificBranchCommitsFactory,
   getStreamCommitCounts,
   getUserAuthoredCommitCounts,
   getUserStreamCommitCounts
@@ -111,6 +111,7 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
 const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
 const getCommits = getCommitsFactory({ db })
+const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

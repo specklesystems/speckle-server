@@ -27,7 +27,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
@@ -67,7 +67,7 @@ const crossServerSyncModule: SpeckleModule = {
         getStreamObjects,
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-        getSpecificBranchCommits,
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits
       })
     })

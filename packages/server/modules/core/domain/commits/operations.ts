@@ -1,4 +1,7 @@
-import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
+import {
+  BranchCommit,
+  CommitWithStreamBranchMetadata
+} from '@/modules/core/domain/commits/types'
 import { Optional } from '@speckle/shared'
 
 export type GetCommits = (
@@ -21,3 +24,10 @@ export type DeleteCommitAndNotify = (
   streamId: string,
   userId: string
 ) => Promise<boolean>
+
+export type GetSpecificBranchCommits = (
+  pairs: {
+    branchId: string
+    commitId: string
+  }[]
+) => Promise<BranchCommit[]>

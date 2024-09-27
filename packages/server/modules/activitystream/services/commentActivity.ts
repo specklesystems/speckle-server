@@ -18,7 +18,7 @@ import {
 import {
   getAllBranchCommits,
   getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import {
@@ -68,7 +68,7 @@ export async function addCommentCreatedActivity(params: {
       getStreamObjects,
       getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
       getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-      getSpecificBranchCommits,
+      getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
       getAllBranchCommits
     })
   })
