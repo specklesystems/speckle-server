@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import type { Optional, StreamRoles, Nullable } from '@speckle/shared'
+import type { Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -104,7 +104,6 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-import type { Survicate } from '@survicate/survicate-web-surveys-wrapper'
 import dayjs from 'dayjs'
 
 graphql(`
@@ -136,7 +135,6 @@ const props = defineProps<{
 }>()
 
 const { $survicate } = useNuxtApp()
-const survicate = $survicate as Nullable<Survicate>
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
@@ -252,8 +250,8 @@ const invokeSurvicateEvent = () => {
   const weekAfterCreation = dayjs(workspaceCreatedAt).add(7, 'day')
   const isWeekAfterCreation = dayjs().isAfter(weekAfterCreation)
 
-  if (survicate && isWeekAfterCreation) {
-    survicate.invokeEvent('workspace-survey')
+  if ($survicate.value && isWeekAfterCreation) {
+    $survicate.value.invokeEvent('workspace-survey')
   }
 }
 

@@ -9,7 +9,7 @@ import { useRoute } from 'vue-router'
 export default defineNuxtPlugin(async () => {
   const { isLoggedIn } = useActiveUser()
   const route = useRoute()
-  let survicateInstance = null as Nullable<Survicate>
+  const survicateInstance = ref<Nullable<Survicate>>(null)
 
   // Check if the current route is the auth verify application page
   const isAuthVerifyPage = computed(() => route.name === 'authorize-app')
@@ -49,9 +49,9 @@ export default defineNuxtPlugin(async () => {
     // Thus we're initializing survicate asynchronously and letting the plugin (& the app) finish running before that happens
     void initSurvicate({ workspaceKey: survicateWorkspaceKey })
       .then(async () => {
-        survicateInstance = getSurvicateInstance()
+        survicateInstance.value = getSurvicateInstance()
 
-        if (!survicateInstance) {
+        if (!survicateInstance.value) {
           throw new Error('Survicate instance is not available after initialization.')
         }
 
@@ -59,15 +59,18 @@ export default defineNuxtPlugin(async () => {
         await onAuthStateChange(
           (user, { resolveDistinctId }) => {
             const distinctId = resolveDistinctId(user)
-            if (distinctId && survicateInstance) {
-              // eslint-disable-next-line camelcase
-              survicateInstance.setVisitorTraits({ user_id: distinctId, distinctId })
+            if (distinctId && survicateInstance.value) {
+              survicateInstance.value.setVisitorTraits({
+                // eslint-disable-next-line camelcase
+                user_id: distinctId,
+                distinctId
+              })
             }
           },
           { immediate: true }
         )
 
-        prepareSurvey(survicateInstance)
+        prepareSurvey(survicateInstance.value)
       })
       .catch(logger.error)
   } catch (error) {
