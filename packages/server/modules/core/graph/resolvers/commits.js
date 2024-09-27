@@ -18,8 +18,8 @@ const {
 const {
   createCommitByBranchName,
   updateCommitAndNotify,
-  deleteCommitAndNotify,
-  markCommitReceivedAndNotify
+  markCommitReceivedAndNotify,
+  deleteCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -38,11 +38,31 @@ const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
 const { BadRequestError } = require('@/modules/shared/errors')
+const {
+  getCommitFactory,
+  deleteCommitFactory
+} = require('@/modules/core/repositories/commits')
+const { db } = require('@/db/knex')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitBranchUpdatedFactory
+} = require('@/modules/core/repositories/branches')
+const {
+  addCommitDeletedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
+
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
 
 /**
  * @param {boolean} publicOnly

@@ -19,7 +19,7 @@ import {
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
-  deleteCommits,
+  deleteCommitsFactory,
   getCommitsFactory,
   moveCommitsToBranch
 } from '@/modules/core/repositories/commits'
@@ -189,7 +189,7 @@ export async function batchDeleteCommits(
   const { commitsWithStreams } = await validateCommitsDelete(params, userId)
 
   try {
-    await deleteCommits(commitIds)
+    await deleteCommitsFactory({ db })(commitIds)
     await Promise.all(
       commitsWithStreams.map(({ commit, stream }) =>
         addCommitDeletedActivity({

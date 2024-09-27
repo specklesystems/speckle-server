@@ -10,7 +10,6 @@ const { createObject } = require('../services/objects')
 const {
   createCommitByBranchName,
   updateCommit,
-  deleteCommit,
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
   getCommitsByStreamId,
@@ -23,13 +22,24 @@ const {
 const cryptoRandomString = require('crypto-random-string')
 const {
   createBranchFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
   addBranchCreatedActivity
 } = require('@/modules/activitystream/services/branchActivity')
-const { getCommitFactory } = require('@/modules/core/repositories/commits')
+const {
+  getCommitFactory,
+  deleteCommitFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  deleteCommitAndNotifyFactory
+} = require('@/modules/core/services/commit/management')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  addCommitDeletedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
@@ -38,6 +48,13 @@ const createBranchAndNotify = createBranchAndNotifyFactory({
   addBranchCreatedActivity
 })
 const getCommit = getCommitFactory({ db })
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -216,11 +233,7 @@ describe('Commits @core-commits', () => {
       authorId: user.id
     })
 
-    const res = await deleteCommit({
-      commitId: tempCommit,
-      streamId: stream.id,
-      userId: user.id
-    })
+    const res = await deleteCommitAndNotify(tempCommit, stream.id, user.id)
     expect(res).to.be.ok
   })
 

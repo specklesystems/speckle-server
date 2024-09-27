@@ -12,8 +12,7 @@ const {
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchName: createCommitByBranchNameNew,
-  updateCommitAndNotify,
-  deleteCommitAndNotify
+  updateCommitAndNotify
 } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
@@ -84,13 +83,6 @@ module.exports = {
   async updateCommit({ streamId, id, message, newBranchName, userId }) {
     await updateCommitAndNotify({ streamId, id, message, newBranchName }, userId)
     return true
-  },
-
-  /**
-   * @deprecated Use 'deleteCommitAndNotify()'
-   */
-  async deleteCommit({ commitId, streamId, userId }) {
-    return await deleteCommitAndNotify(commitId, streamId, userId)
   },
 
   /**

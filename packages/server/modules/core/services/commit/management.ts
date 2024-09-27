@@ -5,6 +5,12 @@ import {
   addCommitReceivedActivity,
   addCommitUpdatedActivity
 } from '@/modules/activitystream/services/commitActivity'
+import { MarkCommitBranchUpdated } from '@/modules/core/domain/branches/operations'
+import {
+  DeleteCommit,
+  DeleteCommitAndNotify,
+  GetCommit
+} from '@/modules/core/domain/commits/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -26,7 +32,6 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   createCommit,
-  deleteCommit,
   getCommitBranch,
   getCommitFactory,
   insertBranchCommits,
@@ -318,39 +323,43 @@ export async function updateCommitAndNotify(
   return newCommit
 }
 
-export async function deleteCommitAndNotify(
-  commitId: string,
-  streamId: string,
-  userId: string
-) {
-  const commit = await getCommitFactory({ db })(commitId)
-  if (!commit) {
-    throw new CommitDeleteError("Couldn't delete nonexistant commit", {
-      info: { commitId, streamId, userId }
-    })
+export const deleteCommitAndNotifyFactory =
+  (deps: {
+    getCommit: GetCommit
+    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitBranchUpdated: MarkCommitBranchUpdated
+    deleteCommit: DeleteCommit
+    addCommitDeletedActivity: typeof addCommitDeletedActivity
+  }): DeleteCommitAndNotify =>
+  async (commitId: string, streamId: string, userId: string) => {
+    const commit = await deps.getCommit(commitId)
+    if (!commit) {
+      throw new CommitDeleteError("Couldn't delete nonexistant commit", {
+        info: { commitId, streamId, userId }
+      })
+    }
+
+    if (commit.author !== userId) {
+      throw new CommitDeleteError('Only the author of a commit may delete it', {
+        info: { commitId, streamId, userId }
+      })
+    }
+
+    const [, updatedBranch] = await Promise.all([
+      deps.markCommitStreamUpdated(commit.id),
+      deps.markCommitBranchUpdated(commit.id)
+    ])
+
+    const isDeleted = await deps.deleteCommit(commitId)
+    if (isDeleted) {
+      await deps.addCommitDeletedActivity({
+        commitId,
+        streamId,
+        userId,
+        commit,
+        branchId: updatedBranch.id
+      })
+    }
+
+    return isDeleted
   }
-
-  if (commit.author !== userId) {
-    throw new CommitDeleteError('Only the author of a commit may delete it', {
-      info: { commitId, streamId, userId }
-    })
-  }
-
-  const [, updatedBranch] = await Promise.all([
-    markCommitStreamUpdated(commit.id),
-    markCommitBranchUpdatedFactory({ db })(commit.id)
-  ])
-
-  const isDeleted = await deleteCommit(commitId)
-  if (isDeleted) {
-    await addCommitDeletedActivity({
-      commitId,
-      streamId,
-      userId,
-      commit,
-      branchId: updatedBranch.id
-    })
-  }
-
-  return isDeleted
-}
