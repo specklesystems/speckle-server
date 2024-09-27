@@ -83,7 +83,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       res,
       req.params.streamId,
       lastCommit.referencedObject,
-      req.params.angle || 'all'
+      req.params.angle
     )
   })
 
@@ -120,7 +120,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         res,
         req.params.streamId,
         lastCommit.referencedObject,
-        req.params.angle || 'all'
+        req.params.angle
       )
     }
   )
@@ -144,7 +144,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       res,
       req.params.streamId,
       commit.referencedObject,
-      req.params.angle || 'all'
+      req.params.angle
     )
   })
 
@@ -160,7 +160,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       res,
       req.params.streamId,
       req.params.objectId,
-      req.params.angle || 'all'
+      req.params.angle
     )
   })
 
