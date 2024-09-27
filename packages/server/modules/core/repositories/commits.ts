@@ -22,7 +22,12 @@ import {
 import { Knex } from 'knex'
 import { Nullable, Optional } from '@speckle/shared'
 import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
-import { GetCommit, GetCommits } from '@/modules/core/domain/commits/operations'
+import {
+  DeleteCommit,
+  DeleteCommits,
+  GetCommit,
+  GetCommits
+} from '@/modules/core/domain/commits/operations'
 
 const tables = {
   commits: (db: Knex) => db<CommitRecord>(Commits.name)
@@ -97,14 +102,18 @@ export async function moveCommitsToBranch(commitIds: string[], branchId: string)
   return inserts.length
 }
 
-export async function deleteCommits(commitIds: string[]) {
-  return await Commits.knex().whereIn(Commits.col.id, commitIds).del()
-}
+export const deleteCommitsFactory =
+  (deps: { db: Knex }): DeleteCommits =>
+  async (commitIds: string[]) => {
+    return await tables.commits(deps.db).whereIn(Commits.col.id, commitIds).del()
+  }
 
-export async function deleteCommit(commitId: string) {
-  const delCount = await deleteCommits([commitId])
-  return !!delCount
-}
+export const deleteCommitFactory =
+  (deps: { db: Knex }): DeleteCommit =>
+  async (commitId: string) => {
+    const delCount = await deleteCommitsFactory(deps)([commitId])
+    return !!delCount
+  }
 
 export async function getStreamCommitsWithBranchId(streamId: string) {
   const baseQuery = Commits.knex<CommitRecord[]>()

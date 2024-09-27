@@ -12,3 +12,12 @@ export type GetCommit = (
   commitId: string,
   options?: Partial<{ streamId: string }>
 ) => Promise<Optional<CommitWithStreamBranchMetadata>>
+
+export type DeleteCommits = (commitIds: string[]) => Promise<number>
+export type DeleteCommit = (commitId: string) => Promise<boolean>
+
+export type DeleteCommitAndNotify = (
+  commitId: string,
+  streamId: string,
+  userId: string
+) => Promise<boolean>
