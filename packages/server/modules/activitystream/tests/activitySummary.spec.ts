@@ -3,7 +3,7 @@ import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { StreamActivity, Users } from '@/modules/core/dbSchema'
 import {
   createActivitySummary,
-  sendActivityNotifications
+  sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
 import { createStream, deleteStream } from '@/modules/core/services/streams'
@@ -140,12 +140,10 @@ describe('Activity summary @activity', () => {
   describe('send activity notifications', () => {
     it('sends no notifications if there are no active streams', async () => {
       const notificationPublisher = new FakeNotificationPublisher()
-      await sendActivityNotifications(
-        new Date(),
-        new Date(),
-        notificationPublisher.publish.bind(notificationPublisher),
-        async () => []
-      )
+      await sendActivityNotificationsFactory({
+        publishNotification: notificationPublisher.publish.bind(notificationPublisher),
+        getActiveUserStreams: async () => []
+      })(new Date(), new Date())
 
       expect(notificationPublisher.notifications.length).to.equal(0)
     })
@@ -156,12 +154,10 @@ describe('Activity summary @activity', () => {
         { userId: 'boo', streamIds: ['tic', 'tac', 'toe'] }
       ]
       const notificationPublisher = new FakeNotificationPublisher()
-      await sendActivityNotifications(
-        new Date(),
-        new Date(),
-        notificationPublisher.publish.bind(notificationPublisher),
-        async () => userStreams
-      )
+      await sendActivityNotificationsFactory({
+        publishNotification: notificationPublisher.publish.bind(notificationPublisher),
+        getActiveUserStreams: async () => userStreams
+      })(new Date(), new Date())
 
       expect(
         notificationPublisher.notifications
