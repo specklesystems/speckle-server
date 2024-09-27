@@ -141,6 +141,8 @@ export type UpdateBranch = (
   branch: Partial<Branch>
 ) => Promise<Branch>
 
+export type DeleteBranchById = (branchId: string) => Promise<number>
+
 export type UpdateBranchAndNotify = (
   input: BranchUpdateInput | UpdateModelInput,
   userId: string
