@@ -1,4 +1,8 @@
-import { ResourceType, StreamActionType } from '@/modules/activitystream/domain/types'
+import {
+  ActivitySummary,
+  ResourceType,
+  StreamActionType
+} from '@/modules/activitystream/domain/types'
 import {
   StreamActivityRecord,
   StreamScopeActivity
@@ -135,3 +139,10 @@ export type GetUserActivity = ({
 }>
 
 export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>
+
+export type CreateActivitySummary = (args: {
+  userId: string
+  streamIds: string[]
+  start: Date
+  end: Date
+}) => Promise<ActivitySummary | null>
