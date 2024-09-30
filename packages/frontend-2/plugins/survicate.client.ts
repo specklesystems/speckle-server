@@ -70,7 +70,7 @@ export default defineNuxtPlugin(async () => {
           { immediate: true }
         )
 
-        prepareSurvey(survicateInstance.value)
+        prepareSurvey(survicateInstance.value as Survicate)
       })
       .catch(logger.error)
   } catch (error) {
