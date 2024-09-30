@@ -295,7 +295,7 @@ export const createAppFactory =
 const revokeExistingAppCredentialsForMaybeUserFactory =
   (deps: { db: Knex }) =>
   async ({ appId, userId }: { appId: string; userId?: string }) => {
-    const maybeUserContext = userId ? { userId, appId } : { userId }
+    const maybeUserContext = userId ? { userId, appId } : { appId }
 
     await tables
       .authorizationCodes(deps.db)
