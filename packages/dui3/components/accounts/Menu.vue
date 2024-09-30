@@ -63,6 +63,7 @@ const { accounts, defaultAccount, userSelectedAccount, isLoading } =
 
 const selectAccount = (acc: DUIAccount) => {
   userSelectedAccount.value = acc
+  accountStore.setUserSelectedAccount(acc) // saves the selected account id into DUI3Config.db for later use
   showAccountsDialog.value = false
   void trackEvent('DUI3 Action', { name: 'Account change' })
 }
