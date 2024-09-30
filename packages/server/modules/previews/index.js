@@ -1,42 +1,42 @@
 /* istanbul ignore file */
 'use strict'
-import { validateScopes, authorizeResolver } from '@/modules/shared'
-import {
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
+const {
   getCommitsByStreamId,
   getCommitsByBranchName
-} from '@/modules/core/services/commits'
+} = require('../core/services/commits')
 
-import { makeOgImage } from '@/modules/previews/ogImage'
-import { moduleLogger } from '@/logging/logging'
-import { listenForPreviewGenerationUpdatesFactory } from '@/modules/previews/services/resultListener'
+const { makeOgImage } = require('./ogImage')
+const { moduleLogger } = require('@/logging/logging')
+const {
+  listenForPreviewGenerationUpdatesFactory
+} = require('@/modules/previews/services/resultListener')
 
-import cors from 'cors'
-import { db } from '@/db/knex'
-import {
+const httpErrorImage = (httpErrorCode) =>
+  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+
+const cors = require('cors')
+const { db } = require('@/db/knex')
+const {
   getObjectPreviewBufferOrFilepathFactory,
   sendObjectPreviewFactory,
   checkStreamPermissionsFactory
-} from '@/modules/previews/services/management'
-import { getObject } from '@/modules/core/services/objects'
-import { getStream } from '@/modules/core/repositories/streams'
-import {
+} = require('@/modules/previews/services/management')
+const { getObject } = require('@/modules/core/services/objects')
+const {
   getObjectPreviewInfoFactory,
   createObjectPreviewFactory,
   getPreviewImageFactory
-} from '@/modules/previews/repository/previews'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import {
+} = require('@/modules/previews/repository/previews')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
   getObjectCommitsWithStreamIds,
   getCommitFactory
-} from '@/modules/core/repositories/commits'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-
-const httpErrorImage = (httpErrorCode: number) =>
-  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+} = require('@/modules/core/repositories/commits')
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
-export const init: SpeckleModule['init'] = (app, isInitial) => {
+exports.init = (app, isInitial) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
@@ -50,7 +50,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     getPreviewImage: getPreviewImageFactory({ db })
   })
   const sendObjectPreview = sendObjectPreviewFactory({
-    getStream,
+    getObject,
     getObjectPreviewBufferOrFilepath,
     makeOgImage
   })
@@ -70,8 +70,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     const { commits } = await getCommitsByStreamId({
       streamId: req.params.streamId,
       limit: 1,
-      ignoreGlobalsBranch: true,
-      cursor: undefined
+      ignoreGlobalsBranch: true
     })
     if (!commits || commits.length === 0) {
       return res.sendFile(noPreviewImage)
@@ -103,8 +102,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         commitsObj = await getCommitsByBranchName({
           streamId: req.params.streamId,
           branchName: req.params.branchName,
-          limit: 1,
-          cursor: undefined
+          limit: 1
         })
       } catch {
         commitsObj = {}
@@ -173,4 +171,4 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
   }
 }
 
-export const finalize = () => {}
+exports.finalize = () => {}
