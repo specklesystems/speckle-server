@@ -35,7 +35,7 @@ import { createRedisClient } from '@/modules/shared/redis/redis'
 import ConnectRedis from 'connect-redis'
 import ExpressSession from 'express-session'
 import { noop } from 'lodash'
-import { oidcProvider } from '@/modules/workspaces/domain/sso'
+import { OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
 import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
@@ -69,7 +69,15 @@ const buildFinalizeUrl = (workspaceSlug: string): URL =>
 
 const ssoVerificationStatusKey = 'ssoVerificationStatus'
 
-const buildErrorUrl = ({ err, url }: { err: unknown; url: URL }): URL => {
+const buildErrorUrl = ({
+  err,
+  url,
+  searchParams
+}: {
+  err: unknown
+  url: URL
+  searchParams?: Record<string, string>
+}): URL => {
   const settingsSearch = url.searchParams.get('settings')
   url.searchParams.forEach((key) => {
     url.searchParams.delete(key)
@@ -78,6 +86,11 @@ const buildErrorUrl = ({ err, url }: { err: unknown; url: URL }): URL => {
   url.searchParams.set(ssoVerificationStatusKey, 'failed')
   const errorMessage = err instanceof Error ? err.message : `Unknown error ${err}`
   url.searchParams.set('ssoVerificationError', errorMessage)
+  if (searchParams) {
+    for (const [name, value] of Object.values(searchParams)) {
+      url.searchParams.set(name, value)
+    }
+  }
   return url
 }
 
@@ -118,7 +131,11 @@ router.get(
       res?.redirect(authorizationUrl.toString())
     } catch (err) {
       session.destroy(noop)
-      const url = buildErrorUrl({ err, url: buildFinalizeUrl(params.workspaceSlug) })
+      const url = buildErrorUrl({
+        err,
+        url: buildFinalizeUrl(params.workspaceSlug),
+        searchParams: query
+      })
       res?.redirect(url.toString())
     }
   }
@@ -138,6 +155,7 @@ router.get(
     // req.context.userId can be authorized for the workspaceSlug if needed
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
+    let provider: OIDCProvider | null = null
     if (req.query.validate === 'true') {
       const workspace = await getWorkspaceBySlugFactory({ db })({
         workspaceSlug: req.params.workspaceSlug
@@ -165,7 +183,7 @@ router.get(
 
         const codeVerifier = await decryptor.decrypt(encryptedValidationToken)
 
-        const provider = await getOIDCProviderFactory({
+        provider = await getOIDCProviderFactory({
           redis: getGenericRedis(),
           decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
         })({
@@ -218,7 +236,11 @@ router.get(
           { error: err },
           'Failed to verify OIDC sso provider for workspace {workspaceSlug}'
         )
-        redirectUrl = buildErrorUrl({ err, url: redirectUrl })
+        redirectUrl = buildErrorUrl({
+          err,
+          url: redirectUrl,
+          searchParams: provider || undefined
+        })
       } finally {
         req.session.destroy(noop)
         // redirectUrl.
