@@ -54,6 +54,6 @@ export class GOutputPass extends BaseGPass {
 
     this.fsQuad.render(renderer)
 
-    return true
+    return false
   }
 }

@@ -7,10 +7,11 @@ import { GPass, ObjectVisibility, ProgressiveGPass } from './GPass.js'
 import { GPipeline } from './GPipeline.js'
 import { GProgressiveAOPass } from './GProgressiveAOPass.js'
 import { GBlendPass } from './GBlendPass.js'
+import { GNormalsPass } from './GNormalPass.js'
 import { GOutputPass, InputType } from './GOutputPass.js'
 import { GTAAPass } from './GTAAPass.js'
 
-export class DefaultPipeline extends GPipeline {
+export class TAAPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
   protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []
@@ -24,10 +25,10 @@ export class DefaultPipeline extends GPipeline {
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
 
-    // const normalPass = new GNormalsPass()
-    // normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    // normalPass.setJitter(true)
+    const normalPass = new GNormalsPass()
+    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    normalPass.setVisibility(ObjectVisibility.OPAQUE)
+    normalPass.setJitter(true)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -37,8 +38,7 @@ export class DefaultPipeline extends GPipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
-      ObjectLayers.SHADOWCATCHER
+      ObjectLayers.STREAM_CONTENT_TEXT
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
     opaqueColorPass.outputTarget = null
@@ -105,8 +105,10 @@ export class DefaultPipeline extends GPipeline {
     this.dynamicStage.push(opaqueColorPass, transparentColorPass)
     this.progressiveStage.push(
       depthPass,
-      opaqueColorPass,
-      transparentColorPass,
+      jitterOpaquePass,
+      jitterTransparentPass,
+      taaPass,
+      outputPass,
       progressiveAOPass,
       blendPass
     )

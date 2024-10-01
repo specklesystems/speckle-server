@@ -9,8 +9,10 @@ import { GProgressiveAOPass } from './GProgressiveAOPass.js'
 import { GBlendPass } from './GBlendPass.js'
 import { GOutputPass, InputType } from './GOutputPass.js'
 import { GTAAPass } from './GTAAPass.js'
+import { GNormalsPass } from './GNormalPass.js'
+import { GEdgePass } from './GEdgesPass.js'
 
-export class DefaultPipeline extends GPipeline {
+export class EdgesPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
   protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []
@@ -23,11 +25,12 @@ export class DefaultPipeline extends GPipeline {
     depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
+    depthPass.setJitter(true)
 
-    // const normalPass = new GNormalsPass()
-    // normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    // normalPass.setJitter(true)
+    const normalPass = new GNormalsPass()
+    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    normalPass.setVisibility(ObjectVisibility.OPAQUE)
+    normalPass.setJitter(true)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -94,21 +97,29 @@ export class DefaultPipeline extends GPipeline {
     jitterTransparentPass.setJitter(true)
     jitterTransparentPass.outputTarget = jitterOpaquePass.outputTarget
 
+    const edgesPass = new GEdgePass()
+    edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
+    edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
+
     const taaPass = new GTAAPass()
-    taaPass.inputTexture = jitterTransparentPass.outputTarget?.texture
+    taaPass.inputTexture = edgesPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
 
-    const outputPass = new GOutputPass()
-    outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
-    outputPass.setInputType(InputType.Color)
+    const outputPassDynamic = new GOutputPass()
+    outputPassDynamic.setTexture('tDiffuse', edgesPass.outputTarget?.texture)
+    outputPassDynamic.setInputType(InputType.Color)
 
-    this.dynamicStage.push(opaqueColorPass, transparentColorPass)
+    const outputPassProgressive = new GOutputPass()
+    outputPassProgressive.setTexture('tDiffuse', taaPass.outputTarget?.texture)
+    outputPassProgressive.setInputType(InputType.Color)
+
+    this.dynamicStage.push(depthPass, normalPass, edgesPass, outputPassDynamic)
     this.progressiveStage.push(
       depthPass,
-      opaqueColorPass,
-      transparentColorPass,
-      progressiveAOPass,
-      blendPass
+      normalPass,
+      edgesPass,
+      taaPass,
+      outputPassProgressive
     )
 
     this.passList = this.dynamicStage
