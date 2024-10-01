@@ -1,8 +1,13 @@
 import {
   BranchCommit,
   CommitWithStreamBranchMetadata,
-  Commit
+  Commit,
+  CommitBranch
 } from '@/modules/core/domain/commits/types'
+import {
+  CommitUpdateInput,
+  UpdateVersionInput
+} from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
 import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
@@ -86,3 +91,23 @@ export type InsertStreamCommits = (
     trx: Knex.Transaction
   }>
 ) => Promise<number[]>
+
+export type UpdateCommitAndNotify = (
+  params: CommitUpdateInput | UpdateVersionInput,
+  userId: string
+) => Promise<Commit>
+
+export type GetCommitBranches = (commitIds: string[]) => Promise<CommitBranch[]>
+
+export type GetCommitBranch = (commitId: string) => Promise<Optional<CommitBranch>>
+
+export type SwitchCommitBranch = (
+  commitId: string,
+  newBranchId: string,
+  oldBranchId?: string
+) => Promise<void>
+
+export type UpdateCommit = (
+  commitId: string,
+  commit: Partial<Commit>
+) => Promise<Commit>

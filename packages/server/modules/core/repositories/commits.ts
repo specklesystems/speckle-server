@@ -30,7 +30,11 @@ import {
   GetCommits,
   GetSpecificBranchCommits,
   InsertBranchCommits,
-  InsertStreamCommits
+  InsertStreamCommits,
+  GetCommitBranches,
+  GetCommitBranch,
+  SwitchCommitBranch,
+  UpdateCommit
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -321,47 +325,54 @@ export async function getBranchCommitsTotalCount(
   return parseInt(res?.count || '0')
 }
 
-export async function getCommitBranches(commitIds: string[]) {
-  if (!commitIds?.length) return []
+export const getCommitBranchesFactory =
+  (deps: { db: Knex }): GetCommitBranches =>
+  async (commitIds: string[]) => {
+    if (!commitIds?.length) return []
 
-  const q = BranchCommits.knex()
-    .select<Array<BranchRecord & { commitId: string }>>([
-      ...Branches.cols,
-      knex.raw(`?? as "commitId"`, [BranchCommits.col.commitId])
-    ])
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-    .whereIn(BranchCommits.col.commitId, commitIds)
+    const q = tables
+      .branchCommits(deps.db)
+      .select<Array<BranchRecord & { commitId: string }>>([
+        ...Branches.cols,
+        knex.raw(`?? as "commitId"`, [BranchCommits.col.commitId])
+      ])
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      .whereIn(BranchCommits.col.commitId, commitIds)
 
-  return await q
-}
-
-export async function getCommitBranch(commitId: string) {
-  const [commit] = await getCommitBranches([commitId])
-  return commit as Optional<typeof commit>
-}
-
-export async function switchCommitBranch(
-  commitId: string,
-  newBranchId: string,
-  oldBranchId?: string
-) {
-  const q = BranchCommits.knex()
-    .where(BranchCommits.col.commitId, commitId)
-    .update(BranchCommits.withoutTablePrefix.col.branchId, newBranchId)
-
-  if (oldBranchId) {
-    q.andWhere(BranchCommits.col.branchId, oldBranchId)
+    return await q
   }
 
-  await q
-}
+export const getCommitBranchFactory =
+  (deps: { db: Knex }): GetCommitBranch =>
+  async (commitId: string) => {
+    const [commit] = await getCommitBranchesFactory(deps)([commitId])
+    return commit as Optional<typeof commit>
+  }
 
-export async function updateCommit(commitId: string, commit: Partial<CommitRecord>) {
-  const [newCommit] = (await Commits.knex()
-    .where(Commits.col.id, commitId)
-    .update(commit, '*')) as CommitRecord[]
-  return newCommit
-}
+export const switchCommitBranchFactory =
+  (deps: { db: Knex }): SwitchCommitBranch =>
+  async (commitId: string, newBranchId: string, oldBranchId?: string) => {
+    const q = tables
+      .branchCommits(deps.db)
+      .where(BranchCommits.col.commitId, commitId)
+      .update(BranchCommits.withoutTablePrefix.col.branchId, newBranchId)
+
+    if (oldBranchId) {
+      q.andWhere(BranchCommits.col.branchId, oldBranchId)
+    }
+
+    await q
+  }
+
+export const updateCommitFactory =
+  (deps: { db: Knex }): UpdateCommit =>
+  async (commitId: string, commit: Partial<CommitRecord>) => {
+    const [newCommit] = (await tables
+      .commits(deps.db)
+      .where(Commits.col.id, commitId)
+      .update(commit, '*')) as CommitRecord[]
+    return newCommit
+  }
 
 export const createCommitFactory =
   (deps: { db: Knex }): StoreCommit =>
