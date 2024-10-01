@@ -1,12 +1,52 @@
 import { z } from 'zod'
 
 export const oidcProvider = z.object({
-  clientId: z.string(),
-  clientSecret: z.string(),
-  issuerUrl: z.string()
+  providerName: z.string().min(1),
+  clientId: z.string().min(5),
+  clientSecret: z.string().min(1),
+  issuerUrl: z.string().min(1).url()
 })
 
 export type OIDCProvider = z.infer<typeof oidcProvider>
+
+type ProviderBaseRecord = {
+  id: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type OIDCProviderRecord = {
+  providerType: 'oidc'
+  provider: OIDCProvider
+} & ProviderBaseRecord
+
+// since storage is encrypted and provider data should be stored as a json string,
+// this record type could be extended to be a union for other provider types too, like SAML
+export type ProviderRecord = OIDCProviderRecord
+
+export type StoreProviderRecord = (args: {
+  providerRecord: ProviderRecord
+}) => Promise<void>
+
+export type WorkspaceSsoProvider = {
+  workspaceId: string
+  providerId: string
+} & ProviderRecord
+
+export type GetWorkspaceSsoProvider = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceSsoProvider | null>
+
+export type UserSsoSession = {
+  userId: string
+  providerId: string
+  createdAt: Date
+  lifespan: number
+}
+
+export type StoreUserSsoSession = (args: {
+  userSsoSession: UserSsoSession
+}) => Promise<void>
 
 export const oidcProviderValidationRequest = z.object({
   token: z.string(),
@@ -39,13 +79,7 @@ export type GetOIDCProviderData = (args: {
   validationToken: string
 }) => Promise<OIDCProvider | null>
 
-export type OIDCCallbackParams = {
-  code: string
-  session_state: string
-}
-
-export type GetOIDCUserData = (args: {
-  codeVerifier: string
-  provider: OIDCProvider
-  callbackParams: OIDCCallbackParams
+export type AssociateSsoProviderWithWorkspace = (args: {
+  workspaceId: string
+  providerId: string
 }) => Promise<void>

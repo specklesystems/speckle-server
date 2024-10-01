@@ -1,10 +1,6 @@
 /* eslint-disable camelcase */
 import { BaseError } from '@/modules/shared/errors'
-import {
-  GetOIDCUserData,
-  OIDCProvider,
-  OIDCProviderAttributes
-} from '@/modules/workspaces/domain/sso'
+import { OIDCProvider, OIDCProviderAttributes } from '@/modules/workspaces/domain/sso'
 import { generators, Issuer, type Client } from 'openid-client'
 
 export const getProviderAuthorizationUrl = async ({
@@ -80,19 +76,6 @@ export const getOIDCProviderAttributes = async ({
           )
       }
     }
-    throw err
-  }
-}
-
-export const getOIDCUserData: GetOIDCUserData = async ({
-  provider,
-  codeVerifier,
-  callbackParams
-}) => {
-  try {
-    const { client } = await initializeIssuerAndClient({ provider })
-    console.log(userInfo)
-  } catch (err) {
     throw err
   }
 }
