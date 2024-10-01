@@ -137,15 +137,12 @@ const props = defineProps<{
 const { client } = useApolloClient()
 const workspaceId = ref<string | undefined>(undefined)
 
-const cachedData = client.readQuery({
-  query: workspaceAccessCheckQuery,
-  variables: { slug: props.workspaceSlug }
-})
-
-//Switch to immediate watcher. When prop changes, reread and update
-if (cachedData?.workspaceBySlug?.id) {
-  workspaceId.value = cachedData.workspaceBySlug.id
-}
+const cachedData = computed(() =>
+  client.readQuery({
+    query: workspaceAccessCheckQuery,
+    variables: { slug: props.workspaceSlug }
+  })
+)
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
@@ -268,4 +265,14 @@ onResult((queryResult) => {
     workspaceMixpanelUpdateGroup(queryResult.data.workspace)
   }
 })
+
+watch(
+  cachedData,
+  (newCachedData) => {
+    if (newCachedData?.workspaceBySlug?.id) {
+      workspaceId.value = newCachedData.workspaceBySlug.id
+    }
+  },
+  { immediate: true }
+)
 </script>

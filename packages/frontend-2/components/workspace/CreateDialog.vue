@@ -4,6 +4,7 @@
     max-width="xs"
     :buttons="dialogButtons"
     title="Create a new workspace"
+    :on-submit="handleCreateWorkspace"
   >
     <div class="flex flex-col gap-4 w-full">
       <FormTextInput
@@ -100,12 +101,12 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Create',
     props: {
       color: 'primary',
+      submit: true,
       disabled:
         !workspaceName.value.trim() ||
         !workspaceShortId.value.trim() ||
         !!customShortIdError.value
-    },
-    onClick: handleCreateWorkspace
+    }
   }
 ])
 

@@ -4,6 +4,7 @@
     title="Edit workspace short ID"
     max-width="sm"
     :buttons="dialogButtons"
+    :on-submit="updateSlug"
   >
     <p class="text-body-xs text-foreground mb-2">
       Changing the workspace short ID has important implications.
@@ -19,7 +20,7 @@
       v-model:model-value="workspaceShortId"
       name="slug"
       label="Short ID"
-      :help="`${baseUrl}/workspaces/${workspaceShortId}`"
+      :help="`${baseUrl}${workspaceRoute(workspaceShortId)}`"
       color="foundation"
       :rules="[isStringOfLength({ maxLength: 50, minLength: 3 }), isValidWorkspaceSlug]"
       show-label
@@ -36,6 +37,7 @@ import {
   isStringOfLength,
   isValidWorkspaceSlug
 } from '~~/lib/common/helpers/validation'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {
@@ -78,7 +80,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       color: 'primary',
       disabled: workspaceShortId.value === props.workspace.slug
     },
-    onClick: updateSlug
+    submit: true
   }
 ])
 

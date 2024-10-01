@@ -190,6 +190,7 @@ const { result: workspaceResult, onResult } = useQuery(
     id: props.workspaceId
   })
 )
+const config = useRuntimeConfig()
 
 const name = ref('')
 const slug = ref('')
@@ -259,7 +260,6 @@ onResult((res) => {
   }
 })
 
-const config = useRuntimeConfig()
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
