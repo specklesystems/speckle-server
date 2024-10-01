@@ -98,10 +98,8 @@ export const useAccountStore = defineStore('accountStore', () => {
       const errorLink = onError((res: ErrorResponse) => {
         if (res.graphQLErrors) {
           const messages: string[] = []
-          res.graphQLErrors.forEach(({ message, locations, path }) => {
-            messages.push(
-              `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-            )
+          res.graphQLErrors.forEach(({ message, path }) => {
+            messages.push(`[GraphQL error]: Message: ${message}, Path: ${path}`)
           })
 
           const notification: ToastNotification = {
