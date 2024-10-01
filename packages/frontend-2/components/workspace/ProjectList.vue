@@ -116,12 +116,10 @@ graphql(`
   }
 `)
 
-const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
-const openNewProject = ref(false)
-
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
+const { client } = useApolloClient()
 const {
   on,
   bind,
@@ -134,16 +132,9 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
-const { client } = useApolloClient()
+const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
+const openNewProject = ref(false)
 const workspaceId = ref<string | undefined>(undefined)
-
-const cachedData = computed(() =>
-  client.readQuery({
-    query: workspaceAccessCheckQuery,
-    variables: { slug: props.workspaceSlug }
-  })
-)
-
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
@@ -250,6 +241,13 @@ const emptyStateItems = computed(() => [
   }
 ])
 
+const cachedData = computed(() =>
+  client.readQuery({
+    query: workspaceAccessCheckQuery,
+    variables: { slug: props.workspaceSlug }
+  })
+)
+
 const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
@@ -260,12 +258,6 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   settingsDialogTarget.value = target
 }
 
-onResult((queryResult) => {
-  if (queryResult.data?.workspace) {
-    workspaceMixpanelUpdateGroup(queryResult.data.workspace)
-  }
-})
-
 watch(
   cachedData,
   (newCachedData) => {
@@ -275,4 +267,10 @@ watch(
   },
   { immediate: true }
 )
+
+onResult((queryResult) => {
+  if (queryResult.data?.workspace) {
+    workspaceMixpanelUpdateGroup(queryResult.data.workspace)
+  }
+})
 </script>
