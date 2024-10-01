@@ -40,7 +40,11 @@ import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/wor
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
-import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  createUserEmailFactory,
+  findEmailsByUserIdFactory,
+  updateUserEmailFactory
+} from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
 const router = Router()
@@ -211,8 +215,8 @@ router.get(
       )
 
       // Get user profile from SSO provider
-      const ssoProviderUserInfo = await client.userinfo(tokenSet)
-      if (!ssoProviderUserInfo.email)
+      const ssoProviderUserInfo = await client.userinfo<{ email: string }>(tokenSet)
+      if (!ssoProviderUserInfo || !ssoProviderUserInfo.email)
         throw new Error('This should never happen, we are asking for an email claim')
 
       if (isValidationFlow) {
@@ -248,14 +252,16 @@ router.get(
             encrypt: encryptor.encrypt
           }),
           storeUserSsoSession: storeUserSsoSessionFactory({ db: trx }),
-          createUserEmail: createUserEmailFactory({ db: trx })
+          createUserEmail: createUserEmailFactory({ db: trx }),
+          updateUserEmail: updateUserEmailFactory({ db: trx }),
+          findEmailsByUserId: findEmailsByUserIdFactory({ db: trx })
         })
         await withTransaction(
           saveSsoProviderRegistration({
             provider,
             userId,
-            workspaceId: workspace.id
-            // ssoProviderUserInfo
+            workspaceId: workspace.id,
+            ssoProviderUserInfo
           }),
           trx
         )
@@ -265,7 +271,9 @@ router.get(
         redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
       } else {
         // OIDC auth flow: SSO is already configured and we are attempting to log in or sign up
+        //
         // Get user by email in `ssoProviderUserInfo`
+        //
         // if (userExists) {
         //   // Update timeout for relevant sso session
         //   // Complete sign in
@@ -291,104 +299,6 @@ router.get(
       req.session.destroy(noop)
       req.res?.redirect(redirectUrl.toString())
     }
-
-    // if (req.query.validate === 'true') {
-    // OIDC configuration verification flow: the user is attempting to configure SSO for their workspace
-    // const workspace = await getWorkspaceBySlugFactory({ db })({
-    //   workspaceSlug: req.params.workspaceSlug
-    // })
-
-    // if (!workspace) throw new WorkspaceNotFoundError()
-
-    // await authorizeResolver(
-    //   req.context.userId,
-    //   workspace.id,
-    //   Roles.Workspace.Admin,
-    //   req.context.resourceAccessRules
-    // )
-    // once we're authorized for the ws, we must have a userId
-    // const userId = req.context.userId!
-
-    // point to the finalize page if there is one
-    // let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug)
-
-    // try {
-    // const encryptionKeyPair = await getEncryptionKeyPair()
-    // const decryptor = await buildDecryptor(encryptionKeyPair)
-    // const encryptedValidationToken = req.session.codeVerifier
-
-    // if (!encryptedValidationToken)
-    //   throw new Error('cannot find verification token, restart the flow')
-
-    // const codeVerifier = await decryptor.decrypt(encryptedValidationToken)
-
-    // provider = await getOIDCProviderFactory({
-    //   redis: getGenericRedis(),
-    //   decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
-    // })({
-    //   validationToken: codeVerifier
-    // })
-
-    // if (!provider) throw new Error('validation request not found, please retry')
-
-    // const { client } = await initializeIssuerAndClient({ provider })
-    // const callbackParams = client.callbackParams(req)
-    // const tokenSet = await client.callback(
-    //   buildAuthRedirectUrl(req.params.workspaceSlug).toString(),
-    //   callbackParams,
-    //   // eslint-disable-next-line camelcase
-    //   { code_verifier: codeVerifier }
-    // )
-
-    // now that we have the user's email, we should compare it to the active user's email.
-    // Ask if they want to add the email to the oidc as a secondary email, if it doesn't match any of the user's emails
-    // const ssoProviderUserInfo = await client.userinfo(tokenSet)
-    // if (!ssoProviderUserInfo.email)
-    //   throw new Error('This should never happen, we are asking for an email claim')
-
-    // const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
-
-    // const trx = await db.transaction()
-    // const saveSsoProviderRegistration = saveSsoProviderRegistrationFactory({
-    //   getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-    //     db: trx,
-    //     decrypt: decryptor.decrypt
-    //   }),
-    //   associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory({
-    //     db: trx
-    //   }),
-    //   storeProviderRecord: storeProviderRecordFactory({
-    //     db,
-    //     encrypt: encryptor.encrypt
-    //   }),
-    //   storeUserSsoSession: storeUserSsoSessionFactory({ db: trx }),
-    //   createUserEmail: createUserEmailFactory({ db: trx })
-    // })
-
-    // await withTransaction(saveSsoProviderRegistration({
-    //   provider,
-    //   userId,
-    //   workspaceId: workspace.id
-    //   // ssoProviderUserInfo
-    // }), trx)
-
-    // redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
-    // } catch (err) {
-    //     logger.warn(
-    //       { error: err },
-    //       'Failed to verify OIDC sso provider for workspace {workspaceSlug}'
-    //     )
-    //     redirectUrl = buildErrorUrl({
-    //       err,
-    //       url: redirectUrl,
-    //       searchParams: provider || undefined
-    //     })
-    //   } finally {
-    //     req.session.destroy(noop)
-    //     // redirectUrl.
-    //     req.res?.redirect(redirectUrl.toString())
-    //   }
-    // }
   }
 )
 

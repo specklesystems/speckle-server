@@ -11,7 +11,11 @@ import {
 } from '@/modules/workspaces/domain/sso'
 import { BaseError } from '@/modules/shared/errors/base'
 import cryptoRandomString from 'crypto-random-string'
-import { CreateUserEmail } from '@/modules/core/domain/userEmails/operations'
+import {
+  CreateUserEmail,
+  FindEmailsByUserId,
+  UpdateUserEmail
+} from '@/modules/core/domain/userEmails/operations'
 
 export class MissingOIDCProviderGrantType extends BaseError {
   static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
@@ -66,25 +70,29 @@ export const saveSsoProviderRegistrationFactory =
     getWorkspaceSsoProvider,
     storeProviderRecord,
     associateSsoProviderWithWorkspace,
-    storeUserSsoSession
-  }: // createUserEmail
-  {
+    storeUserSsoSession,
+    createUserEmail,
+    updateUserEmail,
+    findEmailsByUserId
+  }: {
     getWorkspaceSsoProvider: GetWorkspaceSsoProvider
     storeProviderRecord: StoreProviderRecord
     associateSsoProviderWithWorkspace: AssociateSsoProviderWithWorkspace
     storeUserSsoSession: StoreUserSsoSession
     createUserEmail: CreateUserEmail
+    updateUserEmail: UpdateUserEmail
+    findEmailsByUserId: FindEmailsByUserId
   }) =>
   async ({
     provider,
     workspaceId,
-    userId
-  }: // ssoProviderUserInfo
-  {
+    userId,
+    ssoProviderUserInfo
+  }: {
     provider: OIDCProvider
     userId: string
     workspaceId: string
-    // ssoProviderUserInfo: { email: string }
+    ssoProviderUserInfo: { email: string }
   }) => {
     // create OIDC provider record with ID
     const providerId = cryptoRandomString({ length: 10 })
@@ -108,10 +116,33 @@ export const saveSsoProviderRegistrationFactory =
     await storeUserSsoSession({
       userSsoSession: { createdAt: new Date(), userId, providerId, lifespan }
     })
-    // 1. get userId's emails
 
-    // 2. if the ssoUserInfoEmail is not in the user's emails, add it as verified
-    // 3. if its in the emails, but not verify, verify it
-    // 4. if its verified, do nothing
-    // await createUserEmail()
+    const currentUserEmails = await findEmailsByUserId({ userId })
+    const currentSsoEmailEntry = currentUserEmails.find(
+      (entry) => entry.email === ssoProviderUserInfo.email
+    )
+
+    if (!currentSsoEmailEntry) {
+      await createUserEmail({
+        userEmail: {
+          userId,
+          email: ssoProviderUserInfo.email,
+          verified: true
+        }
+      })
+      return
+    }
+
+    if (!currentSsoEmailEntry.verified) {
+      await updateUserEmail({
+        query: {
+          id: currentSsoEmailEntry.id,
+          userId
+        },
+        update: {
+          verified: true
+        }
+      })
+      return
+    }
   }
