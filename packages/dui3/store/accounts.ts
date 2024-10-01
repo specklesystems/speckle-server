@@ -1,11 +1,22 @@
 import { defineStore } from 'pinia'
 import type { ApolloLink } from '@apollo/client/core'
-import { ApolloClient, InMemoryCache, gql, HttpLink, split } from '@apollo/client/core'
+import {
+  ApolloClient,
+  InMemoryCache,
+  gql,
+  HttpLink,
+  split,
+  from
+} from '@apollo/client/core'
 import { ApolloClients, provideApolloClients } from '@vue/apollo-composable'
 import type { Account } from '~/lib/bindings/definitions/IAccountBinding'
 import { WebSocketLink } from '@apollo/client/link/ws'
+import { onError, type ErrorResponse } from '@apollo/client/link/error'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { setContext } from '@apollo/client/link/context'
+import { useHostAppStore } from '~/store/hostApp'
+import type { ToastNotification } from '@speckle/ui-components'
+import { ToastNotificationType } from '@speckle/ui-components'
 
 export type DUIAccount = {
   /** account info coming from the host app */
@@ -29,6 +40,8 @@ const accountTestQuery = gql`
 export const useAccountStore = defineStore('accountStore', () => {
   const app = useNuxtApp()
   const { $accountBinding } = app
+
+  const hostAppStore = useHostAppStore()
 
   const apolloClients = {} as Record<string, ApolloClient<unknown>>
   const accounts = ref<DUIAccount[]>([])
@@ -81,12 +94,38 @@ export const useAccountStore = defineStore('accountStore', () => {
         continue
       }
 
+      // Handle apollo client errors as top level
+      const errorLink = onError((res: ErrorResponse) => {
+        if (res.graphQLErrors) {
+          const messages: string[] = []
+          res.graphQLErrors.forEach(({ message, path }) => {
+            messages.push(`${message},\n Path: ${path}`)
+          })
+
+          const notification: ToastNotification = {
+            type: ToastNotificationType.Danger,
+            title: 'Graphql Error',
+            description: messages.join('\n')
+          }
+          hostAppStore.setNotification(notification)
+        }
+
+        if (res.networkError) {
+          const notification: ToastNotification = {
+            type: ToastNotificationType.Danger,
+            title: 'Network Error',
+            description: res.networkError.message
+          }
+          hostAppStore.setNotification(notification)
+        }
+      })
+
       const link = splitLink(
         getLinks(new URL('/graphql', acc.serverInfo.url).href, 'Bearer ' + acc.token)
       )
       const client = new ApolloClient({
         cache: new InMemoryCache(),
-        link,
+        link: from([errorLink, link]),
         headers: {
           Authorization: 'Bearer ' + acc.token
         }
