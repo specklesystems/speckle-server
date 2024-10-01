@@ -87,7 +87,7 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
   getAllBranchCommitsFactory,
-  getCommitsAndTheirBranchIds,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
@@ -148,7 +148,7 @@ const getViewerResourcesFromLegacyIdentifiers =
       getViewerResourcesFromLegacyIdentifiers: (...args) =>
         getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
     }),
-    getCommitsAndTheirBranchIds,
+    getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
     getStreamObjects
   })
 

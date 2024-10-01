@@ -40,7 +40,8 @@ import {
   GetStreamCommitCounts,
   GetStreamCommitCount,
   GetUserStreamCommitCounts,
-  GetUserAuthoredCommitCounts
+  GetUserAuthoredCommitCounts,
+  GetCommitsAndTheirBranchIds
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -222,17 +223,20 @@ export const getStreamCommitCountFactory =
     return res?.count || 0
   }
 
-export async function getCommitsAndTheirBranchIds(commitIds: string[]) {
-  if (!commitIds.length) return []
+export const getCommitsAndTheirBranchIdsFactory =
+  (deps: { db: Knex }): GetCommitsAndTheirBranchIds =>
+  async (commitIds: string[]) => {
+    if (!commitIds.length) return []
 
-  return await Commits.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .whereIn(Commits.col.id, commitIds)
-}
+    return await tables
+      .commits(deps.db)
+      .select<Array<CommitRecord & { branchId: string }>>([
+        ...Commits.cols,
+        BranchCommits.col.branchId
+      ])
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .whereIn(Commits.col.id, commitIds)
+  }
 
 export const getSpecificBranchCommitsFactory =
   (deps: { db: Knex }): GetSpecificBranchCommits =>
