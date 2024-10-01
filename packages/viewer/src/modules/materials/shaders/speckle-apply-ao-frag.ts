@@ -17,6 +17,6 @@ export const speckleApplyAoFrag = `
             // #else
             //     gl_FragColor.rgb = dynamicSample;
             // #endif
-            gl_FragColor.rgb = texture2D( tDiffuse, vUv ).rgb;
+            gl_FragColor.rgb = min(texture2D( tDiffuse, vUv ).rgb, texture2D (tEdges, vUv).rgb);
 			gl_FragColor.a = 1.;
 		}`

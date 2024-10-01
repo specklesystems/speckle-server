@@ -29,6 +29,7 @@ export class GBlendPass extends ProgressiveGPass {
       },
       uniforms: {
         tDiffuse: { value: null },
+        tEdges: { value: null },
         frameIndex: { value: 0 }
       },
       vertexShader: speckleApplyAoVert,
