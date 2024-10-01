@@ -41,7 +41,7 @@ import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
@@ -58,7 +58,7 @@ const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
   getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
   getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-  getAllBranchCommits
+  getAllBranchCommits: getAllBranchCommitsFactory({ db })
 })
 
 const getPaginatedProjectModels = getPaginatedProjectModelsFactory({

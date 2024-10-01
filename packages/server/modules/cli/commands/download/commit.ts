@@ -26,7 +26,7 @@ import {
 } from '@/modules/core/services/commit/viewerResources'
 import {
   createCommitFactory,
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
@@ -102,7 +102,7 @@ const command: CommandModule<
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits
+        getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({

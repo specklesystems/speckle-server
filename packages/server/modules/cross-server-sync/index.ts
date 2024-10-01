@@ -31,7 +31,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   createCommitFactory,
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
@@ -76,7 +76,7 @@ const crossServerSyncModule: SpeckleModule = {
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits
+        getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({

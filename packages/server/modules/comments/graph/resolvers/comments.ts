@@ -86,7 +86,7 @@ import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getCommitsAndTheirBranchIds,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
@@ -179,7 +179,7 @@ const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
     getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-    getAllBranchCommits
+    getAllBranchCommits: getAllBranchCommitsFactory({ db })
   })
 })
 const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
