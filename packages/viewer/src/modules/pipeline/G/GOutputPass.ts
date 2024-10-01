@@ -1,10 +1,4 @@
-import {
-  NoBlending,
-  ShaderMaterial,
-  Texture,
-  UniformsUtils,
-  WebGLRenderer
-} from 'three'
+import { ShaderMaterial, Texture, UniformsUtils, WebGLRenderer } from 'three'
 import { BaseGPass } from './GPass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import { speckleCopyOutputVert } from '../../materials/shaders/speckle-copy-output-vert.js'
@@ -30,7 +24,7 @@ export class GOutputPass extends BaseGPass {
       uniforms: UniformsUtils.clone(CopyShader.uniforms),
       vertexShader: speckleCopyOutputVert,
       fragmentShader: speckleCopyOutputFrag,
-      blending: NoBlending
+      transparent: false
     })
 
     this.materialCopy.needsUpdate = true
@@ -60,6 +54,6 @@ export class GOutputPass extends BaseGPass {
 
     this.fsQuad.render(renderer)
 
-    return false
+    return true
   }
 }

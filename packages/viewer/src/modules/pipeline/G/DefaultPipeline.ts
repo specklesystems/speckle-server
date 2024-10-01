@@ -13,7 +13,7 @@ import { GTAAPass } from './GTAAPass.js'
 
 export class DefaultPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
-  protected accumulationFrameCount: number = 160
+  protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []
   protected progressiveStage: Array<GPass> = []
 
@@ -94,6 +94,7 @@ export class DefaultPipeline extends GPipeline {
     ])
     jitterTransparentPass.setVisibility(ObjectVisibility.TRANSPARENT)
     jitterTransparentPass.setJitter(true)
+    // jitterTransparentPass.clear = true
     jitterTransparentPass.outputTarget = jitterOpaquePass.outputTarget
 
     const taaPass = new GTAAPass()
@@ -104,22 +105,22 @@ export class DefaultPipeline extends GPipeline {
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
     outputPass.setInputType(InputType.Color)
 
-    // this.dynamicStage.push(opaqueColorPass, transparentColorPass)
-    // this.progressiveStage.push(
-    //   depthPass,
-    //   normalPass,
-    //   opaqueColorPass,
-    //   transparentColorPass,
-    //   progressiveAOPass,
-    //   blendPass
-    // )
     this.dynamicStage.push(opaqueColorPass, transparentColorPass)
     this.progressiveStage.push(
-      jitterOpaquePass,
-      jitterTransparentPass,
-      taaPass,
-      outputPass
+      depthPass,
+      normalPass,
+      opaqueColorPass,
+      transparentColorPass,
+      progressiveAOPass,
+      blendPass
     )
+    // this.dynamicStage.push(opaqueColorPass, transparentColorPass)
+    // this.progressiveStage.push(
+    //   jitterOpaquePass,
+    //   jitterTransparentPass,
+    //   taaPass,
+    //   outputPass
+    // )
 
     this.passList = this.dynamicStage
   }

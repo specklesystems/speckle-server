@@ -50,6 +50,6 @@ export class GColorPass extends BaseGPass {
     renderer.render(scene, camera)
     if (this.onAfterRender) this.onAfterRender()
 
-    return true
+    return false
   }
 }

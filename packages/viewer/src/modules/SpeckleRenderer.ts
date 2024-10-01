@@ -553,7 +553,8 @@ export default class SpeckleRenderer {
 
   public resize(width: number, height: number) {
     this.renderer.setSize(width, height)
-    this.pipeline.resize(width, height)
+    const dpr = this._renderer.getPixelRatio()
+    this.pipeline.resize(width * dpr, height * dpr)
     this._needsRender = true
   }
 
