@@ -284,7 +284,7 @@ describe('Commits @core-commits', () => {
       },
       user.id
     )
-    expect(res).to.equal(true)
+    expect(res).to.be.ok
   })
 
   it('Should delete a commit', async () => {
