@@ -1,18 +1,32 @@
+import { db } from '@/db/knex'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { saveActivity } from '@/modules/activitystream/services'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
 import {
   CommentCreateInput,
   CreateCommentInput,
   CreateCommentReplyInput,
   ProjectCommentsUpdatedMessageType,
-  ReplyCreateInput,
-  ViewerResourceItem
+  ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import {
-  getViewerResourceItemsUngrouped,
-  getViewerResourcesForComment,
-  getViewerResourcesFromLegacyIdentifiers
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getAllBranchCommits,
+  getCommitsAndTheirBranchIds,
+  getSpecificBranchCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { getStreamObjects } from '@/modules/core/repositories/objects'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { pubsub } from '@/modules/shared/utils/subscriptions'
 import {
@@ -39,6 +53,26 @@ export async function addCommentCreatedActivity(params: {
 }) {
   const { streamId, userId, input, comment } = params
 
+  const getViewerResourcesFromLegacyIdentifiers =
+    getViewerResourcesFromLegacyIdentifiersFactory({
+      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db }),
+        getViewerResourcesFromLegacyIdentifiers: (...args) =>
+          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+      }),
+      getCommitsAndTheirBranchIds,
+      getStreamObjects
+    })
+  const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+    getViewerResourceGroups: getViewerResourceGroupsFactory({
+      getStreamObjects,
+      getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+      getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+      getAllBranchCommits
+    })
+  })
+
   let resourceIds: string
   let resourceItems: ViewerResourceItem[]
   if (isLegacyCommentCreateInput(input)) {
@@ -62,7 +96,7 @@ export async function addCommentCreatedActivity(params: {
   }
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       resourceId: comment.id,
       streamId,
       resourceType: ResourceTypes.Comment,
@@ -104,8 +138,25 @@ export async function addCommentArchivedActivity(params: {
   const { streamId, commentId, userId, input, comment } = params
   const isArchiving = !!input.archived
 
+  const getCommentsResources = getCommentsResourcesFactory({ db })
+  const getViewerResourcesFromLegacyIdentifiers =
+    getViewerResourcesFromLegacyIdentifiersFactory({
+      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db }),
+        getViewerResourcesFromLegacyIdentifiers: (...args) =>
+          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+      }),
+      getCommitsAndTheirBranchIds,
+      getStreamObjects
+    })
+
+  const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+    getCommentsResources,
+    getViewerResourcesFromLegacyIdentifiers
+  })
+
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Comment,
       resourceId: commentId,
@@ -149,11 +200,28 @@ export async function addReplyAddedActivity(params: {
 }) {
   const { streamId, input, reply, userId } = params
 
+  const getCommentsResources = getCommentsResourcesFactory({ db })
+  const getViewerResourcesFromLegacyIdentifiers =
+    getViewerResourcesFromLegacyIdentifiersFactory({
+      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db }),
+        getViewerResourcesFromLegacyIdentifiers: (...args) =>
+          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+      }),
+      getCommitsAndTheirBranchIds,
+      getStreamObjects
+    })
+
+  const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+    getCommentsResources,
+    getViewerResourcesFromLegacyIdentifiers
+  })
+
   const parentCommentId = isLegacyReplyCreateInput(input)
     ? input.parentComment
     : input.threadId
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Comment,
       resourceId: parentCommentId,

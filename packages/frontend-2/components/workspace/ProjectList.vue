@@ -6,7 +6,7 @@
     <template v-else>
       <Portal to="navigation">
         <HeaderNavLink
-          :to="workspaceRoute(workspaceId)"
+          :to="workspaceRoute(workspaceSlug)"
           :name="workspace?.name"
           :separator="false"
         />
@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { useQuery, useQueryLoading, useApolloClient } from '@vue/apollo-composable'
 import type { Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
@@ -104,6 +104,7 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
+import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -115,12 +116,10 @@ graphql(`
   }
 `)
 
-const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
-const openNewProject = ref(false)
-
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
+const { client } = useApolloClient()
 const {
   on,
   bind,
@@ -130,9 +129,12 @@ const {
 })
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceSlug: string
 }>()
 
+const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
+const openNewProject = ref(false)
+const workspaceId = ref<string | undefined>(undefined)
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
@@ -146,7 +148,7 @@ const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
-    workspaceId: props.workspaceId,
+    workspaceId: workspaceId.value as string,
     filter: {
       search: (search.value || '').trim() || null
     },
@@ -163,7 +165,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
 >({
   query: workspaceProjectsQuery,
   baseVariables: computed(() => ({
-    workspaceId: props.workspaceId,
+    workspaceId: workspaceId.value as string,
     filter: {
       search: (search.value || '').trim() || null
     }
@@ -190,9 +192,16 @@ const showEmptyState = computed(() => {
 
   return projects.value && !projects.value?.items?.length
 })
+
 const showLoadingBar = computed(() => {
-  return areQueriesLoading.value && (!!search.value || !projects.value?.items?.length)
+  const isLoading =
+    workspaceId.value === undefined ||
+    areQueriesLoading.value ||
+    (!!search.value && !projects.value?.items?.length)
+
+  return isLoading
 })
+
 const emptyStateItems = computed(() => [
   {
     title: 'Set up verified domains',
@@ -232,6 +241,13 @@ const emptyStateItems = computed(() => [
   }
 ])
 
+const cachedData = computed(() =>
+  client.readQuery({
+    query: workspaceAccessCheckQuery,
+    variables: { slug: props.workspaceSlug }
+  })
+)
+
 const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
@@ -241,6 +257,16 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   showSettingsDialog.value = true
   settingsDialogTarget.value = target
 }
+
+watch(
+  cachedData,
+  (newCachedData) => {
+    if (newCachedData?.workspaceBySlug?.id) {
+      workspaceId.value = newCachedData.workspaceBySlug.id
+    }
+  },
+  { immediate: true }
+)
 
 onResult((queryResult) => {
   if (queryResult.data?.workspace) {

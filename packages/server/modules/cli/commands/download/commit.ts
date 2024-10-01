@@ -2,15 +2,42 @@ import { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger } from '@/logging/logging'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import {
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
+} from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
+import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
-  createCommentReplyAndNotify,
-  createCommentThreadAndNotify
+  createCommentReplyAndNotifyFactory,
+  createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/core/services/commit/viewerResources'
+import {
+  getAllBranchCommits,
+  getSpecificBranchCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
+  getCommentFactory,
+  insertCommentLinksFactory,
+  insertCommentsFactory,
+  markCommentUpdatedFactory,
+  markCommentViewedFactory
+} from '@/modules/comments/repositories/comments'
+import { db } from '@/db/knex'
+import { CommentsEmitter } from '@/modules/comments/events/emitter'
+import {
+  addCommentCreatedActivity,
+  addReplyAddedActivity
+} from '@/modules/activitystream/services/commentActivity'
+import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 
 const command: CommandModule<
   unknown,
@@ -51,9 +78,45 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const markCommentViewed = markCommentViewedFactory({ db })
+    const validateInputAttachments = validateInputAttachmentsFactory({
+      getBlobs: getBlobsFactory({ db })
+    })
+    const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+    const insertComments = insertCommentsFactory({ db })
+    const insertCommentLinks = insertCommentLinksFactory({ db })
+    const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
+      getViewerResourceGroups: getViewerResourceGroupsFactory({
+        getStreamObjects,
+        getBranchLatestCommits,
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+        getAllBranchCommits
+      })
+    })
+    const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+      getViewerResourceItemsUngrouped,
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentViewed,
+      commentsEventsEmit: CommentsEmitter.emit,
+      addCommentCreatedActivity
+    })
+
+    const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+      getComment: getCommentFactory({ db }),
+      validateInputAttachments,
+      insertComments,
+      insertCommentLinks,
+      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      commentsEventsEmit: CommentsEmitter.emit,
+      addReplyAddedActivity
+    })
+
     const downloadCommit = downloadCommitFactory({
       getStream,
-      getStreamBranchByName,
+      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
       getStreamCollaborators,
       getUser,
       createCommitByBranchId,

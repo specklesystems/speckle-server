@@ -9,16 +9,16 @@ import {
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { trim } from 'lodash'
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 
 const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
 
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
-  getStreamBranchByName: typeof getStreamBranchByName
+  getStreamBranchByName: GetStreamBranchByName
   publish: PublishSubscription
 }
 

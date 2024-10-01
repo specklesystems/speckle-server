@@ -2,16 +2,18 @@ import { moduleLogger } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
-  onModelVersionCreate,
-  triggerAutomationRevisionRun
+  onModelVersionCreateFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
-  getActiveTriggerDefinitions,
-  getAutomationRunFullTriggers,
-  getFullAutomationRevisionMetadata,
-  getAutomation,
-  getAutomationRevision,
-  getFullAutomationRunById
+  getActiveTriggerDefinitionsFactory,
+  getAutomationFactory,
+  getAutomationRevisionFactory,
+  getAutomationRunFullTriggersFactory,
+  getAutomationTokenFactory,
+  getFullAutomationRevisionMetadataFactory,
+  getFullAutomationRunByIdFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -19,20 +21,25 @@ import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
   getEncryptionKeyPairFor,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import {
-  setupAutomationUpdateSubscriptions,
-  setupStatusUpdateSubscriptions
+  setupAutomationUpdateSubscriptionsFactory,
+  setupStatusUpdateSubscriptionsFactory
 } from '@/modules/automate/services/subscriptions'
-import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
+import { setupRunFinishedTrackingFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getUserById } from '@/modules/core/services/users'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
+import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -63,29 +70,51 @@ async function initScopes() {
 }
 
 const initializeEventListeners = () => {
-  const triggerFn = triggerAutomationRevisionRun({
+  const getAutomationRunFullTriggers = getAutomationRunFullTriggersFactory({ db })
+  const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+    db
+  })
+
+  const triggerFn = triggerAutomationRevisionRunFactory({
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,
-    getFunctionInputDecryptor: getFunctionInputDecryptor({
+    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
       buildDecryptor
+    }),
+    createAppToken,
+    automateRunsEmitter: AutomateRunsEmitter.emit,
+    getAutomationToken: getAutomationTokenFactory({ db }),
+    upsertAutomationRun: upsertAutomationRunFactory({ db }),
+    getFullAutomationRevisionMetadata,
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+    getCommit: getCommitFactory({ db })
+  })
+  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
+    getAutomationRunFullTriggers,
+    publish,
+    automateRunsEventsListener: AutomateRunsEmitter.listen
+  })
+  const setupAutomationUpdateSubscriptionsInvoke =
+    setupAutomationUpdateSubscriptionsFactory({
+      automationsEmitterListen: AutomationsEmitter.listen,
+      publish
     })
-  })
-  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
-    getAutomationRunFullTriggers
-  })
-  const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
-  const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
+  const setupRunFinishedTrackingInvoke = setupRunFinishedTrackingFactory({
     getFullAutomationRevisionMetadata,
     getUserById,
-    getCommit,
-    getFullAutomationRunById
+    getCommit: getCommitFactory({ db }),
+    getFullAutomationRunById: getFullAutomationRunByIdFactory({ db }),
+    automateRunsEventListener: AutomateRunsEmitter.listen
   })
+  const getAutomation = getAutomationFactory({ db })
+  const getAutomationRevision = getAutomationRevisionFactory({ db })
+  const getActiveTriggerDefinitions = getActiveTriggerDefinitionsFactory({ db })
 
   const quitters = [
     VersionsEmitter.listen(
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation,
           getAutomationRevision,
           getTriggers: getActiveTriggerDefinitions,

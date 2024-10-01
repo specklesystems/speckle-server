@@ -1,10 +1,11 @@
+import { db } from '@/db/knex'
 import {
   AccessRequestsEmitter,
   AccessRequestsEvents,
   AccessRequestsEventsPayloads
 } from '@/modules/accessrequests/events/emitter'
 import { AccessRequestType } from '@/modules/accessrequests/repositories'
-import { saveActivity } from '@/modules/activitystream/services'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamAccessRequestDeclinedActivity,
   addStreamAccessRequestedActivity
@@ -18,7 +19,7 @@ import {
 async function onUserCreated(payload: UsersEventsPayloads[UsersEvents.Created]) {
   const { user } = payload
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId: null,
     resourceType: 'user',
     resourceId: user.id,

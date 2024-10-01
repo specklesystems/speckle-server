@@ -24,29 +24,29 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
-  getCommits,
-  getSpecificBranchCommits,
+  getCommitsFactory,
+  getSpecificBranchCommitsFactory,
   getStreamCommitCounts,
   getUserAuthoredCommitCounts,
   getUserStreamCommitCounts
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchCommentCounts,
-  getCommentParents,
-  getCommentReplyAuthorIds,
-  getCommentReplyCounts,
-  getCommentsResources,
-  getCommentsViewedAt,
-  getCommitCommentCounts,
-  getStreamCommentCounts
+  getBranchCommentCountsFactory,
+  getCommentParentsFactory,
+  getCommentReplyAuthorIdsFactory,
+  getCommentReplyCountsFactory,
+  getCommentsResourcesFactory,
+  getCommentsViewedAtFactory,
+  getCommitCommentCountsFactory,
+  getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
-  getBranchCommitCounts,
-  getBranchesByIds,
-  getBranchLatestCommits,
-  getStreamBranchCounts,
-  getStreamBranchesByName
+  getBranchCommitCountsFactory,
+  getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory,
+  getStreamBranchCountsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -61,13 +61,13 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
-  getAutomationRevisions,
-  getAutomationRunsTriggers,
-  getAutomations,
-  getFunctionAutomationCounts,
-  getLatestAutomationRevisions,
-  getRevisionsFunctions,
-  getRevisionsTriggerDefinitions
+  getAutomationRevisionsFactory,
+  getAutomationRunsTriggersFactory,
+  getAutomationsFactory,
+  getFunctionAutomationCountsFactory,
+  getLatestAutomationRevisionsFactory,
+  getRevisionsFunctionsFactory,
+  getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
   getFunction,
@@ -90,6 +90,28 @@ const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
+const getAutomations = getAutomationsFactory({ db })
+const getAutomationRevisions = getAutomationRevisionsFactory({ db })
+const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
+const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
+const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
+const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
+const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
+const getCommentsResources = getCommentsResourcesFactory({ db })
+const getCommentsViewedAt = getCommentsViewedAtFactory({ db })
+const getCommitCommentCounts = getCommitCommentCountsFactory({ db })
+const getBranchCommentCounts = getBranchCommentCountsFactory({ db })
+const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
+const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
+const getCommentParents = getCommentParentsFactory({ db })
+const getBranchesByIds = getBranchesByIdsFactory({ db })
+const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
+const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -141,6 +163,7 @@ export function buildRequestLoaders(
   const loaders = {
     ...(Object.assign(
       {},
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       ...modulesLoaders.map((l) => l({ ctx, createLoader }))
     ) as Record<string, unknown>),
     streams: {

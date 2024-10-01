@@ -27,12 +27,11 @@ const {
   getStream
 } = require('../services/streams')
 
-const { createBranch, getBranchesByStreamId } = require('../services/branches')
+const { getBranchesByStreamId } = require('../services/branches')
 
 const {
   createCommitByBranchName,
   getCommitsByBranchName,
-  getCommitById,
   getCommitsByStreamId
 } = require('../services/commits')
 
@@ -40,6 +39,12 @@ const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
+const { getCommitFactory } = require('@/modules/core/repositories/commits')
+
+const createBranch = createBranchFactory({ db })
+const getCommit = getCommitFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -127,18 +132,22 @@ describe('Actors & Tokens @user-services', () => {
 
       // create a branch for ballmer on the multiowner stream
       const branch = { name: 'ballmer/dev' }
-      branch.id = await createBranch({
-        ...branch,
-        streamId: multiOwnerStream.id,
-        authorId: ballmerUserId
-      })
+      branch.id = (
+        await createBranch({
+          ...branch,
+          streamId: multiOwnerStream.id,
+          authorId: ballmerUserId
+        })
+      ).id
 
       const branchSecond = { name: 'steve/jobs' }
-      branchSecond.id = await createBranch({
-        ...branchSecond,
-        streamId: multiOwnerStream.id,
-        authorId: myTestActor.id
-      })
+      branchSecond.id = (
+        await createBranch({
+          ...branchSecond,
+          streamId: multiOwnerStream.id,
+          authorId: myTestActor.id
+        })
+      ).id
 
       // create an object and a commit around it on the multiowner stream
       const objId = await createObject({
@@ -174,10 +183,7 @@ describe('Actors & Tokens @user-services', () => {
       })
       expect(branchCommits.commits.length).to.equal(1)
 
-      const commit = await getCommitById({
-        streamId: multiOwnerStream.id,
-        id: commitId
-      })
+      const commit = await getCommit(commitId, { streamId: multiOwnerStream.id })
       expect(commit).to.be.not.null
 
       const commitsByStreamId = await getCommitsByStreamId({

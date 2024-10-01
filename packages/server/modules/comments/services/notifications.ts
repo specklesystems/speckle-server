@@ -1,12 +1,14 @@
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
+import { CommentsEvents, CommentsEventsListen } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
-import { publishNotification } from '@/modules/notifications/services/publication'
 import { difference, flatten } from 'lodash'
-import { NotificationType } from '@/modules/notifications/helpers/types'
-import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
+import {
+  NotificationPublisher,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
+import { AddStreamCommentMentionActivity } from '@/modules/activitystream/domain/operations'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -32,69 +34,81 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
   return findMentionedUserIds(doc)
 }
 
-async function sendNotificationsForUsers(userIds: string[], comment: CommentRecord) {
-  const { id, streamId, authorId, parentComment } = comment
-  const threadId = parentComment || id
+type SendNotificationsForUsersDeps = {
+  publish: NotificationPublisher
+  addStreamCommentMentionActivity: AddStreamCommentMentionActivity
+}
 
-  await Promise.all(
-    flatten(
-      userIds.map((uid) => {
-        return [
-          // Actually send out notification
-          publishNotification(NotificationType.MentionedInComment, {
-            targetUserId: uid,
-            data: {
-              threadId,
+const sendNotificationsForUsersFactory =
+  (deps: SendNotificationsForUsersDeps) =>
+  async (userIds: string[], comment: CommentRecord) => {
+    const { id, streamId, authorId, parentComment } = comment
+    const threadId = parentComment || id
+
+    await Promise.all(
+      flatten(
+        userIds.map((uid) => {
+          return [
+            // Actually send out notification
+            deps.publish(NotificationType.MentionedInComment, {
+              targetUserId: uid,
+              data: {
+                threadId,
+                streamId,
+                authorId,
+                commentId: id
+              }
+            }),
+            // Create activity item
+            deps.addStreamCommentMentionActivity({
               streamId,
-              authorId,
-              commentId: id
-            }
-          }),
-          // Create activity item
-          addStreamCommentMentionActivity({
-            streamId,
-            mentionAuthorId: authorId,
-            mentionTargetId: uid,
-            commentId: id,
-            threadId
-          })
-        ]
-      })
+              mentionAuthorId: authorId,
+              mentionTargetId: uid,
+              commentId: id,
+              threadId
+            })
+          ]
+        })
+      )
     )
-  )
-}
+  }
 
-async function processCommentMentions(
-  newComment: CommentRecord,
-  previousComment?: CommentRecord
-) {
-  const newMentionedUserIds = collectMentionedUserIds(newComment)
-  const previouslyMentionedUserIds = previousComment
-    ? collectMentionedUserIds(previousComment)
-    : []
+const processCommentMentionsFactory =
+  (deps: SendNotificationsForUsersDeps) =>
+  async (newComment: CommentRecord, previousComment?: CommentRecord) => {
+    const newMentionedUserIds = collectMentionedUserIds(newComment)
+    const previouslyMentionedUserIds = previousComment
+      ? collectMentionedUserIds(previousComment)
+      : []
 
-  const newMentions = difference(newMentionedUserIds, previouslyMentionedUserIds)
-  if (!newMentions.length) return
+    const newMentions = difference(newMentionedUserIds, previouslyMentionedUserIds)
+    if (!newMentions.length) return
 
-  await sendNotificationsForUsers(newMentions, newComment)
-}
+    await sendNotificationsForUsersFactory(deps)(newMentions, newComment)
+  }
 
 /**
  * Hook into the comments lifecycle to generate notifications accordingly
  * @returns Callback to invoke when you wish to stop listening for comments events
  */
-export async function notifyUsersOnCommentEvents() {
-  const exitCbs = [
-    CommentsEmitter.listen(CommentsEvents.Created, async ({ comment }) => {
-      await processCommentMentions(comment)
-    }),
-    CommentsEmitter.listen(
-      CommentsEvents.Updated,
-      async ({ newComment, previousComment }) => {
-        await processCommentMentions(newComment, previousComment)
-      }
-    )
-  ]
+export const notifyUsersOnCommentEventsFactory =
+  (
+    deps: { commentsEventsListen: CommentsEventsListen } & SendNotificationsForUsersDeps
+  ) =>
+  async () => {
+    const processCommentMentions = processCommentMentionsFactory(deps)
 
-  return () => exitCbs.forEach((cb) => cb())
-}
+    const exitCbs = [
+      deps.commentsEventsListen(CommentsEvents.Created, async ({ comment }) => {
+        await processCommentMentions(comment)
+      }),
+      deps.commentsEventsListen(
+        CommentsEvents.Updated,
+        async ({ newComment, previousComment }) => {
+          await processCommentMentions(newComment, previousComment)
+        }
+      )
+    ]
+
+    return () => exitCbs.forEach((cb) => cb())
+  }

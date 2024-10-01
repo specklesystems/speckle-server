@@ -1,9 +1,16 @@
+import { db } from '@/db/knex'
 import {
   addCommitCreatedActivity,
   addCommitDeletedActivity,
   addCommitReceivedActivity,
   addCommitUpdatedActivity
 } from '@/modules/activitystream/services/commitActivity'
+import { MarkCommitBranchUpdated } from '@/modules/core/domain/branches/operations'
+import {
+  DeleteCommit,
+  DeleteCommitAndNotify,
+  GetCommit
+} from '@/modules/core/domain/commits/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -19,15 +26,14 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
-  getBranchById,
-  getStreamBranchByName,
-  markCommitBranchUpdated
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import {
   createCommit,
-  deleteCommit,
-  getCommit,
   getCommitBranch,
+  getCommitFactory,
   insertBranchCommits,
   insertStreamCommits,
   switchCommitBranch,
@@ -57,7 +63,9 @@ export async function markCommitReceivedAndNotify(params: {
         }
       : input
 
-  const commit = await getCommit(oldInput.commitId, { streamId: oldInput.streamId })
+  const commit = await getCommitFactory({ db })(oldInput.commitId, {
+    streamId: oldInput.streamId
+  })
   if (!commit) {
     throw new CommitReceiveError(
       `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
@@ -106,7 +114,7 @@ export async function createCommitByBranchId(
     totalChildrenCount = obj.totalChildrenCount || 1
   }
 
-  const branch = await getBranchById(branchId, { streamId })
+  const branch = await getBranchByIdFactory({ db })(branchId, { streamId })
   if (!branch) {
     throw new CommitCreateError(`Failed to find branch with id ${branchId}.`, {
       info: params
@@ -132,7 +140,7 @@ export async function createCommitByBranchId(
 
   await Promise.all([
     markCommitStreamUpdated(id),
-    markCommitBranchUpdated(id),
+    markCommitBranchUpdatedFactory({ db })(id),
     VersionsEmitter.emit(VersionEvents.Created, {
       projectId: streamId,
       modelId: branchId,
@@ -187,9 +195,9 @@ export async function createCommitByBranchName(
   const { notify = true } = options || {}
 
   const branchName = params.branchName.toLowerCase()
-  let myBranch = await getStreamBranchByName(streamId, branchName)
+  let myBranch = await getStreamBranchByNameFactory({ db })(streamId, branchName)
   if (!myBranch) {
-    myBranch = (await getBranchById(branchName)) || null
+    myBranch = (await getBranchByIdFactory({ db })(branchName)) || null
   }
   if (!myBranch) {
     throw new CommitCreateError(
@@ -246,7 +254,7 @@ export async function updateCommitAndNotify(
   }
 
   const [commit, stream] = await Promise.all([
-    getCommit(commitId),
+    getCommitFactory({ db })(commitId),
     streamId ? getStream({ streamId, userId }) : getCommitStream({ commitId, userId })
   ])
   if (!commit) {
@@ -271,7 +279,7 @@ export async function updateCommitAndNotify(
   if (newBranchName) {
     try {
       const [newBranch, oldBranch] = await Promise.all([
-        getStreamBranchByName(streamId, newBranchName),
+        getStreamBranchByNameFactory({ db })(streamId, newBranchName),
         getCommitBranch(commitId)
       ])
 
@@ -308,46 +316,50 @@ export async function updateCommitAndNotify(
 
     await Promise.all([
       markCommitStreamUpdated(commit.id),
-      markCommitBranchUpdated(commit.id)
+      markCommitBranchUpdatedFactory({ db })(commit.id)
     ])
   }
 
   return newCommit
 }
 
-export async function deleteCommitAndNotify(
-  commitId: string,
-  streamId: string,
-  userId: string
-) {
-  const commit = await getCommit(commitId)
-  if (!commit) {
-    throw new CommitDeleteError("Couldn't delete nonexistant commit", {
-      info: { commitId, streamId, userId }
-    })
+export const deleteCommitAndNotifyFactory =
+  (deps: {
+    getCommit: GetCommit
+    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitBranchUpdated: MarkCommitBranchUpdated
+    deleteCommit: DeleteCommit
+    addCommitDeletedActivity: typeof addCommitDeletedActivity
+  }): DeleteCommitAndNotify =>
+  async (commitId: string, streamId: string, userId: string) => {
+    const commit = await deps.getCommit(commitId)
+    if (!commit) {
+      throw new CommitDeleteError("Couldn't delete nonexistant commit", {
+        info: { commitId, streamId, userId }
+      })
+    }
+
+    if (commit.author !== userId) {
+      throw new CommitDeleteError('Only the author of a commit may delete it', {
+        info: { commitId, streamId, userId }
+      })
+    }
+
+    const [, updatedBranch] = await Promise.all([
+      deps.markCommitStreamUpdated(commit.id),
+      deps.markCommitBranchUpdated(commit.id)
+    ])
+
+    const isDeleted = await deps.deleteCommit(commitId)
+    if (isDeleted) {
+      await deps.addCommitDeletedActivity({
+        commitId,
+        streamId,
+        userId,
+        commit,
+        branchId: updatedBranch.id
+      })
+    }
+
+    return isDeleted
   }
-
-  if (commit.author !== userId) {
-    throw new CommitDeleteError('Only the author of a commit may delete it', {
-      info: { commitId, streamId, userId }
-    })
-  }
-
-  const [, updatedBranch] = await Promise.all([
-    markCommitStreamUpdated(commit.id),
-    markCommitBranchUpdated(commit.id)
-  ])
-
-  const isDeleted = await deleteCommit(commitId)
-  if (isDeleted) {
-    await addCommitDeletedActivity({
-      commitId,
-      streamId,
-      userId,
-      commit,
-      branchId: updatedBranch.id
-    })
-  }
-
-  return isDeleted
-}

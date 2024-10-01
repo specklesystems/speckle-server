@@ -1,6 +1,6 @@
 overwrite: true
 schema:
-  - 'modules/schema.js'
+  - 'modules/schema.ts'
 documents: null
 generates:
   modules/core/graph/generated/graphql.ts:
@@ -67,6 +67,7 @@ generates:
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueSchema'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
         ServerWorkspacesInfo: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ActivityCollection: '@/modules/activitystream/helpers/graphTypes#ActivityCollectionGraphQLReturn'
         ProjectRole: '@/modules/workspacesCore/helpers/graphTypes#ProjectRoleGraphQLReturn'
         ServerApp: '@/modules/auth/helpers/graphTypes#ServerAppGraphQLReturn'
         ServerAppListItem: '@/modules/auth/helpers/graphTypes#ServerAppListItemGraphQLReturn'
