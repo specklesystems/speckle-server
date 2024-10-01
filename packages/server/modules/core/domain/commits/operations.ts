@@ -116,3 +116,36 @@ export type GetAllBranchCommits = (params: {
   branchIds?: string[]
   projectId?: string
 }) => Promise<{ [branchId: string]: Commit[] }>
+
+export type GetStreamCommitCounts = (
+  streamIds: string[],
+  options?: Partial<{
+    ignoreGlobalsBranch: boolean
+  }>
+) => Promise<
+  {
+    count: number
+    streamId: string
+  }[]
+>
+
+export type GetStreamCommitCount = (
+  streamId: string,
+  options?: Partial<{
+    ignoreGlobalsBranch: boolean
+  }>
+) => Promise<number>
+
+export type GetUserStreamCommitCounts = (params: {
+  userIds: string[]
+  publicOnly?: boolean
+}) => Promise<{
+  [userId: string]: number
+}>
+
+export type GetUserAuthoredCommitCounts = (params: {
+  userIds: string[]
+  publicOnly?: boolean
+}) => Promise<{
+  [userId: string]: number
+}>

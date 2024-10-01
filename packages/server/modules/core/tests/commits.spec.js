@@ -11,7 +11,6 @@ const {
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
   getCommitsByStreamId,
-  getCommitsTotalCountByStreamId,
   getCommitsByUserId
 } = require('../services/commits')
 const {
@@ -36,7 +35,8 @@ const {
   insertBranchCommitsFactory,
   getCommitBranchFactory,
   switchCommitBranchFactory,
-  updateCommitFactory
+  updateCommitFactory,
+  getStreamCommitCountFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -102,6 +102,7 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
+const getStreamCommitCount = getStreamCommitCountFactory({ db })
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -379,7 +380,7 @@ describe('Commits @core-commits', () => {
     expect(commits.length).to.equal(10)
     expect(commits2.length).to.equal(5)
 
-    const c = await getCommitsTotalCountByStreamId({ streamId })
+    const c = await getStreamCommitCount(streamId)
     expect(c).to.equal(15)
   })
 
