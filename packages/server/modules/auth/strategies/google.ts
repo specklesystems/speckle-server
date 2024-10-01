@@ -60,11 +60,6 @@ const googleStrategyBuilderFactory =
       },
       async (req, _accessToken, _refreshToken, profile, done) => {
         const serverInfo = await deps.getServerInfo()
-        const logger = req.log.child({
-          authStrategy: 'google',
-          profileId: profile.id,
-          serverVersion: serverInfo.version
-        })
 
         try {
           const email = profile.emails?.[0].value
@@ -132,13 +127,6 @@ const googleStrategyBuilderFactory =
             err,
             'Unexpected issue occured while authenticating with Google'
           )
-          switch (e.constructor) {
-            case UserInputError:
-              logger.info(err)
-              break
-            default:
-              logger.error(err)
-          }
           return done(err, false, { message: e.message })
         }
       }
