@@ -60,8 +60,13 @@
         <a
           v-if="rightIcon"
           :title="rightIconTitle"
-          :class="sizeClasses"
-          class="absolute top-0 bottom-0 right-0 hidden group-hover:flex items-center pr-1 cursor-pointer text-foreground-2"
+          :class="[
+            sizeClasses,
+            readOnly
+              ? 'w-full cursor-text border border-transparent group-hover:border-outline-5 rounded-md'
+              : 'cursor-pointer'
+          ]"
+          class="absolute top-0 right-0 hidden group-hover:flex items-center justify-end pr-1 text-foreground-2"
           @click="onRightIconClick"
           @keydown="onRightIconClick"
         >
