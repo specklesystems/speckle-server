@@ -99,7 +99,7 @@ export const useAccountStore = defineStore('accountStore', () => {
         if (res.graphQLErrors) {
           const messages: string[] = []
           res.graphQLErrors.forEach(({ message, path }) => {
-            messages.push(`Message: ${message}\n, Path: ${path}`)
+            messages.push(`${message},\n Path: ${path}`)
           })
 
           const notification: ToastNotification = {
