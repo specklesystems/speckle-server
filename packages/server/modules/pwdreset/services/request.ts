@@ -1,3 +1,4 @@
+import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
@@ -33,9 +34,7 @@ const initializeNewTokenFactory =
     ])
 
     if (!user) {
-      throw new InvalidPasswordRecoveryRequestError(
-        'No user with that e-mail address found'
-      )
+      throw new UserNotFoundError('No user with that e-mail address found')
     }
 
     if (tokenAlreadyExists) {

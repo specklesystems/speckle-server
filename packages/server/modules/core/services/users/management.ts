@@ -15,7 +15,7 @@ export const MINIMUM_PASSWORD_LENGTH = 8
 export async function updateUserAndNotify(userId: string, update: UserUpdateInput) {
   const existingUser = await getUser(userId)
   if (!existingUser) {
-    throw new UserUpdateError('Attempting to update a non-existant user')
+    throw new UserNotFoundError('Attempting to update a non-existant user')
   }
 
   const filteredUpdate: Partial<UserRecord> = {}
@@ -73,7 +73,7 @@ export async function changePassword(
   const { oldPassword, newPassword } = input
   const user = await getUser(userId, { skipClean: true })
   if (!user) {
-    throw new UserUpdateError('Could not find the user with the specified id')
+    throw new UserNotFoundError('Could not find the user with the specified id')
   }
 
   const isOldPasswordValid = await validateUserPassword({
@@ -81,7 +81,7 @@ export async function changePassword(
     password: oldPassword
   })
   if (!isOldPasswordValid) {
-    throw new UserUpdateError('Old password is incorrect')
+    throw new UserInputError('Old password is incorrect')
   }
 
   if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {

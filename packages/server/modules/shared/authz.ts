@@ -296,7 +296,7 @@ export const authPipelineCreator = (
     }
     // validate auth result a bit...
     if (authResult.authorized && authHasFailed(authResult))
-      throw new Error('Auth failure')
+      throw new UnauthorizedError('Auth failure')
     return { context, authResult }
   }
   return pipeline

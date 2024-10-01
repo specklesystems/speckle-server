@@ -10,7 +10,6 @@ import {
   batchDeleteCommits,
   batchMoveCommits
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchId,
   markCommitReceivedAndNotify,
@@ -21,6 +20,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
   Project: {
@@ -61,7 +61,7 @@ export = {
         args.input.versionId
       )
       if (!stream) {
-        throw new CommitUpdateError('Commit stream not found')
+        throw new StreamNotFoundError('Commit stream not found')
       }
 
       await authorizeResolver(

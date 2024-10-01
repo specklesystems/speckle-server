@@ -5,7 +5,9 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import {
   CommitInvalidAccessError,
-  CommitBatchUpdateError
+  CommitBatchUpdateError,
+  CommitNotFoundError,
+  CommitBatchUpdateInternalError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,
@@ -41,7 +43,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
 
   if (!userId) {
     throw new CommitInvalidAccessError(
-      'User must be authenticate to operate with commits'
+      'User must be authenticated to operate with commits'
     )
   }
   if (!commitIds?.length) {
@@ -54,7 +56,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
     commitIds.length !== foundCommitIds.length ||
     difference(commitIds, foundCommitIds).length > 0
   ) {
-    throw new CommitBatchUpdateError('At least one of the commits does not exist')
+    throw new CommitNotFoundError('At least one of the commits does not exist')
   }
 
   const streamGroups = groupBy(commits, (c) => c.streamId)
@@ -173,7 +175,7 @@ export async function batchMoveCommits(
     return finalBranch
   } catch (e) {
     const err = ensureError(e)
-    throw new CommitBatchUpdateError('Batch commit move failed', { cause: err })
+    throw new CommitBatchUpdateInternalError('Batch commit move failed', { cause: err })
   }
 }
 
@@ -203,6 +205,8 @@ export async function batchDeleteCommits(
     )
   } catch (e) {
     const err = ensureError(e)
-    throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
+    throw new CommitBatchUpdateInternalError('Batch commit delete failed', {
+      cause: err
+    })
   }
 }

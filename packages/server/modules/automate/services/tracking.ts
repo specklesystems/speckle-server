@@ -16,8 +16,10 @@ import {
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { getUserById } from '@/modules/core/services/users'
+import { LogicError } from '@/modules/shared/errors'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
 
@@ -57,7 +59,7 @@ const onAutomationRunStatusUpdatedFactory =
       run.automationRevisionId
     )
     const fullRun = await deps.getFullAutomationRunById(run.id)
-    if (!fullRun) throw new Error('This should never happen')
+    if (!fullRun) throw new LogicError('This should never happen')
 
     if (!automationWithRevision) {
       automateLogger.error(
@@ -100,7 +102,7 @@ const getUserEmailFromAutomationRunFactory =
         const version = await deps.getCommit(trigger.triggeringId, {
           streamId: projectId
         })
-        if (!version) throw new Error("Version doesn't exist any more")
+        if (!version) throw new CommitNotFoundError("Version doesn't exist any more")
         const userId = version.author
         if (userId) {
           const user = await deps.getUserById({ userId })

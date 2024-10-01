@@ -2,13 +2,16 @@ import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamNotFoundError
+} from '@/modules/core/errors/stream'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
+import { CommentCreateError, CommentNotFoundError } from '@/modules/comments/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { knex } from '@/modules/core/dbSchema'
 import {
@@ -65,7 +68,7 @@ export const authorizeProjectCommentsAccessFactory =
       userId: authCtx.userId
     })
     if (!project) {
-      throw new StreamInvalidAccessError('Stream not found')
+      throw new StreamNotFoundError('Stream not found')
     }
 
     let success = true
@@ -207,7 +210,9 @@ export const createCommentReplyAndNotifyFactory =
   async (input: CreateCommentReplyInput, userId: string) => {
     const thread = await deps.getComment({ id: input.threadId, userId })
     if (!thread) {
-      throw new CommentCreateError('Reply creation failed due to nonexistant thread')
+      throw new CommentNotFoundError(
+        'Reply creation failed due to nonexistant comment thread'
+      )
     }
     await deps.validateInputAttachments(thread.streamId, input.content.blobIds || [])
 
@@ -264,10 +269,10 @@ export const editCommentAndNotifyFactory =
   async (input: EditCommentInput, userId: string) => {
     const comment = await deps.getComment({ id: input.commentId, userId })
     if (!comment) {
-      throw new CommentUpdateError('Comment update failed due to nonexistant comment')
+      throw new CommentNotFoundError('Comment update failed due to nonexistant comment')
     }
     if (comment.authorId !== userId) {
-      throw new CommentUpdateError("You cannot edit someone else's comments")
+      throw new ForbiddenError("You cannot edit someone else's comments")
     }
 
     await deps.validateInputAttachments(comment.streamId, input.content.blobIds || [])
@@ -296,7 +301,7 @@ export const archiveCommentAndNotifyFactory =
   async (commentId: string, userId: string, archived = true) => {
     const comment = await deps.getComment({ id: commentId, userId })
     if (!comment) {
-      throw new CommentUpdateError(
+      throw new CommentNotFoundError(
         "Specified comment doesn't exist and thus it's archival status can't be changed"
       )
     }
@@ -306,9 +311,7 @@ export const archiveCommentAndNotifyFactory =
       !stream ||
       (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
     ) {
-      throw new CommentUpdateError(
-        'You do not have permissions to archive this comment'
-      )
+      throw new ForbiddenError('You do not have permissions to archive this comment')
     }
     const updatedComment = await deps.updateComment(comment.id, {
       archived

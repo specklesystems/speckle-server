@@ -28,6 +28,7 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const githubStrategyBuilderFactory =
   (deps: {
@@ -83,7 +84,7 @@ const githubStrategyBuilderFactory =
         try {
           const email = profile.emails?.[0].value
           if (!email) {
-            throw new Error('No email provided by Github')
+            throw new EnvironmentResourceError('No email provided by Github')
           }
 
           const name = profile.displayName || profile.username

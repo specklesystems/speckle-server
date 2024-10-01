@@ -20,6 +20,7 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
@@ -90,7 +91,7 @@ const azureAdStrategyBuilderFactory =
       deps.passportAuthenticateHandlerBuilder('azuread-openidconnect'),
       async (req, _res, next) => {
         const serverInfo = await deps.getServerInfo()
-        let logger = req.log.child({
+        const logger = req.log.child({
           authStrategy: 'entraId',
           serverVersion: serverInfo.version
         })
@@ -100,10 +101,8 @@ const azureAdStrategyBuilderFactory =
           // than to refactor everything
           const profile = req.user as Optional<IProfile>
           if (!profile) {
-            throw new Error('No profile provided by Entra ID')
+            throw new EnvironmentResourceError('No profile provided by Entra ID')
           }
-
-          logger = logger.child({ profileId: profile.oid })
 
           const user = {
             email: profile._json.email,
@@ -183,7 +182,6 @@ const azureAdStrategyBuilderFactory =
             err,
             'Unexpected issue occured while authenticating with Entra ID'
           )
-
           switch (e.constructor) {
             case UserInputError:
               logger.info(

@@ -1,6 +1,6 @@
 import {
   AutomationCreationError,
-  AutomationUpdateError
+  AutomationNotFoundError
 } from '@/modules/automate/errors/management'
 import {
   getAutomationFactory,
@@ -196,7 +196,7 @@ const buildAutomationUpdate = () => {
               projectId: myStream.id
             })
         )
-        expect(e).to.have.property('name', AutomationUpdateError.name)
+        expect(e).to.have.property('name', AutomationNotFoundError.name)
         expect(e).to.have.property('message', 'Automation not found')
       })
 
@@ -342,7 +342,7 @@ const buildAutomationUpdate = () => {
               projectId: myStream.id
             })
         )
-        expect(e).to.have.property('name', AutomationUpdateError.name)
+        expect(e).to.have.property('name', AutomationNotFoundError.name)
         expect(e).to.have.property('message', 'Automation not found')
       })
 

@@ -1,4 +1,4 @@
-import { StreamCloneError } from '@/modules/core/errors/stream'
+import { StreamCloneError, StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   BranchCommitRecord,
   StreamCommitRecord,
@@ -41,6 +41,9 @@ import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
 import { InsertCommentPayload } from '@/modules/comments/domain/operations'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { CommentNotFoundError } from '@/modules/comments/errors'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -82,14 +85,14 @@ const prepareState = async (
 ): Promise<CloneStreamInitialState> => {
   const targetStream = await getStream({ streamId: sourceStreamId })
   if (!targetStream) {
-    throw new StreamCloneError('Clonable source stream not found', {
+    throw new StreamNotFoundError('Clonable source stream not found', {
       info: { sourceStreamId }
     })
   }
 
   const user = await getUser(userId)
   if (!user) {
-    throw new StreamCloneError('Clone target user not found')
+    throw new UserNotFoundError('Clone target user not found')
   }
 
   const trx = await knex.transaction()
@@ -244,7 +247,7 @@ async function createBranchCommitReferences(
       const newBranchId = branchIdMap.get(bc.branchId)
       const newCommitId = commitIdMap.get(bc.commitId)
       if (!newBranchId || !newCommitId) {
-        throw new StreamCloneError('Unexpected missing branch or commit mapping', {
+        throw new BranchNotFoundError('Unexpected missing branch or commit mapping', {
           info: {
             oldBranchId: bc.branchId,
             newBranchId,
@@ -311,7 +314,7 @@ async function cloneComments(
         if (c.parentComment) {
           const newParentComment = commentIdMap.get(c.parentComment)
           if (!newParentComment) {
-            throw new StreamCloneError('Unexpected missing comment mapping', {
+            throw new CommentNotFoundError('Unexpected missing comment mapping', {
               info: {
                 newStreamId: coreResult.newStreamId,
                 oldStreamId: state.targetStream.id,

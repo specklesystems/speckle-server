@@ -1,4 +1,5 @@
 import { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
@@ -24,7 +25,7 @@ const initializeStateFactory =
 
     const user = await deps.getUserByEmail(token.email)
     if (!user) {
-      throw new PasswordRecoveryFinalizationError('Invalid finalization request')
+      throw new UserNotFoundError('Invalid finalization request')
     }
 
     return { tokenId, password, token, user }

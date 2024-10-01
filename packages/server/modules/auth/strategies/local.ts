@@ -10,8 +10,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
+import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
@@ -23,6 +22,8 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { UnauthorizedError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -61,10 +62,10 @@ const localStrategyBuilderFactory =
             password: req.body.password
           })
 
-          if (!valid) throw new UserInputError('Invalid credentials.')
+          if (!valid) throw new UnauthorizedError('Invalid credentials.')
 
           const user = await deps.getUserByEmail({ email: req.body.email })
-          if (!user) throw new UserInputError('Invalid credentials.')
+          if (!user) throw new UnauthorizedError('Invalid credentials.')
           req.user = { id: user.id, email: user.email }
 
           return next()

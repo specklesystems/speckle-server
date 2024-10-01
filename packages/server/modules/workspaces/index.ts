@@ -9,6 +9,7 @@ import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import ssoRouter from '@/modules/workspaces/rest/sso'
+import { InvalidWorkspaceLicenseError } from '@/modules/workspaces/errors/workspace'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
 
@@ -32,7 +33,7 @@ const workspacesModule: SpeckleModule = {
     })
 
     if (!isWorkspaceLicenseValid)
-      throw new Error(
+      throw new InvalidWorkspaceLicenseError(
         'The workspaces module needs a valid license to run, contact Speckle to get one.'
       )
     moduleLogger.info('⚒️  Init workspaces module')

@@ -31,6 +31,9 @@ import {
   CreateCommentThreadAndNotify
 } from '@/modules/comments/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -214,7 +217,7 @@ const parseIncomingUrl = async (url: string, token?: string) => {
     return modelUrl
   }
 
-  throw new CrossServerCommitSyncError(`Couldn't parse commit URL: ${url}`)
+  throw new UserInputError("Couldn't parse commit URL: {url}", { info: { url } })
 }
 
 type GetLocalResourcesDeps = {
@@ -229,14 +232,14 @@ const getLocalResourcesFactory =
   async (targetStreamId: string, branchName: string, commentAuthorId?: string) => {
     const targetStream = await deps.getStream({ streamId: targetStreamId })
     if (!targetStream) {
-      throw new CrossServerCommitSyncError(
+      throw new StreamNotFoundError(
         `Couldn't find local stream with id ${targetStreamId}`
       )
     }
 
     const targetBranch = await deps.getStreamBranchByName(targetStreamId, branchName)
     if (!targetBranch) {
-      throw new CrossServerCommitSyncError(
+      throw new BranchNotFoundError(
         `Couldn't find local branch ${branchName} in stream ${targetStreamId}`
       )
     }

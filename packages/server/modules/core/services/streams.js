@@ -122,6 +122,7 @@ module.exports = {
     }
 
     if (visibility && visibility !== 'all') {
+      //TODO this can probably be removed if typescript is used
       if (!['private', 'public'].includes(visibility))
         throw new Error('Stream visibility should be either private, public or all')
       const isPublic = visibility === 'public'

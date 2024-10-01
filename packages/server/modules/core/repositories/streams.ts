@@ -52,8 +52,7 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import {
   StreamAccessUpdateError,
-  StreamNotFoundError,
-  StreamUpdateError
+  StreamNotFoundError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
@@ -1183,7 +1182,7 @@ export async function revokeStreamPermissions(
 export async function markOnboardingBaseStream(streamId: string, version: string) {
   const stream = await getStream({ streamId })
   if (!stream) {
-    throw new Error(`Stream ${streamId} not found`)
+    throw new StreamNotFoundError(`Stream ${streamId} not found`)
   }
   await updateStream({
     id: streamId,

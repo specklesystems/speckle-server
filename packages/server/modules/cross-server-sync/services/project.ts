@@ -1,6 +1,5 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
 import { getUser } from '@/modules/core/repositories/users'
-import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
   GraphQLClient,
@@ -19,6 +18,8 @@ import {
   CreateBranchAndNotify,
   GetStreamBranchByName
 } from '@/modules/core/domain/branches/operations'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -56,7 +57,7 @@ const getLocalResourcesFactory =
     const { authorId } = params
     const user = await deps.getUser(authorId)
     if (!user) {
-      throw new CrossServerProjectSyncError('Target author not found')
+      throw new UserNotFoundError('Target author not found')
     }
 
     return { user }
@@ -65,7 +66,9 @@ const getLocalResourcesFactory =
 const parseIncomingUrl = (projectUrl: string) => {
   const [, origin, , projectId] = PROJECT_URL_RGX.exec(projectUrl) || []
   if (!origin || !projectId) {
-    throw new CrossServerProjectSyncError('Invalid project URL')
+    throw new UserInputError('Invalid project URL: {url}', {
+      info: { url: projectUrl }
+    })
   }
 
   return { origin, projectId }

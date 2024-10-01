@@ -24,6 +24,7 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const oidcStrategyBuilderFactory =
   (deps: {
@@ -76,7 +77,9 @@ const oidcStrategyBuilderFactory =
           try {
             const email = userinfo['email']
             if (!email) {
-              throw new Error('No email provided by the OIDC provider.')
+              throw new EnvironmentResourceError(
+                'No email provided by the OIDC provider.'
+              )
             }
 
             const name = getNameFromUserInfo(userinfo)
@@ -105,7 +108,7 @@ const oidcStrategyBuilderFactory =
 
             // if the server is invite only and we have no invite id, throw.
             if (serverInfo.inviteOnly && !token) {
-              throw new Error(
+              throw new EnvironmentResourceError(
                 'This server is invite only. Please provide an invite id.'
               )
             }

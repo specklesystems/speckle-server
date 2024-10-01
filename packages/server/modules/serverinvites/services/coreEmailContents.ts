@@ -202,7 +202,8 @@ export const buildCoreInviteEmailContentsFactory =
       })
     } else {
       throw new InviteCreateValidationError(
-        'Unexpected resource target type: ' + primaryResourceTarget.resourceType
+        'Unexpected resource target type: {primaryResourceTargetType}',
+        { info: { primaryResourceTargetType: primaryResourceTarget.resourceType } }
       )
     }
   }

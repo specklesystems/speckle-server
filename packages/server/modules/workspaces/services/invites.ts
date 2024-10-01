@@ -64,7 +64,11 @@ import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/role
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
-import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceNotFoundError,
+  WorkspaceProtectedError,
+  WorkspacesNotAuthorizedError
+} from '@/modules/workspaces/errors/workspace'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
   anyEmailCompliantWithWorkspaceDomains,
@@ -499,14 +503,14 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
       userId: finalizerUserId
     })
     if (!workspace) {
-      throw new InviteFinalizingError(
+      throw new WorkspaceNotFoundError(
         'Attempting to finalize invite to a non-existant workspace'
       )
     }
 
     if (action === InviteFinalizationAction.CANCEL) {
       if (workspace.role !== Roles.Workspace.Admin) {
-        throw new InviteFinalizingError(
+        throw new WorkspacesNotAuthorizedError(
           'Attempting to cancel invite to a workspace that the user does not own'
         )
       }

@@ -1,5 +1,5 @@
 import crs from 'crypto-random-string'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { ForbiddenError, ResourceMismatch } from '@/modules/shared/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
 import { isNonNullable, Roles } from '@speckle/shared'
@@ -25,6 +25,8 @@ import {
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
 import { getStream } from '@/modules/core/repositories/streams'
+import { CommentNotFoundError } from '@/modules/comments/errors'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 export const streamResourceCheckFactory =
   (deps: {
@@ -58,19 +60,24 @@ export const createCommentFactory =
   }) =>
   async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
     if (input.resources.length < 1)
-      throw Error('Must specify at least one resource as the comment target')
+      throw new UserInputError(
+        'Must specify at least one resource as the comment target'
+      )
 
     const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
-    if (commentResource) throw new Error('Please use the comment reply mutation.')
+    if (commentResource)
+      throw new UserInputError('Please use the comment reply mutation.')
 
     // Stream checks
     const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
     if (streamResources.length > 1)
-      throw Error('Commenting on multiple streams is not supported')
+      throw new UserInputError('Commenting on multiple streams is not supported')
 
     const [stream] = streamResources
     if (stream && stream.resourceId !== input.streamId)
-      throw Error("Input streamId doesn't match the stream resource.resourceId")
+      throw new ResourceMismatch(
+        "Input streamId doesn't match the stream resource.resourceId"
+      )
 
     const comment = {
       streamId: input.streamId,
@@ -211,7 +218,7 @@ export const editCommentFactory =
     matchUser: boolean
   }) => {
     const editedComment = await deps.getComment({ id: input.id })
-    if (!editedComment) throw new Error("The comment doesn't exist")
+    if (!editedComment) throw new CommentNotFoundError("The comment doesn't exist")
 
     if (matchUser && editedComment.authorId !== userId)
       throw new ForbiddenError("You cannot edit someone else's comments")
@@ -253,7 +260,7 @@ export const archiveCommentFactory =
   }) => {
     const comment = await deps.getComment({ id: commentId })
     if (!comment)
-      throw new Error(
+      throw new CommentNotFoundError(
         `No comment ${commentId} exists, cannot change its archival status`
       )
 

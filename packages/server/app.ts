@@ -61,7 +61,12 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { BaseError, ForbiddenError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  BaseError,
+  ContextError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUser } from '@/modules/core/repositories/users'
@@ -188,15 +193,15 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
           }
 
           if (!header) {
-            throw new Error("Couldn't resolve auth header for subscription")
+            throw new BadRequestError("Couldn't resolve auth header for subscription")
           }
 
           token = header.split(' ')[1]
           if (!token) {
-            throw new Error("Couldn't resolve token from auth header")
+            throw new BadRequestError("Couldn't resolve token from auth header")
           }
         } catch (e) {
-          throw new ForbiddenError('You need a token to subscribe')
+          throw new UnauthorizedError('You need a token to subscribe')
         }
 
         // Build context (Apollo Server v3 no longer triggers context building automatically
@@ -218,7 +223,7 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
           )
           return buildCtx
         } catch (e) {
-          throw new ForbiddenError('Subscription context build failed')
+          throw new ContextError('Subscription context build failed')
         }
       },
       onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {

@@ -12,7 +12,8 @@ import {
 } from '@/modules/pwdreset/repositories'
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
-import { ensureError } from '@/modules/shared/helpers/errorHelper'
+import { BadRequestError } from '@/modules/shared/errors'
+import { ensureError } from '@speckle/shared'
 import { Express } from 'express'
 
 export default function (app: Express) {
@@ -49,7 +50,8 @@ export default function (app: Express) {
         deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
       })
 
-      if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')
+      if (!req.body.tokenId || !req.body.password)
+        throw new BadRequestError('Invalid request.')
       await finalizePasswordReset(req.body.tokenId, req.body.password)
 
       return res.status(200).send('Password reset. Please log in.')

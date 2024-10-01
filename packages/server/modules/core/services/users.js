@@ -58,6 +58,7 @@ const {
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
+const { UserCreateError } = require('@/modules/core/errors/user')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -136,7 +137,7 @@ module.exports = {
     if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
-    if (!newUser) throw new Error("Couldn't create user")
+    if (!newUser) throw new UserCreateError("Couldn't create user")
 
     const userRole =
       (await countAdminUsers()) === 0

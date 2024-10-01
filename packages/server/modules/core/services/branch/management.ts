@@ -5,8 +5,9 @@ import {
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
 import {
-  BranchCreateError,
   BranchDeleteError,
+  BranchNameError,
+  BranchNotFoundError,
   BranchUpdateError
 } from '@/modules/core/errors/branch'
 import {
@@ -48,7 +49,7 @@ export const createBranchAndNotifyFactory =
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getStreamBranchByName(streamId, input.name)
     if (existingBranch) {
-      throw new BranchCreateError('A branch with this name already exists')
+      throw new BranchNameError('A branch with this name already exists')
     }
 
     const branch = await deps.createBranch({
@@ -72,7 +73,7 @@ export const updateBranchAndNotifyFactory =
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getBranchById(input.id)
     if (!existingBranch) {
-      throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
+      throw new BranchNotFoundError('Branch not found', { info: { ...input, userId } })
     }
     if (existingBranch.streamId !== streamId) {
       throw new BranchUpdateError(
@@ -123,7 +124,7 @@ export const deleteBranchAndNotifyFactory =
       deps.getStream({ streamId, userId })
     ])
     if (!existingBranch) {
-      throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
+      throw new BranchNotFoundError('Branch not found', { info: { ...input, userId } })
     }
     if (!stream || existingBranch.streamId !== streamId) {
       throw new BranchUpdateError(

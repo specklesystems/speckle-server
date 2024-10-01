@@ -20,6 +20,7 @@ import {
   RequestEmailVerification,
   RequestNewEmailVerification
 } from '@/modules/emails/domain/operations'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
@@ -89,10 +90,7 @@ const createNewEmailVerificationFactory =
       deps.getServerInfo()
     ])
 
-    if (!user)
-      throw new EmailVerificationRequestError(
-        'Unable to resolve verification target user'
-      )
+    if (!user) throw new UserNotFoundError('Unable to resolve verification target user')
 
     const verificationId = await deps.deleteOldAndInsertNewVerification(
       emailRecord.email

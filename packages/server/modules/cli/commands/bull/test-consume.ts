@@ -1,6 +1,7 @@
 import { cliLogger } from '@/logging/logging'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { initializeConsumption } from '@/modules/notifications/index'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { get, noop } from 'lodash'
 import { CommandModule } from 'yargs'
 
@@ -16,7 +17,7 @@ const command: CommandModule = {
         logger.info('Received test message with payload', msg, job)
 
         if (get(msg.data, 'error')) {
-          throw new Error('Forced to throw error!')
+          throw new EnvironmentResourceError('Forced to throw error!')
         }
       }
     })
