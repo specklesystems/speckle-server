@@ -2,15 +2,21 @@ import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
+import {
+  getStream,
+  getStreamCollaborators,
+  markCommitStreamUpdated
+} from '@/modules/core/repositories/streams'
 import {
   createBranchFactory,
+  getBranchByIdFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory
+  getStreamBranchesByNameFactory,
+  markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
 import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
@@ -25,8 +31,11 @@ import {
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import {
+  createCommitFactory,
   getAllBranchCommits,
-  getSpecificBranchCommitsFactory
+  getSpecificBranchCommitsFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getViewerResourceGroupsFactory,
@@ -43,6 +52,8 @@ import {
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 
 const command: CommandModule<
   unknown,
@@ -108,6 +119,18 @@ const command: CommandModule<
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
       addReplyAddedActivity
+    })
+
+    const createCommitByBranchId = createCommitByBranchIdFactory({
+      createCommit: createCommitFactory({ db }),
+      getObject,
+      getBranchById: getBranchByIdFactory({ db }),
+      insertStreamCommits: insertStreamCommitsFactory({ db }),
+      insertBranchCommits: insertBranchCommitsFactory({ db }),
+      markCommitStreamUpdated,
+      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+      versionsEventEmitter: VersionsEmitter.emit,
+      addCommitCreatedActivity
     })
 
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })

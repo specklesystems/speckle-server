@@ -5,6 +5,7 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
@@ -19,26 +20,33 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   createBranchFactory,
+  getBranchByIdFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory
+  getStreamBranchesByNameFactory,
+  markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import {
+  createCommitFactory,
   getAllBranchCommits,
-  getSpecificBranchCommitsFactory
+  getSpecificBranchCommitsFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
   getOnboardingBaseStream,
   getStream,
   getStreamCollaborators,
+  markCommitStreamUpdated,
   markOnboardingBaseStream
 } from '@/modules/core/repositories/streams'
 import { getFirstAdmin, getUser } from '@/modules/core/repositories/users'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
@@ -89,8 +97,19 @@ const crossServerSyncModule: SpeckleModule = {
       commentsEventsEmit: CommentsEmitter.emit,
       addReplyAddedActivity
     })
-
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+    const createCommitByBranchId = createCommitByBranchIdFactory({
+      createCommit: createCommitFactory({ db }),
+      getObject,
+      getBranchById: getBranchByIdFactory({ db }),
+      insertStreamCommits: insertStreamCommitsFactory({ db }),
+      insertBranchCommits: insertBranchCommitsFactory({ db }),
+      markCommitStreamUpdated,
+      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+      versionsEventEmitter: VersionsEmitter.emit,
+      addCommitCreatedActivity
+    })
+
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream,
       getFirstAdmin,

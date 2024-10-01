@@ -5,7 +5,6 @@ const crs = require('crypto-random-string')
 const { beforeEachContext, truncateTables } = require('@/test/hooks')
 const { createUser } = require('@/modules/core/services/users')
 const { createStream } = require('@/modules/core/services/streams')
-const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 const { createObject } = require('@/modules/core/services/objects')
 const {
@@ -56,7 +55,29 @@ const {
 const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
 const { CommentsEmitter } = require('@/modules/comments/events/emitter')
-const { getStream } = require('@/modules/core/repositories/streams')
+const {
+  getStream,
+  markCommitStreamUpdated
+} = require('@/modules/core/repositories/streams')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const { getObject } = require('@/modules/core/repositories/objects')
+const {
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -102,6 +123,24 @@ const archiveComment = archiveCommentFactory({
 const getComments = getCommentsLegacyFactory({ db })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
 const getStreamCommentCount = getStreamCommentCountFactory({ db })
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -164,22 +203,26 @@ describe('Comments @comments', () => {
     testObject1.id = await createObject({ streamId: stream.id, object: testObject1 })
     testObject2.id = await createObject({ streamId: stream.id, object: testObject2 })
 
-    commitId1 = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'first commit',
-      sourceApplication: 'tests',
-      objectId: testObject1.id,
-      authorId: user.id
-    })
-    commitId2 = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'first commit',
-      sourceApplication: 'tests',
-      objectId: testObject2.id,
-      authorId: user.id
-    })
+    commitId1 = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId: testObject1.id,
+        authorId: user.id
+      })
+    ).id
+    commitId2 = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId: testObject2.id,
+        authorId: user.id
+      })
+    ).id
   })
 
   after(() => {
@@ -221,13 +264,15 @@ describe('Comments @comments', () => {
     const objA = { foo: 'bar' }
     objA.id = await createObject({ streamId: streamA.id, object: objA })
     const commA = {}
-    commA.id = await createCommitByBranchName({
-      streamId: streamA.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objA.id,
-      authorId: user.id
-    })
+    commA.id = (
+      await createCommitByBranchName({
+        streamId: streamA.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objA.id,
+        authorId: user.id
+      })
+    ).id
 
     // Stream B belongs to otherUser
     const streamB = { name: 'Stream B' }
@@ -235,13 +280,15 @@ describe('Comments @comments', () => {
     const objB = { qux: 'mux' }
     objB.id = await createObject({ streamId: streamB.id, object: objB })
     const commB = {}
-    commB.id = await createCommitByBranchName({
-      streamId: streamB.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objB.id,
-      authorId: otherUser.id
-    })
+    commB.id = (
+      await createCommitByBranchName({
+        streamId: streamB.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objB.id,
+        authorId: otherUser.id
+      })
+    ).id
 
     // create a comment on streamA but objectB
     await createComment({
@@ -325,13 +372,15 @@ describe('Comments @comments', () => {
     const obj = { foo: 'bar' }
     obj.id = await createObject({ streamId: stream.id, object: obj })
     const commit = {}
-    commit.id = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: obj.id,
-      authorId: user.id
-    })
+    commit.id = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: obj.id,
+        authorId: user.id
+      })
+    ).id
 
     const commCount = 10
     const commentIds = []
@@ -416,13 +465,15 @@ describe('Comments @comments', () => {
     const objOther = { 'are you bored': 'yes' }
     objOther.id = await createObject({ streamId: streamOther.id, object: objOther })
     const commitOther = {}
-    commitOther.id = await createCommitByBranchName({
-      streamId: streamOther.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objOther.id,
-      authorId: user.id
-    })
+    commitOther.id = (
+      await createCommitByBranchName({
+        streamId: streamOther.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objOther.id,
+        authorId: user.id
+      })
+    ).id
 
     const countOther = await getStreamCommentCount(streamOther.id, {
       threadsOnly: true

@@ -12,7 +12,6 @@ const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
 const { getBranchesByStreamId } = require('../services/branches')
-const { createCommitByBranchName } = require('../services/commits')
 
 const {
   updateBranchAndNotifyFactory,
@@ -23,7 +22,8 @@ const {
   getStreamBranchByNameFactory,
   createBranchFactory,
   updateBranchFactory,
-  deleteBranchByIdFactory
+  deleteBranchByIdFactory,
+  markCommitBranchUpdatedFactory
 } = require('@/modules/core/repositories/branches')
 const {
   addBranchUpdatedActivity,
@@ -31,10 +31,26 @@ const {
 } = require('@/modules/activitystream/services/branchActivity')
 const {
   getStream,
-  markBranchStreamUpdated
+  markBranchStreamUpdated,
+  markCommitStreamUpdated
 } = require('@/modules/core/repositories/streams')
 const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const { getObject } = require('@/modules/core/repositories/objects')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
+const db = knex
 const Commits = () => knex('commits')
 const getBranchById = getBranchByIdFactory({ db: knex })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
@@ -52,6 +68,25 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   addBranchDeletedActivity,
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
 describe('Branches @core-branches', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
@@ -233,7 +268,7 @@ describe('Branches @core-branches', () => {
       })
     ).id
 
-    const tempCommit = await createCommitByBranchName({
+    const { id: tempCommitId } = await createCommitByBranchName({
       streamId: stream.id,
       branchName,
       message: 'temp commit',
@@ -243,7 +278,7 @@ describe('Branches @core-branches', () => {
     })
     await deleteBranchAndNotify({ id: branchId, streamId: stream.id }, user.id)
 
-    const commit = await Commits().where({ id: tempCommit }).first()
+    const commit = await Commits().where({ id: tempCommitId }).first()
     expect(commit).to.be.undefined
   })
 
