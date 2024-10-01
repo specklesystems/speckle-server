@@ -129,6 +129,7 @@
     <SettingsDialog
       v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
+      v-model:target-workspace-id="workspaceSettingsDialogTarget"
     />
   </div>
 </template>
@@ -150,6 +151,15 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
+// import { useQuery } from '@vue/apollo-composable'
+// import { graphql } from '~~/lib/common/generated/gql'
+
+// graphql(`
+//   fragment NavUserMenu_Workspace on Workspace {
+//     id
+//     role
+//   }
+// `)
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -162,12 +172,23 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+// const isWorkspacesEnabled = useIsWorkspacesEnabled()
+// const { result: workspaceResult } = useQuery(
+//   settingsSidebarQuery,
+//   () => ({
+//     workspaceId: route.query?.workspace
+//   }),
+//   () => ({
+//     enabled: isWorkspacesEnabled.value
+//   })
+// )
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string | null>(null)
+const workspaceSettingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 
 const version = computed(() => serverInfo.value?.version)
@@ -187,11 +208,16 @@ const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
+  delete currentQueryParams.workspace
+  delete currentQueryParams.error
+
   router.push({ query: currentQueryParams })
 }
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
+  const workspaceQuery = route.query?.workspace
+  const errorQuery = route.query?.error
 
   if (settingsQuery && isString(settingsQuery)) {
     if (settingsQuery.includes('server') && !isAdmin.value) {
@@ -201,6 +227,22 @@ onMounted(() => {
       })
 
       return
+    }
+
+    if (workspaceQuery && isString(workspaceQuery)) {
+      workspaceSettingsDialogTarget.value = workspaceQuery
+
+      if (errorQuery && isString(errorQuery)) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: errorQuery
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Lekker bezig ah niffo'
+        })
+      }
     }
 
     showSettingsDialog.value = true

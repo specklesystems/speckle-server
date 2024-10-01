@@ -5,6 +5,11 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
+      <SettingsWorkspacesSecuritySso
+        v-if="result?.workspace"
+        :workspace="result.workspace"
+      />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <section>
         <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
         <ul v-if="hasWorkspaceDomains">
@@ -137,6 +142,7 @@ graphql(`
     }
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    ...SettingsWorkspacesSecuritySso_Workspace
   }
 
   fragment SettingsWorkspacesSecurity_User on User {
