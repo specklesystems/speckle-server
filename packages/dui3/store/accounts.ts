@@ -96,8 +96,6 @@ export const useAccountStore = defineStore('accountStore', () => {
 
       // Handle apollo client errors as top level
       const errorLink = onError((res: ErrorResponse) => {
-        console.log('hit the onError', res)
-
         if (res.graphQLErrors) {
           const messages: string[] = []
           res.graphQLErrors.forEach(({ message, locations, path }) => {
