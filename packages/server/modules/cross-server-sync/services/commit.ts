@@ -2,7 +2,6 @@ import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles, timeoutAt } from '@speckle/shared'
 import { createObject } from '@/modules/core/services/objects'
@@ -31,6 +30,7 @@ import {
   CreateCommentReplyAndNotify,
   CreateCommentThreadAndNotify
 } from '@/modules/comments/domain/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
@@ -222,7 +222,7 @@ const parseIncomingUrl = async (url: string, token?: string) => {
 
 type GetLocalResourcesDeps = {
   getStream: typeof getStream
-  getStreamBranchByName: typeof getStreamBranchByName
+  getStreamBranchByName: GetStreamBranchByName
   getStreamCollaborators: typeof getStreamCollaborators
   getUser: typeof getUser
 }

@@ -59,8 +59,8 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getBranchesByIds
+  getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory
 } from '@/modules/core/repositories/branches'
 import {
   createTestAutomationRunFactory,
@@ -109,6 +109,7 @@ import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -135,6 +136,7 @@ const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
 
 const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
 const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -523,7 +525,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const create = createAutomationRevisionFactory({
             getAutomation,
             storeAutomationRevision,
-            getBranchesByIds,
+            getBranchesByIds: getBranchesByIdsFactory({ db }),
             getFunctionRelease,
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
@@ -556,7 +558,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               automateRunsEmitter: AutomateRunsEmitter.emit,
               getAutomationToken,
               upsertAutomationRun,
-              getFullAutomationRevisionMetadata
+              getFullAutomationRevisionMetadata,
+              getBranchLatestCommits,
+              getCommit: getCommitFactory({ db })
             }),
             validateStreamAccess
           })

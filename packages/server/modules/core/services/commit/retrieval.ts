@@ -6,7 +6,7 @@ import {
 import {
   getBranchCommitsTotalCount,
   getPaginatedBranchCommits as getPaginatedBranchCommitsDb,
-  getSpecificBranchCommits,
+  getSpecificBranchCommitsFactory,
   PaginatedBranchCommitsParams
 } from '@/modules/core/repositories/commits'
 import {
@@ -14,6 +14,7 @@ import {
   getCommitsTotalCountByStreamId
 } from '@/modules/core/services/commits'
 import { BadRequestError } from '@/modules/shared/errors'
+import { db } from '@/db/knex'
 
 export async function getPaginatedStreamCommits(
   streamId: string,
@@ -44,6 +45,8 @@ export async function getPaginatedBranchCommits(
     throw new BadRequestError(
       'Cannot return more than 100 items, please use pagination.'
     )
+
+  const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
 
   // Load priority commits first
   let priorityCommitPromise: Optional<ReturnType<typeof getSpecificBranchCommits>> =

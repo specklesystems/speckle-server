@@ -8,7 +8,8 @@ import {
   GetStreamActivity,
   GetTimelineCount,
   GetUserActivity,
-  GetUserTimeline
+  GetUserTimeline,
+  SaveActivity
 } from '@/modules/activitystream/domain/operations'
 import {
   StreamActivityRecord,
@@ -17,6 +18,11 @@ import {
 import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
+import { getStream } from '@/modules/core/repositories/streams'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { getUser } from '@/modules/core/repositories/users'
+import { createWebhookEventFactory } from '@/modules/webhooks/repositories/webhooks'
+import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks'
 import { Knex } from 'knex'
 
 const tables = {
@@ -211,5 +217,49 @@ export const getUserActivityFactory =
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
+    }
+  }
+
+// TODO: this function should be a service
+export const saveActivityFactory =
+  ({ db }: { db: Knex }): SaveActivity =>
+  async ({ streamId, resourceType, resourceId, actionType, userId, info, message }) => {
+    const dbObject = {
+      streamId, // abc
+      resourceType, // "commit"
+      resourceId, // commit id
+      actionType, // "commit_receive"
+      userId, // populated by the api
+      info: JSON.stringify(info), // can be anything with conventions! (TBD)
+      message // something human understandable for frontend purposes mostly
+    }
+
+    await tables
+      .streamActivity<Omit<StreamActivityRecord, 'info'> & { info: string }>(db)
+      .insert(dbObject)
+
+    if (streamId) {
+      const webhooksPayload = {
+        streamId,
+        userId,
+        activityMessage: message,
+        event: {
+          // eslint-disable-next-line camelcase
+          event_name: actionType,
+          data: info
+        }
+      }
+
+      await dispatchStreamEventFactory({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
+        streamId,
+        event: actionType,
+        eventPayload: webhooksPayload
+      })
     }
   }

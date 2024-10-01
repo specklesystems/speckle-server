@@ -16,11 +16,6 @@ import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
 import {
-  ActivitySummary,
-  createActivitySummary,
-  StreamActivitySummary
-} from '@/modules/activitystream/services/summary'
-import {
   EmailBody,
   EmailInput,
   renderEmail
@@ -29,12 +24,20 @@ import { getUserNotificationPreferencesFactory } from '@/modules/notifications/s
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
 import { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
+import {
+  ActivitySummary,
+  StreamActivitySummary
+} from '@/modules/activitystream/domain/types'
+import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
+import { getStream } from '@/modules/core/services/streams'
+import { getActivityFactory } from '@/modules/activitystream/repositories'
 
 const digestNotificationEmailHandlerFactory =
   (
     deps: {
       getUserNotificationPreferences: GetUserNotificationPreferences
-      createActivitySummary: typeof createActivitySummary
+      createActivitySummary: CreateActivitySummary
       getServerInfo: typeof getServerInfo
     } & PrepareSummaryEmailDeps
   ) =>
@@ -48,12 +51,12 @@ const digestNotificationEmailHandlerFactory =
     const wantDigests =
       (await deps.getUserNotificationPreferences(userId)).activityDigest?.email !==
       false
-    const activitySummary = await deps.createActivitySummary(
+    const activitySummary = await deps.createActivitySummary({
       userId,
       streamIds,
       start,
       end
-    )
+    })
     // if there are no activities stop early
     if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
       return null
@@ -202,7 +205,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 
   const heading = 'Most active comment'
 
-  const fact = `The most active comment was on ${streamActivity.stream.name} stream. 
+  const fact = `The most active comment was on ${streamActivity.stream.name} stream.
   It received ${replies.length} replies.`
 
   const text = `${heading}\n\n${fact}`
@@ -432,7 +435,10 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
       db
     })
   }),
-  createActivitySummary,
+  createActivitySummary: createActivitySummaryFactory({
+    getStream,
+    getActivity: getActivityFactory({ db })
+  }),
   getServerInfo,
   renderEmail
 })

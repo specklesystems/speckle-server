@@ -10,12 +10,14 @@ import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph
 import { omit } from 'lodash'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { UserNotFoundError } from '@/modules/core/errors/user'
 
@@ -115,8 +117,8 @@ const getProjectMetadata = async (params: {
 }
 
 type EnsureBranchDeps = {
-  getStreamBranchByName: typeof getStreamBranchByName
-  createBranchAndNotify: typeof createBranchAndNotify
+  getStreamBranchByName: GetStreamBranchByName
+  createBranchAndNotify: CreateBranchAndNotify
 }
 
 const ensureBranchFactory =

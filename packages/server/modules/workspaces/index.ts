@@ -8,9 +8,10 @@ import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
+import ssoRouter from '@/modules/workspaces/rest/sso'
 import { InvalidWorkspaceLicenseError } from '@/modules/workspaces/errors/workspace'
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
 
@@ -25,7 +26,7 @@ const initRoles = async () => {
 }
 
 const workspacesModule: SpeckleModule = {
-  async init(_, isInitial) {
+  async init(app, isInitial) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     const isWorkspaceLicenseValid = await validateModuleLicense({
       requiredModules: ['workspaces']
@@ -37,7 +38,10 @@ const workspacesModule: SpeckleModule = {
       )
     moduleLogger.info('⚒️  Init workspaces module')
 
+    if (FF_WORKSPACES_SSO_ENABLED) app.use(ssoRouter)
+
     if (isInitial) {
+      // register the SSO endpoints
       quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])

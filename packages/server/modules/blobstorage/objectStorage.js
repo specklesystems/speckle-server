@@ -1,4 +1,3 @@
-const { logger } = require('@/logging/logging')
 const { NotFoundError, EnvironmentResourceError } = require('@/modules/shared/errors')
 const {
   S3Client,
@@ -106,24 +105,35 @@ const deleteObject = async ({ objectKey }) => {
 const ensureStorageAccess = async () => {
   const { client, Bucket, createBucket } = getObjectStorage()
   try {
-    // await this._client.send(new HeadBucketCommand({ Bucket: this._bucket }))
     await client.send(new HeadBucketCommand({ Bucket }))
     return
   } catch (err) {
-    if (err.statusCode === 403) {
-      throw new EnvironmentResourceError('Access denied to S3 bucket ')
+    if (err.statusCode === 403 || err['$metadata']?.httpStatusCode === 403) {
+      throw new EnvironmentResourceError("Access denied to S3 bucket '{bucket}'", {
+        cause: err,
+        info: { bucket: Bucket }
+      })
     }
     if (createBucket) {
       try {
         await client.send(new CreateBucketCommand({ Bucket }))
       } catch (err) {
-        logger.error(err)
+        throw new EnvironmentResourceError(
+          "Can't open S3 bucket '{bucket}', and have failed to create it.",
+          {
+            cause: err,
+            info: { bucket: Bucket }
+          }
+        )
       }
     } else {
-      throw new EnvironmentResourceError("Can't open S3 bucket '{bucket}'", {
-        cause: err,
-        info: { bucket: Bucket }
-      })
+      throw new EnvironmentResourceError(
+        "Can't open S3 bucket '{bucket}', and the Speckle server configuration has disabled creation of the bucket.",
+        {
+          cause: err,
+          info: { bucket: Bucket }
+        }
+      )
     }
   }
 }

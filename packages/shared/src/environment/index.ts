@@ -45,6 +45,7 @@ export function getFeatureFlags(): {
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_NO_CLOSURE_WRITES: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
+  FF_WORKSPACES_SSO_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

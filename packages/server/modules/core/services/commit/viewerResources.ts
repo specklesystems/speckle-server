@@ -7,6 +7,11 @@ import {
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
 import {
+  GetBranchLatestCommits,
+  GetStreamBranchesByName
+} from '@/modules/core/domain/branches/operations'
+import { GetSpecificBranchCommits } from '@/modules/core/domain/commits/operations'
+import {
   ResourceIdentifier,
   ResourceIdentifierInput,
   ResourceType,
@@ -16,13 +21,8 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
-  getBranchLatestCommits,
-  getStreamBranchesByName
-} from '@/modules/core/repositories/branches'
-import {
   getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getCommitsAndTheirBranchIds
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { Optional, SpeckleViewer } from '@speckle/shared'
@@ -76,7 +76,7 @@ const getObjectResourceGroupsFactory =
   }
 
 type GetVersionResourceGroupsIncludingAllVersionsFactoryDeps = {
-  getStreamBranchesByName: typeof getStreamBranchesByName
+  getStreamBranchesByName: GetStreamBranchesByName
   getAllBranchCommits: typeof getAllBranchCommits
 }
 
@@ -158,9 +158,9 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
   }
 
 type GetVersionResourceGroupsLoadedVersionsOnlyDeps = {
-  getStreamBranchesByName: typeof getStreamBranchesByName
-  getSpecificBranchCommits: typeof getSpecificBranchCommits
-  getBranchLatestCommits: typeof getBranchLatestCommits
+  getStreamBranchesByName: GetStreamBranchesByName
+  getSpecificBranchCommits: GetSpecificBranchCommits
+  getBranchLatestCommits: GetBranchLatestCommits
 }
 
 const getVersionResourceGroupsLoadedVersionsOnlyFactory =
@@ -257,7 +257,7 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
   }
 
 type GetAllModelsResourceGroupDeps = {
-  getBranchLatestCommits: typeof getBranchLatestCommits
+  getBranchLatestCommits: GetBranchLatestCommits
 }
 
 const getAllModelsResourceGroupFactory =

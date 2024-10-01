@@ -7,7 +7,6 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  getCommitById,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByUserId
@@ -19,8 +18,8 @@ const {
 const {
   createCommitByBranchName,
   updateCommitAndNotify,
-  deleteCommitAndNotify,
-  markCommitReceivedAndNotify
+  markCommitReceivedAndNotify,
+  deleteCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -39,11 +38,31 @@ const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
 const { BadRequestError } = require('@/modules/shared/errors')
+const {
+  getCommitFactory,
+  deleteCommitFactory
+} = require('@/modules/core/repositories/commits')
+const { db } = require('@/db/knex')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitBranchUpdatedFactory
+} = require('@/modules/core/repositories/branches')
+const {
+  addCommitDeletedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
+
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
 
 /**
  * @param {boolean} publicOnly
@@ -139,7 +158,7 @@ module.exports = {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent, args) {
+    async commit(parent, args, ctx) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -150,7 +169,9 @@ module.exports = {
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
-      const c = await getCommitById({ streamId: parent.id, id: args.id })
+      const c = await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
       return c
     }
   },

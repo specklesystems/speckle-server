@@ -17,7 +17,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getCommit } from '@/modules/core/repositories/commits'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { getUserById } from '@/modules/core/services/users'
 import { LogicError } from '@/modules/shared/errors'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
@@ -38,7 +38,7 @@ const isFinished = (runStatus: AutomationRunStatus) => {
 export type AutomateTrackingDeps = {
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   getFullAutomationRunById: GetFullAutomationRunById
-  getCommit: typeof getCommit
+  getCommit: GetCommit
   getUserById: typeof getUserById
 }
 

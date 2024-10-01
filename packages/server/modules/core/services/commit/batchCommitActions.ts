@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import {
   addCommitDeletedActivity,
   addCommitMovedActivity
@@ -16,12 +17,12 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  createBranch,
-  getStreamBranchByName
+  createBranchFactory,
+  getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
-  deleteCommits,
-  getCommits,
+  deleteCommitsFactory,
+  getCommitsFactory,
   moveCommitsToBranch
 } from '@/modules/core/repositories/commits'
 import { getStreams } from '@/modules/core/repositories/streams'
@@ -49,7 +50,7 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
     throw new CommitBatchUpdateError('No commits specified')
   }
 
-  const commits = await getCommits(commitIds)
+  const commits = await getCommitsFactory({ db })(commitIds)
   const foundCommitIds = commits.map((c) => c.id)
   if (
     commitIds.length !== foundCommitIds.length ||
@@ -106,7 +107,7 @@ async function validateCommitsMove(
   }
 
   const stream = streams[0]
-  const branch = await getStreamBranchByName(stream.id, targetBranch)
+  const branch = await getStreamBranchByNameFactory({ db })(stream.id, targetBranch)
 
   if (
     !branch &&
@@ -151,7 +152,7 @@ export async function batchMoveCommits(
   try {
     const finalBranch =
       branch ||
-      (await createBranch({
+      (await createBranchFactory({ db })({
         name: targetBranch,
         streamId: stream.id,
         authorId: userId,
@@ -190,7 +191,7 @@ export async function batchDeleteCommits(
   const { commitsWithStreams } = await validateCommitsDelete(params, userId)
 
   try {
-    await deleteCommits(commitIds)
+    await deleteCommitsFactory({ db })(commitIds)
     await Promise.all(
       commitsWithStreams.map(({ commit, stream }) =>
         addCommitDeletedActivity({

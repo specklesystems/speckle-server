@@ -14,7 +14,7 @@ import {
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
+import { getLatestStreamBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addOrUpdateStreamCollaborator,
   validateStreamAccess
@@ -309,7 +309,7 @@ const buildAutomationUpdate = () => {
           projectId: myStream.id,
           userId: me.id
         })
-        projectModel = await getLatestStreamBranch(myStream.id)
+        projectModel = await getLatestStreamBranchFactory({ db })(myStream.id)
       })
 
       it('works successfully', async () => {

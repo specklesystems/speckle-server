@@ -88,13 +88,13 @@ import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
   getAllBranchCommits,
   getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 
 const streamResourceCheck = streamResourceCheckFactory({
@@ -176,9 +176,9 @@ const authorizeCommentAccess = authorizeCommentAccessFactory({
 const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
   getViewerResourceGroups: getViewerResourceGroupsFactory({
     getStreamObjects,
-    getBranchLatestCommits,
-    getStreamBranchesByName,
-    getSpecificBranchCommits,
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+    getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+    getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
     getAllBranchCommits
   })
 })
@@ -226,7 +226,7 @@ const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
 })
 const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
   resolvePaginatedProjectCommentsLatestModelResources:
-    resolvePaginatedProjectCommentsLatestModelResourcesFactory(),
+    resolvePaginatedProjectCommentsLatestModelResourcesFactory({ db }),
   getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({ db }),
   getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCountFactory({
     db

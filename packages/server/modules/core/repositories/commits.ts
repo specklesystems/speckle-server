@@ -14,13 +14,6 @@ import {
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
 import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash'
-
-const CommitWithStreamBranchMetadataFields = [
-  ...Commits.cols,
-  StreamCommits.col.streamId,
-  BranchCommits.col.branchId,
-  `${Branches.col.name} as branchName`
-]
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,
@@ -28,51 +21,61 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
 import { Nullable, Optional } from '@speckle/shared'
+import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
+import {
+  DeleteCommit,
+  DeleteCommits,
+  GetCommit,
+  GetCommits,
+  GetSpecificBranchCommits
+} from '@/modules/core/domain/commits/operations'
+
+const tables = {
+  commits: (db: Knex) => db<CommitRecord>(Commits.name)
+}
 
 export const generateCommitId = () => crs({ length: 10 })
-
-export type CommitWithStreamBranchMetadata = CommitRecord & {
-  streamId: string
-  branchId: string
-  branchName: string
-}
 
 /**
  * Get commits with their stream and branch IDs
  */
-export async function getCommits(
-  commitIds: string[],
-  options?: Partial<{ streamId: string }>
-) {
-  const { streamId } = options || {}
+export const getCommitsFactory =
+  (deps: { db: Knex }): GetCommits =>
+  async (commitIds: string[], options?: Partial<{ streamId: string }>) => {
+    const { streamId } = options || {}
 
-  const q = Commits.knex()
-    .select<CommitWithStreamBranchMetadata[]>(CommitWithStreamBranchMetadataFields)
-    .whereIn(Commits.col.id, commitIds)
-    .leftJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    .leftJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    const q = tables
+      .commits(deps.db)
+      .select<CommitWithStreamBranchMetadata[]>([
+        ...Commits.cols,
+        StreamCommits.col.streamId,
+        BranchCommits.col.branchId,
+        `${Branches.col.name} as branchName`
+      ])
+      .whereIn(Commits.col.id, commitIds)
+      .leftJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+      .leftJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
 
-  if (streamId) {
-    q.andWhere(StreamCommits.col.streamId, streamId)
+    if (streamId) {
+      q.andWhere(StreamCommits.col.streamId, streamId)
+    }
+
+    const rows = await q
+
+    // in case the join tables have multiple values for each commit
+    // (shouldnt happen, but the schema allows for it)
+    const uniqueRows = uniqBy(rows, (r) => r.id)
+
+    return uniqueRows
   }
 
-  const rows = await q
-
-  // in case the join tables have multiple values for each commit
-  // (shouldnt happen, but the schema allows for it)
-  const uniqueRows = uniqBy(rows, (r) => r.id)
-
-  return uniqueRows
-}
-
-export async function getCommit(
-  commitId: string,
-  options?: Partial<{ streamId: string }>
-) {
-  const [commit] = await getCommits([commitId], options)
-  return commit as Optional<typeof commit>
-}
+export const getCommitFactory =
+  (deps: { db: Knex }): GetCommit =>
+  async (commitId: string, options?: Partial<{ streamId: string }>) => {
+    const [commit] = await getCommitsFactory(deps)([commitId], options)
+    return commit as Optional<typeof commit>
+  }
 
 /**
  * Move all commits to the specified branch
@@ -100,28 +103,18 @@ export async function moveCommitsToBranch(commitIds: string[], branchId: string)
   return inserts.length
 }
 
-export async function deleteCommits(commitIds: string[]) {
-  return await Commits.knex().whereIn(Commits.col.id, commitIds).del()
-}
+export const deleteCommitsFactory =
+  (deps: { db: Knex }): DeleteCommits =>
+  async (commitIds: string[]) => {
+    return await tables.commits(deps.db).whereIn(Commits.col.id, commitIds).del()
+  }
 
-export async function deleteCommit(commitId: string) {
-  const delCount = await deleteCommits([commitId])
-  return !!delCount
-}
-
-export async function getStreamCommitsWithBranchId(streamId: string) {
-  const baseQuery = Commits.knex<CommitRecord[]>()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .where(StreamCommits.col.streamId, streamId)
-    .orderBy(Commits.col.createdAt)
-
-  return await baseQuery
-}
+export const deleteCommitFactory =
+  (deps: { db: Knex }): DeleteCommit =>
+  async (commitId: string) => {
+    const delCount = await deleteCommitsFactory(deps)([commitId])
+    return !!delCount
+  }
 
 export function getBatchedStreamCommits(
   streamId: string,
@@ -222,37 +215,38 @@ export async function getCommitsAndTheirBranchIds(commitIds: string[]) {
     .whereIn(Commits.col.id, commitIds)
 }
 
-export async function getSpecificBranchCommits(
-  pairs: { branchId: string; commitId: string }[]
-) {
-  if (!pairs?.length) return []
+export const getSpecificBranchCommitsFactory =
+  (deps: { db: Knex }): GetSpecificBranchCommits =>
+  async (pairs: { branchId: string; commitId: string }[]) => {
+    if (!pairs?.length) return []
 
-  const commitIds = uniq(pairs.map((p) => p.commitId))
-  const branchIds = uniq(pairs.map((p) => p.branchId))
+    const commitIds = uniq(pairs.map((p) => p.commitId))
+    const branchIds = uniq(pairs.map((p) => p.branchId))
 
-  const q = Commits.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .whereIn(Commits.col.id, commitIds)
-    .whereIn(BranchCommits.col.branchId, branchIds)
+    const q = tables
+      .commits(deps.db)
+      .select<Array<CommitRecord & { branchId: string }>>([
+        ...Commits.cols,
+        BranchCommits.col.branchId
+      ])
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .whereIn(Commits.col.id, commitIds)
+      .whereIn(BranchCommits.col.branchId, branchIds)
 
-  const queryResults = await q
-  const results: Array<CommitRecord & { branchId: string }> = []
+    const queryResults = await q
+    const results: Array<CommitRecord & { branchId: string }> = []
 
-  for (const pair of pairs) {
-    const commit = queryResults.find(
-      (r) => r.id === pair.commitId && r.branchId === pair.branchId
-    )
-    if (commit) {
-      results.push(commit)
+    for (const pair of pairs) {
+      const commit = queryResults.find(
+        (r) => r.id === pair.commitId && r.branchId === pair.branchId
+      )
+      if (commit) {
+        results.push(commit)
+      }
     }
-  }
 
-  return results
-}
+    return results
+  }
 
 export type PaginatedBranchCommitsBaseParams = {
   branchId: string
