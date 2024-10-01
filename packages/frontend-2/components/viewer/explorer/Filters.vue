@@ -122,6 +122,10 @@ const props = defineProps<{
   filters: PropertyInfo[]
 }>()
 
+const isRevitProperty = (key: string): boolean => {
+  return revitPropertyRegex.test(key)
+}
+
 const relevantFilters = computed(() => {
   return props.filters.filter((f) => {
     if (
@@ -236,10 +240,6 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   // removePropertyFilter()
   applyPropertyFilter()
-}
-
-const isRevitProperty = (key: string): boolean => {
-  return revitPropertyRegex.test(key)
 }
 
 const getPropertyName = (key: string): string => {
