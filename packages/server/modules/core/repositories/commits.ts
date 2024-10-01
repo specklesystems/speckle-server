@@ -41,7 +41,10 @@ import {
   GetStreamCommitCount,
   GetUserStreamCommitCounts,
   GetUserAuthoredCommitCounts,
-  GetCommitsAndTheirBranchIds
+  GetCommitsAndTheirBranchIds,
+  GetBatchedStreamCommits,
+  GetBatchedBranchCommits,
+  InsertCommits
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -133,38 +136,38 @@ export const deleteCommitFactory =
     return !!delCount
   }
 
-export function getBatchedStreamCommits(
-  streamId: string,
-  options?: Partial<BatchedSelectOptions>
-) {
-  const baseQuery = Commits.knex<CommitRecord[]>()
-    .select<CommitRecord[]>(Commits.cols)
-    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    .where(StreamCommits.col.streamId, streamId)
-    .orderBy(Commits.col.id)
+export const getBatchedStreamCommitsFactory =
+  (deps: { db: Knex }): GetBatchedStreamCommits =>
+  (streamId: string, options?: Partial<BatchedSelectOptions>) => {
+    const baseQuery = tables
+      .commits(deps.db)
+      .select<CommitRecord[]>(Commits.cols)
+      .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+      .where(StreamCommits.col.streamId, streamId)
+      .orderBy(Commits.col.id)
 
-  return executeBatchedSelect(baseQuery, options)
-}
+    return executeBatchedSelect(baseQuery, options)
+  }
 
-export function getBatchedBranchCommits(
-  branchIds: string[],
-  options?: Partial<BatchedSelectOptions>
-) {
-  const baseQuery = BranchCommits.knex<BranchCommitRecord[]>()
-    .whereIn(BranchCommits.col.branchId, branchIds)
-    .orderBy(BranchCommits.col.branchId)
+export const getBatchedBranchCommitsFactory =
+  (deps: { db: Knex }): GetBatchedBranchCommits =>
+  (branchIds: string[], options?: Partial<BatchedSelectOptions>) => {
+    const baseQuery = tables
+      .branchCommits(deps.db)
+      .select<BranchCommitRecord[]>('*')
+      .whereIn(BranchCommits.col.branchId, branchIds)
+      .orderBy(BranchCommits.col.branchId)
 
-  return executeBatchedSelect(baseQuery, options)
-}
+    return executeBatchedSelect(baseQuery, options)
+  }
 
-export async function insertCommits(
-  commits: CommitRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = Commits.knex().insert(commits)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertCommitsFactory =
+  (deps: { db: Knex }): InsertCommits =>
+  async (commits: CommitRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
+    const q = tables.commits(deps.db).insert(commits)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
 export const insertStreamCommitsFactory =
   (deps: { db: Knex }): InsertStreamCommits =>
