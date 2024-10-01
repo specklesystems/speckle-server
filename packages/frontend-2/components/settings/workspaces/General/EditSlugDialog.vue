@@ -10,7 +10,7 @@
     </p>
     <p class="text-body-xs text-foreground mb-2">
       All links generated using the old short ID will become invalid. This may break
-      bookmarks, embeds, or previously shared links.
+      bookmarks or previously shared links.
     </p>
     <p class="text-body-xs text-foreground font-medium mb-2">
       Are you sure you want to proceed?
