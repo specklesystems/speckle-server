@@ -18,9 +18,9 @@ import {
   getBatchedStreamCommits,
   generateCommitId,
   insertCommits,
-  insertStreamCommits,
   getBatchedBranchCommits,
-  insertBranchCommits
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash'
 import {
@@ -192,7 +192,7 @@ async function createStreamCommitReferences(
   const batchedNewCommitIds = chunk(newCommitIds, batchSize)
 
   for (const newCommitIdBatch of batchedNewCommitIds) {
-    await insertStreamCommits(
+    await insertStreamCommitsFactory({ db })(
       newCommitIdBatch.map(
         (id): StreamCommitRecord => ({
           streamId: newStreamId,
@@ -257,7 +257,7 @@ async function createBranchCommitReferences(
       return { commitId: newCommitId, branchId: newBranchId }
     })
 
-    await insertBranchCommits(newBranchCommits, { trx: state.trx })
+    await insertBranchCommitsFactory({ db })(newBranchCommits, { trx: state.trx })
   }
 }
 
