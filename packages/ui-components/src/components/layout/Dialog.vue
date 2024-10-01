@@ -47,6 +47,7 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
+              <div id="toast-target" />
               <div
                 v-if="hasTitle"
                 class="border-b border-outline-3"
