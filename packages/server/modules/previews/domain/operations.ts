@@ -34,7 +34,7 @@ export type SendObjectPreview = (
   res: express.Response,
   streamId: string,
   objectId: string,
-  angle: string
+  angle?: string
 ) => Promise<void>
 
 export type CheckStreamPermissions = (

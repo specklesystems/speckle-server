@@ -10,8 +10,6 @@ import {
   LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -48,6 +46,8 @@ import {
   TriggerAutomationRevisionRun,
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
+import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -216,7 +216,9 @@ export type TriggerAutomationRevisionRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   automateRunsEmitter: AutomateRunsEventsEmitter
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
-} & CreateAutomationRunDataDeps
+  getCommit: GetCommit
+} & CreateAutomationRunDataDeps &
+  ComposeTriggerDataDeps
 
 /**
  * This triggers a run for a specific automation revision
@@ -234,7 +236,8 @@ export const triggerAutomationRevisionRunFactory =
       createAppToken,
       upsertAutomationRun,
       automateRunsEmitter,
-      getFullAutomationRevisionMetadata
+      getFullAutomationRevisionMetadata,
+      getCommit
     } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
@@ -254,7 +257,7 @@ export const triggerAutomationRevisionRunFactory =
         manifest
       })
 
-    const triggerManifests = await composeTriggerData({
+    const triggerManifests = await composeTriggerDataFactory(deps)({
       manifest,
       projectId: automationWithRevision.projectId,
       triggerDefinitions: automationWithRevision.revision.triggers
@@ -327,7 +330,7 @@ export const triggerAutomationRevisionRunFactory =
 export const ensureRunConditionsFactory =
   (deps: {
     revisionGetter: GetFullAutomationRevisionMetadata
-    versionGetter: typeof getCommit
+    versionGetter: GetCommit
     automationTokenGetter: GetAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
@@ -405,58 +408,64 @@ export const ensureRunConditionsFactory =
     }
   }
 
-async function composeTriggerData(params: {
-  projectId: string
-  manifest: BaseTriggerManifest
-  triggerDefinitions: AutomationTriggerDefinitionRecord[]
-}): Promise<BaseTriggerManifest[]> {
-  const { projectId, manifest, triggerDefinitions } = params
-
-  const manifests: BaseTriggerManifest[] = [{ ...manifest }]
-
-  /**
-   * The reason why we collect multiple triggers, even tho there's only one:
-   * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
-   * cause once the function already runs, there may be new versions already
-   */
-
-  if (triggerDefinitions.length > 1) {
-    const associatedTriggers = triggerDefinitions.filter((t) => {
-      if (t.triggerType !== manifest.triggerType) return false
-
-      if (isVersionCreatedTriggerManifest(manifest)) {
-        return t.triggeringId === manifest.modelId
-      }
-
-      return false
-    })
-
-    // Version creation triggers
-    if (manifest.triggerType === VersionCreationTriggerType) {
-      const latestVersions = await getBranchLatestCommits(
-        associatedTriggers.map((t) => t.triggeringId),
-        projectId
-      )
-      manifests.push(
-        ...latestVersions.map(
-          (version): VersionCreatedTriggerManifest => ({
-            modelId: version.branchId,
-            projectId,
-            versionId: version.id,
-            triggerType: VersionCreationTriggerType
-          })
-        )
-      )
-    }
-  }
-
-  return manifests
+type ComposeTriggerDataDeps = {
+  getBranchLatestCommits: GetBranchLatestCommits
 }
+
+const composeTriggerDataFactory =
+  (deps: ComposeTriggerDataDeps) =>
+  async (params: {
+    projectId: string
+    manifest: BaseTriggerManifest
+    triggerDefinitions: AutomationTriggerDefinitionRecord[]
+  }): Promise<BaseTriggerManifest[]> => {
+    const { projectId, manifest, triggerDefinitions } = params
+
+    const manifests: BaseTriggerManifest[] = [{ ...manifest }]
+
+    /**
+     * The reason why we collect multiple triggers, even tho there's only one:
+     * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
+     * cause once the function already runs, there may be new versions already
+     */
+
+    if (triggerDefinitions.length > 1) {
+      const associatedTriggers = triggerDefinitions.filter((t) => {
+        if (t.triggerType !== manifest.triggerType) return false
+
+        if (isVersionCreatedTriggerManifest(manifest)) {
+          return t.triggeringId === manifest.modelId
+        }
+
+        return false
+      })
+
+      // Version creation triggers
+      if (manifest.triggerType === VersionCreationTriggerType) {
+        const latestVersions = await deps.getBranchLatestCommits(
+          associatedTriggers.map((t) => t.triggeringId),
+          projectId
+        )
+        manifests.push(
+          ...latestVersions.map(
+            (version): VersionCreatedTriggerManifest => ({
+              modelId: version.branchId,
+              projectId,
+              versionId: version.id,
+              triggerType: VersionCreationTriggerType
+            })
+          )
+        )
+      }
+    }
+
+    return manifests
+  }
 
 export type ManuallyTriggerAutomationDeps = {
   getAutomationTriggerDefinitions: GetAutomationTriggerDefinitions
   getAutomation: GetAutomation
-  getBranchLatestCommits: typeof getBranchLatestCommits
+  getBranchLatestCommits: GetBranchLatestCommits
   triggerFunction: TriggerAutomationRevisionRun
   validateStreamAccess: typeof validateStreamAccess
 }
@@ -534,8 +543,9 @@ export type CreateTestAutomationRunDeps = {
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   upsertAutomationRun: UpsertAutomationRun
   validateStreamAccess: typeof validateStreamAccess
-  getBranchLatestCommits: typeof getBranchLatestCommits
-} & CreateAutomationRunDataDeps
+  getBranchLatestCommits: GetBranchLatestCommits
+} & CreateAutomationRunDataDeps &
+  ComposeTriggerDataDeps
 
 /**
  * TODO: Reduce duplication w/ other fns in this service
@@ -596,7 +606,7 @@ export const createTestAutomationRunFactory =
       { limit: 1 }
     )
 
-    const triggerManifests = await composeTriggerData({
+    const triggerManifests = await composeTriggerDataFactory(deps)({
       projectId: automationRevisionRecord.projectId,
       triggerDefinitions: automationRevisionRecord.revision.triggers,
       manifest: <VersionCreatedTriggerManifest>{

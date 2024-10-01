@@ -422,6 +422,15 @@ export default class Sandbox {
       this.viewer.getExtension(SectionTool).toggle()
     })
 
+    const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
+      title: 'Toggle Section Box Visibility'
+    })
+    toggleSectionBoxVisibility.on('click', () => {
+      this.viewer.getExtension(SectionTool).visible =
+        !this.viewer.getExtension(SectionTool).visible
+      this.viewer.requestRender()
+    })
+
     const toggleProjection = this.tabs.pages[0].addButton({
       title: 'Toggle Projection'
     })

@@ -15,3 +15,4 @@ const { emit, listen } = initializeModuleEventEmitter<ModelEventsPayloads>({
 })
 
 export const ModelsEmitter = { emit, listen, events: ModelEvents }
+export type ModelsEventsEmitter = (typeof ModelsEmitter)['emit']

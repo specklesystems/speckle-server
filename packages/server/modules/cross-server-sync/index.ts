@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   addCommentCreatedActivity,
   addReplyAddedActivity
@@ -19,13 +20,14 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getBranchLatestCommits,
-  getStreamBranchByName,
-  getStreamBranchesByName
+  createBranchFactory,
+  getBranchLatestCommitsFactory,
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
 import {
@@ -35,7 +37,7 @@ import {
   markOnboardingBaseStream
 } from '@/modules/core/repositories/streams'
 import { getFirstAdmin, getUser } from '@/modules/core/repositories/users'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import {
   getViewerResourceGroupsFactory,
@@ -63,9 +65,9 @@ const crossServerSyncModule: SpeckleModule = {
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits,
-        getStreamBranchesByName,
-        getSpecificBranchCommits,
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits
       })
     })
@@ -88,6 +90,7 @@ const crossServerSyncModule: SpeckleModule = {
       addReplyAddedActivity
     })
 
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream,
       getFirstAdmin,
@@ -106,7 +109,11 @@ const crossServerSyncModule: SpeckleModule = {
         createStreamReturnRecord,
         getUser,
         getStreamBranchByName,
-        createBranchAndNotify
+        createBranchAndNotify: createBranchAndNotifyFactory({
+          createBranch: createBranchFactory({ db }),
+          getStreamBranchByName,
+          addBranchCreatedActivity
+        })
       }),
       markOnboardingBaseStream
     })

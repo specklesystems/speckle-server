@@ -12,13 +12,13 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchLatestCommits,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getAllBranchCommits,
   getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import {
@@ -66,9 +66,9 @@ export async function addCommentCreatedActivity(params: {
   const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getViewerResourceGroups: getViewerResourceGroupsFactory({
       getStreamObjects,
-      getBranchLatestCommits,
-      getStreamBranchesByName,
-      getSpecificBranchCommits,
+      getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+      getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
       getAllBranchCommits
     })
   })
