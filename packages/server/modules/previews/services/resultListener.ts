@@ -1,14 +1,14 @@
-import { getObjectCommitsWithStreamIds } from '@/modules/core/repositories/commits'
 import {
   ProjectSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
+import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 
 type MessageProcessorDeps = {
-  getObjectCommitsWithStreamIds: typeof getObjectCommitsWithStreamIds
+  getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
   publish: PublishSubscription
 }
 

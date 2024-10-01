@@ -1,9 +1,10 @@
 import { Branch } from '@/modules/core/domain/branches/types'
 import {
-  BranchCommit,
+  CommitWithBranchId,
   CommitWithStreamBranchMetadata,
   Commit,
-  CommitBranch
+  CommitBranch,
+  CommitWithStreamId
 } from '@/modules/core/domain/commits/types'
 import {
   CommitsMoveInput,
@@ -43,7 +44,7 @@ export type GetSpecificBranchCommits = (
     branchId: string
     commitId: string
   }[]
-) => Promise<BranchCommit[]>
+) => Promise<CommitWithBranchId[]>
 
 export type StoreCommit = (
   params: Omit<Commit, 'id' | 'createdAt'> & {
@@ -157,7 +158,7 @@ export type GetUserAuthoredCommitCounts = (params: {
 
 export type GetCommitsAndTheirBranchIds = (
   commitIds: string[]
-) => Promise<BranchCommit[]>
+) => Promise<CommitWithBranchId[]>
 
 export type GetBatchedStreamCommits = (
   streamId: string,
@@ -221,3 +222,10 @@ export type ValidateAndBatchMoveCommits = (
   params: CommitsMoveInput | MoveVersionsInput,
   userId: string
 ) => Promise<Branch>
+
+export type GetObjectCommitsWithStreamIds = (
+  objectIds: string[],
+  options?: {
+    streamIds?: string[]
+  }
+) => Promise<CommitWithStreamId[]>

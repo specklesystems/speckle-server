@@ -26,8 +26,8 @@ import {
 } from '@/modules/previews/repository/previews'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import {
-  getObjectCommitsWithStreamIds,
-  getCommitFactory
+  getCommitFactory,
+  getObjectCommitsWithStreamIdsFactory
 } from '@/modules/core/repositories/commits'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
@@ -166,7 +166,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
 
   if (isInitial) {
     const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
-      getObjectCommitsWithStreamIds,
+      getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({ db }),
       publish
     })
     listenForPreviewGenerationUpdates()
