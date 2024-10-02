@@ -1091,6 +1091,32 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
       })
 
+      it("can't retrieve it by passing in the slug, not workspace id", async () => {
+        const res = await gqlHelpers.getInvite(
+          {
+            workspaceId: myInviteTargetWorkspace.slug
+          },
+          { context: { userId: otherGuy.id } }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.not.be.ok
+      })
+
+      it('can retrieve it by passing in the slug, not workspace id, if explicit about it', async () => {
+        const res = await gqlHelpers.getInvite(
+          {
+            workspaceId: myInviteTargetWorkspace.slug,
+            options: { useSlug: true }
+          },
+          { context: { userId: otherGuy.id } }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.be.ok
+        expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
+      })
+
       it('cant resend the invite email w/ mismatched workspaceId', async () => {
         const res = await gqlHelpers.resendWorkspaceInvite({
           input: {
