@@ -1,5 +1,5 @@
 <template>
-  <Teleport :to="portalTarget">
+  <Teleport to="#toast-portal">
     <GlobalToastRenderer v-model:notification="notification" />
   </Teleport>
 </template>
@@ -17,18 +17,5 @@ const notification = computed({
       dismiss()
     }
   }
-})
-
-const portalTarget = ref('body')
-
-const checkForToastTarget = () => {
-  const toastTarget = document.getElementById('toast-target')
-  if (toastTarget) {
-    portalTarget.value = '#toast-target'
-  }
-}
-
-onMounted(() => {
-  checkForToastTarget()
 })
 </script>
