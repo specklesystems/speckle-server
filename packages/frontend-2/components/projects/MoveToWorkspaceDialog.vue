@@ -2,41 +2,45 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Move project to workspace</template>
     <div class="flex flex-col space-y-4">
-      <template v-if="!isCreatingWorkspace">
-        <ProjectsWorkspaceSelect
-          v-if="hasWorkspaces"
-          v-model="selectedWorkspace"
-          :items="workspaces"
-          :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
-          disabled-item-tooltip="Only workspace admins can move projects into a workspace."
-          label="Select a workspace"
-          help="Once a project is moved to a workspace, it cannot be moved out from it."
-          show-label
+      <template v-if="!workspace">
+        <template v-if="!isCreatingWorkspace">
+          <ProjectsWorkspaceSelect
+            v-if="hasWorkspaces"
+            v-model="selectedWorkspace"
+            :items="workspaces"
+            :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+            disabled-item-tooltip="Only workspace admins can move projects into a workspace."
+            label="Select a workspace"
+            help="Once a project is moved to a workspace, it cannot be moved out from it."
+            show-label
+          />
+          <div v-else class="flex flex-col gap-y-2">
+            <FormButton color="outline" @click="isCreatingWorkspace = true">
+              New workspace
+            </FormButton>
+            <p class="text-body-2xs text-foreground-2">
+              Once a project is moved to a workspace, it cannot be moved out from it.
+            </p>
+          </div>
+        </template>
+        <ProjectsNewWorkspace
+          v-else
+          mixpanel-event-source="move-to-workspace-modal"
+          @cancel="isCreatingWorkspace = false"
+          @workspace-created="onWorkspaceCreated"
         />
-        <div v-else class="flex flex-col gap-y-2">
-          <FormButton color="outline" @click="isCreatingWorkspace = true">
-            New workspace
-          </FormButton>
-          <p class="text-body-2xs text-foreground-2">
-            Once a project is moved to a workspace, it cannot be moved out from it.
-          </p>
-        </div>
       </template>
-      <ProjectsNewWorkspace
-        v-else
-        mixpanel-event-source="move-to-workspace-modal"
-        @cancel="isCreatingWorkspace = false"
-        @workspace-created="onWorkspaceCreated"
-      />
 
-      <div v-if="project && selectedWorkspace" class="text-body-xs">
+      <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
         <div class="text-body-xs text-foreground flex flex-col gap-y-4">
           <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
             <p>
               Move
               <span class="font-medium">{{ project.name }}</span>
               to
-              <span class="font-medium">{{ selectedWorkspace.name }}</span>
+              <span class="font-medium">
+                {{ selectedWorkspace?.name ?? workspace?.name }}
+              </span>
             </p>
             <p>
               {{ project.modelCount.totalCount }} {{ modelText }},
@@ -108,6 +112,8 @@ graphql(`
 
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
+  workspace?: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
+  eventSource?: string // Used for mixpanel tracking
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -143,15 +149,21 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
       text: 'Move',
       props: {
         color: 'primary',
-        disabled: !selectedWorkspace.value
+        disabled: !selectedWorkspace.value && !props.workspace
       },
       onClick: () => {
-        if (props.project && selectedWorkspace.value) {
-          moveProject(
-            props.project.id,
-            selectedWorkspace.value.id,
-            selectedWorkspace.value.name
-          )
+        if (props.project && (selectedWorkspace.value || props.workspace)) {
+          const workspaceId = (selectedWorkspace.value?.id ||
+            props.workspace?.id) as string
+          const workspaceName =
+            selectedWorkspace.value?.name || (props.workspace?.name as string)
+
+          moveProject({
+            projectId: props.project.id,
+            workspaceId,
+            workspaceName,
+            eventSource: props.eventSource
+          })
 
           open.value = false
         }
