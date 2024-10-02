@@ -232,6 +232,10 @@ module.exports = {
   },
 
   // TODO: this should be moved to repository
+  /**
+   * Get the user with a primary email that matches the given email
+   * @returns `null` if user not found
+   */
   async getUserByEmail({ email }) {
     const user = await Users()
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)

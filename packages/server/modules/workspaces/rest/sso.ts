@@ -42,10 +42,13 @@ import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import {
   createUserEmailFactory,
+  findEmailFactory,
   findEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { createUser, getUser } from '@/modules/core/services/users'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 const router = Router()
 
@@ -175,7 +178,7 @@ router.get(
     }),
     query: z.object({ validate: z.string() })
   }),
-  async (req) => {
+  async (req, _res, next) => {
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     const workspaceSlug = req.params.workspaceSlug
@@ -271,19 +274,42 @@ router.get(
         redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
       } else {
         // OIDC auth flow: SSO is already configured and we are attempting to log in or sign up
-        //
-        // Get user by email in `ssoProviderUserInfo`
-        //
-        // if (userExists) {
-        //   // Update timeout for relevant sso session
-        //   // Complete sign in
-        //   // Redirect to workspace
-        // } else {
-        //   // Create user
-        //   // Add email as primary and verified email
-        //   // Complete sign in
-        //   // Redirect to workspace
-        // }
+
+        // Get Speckle user by email in SSO provider
+        const userEmail = await findEmailFactory({ db })({ email: ssoProviderUserInfo.email })
+        let user: Pick<UserRecord, 'id' | 'email'> | null = await getUser(userEmail?.userId)
+        const isNewUser = !user
+
+        if (!user) {
+          // Create user
+          const { name, email } = ssoProviderUserInfo
+          const newUser = {
+            name,
+            email,
+            // TODO: Do we set email as verified only if provider says it's verified
+            verified: true
+          }
+          const userId = await createUser(newUser)
+
+          user = {
+            ...newUser,
+            id: userId
+          }
+
+          // Set workspace role
+          // TODO: Based on invite!
+        }
+
+        // Verify user is a member of the workspace
+
+        // Verify workspace has SSO enabled
+
+        // Update timeout for SSO session
+
+        req.user = { id: user.id, email: user.email, isNewUser }
+        req.authRedirectPath = `workspaces/${req.params.workspaceSlug}/`
+
+        return next()
       }
     } catch (err) {
       logger.warn(
@@ -295,9 +321,9 @@ router.get(
         url: redirectUrl,
         searchParams: provider || undefined
       })
+      req.res?.redirect(redirectUrl.toString())
     } finally {
       req.session.destroy(noop)
-      req.res?.redirect(redirectUrl.toString())
     }
   }
 )
