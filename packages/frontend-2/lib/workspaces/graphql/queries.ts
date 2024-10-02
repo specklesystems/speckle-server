@@ -15,6 +15,7 @@ export const workspacePageQuery = graphql(`
     $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
     $token: String
+    $options: WorkspaceInviteLookupOptions
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
       id
@@ -24,7 +25,7 @@ export const workspacePageQuery = graphql(`
         ...WorkspaceProjectList_ProjectCollection
       }
     }
-    workspaceInvite(workspaceId: $workspaceSlug, token: $token) {
+    workspaceInvite(workspaceId: $workspaceSlug, token: $token, options: $options) {
       id
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
@@ -48,8 +49,12 @@ export const workspaceProjectsQuery = graphql(`
 `)
 
 export const workspaceInviteQuery = graphql(`
-  query WorkspaceInvite($workspaceId: String, $token: String) {
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+  query WorkspaceInvite(
+    $workspaceId: String
+    $token: String
+    $options: WorkspaceInviteLookupOptions
+  ) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
     }

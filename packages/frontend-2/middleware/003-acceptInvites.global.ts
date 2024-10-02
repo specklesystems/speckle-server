@@ -8,8 +8,12 @@ import { useProjectInviteManager } from '~/lib/projects/composables/invites'
 import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
 
 const autoAcceptableWorkspaceInviteQuery = graphql(`
-  query AutoAcceptableWorkspaceInvite($token: String!, $workspaceId: String!) {
-    workspaceInvite(token: $token, workspaceId: $workspaceId) {
+  query AutoAcceptableWorkspaceInvite(
+    $token: String!
+    $workspaceId: String!
+    $options: WorkspaceInviteLookupOptions
+  ) {
+    workspaceInvite(token: $token, workspaceId: $workspaceId, options: $options) {
       id
       ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator
     }
@@ -26,11 +30,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const shouldTryWorkspaceAccept =
     to.path.startsWith('/workspaces/') && isWorkspacesEnabled.value
   const idParam = to.params.id as Optional<string>
+  const slugParam = to.params.slug as Optional<string>
   const token = to.query.token as Optional<string>
   const accept = to.query.accept === 'true'
   const addNewEmail = to.query.addNewEmail === 'true'
 
-  if (!idParam?.length) return
+  if (!slugParam?.length && !idParam?.length) return
   if (!shouldTryProjectAccept && !shouldTryWorkspaceAccept) return
   if (!token?.length || !accept) return
 
@@ -64,14 +69,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
         query: activeUserQuery
       })
       .catch(convertThrowIntoFetchResult),
-    ...(shouldTryWorkspaceAccept
+    ...(shouldTryWorkspaceAccept && slugParam
       ? <const>[
           client
             .query({
               query: autoAcceptableWorkspaceInviteQuery,
               variables: {
                 token,
-                workspaceId: idParam
+                workspaceId: slugParam,
+                options: {
+                  useSlug: true
+                }
               }
             })
             .catch(convertThrowIntoFetchResult)
@@ -87,7 +95,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!activeUserData.data?.activeUser?.id) return
 
   let success = false
-  if (shouldTryProjectAccept) {
+  if (shouldTryProjectAccept && idParam) {
     success = await useInvite({ token, accept, projectId: idParam })
   } else if (shouldTryWorkspaceAccept) {
     success = await acceptWorkspaceInvite({ addNewEmail })
