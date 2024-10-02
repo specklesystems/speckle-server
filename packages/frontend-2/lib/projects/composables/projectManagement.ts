@@ -28,7 +28,8 @@ import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  modifyObjectFields
+  modifyObjectFields,
+  modifyObjectField
 } from '~~/lib/common/helpers/graphql'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
@@ -551,11 +552,33 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (projectId: string, workspaceId: string, workspaceName: string) => {
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
+    eventSource?: string
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
     const { data, errors } = await apollo
       .mutate({
         mutation: useMoveProjectToWorkspaceMutation,
-        variables: { projectId, workspaceId }
+        variables: { projectId, workspaceId },
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
+          if (!workspaceId) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', workspaceId),
+            'projects',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -568,7 +591,8 @@ export function useMoveProjectToWorkspace() {
       mixpanel.track('Project Moved To Workspace', {
         projectId,
         // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+        workspace_id: workspaceId,
+        source: eventSource
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)

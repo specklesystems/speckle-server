@@ -63,3 +63,11 @@ export const workspaceInviteQuery = graphql(`
     }
   }
 `)
+
+export const moveProjectsDialogQuery = graphql(`
+  query MoveProjectsDialog {
+    activeUser {
+      ...MoveProjectsDialog_User
+    }
+  }
+`)

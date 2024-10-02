@@ -17,6 +17,7 @@
         :workspace-info="workspace"
         @show-invite-dialog="showInviteDialog = true"
         @show-settings-dialog="onShowSettingsDialog"
+        @show-move-projects-dialog="showMoveProjectsDialog = true"
       />
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
@@ -77,6 +78,10 @@
           :target-menu-item="settingsDialogTarget"
           :target-workspace-id="workspace.id"
         />
+        <WorkspaceMoveProjectsDialog
+          v-model:open="showMoveProjectsDialog"
+          :workspace="workspace"
+        />
       </template>
     </template>
   </div>
@@ -127,6 +132,7 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showInviteDialog = ref(false)

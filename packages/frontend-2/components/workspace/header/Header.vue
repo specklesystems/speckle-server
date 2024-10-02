@@ -77,10 +77,19 @@
           </button>
           <FormButton
             v-if="isWorkspaceAdmin"
+            class="hidden md:block"
             color="outline"
             @click="$emit('show-invite-dialog')"
           >
             Invite
+          </FormButton>
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            class="hidden md:block"
+            color="subtle"
+            @click="$emit('show-move-projects-dialog')"
+          >
+            Move projects
           </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -108,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useBreakpoints } from '@vueuse/core'
 import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -121,6 +130,7 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import DescriptionDialog from './DescriptionDialog.vue'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -154,12 +164,15 @@ graphql(`
 
 enum ActionTypes {
   Settings = 'settings',
-  CopyLink = 'copy-link'
+  CopyLink = 'copy-link',
+  MoveProjects = 'move-projects',
+  Invite = 'invite'
 }
 
 const emit = defineEmits<{
   (e: 'show-invite-dialog'): void
   (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
+  (e: 'show-move-projects-dialog'): void
 }>()
 
 const props = defineProps<{
@@ -167,6 +180,9 @@ const props = defineProps<{
 }>()
 
 const menuId = useId()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+
+const isMobile = breakpoints.smaller('md')
 const showActionsMenu = ref(false)
 
 const team = computed(() => props.workspaceInfo.team.items || [])
@@ -174,7 +190,15 @@ const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Copy link', id: ActionTypes.CopyLink }],
+  [
+    ...(isMobile.value
+      ? [
+          { title: 'Move projects', id: ActionTypes.MoveProjects },
+          { title: 'Invite', id: ActionTypes.Invite }
+        ]
+      : []),
+    { title: 'Copy link', id: ActionTypes.CopyLink }
+  ],
   [{ title: 'Settings...', id: ActionTypes.Settings }]
 ])
 
@@ -191,6 +215,12 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Settings:
       openSettingsDialog(SettingMenuKeys.Workspace.General)
+      break
+    case ActionTypes.MoveProjects:
+      emit('show-move-projects-dialog')
+      break
+    case ActionTypes.Invite:
+      emit('show-invite-dialog')
       break
   }
 }
