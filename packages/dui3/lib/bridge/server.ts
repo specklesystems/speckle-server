@@ -1,6 +1,7 @@
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import type { ProgressStage } from '@speckle/objectloader'
 import ObjectLoader from '@speckle/objectloader'
+import ObjectSender from '@speckle/objectsender'
 import { provideApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   versionDetailsQuery,
@@ -24,8 +25,7 @@ export type SendViaBrowserArgs = {
   sendConversionResults: ConversionResult[]
   sendObject: {
     id: string // the root object id which should be used for creating the version
-    totalChildrenCount: number
-    batches: string[]
+    rootObject: object // NOTE to dim
   }
 }
 
@@ -164,22 +164,30 @@ export class ServerBridge {
         progress: 0
       }
     } as unknown as string)
+
+    await ObjectSender.send(sendObject.rootObject as unknown as ObjectSender.Base, {
+      serverUrl,
+      projectId,
+      token
+    }) // NOTE to dim
+
+    // BEFORE as below
     // TODO: More of a question: why are we not sending multiple batches at once?
     // What's in a batch? etc. To look at optmizing this and not blocking the
     // main thread.
-    const promises = [] as Promise<Response>[]
-    sendObject.batches.forEach((batch) => {
-      const formData = new FormData()
-      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-      promises.push(
-        fetch(`${serverUrl}/objects/${projectId}`, {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token },
-          body: formData
-        })
-      )
-    })
-    await Promise.all(promises)
+    // const promises = [] as Promise<Response>[]
+    // sendObject.batches.forEach((batch) => {
+    //   const formData = new FormData()
+    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    //   promises.push(
+    //     fetch(`${serverUrl}/objects/${projectId}`, {
+    //       method: 'POST',
+    //       headers: { Authorization: 'Bearer ' + token },
+    //       body: formData
+    //     })
+    //   )
+    // })
+    // await Promise.all(promises)
 
     const hostAppStore = useHostAppStore()
 
