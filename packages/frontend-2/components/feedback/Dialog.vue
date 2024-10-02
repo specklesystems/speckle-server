@@ -71,4 +71,10 @@ const onSubmit = handleSubmit(async () => {
     feedback: feedback.value
   })
 })
+
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    feedback.value = ''
+  }
+})
 </script>
