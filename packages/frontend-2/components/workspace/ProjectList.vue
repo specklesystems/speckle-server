@@ -146,10 +146,7 @@ const { result: initialQueryResult, onResult } = useQuery(
     filter: {
       search: (search.value || '').trim() || null
     },
-    token: token.value || null,
-    options: {
-      useSlug: true
-    }
+    token: token.value || null
   }),
   () => ({
     fetchPolicy: pageFetchPolicy.value
