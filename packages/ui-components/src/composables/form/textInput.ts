@@ -114,7 +114,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['text-body-2xs']
+    const classParts = ['text-body-2xs break-words']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })

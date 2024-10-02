@@ -26,6 +26,7 @@ export default defineNuxtPlugin(async (ctx) => {
 
   const path = route.path
   const idParam = route.params.id as Optional<string>
+  const slugParam = route.params.slug as Optional<string>
   const promises: Promise<unknown>[] = []
 
   // Standard/global
@@ -51,13 +52,13 @@ export default defineNuxtPlugin(async (ctx) => {
   }
 
   // Preload workspace data
-  if (idParam && path.startsWith('/workspaces/') && isWorkspacesEnabled.value) {
+  if (slugParam && path.startsWith('/workspaces/') && isWorkspacesEnabled.value) {
     promises.push(
       preload({
         queries: [
           {
             query: workspaceAccessCheckQuery,
-            variables: { id: idParam },
+            variables: { slug: slugParam },
             context: { skipLoggingErrors: true }
           }
         ]
