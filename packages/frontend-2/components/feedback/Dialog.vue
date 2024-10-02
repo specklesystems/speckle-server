@@ -16,7 +16,6 @@
         name="feedback"
         label="Feedback"
         color="foundation"
-        placeholder="What if..."
       />
     </div>
   </LayoutDialog>
@@ -29,11 +28,13 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { isRequired } from '~/lib/common/helpers/validation'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 type FormValues = { feedback: string }
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 const { sendWebhook } = useZapier()
 const { triggerNotification } = useGlobalToast()
@@ -54,30 +55,20 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 const onSubmit = handleSubmit(async () => {
   if (!feedback.value) return
 
-  try {
-    const response = await sendWebhook(
-      'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/',
-      {
-        feedback: feedback.value
-      }
-    )
+  isOpen.value = false
 
-    if (response.ok) {
-      isOpen.value = false
-      mixpanel.track('Feedback Sent', {
-        feedback: feedback.value
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Thank you for your feedback!'
-      })
-    }
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to send feedback. Please try again.'
-    })
-  }
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Thank you for your feedback!'
+  })
+
+  mixpanel.track('Feedback Sent', {
+    feedback: feedback.value
+  })
+
+  await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+    userId: user.value?.id ?? '',
+    feedback: feedback.value
+  })
 })
 </script>
