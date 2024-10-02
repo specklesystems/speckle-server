@@ -158,7 +158,12 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
           const workspaceName =
             selectedWorkspace.value?.name || (props.workspace?.name as string)
 
-          moveProject(props.project.id, workspaceId, workspaceName, props.eventSource)
+          moveProject({
+            projectId: props.project.id,
+            workspaceId,
+            workspaceName,
+            eventSource: props.eventSource
+          })
 
           open.value = false
         }

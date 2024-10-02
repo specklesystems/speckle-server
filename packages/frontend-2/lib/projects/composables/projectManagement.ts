@@ -552,17 +552,20 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (
-    projectId: string,
-    workspaceId: string,
-    workspaceName: string,
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
     eventSource?: string
-  ) => {
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
     const { data, errors } = await apollo
       .mutate({
         mutation: useMoveProjectToWorkspaceMutation,
         variables: { projectId, workspaceId },
-        update(cache) {
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
           if (!workspaceId) return
 
           modifyObjectField(
