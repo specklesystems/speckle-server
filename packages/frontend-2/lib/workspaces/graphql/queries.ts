@@ -10,13 +10,13 @@ export const workspaceAccessCheckQuery = graphql(`
 
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
-    $workspaceId: String!
+    $workspaceSlug: String!
     $filter: WorkspaceProjectsFilter
     $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
     $token: String
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $workspaceSlug) {
       id
       ...WorkspaceHeader_Workspace
       ...WorkspaceMixpanelUpdateGroup_Workspace
@@ -24,7 +24,7 @@ export const workspacePageQuery = graphql(`
         ...WorkspaceProjectList_ProjectCollection
       }
     }
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+    workspaceInvite(workspaceId: $workspaceSlug, token: $token) {
       id
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
@@ -34,11 +34,11 @@ export const workspacePageQuery = graphql(`
 
 export const workspaceProjectsQuery = graphql(`
   query WorkspaceProjectsQuery(
-    $workspaceId: String!
+    $workspaceSlug: String!
     $filter: WorkspaceProjectsFilter
     $cursor: String
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $workspaceSlug) {
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
