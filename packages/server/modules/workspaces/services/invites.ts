@@ -320,7 +320,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const subject = `${inviter.name} has invited you to the "${workspace.name}" Speckle workspace`
     const inviteLink = new URL(
-      `${getWorkspaceRoute(workspace.id)}?token=${invite.token}&accept=true`,
+      `${getWorkspaceRoute(workspace.slug)}?token=${invite.token}&accept=true`,
       getFrontendOrigin()
     ).toString()
 
