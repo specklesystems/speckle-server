@@ -11,7 +11,7 @@ import { storeToRefs } from 'pinia'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
-import { GenericBridge } from '~/lib/bridge/generic-v2'
+import type { Emitter } from 'nanoevents'
 
 export type SendViaBrowserArgs = {
   modelCardId: string
@@ -49,9 +49,20 @@ export type CreateVersionArgs = {
 }
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
-export class ServerBridge extends GenericBridge {
+export class ServerBridge {
+  private runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  public emitter: Emitter
+
+  constructor(
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>,
+    emitter: Emitter
+  ) {
+    this.runMethod = runMethod
+    this.emitter = emitter
+  }
+
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
-  emit(eventName: string, payload: string): void {
+  emit(eventName: string, payload: Record<string, unknown>): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
     if (eventName === 'sendByBrowser')
@@ -146,7 +157,7 @@ export class ServerBridge extends GenericBridge {
       sendConversionResults,
       message
     } = eventPayload
-    this.emit('setModelProgress', {
+    this.emitter.emit('setModelProgress', {
       modelCardId,
       progress: {
         status: 'Uploading',

@@ -205,6 +205,8 @@ export class SketchupBridge extends BaseBridge {
     // TODO: More of a question: why are we not sending multiple batches at once?
     // What's in a batch? etc. To look at optmizing this and not blocking the
     // main thread.
+    console.log(eventPayload)
+
     const promises = [] as Promise<Response>[]
     sendObject.batches.forEach((batch) => {
       const formData = new FormData()
