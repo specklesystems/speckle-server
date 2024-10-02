@@ -6,21 +6,55 @@ const { beforeEachContext } = require('@/test/hooks')
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
-const { createBranch } = require('../services/branches')
 
 const {
   createCommitByBranchName,
   updateCommit,
-  getCommitById,
-  deleteCommit,
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId,
   getCommitsByUserId
 } = require('../services/commits')
-const { createBranchAndNotify } = require('@/modules/core/services/branch/management')
+const {
+  createBranchAndNotifyFactory
+} = require('@/modules/core/services/branch/management')
 const cryptoRandomString = require('crypto-random-string')
+const {
+  createBranchFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+const {
+  getCommitFactory,
+  deleteCommitFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  deleteCommitAndNotifyFactory
+} = require('@/modules/core/services/commit/management')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  addCommitDeletedActivity
+} = require('@/modules/activitystream/services/commitActivity')
+
+const createBranch = createBranchFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  createBranch,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  addBranchCreatedActivity
+})
+const getCommit = getCommitFactory({ db })
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -199,18 +233,14 @@ describe('Commits @core-commits', () => {
       authorId: user.id
     })
 
-    const res = await deleteCommit({
-      commitId: tempCommit,
-      streamId: stream.id,
-      userId: user.id
-    })
+    const res = await deleteCommitAndNotify(tempCommit, stream.id, user.id)
     expect(res).to.be.ok
   })
 
   it('Should get a commit by id', async () => {
-    const cm = await getCommitById({ streamId: stream.id, id: commitId1 })
+    const cm = await getCommit(commitId1, { streamId: stream.id })
     expect(cm.message).to.equal('FIRST COMMIT YOOOOOO')
-    expect(cm.authorId).to.equal(user.id)
+    expect(cm.author).to.equal(user.id)
   })
 
   it('Should get the commits and their total count from a branch', async () => {
@@ -306,7 +336,7 @@ describe('Commits @core-commits', () => {
     })
     const branchCommit = branchCommits[0]
 
-    const idCommit = await getCommitById({ streamId: stream.id, id: commitId3 })
+    const idCommit = await getCommit(commitId3, { streamId: stream.id })
 
     for (const commit of [userCommit, serverCommit, branchCommit, idCommit]) {
       expect(commit).to.have.property('sourceApplication')
@@ -324,8 +354,8 @@ describe('Commits @core-commits', () => {
 
   it('Should have an array of parents', async () => {
     const commits = [
-      await getCommitById({ streamId: stream.id, id: commitId3 }),
-      await getCommitById({ streamId: stream.id, id: commitId2 })
+      await getCommit(commitId3, { streamId: stream.id }),
+      await getCommit(commitId2, { streamId: stream.id })
     ]
 
     for (const commit of commits) {

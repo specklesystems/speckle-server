@@ -9,21 +9,21 @@ import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const workspaceId = to.params.id as string
+  const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
     .query({
       query: workspaceAccessCheckQuery,
-      variables: { id: workspaceId },
+      variables: { slug: workspaceSlug },
       context: {
         skipLoggingErrors: true
       }
     })
     .catch(convertThrowIntoFetchResult)
 
-  if (data?.workspace?.id) return
+  if (data?.workspaceBySlug.id) return
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
   const isNotFound = (errors || []).find(

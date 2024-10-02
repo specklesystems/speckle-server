@@ -1,10 +1,9 @@
 'use strict'
 const knex = require('@/db/knex')
+const { getStreamBranchByNameFactory } = require('@/modules/core/repositories/branches')
 
 const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
-
-const { getBranchByNameAndStreamId } = require('./branches')
 
 const {
   getStreamCommitCount,
@@ -13,8 +12,7 @@ const {
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchName: createCommitByBranchNameNew,
-  updateCommitAndNotify,
-  deleteCommitAndNotify
+  updateCommitAndNotify
 } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
@@ -87,38 +85,6 @@ module.exports = {
     return true
   },
 
-  async getCommitById({ streamId, id }) {
-    const query = await Commits()
-      .columns([
-        { id: 'commits.id' },
-        'message',
-        'referencedObject',
-        'sourceApplication',
-        'totalChildrenCount',
-        'parents',
-        'commits.createdAt',
-        { branchName: 'branches.name' },
-        { authorName: 'users.name' },
-        { authorId: 'users.id' },
-        { authorAvatar: 'users.avatar' }
-      ])
-      .select()
-      .join('stream_commits', 'commits.id', 'stream_commits.commitId')
-      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .leftJoin('users', 'commits.author', 'users.id')
-      .where({ 'stream_commits.streamId': streamId, 'commits.id': id })
-      .first()
-    return await query
-  },
-
-  /**
-   * @deprecated Use 'deleteCommitAndNotify()'
-   */
-  async deleteCommit({ commitId, streamId, userId }) {
-    return await deleteCommitAndNotify(commitId, streamId, userId)
-  },
-
   /**
    * @deprecated Use `getBranchCommitsTotalCount()` instead
    */
@@ -128,10 +94,8 @@ module.exports = {
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
     branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+    const myBranch = await getStreamBranchByName(streamId, branchName)
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
@@ -147,10 +111,8 @@ module.exports = {
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {
     branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+    const myBranch = await getStreamBranchByName(streamId, branchName)
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 

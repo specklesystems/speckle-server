@@ -59,5 +59,5 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   res.status(resolveStatusCode(e)).json({
     error: resolveErrorInfo(e)
   })
-  next()
+  next(err)
 }

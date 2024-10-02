@@ -24,8 +24,8 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
-  getCommits,
-  getSpecificBranchCommits,
+  getCommitsFactory,
+  getSpecificBranchCommitsFactory,
   getStreamCommitCounts,
   getUserAuthoredCommitCounts,
   getUserStreamCommitCounts
@@ -42,11 +42,11 @@ import {
   getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
-  getBranchCommitCounts,
-  getBranchesByIds,
-  getBranchLatestCommits,
-  getStreamBranchCounts,
-  getStreamBranchesByName
+  getBranchCommitCountsFactory,
+  getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory,
+  getStreamBranchCountsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -105,6 +105,13 @@ const getBranchCommentCounts = getBranchCommentCountsFactory({ db })
 const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
 const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
 const getCommentParents = getCommentParentsFactory({ db })
+const getBranchesByIds = getBranchesByIdsFactory({ db })
+const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
+const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -156,6 +163,7 @@ export function buildRequestLoaders(
   const loaders = {
     ...(Object.assign(
       {},
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       ...modulesLoaders.map((l) => l({ ctx, createLoader }))
     ) as Record<string, unknown>),
     streams: {

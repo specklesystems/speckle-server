@@ -8,11 +8,10 @@ const {
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
-const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
 const {
-  createBranchAndNotify,
-  updateBranchAndNotify,
-  deleteBranchAndNotify
+  createBranchAndNotifyFactory,
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
@@ -20,11 +19,50 @@ const {
 
 const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
+const {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  createBranchFactory,
+  updateBranchFactory,
+  deleteBranchByIdFactory
+} = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity,
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStream,
+  markBranchStreamUpdated
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
+
+const getBranchById = getBranchByIdFactory({ db })
+const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName,
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
+})
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById,
+  updateBranch: updateBranchFactory({ db }),
+  addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -41,13 +79,10 @@ module.exports = {
       // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
       // and get it by id as well (this would be coming from a FE2 url).
 
-      const branchByName = await getBranchByNameAndStreamId({
-        streamId: parent.id,
-        name: args.name
-      })
+      const branchByName = await getStreamBranchByName(parent.id, args.name)
       if (branchByName) return branchByName
 
-      const branchByIdRes = await getBranchById({ id: args.name })
+      const branchByIdRes = await getBranchById(args.name)
       if (!branchByIdRes) return null
 
       // Extra validation to check if it actually belongs to the stream
