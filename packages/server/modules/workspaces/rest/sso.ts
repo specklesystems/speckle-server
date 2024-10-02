@@ -123,6 +123,37 @@ const buildErrorUrl = ({
 }
 
 router.get(
+  '/api/v1/workspaces/:workspaceSlug/sso/auth',
+  sessionMiddleware,
+  validateRequest({
+    params: z.object({
+      workspaceSlug: z.string().min(1)
+    }),
+    query: oidcProvider
+  }),
+  async ({ params }) => {
+    const { workspaceSlug } = params
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const decryptor = await buildDecryptor(encryptionKeyPair)
+    try {
+      const workspace = await getWorkspaceBySlugFactory({ db })({
+        workspaceSlug
+      })
+      if (!workspace) throw new Error('No workspace found')
+
+      const provider = await getWorkspaceSsoProviderFactory({
+        db,
+        decrypt: decryptor.decrypt
+      })({ workspaceId: params.workspaceSlug })
+
+      if (!provider) throw new Error('No SSO provider registered for the workspace')
+    } catch (err) {
+      // if things fail, before sending you to the provider, we need to tell it to the user in a nice way
+    }
+  }
+)
+
+router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
   validateRequest({
@@ -132,6 +163,8 @@ router.get(
     query: oidcProvider
   }),
   async ({ session, params, query, res }) => {
+    // do we need to authorize this?, redirect will stop ppl from doing bad shit
+    // Verify workspace has SSO enabled
     try {
       const provider = query
       const encryptionKeyPair = await getEncryptionKeyPair()
@@ -178,7 +211,7 @@ router.get(
     }),
     query: z.object({ validate: z.string() })
   }),
-  async (req, _res, next) => {
+  async (req, res, next) => {
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     const workspaceSlug = req.params.workspaceSlug
@@ -187,6 +220,7 @@ router.get(
     let provider: OIDCProvider | null = null
     let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
 
+    // Verify workspace has SSO enabled
     try {
       // Initialize OIDC client based on provider for current request flow
       const encryptionKeyPair = await getEncryptionKeyPair()
@@ -199,6 +233,8 @@ router.get(
 
       const codeVerifier = await decryptor.decrypt(encryptedCodeVerifier)
 
+      // this is only the case for the validation route,
+      // if we're logging in, the provider must come from the pgDB with a cache infront
       provider = await getOIDCProviderFactory({
         redis: getGenericRedis(),
         decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
@@ -276,12 +312,37 @@ router.get(
         // OIDC auth flow: SSO is already configured and we are attempting to log in or sign up
 
         // Get Speckle user by email in SSO provider
-        const userEmail = await findEmailFactory({ db })({ email: ssoProviderUserInfo.email })
-        let user: Pick<UserRecord, 'id' | 'email'> | null = await getUser(userEmail?.userId)
+        const userEmail = await findEmailFactory({ db })({
+          email: ssoProviderUserInfo.email
+        })
+        let user: Pick<UserRecord, 'id' | 'email'> | null = await getUser(
+          userEmail?.userId
+        )
+        // if someone already uses this email in an sso flow, GO AWAY!!!!!
+        // req.context.userId
+
         const isNewUser = !user
 
         if (!user) {
+          // let invite
+          // if (!req.inviteToken) {
+          // try to get an invite from the db, based on the oidc user info email
+          // -> invite
+          // } else {
+          // get the invite from the db based on the invite token
+          // -> invite
+          //}
+          // if (invite) {
+          // make sure, the invite is an invite to the current workspace and it doesn't target a user,
+          // the target must be, the same email,
+          // that comes back from the oidc provider
+          // use invite if its not part of the finalize flow?!
+          //} else {
+          // GO AWAY!!!!
+          //}
+
           // Create user
+          // if the ssoProvderUserInfo comes back with an unverified email, GO AWAY!!!!
           const { name, email } = ssoProviderUserInfo
           const newUser = {
             name,
@@ -296,17 +357,19 @@ router.get(
             id: userId
           }
 
+          // what happens if there is already a req.user ?!
+          // this is only needed if you are creating a new user
+          req.user = { id: user.id, email: user.email, isNewUser }
+
           // Set workspace role
           // TODO: Based on invite!
+        } else {
+          // Verify user is a member of the workspace
         }
-
-        // Verify user is a member of the workspace
-
-        // Verify workspace has SSO enabled
 
         // Update timeout for SSO session
 
-        req.user = { id: user.id, email: user.email, isNewUser }
+        // this is not valid in the case of validate, that needs to go to /workspace settings, make sure, that is true
         req.authRedirectPath = `workspaces/${req.params.workspaceSlug}/`
 
         return next()
@@ -314,14 +377,16 @@ router.get(
     } catch (err) {
       logger.warn(
         { error: err },
+        // this is only valid for the validate errors, not really for login !!!!
         `Failed to verify OIDC sso provider for workspace ${workspaceSlug}`
       )
+      // in case of this is a login error, we need to redirect to the login page with the error
       redirectUrl = buildErrorUrl({
         err,
         url: redirectUrl,
         searchParams: provider || undefined
       })
-      req.res?.redirect(redirectUrl.toString())
+      res.redirect(redirectUrl.toString())
     } finally {
       req.session.destroy(noop)
     }
