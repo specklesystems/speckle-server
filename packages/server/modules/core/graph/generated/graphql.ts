@@ -2661,6 +2661,7 @@ export type QueryWorkspaceBySlugArgs = {
 
 
 export type QueryWorkspaceInviteArgs = {
+  options?: InputMaybe<WorkspaceInviteLookupOptions>;
   token?: InputMaybe<Scalars['String']['input']>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4028,6 +4029,11 @@ export type WorkspaceInviteCreateInput = {
   userId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type WorkspaceInviteLookupOptions = {
+  /** If true, the query will assume workspaceId is actually the workspace slug, and do the lookup by slug */
+  useSlug?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type WorkspaceInviteMutations = {
   __typename?: 'WorkspaceInviteMutations';
   batchCreate: Workspace;
@@ -4531,6 +4537,7 @@ export type ResolversTypes = {
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
+  WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
   WorkspaceInviteResendInput: WorkspaceInviteResendInput;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
@@ -4771,6 +4778,7 @@ export type ResolversParentTypes = {
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
+  WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
   WorkspaceInviteResendInput: WorkspaceInviteResendInput;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
