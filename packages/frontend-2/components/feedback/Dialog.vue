@@ -52,20 +52,27 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onSubmit = handleSubmit(async () => {
+  if (!feedback.value) return
+
   try {
-    await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
-      feedback: feedback.value
-    })
+    const response = await sendWebhook(
+      'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/',
+      {
+        feedback: feedback.value
+      }
+    )
 
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Thank you for your feedback!'
-    })
-
-    isOpen.value = false
-    mixpanel.track('Feedback Sent', {
-      feedback: feedback.value
-    })
+    if (response.ok) {
+      isOpen.value = false
+      mixpanel.track('Feedback Sent', {
+        feedback: feedback.value
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Thank you for your feedback!'
+      })
+    }
   } catch (error) {
     triggerNotification({
       type: ToastNotificationType.Danger,
