@@ -1,7 +1,7 @@
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import type { ProgressStage } from '@speckle/objectloader'
 import ObjectLoader from '@speckle/objectloader'
-import ObjectSender from '@speckle/objectsender'
+import { send, type Base } from '@speckle/objectsender'
 import { provideApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   versionDetailsQuery,
@@ -165,7 +165,7 @@ export class ServerBridge {
       }
     } as unknown as string)
 
-    await ObjectSender.send(sendObject.rootObject as unknown as ObjectSender.Base, {
+    await send(sendObject.rootObject as unknown as Base, {
       serverUrl,
       projectId,
       token
