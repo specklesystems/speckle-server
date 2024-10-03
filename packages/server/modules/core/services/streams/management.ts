@@ -80,10 +80,23 @@ export async function createStreamReturnRecord(
   const streamId = stream.id
 
   if (options?.templateId) {
+    // architectural, structural, 3d, geographic
     await Promise.all([
       createBranchFactory({ db })({
-        name: 'main',
-        description: 'default branch',
+        name: 'architectural',
+        description: 'architectural branch',
+        streamId,
+        authorId: ownerId
+      }),
+      createBranchFactory({ db })({
+        name: '3d',
+        description: '3d branch',
+        streamId,
+        authorId: ownerId
+      }),
+      createBranchFactory({ db })({
+        name: 'structural',
+        description: 'structural branch',
         streamId,
         authorId: ownerId
       })
