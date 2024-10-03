@@ -43,6 +43,7 @@ import { type PropertyInfo } from './filtering/PropertyManager.js'
 import { BatchObject } from './batching/BatchObject.js'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
+import { Categorize } from './extensions/Categorize.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -128,6 +129,7 @@ export class LegacyViewer extends Viewer {
     this.explodeExtension = this.createExtension(ExplodeExtension)
     this.diffExtension = this.createExtension(DiffExtension)
     this.highlightExtension = this.createExtension(HighlightExtension)
+    this.createExtension(Categorize)
   }
 
   public async init(): Promise<void> {

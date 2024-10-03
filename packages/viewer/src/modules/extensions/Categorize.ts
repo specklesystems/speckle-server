@@ -2,9 +2,13 @@ import { BatchObject } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
 import { Extension, IViewer, TreeNode } from '@speckle/viewer'
 import { NodeRenderView } from '@speckle/viewer'
-import { Box3Helper, Color, Matrix4, Vector3, Box3 } from 'three'
+import { Box3Helper, Color, Matrix4, Vector3, Box3, DoubleSide, Group } from 'three'
 import potpack from 'potpack'
+import { SpeckleText } from '../objects/SpeckleText.js'
+import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 
+const ZERO = 0.00001
+const ONE = 0.99999
 /** Simple animation data interface */
 interface Animation {
   target: BatchObject
@@ -18,6 +22,8 @@ interface Animation {
 export class Categorize extends Extension {
   /** We'll store our animations here */
   private animations: Animation[] = []
+  private textGroup: Group
+  private reverse = false
   /** We'll store the boxes for the categories here */
 
   /** Animation params */
@@ -34,13 +40,18 @@ export class Categorize extends Extension {
     let animCount = 0
     for (let k = 0; k < this.animations.length; k++) {
       /** Animation finished, no need to update it */
-      if (this.animations[k].time === 1) {
+      if (this.animations[k].time === 1 || this.animations[k].time === 0) {
         continue
       }
       /** Compute the next animation time value */
-      const t = this.animations[k].time + deltaTime * this.animTimeScale
+      const t =
+        this.animations[k].time +
+        (this.reverse
+          ? -(deltaTime * this.animTimeScale)
+          : deltaTime * this.animTimeScale)
+
       /** Clamp it to 1 */
-      this.animations[k].time = Math.min(t, 1)
+      this.animations[k].time = Math.min(Math.max(t, 0), 1)
       /** Compute current position value based on animation time */
       const valueL = new Vector3().copy(this.animations[k].start).lerp(
         this.animations[k].end,
@@ -72,14 +83,28 @@ export class Categorize extends Extension {
   }
 
   public play() {
+    this.reverse = false
     for (let k = 0; k < this.animations.length; k++) {
-      this.animations[k].time = 0
+      this.animations[k].time = ZERO
     }
+  }
+
+  public playReverse() {
+    for (let k = 0; k < this.animations.length; k++) {
+      this.animations[k].time = ONE
+    }
+    this.reverse = true
+  }
+
+  public wipe() {
+    this.viewer.getRenderer().scene.remove(this.textGroup)
   }
 
   /** Example's main function */
   public async categorize(input: { [categoryName: string]: Array<string> }) {
     const categories: { [id: string]: TreeNode[] } = {}
+    this.textGroup = new Group()
+
     for (const cat in input) {
       for (let k = 0; k < input[cat].length; k++) {
         const node = this.viewer.getWorldTree().findId(input[cat][k])[0]
@@ -175,7 +200,8 @@ export class Categorize extends Extension {
       boxHelper.layers.set(ObjectLayers.OVERLAY)
       boxHelper.frustumCulled = false
       /** Add the BoxHelper to the scene */
-      this.viewer.getRenderer().scene.add(boxHelper)
+      //   this.viewer.getRenderer().scene.add(boxHelper)
+
       const bObj = finalBoxes[k].obj
       const boxCenter = box.getCenter(new Vector3())
       const aabbCenter = bObj.aabb.getCenter(new Vector3())
@@ -198,8 +224,60 @@ export class Categorize extends Extension {
         time: 0,
         radialEnd: finalRadial
       })
-      //   finalBoxes[k].obj.transformTRS(finalPos)
     }
+
+    for (const categoryBox of categoryBoxes) {
+      /** Create a speckle text object */
+      const text = new SpeckleText('test-text', ObjectLayers.OVERLAY)
+
+      /** Simple text material */
+      const material = new SpeckleTextMaterial(
+        {
+          color: 0x1a1a1a,
+          opacity: 1,
+          side: DoubleSide
+        },
+        ['USE_RTE', 'BILLBOARD_FIXED']
+      )
+      material.toneMapped = false
+      material.color.convertSRGBToLinear()
+      material.opacity = 1
+      material.transparent = false
+      material.depthTest = false
+      material.billboardPixelHeight = 20
+      material.userData.billboardPos.value.copy(text.position)
+      text.textMesh.material = material.getDerivedMaterial()
+
+      if (text.backgroundMesh) text.backgroundMesh.renderOrder = 3
+      text.textMesh.renderOrder = 4
+
+      /** Set the layers to PROPS, so that AO and interactions will ignore them */
+      text.layers.set(ObjectLayers.OVERLAY)
+      text.textMesh.layers.set(ObjectLayers.OVERLAY)
+      /** Update the text with the cateogry name, size and anchor */
+      await text
+        .update({
+          textValue: categoryBox.category,
+          height: 1,
+          anchorX: '50%',
+          anchorY: '43%'
+        })
+        .then(() => {
+          text.style = {
+            textColor: new Color(0x1a1a1a),
+            backgroundColor: new Color(0xffffff),
+            billboard: true,
+            backgroundPixelHeight: 20
+          }
+          /** Move the text to the bottom center of the category box */
+          text.setTransform(
+            new Vector3(origin.x + categoryBox.x, origin.y + categoryBox.y, 0)
+          )
+        })
+      /** Add the text to the scene */
+      this.textGroup.add(text)
+    }
+    this.viewer.getRenderer().scene.add(this.textGroup)
   }
 
   private easeOutQuart(x: number): number {
