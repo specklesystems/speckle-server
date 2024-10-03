@@ -57,6 +57,7 @@
     "@vue/apollo-ssr": "4.0.0",
     "@vueuse/core": "^10.9.0",
     "apollo-upload-client": "^18.0.1",
+    "d3": "^7.9.0",
     "dayjs": "^1.11.7",
     "dompurify": "^3.0.4",
     "graphql": "^16.6.0",
