@@ -1,4 +1,9 @@
-import { SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+import {
+  Categorize,
+  SectionTool,
+  SpeckleStandardMaterial,
+  TreeNode
+} from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -142,7 +147,6 @@ export default class Sandbox {
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -274,7 +278,6 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
@@ -377,7 +380,6 @@ export default class Sandbox {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
@@ -407,14 +409,25 @@ export default class Sandbox {
     this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
 
+    const play = this.tabs.pages[0].addButton({
+      title: 'Play'
+    })
+    let reverse = false
+    play.on('click', () => {
+      if (reverse) this.viewer.getExtension(Categorize).playReverse()
+      else this.viewer.getExtension(Categorize).play()
+      reverse = !reverse
+    })
+
     const toggleSectionBox = this.tabs.pages[0].addButton({
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
-      let box = this.viewer.getRenderer().boxFromObjects(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
-      )
+      let box = this.viewer
+        .getRenderer()
+        .boxFromObjects(
+          this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+        )
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
@@ -442,11 +455,12 @@ export default class Sandbox {
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer.getExtension(CameraController).setCameraView(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
-        true
-      )
+      this.viewer
+        .getExtension(CameraController)
+        .setCameraView(
+          this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
+          true
+        )
     })
 
     this.tabs.pages[0].addSeparator()
@@ -504,22 +518,21 @@ export default class Sandbox {
       title: `PM's Colors`
     })
     colors.on('click', async () => {
-      const colorNodes = this.viewer.getWorldTree().findAll(
-        (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-          node.model.renderView &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          node.model.renderView.renderData.colorMaterial &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          node.model.renderView.geometryType === GeometryType.MESH
-      )
+      const colorNodes = this.viewer
+        .getWorldTree()
+        .findAll(
+          (node: TreeNode) =>
+            node.model.renderView &&
+            node.model.renderView.renderData.colorMaterial &&
+            node.model.renderView.geometryType === GeometryType.MESH
+        )
       const colorMap: { [color: number]: Array<string> } = {}
       for (let k = 0; k < colorNodes.length; k++) {
         const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         const color: number = node.model.renderView.renderData.colorMaterial.color
         if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+
         colorMap[color].push(node.model.id)
       }
       const colorGroups = []
@@ -1341,9 +1354,7 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }

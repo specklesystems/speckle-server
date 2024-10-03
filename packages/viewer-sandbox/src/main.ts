@@ -3,7 +3,9 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController
+  CameraController,
+  Categorize,
+  TreeNode
 } from '@speckle/viewer'
 
 import './style.css'
@@ -48,6 +50,8 @@ const createViewer = async (containerName: string, stream: string) => {
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
+  const categorize = viewer.createExtension(Categorize)
+
   // const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
@@ -68,7 +72,6 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (event) console.log(event.hits[0].node.model.id)
   })
 
@@ -77,6 +80,20 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
+
+    const categories: { [id: string]: string[] } = {}
+    await viewer.getWorldTree().walkAsync((node: TreeNode) => {
+      if (!node.model.atomic || viewer.getWorldTree().isRoot(node)) return true
+      const category = node.model.raw.category
+      if (category) {
+        if (!categories[category]) {
+          categories[category] = []
+        }
+        categories[category].push(node.model.id)
+      }
+      return true
+    })
+    void viewer.getExtension(Categorize).categorize(categories)
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {

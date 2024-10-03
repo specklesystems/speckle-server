@@ -236,7 +236,7 @@ export class SpeckleText extends Mesh {
     const sizeDelta = sizeBox.distanceTo(this._backgroundSize)
     let geometry = this._background?.geometry
     if (sizeDelta > 0.1) {
-      geometry = this.RectangleRounded(sizeBox.x * 1.2, sizeBox.y * 1.2, 0.5, 5)
+      geometry = this.RectangleRounded(sizeBox.x * 0.6, sizeBox.y, 0.5, 5)
       geometry.computeBoundingBox()
       this._backgroundSize.copy(sizeBox)
       if (this._background) this._background.geometry = geometry
