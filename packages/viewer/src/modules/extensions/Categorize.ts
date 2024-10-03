@@ -1,11 +1,12 @@
-import { BatchObject } from '@speckle/viewer'
-import { ObjectLayers } from '@speckle/viewer'
-import { Extension, IViewer, TreeNode } from '@speckle/viewer'
-import { NodeRenderView } from '@speckle/viewer'
 import { Box3Helper, Color, Matrix4, Vector3, Box3, DoubleSide, Group } from 'three'
 import potpack from 'potpack'
 import { SpeckleText } from '../objects/SpeckleText.js'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
+import { BatchObject } from '../batching/BatchObject.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { Extension } from './Extension.js'
+import { TreeNode } from '../tree/WorldTree.js'
+import { ObjectLayers } from '../../IViewer.js'
 
 const ZERO = 0.00001
 const ONE = 0.99999
@@ -28,10 +29,6 @@ export class Categorize extends Extension {
 
   /** Animation params */
   private readonly animTimeScale: number = 0.25
-
-  public constructor(viewer: IViewer) {
-    super(viewer)
-  }
 
   /** We're tying in to the viewer core's frame event */
   public onLateUpdate(deltaTime: number) {
@@ -107,7 +104,9 @@ export class Categorize extends Extension {
 
     for (const cat in input) {
       for (let k = 0; k < input[cat].length; k++) {
-        const node = this.viewer.getWorldTree().findId(input[cat][k])[0]
+        const nodes = this.viewer.getWorldTree().findId(input[cat][k])
+        if (!nodes) continue
+        const node = nodes[0]
         // if (!node.model.atomic || this.viewer.getWorldTree().isRoot(node)) continue
         if (!categories[cat]) categories[cat] = []
         categories[cat].push(node)
