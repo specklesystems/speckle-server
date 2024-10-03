@@ -412,8 +412,11 @@ export default class Sandbox {
     const play = this.tabs.pages[0].addButton({
       title: 'Play'
     })
+    let reverse = false
     play.on('click', () => {
-      this.viewer.getExtension(Categorize).play()
+      if (reverse) this.viewer.getExtension(Categorize).playReverse()
+      else this.viewer.getExtension(Categorize).play()
+      reverse = !reverse
     })
 
     const toggleSectionBox = this.tabs.pages[0].addButton({
