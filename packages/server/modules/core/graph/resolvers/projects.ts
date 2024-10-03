@@ -1,4 +1,12 @@
 import { db } from '@/db/knex'
+import {
+  BranchCommits,
+  Branches,
+  Commits,
+  Objects,
+  StreamAcl,
+  Streams
+} from '@/modules/core/dbSchema'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -10,12 +18,14 @@ import {
 import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   getUserStreamsCount,
   getUserStreams,
   getStreamCollaborators,
   getStream
 } from '@/modules/core/repositories/streams'
+import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -69,8 +79,35 @@ export = {
   },
   ProjectMutations: {
     async load(_parend, args, ctx) {
-      const source = await db('streams').where({ name: 'Hackathon_2024' }).first()
-      await cloneStream(ctx.userId!, source.id, args.id)
+      const source = await db('streams')
+        .join(StreamAcl.name, StreamAcl.col.resourceId, Streams.col.id)
+        .where({ name: 'Hackathon_2024', userId: ctx.userId })
+        .first()
+      const branches = await db('branches').where({ streamId: args.id })
+
+      const objects = await db('branches')
+        .join(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+        .join(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+        .join(Objects.name, Objects.col.id, Commits.col.referencedObject)
+        .where(Branches.col.streamId, source.id)
+
+      for (const object of objects) {
+        const branchName = object.name
+
+        const branch = branches.find((b) => b.name === branchName)
+
+        if (!branch) continue
+        await createCommitByBranchId({
+          authorId: ctx.userId!,
+          streamId: args.id,
+          branchId: branch.id,
+          message: null,
+          sourceApplication: null,
+          objectId: object.id,
+          parents: []
+        })
+      }
+
       return true
     },
     async batchDelete(_parent, args, ctx) {

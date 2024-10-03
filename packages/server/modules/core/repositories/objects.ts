@@ -26,7 +26,7 @@ export async function getObject(
 ): Promise<Optional<ObjectRecord>> {
   return await Objects.knex<ObjectRecord[]>()
     .where(Objects.col.id, objectId)
-    .andWhere(Objects.col.streamId, streamId)
+    // .andWhere(Objects.col.streamId, streamId)
     .first()
 }
 
