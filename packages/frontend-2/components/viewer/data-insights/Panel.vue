@@ -117,7 +117,6 @@ watch(
 
     getBlobUrl({ blobId: blobId!, projectId: projectId.value })
       .then((url) => {
-        console.log(url)
         return fetch(url)
       })
       .then((res) => {
@@ -172,8 +171,6 @@ const toReport = (data: MaterialData): Report => {
     objectIdsByMaterialByGrade[entry.Material][entry.Grade] ??= []
     objectIdsByMaterialByGrade[entry.Material][entry.Grade].push(entry.id)
   }
-
-  // console.log(volumeByMaterialGrade)
 
   const report: Report = {
     name: 'Material Composition',
