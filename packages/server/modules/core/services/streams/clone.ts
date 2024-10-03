@@ -218,7 +218,7 @@ async function cloneBranches(state: CloneStreamInitialState, newStreamId: string
       const oldId = b.id
       const createdDate = getNewDate()
 
-      // b.id = generateBranchId()
+      b.id = generateBranchId()
       b.streamId = newStreamId
       b.authorId = state.user.id
       b.createdAt = createdDate
@@ -227,10 +227,7 @@ async function cloneBranches(state: CloneStreamInitialState, newStreamId: string
       branchIdMap.set(oldId, b.id)
     })
 
-    // await insertBranches(branchesBatch, { trx: state.trx })
-    await Promise.all(
-      branchesBatch.map((b) => Branches.knex().where({ id: b.id }).update(b))
-    )
+    await insertBranches(branchesBatch, { trx: state.trx })
   }
 
   return branchIdMap
