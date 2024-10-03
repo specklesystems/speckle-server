@@ -68,6 +68,14 @@
       <slot></slot>
     </div>
 
+    <div v-if="isLiveSessionEnabled" class="text-xs px-4 mb-2 h-full flex items-center">
+      <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+      Live session in progress
+      <FormButton text size="xs" class="ml-3" @click.stop="stopLiveSession()">
+        Stop session
+      </FormButton>
+    </div>
+
     <!-- Progress state -->
     <div
       v-if="modelCard.progress"
@@ -204,6 +212,40 @@ const buttonTooltip = computed(() => {
     : isSender.value
     ? 'Publish model'
     : 'Load selected version'
+})
+
+const stopLiveSession = async () => {
+  const liveSessionSetting = props.modelCard.settings?.find(
+    (s) => s.id === 'enableLiveSession'
+  )
+
+  if (liveSessionSetting) {
+    if (liveSessionSetting.value) {
+      const newSettings = props.modelCard.settings?.map((setting) => {
+        if (setting.id === 'enableLiveSession') {
+          return { ...setting, value: false }
+        }
+        return setting
+      })
+      await store.patchModel(props.modelCard.modelCardId, {
+        settings: newSettings
+      })
+    } else {
+      return
+    }
+  }
+}
+
+const isLiveSessionEnabled = computed(() => {
+  const liveSessionSetting = props.modelCard.settings?.find(
+    (s) => s.id === 'enableLiveSession'
+  )
+
+  if (liveSessionSetting && liveSessionSetting.value) {
+    return true
+  }
+
+  return false
 })
 
 const projectAccount = computed(() =>
