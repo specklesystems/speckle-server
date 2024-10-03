@@ -96,6 +96,10 @@ export class Categorize extends Extension {
     this.reverse = true
   }
 
+  public wipe() {
+    this.viewer.getRenderer().scene.remove(this.textGroup)
+  }
+
   /** Example's main function */
   public async categorize(input: { [categoryName: string]: Array<string> }) {
     const categories: { [id: string]: TreeNode[] } = {}
