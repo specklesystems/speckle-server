@@ -76,21 +76,18 @@ export class Categorize extends Extension {
       this.animations[k].time = 0
     }
   }
-  /** Example's main function */
-  public async run() {
-    const categories: { [id: string]: TreeNode[] } = {}
 
-    await this.viewer.getWorldTree().walkAsync((node: TreeNode) => {
-      if (!node.model.atomic || this.viewer.getWorldTree().isRoot(node)) return true
-      const category = node.model.raw.category
-      if (category) {
-        if (!categories[category]) {
-          categories[category] = []
-        }
-        categories[category].push(node)
+  /** Example's main function */
+  public async categorize(input: { [categoryName: string]: Array<string> }) {
+    const categories: { [id: string]: TreeNode[] } = {}
+    for (const cat in input) {
+      for (let k = 0; k < input[cat].length; k++) {
+        const node = this.viewer.getWorldTree().findId(input[cat][k])[0]
+        // if (!node.model.atomic || this.viewer.getWorldTree().isRoot(node)) continue
+        if (!categories[cat]) categories[cat] = []
+        categories[cat].push(node)
       }
-      return true
-    })
+    }
 
     /** We go over each category */
     const finalBoxes = Array<{ category: string; obj: BatchObject; box: Box3 }>()
