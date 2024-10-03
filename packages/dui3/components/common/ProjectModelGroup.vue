@@ -267,5 +267,18 @@ onResult((res) => {
     hasDismissedUpdateWarning: false,
     displayReceiveComplete: false
   })
+
+  const liveSessionSetting = relevantReceiver.settings?.find(
+    (s) => s.id === 'enableLiveSession'
+  )
+
+  if (liveSessionSetting && liveSessionSetting.value) {
+    // ITS MESS because it is hackacthon
+    hostAppStore.patchModel(relevantReceiver.modelCardId, {
+      selectedVersionId: res.data.projectVersionsUpdated.version?.id,
+      selectedVersionCreatedAt: res.data.projectVersionsUpdated.version?.createdAt
+    })
+    hostAppStore.receiveModel(relevantReceiver.modelCardId, 'AutoReceive')
+  }
 })
 </script>
