@@ -131,6 +131,15 @@
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
 
+          <!-- Data Insights -->
+          <ViewerControlsButtonToggle
+            v-tippy="'Learn things'"
+            :active="activeControl === 'dataInsights'"
+            @click="toggleActiveControl('dataInsights')"
+          >
+            🦀
+          </ViewerControlsButtonToggle>
+
           <!-- Gendo -->
           <ViewerControlsButtonToggle
             v-show="isGendoEnabled"
@@ -221,10 +230,8 @@
         <ViewerGendoPanel @close="activeControl = 'none'" />
       </div>
 
-      <div>
-        <Portal to="data-insights">
-          <ViewerDataInsightsPanel :automation-runs="allAutomationRuns" />
-        </Portal>
+      <div v-if="resourceItems.length !== 0 && activeControl === 'dataInsights'">
+        <ViewerDataInsightsPanel :automation-runs="allAutomationRuns" />
       </div>
 
       <!-- Empty state -->
@@ -351,6 +358,7 @@ type ActiveControl =
   | 'measurements'
   | 'mobileOverflow'
   | 'gendo'
+  | 'dataInsights'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
