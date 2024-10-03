@@ -26,14 +26,12 @@ const toggleInput = () => {
   }
 }
 
-const shortcutModifiers: ModifierKeys[] = [ModifierKeys.CtrlOrCmd]
-const shortcutKey = 'k'
-
 const handleShortcut = () => {
   toggleInput()
 }
 
-onKeyboardShortcut(shortcutModifiers, shortcutKey, handleShortcut)
+onKeyboardShortcut([ModifierKeys.CtrlOrCmd], 'k', handleShortcut)
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'k', handleShortcut)
 
 onKeyStroke('Escape', () => {
   hideInput()
