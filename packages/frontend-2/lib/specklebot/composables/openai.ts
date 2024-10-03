@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { askAboutLoadedDataSystem } from '~/lib/specklebot/constants/system'
 import { EventIterator } from 'event-iterator'
 import type { MaybeAsync } from '@speckle/shared'
+import { marked } from 'marked'
 
 const model = 'gpt-3.5-turbo'
 
@@ -140,8 +141,17 @@ export const useSpeckleBot = () => {
       })
 
       const generator = openAi.runAssistant({ thread })
+
+      let cleanMessage = ''
+      let markedMessage = ''
       for await (const messagePart of generator) {
-        yield messagePart
+        cleanMessage += messagePart
+        markedMessage = marked(cleanMessage, {
+          mangle: false,
+          headerIds: false
+        })
+
+        yield markedMessage
       }
 
       loading.value = false
