@@ -1818,6 +1818,7 @@ export type Project = {
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
+  templateId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
   version?: Maybe<Version>;

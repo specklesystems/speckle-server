@@ -188,6 +188,7 @@ type Project {
   Source apps used in any models of this project
   """
   sourceApps: [String!]!
+  templateId: String
 }
 
 input UserProjectsFilter {

@@ -806,6 +806,7 @@ export async function createStream(
      * If set, will assign owner permissions to this user
      */
     ownerId: string
+    templateId: string
     trx: Knex.Transaction
   }>
 ) {
@@ -833,7 +834,8 @@ export async function createStream(
     isPublic: shouldBePublic,
     isDiscoverable: shouldBeDiscoverable,
     updatedAt: knex.fn.now(),
-    workspaceId: workspaceId || null
+    workspaceId: workspaceId || null,
+    templateId: options?.templateId
   }
 
   // Create the stream & set up permissions

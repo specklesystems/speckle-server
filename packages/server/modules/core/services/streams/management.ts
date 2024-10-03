@@ -64,7 +64,7 @@ export async function createStreamReturnRecord(
   options?: Partial<{ createActivity: boolean; templateId?: string }>
 ): Promise<StreamRecord> {
   const { ownerId, ownerResourceAccessRules } = params
-  const { createActivity = true } = options || {}
+  const { createActivity = true, templateId } = options || {}
 
   const canCreateStream = isNewResourceAllowed({
     resourceType: TokenResourceIdentifierType.Project,
@@ -76,7 +76,7 @@ export async function createStreamReturnRecord(
     )
   }
 
-  const stream = await createStream(params, { ownerId })
+  const stream = await createStream(params, { ownerId, templateId })
   const streamId = stream.id
 
   if (options?.templateId) {
