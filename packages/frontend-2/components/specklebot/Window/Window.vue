@@ -95,25 +95,33 @@ import { ModifierKeys, onKeyboardShortcut } from '@speckle/ui-components'
 import { onKeyStroke } from '@vueuse/core'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/20/solid'
 
-const open = ref(false)
+const open = defineModel<boolean>('open')
 
 const activeWindow = ref<'initial' | 'chat' | 'compliance' | 'version' | 'visual'>(
   'initial'
 )
 
-const openWindow = () => {
-  open.value = true
-}
-
 const closeWindow = () => {
   open.value = false
+  resetStates()
 }
+
+const resetStates = () => {
+  activeWindow.value = 'initial'
+}
+
+// Watch for changes in the 'open' state
+watch(open, (newValue) => {
+  if (!newValue) {
+    resetStates()
+  }
+})
 
 const toggleInput = () => {
   if (open.value) {
     closeWindow()
   } else {
-    openWindow()
+    open.value = true
   }
 }
 
