@@ -138,7 +138,15 @@ export default defineNuxtConfig({
   },
 
   app: {
-    pageTransition: { name: 'page', mode: 'out-in' }
+    pageTransition: { name: 'page', mode: 'out-in' },
+    head: {
+      script: [
+        {
+          src: 'https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs',
+          type: 'module'
+        }
+      ]
+    }
   },
 
   routeRules: {

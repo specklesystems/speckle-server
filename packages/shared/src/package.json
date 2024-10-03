@@ -1,0 +1,11 @@
+{
+  "type": "commonjs",
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
+    }
+  }
+}
