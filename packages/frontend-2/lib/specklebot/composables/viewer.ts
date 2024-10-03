@@ -43,9 +43,7 @@ export const useGetLoadedData = () => {
         }
       })
       // eslint-disable-next-line @typescript-eslint/await-thenable
-      return await objectLoader.getAndConstructObject((e) =>
-        log(`Progress ${e.stage}: ${e.current}`)
-      )
+      return await objectLoader.getAndConstructObject(noop)
     }
 
     const versionsData = await Promise.all(
@@ -56,10 +54,11 @@ export const useGetLoadedData = () => {
     )
 
     const ret = {
-      versions: versionsData,
+      versions: versionsData.slice(0, 1),
       mainModelMetadata: omit(firstModel.model, ['loadedVersion', 'versions'])
     }
     cachedData = ret
+    log(cachedData)
     return ret
   }
 
