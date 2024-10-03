@@ -8,6 +8,9 @@ import Logger from '../../utils/Logger.js'
 
 export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
+  public meshTriangulationTime = 0
+  public actualTriangulateTime = 0
+  public pushTime = 0
 
   public getSpeckleType(node: NodeData): SpeckleType {
     const rawType = node.raw.speckle_type ? node.raw.speckle_type : 'Base'
@@ -243,6 +246,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     if (!node.raw.vertices) return null
     if (!node.raw.faces) return null
 
+    const start = performance.now()
     const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
@@ -253,15 +257,19 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       if (n < 3) n += 3 // 0 -> 3, 1 -> 4
 
       if (n === 3) {
+        const startP = performance.now()
         // Triangle face
         indices.push(faces[k + 1], faces[k + 2], faces[k + 3])
+        this.pushTime += performance.now() - startP
       } else {
         // Quad or N-gon face
+        const start1 = performance.now()
         const triangulation = MeshTriangulationHelper.triangulateFace(
           k,
           faces,
           vertices
         )
+        this.actualTriangulateTime += performance.now() - start1
         indices.push(
           ...triangulation.filter((el) => {
             return el !== undefined
@@ -271,6 +279,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
       k += n + 1
     }
+    this.meshTriangulationTime += performance.now() - start
 
     if (colorsRaw && colorsRaw.length !== 0) {
       if (colorsRaw.length !== vertices.length / 3) {

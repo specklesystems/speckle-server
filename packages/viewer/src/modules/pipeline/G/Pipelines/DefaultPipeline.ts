@@ -1,17 +1,16 @@
 import { OrthographicCamera, PerspectiveCamera } from 'three'
-import { ObjectLayers } from '../../../index.js'
-import SpeckleRenderer from '../../SpeckleRenderer.js'
-import { GColorPass } from './GColorPass.js'
-import { DepthType, GDepthPass } from './GDepthPass.js'
-import { GPass, ObjectVisibility, ProgressiveGPass } from './GPass.js'
-import { GPipeline } from './GPipeline.js'
-import { GProgressiveAOPass } from './GProgressiveAOPass.js'
-import { GBlendPass } from './GBlendPass.js'
-import { GNormalsPass } from './GNormalPass.js'
-import { GOutputPass, InputType } from './GOutputPass.js'
-import { GTAAPass } from './GTAAPass.js'
+import { ObjectLayers } from '../../../../index.js'
+import SpeckleRenderer from '../../../SpeckleRenderer.js'
+import { GColorPass } from '../GColorPass.js'
+import { DepthType, GDepthPass } from '../GDepthPass.js'
+import { GPass, ObjectVisibility, ProgressiveGPass } from '../GPass.js'
+import { GPipeline } from '../GPipeline.js'
+import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
+import { GBlendPass } from '../GBlendPass.js'
+import { GOutputPass, InputType } from '../GOutputPass.js'
+import { GTAAPass } from '../GTAAPass.js'
 
-export class TAAPipeline extends GPipeline {
+export class DefaultPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
   protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []
@@ -25,10 +24,10 @@ export class TAAPipeline extends GPipeline {
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
 
-    const normalPass = new GNormalsPass()
-    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    normalPass.setJitter(true)
+    // const normalPass = new GNormalsPass()
+    // normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
+    // normalPass.setJitter(true)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -38,7 +37,8 @@ export class TAAPipeline extends GPipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.SHADOWCATCHER
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
     opaqueColorPass.outputTarget = null
@@ -63,6 +63,7 @@ export class TAAPipeline extends GPipeline {
 
     const blendPass = new GBlendPass()
     blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
+    blendPass.setTexture('tEdges', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
     const jitterOpaquePass = new GColorPass()
@@ -105,10 +106,8 @@ export class TAAPipeline extends GPipeline {
     this.dynamicStage.push(opaqueColorPass, transparentColorPass)
     this.progressiveStage.push(
       depthPass,
-      jitterOpaquePass,
-      jitterTransparentPass,
-      taaPass,
-      outputPass,
+      opaqueColorPass,
+      transparentColorPass,
       progressiveAOPass,
       blendPass
     )
