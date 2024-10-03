@@ -165,11 +165,14 @@ export class ServerBridge {
       }
     } as unknown as string)
 
-    await send(sendObject.rootObject as unknown as Base, {
-      serverUrl,
-      projectId,
-      token
-    }) // NOTE to dim
+    const { hash: rootCommitObjectId } = await send(
+      sendObject.rootObject as unknown as Base,
+      {
+        serverUrl,
+        projectId,
+        token
+      }
+    ) // NOTE to dim
 
     // BEFORE as below
     // TODO: More of a question: why are we not sending multiple batches at once?
@@ -196,7 +199,7 @@ export class ServerBridge {
       projectId,
       modelId,
       accountId,
-      objectId: sendObject.id,
+      objectId: rootCommitObjectId,
       sourceApplication: hostAppStore.hostAppName?.toLowerCase(),
       message: message || `send from ${hostAppStore.hostAppName?.toLowerCase()}`
     }
