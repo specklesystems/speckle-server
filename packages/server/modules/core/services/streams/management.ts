@@ -89,8 +89,8 @@ export async function createStreamReturnRecord(
         authorId: ownerId
       }),
       createBranchFactory({ db })({
-        name: '3d',
-        description: '3d branch',
+        name: 'geographic',
+        description: 'geographic branch',
         streamId,
         authorId: ownerId
       }),

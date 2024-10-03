@@ -1814,6 +1814,7 @@ export type Project = {
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
+  templateId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
   version?: Maybe<Version>;
@@ -2089,6 +2090,7 @@ export enum ProjectCommentsUpdatedMessageType {
 export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  templateId?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -6756,6 +6758,7 @@ export type ProjectFieldArgs = {
   role: {},
   sourceApps: {},
   team: {},
+  templateId: {},
   updatedAt: {},
   version: ProjectVersionArgs,
   versions: ProjectVersionsArgs,
