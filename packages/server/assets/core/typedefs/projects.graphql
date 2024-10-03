@@ -136,6 +136,7 @@ type ProjectMutations {
   Leave a project. Only possible if you're not the last remaining owner.
   """
   leave(id: String!): Boolean!
+  load(id: String!): Boolean!
 }
 
 extend type Mutation {

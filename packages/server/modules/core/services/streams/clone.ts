@@ -6,6 +6,7 @@ import {
 } from '@/modules/core/helpers/types'
 import {
   createStream,
+  getProjectFactory,
   getStream,
   StreamWithOptionalRole
 } from '@/modules/core/repositories/streams'
@@ -41,6 +42,7 @@ import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
 import { InsertCommentPayload } from '@/modules/comments/domain/operations'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { Branches } from '@/modules/core/dbSchema'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -216,7 +218,7 @@ async function cloneBranches(state: CloneStreamInitialState, newStreamId: string
       const oldId = b.id
       const createdDate = getNewDate()
 
-      b.id = generateBranchId()
+      // b.id = generateBranchId()
       b.streamId = newStreamId
       b.authorId = state.user.id
       b.createdAt = createdDate
@@ -225,7 +227,10 @@ async function cloneBranches(state: CloneStreamInitialState, newStreamId: string
       branchIdMap.set(oldId, b.id)
     })
 
-    await insertBranches(branchesBatch, { trx: state.trx })
+    // await insertBranches(branchesBatch, { trx: state.trx })
+    await Promise.all(
+      branchesBatch.map((b) => Branches.knex().where({ id: b.id }).update(b))
+    )
   }
 
   return branchIdMap
@@ -261,9 +266,15 @@ async function createBranchCommitReferences(
   }
 }
 
-async function cloneStreamCore(state: CloneStreamInitialState) {
-  const newStream = await cloneStreamEntity(state)
-  const { id: newStreamId } = newStream
+async function cloneStreamCore(state: CloneStreamInitialState, streamId?: string) {
+  let newStreamId = streamId
+  let newStream
+  if (!newStreamId) {
+    newStream = await cloneStreamEntity(state)
+    newStreamId = newStream.id
+  } else {
+    newStream = await getProjectFactory()({ projectId: newStreamId })
+  }
 
   // Clone objects
   await cloneStreamObjectsGrug(state, newStreamId)
@@ -410,14 +421,18 @@ async function cloneStreamComments(
  * access control checking before you invoke this function, if needed.
  * @returns The ID of the new stream
  */
-export async function cloneStream(userId: string, sourceStreamId: string) {
+export async function cloneStream(
+  userId: string,
+  sourceStreamId: string,
+  destinationStreamId?: string
+) {
   console.time('clone')
   const state = await prepareState(userId, sourceStreamId)
   console.timeLog('clone', 'state prep end')
 
   try {
     // Clone stream/commits/branches/objects
-    const coreCloneResult = await cloneStreamCore(state)
+    const coreCloneResult = await cloneStreamCore(state, destinationStreamId)
     const { newStream } = coreCloneResult
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)

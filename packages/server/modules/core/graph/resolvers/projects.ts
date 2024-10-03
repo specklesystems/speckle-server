@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -19,6 +20,7 @@ import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
+import { cloneStream } from '@/modules/core/services/streams/clone'
 import {
   createStreamReturnRecord,
   deleteStreamAndNotify,
@@ -66,6 +68,11 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
+    async load(_parend, args, ctx) {
+      const source = await db('streams').where({ name: 'Hackathon_2024' }).first()
+      await cloneStream(ctx.userId!, source.id, args.id)
+      return true
+    },
     async batchDelete(_parent, args, ctx) {
       const results = await Promise.all(
         args.ids.map((id) =>

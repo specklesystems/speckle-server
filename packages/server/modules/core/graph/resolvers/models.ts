@@ -50,8 +50,13 @@ import {
   addBranchDeletedActivity,
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
-import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
+import {
+  getProjectFactory,
+  getStream,
+  markBranchStreamUpdated
+} from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { cloneStream } from '../../services/streams/clone'
 
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,

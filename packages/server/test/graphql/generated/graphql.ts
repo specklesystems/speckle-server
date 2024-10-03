@@ -2234,6 +2234,7 @@ export type ProjectMutations = {
   invites: ProjectInviteMutations;
   /** Leave a project. Only possible if you're not the last remaining owner. */
   leave: Scalars['Boolean']['output'];
+  load: Scalars['Boolean']['output'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -2262,6 +2263,11 @@ export type ProjectMutationsDeleteArgs = {
 
 
 export type ProjectMutationsLeaveArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type ProjectMutationsLoadArgs = {
   id: Scalars['String']['input'];
 };
 
