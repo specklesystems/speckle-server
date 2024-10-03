@@ -43,6 +43,9 @@
         </div>
       </template>
       <div class="p-1 mb-2 sm:mb-0 sm:py-2">
+        <div>
+          <PortalTarget name="data-insights"></PortalTarget>
+        </div>
         <div class="space-y-2">
           <ViewerSelectionObject
             v-for="object in objectsLimited"

@@ -214,10 +214,17 @@
           @close="activeControl = 'none'"
         />
       </div>
+
       <div
         v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
       >
         <ViewerGendoPanel @close="activeControl = 'none'" />
+      </div>
+
+      <div>
+        <Portal to="data-insights">
+          <ViewerDataInsightsPanel :automation-runs="allAutomationRuns" />
+        </Portal>
       </div>
 
       <!-- Empty state -->
