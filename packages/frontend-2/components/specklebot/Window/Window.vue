@@ -3,23 +3,37 @@
 <template>
   <div
     class="absolute inset-0 h-dvh w-dvh flex pointer-events-none"
-    :class="open ? 'items-center justify-center' : 'items-end justify-end pb-6 pr-6'"
+    :class="
+      open
+        ? activeWindow === 'visual'
+          ? 'items-end justify-end'
+          : 'items-center justify-center'
+        : 'items-end justify-end pb-6 pr-6'
+    "
   >
     <div
-      v-if="open"
+      v-if="open && activeWindow !== 'visual'"
       class="absolute inset-0 z-40 backdrop-blur bg-foundation/10 pointer-events-auto"
       @click="closeWindow()"
     />
     <div
       class="relative z-50 w-full flex pointer-events-auto"
-      :class="open ? 'justify-center' : 'justify-end items-end'"
+      :class="
+        open
+          ? activeWindow === 'visual'
+            ? 'justify-end items-end'
+            : 'justify-center'
+          : 'justify-end items-end'
+      "
       @click="closeWindow()"
     >
       <div
         class="relative bg-foundation-page w-full border border-outline-3 shadow-xl overflow-hidden mt-12"
         :class="
           open
-            ? 'rounded-lg max-w-2xl'
+            ? activeWindow === 'visual'
+              ? 'rounded-t-lg max-w-full h-full'
+              : 'rounded-lg max-w-2xl'
             : 'rounded-full max-w-max hover:scale-110 hover:border-outline-5 transition-all'
         "
         @click.stop
@@ -69,6 +83,7 @@
           <SpecklebotWindowChat v-if="activeWindow === 'chat'" />
           <SpecklebotWindowCompliance v-if="activeWindow === 'compliance'" />
           <SpecklebotWindowVersion v-if="activeWindow === 'version'" />
+          <SpecklebotWindowVisual v-if="activeWindow === 'visual'" />
         </div>
       </div>
     </div>
