@@ -2,8 +2,10 @@ import { BatchObject } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
 import { Extension, IViewer, TreeNode } from '@speckle/viewer'
 import { NodeRenderView } from '@speckle/viewer'
-import { Box3Helper, Color, Matrix4, Vector3, Box3 } from 'three'
+import { Box3Helper, Color, Matrix4, Vector3, Box3, DoubleSide } from 'three'
 import potpack from 'potpack'
+import { SpeckleText } from '../objects/SpeckleText.js'
+import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 
 /** Simple animation data interface */
 interface Animation {
@@ -175,7 +177,8 @@ export class Categorize extends Extension {
       boxHelper.layers.set(ObjectLayers.OVERLAY)
       boxHelper.frustumCulled = false
       /** Add the BoxHelper to the scene */
-      this.viewer.getRenderer().scene.add(boxHelper)
+      //   this.viewer.getRenderer().scene.add(boxHelper)
+
       const bObj = finalBoxes[k].obj
       const boxCenter = box.getCenter(new Vector3())
       const aabbCenter = bObj.aabb.getCenter(new Vector3())
@@ -198,7 +201,58 @@ export class Categorize extends Extension {
         time: 0,
         radialEnd: finalRadial
       })
-      //   finalBoxes[k].obj.transformTRS(finalPos)
+    }
+
+    for (const categoryBox of categoryBoxes) {
+      /** Create a speckle text object */
+      const text = new SpeckleText('test-text', ObjectLayers.OVERLAY)
+
+      /** Simple text material */
+      const material = new SpeckleTextMaterial(
+        {
+          color: 0x1a1a1a,
+          opacity: 1,
+          side: DoubleSide
+        },
+        ['USE_RTE', 'BILLBOARD_FIXED']
+      )
+      material.toneMapped = false
+      material.color.convertSRGBToLinear()
+      material.opacity = 1
+      material.transparent = false
+      material.depthTest = false
+      material.billboardPixelHeight = 20
+      material.userData.billboardPos.value.copy(text.position)
+      text.textMesh.material = material.getDerivedMaterial()
+
+      if (text.backgroundMesh) text.backgroundMesh.renderOrder = 3
+      text.textMesh.renderOrder = 4
+
+      /** Set the layers to PROPS, so that AO and interactions will ignore them */
+      text.layers.set(ObjectLayers.OVERLAY)
+      text.textMesh.layers.set(ObjectLayers.OVERLAY)
+      /** Update the text with the cateogry name, size and anchor */
+      await text
+        .update({
+          textValue: categoryBox.category,
+          height: 1,
+          anchorX: '50%',
+          anchorY: '43%'
+        })
+        .then(() => {
+          text.style = {
+            textColor: new Color(0x1a1a1a),
+            backgroundColor: new Color(0xffffff),
+            billboard: true,
+            backgroundPixelHeight: 20
+          }
+          /** Move the text to the bottom center of the category box */
+          text.setTransform(
+            new Vector3(origin.x + categoryBox.x, origin.y + categoryBox.y, 0)
+          )
+        })
+      /** Add the text to the scene */
+      this.viewer.getRenderer().scene.add(text)
     }
   }
 
