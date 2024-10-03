@@ -21,7 +21,7 @@
           <img
             src="~/assets/images/specklebot.png"
             alt="Specklebot"
-            class="w-12 h-12"
+            class="w-10 h-10"
           />
           <p class="text-heading">Ask me anything about your model data</p>
         </div>

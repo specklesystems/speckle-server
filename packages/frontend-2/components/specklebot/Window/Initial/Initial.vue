@@ -1,7 +1,7 @@
 <template>
   <div class="w-full p-6 min-h-80">
     <div class="flex gap-3 items-center -mt-1">
-      <img src="~/assets/images/specklebot.png" alt="Specklebot" class="w-12 h-12" />
+      <img src="~/assets/images/specklebot.png" alt="Specklebot" class="w-10 h-10" />
       <h4 class="text-heading text-foreground mt-1.5">What can I help you with?</h4>
     </div>
 

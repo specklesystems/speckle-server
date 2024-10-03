@@ -1,6 +1,6 @@
 <template>
   <div>
-    <SpecklebotWindow v-if="isInputVisible" @close="hideInput" />
+    <SpecklebotWindow v-if="open" @close="hideInput" />
   </div>
 </template>
 
@@ -8,18 +8,18 @@
 import { ModifierKeys, onKeyboardShortcut } from '@speckle/ui-components'
 import { onKeyStroke } from '@vueuse/core'
 
-const isInputVisible = defineModel<boolean>('open', { required: true })
+const open = defineModel<boolean>('open', { required: true })
 
 const showInput = () => {
-  isInputVisible.value = true
+  open.value = true
 }
 
 const hideInput = () => {
-  isInputVisible.value = false
+  open.value = false
 }
 
 const toggleInput = () => {
-  if (isInputVisible.value) {
+  if (open.value) {
     hideInput()
   } else {
     showInput()

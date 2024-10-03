@@ -6,9 +6,10 @@
       class="absolute inset-0 z-10 backdrop-blur bg-foundation/10"
       @click="emit('close')"
     />
-    <div class="relative z-20 w-full flex justify-center">
+    <div class="relative z-20 w-full flex justify-center" @click="emit('close')">
       <div
         class="max-w-2xl bg-foundation-page w-full border border-outline-2 rounded-lg shadow-xl overflow-hidden"
+        @click.stop
       >
         <SpecklebotWindowInitial
           v-if="activeWindow === 'initial'"
