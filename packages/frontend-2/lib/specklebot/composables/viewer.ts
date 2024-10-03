@@ -49,14 +49,14 @@ export const useGetLoadedData = () => {
     }
 
     const versionsData = await Promise.all(
-      versions.map((v) => async () => {
-        const versionData = await loadVersionData(v.id)
-        return { versionInfo: v, versionData }
+      versions.map(async (v) => {
+        const versionData = await loadVersionData(v.referencedObject)
+        return { metadata: v, geometry: versionData }
       })
     )
 
     const ret = {
-      versionsData,
+      versions: versionsData,
       mainModelMetadata: omit(firstModel.model, ['loadedVersion', 'versions'])
     }
     cachedData = ret
