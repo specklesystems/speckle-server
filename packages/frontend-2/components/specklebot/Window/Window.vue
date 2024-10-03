@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { useOpenAIClient } from '~/lib/specklebot/composables/openai'
+import { useSpeckleBot } from '~/lib/specklebot/composables/openai'
 import type Question from './Question.vue'
 
 const emit = defineEmits<{
@@ -80,7 +80,7 @@ interface Question {
   favorite: boolean
 }
 
-const { askPrompt } = useOpenAIClient()
+const { ask, response, loading } = useSpeckleBot()
 
 const savedQuestions = ref<Question[]>([])
 
@@ -109,8 +109,6 @@ const suggestedQuestions = ref<Question[]>([
 
 const specklebotInput = ref<HTMLInputElement | null>(null)
 const prompt = ref('')
-const loading = ref(false)
-const response = ref('')
 
 const toggleFavorite = (question: Question) => {
   question.favorite = !question.favorite
@@ -128,13 +126,7 @@ const onSubmit = async () => {
   if (!finalPrompt.length) return
 
   prompt.value = ''
-  loading.value = true
-
-  for await (const message of askPrompt({ prompt: finalPrompt })) {
-    response.value += message || ''
-  }
-
-  loading.value = false
+  await ask({ prompt: finalPrompt })
 }
 
 onMounted(() => {

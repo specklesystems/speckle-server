@@ -29,3 +29,31 @@ export const useOpenAIClient = () => {
     askPrompt
   }
 }
+
+export const useSpeckleBot = () => {
+  const { askPrompt } = useOpenAIClient()
+
+  const response = ref('')
+  const loading = ref(false)
+
+  const ask = async (params: { prompt: string }) => {
+    const { prompt } = params
+
+    response.value = ''
+    loading.value = true
+    try {
+      const generator = askPrompt({ prompt })
+      for await (const chunk of generator) {
+        response.value += chunk || ''
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    ask,
+    response,
+    loading
+  }
+}
