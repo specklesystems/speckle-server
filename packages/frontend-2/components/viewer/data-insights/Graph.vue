@@ -63,10 +63,10 @@ export type Report = {
 }
 
 const colors = [
-  // Steel is blue
+  // "Steel is blue" -Björn
   ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC']
+  ['#22C28A', '#4EF9BD', '#77FACC', '#A2FCDD'],
+  ['#C29722', '#F9CB4E', '#FAD777', '#FCE4A2'],
+  ['#C26722', '#F9984E', '#FAB077', '#FCC9A2']
 ]
 </script>

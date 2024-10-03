@@ -24,7 +24,9 @@ const props = defineProps<{
 
 defineEmits(['close'])
 
-const isEmpty = false
+const isEmpty = computed(() => {
+  return !!props.automationRuns.at(0)?.functionRuns.at(0)?.function?.id
+})
 
 const { getBlobUrl } = useFileDownload()
 const { projectId } = useInjectedViewerState()
@@ -45,62 +47,7 @@ type MaterialDataEntry = {
 
 const report = ref<Report>({
   name: 'Material Composition',
-  entries: [
-    {
-      label: 'Steel',
-      totalPercent: 60,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Timber',
-      totalPercent: 30,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Grass',
-      totalPercent: 10,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    }
-  ]
+  entries: []
 })
 
 watch(
