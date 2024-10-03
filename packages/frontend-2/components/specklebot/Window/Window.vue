@@ -16,7 +16,7 @@
       @click="closeWindow()"
     >
       <div
-        class="relative bg-foundation-page w-full border border-outline-3 shadow-xl overflow-hidden"
+        class="relative bg-foundation-page w-full border border-outline-3 shadow-xl overflow-hidden mt-12"
         :class="
           open
             ? 'rounded-lg max-w-2xl'
@@ -24,17 +24,24 @@
         "
         @click.stop
       >
-        <button
-          v-if="open && activeWindow !== 'initial'"
-          class="absolute flex gap-2 items-center top-4 left-4 text-body-xs text-foreground-2 hover:text-foreground"
-          @click="activeWindow = 'initial'"
+        <div
+          v-if="open"
+          class="flex items-center justify-between p-2 bg-foundation-page"
         >
-          <ChevronLeftIcon class="h-4 w-4" />
-          Back
-        </button>
-        <button v-if="open" class="absolute top-4 right-4" @click="closeWindow()">
-          <XMarkIcon class="h-5 w-5 text-foreground-2 hover:text-foreground" />
-        </button>
+          <button
+            v-if="activeWindow !== 'initial'"
+            class="flex gap-2 items-center text-body-xs text-foreground-2 hover:text-foreground"
+            @click="activeWindow = 'initial'"
+          >
+            <ChevronLeftIcon class="h-4 w-4" />
+            Back
+          </button>
+          <div v-else />
+          <button @click="closeWindow()">
+            <XMarkIcon class="h-5 w-5 text-foreground-2 hover:text-foreground" />
+          </button>
+        </div>
+
         <div
           v-if="!open"
           class="group cursor-pointer bg-foundation p-3"
@@ -51,15 +58,17 @@
             class="w-8 h-8 group-hover:hidden"
           />
         </div>
-        <div v-if="open" :class="activeWindow !== 'initial' ? 'mt-8' : ''">
+        <div v-if="open">
           <SpecklebotWindowInitial
             v-if="activeWindow === 'initial'"
-            @card-clicked="handleCardClick"
+            @chat-clicked="activeWindow = 'chat'"
+            @compliance-clicked="activeWindow = 'compliance'"
+            @version-clicked="activeWindow = 'version'"
+            @visual-clicked="activeWindow = 'visual'"
           />
-          <SpecklebotWindowChat
-            v-if="activeWindow === 'chat'"
-            :initial-prompt="initialPrompt"
-          />
+          <SpecklebotWindowChat v-if="activeWindow === 'chat'" />
+          <SpecklebotWindowCompliance v-if="activeWindow === 'compliance'" />
+          <SpecklebotWindowVersion v-if="activeWindow === 'version'" />
         </div>
       </div>
     </div>
@@ -73,13 +82,9 @@ import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/20/solid'
 
 const open = ref(false)
 
-const activeWindow = ref<'initial' | 'chat'>('initial')
-const initialPrompt = ref('')
-
-const handleCardClick = (cardTitle: string) => {
-  activeWindow.value = 'chat'
-  initialPrompt.value = `Let's talk about ${cardTitle}.`
-}
+const activeWindow = ref<'initial' | 'chat' | 'compliance' | 'version' | 'visual'>(
+  'initial'
+)
 
 const openWindow = () => {
   open.value = true

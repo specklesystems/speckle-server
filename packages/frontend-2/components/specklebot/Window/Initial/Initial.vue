@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full p-6 min-h-80">
+  <div class="w-full p-6 pt-0 min-h-80">
     <div class="flex gap-3 items-center -mt-1">
       <img src="~/assets/images/specklebot.png" alt="Specklebot" class="w-10 h-10" />
       <h4 class="text-heading text-foreground mt-1.5">What can I help you with?</h4>
@@ -11,7 +11,7 @@
         :key="index"
         :title="card.title"
         :description="card.description"
-        @click="handleCardClick(card)"
+        @click="card.onClick"
       />
     </div>
   </div>
@@ -19,33 +19,36 @@
 
 <script setup lang="ts">
 const emit = defineEmits<{
-  (e: 'cardClicked', cardTitle: string): void
+  (e: 'chatClicked'): void
+  (e: 'complianceClicked'): void
+  (e: 'visualClicked'): void
+  (e: 'versionClicked'): void
 }>()
 
 const cards = [
   {
     title: 'Model Insights',
     description:
-      'Explore and ask questions about your data, unlocking valuable information and trends.'
+      'Explore and ask questions about your data, unlocking valuable information and trends.',
+    onClick: () => emit('chatClicked')
   },
   {
-    title: 'Data Analysis',
+    title: 'Version Analysis',
     description:
-      'Get detailed analysis of your project data, including statistics and visualizations.'
+      'Track changes in your project over time, identifying who made modifications and when they occurred.',
+    onClick: () => emit('versionClicked')
   },
   {
-    title: 'Search Assistant',
+    title: 'Visual Interpreter',
     description:
-      'Find specific information or elements within your projects quickly and easily.'
+      'Analyze images of your models, allowing SpeckleBot to provide insights based on visual inspection.',
+    onClick: () => emit('visualClicked')
   },
   {
-    title: 'Collaboration Helper',
+    title: 'Compliance Inspector',
     description:
-      'Get assistance with team coordination, task management, and communication.'
+      'Upload local building specifications and check your file for compliance with regulatory standards.',
+    onClick: () => emit('complianceClicked')
   }
 ]
-
-const handleCardClick = (card: (typeof cards)[number]) => {
-  emit('cardClicked', card.title)
-}
 </script>

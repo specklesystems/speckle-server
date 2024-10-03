@@ -5,7 +5,7 @@
         v-if="loading"
         src="~/assets/images/specklebot.gif"
         alt="Specklebot"
-        class="w-8 h-8 hidden"
+        class="w-8 h-8"
       />
       <img
         v-else
@@ -18,8 +18,8 @@
       class="max-w-max w-7/12 text-body-xs rounded-md px-4 py-2"
       :class="isUser ? 'ml-auto bg-primary text-foundation' : 'bg-highlight-3'"
     >
-      <div v-if="loading">
-        <div class="flex gap-0.5 justify-center items-center">
+      <div v-if="loading" class="h-full">
+        <div class="flex gap-0.5 justify-center items-center h-full">
           <span class="sr-only">Loading...</span>
           <div
             class="h-1 w-1 bg-foreground-2 rounded-full animate-bounce [animation-delay:-0.3s]"

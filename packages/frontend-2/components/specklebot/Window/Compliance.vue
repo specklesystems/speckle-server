@@ -6,7 +6,7 @@
     <div
       v-if="chatHistory.length"
       ref="chatContainer"
-      class="p-6 gap-y-4 max-h-[70dvh] overflow-y-auto simple-scrollbar flex flex-col-reverse"
+      class="p-6 gap-y-4 max-h-96 overflow-y-auto simple-scrollbar flex flex-col-reverse"
     >
       <div class="flex flex-col gap-5">
         <SpecklebotWindowChatMessage
@@ -25,26 +25,29 @@
       </div>
     </div>
     <template v-else>
-      <div class="p-6 pt-3 min-h-80 flex flex-col justify-between">
+      <div class="p-6 pt-3 flex flex-col gap-4">
         <div class="flex gap-3 items-center -mt-1">
           <img
             src="~/assets/images/specklebot.png"
             alt="Specklebot"
             class="w-10 h-10"
           />
-          <p class="text-heading">Ask me anything about your model data</p>
+          <p class="text-heading">I can help with compliance</p>
         </div>
         <div>
-          <h6 class="text-body-xs font-medium text-foreground-2 mb-1 opacity-80">
-            Suggested questions
-          </h6>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <SpecklebotWindowInitialCard
-              v-for="(card, index) in cards"
-              :key="index"
-              :description="card.description"
-              @click="askQuestion(card.description)"
-            />
+          <p class="text-body-xs text-foreground-2 mb-4">
+            Enhance my compliance checking capabilities by uploading your local building
+            codes or project-specific specifications. This allows me to automatically
+            verify your model against relevant standards.
+          </p>
+          <div
+            class="group border border-outline-5 hover:border-outline-1 cursor-pointer border-dashed rounded-md p-4 text-center"
+          >
+            <span
+              class="text-foreground-2 text-body-sm font-medium group-hover:text-outline-1"
+            >
+              Drop files here or click to upload
+            </span>
           </div>
         </div>
       </div>
@@ -57,9 +60,8 @@
         id="specklebot-input"
         ref="specklebotInput"
         v-model="prompt"
-        :disabled="loading"
         name="query"
-        :placeholder="loading ? 'Loading...' : 'Ask SpeckleBot...'"
+        placeholder="Ask SpeckleBot..."
         class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm bg-foundation"
         @keydown.enter="onSubmit"
       />
@@ -91,19 +93,6 @@ interface ChatMessage {
 const specklebotInput = ref<HTMLInputElement | null>(null)
 const prompt = ref('')
 const chatHistory = ref<ChatMessage[]>([])
-
-const cards = [
-  {
-    description:
-      'Can you return a breakdown of all of the different walls in the model?'
-  },
-  {
-    description: 'What type of concrete is used in this model?'
-  },
-  {
-    description: 'What material are the top rails made of?'
-  }
-]
 
 const askQuestion = async (question: string) => {
   await ensure()
