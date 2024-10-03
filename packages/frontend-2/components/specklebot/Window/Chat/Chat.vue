@@ -94,8 +94,7 @@ const chatHistory = ref<ChatMessage[]>([])
 
 const cards = [
   {
-    description:
-      'Can you return a breakdown of all of the different walls in the model?'
+    description: 'Give me a list of all the objects whose category is Walls.'
   },
   {
     description: 'What type of concrete is used in this model?'
