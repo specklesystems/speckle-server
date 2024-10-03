@@ -2,18 +2,21 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="w-full">
-    <div v-if="loading" class="p-6">Loading...</div>
     <div
       v-if="chatHistory.length"
-      class="p-6 gap-y-4 max-h-96 overflow-y-auto simple-scrollbar"
+      ref="chatContainer"
+      class="p-6 gap-y-4 max-h-96 overflow-y-auto simple-scrollbar flex flex-col-reverse"
     >
-      <SpecklebotWindowChatMessage
-        v-for="(message, index) in chatHistory"
-        :key="index"
-        :is-user="message.isUser"
-      >
-        {{ message.content }}
-      </SpecklebotWindowChatMessage>
+      <div class="flex flex-col gap-5">
+        <SpecklebotWindowChatMessage
+          v-for="(message, index) in chatHistory"
+          :key="index"
+          :is-user="message.isUser"
+          :loading="!message.isUser && message.content.length === 0"
+        >
+          {{ message.content }}
+        </SpecklebotWindowChatMessage>
+      </div>
     </div>
     <template v-else>
       <div class="p-6 min-h-80 flex flex-col justify-between">
@@ -47,12 +50,11 @@
         name="query"
         :placeholder="loading ? 'LOADING' : 'Ask SpeckleBot...'"
         class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm bg-foundation"
-        @keydown.esc="emit('close')"
         @keydown.enter="onSubmit"
       />
       <button
         class="bg-foundation-2 hover:bg-highlight-3 p-2 rounded text-body-3xs text-foregorund-2 mr-4 select-none"
-        @click="emit('close')"
+        @click="onSubmit"
       >
         <ArrowRightIcon class="h-4 w-4" />
       </button>
@@ -63,10 +65,6 @@
 <script setup lang="ts">
 import { useSpeckleBot } from '~/lib/specklebot/composables/openai'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
-
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
 
 const { askAboutLoadedData, loading } = useSpeckleBot()
 
