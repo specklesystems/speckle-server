@@ -1,55 +1,58 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="absolute inset-0 h-dvh w-dvh">
-    <div class="absolute inset-0 backdrop-blur bg-foundation/10" />
-    <div class="absolute inset-0 z-10 flex items-center justify-center">
-      <div class="relative">
+  <div class="absolute inset-0 h-dvh w-dvh flex items-center justify-center">
+    <div
+      class="absolute inset-0 z-10 backdrop-blur bg-foundation/10"
+      @click="emit('close')"
+    />
+    <div class="relative z-20">
+      <div
+        class="max-w-2xl bg-foundation-3 w-full border border-outline-2 rounded-lg shadow-xl overflow-hidden"
+      >
+        <label for="specklebot-input" class="sr-only">Ask SpeckleBot</label>
+        <div class="flex justify-between items-center">
+          <input
+            id="specklebot-input"
+            ref="specklebotInput"
+            name="query"
+            placeholder="Ask SpeckleBot..."
+            class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm"
+            @keydown.esc="emit('close')"
+          />
+          <button
+            class="bg-highlight-2 hover:bg-highlight-3 p-2 rounded text-body-3xs text-foregorund-2 mr-2 select-none"
+            @click="emit('close')"
+          >
+            ESC
+          </button>
+        </div>
+
+        <!-- Saved questions -->
         <div
-          class="max-w-2xl bg-foundation-3 w-full border border-outline-2 rounded-lg shadow-xl overflow-hidden"
+          v-if="savedQuestions.length > 0"
+          class="flex flex-col border-t border-outline-3 divide-y divide-outline-3 w-full"
         >
-          <label for="specklebot-input" class="sr-only">Ask SpeckleBot</label>
-          <div class="flex justify-between items-center">
-            <input
-              id="specklebot-input"
-              ref="specklebotInput"
-              name="query"
-              placeholder="Ask SpeckleBot..."
-              class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm"
-              @keydown.esc="emit('close')"
-            />
-            <button
-              class="bg-highlight-2 hover:bg-highlight-3 p-2 rounded text-body-3xs text-foregorund-2 mr-2 select-none"
-              @click="emit('close')"
-            >
-              ESC
-            </button>
-          </div>
+          <h6 class="p-6 pb-3 font-medium text-sm">Saved questions</h6>
+          <SpecklebotWindowQuestion
+            v-for="(question, index) in savedQuestions"
+            :key="index"
+            :question="question"
+            @toggle-favorite="toggleFavorite"
+          />
+        </div>
 
-          <!-- Saved questions -->
-          <div
-            v-if="savedQuestions.length > 0"
-            class="flex flex-col border-t border-outline-3 divide-y divide-outline-3 w-full"
-          >
-            <h6 class="p-6 pb-3 font-medium text-sm">Saved questions</h6>
-            <SpecklebotWindowQuestion
-              v-for="(question, index) in savedQuestions"
-              :key="index"
-              :question="question"
-              @toggle-favorite="toggleFavorite"
-            />
-          </div>
-
-          <!-- Suggested questions -->
-          <div
-            class="flex flex-col border-t border-outline-3 divide-y divide-outline-3 w-full"
-          >
-            <h6 class="p-6 pb-3 font-medium text-sm">Suggested questions</h6>
-            <SpecklebotWindowQuestion
-              v-for="(question, index) in suggestedQuestions"
-              :key="index"
-              :question="question"
-              @toggle-favorite="toggleFavorite"
-            />
-          </div>
+        <!-- Suggested questions -->
+        <div
+          class="flex flex-col border-t border-outline-3 divide-y divide-outline-3 w-full"
+        >
+          <h6 class="p-6 pb-3 font-medium text-sm">Suggested questions</h6>
+          <SpecklebotWindowQuestion
+            v-for="(question, index) in suggestedQuestions"
+            :key="index"
+            :question="question"
+            @toggle-favorite="toggleFavorite"
+          />
         </div>
       </div>
     </div>
