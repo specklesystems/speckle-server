@@ -161,10 +161,17 @@ const rootNodes = computed(() => {
     ...unmatchedNodes
   ]
 
-  return nodes.map(
+  const finalNodes = nodes.map(
     (n): TreeItemComponentModel => ({
       rawNode: markRaw(n)
     })
   )
+
+  // Log the full rootNodes as JSON
+  // console.log('ROOTNODES_JSON_START')
+  // console.log(JSON.stringify(finalNodes, null, 2))
+  // console.log('ROOTNODES_JSON_END')
+
+  return finalNodes
 })
 </script>

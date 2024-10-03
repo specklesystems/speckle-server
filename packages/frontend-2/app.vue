@@ -7,6 +7,7 @@
       <NuxtPage />
     </NuxtLayout>
     <SingletonManagers />
+    <SpecklebotWrapper />
   </div>
 </template>
 <script setup lang="ts">
