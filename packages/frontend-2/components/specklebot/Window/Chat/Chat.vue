@@ -43,9 +43,9 @@
         id="specklebot-input"
         ref="specklebotInput"
         v-model="prompt"
-        :readonly="loading"
+        :disabled="loading"
         name="query"
-        placeholder="Ask SpeckleBot..."
+        :placeholder="loading ? 'LOADING' : 'Ask SpeckleBot...'"
         class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm bg-foundation"
         @keydown.esc="emit('close')"
         @keydown.enter="onSubmit"
@@ -61,14 +61,14 @@
 </template>
 
 <script setup lang="ts">
-import { useOpenAIClient } from '~/lib/specklebot/composables/openai'
+import { useSpeckleBot } from '~/lib/specklebot/composables/openai'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const { askPrompt } = useOpenAIClient()
+const { askAboutLoadedData, loading } = useSpeckleBot()
 
 interface ChatMessage {
   content: string
@@ -77,7 +77,6 @@ interface ChatMessage {
 
 const specklebotInput = ref<HTMLInputElement | null>(null)
 const prompt = ref('')
-const loading = ref(false)
 const chatHistory = ref<ChatMessage[]>([])
 
 const cards = [
@@ -93,19 +92,18 @@ const cards = [
 ]
 
 const askQuestion = async (question: string) => {
+  await ensure()
+
   if (loading.value) return
-
   chatHistory.value.push({ content: question, isUser: true })
-  loading.value = true
+  const generator = ask({ message: question })
 
-  let aiResponse = ''
-
-  for await (const message of askPrompt({ prompt: question })) {
-    aiResponse += message || ''
+  const responseMsg: ChatMessage = { content: '', isUser: false }
+  chatHistory.value.push(responseMsg)
+  for await (const msg of generator) {
+    responseMsg.content += msg || ''
+    chatHistory.value = [...chatHistory.value]
   }
-
-  chatHistory.value.push({ content: aiResponse, isUser: false })
-  loading.value = false
 }
 
 const onSubmit = () => {
@@ -121,4 +119,7 @@ onMounted(() => {
     specklebotInput.value?.focus()
   })
 })
+
+const { ask, ensure } = askAboutLoadedData({ loadedData: { a: 1, b: 2, c: 3 } })
+ensure()
 </script>
