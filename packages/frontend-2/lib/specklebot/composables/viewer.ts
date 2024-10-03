@@ -2,6 +2,7 @@ import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import ObjectLoader from '@speckle/objectloader'
 import { useAuthCookie } from '~/lib/auth/composables/auth'
 import type { Optional } from '@speckle/shared'
+import { omit } from 'lodash-es'
 
 export const useGetLoadedData = () => {
   const {
@@ -19,30 +20,45 @@ export const useGetLoadedData = () => {
   const getLoadedData = async (): Promise<Record<string, unknown>> => {
     if (cachedData) return cachedData
 
-    const firstVersion = modelsAndVersionIds.value[0]?.model.loadedVersion.items[0]
-    if (!firstVersion) return {}
+    const firstModel = modelsAndVersionIds.value.find(
+      (m) => m.model.versions.items.length > 0
+    )
+    if (!firstModel) return {}
 
-    const objectId = firstVersion.referencedObject
-    const objectLoader = new ObjectLoader({
-      serverUrl: apiOrigin,
-      streamId: projectId.value,
-      objectId,
-      token: token.value,
-      options: {
-        excludeProps: [
-          '__closure',
-          'totalChildrenCount',
-          'displayValue',
-          '@displayValue'
-        ]
-      }
-    })
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    const versionData = await objectLoader.getAndConstructObject((e) =>
-      log(`Progress ${e.stage}: ${e.current}`)
+    const versions = firstModel.model.versions.items
+
+    const loadVersionData = async (objectId: string) => {
+      const objectLoader = new ObjectLoader({
+        serverUrl: apiOrigin,
+        streamId: projectId.value,
+        objectId,
+        token: token.value,
+        options: {
+          excludeProps: [
+            '__closure',
+            'totalChildrenCount',
+            'displayValue',
+            '@displayValue'
+          ]
+        }
+      })
+      // eslint-disable-next-line @typescript-eslint/await-thenable
+      return await objectLoader.getAndConstructObject((e) =>
+        log(`Progress ${e.stage}: ${e.current}`)
+      )
+    }
+
+    const versionsData = await Promise.all(
+      versions.map((v) => async () => {
+        const versionData = await loadVersionData(v.id)
+        return { versionInfo: v, versionData }
+      })
     )
 
-    const ret = { versionInfo: firstVersion, versionData }
+    const ret = {
+      versionsData,
+      mainModelMetadata: omit(firstModel.model, ['loadedVersion', 'versions'])
+    }
     cachedData = ret
     return ret
   }

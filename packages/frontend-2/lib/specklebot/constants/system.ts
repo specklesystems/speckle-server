@@ -7,5 +7,5 @@ export const baseSystem: string[] = [
 export const askAboutLoadedDataSystem = [
   ...baseSystem,
   'I have loaded a 3D model in the viewer and want to ask some questions about it. The model is represented as a JSON object with various properties.',
-  "I've uploaded the 3D model's JSON representation to this conversation."
+  "I've uploaded the 3D model's JSON representation to this conversation. Its a JSON file that contians 2 top level keys - 'versionsData' that holds a list of all versions of the 3D model (newer ones come first), and 'mainModelMetadata' which covers main model information like name etc."
 ]
