@@ -283,13 +283,21 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   }
 
   app.$sendBinding?.on('setModelsExpired', (modelCardIds) => {
-    documentModelStore.value.models
-      .filter((m) => modelCardIds.includes(m.modelCardId))
-      .forEach((model: ISenderModelCard) => {
-        model.latestCreatedVersionId = undefined
-        model.error = undefined
+    const modelCardsToExpire = documentModelStore.value.models.filter((m) =>
+      modelCardIds.includes(m.modelCardId)
+    )
+    modelCardsToExpire.forEach((model: ISenderModelCard) => {
+      const liveSessionSetting = model.settings?.find(
+        (s) => s.id === 'enableLiveSession'
+      )
+      if (liveSessionSetting && liveSessionSetting.value) {
+        sendModel(model.modelCardId, 'AutoUpdate')
+      } else {
         model.expired = true
-      })
+      }
+      model.latestCreatedVersionId = undefined
+      model.error = undefined
+    })
   })
 
   const setModelSendResult = (args: {
