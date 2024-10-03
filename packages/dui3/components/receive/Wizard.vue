@@ -196,6 +196,7 @@ const selectVersionAndAddModel = async (
 
   modelCard.hasDismissedUpdateWarning = true
   modelCard.hasSelectedOldVersion = version.id !== latestVersion.id
+  modelCard.settings = hostAppStore.receiveSettings
 
   emit('close')
   await hostAppStore.addModel(modelCard)
