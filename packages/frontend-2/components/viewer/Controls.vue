@@ -56,6 +56,15 @@
       <!-- TODO: direct add comment -->
       <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
 
+      <!-- Data Insights -->
+      <ViewerControlsButtonToggle
+        v-tippy="'Learn things'"
+        :active="activeControl === 'dataInsights'"
+        @click="toggleActiveControl('dataInsights')"
+      >
+        🦀
+      </ViewerControlsButtonToggle>
+
       <!-- Measurements -->
       <ViewerControlsButtonToggle
         v-tippy="isSmallerOrEqualSm ? undefined : measureShortcut"
@@ -130,15 +139,6 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
-
-          <!-- Data Insights -->
-          <ViewerControlsButtonToggle
-            v-tippy="'Learn things'"
-            :active="activeControl === 'dataInsights'"
-            @click="toggleActiveControl('dataInsights')"
-          >
-            🦀
-          </ViewerControlsButtonToggle>
 
           <!-- Gendo -->
           <ViewerControlsButtonToggle

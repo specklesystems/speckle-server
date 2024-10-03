@@ -12,11 +12,13 @@
 </template>
 
 <script setup lang="ts">
+import type { Automate } from '@speckle/shared'
 import type { Report } from '~/components/viewer/data-insights/Graph.vue'
 import type { AutomateViewerPanel_AutomateRunFragment } from '~/lib/common/generated/gql/graphql'
-import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
+import { useFileDownload } from '~/lib/core/composables/fileUpload'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
-defineProps<{
+const props = defineProps<{
   automationRuns: AutomateViewerPanel_AutomateRunFragment[]
 }>()
 
@@ -24,7 +26,8 @@ defineEmits(['close'])
 
 const isEmpty = false
 
-const { objects } = useSelectionUtilities()
+const { getBlobUrl } = useFileDownload()
+const { projectId } = useInjectedViewerState()
 
 type MaterialData = [
   ('id' | 'Type' | 'Material' | 'Grade' | 'Volume' | 'Mass')[],
@@ -39,6 +42,95 @@ type MaterialDataEntry = {
   Volume: string
   Mass: string
 }
+
+const report = ref<Report>({
+  name: 'Material Composition',
+  entries: [
+    {
+      label: 'Steel',
+      totalPercent: 60,
+      segments: [
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 60
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 30
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 10
+        }
+      ]
+    },
+    {
+      label: 'Timber',
+      totalPercent: 30,
+      segments: [
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 60
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 30
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 10
+        }
+      ]
+    },
+    {
+      label: 'Grass',
+      totalPercent: 10,
+      segments: [
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 60
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 30
+        },
+        {
+          objectIds: ['db93d618dc57f1bafb38191e75864574'],
+          entryPercent: 10
+        }
+      ]
+    }
+  ]
+})
+
+watch(
+  props,
+  () => {
+    // const run = props.automationRuns.at(0)
+
+    // if (!run) return
+
+    // const results = run.functionRuns[0].results as Automate.AutomateTypes.ResultsSchema
+    // const blobId = results.values.blobIds?.[0]
+
+    const blobId = 'e5a5b23698'
+
+    getBlobUrl({ blobId: blobId!, projectId: projectId.value })
+      .then((url) => {
+        return fetch(url)
+      })
+      .then((res) => {
+        return res.text()
+      })
+      .then((data) => {
+        const json = JSON.parse(data.replaceAll("'", '"').replaceAll('None', '""'))
+        report.value = toReport(json)
+      })
+  },
+  {
+    immediate: true
+  }
+)
 
 const toReport = (data: MaterialData): Report => {
   let totalVolume = 0
@@ -62,15 +154,18 @@ const toReport = (data: MaterialData): Report => {
 
     const entryVolume = Number.parseFloat(entry.Volume)
 
-    totalVolume = totalVolume + entryVolume
+    const factor = entry.Material === 'Concrete' ? 0.1 : 1
+
+    totalVolume = totalVolume + entryVolume * factor
 
     volumeByMaterial[entry.Material] ??= 0
-    volumeByMaterial[entry.Material] = volumeByMaterial[entry.Material] + entryVolume
+    volumeByMaterial[entry.Material] =
+      volumeByMaterial[entry.Material] + entryVolume * factor
 
     volumeByMaterialGrade[entry.Material] ??= {}
     volumeByMaterialGrade[entry.Material][entry.Grade] ??= 0
     volumeByMaterialGrade[entry.Material][entry.Grade] =
-      volumeByMaterialGrade[entry.Material][entry.Grade] + entryVolume
+      volumeByMaterialGrade[entry.Material][entry.Grade] + entryVolume * factor
 
     objectIdsByMaterialByGrade[entry.Material] ??= {}
     objectIdsByMaterialByGrade[entry.Material][entry.Grade] ??= []
@@ -94,65 +189,5 @@ const toReport = (data: MaterialData): Report => {
   }
 
   return report
-}
-
-const report: Report = {
-  name: 'Material Composition',
-  entries: [
-    {
-      label: 'Steel',
-      totalPercent: 60,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Label',
-      totalPercent: 30,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Label',
-      totalPercent: 10,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    }
-  ]
 }
 </script>

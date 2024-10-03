@@ -1,6 +1,6 @@
 <template>
-  <div class="w-full grid grid-cols-[4fr_6fr] grid-flow-row gap-2">
-    <div class="col-span-2 row-span-1">Graph Name</div>
+  <div class="w-full grid grid-cols-[min-content_1fr] grid-flow-row gap-2">
+    <div class="col-span-2 row-span-1">{{ report.name }}</div>
     <template v-for="(entry, i) in report.entries" :key="i">
       <div class="pl-2 pr-4 h-6 flex items-center">
         <p class="text-sm">{{ entry.label }}</p>
@@ -10,16 +10,17 @@
           <div class="w-full h-full flex flex-row">
             <div
               class="h-full border border-2 border-white rounded-md overflow-hidden flex flex-row"
-              :style="{ width: `${entry.totalPercent}%` }"
+              :style="{ width: `${max([entry.totalPercent, 5])}%` }"
             >
               <div
                 v-for="(segment, j) in entry.segments"
                 :key="j"
-                class="h-full"
+                class="h-full hover:opacity-80"
                 :style="{
                   width: `${segment.entryPercent}%`,
                   backgroundColor: colors[i][j]
                 }"
+                @click="() => handleClick(segment.objectIds)"
               ></div>
             </div>
           </div>
@@ -36,9 +37,18 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+import { max } from 'lodash-es'
+import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
+
+defineProps<{
   report: Report
 }>()
+
+const { setSelectionFromObjectIds } = useSelectionUtilities()
+
+const handleClick = (objectIds: string[]): void => {
+  setSelectionFromObjectIds(objectIds)
+}
 
 export type Report = {
   name: string
