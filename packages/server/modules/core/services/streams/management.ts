@@ -61,7 +61,7 @@ export async function createStreamReturnRecord(
     ownerId: string
     ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   },
-  options?: Partial<{ createActivity: boolean }>
+  options?: Partial<{ createActivity: boolean; templateId?: string }>
 ): Promise<StreamRecord> {
   const { ownerId, ownerResourceAccessRules } = params
   const { createActivity = true } = options || {}
@@ -79,13 +79,24 @@ export async function createStreamReturnRecord(
   const stream = await createStream(params, { ownerId })
   const streamId = stream.id
 
-  // Create a default main branch
-  await createBranchFactory({ db })({
-    name: 'main',
-    description: 'default branch',
-    streamId,
-    authorId: ownerId
-  })
+  if (options?.templateId) {
+    await Promise.all([
+      createBranchFactory({ db })({
+        name: 'main',
+        description: 'default branch',
+        streamId,
+        authorId: ownerId
+      })
+    ])
+  } else {
+    // Create a default main branch
+    await createBranchFactory({ db })({
+      name: 'main',
+      description: 'default branch',
+      streamId,
+      authorId: ownerId
+    })
+  }
 
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {

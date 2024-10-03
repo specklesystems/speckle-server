@@ -2108,6 +2108,7 @@ export enum ProjectCommentsUpdatedMessageType {
 export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  templateId?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };

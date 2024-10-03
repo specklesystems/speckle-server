@@ -110,7 +110,7 @@ export = {
           ownerId: context.userId!,
           ownerResourceAccessRules: context.resourceAccessRules
         },
-        { createActivity: true }
+        { createActivity: true, templateId: args.input?.templateId ?? undefined }
       )
 
       return project
