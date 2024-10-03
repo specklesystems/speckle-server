@@ -6,12 +6,18 @@
       class="absolute inset-0 z-10 backdrop-blur bg-foundation/10"
       @click="emit('close')"
     />
-    <div class="relative z-20">
+    <div class="relative z-20 w-full flex justify-center">
       <div
-        class="max-w-2xl bg-foundation-3 w-full border border-outline-2 rounded-lg shadow-xl overflow-hidden"
+        class="max-w-2xl bg-foundation-page w-full border border-outline-2 rounded-lg shadow-xl overflow-hidden"
       >
-        <SpecklebotWindowInitial v-if="activeWindow === 'initial'" />
-        <SpecklebotWindowChat v-if="activeWindow === 'chat'" />
+        <SpecklebotWindowInitial
+          v-if="activeWindow === 'initial'"
+          @card-clicked="handleCardClick"
+        />
+        <SpecklebotWindowChat
+          v-if="activeWindow === 'chat'"
+          :initial-prompt="initialPrompt"
+        />
       </div>
     </div>
   </div>
@@ -22,12 +28,11 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const activeWindow = ref<'initial' | 'chat'>('chat')
-const specklebotInput = ref<HTMLInputElement | null>(null)
+const activeWindow = ref<'initial' | 'chat'>('initial')
+const initialPrompt = ref('')
 
-onMounted(() => {
-  nextTick(() => {
-    specklebotInput.value?.focus()
-  })
-})
+const handleCardClick = (cardTitle: string) => {
+  activeWindow.value = 'chat'
+  initialPrompt.value = `Let's talk about ${cardTitle}.`
+}
 </script>
