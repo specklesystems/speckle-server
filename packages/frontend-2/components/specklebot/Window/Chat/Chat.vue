@@ -89,13 +89,14 @@ const chatHistory = ref<ChatMessage[]>([])
 
 const cards = [
   {
-    description: 'What are the key components of my current model?'
+    description:
+      'Can you return a breakdown of all of the different walls in the model?'
   },
   {
-    description: 'Can you provide a summary of the project data statistics?'
+    description: 'What type of concrete is used in this model?'
   },
   {
-    description: 'Where can I find information about the latest project updates?'
+    description: 'What material are the top rails made of?'
   }
 ]
 
