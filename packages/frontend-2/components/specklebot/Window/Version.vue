@@ -6,7 +6,7 @@
     <div
       v-if="chatHistory.length"
       ref="chatContainer"
-      class="p-6 gap-y-4 max-h-[70dvh] overflow-y-auto simple-scrollbar flex flex-col-reverse"
+      class="p-6 gap-y-4 max-h-96 overflow-y-auto simple-scrollbar flex flex-col-reverse"
     >
       <div class="flex flex-col gap-5">
         <SpecklebotWindowChatMessage
@@ -32,7 +32,7 @@
             alt="Specklebot"
             class="w-10 h-10"
           />
-          <p class="text-heading">Ask me anything about your model data</p>
+          <p class="text-heading">Let's explore your project's evolution</p>
         </div>
         <div>
           <h6 class="text-body-xs font-medium text-foreground-2 mb-1 opacity-80">
@@ -59,7 +59,7 @@
         v-model="prompt"
         :disabled="loading"
         name="query"
-        :placeholder="loading ? 'Loading...' : 'Ask SpeckleBot...'"
+        placeholder="Ask SpeckleBot..."
         class="w-full h-16 px-6 focus-visible:outline-0 text-body-sm bg-foundation"
         @keydown.enter="onSubmit"
       />
@@ -94,13 +94,13 @@ const chatHistory = ref<ChatMessage[]>([])
 
 const cards = [
   {
-    description: 'What are the key components of my current model?'
+    description: 'Who made the most recent changes to the structural elements?'
   },
   {
-    description: 'Can you provide a summary of the project data statistics?'
+    description: "When was the last modification to the building's facade made?"
   },
   {
-    description: 'Where can I find information about the latest project updates?'
+    description: 'Show the main differences between the current version & the original.'
   }
 ]
 
