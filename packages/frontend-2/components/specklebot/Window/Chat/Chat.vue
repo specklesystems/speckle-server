@@ -63,12 +63,14 @@
 <script setup lang="ts">
 import { useSpeckleBot } from '~/lib/specklebot/composables/openai'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { useGetLoadedData } from '~/lib/specklebot/composables/viewer'
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
 const { askAboutLoadedData, loading } = useSpeckleBot()
+const { getLoadedData } = useGetLoadedData()
 
 interface ChatMessage {
   content: string
@@ -120,6 +122,6 @@ onMounted(() => {
   })
 })
 
-const { ask, ensure } = askAboutLoadedData({ loadedData: { a: 1, b: 2, c: 3 } })
+const { ask, ensure } = askAboutLoadedData({ getLoadedData })
 ensure()
 </script>

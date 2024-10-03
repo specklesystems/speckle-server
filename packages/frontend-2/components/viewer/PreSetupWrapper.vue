@@ -100,6 +100,7 @@
           </div>
         </ClientOnly>
       </div>
+      <SpecklebotWrapper />
     </ViewerPostSetupWrapper>
     <ViewerEmbedFooter
       :name="modelName || 'Loading...'"
@@ -109,7 +110,6 @@
     <Portal to="primary-actions">
       <HeaderNavShare v-if="project" :resource-id-string="modelId" :project="project" />
     </Portal>
-    <SpecklebotWrapper />
   </div>
 </template>
 <script setup lang="ts">
