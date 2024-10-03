@@ -71,7 +71,8 @@ export default defineNuxtConfig({
       datadogEnv: '',
       enableDirectPreviews: true,
       ghostApiKey: '',
-      openaiKey: ''
+      openaiKey: '',
+      openaiAssistantId: ''
     }
   },
 

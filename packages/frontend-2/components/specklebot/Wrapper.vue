@@ -8,7 +8,7 @@
 import { ModifierKeys, onKeyboardShortcut } from '@speckle/ui-components'
 import { onKeyStroke } from '@vueuse/core'
 
-const open = defineModel<boolean>('open', { required: true })
+const open = ref(false)
 
 const showInput = () => {
   open.value = true

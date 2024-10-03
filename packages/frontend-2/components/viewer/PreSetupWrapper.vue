@@ -109,6 +109,7 @@
     <Portal to="primary-actions">
       <HeaderNavShare v-if="project" :resource-id-string="modelId" :project="project" />
     </Portal>
+    <SpecklebotWrapper />
   </div>
 </template>
 <script setup lang="ts">

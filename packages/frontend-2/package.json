@@ -59,6 +59,7 @@
     "apollo-upload-client": "^18.0.1",
     "dayjs": "^1.11.7",
     "dompurify": "^3.0.4",
+    "event-iterator": "^2.0.0",
     "graphql": "^16.6.0",
     "ioredis": "^5.3.2",
     "js-cookie": "^3.0.1",
