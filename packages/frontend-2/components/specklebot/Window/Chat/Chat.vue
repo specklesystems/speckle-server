@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
@@ -14,7 +15,12 @@
           :is-user="message.isUser"
           :loading="!message.isUser && message.content.length === 0"
         >
-          {{ message.content }}
+          <template v-if="message.isHtml">
+            <span :class="proseClasses" v-html="message.content" />
+          </template>
+          <template v-else>
+            {{ message.content }}
+          </template>
         </SpecklebotWindowChatMessage>
       </div>
     </div>
@@ -65,12 +71,16 @@
 <script setup lang="ts">
 import { useSpeckleBot } from '~/lib/specklebot/composables/openai'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { useGetLoadedData } from '~/lib/specklebot/composables/viewer'
+import { proseClasses } from '~/lib/common/composables/markdown'
 
 const { askAboutLoadedData, loading } = useSpeckleBot()
+const { getLoadedData } = useGetLoadedData()
 
 interface ChatMessage {
   content: string
   isUser: boolean
+  isHtml?: boolean
 }
 
 const specklebotInput = ref<HTMLInputElement | null>(null)
@@ -96,10 +106,10 @@ const askQuestion = async (question: string) => {
   chatHistory.value.push({ content: question, isUser: true })
   const generator = ask({ message: question })
 
-  const responseMsg: ChatMessage = { content: '', isUser: false }
+  const responseMsg: ChatMessage = { content: '', isUser: false, isHtml: true }
   chatHistory.value.push(responseMsg)
-  for await (const msg of generator) {
-    responseMsg.content += msg || ''
+  for await (const messageHtml of generator) {
+    responseMsg.content = messageHtml
     chatHistory.value = [...chatHistory.value]
   }
 }
@@ -118,6 +128,6 @@ onMounted(() => {
   })
 })
 
-const { ask, ensure } = askAboutLoadedData({ loadedData: { a: 1, b: 2, c: 3 } })
+const { ask, ensure } = askAboutLoadedData({ getLoadedData })
 ensure()
 </script>

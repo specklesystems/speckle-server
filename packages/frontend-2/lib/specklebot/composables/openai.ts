@@ -2,6 +2,8 @@
 import OpenAI from 'openai'
 import { askAboutLoadedDataSystem } from '~/lib/specklebot/constants/system'
 import { EventIterator } from 'event-iterator'
+import type { MaybeAsync } from '@speckle/shared'
+import { marked } from 'marked'
 
 const model = 'gpt-3.5-turbo'
 
@@ -75,25 +77,24 @@ export const useOpenAIClient = () => {
   }
 }
 
-export enum HelpCategory {
-  AskAboutLoadedData = 'ask_about_loaded_data',
-  Test = 'test'
-}
-
 export const useSpeckleBot = () => {
   const openAi = useOpenAIClient()
   const loading = ref(false)
 
-  const askAboutLoadedData = (params: { loadedData: Record<string, unknown> }) => {
-    const { loadedData } = params
+  const askAboutLoadedData = (params: {
+    getLoadedData: () => MaybeAsync<Record<string, unknown>>
+  }) => {
+    const { getLoadedData } = params
 
     let thread: OpenAI.Beta.Threads.Thread
+    let loadedData: Record<string, unknown>
     let isInitialized = false
 
     const ensure = async () => {
-      if (isInitialized) return
+      if (isInitialized || loading.value) return
       loading.value = true
 
+      loadedData = await getLoadedData()
       thread = await openAi.createThread()
 
       // Init context
@@ -102,13 +103,10 @@ export const useSpeckleBot = () => {
       await openAi.addMessageToThread({
         thread,
         message: {
-          content: [
-            ...askAboutLoadedDataSystem.map((text) => ({ type: <const>'text', text })),
-            {
-              type: 'text',
-              text: "I've attached the loaded 3D data as a JSON attachment. I will likely refer to it as a file or model."
-            }
-          ],
+          content: askAboutLoadedDataSystem.map((text) => ({
+            type: <const>'text',
+            text
+          })),
           attachments: [
             {
               tools: [{ type: 'file_search' }],
@@ -124,6 +122,8 @@ export const useSpeckleBot = () => {
     }
 
     const ask = async function* (params: { message: string }) {
+      if (!isInitialized) return
+
       const { message } = params
       loading.value = true
 
@@ -141,8 +141,17 @@ export const useSpeckleBot = () => {
       })
 
       const generator = openAi.runAssistant({ thread })
+
+      let cleanMessage = ''
+      let markedMessage = ''
       for await (const messagePart of generator) {
-        yield messagePart
+        cleanMessage += messagePart
+        markedMessage = marked(cleanMessage, {
+          mangle: false,
+          headerIds: false
+        })
+
+        yield markedMessage
       }
 
       loading.value = false
