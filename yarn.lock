@@ -16900,8 +16900,10 @@ __metadata:
     "@tweakpane/core": "npm:^1.0.9"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
+    efficient-rect-packer: "npm:1.1.2"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
+    potpack: "npm:2.0.0"
     tweakpane: "npm:^3.0.8"
     typescript: "npm:^4.5.4"
     vite: "npm:^5.0.12"
@@ -29754,6 +29756,13 @@ __metadata:
   version: 1.1.1
   resolution: "ee-first@npm:1.1.1"
   checksum: 10/1b4cac778d64ce3b582a7e26b218afe07e207a0f9bfe13cc7395a6d307849cfe361e65033c3251e00c27dd060cab43014c2d6b2647676135e18b77d2d05b3f4f
+  languageName: node
+  linkType: hard
+
+"efficient-rect-packer@npm:1.1.2":
+  version: 1.1.2
+  resolution: "efficient-rect-packer@npm:1.1.2"
+  checksum: 10/34f8055b56f82c51c14ab9c8a903a9ae5b0bbf7e9ee21b79e96332ff7c0d9998117579d2cfa153ac0b6c3fb9c3396b2423acacdfd83bc5b75d4fb11f1e4601c0
   languageName: node
   linkType: hard
 
@@ -44233,6 +44242,13 @@ __metadata:
   dependencies:
     xtend: "npm:^4.0.0"
   checksum: 10/746b71f93805ae33b03528e429dc624706d1f9b20ee81bf743263efb6a0cd79ae02a642a8a480dbc0f09547b4315ab7df6ce5ec0be77ed700bac42730f5c76b2
+  languageName: node
+  linkType: hard
+
+"potpack@npm:2.0.0":
+  version: 2.0.0
+  resolution: "potpack@npm:2.0.0"
+  checksum: 10/6dd41692349936b436c29c28cf9ff1268c03ed6ec96c4384b2d9eb95e58e422fab75d428648f475507dd167934984d1002df2010b83e5747b5c358bea371e8f7
   languageName: node
   linkType: hard
 

@@ -81,6 +81,7 @@ import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
 import LineBatch from './modules/batching/LineBatch.js'
 import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
+import { Categorize } from './modules/extensions/Categorize.js'
 
 export {
   Viewer,
@@ -128,7 +129,8 @@ export {
   SpeckleGeometryConverter,
   Assets,
   AssetType,
-  HybridCameraController
+  HybridCameraController,
+  Categorize
 }
 
 export type {

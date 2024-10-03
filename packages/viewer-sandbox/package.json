@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@speckle/viewer": "workspace:^",
+    "efficient-rect-packer": "1.1.2",
+    "potpack": "2.0.0",
     "tweakpane": "^3.0.8"
   },
   "devDependencies": {
