@@ -25,12 +25,26 @@
         />
       </div>
     </ViewerLayoutPanel>
+    <ViewerLayoutPanel v-if="!!srcdoc" hide-close>
+      <FormButton @click="handleParentClick">GO</FormButton>
+      <iframe
+        ref="iframeRef"
+        width="250"
+        height="250"
+        title="unique-title"
+        :srcdoc="srcdoc"
+      />
+    </ViewerLayoutPanel>
   </div>
 </template>
 <script setup lang="ts">
+import type { Automate } from '@speckle/shared'
 import { type RunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useAutomationsStatusOrderedRuns } from '~/lib/automate/composables/runs'
 import { graphql } from '~/lib/common/generated/gql'
+import { useFileDownload } from '~/lib/core/composables/fileUpload'
+// import { getBlobUrl } from '~/lib/core/api/blobStorage';
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import type { AutomateViewerPanel_AutomateRunFragment } from '~~/lib/common/generated/gql/graphql'
 
 // TODO: Subscriptions
@@ -53,7 +67,55 @@ const props = defineProps<{
   summary: RunsStatusSummary
 }>()
 
+const { getBlobUrl } = useFileDownload()
+const { projectId } = useInjectedViewerState()
 const { runs } = useAutomationsStatusOrderedRuns({
   automationRuns: computed(() => props.automationRuns)
+})
+
+const iframeRef = ref<HTMLIFrameElement>()
+const srcdoc = ref<string>()
+
+watch(
+  runs,
+  () => {
+    const run = runs.value.at(0)
+    if (!run) return
+
+    const results = run.results as Automate.AutomateTypes.ResultsSchema
+    const blobId = results.values.blobIds?.at(0)
+    if (!blobId) return
+
+    getBlobUrl({ blobId, projectId: projectId.value })
+      .then((url) => {
+        return fetch(url)
+      })
+      .then((res) => {
+        return res.text()
+      })
+      .then((doc) => {
+        srcdoc.value = doc
+      })
+  },
+  {
+    immediate: true
+  }
+)
+
+const handleParentClick = () => {
+  iframeRef.value?.contentWindow?.postMessage({ message: 'Hello from speckle' })
+}
+
+const handleMessage = (e: MessageEvent) => {
+  if (e.data.source !== 'speckle') return
+  console.log('INCOMING')
+  console.log(e)
+}
+
+onMounted(() => {
+  window.addEventListener('message', handleMessage)
+})
+onUnmounted(() => {
+  window.removeEventListener('message', handleMessage)
 })
 </script>
