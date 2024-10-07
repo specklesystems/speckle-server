@@ -12,6 +12,7 @@ import {
 } from '@/modules/core/domain/branches/operations'
 import {
   GetAllBranchCommits,
+  GetCommitsAndTheirBranchIds,
   GetSpecificBranchCommits
 } from '@/modules/core/domain/commits/operations'
 import {
@@ -23,7 +24,6 @@ import {
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { getCommitsAndTheirBranchIds } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { Optional, SpeckleViewer } from '@speckle/shared'
 import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash'
@@ -370,7 +370,7 @@ export const getViewerResourcesFromLegacyIdentifiersFactory =
   (
     deps: {
       getViewerResourcesForComments: GetViewerResourcesForComments
-      getCommitsAndTheirBranchIds: typeof getCommitsAndTheirBranchIds
+      getCommitsAndTheirBranchIds: GetCommitsAndTheirBranchIds
     } & GetObjectResourceGroupsDeps
   ): GetViewerResourcesFromLegacyIdentifiers =>
   async (

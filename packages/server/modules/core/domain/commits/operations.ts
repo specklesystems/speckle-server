@@ -149,3 +149,7 @@ export type GetUserAuthoredCommitCounts = (params: {
 }) => Promise<{
   [userId: string]: number
 }>
+
+export type GetCommitsAndTheirBranchIds = (
+  commitIds: string[]
+) => Promise<BranchCommit[]>
