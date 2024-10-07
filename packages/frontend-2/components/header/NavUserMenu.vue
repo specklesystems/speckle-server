@@ -78,18 +78,13 @@
               Invite to Speckle
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-              target="_blank"
-              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-              external
+          <MenuItem>
+            <button
+              class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
+              @click="openFeedbackDialog"
             >
               Feedback
-            </NuxtLink>
+            </button>
           </MenuItem>
           <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -130,6 +125,7 @@
       v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
     />
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -169,6 +165,7 @@ const settingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
+const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
@@ -188,6 +185,10 @@ const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
   router.push({ query: currentQueryParams })
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
 }
 
 onMounted(() => {
