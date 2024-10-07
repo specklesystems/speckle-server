@@ -151,15 +151,6 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-// import { useQuery } from '@vue/apollo-composable'
-// import { graphql } from '~~/lib/common/generated/gql'
-
-// graphql(`
-//   fragment NavUserMenu_Workspace on Workspace {
-//     id
-//     role
-//   }
-// `)
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -173,16 +164,6 @@ const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-// const isWorkspacesEnabled = useIsWorkspacesEnabled()
-// const { result: workspaceResult } = useQuery(
-//   settingsSidebarQuery,
-//   () => ({
-//     workspaceId: route.query?.workspace
-//   }),
-//   () => ({
-//     enabled: isWorkspacesEnabled.value
-//   })
-// )
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)

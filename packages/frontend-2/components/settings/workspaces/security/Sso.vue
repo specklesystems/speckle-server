@@ -92,9 +92,8 @@ const issuerUrl = ref('')
 
 const onSubmit = handleSubmit(async () => {
   const token = useAuthCookie()
-  const baseUrl = '/api/v1/workspaces/'
+  const baseUrl = `/api/v1/workspaces/${props.workspace.slug}/sso/oidc/validate`
   const params = [
-    `workspaceSlug=${props.workspace.slug}`,
     `providerName=${providerName.value}`,
     `clientId=${clientId.value}`,
     `clientSecret=${clientSecret.value}`,

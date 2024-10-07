@@ -102,11 +102,3 @@ export const settingsWorkspacesSecurityQuery = graphql(`
     }
   }
 `)
-
-// export const navUserMenuWorkspaceQuery = graphql(`
-//   query SettingsWorkspace($workspaceId: String!) {
-//     workspace(id: $workspaceId) {
-//       ...NavUserMenu_Workspace
-//     }
-//   }
-// `)
