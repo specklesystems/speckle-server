@@ -15,7 +15,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
+import { getObject, getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
@@ -89,6 +89,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })

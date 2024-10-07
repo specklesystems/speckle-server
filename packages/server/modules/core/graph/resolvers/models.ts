@@ -39,7 +39,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
   getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
@@ -55,6 +55,7 @@ import {
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
+const getStreamObjects = getStreamObjectsFactory({ db })
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
   getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
