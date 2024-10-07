@@ -62,6 +62,9 @@ import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
 import { GPipeline } from './pipeline/G/GPipeline.js'
 import { ShadedViewPipeline } from './pipeline/G/Pipelines/ShadedViewPipeline.js'
+// import { DefaultPipeline } from './pipeline/G/Pipelines/DefaultPipeline.js'
+// import { EdgesPipeline } from './pipeline/G/Pipelines/EdgesPipeline.js'
+// import { TAAPipeline } from './pipeline/G/Pipelines/TAAPipeline.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
