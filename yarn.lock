@@ -16735,6 +16735,7 @@ __metadata:
     yargs: "npm:^17.3.1"
     znv: "npm:^0.4.0"
     zod: "npm:^3.22.4"
+    zod-express: "npm:^0.0.8"
     zod-validation-error: "npm:^1.5.0"
     zxcvbn: "npm:^4.4.2"
   languageName: unknown
@@ -53820,6 +53821,17 @@ __metadata:
   peerDependencies:
     zod: ^3.13.2
   checksum: 10/ba0f47b03c8912581cba25adae60ac5437b8506e847a77996a11436d98353aac192cabe51280627ca52abc2fdf011c409ac79733e8187274d223f568ba277940
+  languageName: node
+  linkType: hard
+
+"zod-express@npm:^0.0.8":
+  version: 0.0.8
+  resolution: "zod-express@npm:0.0.8"
+  peerDependencies:
+    "@types/express": ^4.17.12
+    express: ^4.18.2
+    zod: ^3.21.4
+  checksum: 10/1cc7cc36cc57f8a26a1ad82e18785ce8c5206a6c68e52188a62ef0c272207332d3a2d227f20b091045eb03aab6af5b34f84d539097db778307e369d44ee56e66
   languageName: node
   linkType: hard
 

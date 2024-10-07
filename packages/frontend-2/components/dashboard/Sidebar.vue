@@ -123,17 +123,13 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink
-                to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Give us feedback" external>
+              <div @click="openFeedbackDialog">
+                <LayoutSidebarMenuGroupItem label="Give us feedback">
                   <template #icon>
                     <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+              </div>
 
               <NuxtLink
                 to="https://speckle.guide/"
@@ -163,6 +159,8 @@
         </LayoutSidebar>
       </div>
     </template>
+
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
 
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
@@ -202,6 +200,7 @@ const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
+const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -224,7 +223,7 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.id),
+        to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex
       }))
@@ -249,4 +248,9 @@ onWorkspaceResult((result) => {
     }
   }
 })
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+  isOpenMobile.value = false
+}
 </script>

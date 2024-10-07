@@ -26,6 +26,8 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
   AddStreamCommentMentionActivity,
+  AddStreamInviteDeclinedActivity,
+  AddStreamInviteSentOutActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 
@@ -350,35 +352,39 @@ export async function addStreamPermissionsRevokedActivity(params: {
 /**
  * Save "user invited another user to stream" activity item
  */
-export async function addStreamInviteSentOutActivity(params: {
-  streamId: string
-  inviteTargetId: string | null
-  inviterId: string
-  inviteTargetEmail: string | null
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, inviteTargetEmail, stream } = params
-  const targetDisplay = inviteTargetId || inviteTargetEmail
+export const addStreamInviteSentOutActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamInviteSentOutActivity =>
+  async ({ streamId, inviteTargetId, inviterId, inviteTargetEmail, stream }) => {
+    const targetDisplay = inviteTargetId || inviteTargetEmail
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteSent,
-      userId: inviterId,
-      message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
-      info: { targetId: inviteTargetId || null, targetEmail: inviteTargetEmail || null }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteSent,
+        userId: inviterId,
+        message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
+        info: {
+          targetId: inviteTargetId || null,
+          targetEmail: inviteTargetEmail || null
+        }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user declined an invite" activity item
@@ -390,18 +396,8 @@ export const addStreamInviteDeclinedActivityFactory =
   }: {
     saveActivity: SaveActivity
     publish: PublishSubscription
-  }) =>
-  async ({
-    streamId,
-    inviteTargetId,
-    inviterId,
-    stream
-  }: {
-    streamId: string
-    inviteTargetId: string
-    inviterId: string
-    stream: StreamRecord
-  }) => {
+  }): AddStreamInviteDeclinedActivity =>
+  async ({ streamId, inviteTargetId, inviterId, stream }) => {
     await Promise.all([
       saveActivity({
         streamId,
