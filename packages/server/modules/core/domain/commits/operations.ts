@@ -9,6 +9,7 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
+import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
@@ -153,3 +154,20 @@ export type GetUserAuthoredCommitCounts = (params: {
 export type GetCommitsAndTheirBranchIds = (
   commitIds: string[]
 ) => Promise<BranchCommit[]>
+
+export type GetBatchedStreamCommits = (
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) => AsyncGenerator<Commit[], void, unknown>
+
+export type GetBatchedBranchCommits = (
+  branchIds: string[],
+  options?: Partial<BatchedSelectOptions>
+) => AsyncGenerator<BranchCommitRecord[], void, unknown>
+
+export type InsertCommits = (
+  commits: Commit[],
+  options?: Partial<{
+    trx: Knex.Transaction
+  }>
+) => Promise<number[]>
