@@ -162,8 +162,10 @@
           </LayoutSidebarMenu>
           <template #promo>
             <LayoutSidebarPromo
-              title="Specklecon Copy"
-              text="Specklecon is an event that"
+              title="Specklecon 2024"
+              text="Join us in London on 13-14 November for the ultimate Speckle community event."
+              button-text="Get tickets"
+              to="https://conf.speckle.systems/"
             />
           </template>
         </LayoutSidebar>
