@@ -70,9 +70,9 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getObject } from '@/modules/core/repositories/objects'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
 
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -85,6 +85,7 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,

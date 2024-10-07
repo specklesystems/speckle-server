@@ -54,8 +54,8 @@ const {
   addCommitCreatedActivity,
   addCommitUpdatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
-const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
 const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
@@ -72,6 +72,7 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   addCommitDeletedActivity
 })
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,

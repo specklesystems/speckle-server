@@ -18,7 +18,10 @@ import {
 import { getUser } from '@/modules/core/repositories/users'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject, getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  getStreamObjectsFactory
+} from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
@@ -87,6 +90,8 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getObject = getObjectFactory({ db })
+
     const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
     const validateInputAttachments = validateInputAttachmentsFactory({

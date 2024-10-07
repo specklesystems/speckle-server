@@ -46,7 +46,6 @@ const {
   insertStreamCommitsFactory,
   insertBranchCommitsFactory
 } = require('@/modules/core/repositories/commits')
-const { getObject } = require('@/modules/core/repositories/objects')
 const {
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
@@ -57,6 +56,7 @@ const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   addCommitCreatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -74,6 +74,7 @@ const createComment = createCommentFactory({
   commentsEventsEmit: CommentsEmitter.emit
 })
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,

@@ -11,7 +11,7 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getObject } from '@/modules/core/repositories/objects'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
@@ -21,6 +21,7 @@ import { createObject } from '@/modules/core/services/objects'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,

@@ -33,7 +33,6 @@ import {
   updateCommitFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
-import { getObject } from '@/modules/core/repositories/objects'
 import {
   createBranchFactory,
   getBranchByIdFactory,
@@ -52,7 +51,9 @@ import {
   addCommitMovedActivity,
   addCommitUpdatedActivity
 } from '@/modules/activitystream/services/commitActivity'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,
