@@ -57,11 +57,17 @@ export abstract class GPipeline {
     this.speckleRenderer.renderer.clear(true, true, true)
 
     let renderReturn: boolean = false
+    let lastVisibility: ObjectVisibility
     this.passList.forEach((pass: GPass) => {
       if (!pass.enabled || !pass.render) return
 
-      if (pass.visibility)
+      if (pass.visibility) {
         this.speckleRenderer.batcher.applyVisibility(visibilityMap[pass.visibility])
+        lastVisibility = pass.visibility
+      } else if (lastVisibility) {
+        this.speckleRenderer.batcher.applyVisibility(restoreVisibility)
+      }
+
       if (pass.overrideMaterial)
         this.speckleRenderer.batcher.overrideMaterial(
           pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility,

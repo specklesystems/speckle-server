@@ -4,9 +4,8 @@ import { GBlendPass } from '../GBlendPass.js'
 import { GDepthPass, DepthType } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
-import { GPass, ObjectVisibility, ProgressiveGPass } from '../GPass.js'
+import { GPass, ProgressiveGPass } from '../GPass.js'
 import { GPipeline } from '../GPipeline.js'
-import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GTAAPass } from '../GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 import { GMatcapPass } from '../GMatcapPass.js'
@@ -23,25 +22,25 @@ export class ShadedViewPipeline extends GPipeline {
     const depthPass = new GDepthPass()
     depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setVisibility(ObjectVisibility.DEPTH)
+    // depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
 
     const normalPass = new GNormalsPass()
     normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setVisibility(ObjectVisibility.OPAQUE)
+    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
     normalPass.setJitter(true)
 
     const depthPassDynamic = new GDepthPass()
     depthPassDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
+    // depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
 
     const normalPassDynamic = new GNormalsPass()
     normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
+    // normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
 
-    const opaqueMatcapPass = new GMatcapPass()
-    opaqueMatcapPass.setLayers([
+    const matcapPass = new GMatcapPass()
+    matcapPass.setLayers([
       ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
@@ -50,28 +49,7 @@ export class ShadedViewPipeline extends GPipeline {
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
-    opaqueMatcapPass.setVisibility(ObjectVisibility.OPAQUE)
-    opaqueMatcapPass.outputTarget = null
-    opaqueMatcapPass.clear = true
-
-    const transparentMatcapPass = new GMatcapPass()
-    transparentMatcapPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.STREAM_CONTENT,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
-      ObjectLayers.SHADOWCATCHER
-    ])
-    transparentMatcapPass.setVisibility(ObjectVisibility.TRANSPARENT)
-    transparentMatcapPass.outputTarget = null
-    opaqueMatcapPass.clear = false
-
-    const progressiveAOPass = new GProgressiveAOPass()
-    progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
-    progressiveAOPass.accumulationFrames = this.accumulationFrameCount
+    matcapPass.outputTarget = null
 
     const edgesPass = new GEdgePass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -99,8 +77,7 @@ export class ShadedViewPipeline extends GPipeline {
       depthPassDynamic,
       normalPassDynamic,
       edgesPassDynamic,
-      opaqueMatcapPass,
-      transparentMatcapPass,
+      matcapPass,
       blendPassDynamic
     )
     this.progressiveStage.push(
@@ -108,8 +85,7 @@ export class ShadedViewPipeline extends GPipeline {
       normalPass,
       edgesPass,
       taaPass,
-      opaqueMatcapPass,
-      transparentMatcapPass,
+      matcapPass,
       blendPass
     )
 
