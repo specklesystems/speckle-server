@@ -111,3 +111,8 @@ export type UpdateCommit = (
   commitId: string,
   commit: Partial<Commit>
 ) => Promise<Commit>
+
+export type GetAllBranchCommits = (params: {
+  branchIds?: string[]
+  projectId?: string
+}) => Promise<{ [branchId: string]: Commit[] }>

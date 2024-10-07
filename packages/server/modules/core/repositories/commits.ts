@@ -34,7 +34,8 @@ import {
   GetCommitBranches,
   GetCommitBranch,
   SwitchCommitBranch,
-  UpdateCommit
+  UpdateCommit,
+  GetAllBranchCommits
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -418,40 +419,43 @@ export async function getObjectCommitsWithStreamIds(
   return await q
 }
 
-export async function getAllBranchCommits(params: {
-  branchIds?: string[]
-  projectId?: string
-}): Promise<Record<string, CommitRecord[]>> {
-  const { branchIds, projectId } = params
-  if (!branchIds?.length && !projectId) return {}
+export const getAllBranchCommitsFactory =
+  (deps: { db: Knex }): GetAllBranchCommits =>
+  async (params: {
+    branchIds?: string[]
+    projectId?: string
+  }): Promise<Record<string, CommitRecord[]>> => {
+    const { branchIds, projectId } = params
+    if (!branchIds?.length && !projectId) return {}
 
-  const q = BranchCommits.knex()
-    .select<Array<CommitRecord & { branchId: string }>>([
-      ...Commits.cols,
-      BranchCommits.col.branchId
-    ])
-    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+    const q = tables
+      .branchCommits(deps.db)
+      .select<Array<CommitRecord & { branchId: string }>>([
+        ...Commits.cols,
+        BranchCommits.col.branchId
+      ])
+      .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
 
-  if (branchIds?.length) {
-    q.whereIn(BranchCommits.col.branchId, branchIds)
+    if (branchIds?.length) {
+      q.whereIn(BranchCommits.col.branchId, branchIds)
+    }
+
+    if (projectId) {
+      q.innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      q.andWhere(Branches.col.streamId, projectId)
+    }
+
+    const res = await q
+    return reduce(
+      res,
+      (res, item) => {
+        const branchId = item.branchId
+        ;(res[branchId] = res[branchId] || []).push(item)
+        return res
+      },
+      {} as Record<string, CommitRecord[]>
+    )
   }
-
-  if (projectId) {
-    q.innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-    q.andWhere(Branches.col.streamId, projectId)
-  }
-
-  const res = await q
-  return reduce(
-    res,
-    (res, item) => {
-      const branchId = item.branchId
-      ;(res[branchId] = res[branchId] || []).push(item)
-      return res
-    },
-    {} as Record<string, CommitRecord[]>
-  )
-}
 
 export async function getUserStreamCommitCounts(params: {
   userIds: string[]
