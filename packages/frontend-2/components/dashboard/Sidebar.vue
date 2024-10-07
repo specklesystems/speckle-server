@@ -160,6 +160,12 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
+          <template #promo>
+            <LayoutSidebarPromo
+              title="Specklecon Copy"
+              text="Specklecon is an event that"
+            />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -175,6 +181,7 @@
 import {
   FormButton,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem

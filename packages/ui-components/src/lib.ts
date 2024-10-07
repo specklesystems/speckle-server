@@ -65,6 +65,7 @@ import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import LayoutSidebar from '~~/src/components/layout/sidebar/Sidebar.vue'
+import LayoutSidebarPromo from '~~/src/components/layout/sidebar/Promo.vue'
 import LayoutSidebarMenu from '~~/src/components/layout/sidebar/menu/Menu.vue'
 import LayoutSidebarMenuGroup from '~~/src/components/layout/sidebar/menu/group/Group.vue'
 import LayoutSidebarMenuGroupItem from '~~/src/components/layout/sidebar/menu/group/Item.vue'
@@ -153,6 +154,7 @@ export {
   LayoutTabsVertical,
   LayoutTable,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem,
