@@ -3,6 +3,7 @@
     v-model:open="isOpen"
     title="Give us feedback"
     :buttons="dialogButtons"
+    :on-submit="onSubmit"
     max-width="md"
   >
     <div class="flex flex-col gap-4">
@@ -46,9 +47,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Send',
     props: { color: 'primary' },
-    onClick: () => {
-      onSubmit()
-    }
+    submit: true,
+    id: 'sendFeedback'
   }
 ])
 
@@ -63,7 +63,7 @@ const onSubmit = handleSubmit(async () => {
   })
 
   mixpanel.track('Feedback Sent', {
-    feedback: feedback.value
+    message: feedback.value
   })
 
   await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
