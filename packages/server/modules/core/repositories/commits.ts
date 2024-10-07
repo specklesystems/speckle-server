@@ -23,15 +23,20 @@ import { Knex } from 'knex'
 import { Nullable, Optional } from '@speckle/shared'
 import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
 import {
+  StoreCommit,
   DeleteCommit,
   DeleteCommits,
   GetCommit,
   GetCommits,
-  GetSpecificBranchCommits
+  GetSpecificBranchCommits,
+  InsertBranchCommits,
+  InsertStreamCommits
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
-  commits: (db: Knex) => db<CommitRecord>(Commits.name)
+  commits: (db: Knex) => db<CommitRecord>(Commits.name),
+  branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name),
+  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name)
 }
 
 export const generateCommitId = () => crs({ length: 10 })
@@ -149,23 +154,27 @@ export async function insertCommits(
   return await q
 }
 
-export async function insertStreamCommits(
-  streamCommits: StreamCommitRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = StreamCommits.knex().insert(streamCommits)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertStreamCommitsFactory =
+  (deps: { db: Knex }): InsertStreamCommits =>
+  async (
+    streamCommits: StreamCommitRecord[],
+    options?: Partial<{ trx: Knex.Transaction }>
+  ) => {
+    const q = tables.streamCommits(deps.db).insert(streamCommits)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
-export async function insertBranchCommits(
-  branchCommits: BranchCommitRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = BranchCommits.knex().insert(branchCommits)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertBranchCommitsFactory =
+  (deps: { db: Knex }): InsertBranchCommits =>
+  async (
+    branchCommits: BranchCommitRecord[],
+    options?: Partial<{ trx: Knex.Transaction }>
+  ) => {
+    const q = tables.branchCommits(deps.db).insert(branchCommits)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
 export async function getStreamCommitCounts(
   streamIds: string[],
@@ -354,20 +363,22 @@ export async function updateCommit(commitId: string, commit: Partial<CommitRecor
   return newCommit
 }
 
-export async function createCommit(
-  params: Omit<CommitRecord, 'id' | 'createdAt'> & {
-    message?: Nullable<string>
+export const createCommitFactory =
+  (deps: { db: Knex }): StoreCommit =>
+  async (
+    params: Omit<CommitRecord, 'id' | 'createdAt'> & {
+      message?: Nullable<string>
+    }
+  ) => {
+    const [item] = await tables.commits(deps.db).insert(
+      {
+        ...params,
+        id: generateCommitId()
+      },
+      '*'
+    )
+    return item
   }
-) {
-  const [item] = (await Commits.knex<CommitRecord[]>().insert(
-    {
-      ...params,
-      id: generateCommitId()
-    },
-    '*'
-  )) as CommitRecord[]
-  return item
-}
 
 export async function getObjectCommitsWithStreamIds(
   objectIds: string[],

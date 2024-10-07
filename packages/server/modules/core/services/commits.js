@@ -10,10 +10,7 @@ const {
   getPaginatedBranchCommits,
   getBranchCommitsTotalCount
 } = require('@/modules/core/repositories/commits')
-const {
-  createCommitByBranchName: createCommitByBranchNameNew,
-  updateCommitAndNotify
-} = require('@/modules/core/services/commit/management')
+const { updateCommitAndNotify } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
@@ -50,33 +47,6 @@ const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
 }
 
 module.exports = {
-  /**
-   * @deprecated Use 'createCommitByBranchName()' in 'management.ts'
-   */
-  async createCommitByBranchName({
-    streamId,
-    branchName,
-    objectId,
-    authorId,
-    message,
-    sourceApplication,
-    totalChildrenCount,
-    parents
-  }) {
-    const { id } = await createCommitByBranchNameNew({
-      streamId,
-      branchName,
-      objectId,
-      authorId,
-      message,
-      sourceApplication,
-      totalChildrenCount,
-      parents
-    })
-
-    return id
-  },
-
   /**
    * @deprecated Use 'updateCommitAndNotify()'
    */

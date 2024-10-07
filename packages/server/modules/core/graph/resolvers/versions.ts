@@ -12,7 +12,7 @@ import {
 } from '@/modules/core/services/commit/batchCommitActions'
 import { CommitUpdateError } from '@/modules/core/errors/commit'
 import {
-  createCommitByBranchId,
+  createCommitByBranchIdFactory,
   markCommitReceivedAndNotify,
   updateCommitAndNotify
 } from '@/modules/core/services/commit/management'
@@ -21,6 +21,32 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { db } from '@/db/knex'
+import { getObject } from '@/modules/core/repositories/objects'
+import {
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
 
 export = {
   Project: {
