@@ -1,4 +1,3 @@
-import { LayoutSidebarPromo } from '~~/src/lib';
 <template>
   <!-- If promo content is defined, scroll the menu items. If not, scroll the whole aside  -->
   <aside
