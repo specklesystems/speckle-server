@@ -6,7 +6,6 @@ const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
 
 const {
-  getStreamCommitCount,
   getPaginatedBranchCommits,
   getBranchCommitsTotalCount
 } = require('@/modules/core/repositories/commits')
@@ -78,10 +77,6 @@ module.exports = {
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
     return module.exports.getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
-  },
-
-  async getCommitsTotalCountByStreamId({ streamId, ignoreGlobalsBranch }) {
-    return await getStreamCommitCount(streamId, { ignoreGlobalsBranch })
   },
 
   /**

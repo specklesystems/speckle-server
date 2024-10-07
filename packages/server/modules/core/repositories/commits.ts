@@ -11,6 +11,7 @@ import {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
+  StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
 import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash'
@@ -35,13 +36,18 @@ import {
   GetCommitBranch,
   SwitchCommitBranch,
   UpdateCommit,
-  GetAllBranchCommits
+  GetAllBranchCommits,
+  GetStreamCommitCounts,
+  GetStreamCommitCount,
+  GetUserStreamCommitCounts,
+  GetUserAuthoredCommitCounts
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
   commits: (db: Knex) => db<CommitRecord>(Commits.name),
   branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name),
-  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name)
+  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
 
 export const generateCommitId = () => crs({ length: 10 })
@@ -181,41 +187,40 @@ export const insertBranchCommitsFactory =
     return await q
   }
 
-export async function getStreamCommitCounts(
-  streamIds: string[],
-  options?: Partial<{ ignoreGlobalsBranch: boolean }>
-) {
-  if (!streamIds?.length) return []
+export const getStreamCommitCountsFactory =
+  (deps: { db: Knex }): GetStreamCommitCounts =>
+  async (streamIds: string[], options?: Partial<{ ignoreGlobalsBranch: boolean }>) => {
+    if (!streamIds?.length) return []
 
-  const { ignoreGlobalsBranch } = options || {}
+    const { ignoreGlobalsBranch } = options || {}
 
-  const q = StreamCommits.knex()
-    .select(StreamCommits.col.streamId)
-    .whereIn(StreamCommits.col.streamId, streamIds)
-    .count()
-    .groupBy(StreamCommits.col.streamId)
+    const q = tables
+      .streamCommits(deps.db)
+      .select(StreamCommits.col.streamId)
+      .whereIn(StreamCommits.col.streamId, streamIds)
+      .count()
+      .groupBy(StreamCommits.col.streamId)
 
-  if (ignoreGlobalsBranch) {
-    q.innerJoin(
-      BranchCommits.name,
-      StreamCommits.col.commitId,
-      BranchCommits.col.commitId
-    )
-      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-      .andWhereNot(Branches.col.name, 'globals')
+    if (ignoreGlobalsBranch) {
+      q.innerJoin(
+        BranchCommits.name,
+        StreamCommits.col.commitId,
+        BranchCommits.col.commitId
+      )
+        .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+        .andWhereNot(Branches.col.name, 'globals')
+    }
+
+    const results = (await q) as { streamId: string; count: string }[]
+    return results.map((r) => ({ ...r, count: parseInt(r.count) }))
   }
 
-  const results = (await q) as { streamId: string; count: string }[]
-  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
-}
-
-export async function getStreamCommitCount(
-  streamId: string,
-  options?: Partial<{ ignoreGlobalsBranch: boolean }>
-) {
-  const [res] = await getStreamCommitCounts([streamId], options)
-  return res?.count || 0
-}
+export const getStreamCommitCountFactory =
+  (deps: { db: Knex }): GetStreamCommitCount =>
+  async (streamId: string, options?: Partial<{ ignoreGlobalsBranch: boolean }>) => {
+    const [res] = await getStreamCommitCountsFactory(deps)([streamId], options)
+    return res?.count || 0
+  }
 
 export async function getCommitsAndTheirBranchIds(commitIds: string[]) {
   if (!commitIds.length) return []
@@ -457,62 +462,68 @@ export const getAllBranchCommitsFactory =
     )
   }
 
-export async function getUserStreamCommitCounts(params: {
-  userIds: string[]
-  /**
-   * Only include commits from public/discoverable streams
-   */
-  publicOnly?: boolean
-}) {
-  const { userIds, publicOnly } = params
-  if (!userIds?.length) return {}
+export const getUserStreamCommitCountsFactory =
+  (deps: { db: Knex }): GetUserStreamCommitCounts =>
+  async (params: {
+    userIds: string[]
+    /**
+     * Only include commits from public/discoverable streams
+     */
+    publicOnly?: boolean
+  }) => {
+    const { userIds, publicOnly } = params
+    if (!userIds?.length) return {}
 
-  const q = StreamAcl.knex()
-    .select<{ userId: string; count: string }[]>([
-      StreamAcl.col.userId,
-      knex.raw('COUNT(*)')
-    ])
-    .join(StreamCommits.name, StreamCommits.col.streamId, StreamAcl.col.resourceId)
-    .whereIn(StreamAcl.col.userId, userIds)
-    .groupBy(StreamAcl.col.userId)
+    const q = tables
+      .streamAcl(deps.db)
+      .select<{ userId: string; count: string }[]>([
+        StreamAcl.col.userId,
+        knex.raw('COUNT(*)')
+      ])
+      .join(StreamCommits.name, StreamCommits.col.streamId, StreamAcl.col.resourceId)
+      .whereIn(StreamAcl.col.userId, userIds)
+      .groupBy(StreamAcl.col.userId)
 
-  if (publicOnly) {
-    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-    q.andWhere((q1) => {
-      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
-    })
+    if (publicOnly) {
+      q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+      q.andWhere((q1) => {
+        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+      })
+    }
+
+    const res = await q
+    return mapValues(keyBy(res, 'userId'), (r) => parseInt(r.count))
   }
 
-  const res = await q
-  return mapValues(keyBy(res, 'userId'), (r) => parseInt(r.count))
-}
+export const getUserAuthoredCommitCountsFactory =
+  (deps: { db: Knex }): GetUserAuthoredCommitCounts =>
+  async (params: {
+    userIds: string[]
+    /**
+     * Only include commits from public/discoverable streams
+     */
+    publicOnly?: boolean
+  }) => {
+    const { userIds, publicOnly } = params
+    if (!userIds?.length) return {}
 
-export async function getUserAuthoredCommitCounts(params: {
-  userIds: string[]
-  /**
-   * Only include commits from public/discoverable streams
-   */
-  publicOnly?: boolean
-}) {
-  const { userIds, publicOnly } = params
-  if (!userIds?.length) return {}
+    const q = tables
+      .commits(deps.db)
+      .select<{ authorId: string; count: string }[]>([
+        Commits.col.author,
+        knex.raw('COUNT(*)')
+      ])
+      .whereIn(Commits.col.author, userIds)
+      .groupBy(Commits.col.author)
 
-  const q = Commits.knex()
-    .select<{ authorId: string; count: string }[]>([
-      Commits.col.author,
-      knex.raw('COUNT(*)')
-    ])
-    .whereIn(Commits.col.author, userIds)
-    .groupBy(Commits.col.author)
+    if (publicOnly) {
+      q.join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+      q.join(Streams.name, Streams.col.id, StreamCommits.col.streamId)
+      q.andWhere((q1) => {
+        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+      })
+    }
 
-  if (publicOnly) {
-    q.join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    q.join(Streams.name, Streams.col.id, StreamCommits.col.streamId)
-    q.andWhere((q1) => {
-      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
-    })
+    const res = await q
+    return mapValues(keyBy(res, 'author'), (r) => parseInt(r.count))
   }
-
-  const res = await q
-  return mapValues(keyBy(res, 'author'), (r) => parseInt(r.count))
-}
