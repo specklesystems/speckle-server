@@ -7,8 +7,11 @@ import { promises as fs } from 'fs'
 import { OBJECTS_TABLE_NAME } from '#/migrations/migrations.js'
 import type { Angle } from '@/domain/domain.js'
 import { testLogger as logger } from '@/observability/logging.js'
-
+import { parse } from 'csv-parse'
+import iconv from 'iconv-lite'
+import { createReadStream } from 'fs'
 import { PutObjectCommand, PutObjectCommandInput, S3Client } from '@aws-sdk/client-s3'
+import { finished } from 'stream/promises'
 
 const getS3Config = () => {
   return {
@@ -25,7 +28,7 @@ const getS3Config = () => {
 }
 
 describe.sequential('Acceptance', () => {
-  describe.sequential('Run the preview-service image in docker', () => {
+  describe.sequential('Trigger and wait for the preview-service', () => {
     beforeEach(() => {
       // const dbName = inject('dbName')
       logger.info('🤜 running acceptance test before-each')
@@ -36,7 +39,7 @@ describe.sequential('Acceptance', () => {
 
     // we use integration test and not e2e test because we don't need the server
     acceptanceTest(
-      'loads data, runs docker image, extracts rendered image',
+      'loads data, waits for completion, extracts rendered image',
       {
         timeout: 300000 //5 minutes
       },
@@ -44,18 +47,62 @@ describe.sequential('Acceptance', () => {
         const { db } = context
         // load data
         const streamId = cryptoRandomString({ length: 10 })
-        const objectId = cryptoRandomString({ length: 10 })
 
-        //TODO load object rows from file or sqlite or similar
-        const objectRow = {
-          id: objectId,
-          streamId,
-          speckleType: 'Base',
-          totalChildrenCount: 0,
-          totalChildrenCountByDepth: {},
-          data: {}
+        const processFile = async (csvFileName: string) => {
+          const objectRows: Record<string, unknown>[] = []
+
+          // Initialize the parser
+          const parser = createReadStream(csvFileName)
+            .pipe(iconv.decodeStream('utf8'))
+            .pipe(
+              parse({
+                delimiter: ',',
+                quote: '"',
+                // escape: null,
+                // eslint-disable-next-line camelcase
+                skip_empty_lines: true,
+                // eslint-disable-next-line camelcase
+                auto_parse: true
+              })
+            )
+          parser.on('readable', () => {
+            let record: unknown
+            while ((record = parser.read()) !== null) {
+              if (!Array.isArray(record)) throw new Error('Invalid record')
+              if (record.length !== 7) throw new Error('Invalid record length')
+
+              // "id","speckleType","totalChildrenCount","totalChildrenCountByDepth","createdAt","data","streamId"
+              const row = {
+                id: <unknown>record[0],
+                speckleType: <unknown>record[1],
+                totalChildrenCount: <unknown>record[2],
+                totalChildrenCountByDepth: <unknown>record[3],
+                createdAt: <unknown>record[4],
+                data: <unknown>JSON.parse(record[5] as string),
+                streamId //NOTE we override the stream ID to ensure it's loaded into the test stream
+              }
+
+              objectRows.push(row)
+            }
+          })
+          parser.on('end', () => {
+            //no-op, completion of the stream is handled by the finished(parser) call.
+          })
+          parser.on('error', (err) => {
+            expect(err).not.toBeDefined()
+          })
+
+          await finished(parser)
+          return objectRows
         }
-        await db.batchInsert(OBJECTS_TABLE_NAME, [objectRow])
+
+        const objectId = 'b81d1d9295a995d9479186324b6f145a' //base object in tests/data/deltas.csv
+        try {
+          const objectsToInsert = await processFile('tests/data/deltas.csv')
+          await db.batchInsert(OBJECTS_TABLE_NAME, objectsToInsert)
+        } catch (err) {
+          expect(err, 'Error parsing CSV file.').toBeUndefined()
+        }
 
         const objectPreviewRow = {
           streamId,

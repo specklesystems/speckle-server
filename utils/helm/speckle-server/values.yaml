@@ -43,6 +43,8 @@ featureFlags:
   noClosureWrites: false
   ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
   workspaceModuleEnabled: false
+  ## @param featureFlags.workspaceSsoEnabled High level flag fully toggles the workspaces dynamic sso
+  workspaceSsoEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
 

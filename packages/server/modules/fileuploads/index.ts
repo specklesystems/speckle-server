@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
-import { streamWritePermissions } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { moduleLogger } from '@/logging/logging'
 import { listenForImportUpdatesFactory } from '@/modules/fileuploads/services/resultListener'
@@ -11,11 +10,15 @@ import {
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { HttpMethod, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
+import { getStream } from '@/modules/core/repositories/streams'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-  getStreamBranchByName,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   saveUploadFile: saveUploadFileFactory({ db }),
   publish
 })
@@ -64,7 +67,13 @@ export const init: SpeckleModule['init'] = async ({
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getRoles: getRolesFactory({ db }),
+        getStream,
+        getAutomationProject: getAutomationProjectFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
@@ -121,7 +130,7 @@ export const init: SpeckleModule['init'] = async ({
     const listenForImportUpdates = listenForImportUpdatesFactory({
       getFileInfo: getFileInfoFactory({ db }),
       publish,
-      getStreamBranchByName
+      getStreamBranchByName: getStreamBranchByNameFactory({ db })
     })
 
     listenForImportUpdates()

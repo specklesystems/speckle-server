@@ -224,7 +224,7 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.id),
+        to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex
       }))

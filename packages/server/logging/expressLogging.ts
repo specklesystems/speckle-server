@@ -6,7 +6,7 @@ import pino from 'pino'
 import type { SerializedResponse } from 'pino'
 import type { GenReqId } from 'pino-http'
 import type { IncomingMessage, ServerResponse } from 'http'
-import type { Optional } from '@speckle/shared'
+import { ensureError, type Optional } from '@speckle/shared'
 import { getRequestPath } from '@/modules/core/helpers/server'
 import { get } from 'lodash'
 
@@ -87,7 +87,8 @@ export const LoggingExpressMiddleware = HttpLogger({
 
   customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
-    const requestStatus = isCompleted ? 'completed' : 'aborted'
+    const isError = !!req.context?.err
+    const requestStatus = isCompleted ? (isError ? 'errored' : 'completed') : 'aborted'
     const requestPath = getRequestPath(req) || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
 
@@ -95,23 +96,28 @@ export const LoggingExpressMiddleware = HttpLogger({
       ...val,
       requestStatus,
       requestPath,
-      country
+      country,
+      err: req.context?.err
     }
   },
 
   customErrorMessage() {
     return '{requestPath} request {requestStatus} in {responseTime} ms'
   },
-  customErrorObject(req, _res, _err, val: Record<string, unknown>) {
+  customErrorObject(req, _res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
     const requestPath = getRequestPath(req) || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
+    let e: Error | undefined = undefined
+    if (err) e = ensureError(err)
+    if (!err && req.context?.err) e = req.context.err
 
     return {
       ...val,
       requestStatus,
       requestPath,
-      country
+      country,
+      err: e
     }
   },
 

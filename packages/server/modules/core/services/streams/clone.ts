@@ -18,9 +18,9 @@ import {
   getBatchedStreamCommits,
   generateCommitId,
   insertCommits,
-  insertStreamCommits,
   getBatchedBranchCommits,
-  insertBranchCommits
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash'
 import {
@@ -32,13 +32,15 @@ import {
   generateCommentId,
   getBatchedStreamComments,
   getCommentLinks,
-  insertCommentLinks,
-  insertComments
+  insertCommentLinksFactory,
+  insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
 import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
+import { InsertCommentPayload } from '@/modules/comments/domain/operations'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -190,7 +192,7 @@ async function createStreamCommitReferences(
   const batchedNewCommitIds = chunk(newCommitIds, batchSize)
 
   for (const newCommitIdBatch of batchedNewCommitIds) {
-    await insertStreamCommits(
+    await insertStreamCommitsFactory({ db })(
       newCommitIdBatch.map(
         (id): StreamCommitRecord => ({
           streamId: newStreamId,
@@ -255,7 +257,7 @@ async function createBranchCommitReferences(
       return { commitId: newCommitId, branchId: newBranchId }
     })
 
-    await insertBranchCommits(newBranchCommits, { trx: state.trx })
+    await insertBranchCommitsFactory({ db })(newBranchCommits, { trx: state.trx })
   }
 }
 
@@ -297,7 +299,7 @@ async function cloneComments(
       withParentCommentOnly: !threads,
       trx: state.trx
     })) {
-      commentsBatch.forEach((c) => {
+      const finalBatch = commentsBatch.map((c): InsertCommentPayload => {
         const oldId = c.id
         const newDate = getNewDate()
 
@@ -322,9 +324,13 @@ async function cloneComments(
         }
 
         commentIdMap.set(oldId, c.id)
+        return {
+          ...c,
+          text: c.text as SmartTextEditorValueSchema
+        }
       })
 
-      await insertComments(commentsBatch, { trx: state.trx })
+      await insertCommentsFactory({ db })(finalBatch, { trx: state.trx })
     }
   }
 
@@ -383,7 +389,7 @@ async function cloneCommentLinks(
       }
     })
 
-    await insertCommentLinks(commentLinks, { trx })
+    await insertCommentLinksFactory({ db })(commentLinks, { trx })
   }
 }
 

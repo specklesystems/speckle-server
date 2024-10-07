@@ -204,19 +204,41 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
+        workspaceBySlug: async (_parent, args, ctx) => {
+          const workspace = await getWorkspaceBySlugFactory({ db })({
+            workspaceSlug: args.slug
+          })
+
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+          await authorizeResolver(
+            ctx.userId,
+            workspace.id,
+            Roles.Workspace.Guest,
+            ctx.resourceAccessRules
+          )
+
+          return workspace
+        },
         workspaceInvite: async (_parent, args, ctx) => {
           const getPendingInvite = getUserPendingWorkspaceInviteFactory({
             findInvite: findInviteFactory({
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            getUser
+            getUser,
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
           })
+
+          const useSlug = !!args.options?.useSlug
 
           return await getPendingInvite({
             userId: ctx.userId!,
             token: args.token,
-            workspaceId: args.workspaceId
+            ...(useSlug
+              ? { workspaceSlug: args.workspaceId }
+              : { workspaceId: args.workspaceId })
           })
         },
         validateWorkspaceSlug: async (_parent, args) => {

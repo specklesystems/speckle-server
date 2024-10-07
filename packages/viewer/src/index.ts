@@ -32,7 +32,6 @@ import type {
 } from './modules/queries/Query.js'
 import { type Utils } from './modules/Utils.js'
 import { BatchObject } from './modules/batching/BatchObject.js'
-import { Box3, Vector3 } from 'three'
 import {
   type MeasurementOptions,
   MeasurementType,
@@ -64,7 +63,7 @@ import { Loader, LoaderEvent } from './modules/loaders/Loader.js'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader.js'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader.js'
 import { LegacyViewer } from './modules/LegacyViewer.js'
-import { SpeckleType } from './modules/loaders/GeometryConverter.js'
+import { GeometryConverter, SpeckleType } from './modules/loaders/GeometryConverter.js'
 import Input, { InputEvent, InputEventPayload } from './modules/input/Input.js'
 import { GeometryType } from './modules/batching/Batch.js'
 import { MeshBatch } from './modules/batching/MeshBatch.js'
@@ -78,6 +77,10 @@ import { Assets } from './modules/Assets.js'
 import { SpecklePass } from './modules/pipeline/SpecklePass.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
 import { HybridCameraController } from './modules/extensions/HybridCameraController.js'
+import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
+import LineBatch from './modules/batching/LineBatch.js'
+import { PointBatch } from './modules/batching/PointBatch.js'
+import TextBatch from './modules/batching/TextBatch.js'
 
 export {
   Viewer,
@@ -88,8 +91,6 @@ export {
   World,
   BatchObject,
   InstancedBatchObject,
-  Box3,
-  Vector3,
   WorldTree,
   VisualDiffMode,
   MeasurementType,
@@ -105,6 +106,7 @@ export {
   ExplodeExtension,
   DiffExtension,
   Loader,
+  GeometryConverter,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,
@@ -115,7 +117,11 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
+  LineBatch,
+  PointBatch,
+  TextBatch,
   SpeckleStandardMaterial,
+  SpeckleBasicMaterial,
   SpeckleTextMaterial,
   SpeckleText,
   NodeRenderView,

@@ -76,6 +76,21 @@ export const getWorkspaceQuery = gql`
   ${workspaceCollaboratorFragment}
 `
 
+export const getWorkspaceBySlugQuery = gql`
+  query GetWorkspaceBySlug($workspaceSlug: String!) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...TestWorkspace
+      team {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+      }
+    }
+  }
+  ${workspaceFragment}
+  ${workspaceCollaboratorFragment}
+`
+
 export const getActiveUserDiscoverableWorkspacesQuery = gql`
   query getActiveUserDiscoverableWorkspaces {
     activeUser {

@@ -1,21 +1,21 @@
 import {
-  getAutomation,
-  storeAutomation,
-  storeAutomationRevision,
-  storeAutomationToken
+  getAutomationFactory,
+  storeAutomationFactory,
+  storeAutomationRevisionFactory,
+  storeAutomationTokenFactory
 } from '@/modules/automate/repositories/automations'
 import {
   CreateAutomationRevisionDeps,
-  createAutomation,
-  createAutomationRevision
+  createAutomationFactory,
+  createAutomationRevisionFactory
 } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import { createInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
-  getBranchesByIds,
-  getLatestStreamBranch
+  getBranchesByIdsFactory,
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 
 import {
@@ -35,9 +35,18 @@ import {
 import { faker } from '@faker-js/faker'
 import {
   getEncryptionKeyPair,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const getLatestStreamBranch = getLatestStreamBranchFactory({ db })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })
@@ -47,8 +56,8 @@ export const buildAutomationCreate = (
     createDbAutomation: typeof clientCreateAutomation
   }>
 ) => {
-  const create = createAutomation({
-    createAuthCode: createStoredAuthCode({ redis: createInmemoryRedisClient() }),
+  const create = createAutomationFactory({
+    createAuthCode: createStoredAuthCodeFactory({ redis: createInmemoryRedisClient() }),
     automateCreateAutomation:
       overrides?.createDbAutomation ||
       (async () => ({
@@ -56,7 +65,9 @@ export const buildAutomationCreate = (
         token: cryptoRandomString({ length: 10 })
       })),
     storeAutomation,
-    storeAutomationToken
+    storeAutomationToken,
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit
   })
 
   return create
@@ -77,16 +88,18 @@ export const buildAutomationRevisionCreate = (
     functionId: params.functionId
   })
 
-  const create = createAutomationRevision({
+  const create = createAutomationRevisionFactory({
     getAutomation,
     storeAutomationRevision,
-    getBranchesByIds,
+    getBranchesByIds: getBranchesByIdsFactory({ db }),
     getFunctionRelease: async (params) => fakeGetRelease(params),
     getFunctionReleases: async (params) => params.ids.map(fakeGetRelease),
     getEncryptionKeyPair,
-    getFunctionInputDecryptor: getFunctionInputDecryptor({
+    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
       buildDecryptor
     }),
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit,
     ...overrides
   })
 

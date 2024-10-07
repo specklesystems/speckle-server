@@ -32,6 +32,7 @@
               <ProjectPageTeamPermissionSelect
                 v-model="role"
                 hide-remove
+                :show-label="false"
                 :disabled-roles="isTargettingWorkspaceGuest ? [Roles.Stream.Owner] : []"
               />
             </div>

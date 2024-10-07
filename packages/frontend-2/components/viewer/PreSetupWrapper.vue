@@ -7,7 +7,7 @@
           <ViewerScope :state="state">
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
-                :to="workspaceRoute(project?.workspace.id)"
+                :to="workspaceRoute(project?.workspace.slug)"
                 :name="project?.workspace.name"
                 :separator="false"
               ></HeaderNavLink>
@@ -160,6 +160,7 @@ graphql(`
     visibility
     workspace {
       id
+      slug
       name
     }
   }

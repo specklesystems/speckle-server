@@ -7,7 +7,6 @@ const {
   changeUserRole
 } = require('@/modules/core/services/users')
 const { updateUserAndNotify } = require('@/modules/core/services/users/management')
-const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
@@ -27,6 +26,7 @@ const {
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
 const { BadRequestError } = require('@/modules/shared/errors')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -185,7 +185,7 @@ module.exports = {
         deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
       })(context.userId, args.user)
 
-      await saveActivity({
+      await saveActivityFactory({ db })({
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,

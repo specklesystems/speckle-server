@@ -175,8 +175,12 @@ export const useInviteMutation = gql`
 `
 
 export const getWorkspaceInviteQuery = gql`
-  query GetWorkspaceInvite($workspaceId: String!, $token: String) {
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+  query GetWorkspaceInvite(
+    $workspaceId: String!
+    $token: String
+    $options: WorkspaceInviteLookupOptions = null
+  ) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...BasicPendingWorkspaceCollaborator
     }
   }

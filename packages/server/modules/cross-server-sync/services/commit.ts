@@ -2,7 +2,6 @@ import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles, timeoutAt } from '@speckle/shared'
 import { createObject } from '@/modules/core/services/objects'
@@ -10,14 +9,9 @@ import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
-import {
-  createCommentThreadAndNotify,
-  createCommentReplyAndNotify
-} from '@/modules/comments/services/management'
 import {
   createApolloClient,
   assertValidGraphQLResult
@@ -31,6 +25,12 @@ import {
   CrossSyncProjectViewerResourcesQuery
 } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { DownloadCommit } from '@/modules/cross-server-sync/domain/operations'
+import {
+  CreateCommentReplyAndNotify,
+  CreateCommentThreadAndNotify
+} from '@/modules/comments/domain/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -219,7 +219,7 @@ const parseIncomingUrl = async (url: string, token?: string) => {
 
 type GetLocalResourcesDeps = {
   getStream: typeof getStream
-  getStreamBranchByName: typeof getStreamBranchByName
+  getStreamBranchByName: GetStreamBranchByName
   getStreamCollaborators: typeof getStreamCollaborators
   getUser: typeof getUser
 }
@@ -371,8 +371,8 @@ const cleanViewerState = (
 })
 
 type SaveNewThreadsDeps = {
-  createCommentThreadAndNotify: typeof createCommentThreadAndNotify
-  createCommentReplyAndNotify: typeof createCommentReplyAndNotify
+  createCommentThreadAndNotify: CreateCommentThreadAndNotify
+  createCommentReplyAndNotify: CreateCommentReplyAndNotify
 }
 
 const saveNewThreadsFactory =
@@ -452,7 +452,7 @@ const saveNewThreadsFactory =
   }
 
 type SaveNewCommitDeps = {
-  createCommitByBranchId: typeof createCommitByBranchId
+  createCommitByBranchId: CreateCommitByBranchId
 }
 
 const saveNewCommitFactory =

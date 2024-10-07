@@ -28,7 +28,7 @@
         <div class="pt-3">
           <NuxtLink
             v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
-            :to="workspaceRoute(project.workspace.id)"
+            :to="workspaceRoute(project.workspace.slug)"
             class="my-3 flex items-center"
           >
             <WorkspaceAvatar

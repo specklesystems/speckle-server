@@ -1,8 +1,9 @@
 import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getCommits } from '@/modules/core/repositories/commits'
-import { createBranch } from '@/modules/core/services/branches'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getCommitsFactory } from '@/modules/core/repositories/commits'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
@@ -22,6 +23,9 @@ enum BatchActionType {
   Move,
   Delete
 }
+
+const createBranch = createBranchFactory({ db })
+const getCommits = getCommitsFactory({ db })
 
 const cleanup = async () => {
   await truncateTables([Streams.name, Users.name, Commits.name])

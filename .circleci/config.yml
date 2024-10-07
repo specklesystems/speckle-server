@@ -554,6 +554,7 @@ jobs:
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
       FF_WORKSPACES_MODULE_ENABLED: 'false'
+      FF_WORKSPACES_SSO_ENABLED: 'false'
       FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
       FF_GENDOAI_MODULE_ENABLED: 'false'
 

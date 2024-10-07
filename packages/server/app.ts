@@ -53,7 +53,7 @@ import {
   authContextMiddleware,
   buildContext,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddleware
+  mixpanelTrackerHelperMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -61,9 +61,10 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
-import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
+import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
+import { getUser } from '@/modules/core/repositories/users'
 import { openApiJsonHandlerFactory, openApiJsonPath } from '@/modules/openapi'
 import { openApiDocument } from '@/modules/openapi/openAPIDocs'
 import { OpenAPIV2 } from 'openapi-types'
@@ -97,10 +98,14 @@ function logSubscriptionOperation(params: {
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
-      if (error instanceof GraphQLError && isUserGraphqlError(error)) {
-        logger.info(error, errMsg)
+      let errorLogger = logger
+      if (error instanceof BaseError) {
+        errorLogger = errorLogger.child({ ...error.info() })
+      }
+      if (shouldLogAsInfoLevel(error)) {
+        errorLogger.info({ err: error }, errMsg)
       } else {
-        logger.error(error, errMsg)
+        errorLogger.error({ err: error }, errMsg)
       }
     }
   } else if (response?.data) {
@@ -383,7 +388,7 @@ export async function init() {
       next()
     }
   )
-  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddleware)
+  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser }))
 
   const openApiDoc = openApiDocument()
   // Initialize default modules, including rest api handlers
@@ -429,7 +434,8 @@ export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
 }
 
-const shouldUseFrontendProxy = () => process.env.NODE_ENV === 'development'
+const shouldUseFrontendProxy = () =>
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'

@@ -418,6 +418,11 @@ const getStream = () => {
 
     // Text with no material
     // 'https://latest.speckle.systems/projects/731c6e2fd1/models/bcd3a4a706'
+
+    // BREPs as display values
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/b613d77690@046b56bf12'
+
+    // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
   )
 }
 

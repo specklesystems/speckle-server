@@ -1,4 +1,7 @@
-import { ExtendedComment, getComment } from '@/modules/comments/repositories/comments'
+import { db } from '@/db/knex'
+import { GetComment } from '@/modules/comments/domain/operations'
+import { ExtendedComment } from '@/modules/comments/domain/types'
+import { getCommentFactory } from '@/modules/comments/repositories/comments'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
@@ -161,7 +164,7 @@ const mentionedInCommentHandlerFactory =
   (deps: {
     getUser: typeof getUser
     getStream: typeof getStream
-    getComment: typeof getComment
+    getComment: GetComment
     getServerInfo: typeof getServerInfo
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
@@ -218,7 +221,7 @@ const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) 
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
     getUser,
     getStream,
-    getComment,
+    getComment: getCommentFactory({ db }),
     getServerInfo,
     renderEmail,
     sendEmail

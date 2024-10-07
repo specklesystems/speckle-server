@@ -7,7 +7,6 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  getCommitById,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByUserId
@@ -17,10 +16,11 @@ const {
   getPaginatedBranchCommits
 } = require('@/modules/core/services/commit/retrieval')
 const {
-  createCommitByBranchName,
   updateCommitAndNotify,
-  deleteCommitAndNotify,
-  markCommitReceivedAndNotify
+  markCommitReceivedAndNotify,
+  deleteCommitAndNotifyFactory,
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -39,11 +39,57 @@ const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
 const { BadRequestError } = require('@/modules/shared/errors')
+const {
+  getCommitFactory,
+  deleteCommitFactory,
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const { db } = require('@/db/knex')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitBranchUpdatedFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
+const {
+  addCommitDeletedActivity,
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
+const { getObject } = require('@/modules/core/repositories/objects')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
+
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 /**
  * @param {boolean} publicOnly
@@ -139,7 +185,7 @@ module.exports = {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent, args) {
+    async commit(parent, args, ctx) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -150,7 +196,9 @@ module.exports = {
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
-      const c = await getCommitById({ streamId: parent.id, id: args.id })
+      const c = await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
       return c
     }
   },

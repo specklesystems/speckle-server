@@ -89,6 +89,9 @@
     />
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
+      :title="
+        userToModify?.role === Roles.Workspace.Guest ? 'Remove guest' : 'Remove user'
+      "
       :name="userToModify?.name ?? ''"
       @remove-user="onRemoveUser"
     />

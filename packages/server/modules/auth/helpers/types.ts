@@ -42,6 +42,7 @@ export type AuthSessionData = {
   // More specific params used in OpenID based strategies
   tokenSet?: TokenSet
   userinfo?: UserinfoResponse
+  codeVerifier?: string
 }
 
 export type AuthRequestData = {

@@ -12,8 +12,6 @@ const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
 const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
-const { createComment } = require('@/modules/comments/services')
-const { createCommitByBranchName } = require('@/modules/core/services/commits')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
@@ -22,6 +20,77 @@ const {
   createAuthedTestContext,
   executeOperation
 } = require('@/test/graphqlHelper')
+const {
+  streamResourceCheckFactory,
+  createCommentFactory
+} = require('@/modules/comments/services')
+const {
+  checkStreamResourceAccessFactory,
+  markCommentViewedFactory,
+  insertCommentsFactory,
+  insertCommentLinksFactory,
+  deleteCommentFactory
+} = require('@/modules/comments/repositories/comments')
+const { db } = require('@/db/knex')
+const {
+  validateInputAttachmentsFactory
+} = require('@/modules/comments/services/commentTextService')
+const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
+const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const { getObject } = require('@/modules/core/repositories/objects')
+const {
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
+
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments: validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  }),
+  insertComments: insertCommentsFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  deleteComment: deleteCommentFactory({ db }),
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -477,7 +546,7 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
       notSignal: crs({ length: 10 })
     }
   })
-  const commitId = await createCommitByBranchName({
+  const { id: commitId } = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
     objectId,
@@ -528,7 +597,7 @@ const queryCommitCollectionCommentCount = async ({
       almostMakesSense: crs({ length: 10 })
     }
   })
-  const commitId = await createCommitByBranchName({
+  const { id: commitId } = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
     objectId,

@@ -27,7 +27,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -216,7 +216,7 @@ export const getUserPendingProjectInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<

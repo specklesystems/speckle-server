@@ -1,10 +1,10 @@
 const Busboy = require('busboy')
 const {
-  streamReadPermissions,
-  streamWritePermissions,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-  allowAnonymousUsersOnPublicStreams
+  allowAnonymousUsersOnPublicStreams,
+  streamWritePermissionsPipelineFactory,
+  streamReadPermissionsPipelineFactory
 } = require('@/modules/shared/authz')
 const {
   ensureStorageAccess,
@@ -41,6 +41,12 @@ const {
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
 } = require('@/modules/blobstorage/services/management')
+const { getStream } = require('@/modules/core/repositories/streams')
+const { getRolesFactory } = require('@/modules/shared/repositories/roles')
+const {
+  getAutomationProjectFactory
+} = require('@/modules/automate/repositories/automations')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { HttpMethod } = require('@/modules/shared/helpers/typeHelper')
 
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
@@ -96,6 +102,18 @@ const errorHandler = async (req, res, callback) => {
 
 exports.init = async ({ app, openApiDocument }) => {
   await ensureConditions()
+  const streamWritePermissions = streamWritePermissionsPipelineFactory({
+    getRoles: getRolesFactory({ db }),
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  })
+  const streamReadPermissions = streamReadPermissionsPipelineFactory({
+    adminOverrideEnabled,
+    getRoles: getRolesFactory({ db }),
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  })
+
   app.post(
     '/api/stream/:streamId/blob',
     authMiddlewareCreator([

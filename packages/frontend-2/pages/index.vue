@@ -72,8 +72,7 @@ import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
-import submitImage from '~/assets/images/banners/submit.gif'
-import earlybirdImage from '~/assets/images/banners/earlybird.gif'
+import speckleconTicketsImage from '~/assets/images/banners/grab-your-tickets.gif'
 
 useHead({ title: 'Dashboard' })
 
@@ -190,19 +189,11 @@ const onDownloadManager = (extension: ManagerExtension) => {
 
 const promoBanners = ref<PromoBanner[]>([
   {
-    primaryText: 'Specklecon - Submit your proposal',
+    primaryText: 'Specklecon - Grab your tickets',
     url: 'https://conf.speckle.systems/',
     priority: 1,
-    expiryDate: '2024-09-02',
-    image: submitImage,
-    isBackgroundImage: true
-  },
-  {
-    primaryText: 'Specklecon - Early Bird Tickets',
-    url: 'https://conf.speckle.systems/',
-    priority: 2,
-    expiryDate: '2024-09-15',
-    image: earlybirdImage,
+    expiryDate: '2024-11-14',
+    image: speckleconTicketsImage,
     isBackgroundImage: true
   }
 ])

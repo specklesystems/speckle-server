@@ -3,6 +3,10 @@ extend type Query {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
 
+  workspaceBySlug(slug: String!): Workspace!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+
   """
   Look for an invitation to a workspace, for the current user (authed or not).
 
@@ -10,11 +14,22 @@ extend type Query {
 
   Either token or workspaceId must be specified, or both
   """
-  workspaceInvite(workspaceId: String, token: String): PendingWorkspaceCollaborator
+  workspaceInvite(
+    workspaceId: String
+    token: String
+    options: WorkspaceInviteLookupOptions
+  ): PendingWorkspaceCollaborator
   """
   Validates the slug, to make sure it contains only valid characters and its not taken.
   """
   validateWorkspaceSlug(slug: String!): Boolean!
+}
+
+input WorkspaceInviteLookupOptions {
+  """
+  If true, the query will assume workspaceId is actually the workspace slug, and do the lookup by slug
+  """
+  useSlug: Boolean
 }
 
 input WorkspaceCreateInput {

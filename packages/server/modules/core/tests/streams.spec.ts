@@ -8,13 +8,7 @@ import {
   grantPermissionsStream
 } from '@/modules/core/services/streams'
 
-import {
-  createBranch,
-  getBranchByNameAndStreamId,
-  deleteBranchById
-} from '@/modules/core/services/branches'
 import { createObject } from '@/modules/core/services/objects'
-import { createCommitByBranchName } from '@/modules/core/services/commits'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import {
@@ -35,6 +29,8 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import {
   StreamWithOptionalRole,
+  markBranchStreamUpdated,
+  markCommitStreamUpdated,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
@@ -54,6 +50,58 @@ import {
   ServerAndContext
 } from '@/test/graphqlHelper'
 import { buildApolloServer } from '@/app'
+import {
+  createBranchFactory,
+  deleteBranchByIdFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import { db } from '@/db/knex'
+import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { getObject } from '@/modules/core/repositories/objects'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+
+const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranch = createBranchFactory({ db })
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -328,15 +376,14 @@ describe('Streams @core-streams', () => {
 
       // await sleep(100)
 
-      const b = await getBranchByNameAndStreamId({
-        streamId: updatableStream.id,
-        name: 'dim/lol'
-      })
-      await deleteBranchById({
-        id: b!.id,
-        streamId: updatableStream.id,
-        userId: userOne.id
-      })
+      const b = await getStreamBranchByName(updatableStream.id, 'dim/lol')
+      await deleteBranchAndNotify(
+        {
+          id: b!.id,
+          streamId: updatableStream.id
+        },
+        userOne.id
+      )
 
       const su2 = await getStream({ streamId: updatableStream.id })
       expect(su2?.updatedAt).to.be.ok

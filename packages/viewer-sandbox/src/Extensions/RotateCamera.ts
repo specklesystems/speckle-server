@@ -1,4 +1,5 @@
-import { Vector3, Extension, IViewer, CameraController } from '@speckle/viewer'
+import { Extension, IViewer, CameraController } from '@speckle/viewer'
+import { Vector3 } from 'three'
 
 export class RotateCamera extends Extension {
   get inject() {

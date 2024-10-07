@@ -1,7 +1,7 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  PublishSubscription,
   pubsub,
   StreamSubscriptions as StreamPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
@@ -22,6 +22,14 @@ import {
   publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import {
+  AddStreamCommentMentionActivity,
+  AddStreamInviteDeclinedActivity,
+  AddStreamInviteSentOutActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 
 /**
  * Save "stream updated" activity
@@ -36,7 +44,7 @@ export async function addStreamUpdatedActivity(params: {
   const { streamId, updaterId, oldStream, update, newStream } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -109,7 +117,7 @@ export async function addStreamDeletedActivity(params: {
     )
   }
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Stream,
     resourceId: streamId,
@@ -146,18 +154,15 @@ export async function addStreamClonedActivity(
     })
 
   await Promise.all([
-    saveActivity(
-      {
-        streamId: newStreamId,
-        resourceType: ResourceTypes.Stream,
-        resourceId: newStreamId,
-        actionType: ActionTypes.Stream.Clone,
-        userId: clonerId,
-        info: { sourceStreamId, newStreamId, clonerId },
-        message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-      },
-      { trx }
-    ),
+    saveActivityFactory({ db })({
+      streamId: newStreamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: newStreamId,
+      actionType: ActionTypes.Stream.Clone,
+      userId: clonerId,
+      info: { sourceStreamId, newStreamId, clonerId },
+      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+    }),
     !trx ? publishSubscriptions() : null
   ])
 
@@ -179,7 +184,7 @@ export async function addStreamCreatedActivity(params: {
   const { streamId, creatorId, input, stream } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -215,7 +220,7 @@ export async function addStreamPermissionsAddedActivity(params: {
 }) {
   const { streamId, activityUserId, targetUserId, role, stream } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -261,7 +266,7 @@ export async function addStreamInviteAcceptedActivity(params: {
 }) {
   const { streamId, inviteTargetId, inviterId, role, stream } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -308,7 +313,7 @@ export async function addStreamPermissionsRevokedActivity(params: {
   const isVoluntaryLeave = activityUserId === removedUserId
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -347,89 +352,90 @@ export async function addStreamPermissionsRevokedActivity(params: {
 /**
  * Save "user invited another user to stream" activity item
  */
-export async function addStreamInviteSentOutActivity(params: {
-  streamId: string
-  inviteTargetId: string | null
-  inviterId: string
-  inviteTargetEmail: string | null
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, inviteTargetEmail, stream } = params
-  const targetDisplay = inviteTargetId || inviteTargetEmail
+export const addStreamInviteSentOutActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamInviteSentOutActivity =>
+  async ({ streamId, inviteTargetId, inviterId, inviteTargetEmail, stream }) => {
+    const targetDisplay = inviteTargetId || inviteTargetEmail
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteSent,
-      userId: inviterId,
-      message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
-      info: { targetId: inviteTargetId || null, targetEmail: inviteTargetEmail || null }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteSent,
+        userId: inviterId,
+        message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
+        info: {
+          targetId: inviteTargetId || null,
+          targetEmail: inviteTargetEmail || null
+        }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user declined an invite" activity item
  */
-export async function addStreamInviteDeclinedActivity(params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, stream } = params
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteDeclined,
-      userId: inviteTargetId,
-      message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
-      info: { targetId: inviteTargetId, inviterId }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamInviteDeclinedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamInviteDeclinedActivity =>
+  async ({ streamId, inviteTargetId, inviterId, stream }) => {
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteDeclined,
+        userId: inviteTargetId,
+        message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
+        info: { targetId: inviteTargetId, inviterId }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user mentioned in stream comment" activity item
  */
-export async function addStreamCommentMentionActivity(params: {
-  streamId: string
-  mentionAuthorId: string
-  mentionTargetId: string
-  commentId: string
-  threadId: string
-}) {
-  const { streamId, mentionAuthorId, mentionTargetId, commentId, threadId } = params
-  await saveActivity({
-    streamId,
-    resourceType: ResourceTypes.Comment,
-    resourceId: commentId,
-    actionType: ActionTypes.Comment.Mention,
-    userId: mentionAuthorId,
-    message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
-    info: {
-      mentionAuthorId,
-      mentionTargetId,
-      commentId,
-      threadId
-    }
-  })
-}
+export const addStreamCommentMentionActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamCommentMentionActivity =>
+  async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
+    await saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Comment,
+      resourceId: commentId,
+      actionType: ActionTypes.Comment.Mention,
+      userId: mentionAuthorId,
+      message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+      info: {
+        mentionAuthorId,
+        mentionTargetId,
+        commentId,
+        threadId
+      }
+    })
+  }

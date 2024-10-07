@@ -199,11 +199,14 @@ export const onWorkspaceRoleUpdatedFactory =
             return
           }
 
-          await upsertProjectRole({
-            projectId,
-            userId,
-            role: nextProjectRole
-          })
+          await upsertProjectRole(
+            {
+              projectId,
+              userId,
+              role: nextProjectRole
+            },
+            { trackProjectUpdate: false }
+          )
         })
       )
     }
