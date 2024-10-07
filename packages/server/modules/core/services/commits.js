@@ -10,7 +10,6 @@ const {
   getPaginatedBranchCommits,
   getBranchCommitsTotalCount
 } = require('@/modules/core/repositories/commits')
-const { updateCommitAndNotify } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
@@ -47,14 +46,6 @@ const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
 }
 
 module.exports = {
-  /**
-   * @deprecated Use 'updateCommitAndNotify()'
-   */
-  async updateCommit({ streamId, id, message, newBranchName, userId }) {
-    await updateCommitAndNotify({ streamId, id, message, newBranchName }, userId)
-    return true
-  },
-
   /**
    * @deprecated Use `getBranchCommitsTotalCount()` instead
    */

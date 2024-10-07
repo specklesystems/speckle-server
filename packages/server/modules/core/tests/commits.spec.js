@@ -8,7 +8,6 @@ const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
 
 const {
-  updateCommit,
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
   getCommitsByStreamId,
@@ -34,17 +33,26 @@ const {
   deleteCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
-  createCommitByBranchNameFactory
+  createCommitByBranchNameFactory,
+  updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
-const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitStreamUpdated,
+  getCommitStream,
+  getStream
+} = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity
+  addCommitCreatedActivity,
+  addCommitUpdatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
 const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
@@ -80,6 +88,19 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   createCommitByBranchId,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
+})
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 
 describe('Commits @core-commits', () => {
@@ -255,13 +276,15 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should update a commit', async () => {
-    const res = await updateCommit({
-      id: commitId1,
-      message: 'FIRST COMMIT YOOOOOO',
-      userId: user.id,
-      streamId: stream.id
-    })
-    expect(res).to.equal(true)
+    const res = await updateCommitAndNotify(
+      {
+        id: commitId1,
+        message: 'FIRST COMMIT YOOOOOO',
+        streamId: stream.id
+      },
+      user.id
+    )
+    expect(res).to.be.ok
   })
 
   it('Should delete a commit', async () => {
