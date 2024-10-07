@@ -32,7 +32,7 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
@@ -99,7 +99,7 @@ const command: CommandModule<
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits
+        getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({

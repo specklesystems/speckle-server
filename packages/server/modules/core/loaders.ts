@@ -23,12 +23,12 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  getCommitBranches,
+  getCommitBranchesFactory,
   getCommitsFactory,
   getSpecificBranchCommitsFactory,
-  getStreamCommitCounts,
-  getUserAuthoredCommitCounts,
-  getUserStreamCommitCounts
+  getStreamCommitCountsFactory,
+  getUserAuthoredCommitCountsFactory,
+  getUserStreamCommitCountsFactory
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
@@ -112,6 +112,10 @@ const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
 const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
 const getCommits = getCommitsFactory({ db })
 const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
+const getCommitBranches = getCommitBranchesFactory({ db })
+const getStreamCommitCounts = getStreamCommitCountsFactory({ db })
+const getUserStreamCommitCounts = getUserStreamCommitCountsFactory({ db })
+const getUserAuthoredCommitCounts = getUserAuthoredCommitCountsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
