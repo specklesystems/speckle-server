@@ -17,6 +17,7 @@
         :workspace-info="workspace"
         @show-invite-dialog="showInviteDialog = true"
         @show-settings-dialog="onShowSettingsDialog"
+        @show-move-projects-dialog="showMoveProjectsDialog = true"
       />
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
@@ -64,7 +65,7 @@
 
       <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
 
-      <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
+      <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspace?.id" />
 
       <template v-if="workspace">
         <WorkspaceInviteDialog
@@ -77,6 +78,10 @@
           :target-menu-item="settingsDialogTarget"
           :target-workspace-id="workspace.id"
         />
+        <WorkspaceMoveProjectsDialog
+          v-model:open="showMoveProjectsDialog"
+          :workspace="workspace"
+        />
       </template>
     </template>
   </div>
@@ -84,7 +89,7 @@
 
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
-import { useQuery, useQueryLoading, useApolloClient } from '@vue/apollo-composable'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import type { Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
@@ -93,10 +98,7 @@ import {
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  WorkspaceProjectList_ProjectCollectionFragment,
-  WorkspaceProjectsQueryQueryVariables
-} from '~~/lib/common/generated/gql/graphql'
+import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
@@ -104,7 +106,6 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -119,7 +120,6 @@ graphql(`
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
-const { client } = useApolloClient()
 const {
   on,
   bind,
@@ -132,9 +132,9 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
-const workspaceId = ref<string | undefined>(undefined)
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
@@ -148,7 +148,7 @@ const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
-    workspaceId: workspaceId.value as string,
+    workspaceSlug: props.workspaceSlug,
     filter: {
       search: (search.value || '').trim() || null
     },
@@ -159,23 +159,20 @@ const { result: initialQueryResult, onResult } = useQuery(
   })
 )
 
-const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
-  { workspace: { projects: WorkspaceProjectList_ProjectCollectionFragment } },
-  WorkspaceProjectsQueryQueryVariables
->({
+const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   query: workspaceProjectsQuery,
   baseVariables: computed(() => ({
-    workspaceId: workspaceId.value as string,
+    workspaceSlug: props.workspaceSlug,
     filter: {
       search: (search.value || '').trim() || null
     }
   })),
   resolveKey: (vars: WorkspaceProjectsQueryQueryVariables) => ({
-    workspaceId: vars.workspaceId,
+    workspaceSlug: vars.workspaceSlug,
     search: vars.filter?.search || ''
   }),
-  resolveInitialResult: () => initialQueryResult.value?.workspace.projects,
-  resolveCurrentResult: (result) => result?.workspace?.projects,
+  resolveInitialResult: () => initialQueryResult.value?.workspaceBySlug.projects,
+  resolveCurrentResult: (result) => result?.workspaceBySlug?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,
     cursor: newCursor
@@ -183,9 +180,9 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery<
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => query.result.value?.workspace?.projects)
+const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
-const workspace = computed(() => initialQueryResult.value?.workspace)
+const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
 const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const showEmptyState = computed(() => {
   if (search.value) return false
@@ -195,9 +192,7 @@ const showEmptyState = computed(() => {
 
 const showLoadingBar = computed(() => {
   const isLoading =
-    workspaceId.value === undefined ||
-    areQueriesLoading.value ||
-    (!!search.value && !projects.value?.items?.length)
+    areQueriesLoading.value || (!!search.value && !projects.value?.items?.length)
 
   return isLoading
 })
@@ -241,13 +236,6 @@ const emptyStateItems = computed(() => [
   }
 ])
 
-const cachedData = computed(() =>
-  client.readQuery({
-    query: workspaceAccessCheckQuery,
-    variables: { slug: props.workspaceSlug }
-  })
-)
-
 const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
@@ -258,19 +246,9 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   settingsDialogTarget.value = target
 }
 
-watch(
-  cachedData,
-  (newCachedData) => {
-    if (newCachedData?.workspaceBySlug?.id) {
-      workspaceId.value = newCachedData.workspaceBySlug.id
-    }
-  },
-  { immediate: true }
-)
-
 onResult((queryResult) => {
-  if (queryResult.data?.workspace) {
-    workspaceMixpanelUpdateGroup(queryResult.data.workspace)
+  if (queryResult.data?.workspaceBySlug) {
+    workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
   }
 })
 </script>

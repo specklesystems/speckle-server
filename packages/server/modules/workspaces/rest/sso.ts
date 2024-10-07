@@ -11,13 +11,7 @@ import {
   getProviderAuthorizationUrl,
   initializeIssuerAndClient
 } from '@/modules/workspaces/clients/oidcProvider'
-import {
-  getFrontendOrigin,
-  getRedisUrl,
-  getServerOrigin,
-  getSessionSecret,
-  isSSLServer
-} from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   storeOIDCProviderValidationRequestFactory,
   getOIDCProviderFactory,
@@ -30,10 +24,6 @@ import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
-import { createRedisClient } from '@/modules/shared/redis/redis'
-// temp imports
-import ConnectRedis from 'connect-redis'
-import ExpressSession from 'express-session'
 import { noop } from 'lodash'
 import { OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
 import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/workspaces'
@@ -41,21 +31,19 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  finalizeAuthMiddlewareFactory,
+  sessionMiddlewareFactory
+} from '@/modules/auth/middleware'
+import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
+import { getUserById } from '@/modules/core/services/users'
 
 const router = Router()
 
-// todo, this should be using the app wide session middleware
-const RedisStore = ConnectRedis(ExpressSession)
-const redisClient = createRedisClient(getRedisUrl(), {})
-const sessionMiddleware = ExpressSession({
-  store: new RedisStore({ client: redisClient }),
-  secret: getSessionSecret(),
-  saveUninitialized: false,
-  resave: false,
-  cookie: {
-    maxAge: 1000 * 60 * 3, // 3 minutes
-    secure: isSSLServer()
-  }
+const sessionMiddleware = sessionMiddlewareFactory()
+const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
+  createAuthorizationCode: createAuthorizationCodeFactory({ db }),
+  getUserById
 })
 
 const buildAuthRedirectUrl = (workspaceSlug: string): URL =>
@@ -249,7 +237,8 @@ router.get(
     } else {
       // this must be using the generic OIDC login flow somehow
     }
-  }
+  },
+  finalizeAuthMiddleware
 )
 
 export default router
