@@ -78,13 +78,17 @@
               Invite to Speckle
             </NuxtLink>
           </MenuItem>
-          <MenuItem>
-            <button
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+              ]"
               class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
               @click="openFeedbackDialog"
             >
               Feedback
-            </button>
+            </NuxtLink>
           </MenuItem>
           <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
