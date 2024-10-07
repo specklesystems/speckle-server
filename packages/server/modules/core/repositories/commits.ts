@@ -44,7 +44,11 @@ import {
   GetCommitsAndTheirBranchIds,
   GetBatchedStreamCommits,
   GetBatchedBranchCommits,
-  InsertCommits
+  InsertCommits,
+  PaginatedBranchCommitsBaseParams,
+  PaginatedBranchCommitsParams,
+  GetPaginatedBranchCommitsItems,
+  GetBranchCommitsTotalCount
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -274,69 +278,57 @@ export const getSpecificBranchCommitsFactory =
     return results
   }
 
-export type PaginatedBranchCommitsBaseParams = {
-  branchId: string
-  filter?: Nullable<{
-    /**
-     * Exclude specific commits
-     */
-    excludeIds?: string[]
-  }>
-}
+const getPaginatedBranchCommitsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  <T = CommitRecord[]>(params: PaginatedBranchCommitsBaseParams) => {
+    const { branchId, filter } = params
 
-export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
-  limit: number
-  cursor?: Nullable<string>
-}
+    const q = tables
+      .commits(deps.db)
+      .select<T>(Commits.cols)
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      .where(Branches.col.id, branchId)
+      .groupBy(Commits.col.id)
 
-function getPaginatedBranchCommitsBaseQuery<T = CommitRecord[]>(
-  params: PaginatedBranchCommitsBaseParams
-) {
-  const { branchId, filter } = params
+    if (filter?.excludeIds?.length) {
+      q.whereNotIn(Commits.col.id, filter.excludeIds)
+    }
 
-  const q = Commits.knex<T>()
-    .select(Commits.cols)
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-    .where(Branches.col.id, branchId)
-    .groupBy(Commits.col.id)
-
-  if (filter?.excludeIds?.length) {
-    q.whereNotIn(Commits.col.id, filter.excludeIds)
+    return q
   }
 
-  return q
-}
+export const getPaginatedBranchCommitsItemsFactory =
+  (deps: { db: Knex }): GetPaginatedBranchCommitsItems =>
+  async (params: PaginatedBranchCommitsParams) => {
+    const { cursor } = params
 
-export async function getPaginatedBranchCommits(params: PaginatedBranchCommitsParams) {
-  const { cursor } = params
+    const limit = clamp(params.limit || 25, 1, 100)
+    const q = getPaginatedBranchCommitsBaseQueryFactory(deps)(params)
+      .orderBy(Commits.col.createdAt, 'desc')
+      .limit(limit)
 
-  const limit = clamp(params.limit || 25, 1, 100)
-  const q = getPaginatedBranchCommitsBaseQuery(params)
-    .orderBy(Commits.col.createdAt, 'desc')
-    .limit(limit)
+    if (cursor) {
+      q.andWhere(Commits.col.createdAt, '<', cursor)
+    }
 
-  if (cursor) {
-    q.andWhere(Commits.col.createdAt, '<', cursor)
+    const rows = await q
+
+    return {
+      commits: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    }
   }
 
-  const rows = await q
+export const getBranchCommitsTotalCountFactory =
+  (deps: { db: Knex }): GetBranchCommitsTotalCount =>
+  async (params: PaginatedBranchCommitsBaseParams) => {
+    const baseQ = getPaginatedBranchCommitsBaseQueryFactory(deps)(params)
+    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
-  return {
-    commits: rows,
-    cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    const [res] = await q
+    return parseInt(res?.count || '0')
   }
-}
-
-export async function getBranchCommitsTotalCount(
-  params: PaginatedBranchCommitsBaseParams
-) {
-  const baseQ = getPaginatedBranchCommitsBaseQuery(params)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-
-  const [res] = await q
-  return parseInt(res?.count || '0')
-}
 
 export const getCommitBranchesFactory =
   (deps: { db: Knex }): GetCommitBranches =>

@@ -13,7 +13,7 @@ const {
 } = require('../../services/commits')
 const {
   getPaginatedStreamCommits,
-  getPaginatedBranchCommits
+  getPaginatedBranchCommitsFactory
 } = require('@/modules/core/services/commit/retrieval')
 const {
   markCommitReceivedAndNotify,
@@ -47,7 +47,10 @@ const {
   insertBranchCommitsFactory,
   getCommitBranchFactory,
   switchCommitBranchFactory,
-  updateCommitFactory
+  updateCommitFactory,
+  getSpecificBranchCommitsFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getBranchCommitsTotalCountFactory
 } = require('@/modules/core/repositories/commits')
 const { db } = require('@/db/knex')
 const {
@@ -110,6 +113,12 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   addCommitUpdatedActivity,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
 })
 
 /**

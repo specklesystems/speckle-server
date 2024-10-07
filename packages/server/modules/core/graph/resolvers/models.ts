@@ -15,7 +15,7 @@ import { last } from 'lodash'
 
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
-  getPaginatedBranchCommits,
+  getPaginatedBranchCommitsFactory,
   getPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
 import {
@@ -42,6 +42,8 @@ import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import {
   getAllBranchCommitsFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
@@ -93,6 +95,12 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   markBranchStreamUpdated,
   addBranchDeletedActivity,
   deleteBranchById: deleteBranchByIdFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
 })
 
 export = {
