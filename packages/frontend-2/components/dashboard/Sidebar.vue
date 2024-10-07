@@ -26,7 +26,9 @@
         class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
         :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
-        <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebar
+          class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+        >
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
@@ -158,8 +160,8 @@
           </LayoutSidebarMenu>
           <template #promo>
             <LayoutSidebarPromo
-              title="Specklecon 2024"
-              text="Join us in London on 13-14 November for the ultimate Speckle community event."
+              title="SpeckleCon 2024"
+              text="Join us in London on Nov 13-14 for the ultimate community event."
               button-text="Get tickets"
               to="https://conf.speckle.systems/"
             />
