@@ -64,6 +64,7 @@
       v-if="project"
       v-model:open="showMoveDialog"
       :project="project"
+      event-source="project-page"
     />
   </div>
 </template>

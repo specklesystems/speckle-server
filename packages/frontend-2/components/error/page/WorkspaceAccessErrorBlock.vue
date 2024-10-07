@@ -13,16 +13,19 @@ const route = useRoute()
 const logger = useLogger()
 
 const token = computed(() => route.query.token as Optional<string>)
-const workspaceId = computed(() => route.params.id as Optional<string>)
+const workspaceSlug = computed(() => route.params.slug as Optional<string>)
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const { result } = useQuery(
   workspaceInviteQuery,
   () => ({
-    workspaceId: workspaceId.value,
-    token: token.value
+    workspaceId: workspaceSlug.value,
+    token: token.value,
+    options: {
+      useSlug: true
+    }
   }),
-  () => ({ enabled: !!(workspaceId.value && isWorkspacesEnabled.value) })
+  () => ({ enabled: !!(workspaceSlug.value && isWorkspacesEnabled.value) })
 )
 
 const invite = computed(() => result.value?.workspaceInvite)
