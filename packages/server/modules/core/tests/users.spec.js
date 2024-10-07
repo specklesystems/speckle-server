@@ -29,22 +29,56 @@ const {
 
 const { getBranchesByStreamId } = require('../services/branches')
 
-const {
-  createCommitByBranchName,
-  getCommitsByBranchName,
-  getCommitsByStreamId
-} = require('../services/commits')
+const { getCommitsByBranchName, getCommitsByStreamId } = require('../services/commits')
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const {
+  createBranchFactory,
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
-const { getCommitFactory } = require('@/modules/core/repositories/commits')
+const {
+  getCommitFactory,
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const { getObject } = require('@/modules/core/repositories/objects')
+const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 const createBranch = createBranchFactory({ db })
 const getCommit = getCommitFactory({ db })
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -154,14 +188,16 @@ describe('Actors & Tokens @user-services', () => {
         streamId: multiOwnerStream.id,
         object: { pie: 'in the sky' }
       })
-      const commitId = await createCommitByBranchName({
-        streamId: multiOwnerStream.id,
-        branchName: 'ballmer/dev',
-        message: 'breakfast commit',
-        sourceApplication: 'tests',
-        objectId: objId,
-        authorId: ballmerUserId
-      })
+      const commitId = (
+        await createCommitByBranchName({
+          streamId: multiOwnerStream.id,
+          branchName: 'ballmer/dev',
+          message: 'breakfast commit',
+          sourceApplication: 'tests',
+          objectId: objId,
+          authorId: ballmerUserId
+        })
+      ).id
 
       await deleteUser({ deleteAllUserInvites: async () => true })(ballmerUserId)
 

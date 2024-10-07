@@ -4,8 +4,6 @@ import { createUser } from '@/modules/core/services/users'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createStream } from '@/modules/core/services/streams'
 import { createObjects } from '@/modules/core/services/objects'
-import { createCommitByBranchName } from '@/modules/core/services/commits'
-
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
@@ -23,6 +21,42 @@ import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
 import { Express } from 'express'
 import { db } from '@/db/knex'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { getObject } from '@/modules/core/repositories/objects'
+import {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 

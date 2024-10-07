@@ -7,12 +7,10 @@ import {
   getBranchCommitsTotalCount,
   getPaginatedBranchCommits as getPaginatedBranchCommitsDb,
   getSpecificBranchCommitsFactory,
+  getStreamCommitCountFactory,
   PaginatedBranchCommitsParams
 } from '@/modules/core/repositories/commits'
-import {
-  getCommitsByStreamId,
-  getCommitsTotalCountByStreamId
-} from '@/modules/core/services/commits'
+import { getCommitsByStreamId } from '@/modules/core/services/commits'
 import { BadRequestError } from '@/modules/shared/errors'
 import { db } from '@/db/knex'
 
@@ -30,8 +28,7 @@ export async function getPaginatedStreamCommits(
     cursor: params.cursor,
     ignoreGlobalsBranch: true
   })
-  const totalCount = await getCommitsTotalCountByStreamId({
-    streamId,
+  const totalCount = await getStreamCommitCountFactory({ db })(streamId, {
     ignoreGlobalsBranch: true
   })
 

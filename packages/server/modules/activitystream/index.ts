@@ -8,8 +8,13 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { handleServerInvitesActivitiesFactory } from '@/modules/activitystream/services/serverInvitesActivity'
 import { getStream } from '@/modules/core/repositories/streams'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
-import { getActiveUserStreamsFactory } from '@/modules/activitystream/repositories'
+import {
+  getActiveUserStreamsFactory,
+  saveActivityFactory
+} from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
+import { addStreamInviteSentOutActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 let scheduledTask: ReturnType<typeof scheduleExecution> | null = null
 let quitEventListeners: Optional<ReturnType<typeof initializeEventListeners>> =
@@ -19,7 +24,11 @@ const initializeEventListeners = () => {
   const handleServerInvitesActivities = handleServerInvitesActivitiesFactory({
     eventBus: getEventBus(),
     logger: activitiesLogger,
-    getStream
+    getStream,
+    addStreamInviteSentOutActivity: addStreamInviteSentOutActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })
   })
 
   const quitters = [handleServerInvitesActivities()]

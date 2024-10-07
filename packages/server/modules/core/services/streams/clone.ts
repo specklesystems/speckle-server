@@ -15,12 +15,12 @@ import {
   insertObjects
 } from '@/modules/core/repositories/objects'
 import {
-  getBatchedStreamCommits,
   generateCommitId,
-  insertCommits,
-  insertStreamCommits,
-  getBatchedBranchCommits,
-  insertBranchCommits
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory,
+  getBatchedStreamCommitsFactory,
+  getBatchedBranchCommitsFactory,
+  insertCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash'
 import {
@@ -165,6 +165,8 @@ async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
+  const insertCommits = insertCommitsFactory({ db })
+  const getBatchedStreamCommits = getBatchedStreamCommitsFactory({ db })
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
     trx: state.trx
   })) {
@@ -192,7 +194,7 @@ async function createStreamCommitReferences(
   const batchedNewCommitIds = chunk(newCommitIds, batchSize)
 
   for (const newCommitIdBatch of batchedNewCommitIds) {
-    await insertStreamCommits(
+    await insertStreamCommitsFactory({ db })(
       newCommitIdBatch.map(
         (id): StreamCommitRecord => ({
           streamId: newStreamId,
@@ -237,6 +239,8 @@ async function createBranchCommitReferences(
   branchIdMap: Map<string, string>
 ) {
   const oldBranchIds = [...branchIdMap.keys()]
+  const getBatchedBranchCommits = getBatchedBranchCommitsFactory({ db })
+
   for await (const branchCommits of getBatchedBranchCommits(oldBranchIds, {
     trx: state.trx
   })) {
@@ -257,7 +261,7 @@ async function createBranchCommitReferences(
       return { commitId: newCommitId, branchId: newBranchId }
     })
 
-    await insertBranchCommits(newBranchCommits, { trx: state.trx })
+    await insertBranchCommitsFactory({ db })(newBranchCommits, { trx: state.trx })
   }
 }
 

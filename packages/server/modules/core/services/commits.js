@@ -6,14 +6,9 @@ const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
 
 const {
-  getStreamCommitCount,
   getPaginatedBranchCommits,
   getBranchCommitsTotalCount
 } = require('@/modules/core/repositories/commits')
-const {
-  createCommitByBranchName: createCommitByBranchNameNew,
-  updateCommitAndNotify
-} = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
@@ -51,41 +46,6 @@ const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
 
 module.exports = {
   /**
-   * @deprecated Use 'createCommitByBranchName()' in 'management.ts'
-   */
-  async createCommitByBranchName({
-    streamId,
-    branchName,
-    objectId,
-    authorId,
-    message,
-    sourceApplication,
-    totalChildrenCount,
-    parents
-  }) {
-    const { id } = await createCommitByBranchNameNew({
-      streamId,
-      branchName,
-      objectId,
-      authorId,
-      message,
-      sourceApplication,
-      totalChildrenCount,
-      parents
-    })
-
-    return id
-  },
-
-  /**
-   * @deprecated Use 'updateCommitAndNotify()'
-   */
-  async updateCommit({ streamId, id, message, newBranchName, userId }) {
-    await updateCommitAndNotify({ streamId, id, message, newBranchName }, userId)
-    return true
-  },
-
-  /**
    * @deprecated Use `getBranchCommitsTotalCount()` instead
    */
   async getCommitsTotalCountByBranchId({ branchId }) {
@@ -117,10 +77,6 @@ module.exports = {
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
     return module.exports.getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
-  },
-
-  async getCommitsTotalCountByStreamId({ streamId, ignoreGlobalsBranch }) {
-    return await getStreamCommitCount(streamId, { ignoreGlobalsBranch })
   },
 
   /**

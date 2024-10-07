@@ -7,17 +7,22 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { EventBus } from '@/modules/shared/services/eventBus'
-import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
 import { getStream } from '@/modules/core/repositories/streams'
 import { Logger } from '@/logging/logging'
+import { AddStreamInviteSentOutActivity } from '@/modules/activitystream/domain/operations'
 
 type OnServerInviteCreatedFactoryDeps = {
   getStream: typeof getStream
   logger: Logger
+  addStreamInviteSentOutActivity: AddStreamInviteSentOutActivity
 }
 
 const onServerInviteCreatedFactory =
-  ({ getStream, logger }: OnServerInviteCreatedFactoryDeps) =>
+  ({
+    getStream,
+    logger,
+    addStreamInviteSentOutActivity
+  }: OnServerInviteCreatedFactoryDeps) =>
   async (payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Created]) => {
     const { invite } = payload
     const primaryResourceTarget = invite.resource
