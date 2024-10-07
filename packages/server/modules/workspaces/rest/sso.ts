@@ -91,7 +91,11 @@ router.get(
     }),
     query: oidcProvider
   }),
-  async ({ session, params, query, res }) => {
+  async ({ context, session, params, query, res }) => {
+    console.log('/validate')
+    console.log(context)
+    console.log(context.userId)
+
     try {
       const provider = query
       const encryptionKeyPair = await getEncryptionKeyPair()
@@ -144,6 +148,11 @@ router.get(
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     let provider: OIDCProvider | null = null
+
+    console.log('/callback')
+    console.log(req.context)
+    console.log(req.context.userId)
+
     if (req.query.validate === 'true') {
       const workspace = await getWorkspaceBySlugFactory({ db })({
         workspaceSlug: req.params.workspaceSlug

@@ -83,6 +83,7 @@ const props = defineProps<{
   workspace: SettingsWorkspacesSecuritySso_WorkspaceFragment
 }>()
 
+const apiOrigin = useApiOrigin()
 const { handleSubmit } = useForm<FormValues>()
 
 const providerName = ref('')
@@ -92,20 +93,27 @@ const issuerUrl = ref('')
 
 const onSubmit = handleSubmit(async () => {
   const token = useAuthCookie()
-  const baseUrl = `/api/v1/workspaces/${props.workspace.slug}/sso/oidc/validate`
+  const baseUrl = `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/validate`
   const params = [
     `providerName=${providerName.value}`,
     `clientId=${clientId.value}`,
     `clientSecret=${clientSecret.value}`,
     `issuerUrl=${issuerUrl.value}`
   ]
-  const route = `${baseUrl}${params.join('&')}`
+  const route = `${baseUrl}?${params.join('&')}`
 
-  await fetch(route, {
+  // navigateTo(route, {
+  //   external: true
+  // })
+
+  const x = await fetch(route, {
+    mode: 'cors',
     headers: {
       Authorization: `Bearer ${token.value}`
-    },
-    redirect: 'follow'
+    }
+    // redirect: 'follow'
   })
+
+  console.log(x)
 })
 </script>
