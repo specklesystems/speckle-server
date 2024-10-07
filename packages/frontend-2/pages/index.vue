@@ -3,7 +3,10 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
-    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <PromoBannersWrapper
+      v-if="promoBanners && promoBanners.length"
+      :banners="promoBanners"
+    />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
       :workspaces-invites="workspacesResult?.activeUser || undefined"
@@ -186,14 +189,5 @@ const onDownloadManager = (extension: ManagerExtension) => {
   }
 }
 
-const promoBanners = ref<PromoBanner[]>([
-  {
-    primaryText: 'Specklecon - Grab your tickets',
-    url: 'https://conf.speckle.systems/',
-    priority: 1,
-    expiryDate: '2024-10-06',
-    // image: speckleconTicketsImage,
-    isBackgroundImage: true
-  }
-])
+const promoBanners = ref<PromoBanner[]>()
 </script>
