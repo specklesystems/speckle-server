@@ -6,6 +6,7 @@ import {
 } from '@/modules/core/domain/commits/types'
 import {
   CommitUpdateInput,
+  ModelVersionsFilter,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
@@ -171,3 +172,39 @@ export type InsertCommits = (
     trx: Knex.Transaction
   }>
 ) => Promise<number[]>
+
+export type PaginatedBranchCommitsBaseParams = {
+  branchId: string
+  filter?: Nullable<{
+    /**
+     * Exclude specific commits
+     */
+    excludeIds?: string[]
+  }>
+}
+
+export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
+  limit: number
+  cursor?: Nullable<string>
+}
+
+export type GetPaginatedBranchCommitsItems = (
+  params: PaginatedBranchCommitsParams
+) => Promise<{
+  commits: Commit[]
+  cursor: string | null
+}>
+
+export type GetBranchCommitsTotalCount = (
+  params: PaginatedBranchCommitsBaseParams
+) => Promise<number>
+
+export type GetPaginatedBranchCommits = (
+  params: PaginatedBranchCommitsParams & {
+    filter?: Nullable<ModelVersionsFilter>
+  }
+) => Promise<{
+  totalCount: number
+  items: Commit[]
+  cursor: string | null
+}>
