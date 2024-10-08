@@ -1,4 +1,8 @@
-import { StreamRecord } from '@/modules/core/helpers/types'
+import {
+  LimitedUserRecord,
+  StreamRecord,
+  UserWithRole
+} from '@/modules/core/helpers/types'
 import { StreamRoles } from '@speckle/shared'
 
 export type Stream = StreamRecord
@@ -15,3 +19,7 @@ export type StreamWithCommitId<StreamType extends Stream = StreamWithOptionalRol
   StreamType & {
     commitId: string
   }
+
+export type LimitedUserWithStreamRole = UserWithRole<LimitedUserRecord> & {
+  streamRole: StreamRoles
+}

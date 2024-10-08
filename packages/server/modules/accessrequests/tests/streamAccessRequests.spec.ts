@@ -24,7 +24,7 @@ import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
   getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -53,6 +53,7 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { expect } from 'chai'
 import { noop } from 'lodash'
 
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestStreamAccess = requestStreamAccessFactory({
   requestProjectAccess: requestProjectAccessFactory({

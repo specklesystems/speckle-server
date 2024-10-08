@@ -7,7 +7,6 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { chunk, flatten } from 'lodash'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -30,6 +29,7 @@ import {
   AddStreamInviteSentOutActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 /**
  * Save "stream updated" activity
@@ -94,6 +94,7 @@ export async function addStreamDeletedActivity(params: {
   ])
 
   // Notify all stream users
+  const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
   const users = await getStreamCollaborators(streamId)
   const userBatches = chunk(users, 15)
   for (const userBatch of userBatches) {

@@ -13,8 +13,8 @@ import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/
 import {
   getUserStreamsCount,
   getUserStreams,
-  getStreamCollaborators,
-  getStreamFactory
+  getStreamFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
   getRateLimitResult,
@@ -38,6 +38,7 @@ import {
 import { has } from 'lodash'
 
 const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 
 export = {
   Query: {

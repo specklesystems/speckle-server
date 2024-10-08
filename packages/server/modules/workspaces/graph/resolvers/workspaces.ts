@@ -728,7 +728,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getProject: getProjectFactory({ db }),
             updateProject: updateProjectFactory({ db: trx }),
             upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
-            getProjectCollaborators: getProjectCollaboratorsFactory(),
+            getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
             getWorkspaceRoleToDefaultProjectRoleMapping:
               getWorkspaceRoleToDefaultProjectRoleMappingFactory({

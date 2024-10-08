@@ -2,7 +2,7 @@ import { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger } from '@/logging/logging'
 import {
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
@@ -143,6 +143,7 @@ const command: CommandModule<
       addCommitCreatedActivity
     })
 
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,
       getStreamBranchByName: getStreamBranchByNameFactory({ db }),
