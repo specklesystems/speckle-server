@@ -1,7 +1,6 @@
 import { expect } from 'chai'
 import {
   createStream,
-  getStream,
   updateStream,
   deleteStream,
   getStreamUsers,
@@ -29,6 +28,7 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import {
   StreamWithOptionalRole,
+  getStreamFactory,
   markBranchStreamUpdated,
   markCommitStreamUpdated,
   revokeStreamPermissions
@@ -74,6 +74,7 @@ import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 
+const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({

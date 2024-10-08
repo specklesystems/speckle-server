@@ -3,8 +3,8 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
-  getStream,
   getStreamCollaborators,
+  getStreamFactory,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
 import {
@@ -90,6 +90,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
 
     const getStreamObjects = getStreamObjectsFactory({ db })

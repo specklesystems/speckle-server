@@ -2,7 +2,6 @@
 const _ = require('lodash')
 const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
-  getStream,
   getFavoritedStreams,
   getFavoritedStreamsCount,
   setStreamFavorited,
@@ -10,7 +9,8 @@ const {
   deleteStream: deleteStreamFromDb,
   updateStream: updateStreamInDb,
   revokeStreamPermissions,
-  grantStreamPermissions
+  grantStreamPermissions,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 const { dbLogger } = require('@/logging/logging')
@@ -41,8 +41,6 @@ module.exports = {
     })
     return id
   },
-
-  getStream,
 
   /**
    * @deprecated Use updateStreamAndNotify or use the repository function directly
@@ -204,6 +202,8 @@ module.exports = {
 
     // Favorite/unfavorite the stream
     await setStreamFavorited({ streamId, userId, favorited })
+
+    const getStream = getStreamFactory({ db: knex })
 
     // Get updated stream info
     return await getStream({ streamId, userId })

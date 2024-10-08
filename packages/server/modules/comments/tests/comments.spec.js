@@ -56,8 +56,8 @@ const { db } = require('@/db/knex')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
 const { CommentsEmitter } = require('@/modules/comments/events/emitter')
 const {
-  getStream,
-  markCommitStreamUpdated
+  markCommitStreamUpdated,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const {
   createCommitByBranchIdFactory,
@@ -79,6 +79,7 @@ const {
 } = require('@/modules/activitystream/services/commitActivity')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
+const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })

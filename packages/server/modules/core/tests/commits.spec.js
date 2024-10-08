@@ -47,7 +47,7 @@ const {
 const {
   markCommitStreamUpdated,
   getCommitStream,
-  getStream
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
@@ -57,6 +57,7 @@ const {
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
+const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,

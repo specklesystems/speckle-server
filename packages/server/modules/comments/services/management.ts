@@ -1,7 +1,6 @@
 import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateCommentInput,
@@ -42,9 +41,10 @@ import {
   UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 type AuthorizeProjectCommentsAccessDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
   adminOverrideEnabled: typeof adminOverrideEnabled
 }
 
@@ -289,7 +289,7 @@ export const editCommentAndNotifyFactory =
 export const archiveCommentAndNotifyFactory =
   (deps: {
     getComment: GetComment
-    getStream: typeof getStream
+    getStream: GetStream
     updateComment: UpdateComment
     addCommentArchivedActivity: typeof addCommentArchivedActivity
   }): ArchiveCommentAndNotify =>

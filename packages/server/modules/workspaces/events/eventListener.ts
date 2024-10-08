@@ -5,7 +5,7 @@ import {
 } from '@/modules/core/events/projectsEmitter'
 import {
   deleteProjectRoleFactory,
-  getStream,
+  getStreamFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -45,6 +45,7 @@ import {
 import { getStreams } from '@/modules/core/services/streams'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 export const onProjectCreatedFactory =
   ({
@@ -89,7 +90,7 @@ export const onProjectCreatedFactory =
 
 export const onInviteFinalizedFactory =
   (deps: {
-    getStream: typeof getStream
+    getStream: GetStream
     logger: typeof logger
     updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }) =>
@@ -230,7 +231,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
         const onInviteFinalized = onInviteFinalizedFactory({
-          getStream,
+          getStream: getStreamFactory({ db }),
           logger: moduleLogger,
           updateWorkspaceRole: updateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),

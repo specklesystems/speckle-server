@@ -43,7 +43,6 @@ import {
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { getStream } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
@@ -73,7 +72,9 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
+const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,

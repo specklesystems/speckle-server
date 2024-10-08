@@ -25,6 +25,7 @@ import {
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
 import { GetObject } from '@/modules/core/domain/objects/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -45,7 +46,6 @@ import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import {
   getCommitStream,
-  getStream,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
@@ -253,7 +253,7 @@ const isOldVersionUpdateInput = (
 export const updateCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
-    getStream: typeof getStream
+    getStream: GetStream
     getCommitStream: typeof getCommitStream
     getStreamBranchByName: GetStreamBranchByName
     getCommitBranch: GetCommitBranch

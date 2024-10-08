@@ -1,5 +1,4 @@
 import {
-  getStream,
   getStreams,
   getStreamUsers,
   favoriteStream,
@@ -24,7 +23,8 @@ import { getDiscoverableStreams } from '@/modules/core/services/streams/discover
 import { get } from 'lodash'
 import {
   getUserStreamsCount,
-  getUserStreams
+  getUserStreams,
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   deleteStreamAndNotify,
@@ -49,6 +49,8 @@ import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { getUsers } from '@/modules/core/repositories/users'
 import { BadRequestError } from '@/modules/shared/errors'
+
+const getStream = getStreamFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,

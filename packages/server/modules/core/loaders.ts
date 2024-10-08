@@ -3,12 +3,12 @@ import {
   getBatchUserFavoriteData,
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
-  getStreams,
   getStreamRoles,
   getStreamsSourceApps,
   getCommitStreams,
   StreamWithCommitId,
-  getUserStreamCounts
+  getUserStreamCounts,
+  getStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -88,6 +88,7 @@ import { getAppScopesFactory } from '@/modules/auth/repositories'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
+const getStreams = getStreamsFactory({ db })
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
 const getAutomations = getAutomationsFactory({ db })

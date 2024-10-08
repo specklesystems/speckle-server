@@ -12,6 +12,7 @@ import {
   MoveCommitsToBranch,
   ValidateAndBatchMoveCommits
 } from '@/modules/core/domain/commits/operations'
+import { GetStreams } from '@/modules/core/domain/streams/operations'
 import {
   CommitInvalidAccessError,
   CommitBatchUpdateError
@@ -27,7 +28,7 @@ import {
   deleteCommitsFactory,
   getCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreams } from '@/modules/core/repositories/streams'
+import { getStreamsFactory } from '@/modules/core/repositories/streams'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { difference, groupBy, has, keyBy } from 'lodash'
 
@@ -38,7 +39,7 @@ const isOldBatchInput = (i: CommitBatchInput): i is OldBatchInput => has(i, 'com
 
 type ValidateBatchBaseRulesDeps = {
   getCommits: GetCommits
-  getStreams: typeof getStreams
+  getStreams: GetStreams
 }
 
 /**
@@ -147,7 +148,7 @@ async function validateCommitsDelete(
 ) {
   const validateBatchBaseRules = validateBatchBaseRulesFactory({
     getCommits: getCommitsFactory({ db }),
-    getStreams
+    getStreams: getStreamsFactory({ db })
   })
   return await validateBatchBaseRules(params, userId)
 }
