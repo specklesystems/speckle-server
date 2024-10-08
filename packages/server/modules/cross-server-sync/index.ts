@@ -36,7 +36,10 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  getStreamObjectsFactory
+} from '@/modules/core/repositories/objects'
 import {
   getOnboardingBaseStream,
   getStream,
@@ -64,6 +67,9 @@ const crossServerSyncModule: SpeckleModule = {
   },
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
+
+    const getObject = getObjectFactory({ db })
+    const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })

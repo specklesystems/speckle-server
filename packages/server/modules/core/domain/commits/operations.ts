@@ -1,11 +1,16 @@
+import { Branch } from '@/modules/core/domain/branches/types'
 import {
-  BranchCommit,
+  CommitWithBranchId,
   CommitWithStreamBranchMetadata,
   Commit,
-  CommitBranch
+  CommitBranch,
+  CommitWithStreamId
 } from '@/modules/core/domain/commits/types'
 import {
+  CommitsMoveInput,
   CommitUpdateInput,
+  ModelVersionsFilter,
+  MoveVersionsInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
@@ -39,7 +44,7 @@ export type GetSpecificBranchCommits = (
     branchId: string
     commitId: string
   }[]
-) => Promise<BranchCommit[]>
+) => Promise<CommitWithBranchId[]>
 
 export type StoreCommit = (
   params: Omit<Commit, 'id' | 'createdAt'> & {
@@ -153,7 +158,7 @@ export type GetUserAuthoredCommitCounts = (params: {
 
 export type GetCommitsAndTheirBranchIds = (
   commitIds: string[]
-) => Promise<BranchCommit[]>
+) => Promise<CommitWithBranchId[]>
 
 export type GetBatchedStreamCommits = (
   streamId: string,
@@ -171,3 +176,56 @@ export type InsertCommits = (
     trx: Knex.Transaction
   }>
 ) => Promise<number[]>
+
+export type PaginatedBranchCommitsBaseParams = {
+  branchId: string
+  filter?: Nullable<{
+    /**
+     * Exclude specific commits
+     */
+    excludeIds?: string[]
+  }>
+}
+
+export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
+  limit: number
+  cursor?: Nullable<string>
+}
+
+export type GetPaginatedBranchCommitsItems = (
+  params: PaginatedBranchCommitsParams
+) => Promise<{
+  commits: Commit[]
+  cursor: string | null
+}>
+
+export type GetBranchCommitsTotalCount = (
+  params: PaginatedBranchCommitsBaseParams
+) => Promise<number>
+
+export type GetPaginatedBranchCommits = (
+  params: PaginatedBranchCommitsParams & {
+    filter?: Nullable<ModelVersionsFilter>
+  }
+) => Promise<{
+  totalCount: number
+  items: Commit[]
+  cursor: string | null
+}>
+
+export type MoveCommitsToBranch = (
+  commitIds: string[],
+  branchId: string
+) => Promise<number | undefined>
+
+export type ValidateAndBatchMoveCommits = (
+  params: CommitsMoveInput | MoveVersionsInput,
+  userId: string
+) => Promise<Branch>
+
+export type GetObjectCommitsWithStreamIds = (
+  objectIds: string[],
+  options?: {
+    streamIds?: string[]
+  }
+) => Promise<CommitWithStreamId[]>

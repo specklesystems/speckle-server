@@ -13,7 +13,7 @@ const {
 } = require('../../services/commits')
 const {
   getPaginatedStreamCommits,
-  getPaginatedBranchCommits
+  getPaginatedBranchCommitsFactory
 } = require('@/modules/core/services/commit/retrieval')
 const {
   markCommitReceivedAndNotify,
@@ -29,8 +29,8 @@ const {
   getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
-  batchMoveCommits,
-  batchDeleteCommits
+  batchDeleteCommits,
+  batchMoveCommitsFactory
 } = require('@/modules/core/services/commit/batchCommitActions')
 const {
   validateStreamAccess
@@ -47,26 +47,34 @@ const {
   insertBranchCommitsFactory,
   getCommitBranchFactory,
   switchCommitBranchFactory,
-  updateCommitFactory
+  updateCommitFactory,
+  getSpecificBranchCommitsFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getBranchCommitsTotalCountFactory,
+  getCommitsFactory,
+  moveCommitsToBranchFactory
 } = require('@/modules/core/repositories/commits')
 const { db } = require('@/db/knex')
 const {
   markCommitStreamUpdated,
   getStream,
-  getCommitStream
+  getCommitStream,
+  getStreams
 } = require('@/modules/core/repositories/streams')
 const {
   markCommitBranchUpdatedFactory,
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
   addCommitCreatedActivity,
-  addCommitUpdatedActivity
+  addCommitUpdatedActivity,
+  addCommitMovedActivity
 } = require('@/modules/activitystream/services/commitActivity')
-const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -81,6 +89,7 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   addCommitDeletedActivity
 })
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,
@@ -110,6 +119,21 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   addCommitUpdatedActivity,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+
+const batchMoveCommits = batchMoveCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
+  addCommitMovedActivity
 })
 
 /**

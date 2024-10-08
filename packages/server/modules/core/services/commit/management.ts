@@ -24,6 +24,7 @@ import {
   UpdateCommit,
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
+import { GetObject } from '@/modules/core/domain/objects/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -42,7 +43,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
-import { getObject } from '@/modules/core/repositories/objects'
 import {
   getCommitStream,
   getStream,
@@ -85,7 +85,7 @@ export async function markCommitReceivedAndNotify(params: {
 export const createCommitByBranchIdFactory =
   (deps: {
     createCommit: StoreCommit
-    getObject: typeof getObject
+    getObject: GetObject
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits

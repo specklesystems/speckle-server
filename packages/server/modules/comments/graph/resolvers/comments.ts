@@ -90,12 +90,12 @@ import {
   getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -140,6 +140,7 @@ const archiveComment = archiveCommentFactory({
 })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
 
+const getStreamObjects = getStreamObjectsFactory({ db })
 const getCommentsResources = getCommentsResourcesFactory({ db })
 const getViewerResourcesFromLegacyIdentifiers =
   getViewerResourcesFromLegacyIdentifiersFactory({
