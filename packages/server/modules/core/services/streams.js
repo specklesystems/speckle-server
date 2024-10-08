@@ -14,9 +14,6 @@ const {
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 const { dbLogger } = require('@/logging/logging')
-const {
-  createStreamReturnRecord
-} = require('@/modules/core/services/streams/management')
 const { isResourceAllowed } = require('@/modules/core/helpers/token')
 const {
   TokenResourceIdentifierType
@@ -30,18 +27,6 @@ const {
  */
 
 module.exports = {
-  /**
-   * @deprecated Use createStreamReturnRecord()
-   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
-   * @returns {Promise<string>}
-   */
-  async createStream(params) {
-    const { id } = await createStreamReturnRecord(params, {
-      createActivity: false
-    })
-    return id
-  },
-
   /**
    * @deprecated Use updateStreamAndNotify or use the repository function directly
    * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update

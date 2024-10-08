@@ -5,7 +5,7 @@ import {
   UserRecord
 } from '@/modules/core/helpers/types'
 import {
-  createStream,
+  createStreamFactory,
   getStreamFactory,
   StreamWithOptionalRole
 } from '@/modules/core/repositories/streams'
@@ -103,6 +103,7 @@ const prepareState = async (
 async function cloneStreamEntity(state: CloneStreamInitialState) {
   const { targetStream, user, trx } = state
 
+  const createStream = createStreamFactory({ db })
   const newStream = await createStream(
     {
       name: targetStream.name,

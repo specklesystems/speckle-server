@@ -4,7 +4,6 @@ const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 
 const { createUser } = require('../services/users')
-const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
 
 const {
@@ -47,7 +46,8 @@ const {
 const {
   markCommitStreamUpdated,
   getStreamFactory,
-  getCommitStreamFactory
+  getCommitStreamFactory,
+  createStreamFactory
 } = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
@@ -56,6 +56,34 @@ const {
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { getUsers } = require('@/modules/core/repositories/users')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
 
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -106,6 +134,37 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 const getStreamCommitCount = getStreamCommitCountFactory({ db })
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 
 describe('Commits @core-commits', () => {
   const user = {

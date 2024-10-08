@@ -1,9 +1,15 @@
 import {
   StreamWithCommitId,
   StreamWithOptionalRole,
-  LimitedUserWithStreamRole
+  LimitedUserWithStreamRole,
+  Stream
 } from '@/modules/core/domain/streams/types'
-import { Optional, StreamRoles } from '@speckle/shared'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import {
+  ProjectCreateInput,
+  StreamCreateInput
+} from '@/modules/core/graph/generated/graphql'
+import { MaybeNullOrUndefined, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type GetStreams = (
@@ -38,3 +44,25 @@ export type GetStreamCollaborators = (
   streamId: string,
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
+
+export type StoreStream = (
+  input: StreamCreateInput | ProjectCreateInput,
+  options?: Partial<{
+    ownerId: string
+    trx: Knex.Transaction
+  }>
+) => Promise<Stream>
+
+export type CreateStream = (
+  params: (StreamCreateInput | ProjectCreateInput) & {
+    ownerId: string
+    ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  },
+  options?: Partial<{
+    createActivity: boolean
+  }>
+) => Promise<Stream>
+
+export type LegacyCreateStream = (
+  params: StreamCreateInput & { ownerId: string }
+) => Promise<string>

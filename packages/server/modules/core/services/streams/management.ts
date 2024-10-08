@@ -15,12 +15,10 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
-  createStream,
   deleteStream,
   getStreamFactory,
   updateStream
 } from '@/modules/core/repositories/streams'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -37,99 +35,104 @@ import {
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
-import {
-  deleteAllResourceInvitesFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
-import { ProjectEvents, ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import {
+  ProjectEvents,
+  ProjectsEventsEmitter
+} from '@/modules/core/events/projectsEmitter'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { getUsers } from '@/modules/core/repositories/users'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  CreateStream,
+  LegacyCreateStream,
+  StoreStream
+} from '@/modules/core/domain/streams/operations'
+import { StoreBranch } from '@/modules/core/domain/branches/operations'
 
-export async function createStreamReturnRecord(
-  params: (StreamCreateInput | ProjectCreateInput) & {
-    ownerId: string
-    ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  },
-  options?: Partial<{ createActivity: boolean }>
-): Promise<StreamRecord> {
-  const { ownerId, ownerResourceAccessRules } = params
-  const { createActivity = true } = options || {}
+export const createStreamReturnRecordFactory =
+  (deps: {
+    createStream: StoreStream
+    createBranch: StoreBranch
+    inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
+    addStreamCreatedActivity: ReturnType<typeof addStreamCreatedActivityFactory>
+    projectsEventsEmitter: ProjectsEventsEmitter
+  }): CreateStream =>
+  async (
+    params: (StreamCreateInput | ProjectCreateInput) & {
+      ownerId: string
+      ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+    },
+    options?: Partial<{ createActivity: boolean }>
+  ): Promise<StreamRecord> => {
+    const { ownerId, ownerResourceAccessRules } = params
+    const { createActivity = true } = options || {}
 
-  const canCreateStream = isNewResourceAllowed({
-    resourceType: TokenResourceIdentifierType.Project,
-    resourceAccessRules: ownerResourceAccessRules
-  })
-  if (!canCreateStream) {
-    throw new StreamInvalidAccessError(
-      'You do not have the permissions to create a new stream'
-    )
-  }
-
-  const stream = await createStream(params, { ownerId })
-  const streamId = stream.id
-
-  // Create a default main branch
-  await createBranchFactory({ db })({
-    name: 'main',
-    description: 'default branch',
-    streamId,
-    authorId: ownerId
-  })
-
-  // Invite contributors?
-  if (!isProjectCreateInput(params) && params.withContributors?.length) {
-    // TODO: should be injected in the resolver
-    const getStream = getStreamFactory({ db })
-    await inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          })
-      }),
-      getUsers
-    })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
-  }
-
-  // Save activity
-  if (createActivity) {
-    await addStreamCreatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })({
-      streamId,
-      input: params,
-      stream,
-      creatorId: ownerId
+    const canCreateStream = isNewResourceAllowed({
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ownerResourceAccessRules
     })
+    if (!canCreateStream) {
+      throw new StreamInvalidAccessError(
+        'You do not have the permissions to create a new stream'
+      )
+    }
+
+    const stream = await deps.createStream(params, { ownerId })
+    const streamId = stream.id
+
+    // Create a default main branch
+    await deps.createBranch({
+      name: 'main',
+      description: 'default branch',
+      streamId,
+      authorId: ownerId
+    })
+
+    // Invite contributors?
+    if (!isProjectCreateInput(params) && params.withContributors?.length) {
+      // TODO: should be injected in the resolver
+      await deps.inviteUsersToProject(
+        ownerId,
+        streamId,
+        params.withContributors,
+        ownerResourceAccessRules
+      )
+    }
+
+    // Save activity
+    if (createActivity) {
+      await deps.addStreamCreatedActivity({
+        streamId,
+        input: params,
+        stream,
+        creatorId: ownerId
+      })
+    }
+
+    await deps.projectsEventsEmitter(ProjectEvents.Created, {
+      project: stream,
+      ownerId
+    })
+
+    return stream
   }
 
-  await ProjectsEmitter.emit(ProjectEvents.Created, { project: stream, ownerId })
-
-  return stream
-}
+/**
+ * @deprecated Use createStreamReturnRecordFactory()
+ */
+export const legacyCreateStreamFactory =
+  (deps: { createStreamReturnRecord: CreateStream }): LegacyCreateStream =>
+  async (params) => {
+    const { id } = await deps.createStreamReturnRecord(params, {
+      createActivity: false
+    })
+    return id
+  }
 
 /**
  * Delete stream & notify users (emit events & save activity)

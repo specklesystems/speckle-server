@@ -3,6 +3,7 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
+  createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated
@@ -15,7 +16,7 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
 import {
@@ -26,7 +27,6 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
@@ -57,6 +57,20 @@ import { validateInputAttachmentsFactory } from '@/modules/comments/services/com
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const command: CommandModule<
   unknown,
@@ -138,6 +152,34 @@ const command: CommandModule<
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity
+    })
+
+    const createStreamReturnRecord = createStreamReturnRecordFactory({
+      inviteUsersToProject: inviteUsersToProjectFactory({
+        createAndSendInvite: createAndSendInviteFactory({
+          findUserByTarget: findUserByTargetFactory(),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+            getStream
+          }),
+          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+            getStream
+          }),
+          emitEvent: ({ eventName, payload }) =>
+            getEventBus().emit({
+              eventName,
+              payload
+            })
+        }),
+        getUsers
+      }),
+      createStream: createStreamFactory({ db }),
+      createBranch: createBranchFactory({ db }),
+      addStreamCreatedActivity: addStreamCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      }),
+      projectsEventsEmitter: ProjectsEmitter.emit
     })
 
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
