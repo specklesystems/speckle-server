@@ -17,7 +17,7 @@
       class="mt-1"
       :to="to"
       :target="to ? '_blank' : undefined"
-      @click="onClick ? handleClick : undefined"
+      @click="$emit('onClick')"
     >
       {{ buttonText }}
     </FormButton>
@@ -27,17 +27,12 @@
 <script setup lang="ts">
 import FormButton from '~~/src/components/form/Button.vue'
 
-const props = defineProps<{
+defineEmits(['onClick'])
+
+defineProps<{
   title?: string
   text?: string
   to?: string
   buttonText?: string
-  onClick?: () => void
 }>()
-
-const handleClick = () => {
-  if (props.onClick) {
-    props.onClick()
-  }
-}
 </script>

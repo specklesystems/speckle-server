@@ -163,7 +163,7 @@
               title="SpeckleCon 2024"
               text="Join us in London on Nov 13-14 for the ultimate community event."
               button-text="Get tickets"
-              to="https://conf.speckle.systems/"
+              @on-click="onPromoClick"
             />
           </template>
         </LayoutSidebar>
@@ -259,6 +259,15 @@ onWorkspaceResult((result) => {
     }
   }
 })
+
+const onPromoClick = () => {
+  mixpanel.track('Promo Banner Clicked', {
+    source: 'sidebar',
+    campaign: 'specklecon2024'
+  })
+
+  window.open('https://conf.speckle.systems/', '_blank')
+}
 
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true
