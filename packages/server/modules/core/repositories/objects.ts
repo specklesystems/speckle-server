@@ -6,7 +6,12 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
-import { GetObject, GetStreamObjects } from '@/modules/core/domain/objects/operations'
+import {
+  GetBatchedStreamObjects,
+  GetObject,
+  GetStreamObjects,
+  StoreObjects
+} from '@/modules/core/domain/objects/operations'
 
 const tables = {
   objects: (db: Knex) => db<ObjectRecord>(Objects.name)
@@ -35,22 +40,22 @@ export const getObjectFactory =
       .first()
   }
 
-export function getBatchedStreamObjects(
-  streamId: string,
-  options?: Partial<BatchedSelectOptions>
-) {
-  const baseQuery = Objects.knex<ObjectRecord[]>()
-    .where(Objects.col.streamId, streamId)
-    .orderBy(Objects.col.id)
+export const getBatchedStreamObjectsFactory =
+  (deps: { db: Knex }): GetBatchedStreamObjects =>
+  (streamId: string, options?: Partial<BatchedSelectOptions>) => {
+    const baseQuery = tables
+      .objects(deps.db)
+      .select<ObjectRecord[]>('*')
+      .where(Objects.col.streamId, streamId)
+      .orderBy(Objects.col.id)
 
-  return executeBatchedSelect(baseQuery, options)
-}
+    return executeBatchedSelect(baseQuery, options)
+  }
 
-export async function insertObjects(
-  objects: ObjectRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = Objects.knex().insert(objects)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertObjectsFactory =
+  (deps: { db: Knex }): StoreObjects =>
+  async (objects: ObjectRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
+    const q = tables.objects(deps.db).insert(objects)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }

@@ -11,10 +11,6 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
-  getBatchedStreamObjects,
-  insertObjects
-} from '@/modules/core/repositories/objects'
-import {
   generateCommitId,
   insertStreamCommitsFactory,
   insertBranchCommitsFactory,
@@ -41,6 +37,10 @@ import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
 import { InsertCommentPayload } from '@/modules/comments/domain/operations'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import {
+  getBatchedStreamObjectsFactory,
+  insertObjectsFactory
+} from '@/modules/core/repositories/objects'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -119,6 +119,9 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
   const { getNewDate } = incrementingDateGenerator()
+  const getBatchedStreamObjects = getBatchedStreamObjectsFactory({ db })
+  const insertObjects = insertObjectsFactory({ db })
+
   for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id, {
     trx: state.trx
   })) {
