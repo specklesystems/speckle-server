@@ -5,7 +5,6 @@ import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles, timeoutAt } from '@speckle/shared'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
@@ -31,6 +30,7 @@ import {
 } from '@/modules/comments/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
+import { GetObject } from '@/modules/core/domain/objects/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -489,7 +489,7 @@ const saveNewCommitFactory =
 
 type CreateNewObjectDeps = {
   createObject: typeof createObject
-  getObject: typeof getObject
+  getObject: GetObject
 }
 
 const createNewObjectFactory =
