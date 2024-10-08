@@ -281,7 +281,7 @@ type SubscriptionTypeMap = {
    */
   [StreamSubscriptions.UserStreamAdded]: {
     payload: {
-      userStreamAdded: { id: string }
+      userStreamAdded: { id: string; sharedBy?: string }
       ownerId: string
     }
     variables: NoVariables

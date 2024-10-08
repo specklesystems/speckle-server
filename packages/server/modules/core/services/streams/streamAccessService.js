@@ -12,8 +12,8 @@ const {
 } = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
-  addStreamInviteAcceptedActivity,
-  addStreamPermissionsRevokedActivityFactory
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamInviteAcceptedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const {
   getStream,
@@ -189,7 +189,10 @@ async function addOrUpdateStreamCollaborator(
   })
 
   if (fromInvite) {
-    await addStreamInviteAcceptedActivity({
+    await addStreamInviteAcceptedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })({
       streamId,
       inviterId: addedById,
       inviteTargetId: userId,
