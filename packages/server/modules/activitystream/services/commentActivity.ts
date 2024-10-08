@@ -20,7 +20,7 @@ import {
   getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
@@ -53,6 +53,7 @@ export async function addCommentCreatedActivity(params: {
 }) {
   const { streamId, userId, input, comment } = params
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({
       getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
@@ -138,6 +139,7 @@ export async function addCommentArchivedActivity(params: {
   const { streamId, commentId, userId, input, comment } = params
   const isArchiving = !!input.archived
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getCommentsResources = getCommentsResourcesFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({
@@ -200,6 +202,7 @@ export async function addReplyAddedActivity(params: {
 }) {
   const { streamId, input, reply, userId } = params
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getCommentsResources = getCommentsResourcesFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({

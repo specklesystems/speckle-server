@@ -15,6 +15,7 @@ import {
   GetCommitsAndTheirBranchIds,
   GetSpecificBranchCommits
 } from '@/modules/core/domain/commits/operations'
+import { GetStreamObjects } from '@/modules/core/domain/objects/operations'
 import {
   ResourceIdentifier,
   ResourceIdentifierInput,
@@ -24,7 +25,6 @@ import {
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { Optional, SpeckleViewer } from '@speckle/shared'
 import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash'
 
@@ -45,7 +45,7 @@ function isResourceIdentifierEqual(
 }
 
 type GetObjectResourceGroupsDeps = {
-  getStreamObjects: typeof getStreamObjects
+  getStreamObjects: GetStreamObjects
 }
 
 const getObjectResourceGroupsFactory =
