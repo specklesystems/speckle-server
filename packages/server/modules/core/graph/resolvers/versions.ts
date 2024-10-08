@@ -8,7 +8,7 @@ import {
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommits,
-  batchMoveCommits
+  batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
 import { CommitUpdateError } from '@/modules/core/errors/commit'
 import {
@@ -25,14 +25,17 @@ import {
   createCommitFactory,
   getCommitBranchFactory,
   getCommitFactory,
+  getCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory,
+  moveCommitsToBranchFactory,
   switchCommitBranchFactory,
   updateCommitFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import { getObject } from '@/modules/core/repositories/objects'
 import {
+  createBranchFactory,
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
   markCommitBranchUpdatedFactory
@@ -40,11 +43,13 @@ import {
 import {
   getCommitStream,
   getStream,
+  getStreams,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivity,
+  addCommitMovedActivity,
   addCommitUpdatedActivity
 } from '@/modules/activitystream/services/commitActivity'
 
@@ -71,6 +76,15 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   addCommitUpdatedActivity,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const batchMoveCommits = batchMoveCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
+  addCommitMovedActivity
 })
 
 export = {

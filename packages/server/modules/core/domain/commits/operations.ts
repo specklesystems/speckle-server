@@ -1,3 +1,4 @@
+import { Branch } from '@/modules/core/domain/branches/types'
 import {
   BranchCommit,
   CommitWithStreamBranchMetadata,
@@ -5,8 +6,10 @@ import {
   CommitBranch
 } from '@/modules/core/domain/commits/types'
 import {
+  CommitsMoveInput,
   CommitUpdateInput,
   ModelVersionsFilter,
+  MoveVersionsInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
@@ -208,3 +211,13 @@ export type GetPaginatedBranchCommits = (
   items: Commit[]
   cursor: string | null
 }>
+
+export type MoveCommitsToBranch = (
+  commitIds: string[],
+  branchId: string
+) => Promise<number | undefined>
+
+export type ValidateAndBatchMoveCommits = (
+  params: CommitsMoveInput | MoveVersionsInput,
+  userId: string
+) => Promise<Branch>

@@ -48,7 +48,8 @@ import {
   PaginatedBranchCommitsBaseParams,
   PaginatedBranchCommitsParams,
   GetPaginatedBranchCommitsItems,
-  GetBranchCommitsTotalCount
+  GetBranchCommitsTotalCount,
+  MoveCommitsToBranch
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -107,25 +108,30 @@ export const getCommitFactory =
  * same stream etc. THIS DOESN'T DO ANY VALIDATION!
  * @returns The amount of commits that were moved
  */
-export async function moveCommitsToBranch(commitIds: string[], branchId: string) {
-  if (!commitIds?.length) return
+export const moveCommitsToBranchFactory =
+  (deps: { db: Knex }): MoveCommitsToBranch =>
+  async (commitIds: string[], branchId: string) => {
+    if (!commitIds?.length) return
 
-  // delete old branch commits
-  await BranchCommits.knex().whereIn(BranchCommits.col.commitId, commitIds).del()
+    // delete old branch commits
+    await tables
+      .branchCommits(deps.db)
+      .whereIn(BranchCommits.col.commitId, commitIds)
+      .del()
 
-  // insert new ones
-  const inserts = await BranchCommits.knex().insert(
-    commitIds.map(
-      (cId): BranchCommitRecord => ({
-        branchId,
-        commitId: cId
-      })
-    ),
-    '*'
-  )
+    // insert new ones
+    const inserts = await tables.branchCommits(deps.db).insert(
+      commitIds.map(
+        (cId): BranchCommitRecord => ({
+          branchId,
+          commitId: cId
+        })
+      ),
+      '*'
+    )
 
-  return inserts.length
-}
+    return inserts.length
+  }
 
 export const deleteCommitsFactory =
   (deps: { db: Knex }): DeleteCommits =>
