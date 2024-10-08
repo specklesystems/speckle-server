@@ -16,11 +16,11 @@ const {
   getPaginatedBranchCommits
 } = require('@/modules/core/services/commit/retrieval')
 const {
-  updateCommitAndNotify,
   markCommitReceivedAndNotify,
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
-  createCommitByBranchNameFactory
+  createCommitByBranchNameFactory,
+  updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -44,10 +44,17 @@ const {
   deleteCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
 } = require('@/modules/core/repositories/commits')
 const { db } = require('@/db/knex')
-const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitStreamUpdated,
+  getStream,
+  getCommitStream
+} = require('@/modules/core/repositories/streams')
 const {
   markCommitBranchUpdatedFactory,
   getBranchByIdFactory,
@@ -55,7 +62,8 @@ const {
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity
+  addCommitCreatedActivity,
+  addCommitUpdatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
 const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
@@ -89,6 +97,19 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   createCommitByBranchId,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
+})
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 
 /**

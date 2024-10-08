@@ -8,11 +8,9 @@ const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
 
 const {
-  updateCommit,
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
   getCommitsByStreamId,
-  getCommitsTotalCountByStreamId,
   getCommitsByUserId
 } = require('../services/commits')
 const {
@@ -34,17 +32,27 @@ const {
   deleteCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory,
+  getStreamCommitCountFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
-  createCommitByBranchNameFactory
+  createCommitByBranchNameFactory,
+  updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
-const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitStreamUpdated,
+  getCommitStream,
+  getStream
+} = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity
+  addCommitCreatedActivity,
+  addCommitUpdatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
 const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
@@ -81,6 +89,20 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+const getStreamCommitCount = getStreamCommitCountFactory({ db })
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -255,13 +277,15 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should update a commit', async () => {
-    const res = await updateCommit({
-      id: commitId1,
-      message: 'FIRST COMMIT YOOOOOO',
-      userId: user.id,
-      streamId: stream.id
-    })
-    expect(res).to.equal(true)
+    const res = await updateCommitAndNotify(
+      {
+        id: commitId1,
+        message: 'FIRST COMMIT YOOOOOO',
+        streamId: stream.id
+      },
+      user.id
+    )
+    expect(res).to.be.ok
   })
 
   it('Should delete a commit', async () => {
@@ -356,7 +380,7 @@ describe('Commits @core-commits', () => {
     expect(commits.length).to.equal(10)
     expect(commits2.length).to.equal(5)
 
-    const c = await getCommitsTotalCountByStreamId({ streamId })
+    const c = await getStreamCommitCount(streamId)
     expect(c).to.equal(15)
   })
 

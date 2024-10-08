@@ -16,8 +16,8 @@ import {
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
-  getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
+  getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
@@ -60,7 +60,7 @@ export async function addCommentCreatedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
   const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
@@ -69,7 +69,7 @@ export async function addCommentCreatedActivity(params: {
       getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
       getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
       getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-      getAllBranchCommits
+      getAllBranchCommits: getAllBranchCommitsFactory({ db })
     })
   })
 
@@ -146,7 +146,7 @@ export async function addCommentArchivedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
 
@@ -208,7 +208,7 @@ export async function addReplyAddedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
 

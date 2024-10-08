@@ -14,7 +14,7 @@ import { CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchIdFactory,
   markCommitReceivedAndNotify,
-  updateCommitAndNotify
+  updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
 import {
   getRateLimitResult,
@@ -23,18 +23,30 @@ import {
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
   createCommitFactory,
+  getCommitBranchFactory,
+  getCommitFactory,
   insertBranchCommitsFactory,
-  insertStreamCommitsFactory
+  insertStreamCommitsFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import { getObject } from '@/modules/core/repositories/objects'
 import {
   getBranchByIdFactory,
+  getStreamBranchByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
+import {
+  getCommitStream,
+  getStream,
+  markCommitStreamUpdated
+} from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import {
+  addCommitCreatedActivity,
+  addCommitUpdatedActivity
+} from '@/modules/activitystream/services/commitActivity'
 
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -46,6 +58,19 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
   addCommitCreatedActivity
+})
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity,
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 
 export = {
