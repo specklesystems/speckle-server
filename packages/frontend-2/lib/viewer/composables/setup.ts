@@ -334,6 +334,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
     })
     viewer.createExtension(PassReader)
     const initPromise = viewer.init()
+    window.viewer = viewer
 
     return {
       instance: viewer,

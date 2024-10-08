@@ -1,54 +1,73 @@
 <template>
   <div class="mt-1 mb-1">
-    <ViewerLayoutPane @close="$emit('close')">
-      <div v-if="isEmpty">
+    <ViewerLayoutPanel @close="$emit('close')">
+      <div v-if="!showChart && !isAutomationRunning">
         <ViewerDataInsightsEmpty
           :function-id="functionId"
           :function-release-id="functionReleaseId"
           @run-triggered="runTriggered"
         />
       </div>
-      <div v-else-if="isAutomationRunning">
-        Foo
-        <!-- <DotlottiePlayer
+      <div v-else-if="!showChart && isAutomationRunning">
+        Generating visual report
+        <!-- <DotLottieVue
           src="https://lottie.host/ffc5ea7d-8c2e-49aa-b84d-9b336ca7b963/ZPSkZUvsE7.json"
           background="transparent"
           speed="1"
           style="width: 300px; height: 300px"
           loop
           autoplay
-        ></DotlottiePlayer> -->
+        /> -->
       </div>
       <div v-else>
         <ViewerDataInsightsGraph :report="report" />
       </div>
-    </ViewerLayoutPane>
+    </ViewerLayoutPanel>
   </div>
 </template>
 <script setup lang="ts">
-import type { Automate } from '@speckle/shared'
 import type { Report } from '~/components/viewer/data-insights/Graph.vue'
-import type { AutomateViewerPanel_AutomateRunFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  AutomateRunStatus,
+  type AutomateViewerPanel_AutomateRunFragment
+} from '~/lib/common/generated/gql/graphql'
 // import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
 import { useFileDownload } from '~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-
 const props = defineProps<{
   automationRuns: AutomateViewerPanel_AutomateRunFragment[]
 }>()
 
 defineEmits(['close'])
 
-const isEmpty = ref(false)
-const isAutomationRunning = ref(true)
+const isEmpty = ref(true)
+const isAutomationRunning = ref(false)
+// const isEmpty = computed(() => {
+//   return !!props.automationRuns.at(0)?.functionRuns.at(0)?.function?.id
+// })
 
-const functionReleaseId = 'cc84a0d1fb'
+const functionReleaseId = '379c034163'
 const functionId = '4b7c33d5cf'
 
-const runTriggered = () => {
+const expectedRunId = ref<string | undefined>()
+// const expectedRunId = ref<string | undefined>('59c66de9bf0d269')
+
+const runTriggered = (runId: string) => {
   isEmpty.value = false
   isAutomationRunning.value = true
+  expectedRunId.value = runId
 }
+
+const showChart = computed(() => {
+  const maybeMatchingRun = props.automationRuns.find(
+    (r) => r.id === expectedRunId.value
+  )
+  if (maybeMatchingRun) {
+    return maybeMatchingRun.functionRuns[0].status === AutomateRunStatus.Succeeded
+  } else {
+    return false
+  }
+})
 
 // const { objects } = useSelectionUtilities()
 const { getBlobUrl } = useFileDownload()
@@ -70,75 +89,20 @@ type MaterialDataEntry = {
 
 const report = ref<Report>({
   name: 'Material Composition',
-  entries: [
-    {
-      label: 'Steel',
-      totalPercent: 60,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Timber',
-      totalPercent: 30,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    },
-    {
-      label: 'Grass',
-      totalPercent: 10,
-      segments: [
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 60
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 30
-        },
-        {
-          objectIds: ['db93d618dc57f1bafb38191e75864574'],
-          entryPercent: 10
-        }
-      ]
-    }
-  ]
+  entries: []
 })
 
 watch(
   props,
   () => {
-    // const run = props.automationRuns.at(0)
+    const run = props.automationRuns.find((run) => run.id === expectedRunId.value)
 
-    // if (!run) return
+    console.log(run)
+    if (!run) return
 
-    // const results = run.functionRuns[0].results as Automate.AutomateTypes.ResultsSchema
-    // const blobId = results.values.blobIds?.[0]
-
-    const blobId = 'e5a5b23698'
+    console.log(run)
+    const results = run.functionRuns[0].results as Automate.AutomateTypes.ResultsSchema
+    const blobId = results.values.blobIds?.[0]
 
     getBlobUrl({ blobId: blobId!, projectId: projectId.value })
       .then((url) => {
@@ -148,8 +112,10 @@ watch(
         return res.text()
       })
       .then((data) => {
-        const json = JSON.parse(data.replaceAll("'", '"').replaceAll('None', '""'))
-        report.value = toReport(json)
+        console.log(data)
+        const reportData = toReport(JSON.parse(data))
+        console.log(reportData)
+        report.value = reportData
       })
   },
   {
@@ -179,7 +145,7 @@ const toReport = (data: MaterialData): Report => {
 
     const entryVolume = Number.parseFloat(entry.Volume)
 
-    const factor = entry.Material === 'Concrete' ? 0.1 : 1
+    const factor = 1
 
     totalVolume = totalVolume + entryVolume * factor
 

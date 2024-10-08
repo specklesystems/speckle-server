@@ -15,12 +15,12 @@
               <div
                 v-for="(segment, j) in entry.segments"
                 :key="j"
-                class="h-full hover:opacity-80"
+                class="h-full hover:opacity-80 pointer-events-all"
                 :style="{
                   width: `${segment.entryPercent}%`,
-                  backgroundColor: colors[i][j]
+                  backgroundColor: getColor(i, j)
                 }"
-                @click="() => handleClick(segment.objectIds)"
+                @click="() => handleClick(entry.label, segment.objectIds)"
               ></div>
             </div>
           </div>
@@ -34,20 +34,30 @@
       </div>
     </div>
   </div>
+  <FormButton @click="">GO</FormButton>
 </template>
 
 <script setup lang="ts">
+import { Categorize } from '@speckle/viewer'
 import { max } from 'lodash-es'
-import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
+import { useSelectionUtilities, useFilterUtilities } from '~/lib/viewer/composables/ui'
 
 defineProps<{
   report: Report
 }>()
 
-const { setSelectionFromObjectIds } = useSelectionUtilities()
+const { isolateObjects, resetFilters } = useFilterUtilities()
 
-const handleClick = (objectIds: string[]): void => {
-  setSelectionFromObjectIds(objectIds)
+const handleClick = (category: string, objectIds: string[]): void => {
+  resetFilters()
+  // const viewer = ;
+  const viewer = window.viewer
+  const extension = viewer.getExtension(Categorize)
+  extension.categorize({ [category]: objectIds })
+  extension.play()
+
+  // setSelectionFromObjectIds(objectIds)
+  isolateObjects(objectIds)
 }
 
 export type Report = {
@@ -61,12 +71,22 @@ export type Report = {
     }[]
   }[]
 }
+const getColor = (i: number, j: number) => {
+  const colors = [
+    // Steel is blue
 
-const colors = [
-  // Steel is blue
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
-  ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC']
-]
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#22C28A', '#4EF9BD', '#77FACC', '#A2FCDD'],
+    ['#C29722', '#F9CB4E', '#FAD777', '#FCE4A2'],
+    ['#C26722', '#F9984E', '#FAB077', '#FCC9A2'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC'],
+    ['#2227C2', '#4E54F9', '#777BFA', '#A2A5FC']
+  ]
+  return colors[i][j]
+}
 </script>

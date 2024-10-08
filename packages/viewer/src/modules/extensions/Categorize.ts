@@ -116,7 +116,7 @@ export class Categorize extends Extension {
     /** We go over each category */
     const finalBoxes = Array<{ category: string; obj: BatchObject; box: Box3 }>()
     const categoryBoxes = []
-    const origin = new Vector3(50, 50, 0)
+    const origin = new Vector3(0, 0, 0)
     const padding = 0.5
     const categoryPadding = 5
     for (const cat in categories) {
