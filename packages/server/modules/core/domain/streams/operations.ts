@@ -1,4 +1,7 @@
-import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import {
+  StreamWithCommitId,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
 import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
@@ -19,3 +22,13 @@ export type GetStream = (
     trx: Knex.Transaction
   }>
 ) => Promise<Optional<StreamWithOptionalRole>>
+
+export type GetCommitStreams = (params: {
+  commitIds: string[]
+  userId?: string
+}) => Promise<StreamWithCommitId[]>
+
+export type GetCommitStream = (params: {
+  commitId: string
+  userId?: string
+}) => Promise<Optional<StreamWithCommitId>>

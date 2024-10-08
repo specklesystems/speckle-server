@@ -10,3 +10,8 @@ export type StreamWithOptionalRole = Stream & {
    */
   role?: StreamRoles
 }
+
+export type StreamWithCommitId<StreamType extends Stream = StreamWithOptionalRole> =
+  StreamType & {
+    commitId: string
+  }

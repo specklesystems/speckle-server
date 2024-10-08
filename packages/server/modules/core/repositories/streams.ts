@@ -25,6 +25,7 @@ import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   LimitedUserRecord,
   StreamAclRecord,
+  StreamCommitRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UserWithRole
@@ -66,13 +67,22 @@ import {
   GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
-import { GetStream, GetStreams } from '@/modules/core/domain/streams/operations'
-export type { StreamWithOptionalRole }
+import {
+  StreamWithCommitId,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
+import {
+  GetCommitStream,
+  GetCommitStreams,
+  GetStream,
+  GetStreams
+} from '@/modules/core/domain/streams/operations'
+export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>(Streams.name),
-  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name),
+  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name)
 }
 
 /**
@@ -190,48 +200,48 @@ export const getProjectFactory =
     return project
   }
 
-export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
+export const getCommitStreamsFactory =
+  (deps: { db: Knex }): GetCommitStreams =>
+  async (params: { commitIds: string[]; userId?: string }) => {
+    const { commitIds, userId } = params
+    if (!commitIds?.length) return []
 
-export async function getCommitStreams(params: {
-  commitIds: string[]
-  userId?: string
-}) {
-  const { commitIds, userId } = params
-  if (!commitIds?.length) return []
+    const q = tables
+      .streamCommits(deps.db)
+      .select<Array<StreamWithCommitId>>([...Streams.cols, StreamCommits.col.commitId])
+      .innerJoin(Streams.name, Streams.col.id, StreamCommits.col.streamId)
+      .whereIn(StreamCommits.col.commitId, commitIds)
 
-  const q = StreamCommits.knex()
-    .select<Array<StreamWithCommitId>>([...Streams.cols, StreamCommits.col.commitId])
-    .innerJoin(Streams.name, Streams.col.id, StreamCommits.col.streamId)
-    .whereIn(StreamCommits.col.commitId, commitIds)
+    if (userId) {
+      q.select([
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+      ])
+      q.leftJoin(StreamAcl.name, function () {
+        this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+      q.groupBy(Streams.col.id, StreamCommits.col.commitId)
+    }
 
-  if (userId) {
-    q.select([
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
-    ])
-    q.leftJoin(StreamAcl.name, function () {
-      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
-        StreamAcl.col.userId,
-        userId
-      )
-    })
-    q.groupBy(Streams.col.id, StreamCommits.col.commitId)
+    const results = await q
+    return results
   }
 
-  const results = await q
-  return results
-}
+export const getCommitStreamFactory =
+  (deps: { db: Knex }): GetCommitStream =>
+  async (params: { commitId: string; userId?: string }) => {
+    const { commitId } = params
+    if (!commitId) throw new InvalidArgumentError('Invalid commit ID')
 
-export async function getCommitStream(params: { commitId: string; userId?: string }) {
-  const { commitId } = params
-  if (!commitId) throw new InvalidArgumentError('Invalid commit ID')
-
-  const results = await getCommitStreams({
-    commitIds: [commitId],
-    userId: params.userId
-  })
-  return <Optional<StreamWithCommitId>>results[0]
-}
+    const results = await getCommitStreamsFactory(deps)({
+      commitIds: [commitId],
+      userId: params.userId
+    })
+    return <Optional<StreamWithCommitId>>results[0]
+  }
 
 /**
  * Get base query for finding or counting user favorited streams

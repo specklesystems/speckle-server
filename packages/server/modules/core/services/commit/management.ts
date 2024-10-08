@@ -25,7 +25,7 @@ import {
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
 import { GetObject } from '@/modules/core/domain/objects/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetCommitStream, GetStream } from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -44,10 +44,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
-import {
-  getCommitStream,
-  markCommitStreamUpdated
-} from '@/modules/core/repositories/streams'
+import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -254,7 +251,7 @@ export const updateCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
     getStream: GetStream
-    getCommitStream: typeof getCommitStream
+    getCommitStream: GetCommitStream
     getStreamBranchByName: GetStreamBranchByName
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch

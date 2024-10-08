@@ -40,7 +40,7 @@ import {
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import {
-  getCommitStream,
+  getCommitStreamFactory,
   getStreamFactory,
   getStreamsFactory,
   markCommitStreamUpdated
@@ -53,6 +53,7 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 
+const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
 const getObject = getObjectFactory({ db })
