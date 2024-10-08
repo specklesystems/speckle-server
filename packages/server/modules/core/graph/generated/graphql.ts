@@ -1785,6 +1785,7 @@ export type PendingWorkspaceCollaborator = {
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+  workspaceSlug: Scalars['String']['output'];
 };
 
 export type PendingWorkspaceCollaboratorsFilter = {
@@ -5478,6 +5479,7 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   workspaceName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workspaceSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

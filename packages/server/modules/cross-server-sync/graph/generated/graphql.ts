@@ -1769,6 +1769,7 @@ export type PendingWorkspaceCollaborator = {
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+  workspaceSlug: Scalars['String']['output'];
 };
 
 export type PendingWorkspaceCollaboratorsFilter = {
