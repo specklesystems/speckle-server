@@ -1,6 +1,7 @@
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import type { ProgressStage } from '@speckle/objectloader'
 import ObjectLoader from '@speckle/objectloader'
+import { send, type Base } from '@speckle/objectsender'
 import { provideApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   versionDetailsQuery,
@@ -11,7 +12,7 @@ import { storeToRefs } from 'pinia'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
-import { GenericBridge } from '~/lib/bridge/generic-v2'
+import type { Emitter } from 'nanoevents'
 
 export type SendViaBrowserArgs = {
   modelCardId: string
@@ -24,8 +25,7 @@ export type SendViaBrowserArgs = {
   sendConversionResults: ConversionResult[]
   sendObject: {
     id: string // the root object id which should be used for creating the version
-    totalChildrenCount: number
-    batches: string[]
+    rootObject: object // NOTE to dim
   }
 }
 
@@ -49,9 +49,20 @@ export type CreateVersionArgs = {
 }
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
-export class ServerBridge extends GenericBridge {
+export class ServerBridge {
+  private runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  public emitter: Emitter
+
+  constructor(
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>,
+    emitter: Emitter
+  ) {
+    this.runMethod = runMethod
+    this.emitter = emitter
+  }
+
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
-  emit(eventName: string, payload: string): void {
+  emit(eventName: string, payload: Record<string, unknown>): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
     if (eventName === 'sendByBrowser')
@@ -146,29 +157,40 @@ export class ServerBridge extends GenericBridge {
       sendConversionResults,
       message
     } = eventPayload
-    this.emit('setModelProgress', {
+    this.emitter.emit('setModelProgress', {
       modelCardId,
       progress: {
         status: 'Uploading',
         progress: 0
       }
     } as unknown as string)
+
+    const { hash: rootCommitObjectId } = await send(
+      sendObject.rootObject as unknown as Base,
+      {
+        serverUrl,
+        projectId,
+        token
+      }
+    ) // NOTE to dim
+
+    // BEFORE as below
     // TODO: More of a question: why are we not sending multiple batches at once?
     // What's in a batch? etc. To look at optmizing this and not blocking the
     // main thread.
-    const promises = [] as Promise<Response>[]
-    sendObject.batches.forEach((batch) => {
-      const formData = new FormData()
-      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-      promises.push(
-        fetch(`${serverUrl}/objects/${projectId}`, {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token },
-          body: formData
-        })
-      )
-    })
-    await Promise.all(promises)
+    // const promises = [] as Promise<Response>[]
+    // sendObject.batches.forEach((batch) => {
+    //   const formData = new FormData()
+    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    //   promises.push(
+    //     fetch(`${serverUrl}/objects/${projectId}`, {
+    //       method: 'POST',
+    //       headers: { Authorization: 'Bearer ' + token },
+    //       body: formData
+    //     })
+    //   )
+    // })
+    // await Promise.all(promises)
 
     const hostAppStore = useHostAppStore()
 
@@ -177,7 +199,7 @@ export class ServerBridge extends GenericBridge {
       projectId,
       modelId,
       accountId,
-      objectId: sendObject.id,
+      objectId: rootCommitObjectId,
       sourceApplication: hostAppStore.hostAppName?.toLowerCase(),
       message: message || `send from ${hostAppStore.hostAppName?.toLowerCase()}`
     }
