@@ -12,8 +12,8 @@ const {
 } = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
-  addStreamPermissionsRevokedActivity,
-  addStreamInviteAcceptedActivity
+  addStreamInviteAcceptedActivity,
+  addStreamPermissionsRevokedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const {
   getStream,
@@ -23,6 +23,9 @@ const {
 
 const { ServerAcl } = require('@/modules/core/dbSchema')
 const { ensureError } = require('@speckle/shared')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
 
 /**
  * Check if user is a stream collaborator
@@ -119,7 +122,10 @@ async function removeStreamCollaborator(
 
   const stream = await revokeStreamPermissions({ streamId, userId })
 
-  await addStreamPermissionsRevokedActivity({
+  await addStreamPermissionsRevokedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db })
+  })({
     streamId,
     activityUserId: removedById,
     removedUserId: userId,

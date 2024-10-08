@@ -288,7 +288,7 @@ type SubscriptionTypeMap = {
   }
   [StreamSubscriptions.UserStreamRemoved]: {
     payload: {
-      userStreamRemoved: { id: string }
+      userStreamRemoved: { id: string; revokedBy?: string }
       ownerId: string
     }
     variables: NoVariables
