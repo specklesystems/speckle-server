@@ -303,51 +303,59 @@ export async function addStreamInviteAcceptedActivity(params: {
 /**
  * Save "stream permissions revoked for user" activity item
  */
-export async function addStreamPermissionsRevokedActivity(params: {
-  streamId: string
-  activityUserId: string
-  removedUserId: string
-  stream: StreamRecord
-}) {
-  const { streamId, activityUserId, removedUserId, stream } = params
-  const isVoluntaryLeave = activityUserId === removedUserId
+export const addStreamPermissionsRevokedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    activityUserId: string
+    removedUserId: string
+    stream: StreamRecord
+  }) => {
+    const { streamId, activityUserId, removedUserId, stream } = params
+    const isVoluntaryLeave = activityUserId === removedUserId
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsRemove,
-      userId: activityUserId,
-      info: { targetUser: removedUserId },
-      message: isVoluntaryLeave
-        ? `User ${removedUserId} left the stream`
-        : `Permission revoked for user ${removedUserId}`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
-      userStreamRemoved: {
-        id: streamId,
-        revokedBy: activityUserId
-      },
-      ownerId: removedUserId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Removed,
-        project: null
-      },
-      ownerId: removedUserId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.PermissionsRemove,
+        userId: activityUserId,
+        info: { targetUser: removedUserId },
+        message: isVoluntaryLeave
+          ? `User ${removedUserId} left the stream`
+          : `Permission revoked for user ${removedUserId}`
+      }),
+      publish(StreamPubsubEvents.UserStreamRemoved, {
+        userStreamRemoved: {
+          id: streamId,
+          revokedBy: activityUserId
+        },
+        ownerId: removedUserId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Removed,
+          project: null
+        },
+        ownerId: removedUserId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user invited another user to stream" activity item
