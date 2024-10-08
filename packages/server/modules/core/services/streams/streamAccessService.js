@@ -11,9 +11,9 @@ const {
   StreamAccessUpdateError
 } = require('@/modules/core/errors/stream')
 const {
-  addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivityFactory,
-  addStreamInviteAcceptedActivityFactory
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const {
   getStream,
@@ -200,7 +200,10 @@ async function addOrUpdateStreamCollaborator(
       stream
     })
   } else {
-    await addStreamPermissionsAddedActivity({
+    await addStreamPermissionsAddedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })({
       streamId,
       activityUserId: addedById,
       targetUserId: userId,
