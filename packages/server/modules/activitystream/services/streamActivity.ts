@@ -257,48 +257,56 @@ export async function addStreamPermissionsAddedActivity(params: {
 /**
  * Save "user accepted stream invite" activity item
  */
-export async function addStreamInviteAcceptedActivity(params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  role: StreamRoles
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, role, stream } = params
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteAccepted,
-      userId: inviteTargetId,
-      info: { inviterUser: inviterId, role },
-      message: `User ${inviteTargetId} has accepted an invitation to become a ${role}`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: {
-        id: streamId,
-        sharedBy: inviterId
-      },
-      ownerId: inviteTargetId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: stream
-      },
-      ownerId: inviteTargetId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamInviteAcceptedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    inviteTargetId: string
+    inviterId: string
+    role: StreamRoles
+    stream: StreamRecord
+  }) => {
+    const { streamId, inviteTargetId, inviterId, role, stream } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteAccepted,
+        userId: inviteTargetId,
+        info: { inviterUser: inviterId, role },
+        message: `User ${inviteTargetId} has accepted an invitation to become a ${role}`
+      }),
+      publish(StreamPubsubEvents.UserStreamAdded, {
+        userStreamAdded: {
+          id: streamId,
+          sharedBy: inviterId
+        },
+        ownerId: inviteTargetId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: stream
+        },
+        ownerId: inviteTargetId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "stream permissions revoked for user" activity item
