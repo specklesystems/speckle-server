@@ -46,8 +46,7 @@ describe('FileUploads @fileuploads', () => {
     ;({ token: userOneToken } = await createToken({
       userId: userOneId,
       name: 'test token',
-      scopes: [Scopes.Streams.Write],
-      lifespan: 3600
+      scopes: [Scopes.Streams.Write]
     }))
   })
 
