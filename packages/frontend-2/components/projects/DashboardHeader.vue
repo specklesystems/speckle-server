@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="bg-foundation divide-y divide-outline-3 mb-8 empty:mb-0">
+    <div
+      v-if="hasBanners"
+      class="bg-foundation divide-y divide-outline-3 mb-8 empty:mb-0"
+    >
       <ProjectsInviteBanners
         v-if="projectsInvites?.projectInvites?.length"
         :invites="projectsInvites"
@@ -34,8 +37,16 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   projectsInvites?: ProjectsDashboardHeaderProjects_UserFragment
   workspacesInvites?: ProjectsDashboardHeaderWorkspaces_UserFragment
 }>()
+
+const hasBanners = computed(() => {
+  return (
+    props.projectsInvites?.projectInvites?.length ||
+    props.workspacesInvites?.workspaceInvites?.length ||
+    props.workspacesInvites?.discoverableWorkspaces?.length
+  )
+})
 </script>
