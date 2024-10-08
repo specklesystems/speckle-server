@@ -192,14 +192,14 @@ export async function buildContext({
  */
 export const mixpanelTrackerHelperMiddlewareFactory =
   (deps: { getUser: typeof getUser }): Handler =>
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const ctx = req.context
-      const user = ctx.userId ? await deps.getUser(ctx.userId) : null
-      const mp = mixpanel({ userEmail: user?.email, req })
+  async (req: Request, _res: Response, next: NextFunction) => {
+    const ctx = req.context
+    const user = ctx.userId ? await deps.getUser(ctx.userId) : null
+    const mp = mixpanel({ userEmail: user?.email, req })
 
-      req.mixpanel = mp
-      next()
-    }
+    req.mixpanel = mp
+    next()
+  }
 
 const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 /**

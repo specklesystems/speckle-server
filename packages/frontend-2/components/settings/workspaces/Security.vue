@@ -5,11 +5,13 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
-      <SettingsWorkspacesSecuritySso
-        v-if="result?.workspace"
-        :workspace="result.workspace"
-      />
-      <hr class="my-6 md:my-8 border-outline-2" />
+      <template v-if="isSsoEnabled">
+        <SettingsWorkspacesSecuritySso
+          v-if="result?.workspace"
+          :workspace="result.workspace"
+        />
+        <hr class="my-6 md:my-8 border-outline-2" />
+      </template>
       <section>
         <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
         <ul v-if="hasWorkspaceDomains">
@@ -161,6 +163,7 @@ const props = defineProps<{
 
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
+const isSsoEnabled = useIsWorkspacesSsoEnabled()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 

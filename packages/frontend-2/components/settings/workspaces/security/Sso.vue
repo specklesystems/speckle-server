@@ -62,7 +62,6 @@
 import { useForm } from 'vee-validate'
 import { isRequired, isStringOfLength, isUrl } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type { SettingsWorkspacesSecuritySso_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -91,8 +90,7 @@ const clientId = ref('')
 const clientSecret = ref('')
 const issuerUrl = ref('')
 
-const onSubmit = handleSubmit(async () => {
-  const token = useAuthCookie()
+const onSubmit = handleSubmit(() => {
   const baseUrl = `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/validate`
   const params = [
     `providerName=${providerName.value}`,
@@ -102,18 +100,8 @@ const onSubmit = handleSubmit(async () => {
   ]
   const route = `${baseUrl}?${params.join('&')}`
 
-  // navigateTo(route, {
-  //   external: true
-  // })
-
-  const x = await fetch(route, {
-    mode: 'cors',
-    headers: {
-      Authorization: `Bearer ${token.value}`
-    }
-    // redirect: 'follow'
+  navigateTo(route, {
+    external: true
   })
-
-  console.log(x)
 })
 </script>
