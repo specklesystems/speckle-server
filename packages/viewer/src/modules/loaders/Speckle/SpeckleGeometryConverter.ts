@@ -397,7 +397,19 @@ export class SpeckleGeometryConverter extends GeometryConverter {
      */
     const conversionFactor = getConversionFactor(node.raw.units)
 
-    const move = this.PointToVector3(node.raw.basePlane.origin)
+    const T = new Matrix4()
+    const R = new Matrix4()
+
+    if (node.raw.basePlane) {
+      T.setPosition(this.PointToVector3(node.raw.basePlane.origin))
+
+      R.makeBasis(
+        node.raw.basePlane.xdir,
+        node.raw.basePlane.ydir,
+        node.raw.basePlane.normal
+      )
+    } else Logger.warn(`Box ${node.raw.id} is missing it's base plane`)
+
     const width = (node.raw.xSize.end - node.raw.xSize.start) * conversionFactor
     const depth = (node.raw.ySize.end - node.raw.ySize.start) * conversionFactor
     const height = (node.raw.zSize.end - node.raw.zSize.start) * conversionFactor
@@ -442,7 +454,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       attributes: {
         POSITION: edges
       },
-      bakeTransform: new Matrix4().setPosition(move),
+      bakeTransform: new Matrix4().copy(T).multiply(R),
       transform: null
     } as GeometryData
   }
