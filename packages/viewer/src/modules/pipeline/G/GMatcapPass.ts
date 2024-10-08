@@ -29,7 +29,7 @@ export class GMatcapPass extends BaseGPass {
   }
 
   get overrideMaterial(): Material {
-    return this.viewportMaterial
+    return this.matcapMaterial
   }
 
   constructor() {

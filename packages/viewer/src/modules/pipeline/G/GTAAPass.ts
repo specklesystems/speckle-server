@@ -17,6 +17,7 @@ export class GTAAPass extends ProgressiveGPass {
   private inputTex: Texture | undefined
   private historyTarget: WebGLRenderTarget
   private fsQuad: FullScreenQuad
+  public outputToScreen = false
 
   private materialCopy: ShaderMaterial
   private reprojectionMaterial: ShaderMaterial
@@ -94,6 +95,14 @@ export class GTAAPass extends ProgressiveGPass {
     this.materialCopy.needsUpdate = true
     this.fsQuad.material = this.materialCopy
     this.fsQuad.render(renderer)
+
+    if (this.outputToScreen) {
+      renderer.setRenderTarget(null)
+      this.materialCopy.uniforms['tDiffuse'].value = this._outputTarget?.texture
+      this.materialCopy.needsUpdate = true
+      this.fsQuad.material = this.materialCopy
+      this.fsQuad.render(renderer)
+    }
 
     if (this._frameIndex >= this._accumulationFrames) {
       return false
