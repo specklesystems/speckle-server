@@ -389,17 +389,8 @@ export const updateWorkspaceRoleFactory =
 
     // Return early if no work required
     const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
-
     if (previousWorkspaceRole?.role === nextWorkspaceRole) {
       return
-    }
-
-    // Protect against removing last admin
-    if (
-      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      nextWorkspaceRole !== Roles.Workspace.Admin
-    ) {
-      throw new WorkspaceAdminRequiredError()
     }
 
     // prevent role downgrades (used during invite flow)
@@ -414,6 +405,14 @@ export const updateWorkspaceRoleFactory =
         )!.weight
         if (newRoleWeight < existingRoleWeight) return
       }
+    }
+
+    // Protect against removing last admin
+    if (
+      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
+      nextWorkspaceRole !== Roles.Workspace.Admin
+    ) {
+      throw new WorkspaceAdminRequiredError()
     }
 
     // ensure domain compliance

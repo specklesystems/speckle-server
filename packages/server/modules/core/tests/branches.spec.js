@@ -44,11 +44,11 @@ const {
   insertStreamCommitsFactory,
   insertBranchCommitsFactory
 } = require('@/modules/core/repositories/commits')
-const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   addCommitCreatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
 const db = knex
 const Commits = () => knex('commits')
@@ -69,6 +69,7 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
+const getObject = getObjectFactory({ db: knex })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,

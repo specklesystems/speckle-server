@@ -221,6 +221,7 @@ graphql(`
     id
     token
     workspaceId
+    workspaceSlug
     user {
       id
     }
@@ -283,6 +284,7 @@ export const useWorkspaceInviteManager = <
     if (!token.value || !invite.value) return false
 
     const workspaceId = invite.value.workspaceId
+    const workspaceSlug = invite.value.workspaceSlug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true
@@ -302,8 +304,8 @@ export const useWorkspaceInviteManager = <
 
           // Redirect
           if (accept) {
-            if (workspaceId) {
-              window.location.href = workspaceRoute(workspaceId)
+            if (workspaceSlug) {
+              window.location.href = workspaceRoute(workspaceSlug)
             } else {
               window.location.reload()
             }

@@ -862,6 +862,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           return workspace!.name
         },
+        workspaceSlug: async (parent, _args, ctx) => {
+          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
+            parent.workspaceId
+          )
+          return workspace!.slug
+        },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent
           if (!invitedById) return null

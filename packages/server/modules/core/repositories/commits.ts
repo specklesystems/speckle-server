@@ -44,7 +44,13 @@ import {
   GetCommitsAndTheirBranchIds,
   GetBatchedStreamCommits,
   GetBatchedBranchCommits,
-  InsertCommits
+  InsertCommits,
+  GetObjectCommitsWithStreamIds,
+  PaginatedBranchCommitsBaseParams,
+  PaginatedBranchCommitsParams,
+  GetPaginatedBranchCommitsItems,
+  GetBranchCommitsTotalCount,
+  MoveCommitsToBranch
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -103,25 +109,30 @@ export const getCommitFactory =
  * same stream etc. THIS DOESN'T DO ANY VALIDATION!
  * @returns The amount of commits that were moved
  */
-export async function moveCommitsToBranch(commitIds: string[], branchId: string) {
-  if (!commitIds?.length) return
+export const moveCommitsToBranchFactory =
+  (deps: { db: Knex }): MoveCommitsToBranch =>
+  async (commitIds: string[], branchId: string) => {
+    if (!commitIds?.length) return
 
-  // delete old branch commits
-  await BranchCommits.knex().whereIn(BranchCommits.col.commitId, commitIds).del()
+    // delete old branch commits
+    await tables
+      .branchCommits(deps.db)
+      .whereIn(BranchCommits.col.commitId, commitIds)
+      .del()
 
-  // insert new ones
-  const inserts = await BranchCommits.knex().insert(
-    commitIds.map(
-      (cId): BranchCommitRecord => ({
-        branchId,
-        commitId: cId
-      })
-    ),
-    '*'
-  )
+    // insert new ones
+    const inserts = await tables.branchCommits(deps.db).insert(
+      commitIds.map(
+        (cId): BranchCommitRecord => ({
+          branchId,
+          commitId: cId
+        })
+      ),
+      '*'
+    )
 
-  return inserts.length
-}
+    return inserts.length
+  }
 
 export const deleteCommitsFactory =
   (deps: { db: Knex }): DeleteCommits =>
@@ -274,69 +285,57 @@ export const getSpecificBranchCommitsFactory =
     return results
   }
 
-export type PaginatedBranchCommitsBaseParams = {
-  branchId: string
-  filter?: Nullable<{
-    /**
-     * Exclude specific commits
-     */
-    excludeIds?: string[]
-  }>
-}
+const getPaginatedBranchCommitsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  <T = CommitRecord[]>(params: PaginatedBranchCommitsBaseParams) => {
+    const { branchId, filter } = params
 
-export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
-  limit: number
-  cursor?: Nullable<string>
-}
+    const q = tables
+      .commits(deps.db)
+      .select<T>(Commits.cols)
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      .where(Branches.col.id, branchId)
+      .groupBy(Commits.col.id)
 
-function getPaginatedBranchCommitsBaseQuery<T = CommitRecord[]>(
-  params: PaginatedBranchCommitsBaseParams
-) {
-  const { branchId, filter } = params
+    if (filter?.excludeIds?.length) {
+      q.whereNotIn(Commits.col.id, filter.excludeIds)
+    }
 
-  const q = Commits.knex<T>()
-    .select(Commits.cols)
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-    .where(Branches.col.id, branchId)
-    .groupBy(Commits.col.id)
-
-  if (filter?.excludeIds?.length) {
-    q.whereNotIn(Commits.col.id, filter.excludeIds)
+    return q
   }
 
-  return q
-}
+export const getPaginatedBranchCommitsItemsFactory =
+  (deps: { db: Knex }): GetPaginatedBranchCommitsItems =>
+  async (params: PaginatedBranchCommitsParams) => {
+    const { cursor } = params
 
-export async function getPaginatedBranchCommits(params: PaginatedBranchCommitsParams) {
-  const { cursor } = params
+    const limit = clamp(params.limit || 25, 1, 100)
+    const q = getPaginatedBranchCommitsBaseQueryFactory(deps)(params)
+      .orderBy(Commits.col.createdAt, 'desc')
+      .limit(limit)
 
-  const limit = clamp(params.limit || 25, 1, 100)
-  const q = getPaginatedBranchCommitsBaseQuery(params)
-    .orderBy(Commits.col.createdAt, 'desc')
-    .limit(limit)
+    if (cursor) {
+      q.andWhere(Commits.col.createdAt, '<', cursor)
+    }
 
-  if (cursor) {
-    q.andWhere(Commits.col.createdAt, '<', cursor)
+    const rows = await q
+
+    return {
+      commits: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    }
   }
 
-  const rows = await q
+export const getBranchCommitsTotalCountFactory =
+  (deps: { db: Knex }): GetBranchCommitsTotalCount =>
+  async (params: PaginatedBranchCommitsBaseParams) => {
+    const baseQ = getPaginatedBranchCommitsBaseQueryFactory(deps)(params)
+    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
-  return {
-    commits: rows,
-    cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    const [res] = await q
+    return parseInt(res?.count || '0')
   }
-}
-
-export async function getBranchCommitsTotalCount(
-  params: PaginatedBranchCommitsBaseParams
-) {
-  const baseQ = getPaginatedBranchCommitsBaseQuery(params)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-
-  const [res] = await q
-  return parseInt(res?.count || '0')
-}
 
 export const getCommitBranchesFactory =
   (deps: { db: Knex }): GetCommitBranches =>
@@ -404,32 +403,35 @@ export const createCommitFactory =
     return item
   }
 
-export async function getObjectCommitsWithStreamIds(
-  objectIds: string[],
-  options?: {
-    /**
-     * Optionally also filter by stream ids
-     */
-    streamIds?: string[]
+export const getObjectCommitsWithStreamIdsFactory =
+  (deps: { db: Knex }): GetObjectCommitsWithStreamIds =>
+  async (
+    objectIds: string[],
+    options?: {
+      /**
+       * Optionally also filter by stream ids
+       */
+      streamIds?: string[]
+    }
+  ) => {
+    if (!objectIds?.length) return []
+    const { streamIds } = options || {}
+
+    const q = tables
+      .commits(deps.db)
+      .select<Array<CommitRecord & { streamId: string }>>([
+        ...Commits.cols,
+        StreamCommits.col.streamId
+      ])
+      .whereIn(Commits.col.referencedObject, objectIds)
+      .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+
+    if (streamIds?.length) {
+      q.whereIn(StreamCommits.col.streamId, streamIds)
+    }
+
+    return await q
   }
-) {
-  if (!objectIds?.length) return []
-  const { streamIds } = options || {}
-
-  const q = Commits.knex()
-    .select<Array<CommitRecord & { streamId: string }>>([
-      ...Commits.cols,
-      StreamCommits.col.streamId
-    ])
-    .whereIn(Commits.col.referencedObject, objectIds)
-    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-
-  if (streamIds?.length) {
-    q.whereIn(StreamCommits.col.streamId, streamIds)
-  }
-
-  return await q
-}
 
 export const getAllBranchCommitsFactory =
   (deps: { db: Knex }): GetAllBranchCommits =>
