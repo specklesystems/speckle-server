@@ -10,7 +10,6 @@
     :disabled="disabled"
     :label-id="labelId"
     :button-id="buttonId"
-    hide-checkmarks
     by="id"
     class="min-w-60"
     mount-menu-on-body

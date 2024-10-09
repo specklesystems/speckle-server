@@ -113,10 +113,7 @@
                   />
                 </div>
               </label>
-              <div
-                class="overflow-auto simple-scrollbar"
-                :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
-              >
+              <div class="overflow-auto simple-scrollbar max-h-60">
                 <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                   <CommonLoadingBar :loading="true" />
                 </div>
@@ -154,8 +151,10 @@
                         class="block px-2 py-1.5 rounded-md"
                         :class="[
                           selected ? 'bg-highlight-3' : '',
-                          !hideCheckmarks ? 'pr-9' : 'pr-2',
-                          disabledItemPredicate?.(item) ? '' : 'hover:bg-highlight-1'
+                          !hideCheckmarks ? 'pr-8' : 'pr-2',
+                          !disabledItemPredicate?.(item) && !selected
+                            ? 'hover:bg-highlight-1'
+                            : ''
                         ]"
                       >
                         <slot
