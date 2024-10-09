@@ -17,13 +17,15 @@ export enum ObjectVisibility {
   STENCIL = 'stencil'
 }
 
+export interface PassOptions {}
+
 export interface GPass {
   get displayName(): string
   set outputTarget(value: WebGLRenderTarget)
   get outputTarget(): WebGLRenderTarget | null
   get enabled(): boolean
   set enabled(value: boolean)
-  set options(value: Record<string, unknown>)
+  set options(value: PassOptions)
   get visibility(): ObjectVisibility | null
   get overrideMaterial(): Material | null
   get jitter(): boolean
@@ -49,6 +51,7 @@ export abstract class BaseGPass implements GPass {
   protected _enabledLayers: ObjectLayers[] = []
   protected _objectVisibility: ObjectVisibility | null = null
   protected _jitter: boolean = false
+  protected _options: PassOptions = {}
 
   protected _outputTarget: WebGLRenderTarget | null = null
 
@@ -78,7 +81,9 @@ export abstract class BaseGPass implements GPass {
     this._enabled = value
   }
 
-  set options(_value: Record<string, unknown>) {}
+  set options(value: PassOptions) {
+    Object.assign(this._options, value)
+  }
 
   get visibility() {
     return this._objectVisibility

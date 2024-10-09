@@ -1,5 +1,10 @@
 export const speckleStaticAoGenerateFrag = /* glsl */ `
 		#include <common>
+		#define AO_ESTIMATOR 1
+		#define NORMAL_TEXTURE 0
+		#define IMPROVED_NORMAL_RECONSTRUCTION 0
+		#define ACCURATE_NORMAL_RECONSTRUCTION 1
+
 		varying vec2 vUv;
 		uniform sampler2D tDepth;
 		uniform sampler2D tNormal;
@@ -9,31 +14,29 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		uniform float cameraFar;
 		uniform mat4 cameraProjectionMatrix;
 		uniform mat4 cameraInverseProjectionMatrix;
-
-		uniform float scale;
+		
 		uniform float intensity;
 		uniform float bias;
 		uniform float kernelRadius;
-		uniform float minResolution;
-        uniform float frameIndex;
-		uniform float tanFov;
-
-		#define AO_ESTIMATOR 1
-		// #define KERNEL_SIZE 16
-		uniform sampler2D tNoise;
-		uniform vec3 kernel[ KERNEL_SIZE ];
-		uniform float minDistance;
-		uniform float maxDistance;
-
-        #define NUM_SAMPLES 16
-        #define SPIRAL_TURNS 2
 		
-        // #define NUM_FRAMES 16
-
-		#define NORMAL_TEXTURE 0
-		#define IMPROVED_NORMAL_RECONSTRUCTION 0
-		#define ACCURATE_NORMAL_RECONSTRUCTION 1
 		
+		#if AO_ESTIMATOR == 0
+			#define NUM_SAMPLES 16
+        	#define SPIRAL_TURNS 2
+			#define INV_NUM_SAMPLES 1.0 / float( NUM_SAMPLES )
+        	#define offset PI2 / float(NUM_FRAMES)
+
+			uniform float minResolution;
+			uniform float frameIndex;
+			uniform float scale;
+		#endif
+
+		#if AO_ESTIMATOR == 1
+			uniform float tanFov;
+			uniform sampler2D tNoise;
+			uniform vec3 kernel[ KERNEL_SIZE ];
+		#endif
+
 		// RGBA depth
 		#include <packing>
 		vec4 getDefaultColor( const in vec2 screenPosition ) {
@@ -194,8 +197,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		float scaleDividedByCameraFar;
 		float minResolutionMultipliedByCameraFar;
         // moving costly divides into consts
-		const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
-        const float offset = PI2 / float(NUM_FRAMES);
+		
 
 		float computeKernelSize(float d, float r) {
 			#if PERSPECTIVE_CAMERA == 1

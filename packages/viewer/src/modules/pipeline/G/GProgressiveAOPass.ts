@@ -22,7 +22,7 @@ import {
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js'
-import { ProgressiveGPass } from './GPass.js'
+import { PassOptions, ProgressiveGPass } from './GPass.js'
 import { speckleStaticAoAccumulateFrag } from '../../materials/shaders/speckle-static-ao-accumulate-frag.js'
 import { speckleStaticAoAccumulateVert } from '../../materials/shaders/speckle-static-ao-accumulate-vert.js'
 import { speckleStaticAoGenerateVert } from '../../materials/shaders/speckle-static-ao-generate-vert.js'
@@ -32,22 +32,18 @@ import { speckleStaticAoGenerateFrag } from '../../materials/shaders/speckle-sta
  * SAO implementation inspired from bhouston previous SAO work
  */
 
-export interface StaticAoPassParams {
+export interface ProgressiveAOPassOptions extends PassOptions {
   intensity?: number
   kernelRadius?: number
   kernelSize?: number
   bias?: number
-  minDistance?: number
-  maxDistance?: number
 }
 
-export const DefaultStaticAoPassParams = {
+export const DefaultProgressiveAOPassOptions: ProgressiveAOPassOptions = {
   intensity: 1,
   kernelRadius: 30, // Screen space
-  kernelSize: 16,
   bias: 0.01,
-  minDistance: 0,
-  maxDistance: 0.008
+  kernelSize: 16
 }
 
 export class GProgressiveAOPass extends ProgressiveGPass {
@@ -56,7 +52,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
   private _generationBuffer: WebGLRenderTarget
 
-  private params: StaticAoPassParams = DefaultStaticAoPassParams
+  public _options: ProgressiveAOPassOptions = DefaultProgressiveAOPassOptions
 
   private fsQuad: FullScreenQuad
 
@@ -70,7 +66,13 @@ export class GProgressiveAOPass extends ProgressiveGPass {
   }
 
   public get displayName(): string {
-    return 'STATIC-AO'
+    return 'PROGRESSIVE-AO'
+  }
+
+  public set options(value: ProgressiveAOPassOptions) {
+    super.options = value
+    this.kernels = []
+    this.noiseTextures = []
   }
 
   constructor() {
@@ -93,19 +95,17 @@ export class GProgressiveAOPass extends ProgressiveGPass {
         cameraInverseProjectionMatrix: { value: new Matrix4() },
         tanFov: { value: 0 },
 
-        scale: { value: 1.0 },
-        intensity: { value: 1 },
-        bias: { value: 0 },
-
-        minResolution: { value: 0.0 },
-        kernelRadius: { value: 0.5 }, // World space
-
-        frameIndex: { value: 0 },
+        intensity: { value: this._options.intensity },
+        bias: { value: this._options.bias },
+        kernelRadius: { value: this._options.kernelRadius }, // World space
 
         tNoise: { value: null },
-        kernel: { value: null },
-        minDistance: { value: 0.001 },
-        maxDistance: { value: 1 }
+        kernel: { value: null }
+
+        /** Only used with McGuire-like estimator */
+        // minResolution: { value: 0 },
+        // frameIndex: { value: 0 },
+        // scale: { value: 1 }
       }
     })
 
@@ -134,12 +134,6 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     this.fsQuad = new FullScreenQuad(this.generationMaterial)
   }
 
-  public setParams(params: unknown) {
-    Object.assign(this.params, params)
-    this.kernels = []
-    this.noiseTextures = []
-  }
-
   public update(camera: PerspectiveCamera | OrthographicCamera) {
     /** DEFINES */
     this.generationMaterial.defines['PERSPECTIVE_CAMERA'] = (
@@ -148,8 +142,9 @@ export class GProgressiveAOPass extends ProgressiveGPass {
       ? 1
       : 0
     this.generationMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
-    this.generationMaterial.defines['KERNEL_SIZE'] = this.params.kernelSize
+    this.generationMaterial.defines['KERNEL_SIZE'] = this._options.kernelSize
     this.accumulateMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
+
     /** UNIFORMS */
     this.generationMaterial.uniforms['cameraNear'].value = camera.near
     this.generationMaterial.uniforms['cameraFar'].value = camera.far
@@ -172,13 +167,10 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     this.generationMaterial.uniforms['tNoise'].value =
       this.noiseTextures[this.frameIndex]
 
-    this.generationMaterial.uniforms['intensity'].value = this.params.intensity
-    this.generationMaterial.uniforms['kernelRadius'].value = this.params.kernelRadius
-    this.generationMaterial.uniforms['bias'].value = this.params.bias
-    this.generationMaterial.uniforms['frameIndex'].value = this.frameIndex
+    this.generationMaterial.uniforms['intensity'].value = this._options.intensity
+    this.generationMaterial.uniforms['kernelRadius'].value = this._options.kernelRadius
+    this.generationMaterial.uniforms['bias'].value = this._options.bias
 
-    this.generationMaterial.uniforms['minDistance'].value = this.params.minDistance
-    this.generationMaterial.uniforms['maxDistance'].value = this.params.maxDistance
     this.generationMaterial.needsUpdate = true
     this.accumulateMaterial.needsUpdate = true
   }
@@ -215,8 +207,8 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     this.generationMaterial.needsUpdate = true
   }
 
-  private generateSampleKernel(frameIndex: number) {
-    const kernelSize = this.params.kernelSize || 0
+  protected generateSampleKernel(frameIndex: number) {
+    const kernelSize = this._options.kernelSize || 0
     this.kernels[frameIndex] = []
 
     for (let i = 0; i < kernelSize; i++) {
@@ -235,7 +227,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     }
   }
 
-  private generateRandomKernelRotations(frameIndex: number) {
+  protected generateRandomKernelRotations(frameIndex: number) {
     const width = 4,
       height = 4
 
