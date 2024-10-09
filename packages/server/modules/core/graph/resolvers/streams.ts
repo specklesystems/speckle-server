@@ -1,5 +1,4 @@
 import {
-  getStream,
   getStreams,
   getStreamUsers,
   favoriteStream,
@@ -10,6 +9,7 @@ import {
 } from '@/modules/core/services/streams'
 import {
   filteredSubscribe,
+  publish,
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -17,19 +17,26 @@ import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
-import { getPendingProjectCollaboratorsFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import {
+  getPendingProjectCollaboratorsFactory,
+  inviteUsersToProjectFactory
+} from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
 import { get } from 'lodash'
 import {
   getUserStreamsCount,
-  getUserStreams
+  getUserStreams,
+  getStreamFactory,
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
-  createStreamReturnRecord,
+  createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
@@ -44,11 +51,69 @@ import {
   TokenResourceIdentifierType,
   UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  deleteAllResourceInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  queryAllResourceInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { getUsers } from '@/modules/core/repositories/users'
 import { BadRequestError } from '@/modules/shared/errors'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivity,
+  addStreamUpdatedActivity
+} from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+
+const getStream = getStreamFactory({ db })
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory(),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        })
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addStreamCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity
+})
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,

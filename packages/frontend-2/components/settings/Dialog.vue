@@ -141,6 +141,7 @@ graphql(`
   fragment SettingsDialog_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
     id
+    slug
     role
     name
   }

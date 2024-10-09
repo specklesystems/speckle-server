@@ -12,15 +12,15 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchLatestCommits,
-  getStreamBranchesByName
+  getBranchLatestCommitsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
-  getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
@@ -53,6 +53,7 @@ export async function addCommentCreatedActivity(params: {
 }) {
   const { streamId, userId, input, comment } = params
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({
       getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
@@ -60,16 +61,16 @@ export async function addCommentCreatedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
   const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getViewerResourceGroups: getViewerResourceGroupsFactory({
       getStreamObjects,
-      getBranchLatestCommits,
-      getStreamBranchesByName,
-      getSpecificBranchCommits,
-      getAllBranchCommits
+      getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
+      getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+      getAllBranchCommits: getAllBranchCommitsFactory({ db })
     })
   })
 
@@ -138,6 +139,7 @@ export async function addCommentArchivedActivity(params: {
   const { streamId, commentId, userId, input, comment } = params
   const isArchiving = !!input.archived
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getCommentsResources = getCommentsResourcesFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({
@@ -146,7 +148,7 @@ export async function addCommentArchivedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
 
@@ -200,6 +202,7 @@ export async function addReplyAddedActivity(params: {
 }) {
   const { streamId, input, reply, userId } = params
 
+  const getStreamObjects = getStreamObjectsFactory({ db })
   const getCommentsResources = getCommentsResourcesFactory({ db })
   const getViewerResourcesFromLegacyIdentifiers =
     getViewerResourcesFromLegacyIdentifiersFactory({
@@ -208,7 +211,7 @@ export async function addReplyAddedActivity(params: {
         getViewerResourcesFromLegacyIdentifiers: (...args) =>
           getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
       }),
-      getCommitsAndTheirBranchIds,
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
       getStreamObjects
     })
 

@@ -8,7 +8,6 @@ import {
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import { getStream } from '@/modules/core/repositories/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   buildAbsoluteFrontendUrlFromPath,
@@ -22,11 +21,13 @@ import {
 import { getServerInfo } from '@/modules/core/services/generic'
 import { db } from '@/db/knex'
 import { GetPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
   getUser: typeof getUser
-  getStream: typeof getStream
+  getStream: GetStream
 }
 
 const validateMessageFactory =
@@ -150,7 +151,7 @@ const handler: NotificationHandler<NewStreamAccessRequestMessage> = (...args) =>
     renderEmail,
     sendEmail,
     getUser,
-    getStream,
+    getStream: getStreamFactory({ db }),
     getPendingAccessRequest: getPendingAccessRequestFactory({ db })
   })
   return newStreamAccessRequestHandler(...args)

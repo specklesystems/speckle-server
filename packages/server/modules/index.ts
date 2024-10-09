@@ -1,20 +1,32 @@
-const fs = require('fs')
-const path = require('path')
-const { appRoot, packageRoot } = require('@/bootstrap')
-const { values, merge, camelCase, reduce, intersection } = require('lodash')
-const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
-const { scalarResolvers } = require('./core/graph/scalars')
-const { makeExecutableSchema } = require('@graphql-tools/schema')
-const { moduleLogger } = require('@/logging/logging')
-const { addMocksToSchema } = require('@graphql-tools/mock')
-const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
-const { isNonNullable } = require('@speckle/shared')
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-var-requires */
+import fs from 'fs'
+import path from 'path'
+import { appRoot, packageRoot } from '@/bootstrap'
+import { values, merge, camelCase, reduce, intersection } from 'lodash'
+import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
+import { scalarResolvers } from '@/modules/core/graph/scalars'
+import { makeExecutableSchema } from '@graphql-tools/schema'
+import { moduleLogger } from '@/logging/logging'
+import { addMocksToSchema } from '@graphql-tools/mock'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { isNonNullable } from '@speckle/shared'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { Express } from 'express'
+import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
+import { ApolloServerOptions } from '@apollo/server'
+import {
+  GraphqlDirectiveBuilder,
+  SchemaTransformer
+} from '@/modules/core/graph/helpers/directiveHelper'
+import { AppMocksConfig } from '@/modules/mocks'
+import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 
 /**
  * Cached speckle module requires
- * @type {import('@/modules/shared/helpers/typeHelper').SpeckleModule[]}
  * */
-const loadedModules = []
+const loadedModules: SpeckleModule[] = []
 
 /**
  * Module init will be ran multiple times in tests, so it's useful for modules to know
@@ -22,10 +34,10 @@ const loadedModules = []
  */
 let hasInitializationOccurred = false
 
-function autoloadFromDirectory(dirPath) {
+function autoloadFromDirectory(dirPath: string) {
   if (!fs.existsSync(dirPath)) return
 
-  const results = {}
+  const results: Record<string, any> = {}
   fs.readdirSync(dirPath).forEach((file) => {
     const pathToFile = path.join(dirPath, file)
     const stat = fs.statSync(pathToFile)
@@ -85,7 +97,7 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-exports.init = async (app) => {
+export const init = async (app: Express) => {
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
@@ -102,7 +114,7 @@ exports.init = async (app) => {
   hasInitializationOccurred = true
 }
 
-exports.shutdown = async () => {
+export const shutdown = async () => {
   moduleLogger.info('Triggering module shutdown...')
   const modules = await getSpeckleModules()
 
@@ -114,10 +126,9 @@ exports.shutdown = async () => {
 
 /**
  * Autoloads dataloaders from all modules
- * @returns {import('@/modules/shared/helpers/graphqlHelper').RequestDataLoadersBuilder<unknown>[]}
  */
-exports.graphDataloadersBuilders = () => {
-  let dataLoaders = []
+export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => {
+  let dataLoaders: RequestDataLoadersBuilder<any>[] = []
 
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
@@ -141,13 +152,15 @@ exports.graphDataloadersBuilders = () => {
 /**
  * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
  * that resolvers return valid values even if the module is disabled
- * @returns {Pick<import('@apollo/server').ApolloServerOptions, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
  */
-const graphComponents = () => {
+const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
+  directiveBuilders: Record<string, GraphqlDirectiveBuilder>
+  typeDefs: string[]
+} => {
   // Base query and mutation to allow for type extension by modules.
   const typeDefs = [baseTypeDefs]
 
-  let resolverObjs = []
+  let resolverObjs: Array<Record<string, unknown>> = []
   let directiveBuilders = {}
 
   // load typedefs from /assets
@@ -197,18 +210,11 @@ const graphComponents = () => {
   return { resolvers, typeDefs, directiveBuilders }
 }
 
-/**
- *
- * @param {import('@/modules/mocks').AppMocksConfig | undefined} [mocksConfig]
- * @returns
- */
-exports.graphSchema = (mocksConfig) => {
+export const graphSchema = (mocksConfig?: AppMocksConfig) => {
   const { resolvers, typeDefs, directiveBuilders } = graphComponents()
 
-  /** @type {string[]} */
-  const directiveTypedefs = []
-  /** @type {import('@/modules/core/graph/helpers/directiveHelper').SchemaTransformer[]} */
-  const directiveSchemaTransformers = []
+  const directiveTypedefs: string[] = []
+  const directiveSchemaTransformers: SchemaTransformer[] = []
   for (const directiveBuilder of Object.values(directiveBuilders)) {
     const { typeDefs, schemaTransformer } = directiveBuilder()
     directiveTypedefs.push(typeDefs)
@@ -244,14 +250,14 @@ exports.graphSchema = (mocksConfig) => {
 
 /**
  * Load GQL mock configs from speckle modules
- * @param {string[]} moduleWhitelist
- * @returns {Record<string, import('@/modules/shared/helpers/mocks').SpeckleModuleMocksConfig>}
  */
-exports.moduleMockConfigs = (moduleWhitelist) => {
+export const moduleMockConfigs = (
+  moduleWhitelist: string[]
+): Record<string, SpeckleModuleMocksConfig> => {
   const enabledModuleNames = intersection(getEnabledModuleNames(), moduleWhitelist)
 
   // Config default exports keyed by module name
-  const mockConfigs = {}
+  const mockConfigs: Record<string, SpeckleModuleMocksConfig> = {}
   if (!enabledModuleNames.length) return mockConfigs
 
   // load code modules from /modules

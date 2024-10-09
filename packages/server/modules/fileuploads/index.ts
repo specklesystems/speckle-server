@@ -10,18 +10,19 @@ import {
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getStream } from '@/modules/core/repositories/streams'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-  getStreamBranchByName,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   saveUploadFile: saveUploadFileFactory({ db }),
   publish
 })
+const getStream = getStreamFactory({ db })
 
 const saveFileUploads = async ({
   userId,
@@ -114,7 +115,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
     const listenForImportUpdates = listenForImportUpdatesFactory({
       getFileInfo: getFileInfoFactory({ db }),
       publish,
-      getStreamBranchByName
+      getStreamBranchByName: getStreamBranchByNameFactory({ db })
     })
 
     listenForImportUpdates()

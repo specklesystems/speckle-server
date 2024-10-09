@@ -1,46 +1,49 @@
 /* istanbul ignore file */
 'use strict'
-const { validateScopes, authorizeResolver } = require('@/modules/shared')
-const {
+import { validateScopes, authorizeResolver } from '@/modules/shared'
+import {
   getCommitsByStreamId,
-  getCommitsByBranchName,
-  getCommitById
-} = require('../core/services/commits')
+  getCommitsByBranchName
+} from '@/modules/core/services/commits'
 
-const { makeOgImage } = require('./ogImage')
-const { moduleLogger } = require('@/logging/logging')
-const {
-  listenForPreviewGenerationUpdatesFactory
-} = require('@/modules/previews/services/resultListener')
+import { makeOgImage } from '@/modules/previews/ogImage'
+import { moduleLogger } from '@/logging/logging'
+import { listenForPreviewGenerationUpdatesFactory } from '@/modules/previews/services/resultListener'
 
-const httpErrorImage = (httpErrorCode) =>
-  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
-
-const cors = require('cors')
-const { db } = require('@/db/knex')
-const {
+import cors from 'cors'
+import { db } from '@/db/knex'
+import {
   getObjectPreviewBufferOrFilepathFactory,
   sendObjectPreviewFactory,
   checkStreamPermissionsFactory
-} = require('@/modules/previews/services/management')
-const { getObject } = require('@/modules/core/services/objects')
-const {
+} from '@/modules/previews/services/management'
+import { getObject } from '@/modules/core/services/objects'
+import {
   getObjectPreviewInfoFactory,
   createObjectPreviewFactory,
   getPreviewImageFactory
-} = require('@/modules/previews/repository/previews')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getObjectCommitsWithStreamIds } = require('@/modules/core/repositories/commits')
+} from '@/modules/previews/repository/previews'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  getCommitFactory,
+  getObjectCommitsWithStreamIdsFactory
+} from '@/modules/core/repositories/commits'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+
+const httpErrorImage = (httpErrorCode: number) =>
+  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
-exports.init = (app, isInitial) => {
+export const init: SpeckleModule['init'] = (app, isInitial) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
     moduleLogger.info('📸 Init object preview module')
   }
 
+  const getStream = getStreamFactory({ db })
   const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
     getObject,
     getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
@@ -48,13 +51,14 @@ exports.init = (app, isInitial) => {
     getPreviewImage: getPreviewImageFactory({ db })
   })
   const sendObjectPreview = sendObjectPreviewFactory({
-    getObject,
+    getStream,
     getObjectPreviewBufferOrFilepath,
     makeOgImage
   })
   const checkStreamPermissions = checkStreamPermissionsFactory({
     validateScopes,
-    authorizeResolver
+    authorizeResolver,
+    getStream
   })
 
   app.options('/preview/:streamId/:angle?', cors())
@@ -68,7 +72,8 @@ exports.init = (app, isInitial) => {
     const { commits } = await getCommitsByStreamId({
       streamId: req.params.streamId,
       limit: 1,
-      ignoreGlobalsBranch: true
+      ignoreGlobalsBranch: true,
+      cursor: undefined
     })
     if (!commits || commits.length === 0) {
       return res.sendFile(noPreviewImage)
@@ -100,7 +105,8 @@ exports.init = (app, isInitial) => {
         commitsObj = await getCommitsByBranchName({
           streamId: req.params.streamId,
           branchName: req.params.branchName,
-          limit: 1
+          limit: 1,
+          cursor: undefined
         })
       } catch {
         commitsObj = {}
@@ -129,9 +135,9 @@ exports.init = (app, isInitial) => {
       return res.sendFile(httpErrorImage(httpErrorCode))
     }
 
-    const commit = await getCommitById({
-      streamId: req.params.streamId,
-      id: req.params.commitId
+    const getCommit = getCommitFactory({ db })
+    const commit = await getCommit(req.params.commitId, {
+      streamId: req.params.streamId
     })
     if (!commit) return res.sendFile(noPreviewImage)
 
@@ -162,11 +168,11 @@ exports.init = (app, isInitial) => {
 
   if (isInitial) {
     const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
-      getObjectCommitsWithStreamIds,
+      getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({ db }),
       publish
     })
     listenForPreviewGenerationUpdates()
   }
 }
 
-exports.finalize = () => {}
+export const finalize = () => {}

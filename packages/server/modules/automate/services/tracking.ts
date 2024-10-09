@@ -16,7 +16,7 @@ import {
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
-import { getCommit } from '@/modules/core/repositories/commits'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
@@ -36,7 +36,7 @@ const isFinished = (runStatus: AutomationRunStatus) => {
 export type AutomateTrackingDeps = {
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   getFullAutomationRunById: GetFullAutomationRunById
-  getCommit: typeof getCommit
+  getCommit: GetCommit
   getUserById: typeof getUserById
 }
 

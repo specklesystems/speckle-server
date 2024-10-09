@@ -1,13 +1,13 @@
 import {
+  ActivitySummary,
+  StreamActivitySummary
+} from '@/modules/activitystream/domain/types'
+import {
   ActionTypes,
   ResourceTypes,
   StreamScopeActivity,
   AllActivityTypes
 } from '@/modules/activitystream/helpers/types'
-import {
-  ActivitySummary,
-  StreamActivitySummary
-} from '@/modules/activitystream/services/summary'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import {

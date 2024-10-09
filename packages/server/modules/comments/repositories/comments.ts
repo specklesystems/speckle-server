@@ -31,7 +31,6 @@ import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelp
 import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Merge } from 'type-fest'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import {
   CheckStreamResourceAccess,
   DeleteComment,
@@ -65,6 +64,8 @@ import {
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
 import { ExtendedComment } from '@/modules/comments/domain/types'
+import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 
 const tables = {
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
@@ -504,7 +505,7 @@ export const getPaginatedBranchCommentsTotalCountFactory =
  * when we only wish to load comment threads for loaded resources.
  */
 export const resolvePaginatedProjectCommentsLatestModelResourcesFactory =
-  (): ResolvePaginatedProjectCommentsLatestModelResources =>
+  (deps: { db: Knex }): ResolvePaginatedProjectCommentsLatestModelResources =>
   async (resourceIdString) => {
     if (!resourceIdString?.length) return []
     const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
@@ -514,7 +515,9 @@ export const resolvePaginatedProjectCommentsLatestModelResourcesFactory =
     const latestModelResources = modelResources.filter((r) => !r.versionId)
     if (!latestModelResources.length) return []
 
-    return await getBranchLatestCommits(latestModelResources.map((r) => r.modelId))
+    return await getBranchLatestCommitsFactory(deps)(
+      latestModelResources.map((r) => r.modelId)
+    )
   }
 
 const getPaginatedProjectCommentsBaseQueryFactory =
@@ -522,11 +525,12 @@ const getPaginatedProjectCommentsBaseQueryFactory =
   async (
     params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
     options?: {
-      preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
+      preloadedModelLatestVersions?: BranchLatestCommit[]
     }
   ) => {
     const resolvePaginatedProjectCommentsLatestModelResources =
-      resolvePaginatedProjectCommentsLatestModelResourcesFactory()
+      resolvePaginatedProjectCommentsLatestModelResourcesFactory(deps)
+
     const { projectId, filter } = params
     const allModelVersions = filter?.allModelVersions || false
 
@@ -679,7 +683,7 @@ export const getPaginatedProjectCommentsTotalCountFactory =
   async (
     params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
     options?: {
-      preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
+      preloadedModelLatestVersions?: BranchLatestCommit[]
     }
   ) => {
     const { baseQuery } = await getPaginatedProjectCommentsBaseQueryFactory(deps)(

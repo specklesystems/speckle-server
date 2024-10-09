@@ -6,11 +6,12 @@ import {
 import { cloneStream } from '@/modules/core/services/streams/clone'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import {
+  createStreamFactory,
   getOnboardingBaseStream,
-  updateStream
+  getStreamFactory,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUser } from '@/modules/core/services/users'
 import {
@@ -18,6 +19,23 @@ import {
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { db } from '@/db/knex'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 export async function createOnboardingStream(
   targetUserId: string,
@@ -32,6 +50,37 @@ export async function createOnboardingStream(
       'You do not have the permissions to create a new stream'
     )
   }
+
+  const updateStream = updateStreamFactory({ db })
+  const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+  const getStream = getStreamFactory({ db })
+  const createStreamReturnRecord = createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
 
   const sourceStream = await getOnboardingBaseProjectFactory({
     getOnboardingBaseStream

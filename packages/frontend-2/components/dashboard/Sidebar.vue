@@ -26,7 +26,9 @@
         class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
         :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
-        <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebar
+          class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+        >
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
@@ -123,17 +125,13 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink
-                to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Give us feedback" external>
+              <div @click="openFeedbackDialog">
+                <LayoutSidebarMenuGroupItem label="Give us feedback">
                   <template #icon>
                     <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+              </div>
 
               <NuxtLink
                 to="https://speckle.guide/"
@@ -160,9 +158,19 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
+          <template #promo>
+            <LayoutSidebarPromo
+              title="SpeckleCon 2024"
+              text="Join us in London on Nov 13-14 for the ultimate community event."
+              button-text="Get tickets"
+              @on-click="onPromoClick"
+            />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
+
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
 
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
@@ -175,6 +183,7 @@
 import {
   FormButton,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
@@ -202,6 +211,7 @@ const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
+const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -224,7 +234,7 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.id),
+        to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex
       }))
@@ -249,4 +259,18 @@ onWorkspaceResult((result) => {
     }
   }
 })
+
+const onPromoClick = () => {
+  mixpanel.track('Promo Banner Clicked', {
+    source: 'sidebar',
+    campaign: 'specklecon2024'
+  })
+
+  window.open('https://conf.speckle.systems/', '_blank')
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+  isOpenMobile.value = false
+}
 </script>

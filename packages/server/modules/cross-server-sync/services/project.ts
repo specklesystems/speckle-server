@@ -10,13 +10,15 @@ import {
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
+import { CreateStream } from '@/modules/core/domain/streams/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -112,8 +114,8 @@ const getProjectMetadata = async (params: {
 }
 
 type EnsureBranchDeps = {
-  getStreamBranchByName: typeof getStreamBranchByName
-  createBranchAndNotify: typeof createBranchAndNotify
+  getStreamBranchByName: GetStreamBranchByName
+  createBranchAndNotify: CreateBranchAndNotify
 }
 
 const ensureBranchFactory =
@@ -191,7 +193,7 @@ const importVersionsFactory =
   }
 
 type DownloadProjectDeps = {
-  createStreamReturnRecord: typeof createStreamReturnRecord
+  createStreamReturnRecord: CreateStream
 } & GetLocalResourcesDeps &
   ImportVersionsDeps
 
