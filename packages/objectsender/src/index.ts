@@ -1,5 +1,7 @@
 import { Serializer } from './utils/Serializer'
+import type { SerializerParams } from './utils/Serializer'
 import { ServerTransport } from './transports/ServerTransport'
+import type { TransportOptions } from './transports/ServerTransport'
 import { Base } from './utils/Base'
 export { Base }
 
@@ -12,6 +14,10 @@ export type SendParams = {
   logger?: {
     log: (message: unknown) => void
     error: (message: unknown) => void
+  }
+  options?: {
+    transport: TransportOptions
+    serializer: Omit<SerializerParams, 'transport'>
   }
 }
 
@@ -32,13 +38,19 @@ export const send = async (
     serverUrl = 'https://app.speckle.systems',
     projectId,
     token,
-    logger = console
+    logger = console,
+    options = undefined
   }: SendParams
 ) => {
   const t0 = performance.now()
   logger?.log('Starting to send')
-  const transport = new ServerTransport(serverUrl, projectId, token)
-  const serializer = new Serializer(transport)
+  const transport = new ServerTransport({
+    serverUrl,
+    projectId,
+    authToken: token,
+    options: options?.transport
+  })
+  const serializer = new Serializer({ ...options?.serializer, transport })
 
   let result: SendResult
   try {
