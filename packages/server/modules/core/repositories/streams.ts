@@ -72,6 +72,7 @@ import {
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
 import {
+  StoreStream,
   GetCommitStream,
   GetCommitStreams,
   GetStream,
@@ -815,62 +816,66 @@ export async function getUserStreamsCount(params: UserStreamsQueryCountParams) {
   return parseInt(res.count)
 }
 
-export async function createStream(
-  input: StreamCreateInput | ProjectCreateInput,
-  options?: Partial<{
-    /**
-     * If set, will assign owner permissions to this user
-     */
-    ownerId: string
-    trx: Knex.Transaction
-  }>
-) {
-  const { name, description } = input
-  const { ownerId, trx } = options || {}
+export const createStreamFactory =
+  (deps: { db: Knex }): StoreStream =>
+  async (
+    input: StreamCreateInput | ProjectCreateInput,
+    options?: Partial<{
+      /**
+       * If set, will assign owner permissions to this user
+       */
+      ownerId: string
+      trx: Knex.Transaction
+    }>
+  ) => {
+    const { name, description } = input
+    const { ownerId, trx } = options || {}
 
-  let shouldBePublic: boolean, shouldBeDiscoverable: boolean
-  if (isProjectCreateInput(input)) {
-    shouldBeDiscoverable = input.visibility === ProjectVisibility.Public
-    shouldBePublic =
-      !input.visibility ||
-      [ProjectVisibility.Public, ProjectVisibility.Unlisted].includes(input.visibility)
-  } else {
-    shouldBePublic = input.isPublic !== false
-    shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
+    let shouldBePublic: boolean, shouldBeDiscoverable: boolean
+    if (isProjectCreateInput(input)) {
+      shouldBeDiscoverable = input.visibility === ProjectVisibility.Public
+      shouldBePublic =
+        !input.visibility ||
+        [ProjectVisibility.Public, ProjectVisibility.Unlisted].includes(
+          input.visibility
+        )
+    } else {
+      shouldBePublic = input.isPublic !== false
+      shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
+    }
+
+    const workspaceId = 'workspaceId' in input ? input.workspaceId : null
+
+    const id = generateId()
+    const stream = {
+      id,
+      name: name || generateStreamName(),
+      description: description || '',
+      isPublic: shouldBePublic,
+      isDiscoverable: shouldBeDiscoverable,
+      updatedAt: knex.fn.now(),
+      workspaceId: workspaceId || null
+    }
+
+    // Create the stream & set up permissions
+    const streamQuery = tables.streams(deps.db).insert(stream, '*')
+    if (trx) streamQuery.transacting(trx)
+
+    const insertResults = await streamQuery
+    const newStream = insertResults[0] as StreamRecord
+
+    if (ownerId) {
+      const streamAclQuery = tables.streamAcl(deps.db).insert({
+        userId: ownerId,
+        resourceId: id,
+        role: Roles.Stream.Owner
+      })
+      if (trx) streamAclQuery.transacting(trx)
+      await streamAclQuery
+    }
+
+    return newStream
   }
-
-  const workspaceId = 'workspaceId' in input ? input.workspaceId : null
-
-  const id = generateId()
-  const stream = {
-    id,
-    name: name || generateStreamName(),
-    description: description || '',
-    isPublic: shouldBePublic,
-    isDiscoverable: shouldBeDiscoverable,
-    updatedAt: knex.fn.now(),
-    workspaceId: workspaceId || null
-  }
-
-  // Create the stream & set up permissions
-  const streamQuery = Streams.knex().insert(stream, '*')
-  if (trx) streamQuery.transacting(trx)
-
-  const insertResults = await streamQuery
-  const newStream = insertResults[0] as StreamRecord
-
-  if (ownerId) {
-    const streamAclQuery = StreamAcl.knex().insert({
-      userId: ownerId,
-      resourceId: id,
-      role: Roles.Stream.Owner
-    })
-    if (trx) streamAclQuery.transacting(trx)
-    await streamAclQuery
-  }
-
-  return newStream
-}
 
 export async function getUserStreamCounts(params: {
   userIds: string[]
