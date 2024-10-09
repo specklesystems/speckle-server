@@ -122,7 +122,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
     { source: props.eventSource }
   )
 
-  if (newWorkspace) {
+  if (newWorkspace && !newWorkspace?.errors) {
     emit('created')
     isOpen.value = false
   }

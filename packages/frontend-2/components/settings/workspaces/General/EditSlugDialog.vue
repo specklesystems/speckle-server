@@ -63,7 +63,6 @@ const workspaceShortId = ref(props.workspace.slug)
 
 const updateSlug = handleSubmit(() => {
   emit('update:slug', workspaceShortId.value)
-  isOpen.value = false
 })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
