@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { Roles, RoleInfo } from '@speckle/shared'
 import type {
   Nullable,
   ServerRoles,
@@ -21,6 +21,7 @@ export type SelectableStreamRole = StreamRoles | 'delete'
 export type SelectableStreamRoleSelectItem = {
   id: SelectableStreamRole
   title: string
+  description?: string
 }
 
 export const roleSelectItems: Record<
@@ -29,15 +30,18 @@ export const roleSelectItems: Record<
 > = {
   [Roles.Stream.Owner]: {
     id: Roles.Stream.Owner,
-    title: 'Owner'
+    title: RoleInfo.Stream[Roles.Stream.Owner].title,
+    description: RoleInfo.Stream[Roles.Stream.Owner].description
   },
   [Roles.Stream.Contributor]: {
     id: Roles.Stream.Contributor,
-    title: 'Can edit'
+    title: RoleInfo.Stream[Roles.Stream.Contributor].title,
+    description: RoleInfo.Stream[Roles.Stream.Contributor].description
   },
   [Roles.Stream.Reviewer]: {
     id: Roles.Stream.Reviewer,
-    title: 'Can view'
+    title: RoleInfo.Stream[Roles.Stream.Reviewer].title,
+    description: RoleInfo.Stream[Roles.Stream.Reviewer].description
   },
   ['delete']: {
     id: 'delete',

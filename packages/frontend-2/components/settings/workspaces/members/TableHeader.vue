@@ -18,7 +18,8 @@
         v-model="role"
         fully-control-value
         clearable
-        class="min-w-32"
+        class="min-w-44"
+        hide-description
       />
     </div>
     <FormButton

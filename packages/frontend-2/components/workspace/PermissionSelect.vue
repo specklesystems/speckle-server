@@ -12,7 +12,7 @@
     :button-id="buttonId"
     hide-checkmarks
     by="id"
-    class="min-w-[85px]"
+    class="min-w-60"
     mount-menu-on-body
   >
     <template #something-selected="{ value }">
@@ -20,17 +20,17 @@
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
-    <template #option="{ item, selected }">
-      <div class="flex flex-col">
-        <div
-          :class="[
-            'text-normal',
-            selected ? 'text-primary' : '',
-            item.id === 'delete' ? 'text-danger' : ''
-          ]"
+    <template #option="{ item }">
+      <div class="flex flex-col space-y-0.5">
+        <span
+          class="truncate font-medium"
+          :class="item.id === 'delete' ? '!text-danger' : ''"
         >
           {{ item.title }}
-        </div>
+        </span>
+        <span v-if="item.description" class="text-body-2xs text-foreground-2">
+          {{ item.description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
