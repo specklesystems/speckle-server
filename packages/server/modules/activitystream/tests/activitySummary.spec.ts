@@ -6,7 +6,6 @@ import {
   sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
-import { deleteStream } from '@/modules/core/services/streams'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
@@ -21,6 +20,7 @@ import {
 import { db } from '@/db/knex'
 import {
   createStreamFactory,
+  deleteStreamFactory,
   getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -82,6 +82,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const deleteStream = deleteStreamFactory({ db })
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {
@@ -163,7 +164,7 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
-      await deleteStream({ streamId })
+      await deleteStream(streamId)
       const summary = await createActivitySummary({
         userId: userA.id,
         streamIds: [streamId],

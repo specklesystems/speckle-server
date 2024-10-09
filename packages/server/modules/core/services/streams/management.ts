@@ -14,11 +14,7 @@ import {
   StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import {
-  deleteStream,
-  getStreamFactory,
-  updateStream
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory, updateStream } from '@/modules/core/repositories/streams'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -35,7 +31,6 @@ import {
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
-import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import {
   TokenResourceIdentifier,
@@ -49,10 +44,14 @@ import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/pr
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
   CreateStream,
+  DeleteStream,
+  DeleteStreamRecords,
   LegacyCreateStream,
   StoreStream
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
+import { AuthorizeResolver } from '@/modules/shared/domain/operations'
+import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -136,46 +135,50 @@ export const legacyCreateStreamFactory =
 
 /**
  * Delete stream & notify users (emit events & save activity)
- * @param {string} streamId
- * @param {string} deleterId
  */
-export async function deleteStreamAndNotify(
-  streamId: string,
-  deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules,
-  options?: {
-    skipAccessChecks?: boolean
+export const deleteStreamAndNotifyFactory =
+  (deps: {
+    deleteStream: DeleteStreamRecords
+    authorizeResolver: AuthorizeResolver
+    addStreamDeletedActivity: typeof addStreamDeletedActivity
+    deleteAllResourceInvites: DeleteAllResourceInvites
+  }): DeleteStream =>
+  async (
+    streamId: string,
+    deleterId: string,
+    deleterResourceAccessRules: ContextResourceAccessRules,
+    options?: {
+      skipAccessChecks?: boolean
+    }
+  ) => {
+    const { skipAccessChecks = false } = options || {}
+
+    if (!skipAccessChecks) {
+      await deps.authorizeResolver(
+        deleterId,
+        streamId,
+        Roles.Stream.Owner,
+        deleterResourceAccessRules
+      )
+    }
+
+    await deps.addStreamDeletedActivity({ streamId, deleterId })
+
+    // TODO: this has been around since before my time, we should get rid of it...
+    // delay deletion by a bit so we can do auth checks
+    await wait(250)
+
+    // Delete after event so we can do authz
+    const deleteAllStreamInvites = deps.deleteAllResourceInvites
+    await Promise.all([
+      deleteAllStreamInvites({
+        resourceId: streamId,
+        resourceType: ProjectInviteResourceType
+      }),
+      deps.deleteStream(streamId)
+    ])
+    return true
   }
-) {
-  const { skipAccessChecks = false } = options || {}
-
-  if (!skipAccessChecks) {
-    await authorizeResolver(
-      deleterId,
-      streamId,
-      Roles.Stream.Owner,
-      deleterResourceAccessRules
-    )
-  }
-
-  await addStreamDeletedActivity({ streamId, deleterId })
-
-  // TODO: this has been around since before my time, we should get rid of it...
-  // delay deletion by a bit so we can do auth checks
-  await wait(250)
-
-  // TODO: use proper injection once we refactor this module
-  // Delete after event so we can do authz
-  const deleteAllStreamInvites = deleteAllResourceInvitesFactory({ db })
-  await Promise.all([
-    deleteAllStreamInvites({
-      resourceId: streamId,
-      resourceType: ProjectInviteResourceType
-    }),
-    deleteStream(streamId)
-  ])
-  return true
-}
 
 /**
  * Update stream metadata & notify users (emit events & save activity)

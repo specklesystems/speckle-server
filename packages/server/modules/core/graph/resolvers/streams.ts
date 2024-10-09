@@ -29,11 +29,12 @@ import {
   getUserStreamsCount,
   getUserStreams,
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  deleteStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
-  deleteStreamAndNotify,
+  deleteStreamAndNotifyFactory,
   updateStreamAndNotify,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
@@ -50,6 +51,7 @@ import {
   UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
 import {
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   queryAllResourceInvitesFactory
@@ -63,7 +65,10 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivity
+} from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 
@@ -94,6 +99,12 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
     publish
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
 })
 
 const getUserStreamsCore = async (

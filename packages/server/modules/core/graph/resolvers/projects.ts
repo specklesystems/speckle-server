@@ -1,6 +1,9 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivity
+} from '@/modules/activitystream/services/streamActivity'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -19,7 +22,8 @@ import {
   getUserStreams,
   getStreamFactory,
   getStreamCollaboratorsFactory,
-  createStreamFactory
+  createStreamFactory,
+  deleteStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
 import {
@@ -28,13 +32,14 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import {
   createStreamReturnRecordFactory,
-  deleteStreamAndNotify,
+  deleteStreamAndNotifyFactory,
   updateStreamAndNotify,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import {
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
@@ -81,6 +86,12 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
     publish
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
 })
 
 export = {
