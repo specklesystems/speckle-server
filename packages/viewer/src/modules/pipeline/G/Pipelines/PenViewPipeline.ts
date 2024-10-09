@@ -1,12 +1,10 @@
 import { PerspectiveCamera, OrthographicCamera } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GColorPass } from '../GColorPass.js'
 import { GDepthPass, DepthType } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { GPass, ObjectVisibility, ProgressiveGPass } from '../GPass.js'
 import { GPipeline } from '../GPipeline.js'
-import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GTAAPass } from '../GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 
@@ -39,37 +37,6 @@ export class PenViewPipeline extends GPipeline {
     normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
 
-    const opaqueColorPass = new GColorPass()
-    opaqueColorPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.STREAM_CONTENT,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
-    ])
-    opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
-    opaqueColorPass.outputTarget = null
-
-    const transparentColorPass = new GColorPass()
-    transparentColorPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.STREAM_CONTENT,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
-      ObjectLayers.SHADOWCATCHER
-    ])
-    transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
-    transparentColorPass.outputTarget = null
-
-    const progressiveAOPass = new GProgressiveAOPass()
-    progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
-    progressiveAOPass.accumulationFrames = this.accumulationFrameCount
-
     const edgesPass = new GEdgePass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
@@ -85,13 +52,7 @@ export class PenViewPipeline extends GPipeline {
     taaPass.outputToScreen = true
 
     this.dynamicStage.push(depthPassDynamic, normalPassDynamic, edgesPassDynamic)
-    this.progressiveStage.push(
-      depthPass,
-      normalPass,
-      edgesPass,
-      progressiveAOPass,
-      taaPass
-    )
+    this.progressiveStage.push(depthPass, normalPass, edgesPass, taaPass)
 
     this.passList = this.dynamicStage
   }
