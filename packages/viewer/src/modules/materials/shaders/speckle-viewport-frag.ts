@@ -23,7 +23,7 @@ uniform float opacity;
 #include <clipping_planes_pars_fragment>
 
 varying float dotValue;
-
+uniform float falloff;
 void main() {
 	#include <clipping_planes_fragment>
 	vec4 diffuseColor = vec4( diffuse, opacity );
@@ -56,7 +56,8 @@ void main() {
 		diffuseColor.a *= transmissionAlpha + 0.1;
 	#endif
     float d = max((gl_FrontFacing ? dotValue : -dotValue), 0.075);
-	gl_FragColor = vec4( outgoingLight * diffuseColor.a * d, 1. );
+	vec3 color = mix(outgoingLight, outgoingLight * d, pow(d, falloff));
+	gl_FragColor = vec4( color * diffuseColor.a, 1. );
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>

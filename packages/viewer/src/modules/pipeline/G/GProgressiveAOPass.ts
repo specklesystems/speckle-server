@@ -240,7 +240,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
       height = 4
 
     if (SimplexNoise === undefined) {
-      console.error('THREE.SSAOPass: The pass relies on SimplexNoise.')
+      console.error('The pass relies on SimplexNoise.')
     }
 
     const simplex = new SimplexNoise()

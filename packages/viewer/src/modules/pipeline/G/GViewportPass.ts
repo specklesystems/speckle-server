@@ -7,19 +7,14 @@ import {
   PerspectiveCamera,
   Plane,
   Scene,
-  Texture,
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
 import { BaseGPass } from './GPass.js'
-import SpeckleMatcapMaterial from '../../materials/SpeckleMatcapMaterial.js'
-import { Assets } from '../../Assets.js'
-import Logger from '../..//utils/Logger.js'
-import defaultMatcap from '../../../assets/matcap.png'
-import { AssetType } from '../../../IViewer.js'
+import SpeckleViewportMaterial from '../../materials/SpeckleViewportMaterial.js'
 
-export class GMatcapPass extends BaseGPass {
-  private matcapMaterial: SpeckleMatcapMaterial
+export class GViewportPass extends BaseGPass {
+  public viewportMaterial: SpeckleViewportMaterial
   public clear = false
 
   get displayName(): string {
@@ -27,7 +22,7 @@ export class GMatcapPass extends BaseGPass {
   }
 
   get overrideMaterial(): Material {
-    return this.matcapMaterial
+    return this.viewportMaterial
   }
 
   constructor() {
@@ -44,25 +39,14 @@ export class GMatcapPass extends BaseGPass {
     this._outputTarget.depthBuffer = true
     this._outputTarget.stencilBuffer = true
 
-    this.matcapMaterial = new SpeckleMatcapMaterial({})
-    this.matcapMaterial.blending = NoBlending
-    this.matcapMaterial.side = DoubleSide
-    this.matcapMaterial.toneMapped = false
-    Assets.getTexture({
-      id: 'defaultMatcap',
-      src: defaultMatcap,
-      type: AssetType.TEXTURE_8BPP
-    })
-      .then((value: Texture) => {
-        this.matcapMaterial.matcap = value
-      })
-      .catch((reason) => {
-        Logger.error(`Matcap texture failed to load ${reason}`)
-      })
+    this.viewportMaterial = new SpeckleViewportMaterial({})
+    this.viewportMaterial.blending = NoBlending
+    this.viewportMaterial.side = DoubleSide
+    this.viewportMaterial.toneMapped = false
   }
 
   public setClippingPlanes(planes: Plane[]) {
-    this.matcapMaterial.clippingPlanes = planes
+    this.viewportMaterial.clippingPlanes = planes
   }
 
   public render(
