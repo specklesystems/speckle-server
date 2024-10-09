@@ -4,6 +4,9 @@
     :items="roles"
     :multiple="multiple"
     :disabled-item-predicate="disabledItemPredicate"
+    :disabled-item-tooltip="
+      !allowGuest ? 'The Guest role isn\'t enabled on the server' : ''
+    "
     name="serverRoles"
     label="Role"
     :show-label="showLabel"

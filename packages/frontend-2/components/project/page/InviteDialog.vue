@@ -34,6 +34,11 @@
                 hide-remove
                 :show-label="false"
                 :disabled-roles="isTargettingWorkspaceGuest ? [Roles.Stream.Owner] : []"
+                :disabled-item-tooltip="
+                  isTargettingWorkspaceGuest
+                    ? 'Workspace guests cannot be project owners'
+                    : ''
+                "
               />
             </div>
           </template>

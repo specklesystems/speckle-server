@@ -11,6 +11,7 @@
     :label-id="labelId"
     :button-id="buttonId"
     :disabled-item-predicate="disabledItemPredicate"
+    :disabled-item-tooltip="disabledItemTooltip"
     by="id"
     class="min-w-60"
     mount-menu-on-body
@@ -58,6 +59,7 @@ const props = defineProps<{
   hideRemove?: boolean
   hideOwner?: boolean
   disabledRoles?: StreamRoles[]
+  disabledItemTooltip?: string
 }>()
 
 const labelId = useId()

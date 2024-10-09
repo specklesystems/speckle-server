@@ -30,6 +30,16 @@
             :model-value="collaborator.role"
             :disabled="loading"
             :hide-owner="collaborator.serverRole === Roles.Server.Guest"
+            :disabled-roles="
+              isTargettingWorkspaceGuest(collaborator.workspaceRole || undefined)
+                ? [Roles.Stream.Owner]
+                : []
+            "
+            :disabled-item-tooltip="
+              isTargettingWorkspaceGuest(collaborator.workspaceRole || undefined)
+                ? 'Workspace guests cannot be project owners'
+                : ''
+            "
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
@@ -74,7 +84,7 @@
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import type { Nullable, StreamRoles } from '@speckle/shared'
+import type { Nullable, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Project } from '~~/lib/common/generated/gql/graphql'
@@ -201,6 +211,9 @@ const getRoleTooltip = (collaborator: ProjectCollaboratorListItem): string | nul
 
   return null
 }
+
+const isTargettingWorkspaceGuest = (role?: WorkspaceRoles) =>
+  role === Roles.Workspace.Guest
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
