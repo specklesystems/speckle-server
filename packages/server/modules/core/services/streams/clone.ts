@@ -32,7 +32,6 @@ import {
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
-import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
 import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
 import { InsertCommentPayload } from '@/modules/comments/domain/operations'
@@ -41,6 +40,9 @@ import {
   getBatchedStreamObjectsFactory,
   insertObjectsFactory
 } from '@/modules/core/repositories/objects'
+import { addStreamClonedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -429,7 +431,10 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
     // Create activity item
-    await addStreamClonedActivity(
+    await addStreamClonedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })(
       {
         sourceStreamId,
         newStream,

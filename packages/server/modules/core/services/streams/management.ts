@@ -1,6 +1,6 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import {
-  addStreamCreatedActivity,
+  addStreamCreatedActivityFactory,
   addStreamDeletedActivity,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
@@ -55,6 +55,8 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -112,7 +114,10 @@ export async function createStreamReturnRecord(
 
   // Save activity
   if (createActivity) {
-    await addStreamCreatedActivity({
+    await addStreamCreatedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })({
       streamId,
       input: params,
       stream,
