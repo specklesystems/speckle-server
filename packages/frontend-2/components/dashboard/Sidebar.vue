@@ -61,7 +61,7 @@
               :plus-click="
                 isNotGuest
                   ? () => {
-                      openWorkspaceCreateDialog()
+                      router.push(workspacesRoute)
                     }
                   : undefined
               "
@@ -206,6 +206,7 @@ import { Roles } from '@speckle/shared'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const router = useRouter()
 const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
@@ -240,13 +241,6 @@ const workspacesItems = computed(() =>
       }))
     : []
 )
-
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'sidebar'
-  })
-}
 
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {

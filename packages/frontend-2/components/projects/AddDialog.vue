@@ -28,7 +28,7 @@
           <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
         </div>
         <template v-if="isWorkspacesEnabled && !workspaceId">
-          <div v-if="!isCreatingWorkspace" class="flex gap-y-2 flex-col">
+          <div class="flex gap-y-2 flex-col">
             <p class="text-body-xs text-foreground font-medium">Workspace</p>
             <div v-if="hasWorkspaces">
               <div class="flex gap-x-2 items-center">
@@ -39,31 +39,32 @@
                   disabled-item-tooltip="You dont have rights to create projects in this workspace"
                   class="flex-1"
                 />
-                <FormButton
-                  :icon-left="PlusIcon"
-                  hide-text
-                  class="flex"
-                  color="outline"
-                  @click="isCreatingWorkspace = true"
-                />
+                <div v-tippy="'Create workspace'" class="flex">
+                  <FormButton
+                    :icon-left="PlusIcon"
+                    hide-text
+                    class="flex"
+                    color="outline"
+                    @click="confirmCreateWorkspace"
+                  />
+                </div>
               </div>
             </div>
-            <FormButton v-else color="outline" @click="isCreatingWorkspace = true">
+            <FormButton v-else color="outline" @click="confirmCreateWorkspace">
               New workspace
             </FormButton>
             <p class="text-foreground-2 text-body-2xs">
               Workspace offers better project management and higher data security.
             </p>
           </div>
-          <ProjectsNewWorkspace
-            v-if="isCreatingWorkspace"
-            mixpanel-event-source="create-project-modal"
-            @cancel="isCreatingWorkspace = false"
-            @workspace-created="onWorkspaceCreated"
-          />
         </template>
       </div>
     </form>
+    <CommonConfirmDialog
+      v-model:open="showConfirmDialog"
+      text="You have unsaved changes. Are you sure you want to leave and create a new workspace?"
+      @confirm="navigateToWorkspaceExplainer()"
+    />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -80,6 +81,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
+import { workspacesRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsAddDialog_Workspace on Workspace {
@@ -114,23 +116,19 @@ const emit = defineEmits<{
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const createProject = useCreateProject()
-const { handleSubmit } = useForm<FormValues>()
+const router = useRouter()
+const { handleSubmit, meta } = useForm<FormValues>()
 const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, () => ({
   enabled: isWorkspacesEnabled.value
 }))
 
 const visibility = ref(ProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
-const isCreatingWorkspace = ref<boolean>(false)
+const showConfirmDialog = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
-
-const onWorkspaceCreated = (workspace: ProjectsAddDialog_WorkspaceFragment) => {
-  isCreatingWorkspace.value = false
-  selectedWorkspace.value = workspace
-}
 
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
@@ -154,7 +152,6 @@ const workspaces = computed(
 )
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
 const dialogButtons = computed((): LayoutDialogButton[] => {
-  if (isCreatingWorkspace.value) return []
   return [
     {
       text: 'Cancel',
@@ -172,6 +169,22 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     }
   ]
 })
+
+const formIsDirty = computed(() => {
+  return meta.value.dirty
+})
+
+const confirmCreateWorkspace = () => {
+  if (formIsDirty.value) {
+    showConfirmDialog.value = true
+  } else {
+    navigateToWorkspaceExplainer()
+  }
+}
+
+const navigateToWorkspaceExplainer = () => {
+  router.push(workspacesRoute)
+}
 
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
