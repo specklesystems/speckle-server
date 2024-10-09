@@ -30,8 +30,8 @@ import {
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
 import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
-import { getStream } from '@/modules/core/services/streams'
 import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const digestNotificationEmailHandlerFactory =
   (
@@ -436,7 +436,7 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
     })
   }),
   createActivitySummary: createActivitySummaryFactory({
-    getStream,
+    getStream: getStreamFactory({ db }),
     getActivity: getActivityFactory({ db })
   }),
   getServerInfo,

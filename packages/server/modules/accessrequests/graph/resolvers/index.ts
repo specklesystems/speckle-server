@@ -20,13 +20,14 @@ import {
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaborator,
   validateStreamAccess
 } from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
 
+const getStream = getStreamFactory({ db })
 const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
   getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
 })

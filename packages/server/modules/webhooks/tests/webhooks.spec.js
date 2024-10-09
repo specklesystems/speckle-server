@@ -10,7 +10,7 @@ const {
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createUser } = require('../../core/services/users')
-const { createStream, grantPermissionsStream } = require('../../core/services/streams')
+const { grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
   createWebhookConfigFactory,
@@ -31,13 +31,75 @@ const {
 } = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { getStream } = require('@/modules/core/repositories/streams')
-const { getUser } = require('@/modules/core/repositories/users')
+const { getUser, getUsers } = require('@/modules/core/repositories/users')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
 
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
 const updateWebhook = updateWebhookFactory({
   updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })

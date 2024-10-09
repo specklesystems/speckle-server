@@ -4,12 +4,13 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
   getProjectFactory,
-  getStream,
   getUserStreams,
   getUserStreamsCount,
   updateProjectFactory,
   upsertProjectRoleFactory,
-  getRolesByUserIdFactory
+  getRolesByUserIdFactory,
+  getStreamFactory,
+  deleteStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -109,7 +110,6 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
-import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -136,6 +136,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 
+const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -183,6 +184,7 @@ const buildCreateAndSendWorkspaceInvite = () =>
         payload
       })
   })
+const deleteStream = deleteStreamFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -724,10 +726,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const trx = await db.transaction()
 
           const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-            getProject: getProjectFactory(),
+            getProject: getProjectFactory({ db }),
             updateProject: updateProjectFactory({ db: trx }),
             upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
-            getProjectCollaborators: getProjectCollaboratorsFactory(),
+            getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
             getWorkspaceRoleToDefaultProjectRoleMapping:
               getWorkspaceRoleToDefaultProjectRoleMappingFactory({
@@ -861,6 +863,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             parent.workspaceId
           )
           return workspace!.name
+        },
+        workspaceSlug: async (parent, _args, ctx) => {
+          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
+            parent.workspaceId
+          )
+          return workspace!.slug
         },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent

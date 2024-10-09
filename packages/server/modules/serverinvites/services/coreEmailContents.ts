@@ -1,9 +1,9 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   getRegistrationRoute,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   EmailTemplateParams,
   sanitizeMessage
@@ -162,7 +162,7 @@ const buildProjectEmailTemplateParams = (
   }
 }
 
-type BuildProjectInviteContentsFactoryDeps = { getStream: typeof getStream }
+type BuildProjectInviteContentsFactoryDeps = { getStream: GetStream }
 
 const buildProjectInviteContentsFactory =
   (deps: BuildProjectInviteContentsFactoryDeps): BuildProjectInviteEmailContents =>

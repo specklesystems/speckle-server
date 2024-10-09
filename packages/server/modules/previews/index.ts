@@ -18,7 +18,6 @@ import {
   checkStreamPermissionsFactory
 } from '@/modules/previews/services/management'
 import { getObject } from '@/modules/core/services/objects'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   getObjectPreviewInfoFactory,
   createObjectPreviewFactory,
@@ -26,10 +25,11 @@ import {
 } from '@/modules/previews/repository/previews'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import {
-  getObjectCommitsWithStreamIds,
-  getCommitFactory
+  getCommitFactory,
+  getObjectCommitsWithStreamIdsFactory
 } from '@/modules/core/repositories/commits'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -43,6 +43,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     moduleLogger.info('📸 Init object preview module')
   }
 
+  const getStream = getStreamFactory({ db })
   const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
     getObject,
     getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
@@ -56,7 +57,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
   })
   const checkStreamPermissions = checkStreamPermissionsFactory({
     validateScopes,
-    authorizeResolver
+    authorizeResolver,
+    getStream
   })
 
   app.options('/preview/:streamId/:angle?', cors())
@@ -166,7 +168,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
 
   if (isInitial) {
     const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
-      getObjectCommitsWithStreamIds,
+      getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({ db }),
       publish
     })
     listenForPreviewGenerationUpdates()

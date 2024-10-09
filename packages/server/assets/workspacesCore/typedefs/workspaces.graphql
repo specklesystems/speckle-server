@@ -381,6 +381,7 @@ type PendingWorkspaceCollaborator {
   inviteId: String!
   workspaceId: String!
   workspaceName: String!
+  workspaceSlug: String!
   """
   E-mail address if target is unregistered or primary e-mail of target registered user
   if token was specified to retrieve this invite

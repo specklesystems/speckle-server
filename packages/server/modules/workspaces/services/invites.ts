@@ -71,7 +71,7 @@ import {
   anyEmailCompliantWithWorkspaceDomains,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
-import { getStream } from '@/modules/core/repositories/streams'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -124,7 +124,7 @@ type CollectAndValidateWorkspaceTargetsFactoryDeps =
     getWorkspace: GetWorkspace
     getWorkspaceDomains: GetWorkspaceDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
-    getStream: typeof getStream
+    getStream: GetStream
   }
 
 export const collectAndValidateWorkspaceTargetsFactory =

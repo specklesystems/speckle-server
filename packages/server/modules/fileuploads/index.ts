@@ -12,16 +12,17 @@ import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getStream } from '@/modules/core/repositories/streams'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   saveUploadFile: saveUploadFileFactory({ db }),
   publish
 })
+const getStream = getStreamFactory({ db })
 
 const saveFileUploads = async ({
   userId,

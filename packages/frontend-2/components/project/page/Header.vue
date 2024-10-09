@@ -64,9 +64,9 @@ graphql(`
   }
 `)
 
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-
 defineProps<{
   project: ProjectPageProjectHeaderFragment
 }>()
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 </script>

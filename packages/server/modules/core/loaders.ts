@@ -3,12 +3,12 @@ import {
   getBatchUserFavoriteData,
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
-  getStreams,
   getStreamRoles,
   getStreamsSourceApps,
-  getCommitStreams,
   StreamWithCommitId,
-  getUserStreamCounts
+  getUserStreamCounts,
+  getStreamsFactory,
+  getCommitStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -23,12 +23,12 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  getCommitBranches,
+  getCommitBranchesFactory,
   getCommitsFactory,
   getSpecificBranchCommitsFactory,
-  getStreamCommitCounts,
-  getUserAuthoredCommitCounts,
-  getUserStreamCommitCounts
+  getStreamCommitCountsFactory,
+  getUserAuthoredCommitCountsFactory,
+  getUserStreamCommitCountsFactory
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
@@ -88,6 +88,7 @@ import { getAppScopesFactory } from '@/modules/auth/repositories'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
+const getStreams = getStreamsFactory({ db })
 const getStreamPendingModels = getStreamPendingModelsFactory({ db })
 const getAppScopes = getAppScopesFactory({ db })
 const getAutomations = getAutomationsFactory({ db })
@@ -112,6 +113,11 @@ const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
 const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
 const getCommits = getCommitsFactory({ db })
 const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
+const getCommitBranches = getCommitBranchesFactory({ db })
+const getStreamCommitCounts = getStreamCommitCountsFactory({ db })
+const getUserStreamCommitCounts = getUserStreamCommitCountsFactory({ db })
+const getUserAuthoredCommitCounts = getUserAuthoredCommitCountsFactory({ db })
+const getCommitStreams = getCommitStreamsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

@@ -41,13 +41,14 @@ const {
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
 } = require('@/modules/blobstorage/services/management')
-const { getStream } = require('@/modules/core/repositories/streams')
 const { getRolesFactory } = require('@/modules/shared/repositories/roles')
 const {
   getAutomationProjectFactory
 } = require('@/modules/automate/repositories/automations')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
 
+const getStream = getStreamFactory({ db })
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
 const updateBlob = updateBlobFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({

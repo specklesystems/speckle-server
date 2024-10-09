@@ -46,7 +46,7 @@ const documents = {
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.HeaderNavShare_ProjectFragmentDoc,
-    "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
+    "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n    workspace {\n      id\n      slug\n      name\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    visibility\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectModelPageVersionsPaginationFragmentDoc,
     "\n  fragment ProjectModelPageVersionsProject on Project {\n    ...ProjectPageProjectHeader\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
     "\n  fragment ProjectModelPageDialogDeleteVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogDeleteVersionFragmentDoc,
@@ -311,7 +311,7 @@ const documents = {
     "\n  subscription OnViewerUserActivityBroadcasted(\n    $target: ViewerUpdateTrackingTarget!\n    $sessionId: String!\n  ) {\n    viewerUserActivityBroadcasted(target: $target, sessionId: $sessionId) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      state\n      status\n      sessionId\n    }\n  }\n": types.OnViewerUserActivityBroadcastedDocument,
     "\n  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n": types.OnViewerCommentsUpdatedDocument,
     "\n  fragment LinkableComment on Comment {\n    id\n    viewerResources {\n      modelId\n      versionId\n      objectId\n    }\n  }\n": types.LinkableCommentFragmentDoc,
-    "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
+    "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    billing {\n      cost {\n        total\n      }\n      versionsCount {\n        current\n        max\n      }\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
@@ -486,7 +486,7 @@ export function graphql(source: "\n  fragment HeaderNavShare_Project on Project 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n    workspace {\n      id\n      slug\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n    workspace {\n      id\n      slug\n      name\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1546,7 +1546,7 @@ export function graphql(source: "\n  fragment LinkableComment on Comment {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    user {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    user {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

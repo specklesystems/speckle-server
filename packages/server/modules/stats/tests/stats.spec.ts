@@ -2,10 +2,7 @@
 import { expect } from 'chai'
 import { createUser } from '@/modules/core/services/users'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
-import { createStream } from '@/modules/core/services/streams'
 import { createObjects } from '@/modules/core/services/objects'
-import { createCommitByBranchName } from '@/modules/core/services/commits'
-
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
@@ -23,6 +20,98 @@ import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
 import { Express } from 'express'
 import { db } from '@/db/knex'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
+  createBranchFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  createStreamFactory,
+  getStreamFactory,
+  markCommitStreamUpdated
+} from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
