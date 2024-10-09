@@ -131,46 +131,54 @@ export async function addStreamDeletedActivity(params: {
 /**
  * Save "user cloned stream X" activity item
  */
-export async function addStreamClonedActivity(
-  params: {
-    sourceStreamId: string
-    newStream: StreamRecord
-    clonerId: string
-  },
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const { trx } = options || {}
-  const { sourceStreamId, newStream, clonerId } = params
-  const newStreamId = newStream.id
+export const addStreamClonedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (
+    params: {
+      sourceStreamId: string
+      newStream: StreamRecord
+      clonerId: string
+    },
+    options?: Partial<{ trx: Knex.Transaction }>
+  ) => {
+    const { trx } = options || {}
+    const { sourceStreamId, newStream, clonerId } = params
+    const newStreamId = newStream.id
 
-  const publishSubscriptions = async () =>
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: newStreamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: newStream
-      },
-      ownerId: clonerId
-    })
+    const publishSubscriptions = async () =>
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: newStreamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: newStream
+        },
+        ownerId: clonerId
+      })
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId: newStreamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: newStreamId,
-      actionType: ActionTypes.Stream.Clone,
-      userId: clonerId,
-      info: { sourceStreamId, newStreamId, clonerId },
-      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-    }),
-    !trx ? publishSubscriptions() : null
-  ])
+    await Promise.all([
+      saveActivity({
+        streamId: newStreamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: newStreamId,
+        actionType: ActionTypes.Stream.Clone,
+        userId: clonerId,
+        info: { sourceStreamId, newStreamId, clonerId },
+        message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+      }),
+      !trx ? publishSubscriptions() : null
+    ])
 
-  if (trx) {
-    // can't await this, cause it'll block everything
-    void trx.executionPromise.then(publishSubscriptions)
+    if (trx) {
+      // can't await this, cause it'll block everything
+      void trx.executionPromise.then(publishSubscriptions)
+    }
   }
-}
 
 /**
  * Save "user created stream" activity item
