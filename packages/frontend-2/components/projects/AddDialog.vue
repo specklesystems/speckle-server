@@ -54,7 +54,7 @@
               New workspace
             </FormButton>
             <p class="text-foreground-2 text-body-2xs">
-              Workspace offers better project management and higher data security.
+              Workspaces offer better project management and higher data security.
             </p>
           </div>
         </template>
