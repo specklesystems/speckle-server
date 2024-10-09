@@ -25,6 +25,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
   AddStreamCommentMentionActivity,
+  AddStreamDeletedActivity,
   AddStreamInviteDeclinedActivity,
   AddStreamInviteSentOutActivity,
   SaveActivity
@@ -81,7 +82,7 @@ export const addStreamDeletedActivityFactory =
     getStreamCollaborators: GetStreamCollaborators
     saveActivity: SaveActivity
     publish: PublishSubscription
-  }) =>
+  }): AddStreamDeletedActivity =>
   async (params: { streamId: string; deleterId: string }) => {
     const { streamId, deleterId } = params
 

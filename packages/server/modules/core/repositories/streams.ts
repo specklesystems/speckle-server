@@ -77,7 +77,9 @@ import {
   GetCommitStreams,
   GetStream,
   GetStreamCollaborators,
-  GetStreams
+  GetStreams,
+  DeleteStreamRecords,
+  UpdateStreamRecord
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -905,20 +907,22 @@ export async function getUserStreamCounts(params: {
   return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
 }
 
-export async function deleteStream(streamId: string) {
-  // Delete stream commits (not automatically cascaded)
-  await knex.raw(
-    `
+export const deleteStreamFactory =
+  (deps: { db: Knex }): DeleteStreamRecords =>
+  async (streamId: string) => {
+    // Delete stream commits (not automatically cascaded)
+    await deps.db.raw(
+      `
       DELETE FROM commits WHERE id IN (
         SELECT sc."commitId" FROM streams s
         INNER JOIN stream_commits sc ON s.id = sc."streamId"
         WHERE s.id = ?
       )
       `,
-    [streamId]
-  )
-  return await Streams.knex().where(Streams.col.id, streamId).del()
-}
+      [streamId]
+    )
+    return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
+  }
 
 export async function getStreamsSourceApps(streamIds: string[]) {
   if (!streamIds?.length) return {}
@@ -952,58 +956,56 @@ const isProjectUpdateInput = (
   i: StreamUpdateInput | ProjectUpdateInput
 ): i is ProjectUpdateInput => has(i, 'visibility')
 
-/** @deprecated Replace all calls with `updateProjectFacotry` */
-export async function updateStream(
-  update: StreamUpdateInput | ProjectUpdateInput,
-  db?: Knex
-) {
-  const { id: streamId } = update
+export const updateStreamFactory =
+  (deps: { db: Knex }): UpdateStreamRecord =>
+  async (update: StreamUpdateInput | ProjectUpdateInput) => {
+    const { id: streamId } = update
 
-  if (!update.name) update.name = null // to prevent saving name ''
-  const validUpdate: Partial<StreamRecord> & Record<string, unknown> = omitBy(
-    update,
-    (v) => isNull(v) || isUndefined(v)
-  )
+    if (!update.name) update.name = null // to prevent saving name ''
+    const validUpdate: Partial<StreamRecord> & Record<string, unknown> = omitBy(
+      update,
+      (v) => isNull(v) || isUndefined(v)
+    )
 
-  if (isProjectUpdateInput(update)) {
-    if (has(validUpdate, 'visibility')) {
-      validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
-      validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
-      delete validUpdate['visibility'] // cause it's not a real column
+    if (isProjectUpdateInput(update)) {
+      if (has(validUpdate, 'visibility')) {
+        validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
+        validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
+        delete validUpdate['visibility'] // cause it's not a real column
+      }
+    } else {
+      if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+        validUpdate.isDiscoverable = false
+      }
     }
-  } else {
+
     if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-      validUpdate.isDiscoverable = false
+      validUpdate.allowPublicComments = false
+    } else if (
+      has(validUpdate, 'allowPublicComments') &&
+      validUpdate.allowPublicComments
+    ) {
+      validUpdate.isPublic = true
     }
+
+    if (!Object.keys(validUpdate).length) return null
+
+    const [updatedStream] = await tables
+      .streams(deps.db)
+      .returning('*')
+      .where({ id: streamId })
+      .update<StreamRecord[]>({
+        ...validUpdate,
+        updatedAt: knex.fn.now()
+      })
+
+    return updatedStream
   }
-
-  if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-    validUpdate.allowPublicComments = false
-  } else if (
-    has(validUpdate, 'allowPublicComments') &&
-    validUpdate.allowPublicComments
-  ) {
-    validUpdate.isPublic = true
-  }
-
-  if (!Object.keys(validUpdate).length) return null
-
-  const [updatedStream] = await tables
-    .streams(db ?? knex)
-    .returning('*')
-    .where({ id: streamId })
-    .update<StreamRecord[]>({
-      ...validUpdate,
-      updatedAt: knex.fn.now()
-    })
-
-  return updatedStream
-}
 
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
-    const updatedStream = await updateStream(projectUpdate, db)
+    const updatedStream = await updateStreamFactory({ db })(projectUpdate)
 
     if (!updatedStream) {
       throw new StreamUpdateError()
@@ -1206,7 +1208,7 @@ export async function markOnboardingBaseStream(streamId: string, version: string
   if (!stream) {
     throw new Error(`Stream ${streamId} not found`)
   }
-  await updateStream({
+  await updateStreamFactory({ db })({
     id: streamId,
     name: 'Onboarding Stream Local Source - Do Not Delete'
   })

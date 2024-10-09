@@ -6,14 +6,11 @@ const {
   getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
-  deleteStream: deleteStreamFromDb,
-  updateStream: updateStreamInDb,
   revokeStreamPermissions,
   grantStreamPermissions,
   getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
-const { dbLogger } = require('@/logging/logging')
 const { isResourceAllowed } = require('@/modules/core/helpers/token')
 const {
   TokenResourceIdentifierType
@@ -27,15 +24,6 @@ const {
  */
 
 module.exports = {
-  /**
-   * @deprecated Use updateStreamAndNotify or use the repository function directly
-   * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
-   */
-  async updateStream(update) {
-    const updatedStream = await updateStreamInDb(update)
-    return updatedStream?.id || null
-  },
-
   setStreamFavorited,
 
   /**
@@ -50,14 +38,6 @@ module.exports = {
    */
   async revokePermissionsStream({ streamId, userId }) {
     return await revokeStreamPermissions({ streamId, userId })
-  },
-
-  /**
-   * @deprecated Use deleteStreamAndNotify or use the repository function directly
-   */
-  async deleteStream({ streamId }) {
-    dbLogger.info('Deleting stream %s', streamId)
-    return await deleteStreamFromDb(streamId)
   },
 
   /**

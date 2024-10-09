@@ -7,9 +7,12 @@ import {
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   ProjectCreateInput,
-  StreamCreateInput
+  ProjectUpdateInput,
+  StreamCreateInput,
+  StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { MaybeNullOrUndefined, Optional, StreamRoles } from '@speckle/shared'
+import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type GetStreams = (
@@ -53,6 +56,12 @@ export type StoreStream = (
   }>
 ) => Promise<Stream>
 
+export type DeleteStreamRecords = (streamId: string) => Promise<number>
+
+export type UpdateStreamRecord = (
+  update: StreamUpdateInput | ProjectUpdateInput
+) => Promise<Nullable<Stream>>
+
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateInput) & {
     ownerId: string
@@ -66,3 +75,22 @@ export type CreateStream = (
 export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
+
+export type DeleteStream = (
+  streamId: string,
+  deleterId: string,
+  deleterResourceAccessRules: ContextResourceAccessRules,
+  options?: {
+    skipAccessChecks?: boolean
+  }
+) => Promise<boolean>
+
+export type UpdateStream = (
+  update: StreamUpdateInput | ProjectUpdateInput,
+  updaterId: string,
+  updaterResourceAccessRules: ContextResourceAccessRules
+) => Promise<Stream>
+
+export type LegacyUpdateStream = (
+  update: StreamUpdateInput
+) => Promise<Nullable<string>>

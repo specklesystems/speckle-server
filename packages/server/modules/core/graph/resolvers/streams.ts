@@ -29,12 +29,15 @@ import {
   getUserStreamsCount,
   getUserStreams,
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
@@ -50,6 +53,7 @@ import {
   UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
 import {
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   queryAllResourceInvitesFactory
@@ -63,7 +67,11 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivityFactory,
+  addStreamUpdatedActivity
+} from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 
@@ -94,6 +102,22 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
     publish
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db }),
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity
 })
 
 const getUserStreamsCore = async (
