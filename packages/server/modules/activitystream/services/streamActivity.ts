@@ -175,38 +175,46 @@ export async function addStreamClonedActivity(
 /**
  * Save "user created stream" activity item
  */
-export async function addStreamCreatedActivity(params: {
-  streamId: string
-  creatorId: string
-  input: StreamCreateInput | ProjectCreateInput
-  stream: StreamRecord
-}) {
-  const { streamId, creatorId, input, stream } = params
+export const addStreamCreatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    creatorId: string
+    input: StreamCreateInput | ProjectCreateInput
+    stream: StreamRecord
+  }) => {
+    const { streamId, creatorId, input, stream } = params
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.Create,
-      userId: creatorId,
-      info: { input },
-      message: `Stream ${input.name} created`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: { id: streamId, ...input },
-      ownerId: creatorId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: stream
-      },
-      ownerId: creatorId
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.Create,
+        userId: creatorId,
+        info: { input },
+        message: `Stream ${input.name} created`
+      }),
+      publish(StreamPubsubEvents.UserStreamAdded, {
+        userStreamAdded: { id: streamId, ...input },
+        ownerId: creatorId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: stream
+        },
+        ownerId: creatorId
+      })
+    ])
+  }
 
 /**
  * Save "stream permissions granted to user" activity item
