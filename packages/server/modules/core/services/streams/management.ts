@@ -1,7 +1,7 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity,
+  addStreamDeletedActivityFactory,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import {
@@ -16,6 +16,7 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   deleteStream,
+  getStreamCollaboratorsFactory,
   getStreamFactory,
   updateStream
 } from '@/modules/core/repositories/streams'
@@ -53,6 +54,8 @@ import {
   StoreStream
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -158,7 +161,11 @@ export async function deleteStreamAndNotify(
     )
   }
 
-  await addStreamDeletedActivity({ streamId, deleterId })
+  await addStreamDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish,
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  })({ streamId, deleterId })
 
   // TODO: this has been around since before my time, we should get rid of it...
   // delay deletion by a bit so we can do auth checks
