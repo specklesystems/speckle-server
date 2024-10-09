@@ -20,6 +20,18 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 
+export type LegacyGetStreams = (params: {
+  cursor?: string | Date | null | undefined
+  limit: number
+  orderBy?: string | null | undefined
+  visibility?: string | null | undefined
+  searchQuery?: string | null | undefined
+  streamIdWhitelist?: string[] | null | undefined
+  workspaceIdWhitelist?: string[] | null | undefined
+  offset?: MaybeNullOrUndefined<number>
+  publicOnly?: MaybeNullOrUndefined<boolean>
+}) => Promise<{ streams: Stream[]; totalCount: number; cursorDate: Nullable<Date> }>
+
 export type GetStreams = (
   streamIds: string[],
   options?: Partial<{

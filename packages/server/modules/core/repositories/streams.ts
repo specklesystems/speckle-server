@@ -83,7 +83,8 @@ import {
   GetOnboardingBaseStream,
   GetDiscoverableStreamsParams,
   CountDiscoverableStreams,
-  GetDiscoverableStreamsPage
+  GetDiscoverableStreamsPage,
+  LegacyGetStreams
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -1240,4 +1241,88 @@ export const getRolesByUserIdFactory =
         .where({ workspaceId })
     }
     return await query
+  }
+
+/**
+ * @deprecated Use getStreams() from the repository directly
+ */
+export const legacyGetStreamsFactory =
+  (deps: { db: Knex }): LegacyGetStreams =>
+  async ({
+    cursor,
+    limit,
+    orderBy,
+    visibility,
+    searchQuery,
+    streamIdWhitelist,
+    workspaceIdWhitelist,
+    offset,
+    publicOnly
+  }) => {
+    const query = tables.streams(deps.db)
+    const countQuery = tables.streams(deps.db)
+
+    if (searchQuery) {
+      const whereFunc: Knex.QueryCallback = function () {
+        this.where('streams.name', 'ILIKE', `%${searchQuery}%`).orWhere(
+          'streams.description',
+          'ILIKE',
+          `%${searchQuery}%`
+        )
+      }
+      query.where(whereFunc)
+      countQuery.where(whereFunc)
+    }
+
+    if (publicOnly) {
+      visibility = 'public'
+    }
+
+    if (visibility && visibility !== 'all') {
+      if (!['private', 'public'].includes(visibility))
+        throw new Error('Stream visibility should be either private, public or all')
+      const isPublic = visibility === 'public'
+      const publicFunc: Knex.QueryCallback = function () {
+        this.where({ isPublic })
+      }
+      query.andWhere(publicFunc)
+      countQuery.andWhere(publicFunc)
+    }
+
+    if (streamIdWhitelist?.length) {
+      query.whereIn('id', streamIdWhitelist)
+      countQuery.whereIn('id', streamIdWhitelist)
+    }
+
+    if (workspaceIdWhitelist?.length) {
+      query.whereIn('workspaceId', workspaceIdWhitelist)
+      countQuery.whereIn('workspaceId', workspaceIdWhitelist)
+    }
+
+    const [res] = await countQuery.count()
+    const count = parseInt(res.count + '')
+
+    if (!count) return { streams: [], totalCount: 0, cursorDate: null }
+
+    orderBy = orderBy || 'updatedAt,desc'
+
+    const [columnName, order] = orderBy.split(',')
+
+    if (cursor) query.where(columnName, order === 'desc' ? '<' : '>', cursor)
+
+    query.orderBy(`${columnName}`, order).limit(limit)
+    if (offset) {
+      query.offset(offset)
+    }
+
+    const rows = await query
+
+    const cursorDate = rows.length
+      ? rows.slice(-1)[0][columnName as keyof StreamRecord]
+      : null
+    return {
+      streams: rows,
+      totalCount: count,
+      cursorDate: cursorDate as Nullable<Date>
+    }
   }
