@@ -6,8 +6,6 @@ const {
   getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
-  revokeStreamPermissions,
-  grantStreamPermissions,
   getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
@@ -25,20 +23,6 @@ const {
 
 module.exports = {
   setStreamFavorited,
-
-  /**
-   * @deprecated Use repository method directly
-   */
-  async grantPermissionsStream({ streamId, userId, role }) {
-    return await grantStreamPermissions({ streamId, userId, role })
-  },
-
-  /**
-   * @deprecated Use repository method directly
-   */
-  async revokePermissionsStream({ streamId, userId }) {
-    return await revokeStreamPermissions({ streamId, userId })
-  },
 
   /**
    * @param {Object} p

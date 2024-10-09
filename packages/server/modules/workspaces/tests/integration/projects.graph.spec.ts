@@ -1,5 +1,6 @@
+import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -26,6 +27,8 @@ import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/stream
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer

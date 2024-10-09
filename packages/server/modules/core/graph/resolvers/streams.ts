@@ -22,7 +22,6 @@ import {
   inviteUsersToProjectFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
 import { get } from 'lodash'
 import {
@@ -31,13 +30,15 @@ import {
   getStreamFactory,
   createStreamFactory,
   deleteStreamFactory,
-  updateStreamFactory
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory,
-  updateStreamRoleAndNotify
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
@@ -59,7 +60,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { BadRequestError } from '@/modules/shared/errors'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
@@ -69,11 +70,21 @@ import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addStreamCreatedActivityFactory,
   addStreamDeletedActivity,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 
+const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
@@ -97,7 +108,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
   addStreamCreatedActivity: addStreamCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
+    saveActivity,
     publish
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
@@ -113,6 +124,36 @@ const updateStreamAndNotify = updateStreamAndNotifyFactory({
   getStream,
   updateStream: updateStreamFactory({ db }),
   addStreamUpdatedActivity
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
 })
 
 const getUserStreamsCore = async (

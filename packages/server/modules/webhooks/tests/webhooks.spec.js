@@ -10,7 +10,6 @@ const {
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createUser } = require('../../core/services/users')
-const { grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
   createWebhookConfigFactory,
@@ -34,7 +33,8 @@ const { getServerInfo } = require('@/modules/core/services/generic')
 const { getUser, getUsers } = require('@/modules/core/repositories/users')
 const {
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
 const {
   legacyCreateStreamFactory,
@@ -100,6 +100,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
