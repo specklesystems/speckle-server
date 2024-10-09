@@ -3,7 +3,7 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
@@ -140,6 +140,7 @@ const command: CommandModule<
       addCommitCreatedActivity
     })
 
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const downloadProject = downloadProjectFactory({
       downloadCommit: downloadCommitFactory({

@@ -4,15 +4,15 @@ import {
   AccessRequestsEventsPayloads
 } from '@/modules/accessrequests/events/emitter'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
+import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
 
 type OnServerAccessRequestCreatedDeps = {
-  getStreamCollaborators: typeof getStreamCollaborators
+  getStreamCollaborators: GetStreamCollaborators
   publishNotification: NotificationPublisher
 }
 

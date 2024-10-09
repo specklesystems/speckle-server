@@ -42,7 +42,7 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   getOnboardingBaseStream,
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated,
   markOnboardingBaseStream
@@ -124,7 +124,7 @@ const crossServerSyncModule: SpeckleModule = {
         downloadCommit: downloadCommitFactory({
           getStream,
           getStreamBranchByName,
-          getStreamCollaborators,
+          getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
           getUser,
           createCommitByBranchId,
           createObject,

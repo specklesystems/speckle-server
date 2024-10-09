@@ -22,7 +22,7 @@ import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
   getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -52,6 +52,7 @@ import { expect } from 'chai'
 import { noop } from 'lodash'
 
 const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const requestProjectAccess = requestProjectAccessFactory({
   getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
     getUserProjectAccessRequest: getUserProjectAccessRequestFactory({

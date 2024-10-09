@@ -75,6 +75,7 @@ import {
   GetCommitStream,
   GetCommitStreams,
   GetStream,
+  GetStreamCollaborators,
   GetStreams
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
@@ -653,35 +654,38 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
 /**
  * Get all stream collaborators. Optionally filter only specific roles.
  */
-export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
-  const q = StreamAcl.knex()
-    .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
-      ...Users.cols,
-      knex.raw(`${StreamAcl.col.role} as "streamRole"`),
-      knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
-    ])
-    .where(StreamAcl.col.resourceId, streamId)
-    .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
-    .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    .groupBy(Users.col.id, StreamAcl.col.role)
+export const getStreamCollaboratorsFactory =
+  (deps: { db: Knex }): GetStreamCollaborators =>
+  async (streamId: string, type?: StreamRoles) => {
+    const q = tables
+      .streamAcl(deps.db)
+      .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
+        ...Users.cols,
+        knex.raw(`${StreamAcl.col.role} as "streamRole"`),
+        knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
+      ])
+      .where(StreamAcl.col.resourceId, streamId)
+      .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .groupBy(Users.col.id, StreamAcl.col.role)
 
-  if (type) {
-    q.andWhere(StreamAcl.col.role, type)
+    if (type) {
+      q.andWhere(StreamAcl.col.role, type)
+    }
+
+    const items = (await q).map((i) => ({
+      ...removePrivateFields(i),
+      streamRole: i.streamRole,
+      role: i.role
+    }))
+    return items
   }
-
-  const items = (await q).map((i) => ({
-    ...removePrivateFields(i),
-    streamRole: i.streamRole,
-    role: i.role
-  }))
-  return items
-}
 
 // TODO: Inject db
 export const getProjectCollaboratorsFactory =
-  (): GetProjectCollaborators =>
+  (deps: { db: Knex }): GetProjectCollaborators =>
   async ({ projectId }) => {
-    return await getStreamCollaborators(projectId)
+    return await getStreamCollaboratorsFactory(deps)(projectId)
   }
 
 type BaseUserStreamsQueryParams = {
