@@ -81,7 +81,8 @@ import {
   DeleteStreamRecords,
   UpdateStreamRecord,
   RevokeStreamPermissions,
-  GrantStreamPermissions
+  GrantStreamPermissions,
+  GetOnboardingBaseStream
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -1214,16 +1215,19 @@ export async function markOnboardingBaseStream(streamId: string, version: string
 /**
  * Get onboarding base stream, if any
  */
-export async function getOnboardingBaseStream(version: string) {
-  const q = Streams.knex()
-    .select<StreamRecord[]>(Streams.cols)
-    .innerJoin(Streams.meta.name, Streams.meta.col.streamId, Streams.col.id)
-    .where(Streams.meta.col.key, Streams.meta.metaKey.onboardingBaseStream)
-    .andWhereRaw(`${Streams.meta.col.value}::text = ?`, JSON.stringify(version))
-    .first()
+export const getOnboardingBaseStreamFactory =
+  (deps: { db: Knex }): GetOnboardingBaseStream =>
+  async (version: string) => {
+    const q = tables
+      .streams(deps.db)
+      .select<StreamRecord[]>(Streams.cols)
+      .innerJoin(Streams.meta.name, Streams.meta.col.streamId, Streams.col.id)
+      .where(Streams.meta.col.key, Streams.meta.metaKey.onboardingBaseStream)
+      .andWhereRaw(`${Streams.meta.col.value}::text = ?`, JSON.stringify(version))
+      .first()
 
-  return await q
-}
+    return await q
+  }
 
 export const getRolesByUserIdFactory =
   ({ db }: { db: Knex }): GetRolesByUserId =>
