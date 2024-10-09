@@ -4,10 +4,7 @@ const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const {
-  grantPermissionsStream,
-  updateStream
-} = require('@/modules/core/services/streams')
+const { grantPermissionsStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
 const { createObject } = require('@/modules/core/services/objects')
@@ -54,7 +51,8 @@ const {
 const {
   markCommitStreamUpdated,
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  updateStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
@@ -63,7 +61,8 @@ const {
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
+  createStreamReturnRecordFactory,
+  legacyUpdateStreamFactory
 } = require('@/modules/core/services/streams/management')
 const {
   inviteUsersToProjectFactory
@@ -155,6 +154,10 @@ const createStream = legacyCreateStreamFactory({
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
+})
+
+const updateStream = legacyUpdateStreamFactory({
+  updateStream: updateStreamFactory({ db })
 })
 
 function buildCommentInputFromString(textString) {
