@@ -15,7 +15,7 @@ import { last } from 'lodash'
 
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
-  getPaginatedBranchCommits,
+  getPaginatedBranchCommitsFactory,
   getPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
 import {
@@ -39,10 +39,12 @@ import {
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommits,
-  getSpecificBranchCommits
+  getAllBranchCommitsFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
@@ -50,15 +52,20 @@ import {
   addBranchDeletedActivity,
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
-import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
+import {
+  getStreamFactory,
+  markBranchStreamUpdated
+} from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
+const getStream = getStreamFactory({ db })
+const getStreamObjects = getStreamObjectsFactory({ db })
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
   getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
   getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-  getSpecificBranchCommits,
-  getAllBranchCommits
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getAllBranchCommits: getAllBranchCommitsFactory({ db })
 })
 
 const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
@@ -93,6 +100,12 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   markBranchStreamUpdated,
   addBranchDeletedActivity,
   deleteBranchById: deleteBranchByIdFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
 })
 
 export = {

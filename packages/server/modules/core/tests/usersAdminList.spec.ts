@@ -1,7 +1,6 @@
 import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
-import { createStream } from '@/modules/core/services/streams'
 import { times, clamp } from 'lodash'
 import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
@@ -11,10 +10,65 @@ import { expect } from 'chai'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import {
+  createStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 const createInviteDirectly = createStreamInviteDirectly
 
 function randomEl<T>(array: T[]): T {

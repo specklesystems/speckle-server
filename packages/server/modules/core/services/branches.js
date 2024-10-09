@@ -1,6 +1,6 @@
 'use strict'
 const knex = require('@/db/knex')
-const { getStreamBranchCount } = require('@/modules/core/repositories/branches')
+const { getStreamBranchCountFactory } = require('@/modules/core/repositories/branches')
 
 const Branches = () => knex('branches')
 
@@ -19,16 +19,12 @@ module.exports = {
     if (cursor) query.andWhere('createdAt', '>', cursor)
     query.orderBy('createdAt').limit(limit)
 
-    const totalCount = await getStreamBranchCount(streamId)
+    const totalCount = await getStreamBranchCountFactory({ db: knex })(streamId)
     const rows = await query
     return {
       items: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null,
       totalCount
     }
-  },
-
-  async getBranchesByStreamIdTotalCount({ streamId }) {
-    return await getStreamBranchCount(streamId)
   }
 }

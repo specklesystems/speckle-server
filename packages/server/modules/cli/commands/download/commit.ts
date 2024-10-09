@@ -1,16 +1,24 @@
 import { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger } from '@/logging/logging'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
+  markCommitStreamUpdated
+} from '@/modules/core/repositories/streams'
+import {
+  getBranchByIdFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory
+  getStreamBranchesByNameFactory,
+  markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  getStreamObjectsFactory
+} from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
@@ -20,8 +28,11 @@ import {
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
-  getAllBranchCommits,
-  getSpecificBranchCommits
+  createCommitFactory,
+  getAllBranchCommitsFactory,
+  getSpecificBranchCommitsFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getCommentFactory,
@@ -38,6 +49,9 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 
 const command: CommandModule<
   unknown,
@@ -78,6 +92,9 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getStream = getStreamFactory({ db })
+    const getObject = getObjectFactory({ db })
+    const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })
@@ -90,8 +107,8 @@ const command: CommandModule<
         getStreamObjects,
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-        getSpecificBranchCommits,
-        getAllBranchCommits
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+        getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
@@ -114,6 +131,19 @@ const command: CommandModule<
       addReplyAddedActivity
     })
 
+    const createCommitByBranchId = createCommitByBranchIdFactory({
+      createCommit: createCommitFactory({ db }),
+      getObject,
+      getBranchById: getBranchByIdFactory({ db }),
+      insertStreamCommits: insertStreamCommitsFactory({ db }),
+      insertBranchCommits: insertBranchCommitsFactory({ db }),
+      markCommitStreamUpdated,
+      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+      versionsEventEmitter: VersionsEmitter.emit,
+      addCommitCreatedActivity
+    })
+
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,
       getStreamBranchByName: getStreamBranchByNameFactory({ db }),

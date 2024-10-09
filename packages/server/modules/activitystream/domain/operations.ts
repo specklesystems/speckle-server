@@ -7,7 +7,7 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 
 export type GetActivity = (
   streamId: string,
@@ -153,4 +153,19 @@ export type AddStreamCommentMentionActivity = (params: {
   mentionTargetId: string
   commentId: string
   threadId: string
+}) => Promise<void>
+
+export type AddStreamInviteDeclinedActivity = (params: {
+  streamId: string
+  inviteTargetId: string
+  inviterId: string
+  stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamInviteSentOutActivity = (params: {
+  streamId: string
+  inviteTargetId: string | null
+  inviterId: string
+  inviteTargetEmail: string | null
+  stream: StreamRecord
 }) => Promise<void>

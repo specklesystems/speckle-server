@@ -208,7 +208,7 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.hideObjects(
           objectIds,
           stateKey,
@@ -226,7 +226,7 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.showObjects(objectIds, stateKey, includeDescendants)
       })
       resolve(filteringState)
@@ -240,7 +240,7 @@ export class LegacyViewer extends Viewer {
     ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.isolateObjects(
           objectIds,
           stateKey,
@@ -258,7 +258,7 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.unIsolateObjects(objectIds, stateKey, includeDescendants)
       })
       resolve(filteringState)
@@ -278,7 +278,7 @@ export class LegacyViewer extends Viewer {
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.setColorFilter(property, ghost)
       })
       resolve(filteringState)
@@ -287,7 +287,7 @@ export class LegacyViewer extends Viewer {
 
   public removeColorFilter(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.removeColorFilter()
       })
       resolve(filteringState)
@@ -298,7 +298,7 @@ export class LegacyViewer extends Viewer {
     groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.setUserObjectColors(groups)
       })
       resolve(filteringState)
@@ -307,20 +307,25 @@ export class LegacyViewer extends Viewer {
 
   public resetFilters(): Promise<FilteringState | null> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.resetFilters()
       })
       resolve(filteringState)
     })
   }
 
-  private preserveSelectionFilter(
+  private preserveSelectionHighlightFilter(
     filterFn: () => FilteringState | null
   ): FilteringState {
     const selectedObjects = this.selection
       .getSelectedObjects()
       .map((obj) => obj.id) as string[]
+    const highLightedObjects = this.highlightExtension
+      .getSelectedObjects()
+      .map((obj) => obj.id) as string[]
     if (selectedObjects.length) this.selection.clearSelection()
+    if (highLightedObjects.length)
+      this.highlightExtension.unselectObjects(highLightedObjects)
     const filteringState = filterFn()
     if (filteringState) {
       if (!filteringState.selectedObjects)
@@ -328,6 +333,8 @@ export class LegacyViewer extends Viewer {
 
       this.selection.selectObjects(filteringState.selectedObjects)
     }
+    if (highLightedObjects.length)
+      this.highlightExtension.selectObjects(highLightedObjects)
     return filteringState || this.filtering.filteringState
   }
 

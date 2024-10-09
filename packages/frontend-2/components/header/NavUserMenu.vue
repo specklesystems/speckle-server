@@ -84,9 +84,8 @@
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              target="_blank"
-              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-              external
+              class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
+              @click="openFeedbackDialog"
             >
               Feedback
             </NuxtLink>
@@ -129,7 +128,9 @@
     <SettingsDialog
       v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
+      v-model:target-workspace-id="workspaceSettingsDialogTarget"
     />
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -162,13 +163,15 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string | null>(null)
+const workspaceSettingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
+const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
@@ -187,11 +190,20 @@ const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
+  delete currentQueryParams.workspace
+  delete currentQueryParams.error
+
   router.push({ query: currentQueryParams })
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
 }
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
+  const workspaceQuery = route.query?.workspace
+  const errorQuery = route.query?.error
 
   if (settingsQuery && isString(settingsQuery)) {
     if (settingsQuery.includes('server') && !isAdmin.value) {
@@ -201,6 +213,22 @@ onMounted(() => {
       })
 
       return
+    }
+
+    if (workspaceQuery && isString(workspaceQuery)) {
+      workspaceSettingsDialogTarget.value = workspaceQuery
+
+      if (errorQuery && isString(errorQuery)) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: errorQuery
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Lekker bezig ah niffo'
+        })
+      }
     }
 
     showSettingsDialog.value = true

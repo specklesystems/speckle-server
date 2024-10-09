@@ -16,7 +16,6 @@ const {
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
-const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
@@ -58,6 +57,7 @@ const {
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
+const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -329,6 +329,7 @@ module.exports = {
    * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
    */
   deleteUser({ deleteAllUserInvites }) {
+    const deleteStream = deleteStreamFactory({ db })
     return async (id) => {
       //TODO: check for the last admin user to survive
       dbLogger.info('Deleting user ' + id)
@@ -355,7 +356,7 @@ module.exports = {
         [id]
       )
       for (const i in streams.rows) {
-        await deleteStream({ streamId: streams.rows[i].id })
+        await deleteStream(streams.rows[i].id)
       }
 
       // Delete all invites (they don't have a FK, so we need to do this manually)

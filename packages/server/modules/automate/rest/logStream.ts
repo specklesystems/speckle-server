@@ -6,7 +6,7 @@ import {
   getAutomationRunWithTokenFactory
 } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   validateRequiredStreamFactory,
   validateResourceAccess,
@@ -29,7 +29,7 @@ export default (app: Application) => {
       })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
       validateRequiredStreamFactory({
-        getStream,
+        getStream: getStreamFactory({ db }),
         getAutomationProject: getAutomationProjectFactory({ db })
       }),
       validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({

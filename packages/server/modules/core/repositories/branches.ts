@@ -6,7 +6,11 @@ import {
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import {
+  BranchCommitRecord,
+  BranchRecord,
+  CommitRecord
+} from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -19,8 +23,11 @@ import {
   DeleteBranchById,
   GenerateBranchId,
   GetBranchById,
+  GetBranchCommitCount,
+  GetBranchCommitCounts,
   GetBranchesByIds,
   GetBranchLatestCommits,
+  GetLatestStreamBranch,
   GetModelTreeItems,
   GetModelTreeItemsFiltered,
   GetModelTreeItemsFilteredTotalCount,
@@ -28,8 +35,11 @@ import {
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetStreamBranchByName,
+  GetStreamBranchCount,
+  GetStreamBranchCounts,
   GetStreamBranchesByName,
   GetStructuredProjectModels,
+  MarkCommitBranchUpdated,
   StoreBranch,
   UpdateBranch
 } from '@/modules/core/domain/branches/operations'
@@ -38,7 +48,8 @@ import { ModelTreeItem } from '@/modules/core/domain/branches/types'
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>(Branches.name),
-  commits: (db: Knex) => db<CommitRecord>(Commits.name)
+  commits: (db: Knex) => db<CommitRecord>(Commits.name),
+  branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name)
 }
 
 export const generateBranchId: GenerateBranchId = () => crs({ length: 10 })
@@ -129,72 +140,84 @@ export async function insertBranches(
   return await q
 }
 
-export async function getStreamBranchCounts(
-  streamIds: string[],
-  options?: Partial<{
-    /**
-     * In FE2 we skip main branches in our queries, if they don't have any commits
-     */
-    skipEmptyMain: boolean
-  }>
-) {
-  const { skipEmptyMain } = options || {}
-  if (!streamIds?.length) return []
+export const getStreamBranchCountsFactory =
+  (deps: { db: Knex }): GetStreamBranchCounts =>
+  async (
+    streamIds: string[],
+    options?: Partial<{
+      /**
+       * In FE2 we skip main branches in our queries, if they don't have any commits
+       */
+      skipEmptyMain: boolean
+    }>
+  ) => {
+    const { skipEmptyMain } = options || {}
+    if (!streamIds?.length) return []
 
-  const q = Branches.knex()
-    .select(Branches.col.streamId)
-    .whereIn(Branches.col.streamId, streamIds)
-    .count()
-    .groupBy(Branches.col.streamId)
+    const q = tables
+      .branches(deps.db)
+      .select(Branches.col.streamId)
+      .whereIn(Branches.col.streamId, streamIds)
+      .count()
+      .groupBy(Branches.col.streamId)
 
-  if (skipEmptyMain) {
-    q.andWhere((w) => {
-      w.whereNot(Branches.col.name, 'main').orWhere(
-        0,
-        '<',
-        BranchCommits.knex()
-          .count()
-          .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
-      )
-    })
+    if (skipEmptyMain) {
+      q.andWhere((w) => {
+        w.whereNot(Branches.col.name, 'main').orWhere(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          0 as any,
+          '<',
+          tables
+            .branchCommits(deps.db)
+            .count()
+            .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
+        )
+      })
+    }
+
+    const results = (await q) as { streamId: string; count: string }[]
+    return results.map((r) => ({ ...r, count: parseInt(r.count) }))
   }
 
-  const results = (await q) as { streamId: string; count: string }[]
-  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
-}
+export const getStreamBranchCountFactory =
+  (deps: { db: Knex }): GetStreamBranchCount =>
+  async (
+    streamId: string,
+    options?: Partial<{
+      /**
+       * In FE2 we skip main branches in our queries, if they don't have any commits
+       */
+      skipEmptyMain: boolean
+    }>
+  ) => {
+    const [res] = await getStreamBranchCountsFactory(deps)([streamId], options)
+    return res?.count || 0
+  }
 
-export async function getStreamBranchCount(
-  streamId: string,
-  options?: Partial<{
-    /**
-     * In FE2 we skip main branches in our queries, if they don't have any commits
-     */
-    skipEmptyMain: boolean
-  }>
-) {
-  const [res] = await getStreamBranchCounts([streamId], options)
-  return res?.count || 0
-}
+export const getBranchCommitCountsFactory =
+  (deps: { db: Knex }): GetBranchCommitCounts =>
+  async (branchIds: string[]) => {
+    if (!branchIds?.length) return []
 
-export async function getBranchCommitCounts(branchIds: string[]) {
-  if (!branchIds?.length) return []
+    const q = tables
+      .branches(deps.db)
+      .select(Branches.col.id)
+      .whereIn(Branches.col.id, branchIds)
+      .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+      .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+      .count()
+      .groupBy(Branches.col.id)
 
-  const q = Branches.knex()
-    .select(Branches.col.id)
-    .whereIn(Branches.col.id, branchIds)
-    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .count()
-    .groupBy(Branches.col.id)
+    const results = (await q) as { id: string; count: string }[]
+    return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+  }
 
-  const results = (await q) as { id: string; count: string }[]
-  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
-}
-
-export async function getBranchCommitCount(branchId: string) {
-  const [res] = await getBranchCommitCounts([branchId])
-  return res?.count || 0
-}
+export const getBranchCommitCountFactory =
+  (deps: { db: Knex }): GetBranchCommitCount =>
+  async (branchId: string) => {
+    const [res] = await getBranchCommitCountsFactory(deps)([branchId])
+    return res?.count || 0
+  }
 
 export const getBranchLatestCommitsFactory =
   (deps: { db: Knex }): GetBranchLatestCommits =>
@@ -698,23 +721,29 @@ export const deleteBranchByIdFactory =
     return await tables.branches(deps.db).where(Branches.col.id, branchId).del()
   }
 
-export async function markCommitBranchUpdated(commitId: string) {
-  const q = Branches.knex()
-    .whereIn(Branches.col.id, (w) => {
-      w.select(BranchCommits.col.branchId)
-        .from(BranchCommits.name)
-        .where(BranchCommits.col.commitId, commitId)
-    })
-    .update(Branches.withoutTablePrefix.col.updatedAt, new Date(), '*')
-  const [branch] = (await q) as BranchRecord[]
-  return branch
-}
+export const markCommitBranchUpdatedFactory =
+  (deps: { db: Knex }): MarkCommitBranchUpdated =>
+  async (commitId: string) => {
+    const q = tables
+      .branches(deps.db)
+      .whereIn(Branches.col.id, (w) => {
+        w.select(BranchCommits.col.branchId)
+          .from(BranchCommits.name)
+          .where(BranchCommits.col.commitId, commitId)
+      })
+      .update(Branches.withoutTablePrefix.col.updatedAt, new Date(), '*')
+    const [branch] = (await q) as BranchRecord[]
+    return branch
+  }
 
-export async function getLatestStreamBranch(streamId: string) {
-  const q = Branches.knex<BranchRecord[]>()
-    .where(Branches.col.streamId, streamId)
-    .orderBy(Branches.col.updatedAt, 'desc')
-    .limit(1)
-  const [branch] = await q
-  return branch
-}
+export const getLatestStreamBranchFactory =
+  (deps: { db: Knex }): GetLatestStreamBranch =>
+  async (streamId: string) => {
+    const q = tables
+      .branches(deps.db)
+      .where(Branches.col.streamId, streamId)
+      .orderBy(Branches.col.updatedAt, 'desc')
+      .limit(1)
+    const [branch] = await q
+    return branch
+  }

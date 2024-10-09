@@ -2,21 +2,15 @@
 const _ = require('lodash')
 const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
-  getStream,
   getFavoritedStreams,
   getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
-  deleteStream: deleteStreamFromDb,
-  updateStream: updateStreamInDb,
   revokeStreamPermissions,
-  grantStreamPermissions
+  grantStreamPermissions,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
-const { dbLogger } = require('@/logging/logging')
-const {
-  createStreamReturnRecord
-} = require('@/modules/core/services/streams/management')
 const { isResourceAllowed } = require('@/modules/core/helpers/token')
 const {
   TokenResourceIdentifierType
@@ -30,29 +24,6 @@ const {
  */
 
 module.exports = {
-  /**
-   * @deprecated Use createStreamReturnRecord()
-   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
-   * @returns {Promise<string>}
-   */
-  async createStream(params) {
-    const { id } = await createStreamReturnRecord(params, {
-      createActivity: false
-    })
-    return id
-  },
-
-  getStream,
-
-  /**
-   * @deprecated Use updateStreamAndNotify or use the repository function directly
-   * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
-   */
-  async updateStream(update) {
-    const updatedStream = await updateStreamInDb(update)
-    return updatedStream?.id || null
-  },
-
   setStreamFavorited,
 
   /**
@@ -67,14 +38,6 @@ module.exports = {
    */
   async revokePermissionsStream({ streamId, userId }) {
     return await revokeStreamPermissions({ streamId, userId })
-  },
-
-  /**
-   * @deprecated Use deleteStreamAndNotify or use the repository function directly
-   */
-  async deleteStream({ streamId }) {
-    dbLogger.info('Deleting stream %s', streamId)
-    return await deleteStreamFromDb(streamId)
   },
 
   /**
@@ -204,6 +167,8 @@ module.exports = {
 
     // Favorite/unfavorite the stream
     await setStreamFavorited({ streamId, userId, favorited })
+
+    const getStream = getStreamFactory({ db: knex })
 
     // Get updated stream info
     return await getStream({ streamId, userId })

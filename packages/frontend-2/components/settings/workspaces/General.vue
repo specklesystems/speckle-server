@@ -20,6 +20,21 @@
         />
         <hr class="my-4 border-outline-3" />
         <FormTextInput
+          v-model="slug"
+          color="foundation"
+          label="Short ID"
+          name="shortId"
+          :help="slugHelp"
+          :disabled="!isAdmin"
+          show-label
+          label-position="left"
+          read-only
+          :right-icon="isAdmin ? IconEdit : undefined"
+          right-icon-title="Edit short ID"
+          @right-icon-click="openSlugEditDialog"
+        />
+        <hr class="my-4 border-outline-3" />
+        <FormTextInput
           v-model="description"
           color="foundation"
           label="Description"
@@ -111,6 +126,14 @@
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
     />
+
+    <SettingsWorkspacesGeneralEditSlugDialog
+      v-if="workspaceResult && isAdmin"
+      v-model:open="showEditSlugDialog"
+      :base-url="baseUrl"
+      :workspace="workspaceResult.workspace"
+      @update:slug="updateWorkspaceSlug"
+    />
   </section>
 </template>
 
@@ -129,13 +152,17 @@ import {
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
+import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useRoute } from 'vue-router'
 
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace
     id
     name
+    slug
     description
     logo
     role
@@ -149,7 +176,11 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const IconEdit = resolveComponent('IconEdit')
+
 const mixpanel = useMixpanel()
+const router = useRouter()
+const route = useRoute()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -159,10 +190,13 @@ const { result: workspaceResult, onResult } = useQuery(
     id: props.workspaceId
   })
 )
+const config = useRuntimeConfig()
 
 const name = ref('')
+const slug = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
+const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
 const defaultProjectRole = ref<StreamRoles>()
 
@@ -214,6 +248,7 @@ watch(
     if (workspaceResult.value?.workspace) {
       name.value = workspaceResult.value.workspace.name
       description.value = workspaceResult.value.workspace.description ?? ''
+      slug.value = workspaceResult.value.workspace.slug ?? ''
     }
   },
   { deep: true, immediate: true }
@@ -224,4 +259,49 @@ onResult((res) => {
     defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
   }
 })
+
+const baseUrl = config.public.baseUrl
+
+const slugHelp = computed(() => {
+  return `Used after ${baseUrl}/workspaces/`
+})
+
+const openSlugEditDialog = () => {
+  showEditSlugDialog.value = true
+}
+
+const updateWorkspaceSlug = async (newSlug: string) => {
+  if (!workspaceResult.value?.workspace) {
+    return
+  }
+
+  const oldSlug = slug.value
+
+  const result = await updateMutation({
+    input: {
+      id: workspaceResult.value.workspace.id,
+      slug: newSlug
+    }
+  })
+
+  if (result && result.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace slug updated'
+    })
+
+    slug.value = newSlug
+
+    if (route.params.slug === oldSlug) {
+      router.replace(workspaceRoute(newSlug))
+    }
+  } else {
+    const errorMessage = getFirstErrorMessage(result && result.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update workspace slug',
+      description: errorMessage
+    })
+  }
+}
 </script>

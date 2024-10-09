@@ -109,6 +109,7 @@ import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -557,7 +558,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               getAutomationToken,
               upsertAutomationRun,
               getFullAutomationRevisionMetadata,
-              getBranchLatestCommits
+              getBranchLatestCommits,
+              getCommit: getCommitFactory({ db })
             }),
             validateStreamAccess
           })

@@ -152,3 +152,30 @@ export type DeleteBranchAndNotify = (
   input: BranchDeleteInput | DeleteModelInput,
   userId: string
 ) => Promise<boolean>
+
+export type GetStreamBranchCounts = (
+  streamIds: string[],
+  options?: Partial<{
+    skipEmptyMain: boolean
+  }>
+) => Promise<Array<{ count: number; streamId: string }>>
+
+export type GetStreamBranchCount = (
+  streamId: string,
+  options?: Partial<{
+    skipEmptyMain: boolean
+  }>
+) => Promise<number>
+
+export type GetBranchCommitCounts = (branchIds: string[]) => Promise<
+  {
+    count: number
+    id: string
+  }[]
+>
+
+export type GetBranchCommitCount = (branchId: string) => Promise<number>
+
+export type MarkCommitBranchUpdated = (commitId: string) => Promise<Branch>
+
+export type GetLatestStreamBranch = (streamId: string) => Promise<Branch>

@@ -15,7 +15,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
   getBranchesByIdsFactory,
-  getLatestStreamBranch
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 
 import {
@@ -46,6 +46,7 @@ const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
+const getLatestStreamBranch = getLatestStreamBranchFactory({ db })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })

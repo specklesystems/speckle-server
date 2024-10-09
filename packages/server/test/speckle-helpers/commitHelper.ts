@@ -1,7 +1,44 @@
-import { createCommitByBranchName } from '@/modules/core/services/commits'
+import { db } from '@/db/knex'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 export type BasicTestCommit = {
   /**
@@ -79,7 +116,7 @@ export async function createTestCommits(
         authorId: c.authorId,
         totalChildrenCount: 0,
         parents: c.parents || []
-      }).then((cid) => (c.id = cid))
+      }).then((newCommit) => (c.id = newCommit.id))
     )
   )
 }
