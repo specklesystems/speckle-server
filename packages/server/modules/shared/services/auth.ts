@@ -1,9 +1,9 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   isResourceAllowed,
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -36,7 +36,7 @@ export const authorizeResolverFactory =
     getRoles: GetRoles
     adminOverrideEnabled: typeof adminOverrideEnabled
     getUserServerRole: GetUserServerRole
-    getStream: typeof getStream
+    getStream: GetStream
     getUserAclRole: GetUserAclRole
   }): AuthorizeResolver =>
   async (userId, resourceId, requiredRole, userResourceAccessLimits) => {

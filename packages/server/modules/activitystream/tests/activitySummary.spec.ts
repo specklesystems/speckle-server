@@ -6,7 +6,7 @@ import {
   sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
-import { createStream, deleteStream, getStream } from '@/modules/core/services/streams'
+import { createStream, deleteStream } from '@/modules/core/services/streams'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
@@ -19,11 +19,13 @@ import {
   saveActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
 
+const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,

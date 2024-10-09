@@ -16,9 +16,9 @@ const {
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const {
-  getStream,
   revokeStreamPermissions,
-  grantStreamPermissions
+  grantStreamPermissions,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 
 const { ServerAcl } = require('@/modules/core/dbSchema')
@@ -34,6 +34,7 @@ const { db } = require('@/db/knex')
  * @returns
  */
 async function isStreamCollaborator(userId, streamId) {
+  const getStream = getStreamFactory({ db })
   const stream = await getStream({ streamId, userId })
   return !!stream.role
 }

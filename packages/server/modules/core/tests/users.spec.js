@@ -21,11 +21,7 @@ const {
   validateToken,
   getUserTokens
 } = require('../services/tokens')
-const {
-  grantPermissionsStream,
-  createStream,
-  getStream
-} = require('../services/streams')
+const { grantPermissionsStream, createStream } = require('../services/streams')
 
 const { getBranchesByStreamId } = require('../services/branches')
 
@@ -52,13 +48,17 @@ const {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
 } = require('@/modules/core/services/commit/management')
-const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitStreamUpdated,
+  getStreamFactory
+} = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   addCommitCreatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 
+const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
 const getCommit = getCommitFactory({ db })
 

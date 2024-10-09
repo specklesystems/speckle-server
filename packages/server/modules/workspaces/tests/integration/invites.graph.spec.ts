@@ -65,7 +65,6 @@ import {
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
@@ -79,6 +78,7 @@ import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/s
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { ForbiddenError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 enum InviteByTarget {
   Email = 'email',
@@ -86,6 +86,8 @@ enum InviteByTarget {
 }
 
 type TestGraphQLOperations = ReturnType<typeof buildGraphqlOperations>
+
+const getStream = getStreamFactory({ db })
 
 const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps

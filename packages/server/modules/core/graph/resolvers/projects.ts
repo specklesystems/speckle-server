@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -13,7 +14,7 @@ import {
   getUserStreamsCount,
   getUserStreams,
   getStreamCollaborators,
-  getStream
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   getRateLimitResult,
@@ -35,6 +36,8 @@ import {
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
+
+const getStream = getStreamFactory({ db })
 
 export = {
   Query: {

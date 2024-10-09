@@ -4,12 +4,12 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
   getProjectFactory,
-  getStream,
   getUserStreams,
   getUserStreamsCount,
   updateProjectFactory,
   upsertProjectRoleFactory,
-  getRolesByUserIdFactory
+  getRolesByUserIdFactory,
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -136,6 +136,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 
+const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -724,7 +725,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const trx = await db.transaction()
 
           const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-            getProject: getProjectFactory(),
+            getProject: getProjectFactory({ db }),
             updateProject: updateProjectFactory({ db: trx }),
             upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
             getProjectCollaborators: getProjectCollaboratorsFactory(),

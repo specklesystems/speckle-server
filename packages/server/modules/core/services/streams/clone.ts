@@ -6,7 +6,7 @@ import {
 } from '@/modules/core/helpers/types'
 import {
   createStream,
-  getStream,
+  getStreamFactory,
   StreamWithOptionalRole
 } from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
@@ -82,6 +82,7 @@ const prepareState = async (
   userId: string,
   sourceStreamId: string
 ): Promise<CloneStreamInitialState> => {
+  const getStream = getStreamFactory({ db })
   const targetStream = await getStream({ streamId: sourceStreamId })
   if (!targetStream) {
     throw new StreamCloneError('Clonable source stream not found', {

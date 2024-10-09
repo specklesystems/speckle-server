@@ -17,7 +17,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   createStream,
   deleteStream,
-  getStream,
+  getStreamFactory,
   updateStream
 } from '@/modules/core/repositories/streams'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
@@ -92,6 +92,7 @@ export async function createStreamReturnRecord(
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
     // TODO: should be injected in the resolver
+    const getStream = getStreamFactory({ db })
     await inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
         findUserByTarget: findUserByTargetFactory(),
@@ -188,6 +189,7 @@ export async function updateStreamAndNotify(
     updaterResourceAccessRules
   )
 
+  const getStream = getStreamFactory({ db })
   const oldStream = await getStream({ streamId: update.id, userId: updaterId })
   if (!oldStream) {
     throw new StreamUpdateError('Stream not found', {

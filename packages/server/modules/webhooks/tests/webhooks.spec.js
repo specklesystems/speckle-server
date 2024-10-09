@@ -31,9 +31,10 @@ const {
 } = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { getStream } = require('@/modules/core/repositories/streams')
 const { getUser } = require('@/modules/core/repositories/users')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
 
+const getStream = getStreamFactory({ db })
 const updateWebhook = updateWebhookFactory({
   updateWebhookConfig: updateWebhookConfigFactory({ db })
 })

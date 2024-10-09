@@ -57,7 +57,7 @@ import {
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { db as defaultKnexInstance } from '@/db/knex'
+import { db, db as defaultKnexInstance } from '@/db/knex'
 import {
   DeleteProjectRole,
   GetProject,
@@ -66,17 +66,13 @@ import {
   GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
+import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import { GetStream, GetStreams } from '@/modules/core/domain/streams/operations'
+export type { StreamWithOptionalRole }
 
 const tables = {
-  streams: (db: Knex) => db<StreamRecord>('streams'),
-  streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl')
-}
-
-export type StreamWithOptionalRole = StreamRecord & {
-  /**
-   * Available, if query joined this data StreamAcl
-   */
-  role?: StreamRoles
+  streams: (db: Knex) => db<StreamRecord>(Streams.name),
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
 
 /**
@@ -130,56 +126,62 @@ const generateStreamName = () => {
 /**
  * Get multiple streams. If userId is specified, the role will be resolved as well.
  */
-export async function getStreams(
-  streamIds: string[],
-  options: Partial<{ userId: string; trx: Knex.Transaction }> = {}
-) {
-  const { userId, trx } = options
-  if (!streamIds?.length) throw new InvalidArgumentError('Empty stream IDs')
+export const getStreamsFactory =
+  (deps: { db: Knex }): GetStreams =>
+  async (
+    streamIds: string[],
+    options: Partial<{ userId: string; trx: Knex.Transaction }> = {}
+  ) => {
+    const { userId, trx } = options
+    if (!streamIds?.length) throw new InvalidArgumentError('Empty stream IDs')
 
-  const q = Streams.knex<StreamWithOptionalRole[]>().whereIn(Streams.col.id, streamIds)
+    const q = tables.streams(deps.db).whereIn(Streams.col.id, streamIds)
 
-  if (userId) {
-    q.select([
-      ...Object.values(Streams.col),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
-    ])
-    q.leftJoin(StreamAcl.name, function () {
-      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
-        StreamAcl.col.userId,
-        userId
-      )
-    })
-    q.groupBy(Streams.col.id)
+    if (userId) {
+      q.select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+      ])
+      q.leftJoin(StreamAcl.name, function () {
+        this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+      q.groupBy(Streams.col.id)
+    }
+
+    if (trx) {
+      q.transacting(trx)
+    }
+
+    return await q
   }
-
-  if (trx) {
-    q.transacting(trx)
-  }
-
-  return await q
-}
 
 /**
  * Get a single stream. If userId is specified, the role will be resolved as well.
  */
-export async function getStream(
-  params: { streamId?: string; userId?: string },
-  options?: Partial<{ trx: Knex.Transaction }>
-): Promise<Optional<StreamWithOptionalRole>> {
-  const { streamId, userId } = params
-  if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
+export const getStreamFactory =
+  (deps: { db: Knex }): GetStream =>
+  async (
+    params: { streamId?: string; userId?: string },
+    options?: Partial<{ trx: Knex.Transaction }>
+  ): Promise<Optional<StreamWithOptionalRole>> => {
+    const { streamId, userId } = params
+    if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
-  const streams = await getStreams([streamId], { userId, ...(options || {}) })
-  return <Optional<StreamWithOptionalRole>>streams[0]
-}
+    const streams = await getStreamsFactory(deps)([streamId], {
+      userId,
+      ...(options || {})
+    })
+    return <Optional<StreamWithOptionalRole>>streams[0]
+  }
 
-// TODO: Inject db
 export const getProjectFactory =
-  (): GetProject =>
+  (deps: { db: Knex }): GetProject =>
   async ({ projectId }) => {
-    const project = await getStream({ streamId: projectId })
+    const project = await getStreamFactory(deps)({ streamId: projectId })
 
     if (!project) {
       throw new StreamNotFoundError()
@@ -1181,7 +1183,7 @@ export async function revokeStreamPermissions(
  * Mark stream as the onboarding base stream from which user onboarding streams will be cloned
  */
 export async function markOnboardingBaseStream(streamId: string, version: string) {
-  const stream = await getStream({ streamId })
+  const stream = await getStreamFactory({ db })({ streamId })
   if (!stream) {
     throw new Error(`Stream ${streamId} not found`)
   }

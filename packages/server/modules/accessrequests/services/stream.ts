@@ -13,7 +13,6 @@ import {
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaborator,
   validateStreamAccess
@@ -35,6 +34,7 @@ import {
   GetUserStreamAccessRequest,
   RequestProjectAccess
 } from '@/modules/accessrequests/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -83,7 +83,7 @@ export const getUserStreamAccessRequestFactory =
 export const requestProjectAccessFactory =
   (deps: {
     getUserStreamAccessRequest: GetUserStreamAccessRequest
-    getStream: typeof getStream
+    getStream: GetStream
     createNewRequest: CreateNewRequest
     accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
   }): RequestProjectAccess =>

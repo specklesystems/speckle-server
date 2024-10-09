@@ -33,8 +33,8 @@ const {
   addBranchDeletedActivity
 } = require('@/modules/activitystream/services/branchActivity')
 const {
-  getStream,
-  markBranchStreamUpdated
+  markBranchStreamUpdated,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 
@@ -43,6 +43,7 @@ const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
+const getStream = getStreamFactory({ db })
 const getBranchById = getBranchByIdFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({

@@ -7,12 +7,12 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { EventBus } from '@/modules/shared/services/eventBus'
-import { getStream } from '@/modules/core/repositories/streams'
 import { Logger } from '@/logging/logging'
 import { AddStreamInviteSentOutActivity } from '@/modules/activitystream/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 type OnServerInviteCreatedFactoryDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
   logger: Logger
   addStreamInviteSentOutActivity: AddStreamInviteSentOutActivity
 }
