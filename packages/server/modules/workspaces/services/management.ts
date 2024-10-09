@@ -26,7 +26,6 @@ import {
   validateWorkspaceSlug
 } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -64,6 +63,7 @@ import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
+import { DeleteStreamRecords } from '@/modules/core/domain/streams/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -278,7 +278,7 @@ export const deleteWorkspaceFactory =
     deleteAllResourceInvites
   }: {
     deleteWorkspace: DeleteWorkspace
-    deleteProject: typeof deleteStream
+    deleteProject: DeleteStreamRecords
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
   }) =>

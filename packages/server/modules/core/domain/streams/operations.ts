@@ -9,6 +9,7 @@ import {
   ProjectCreateInput,
   StreamCreateInput
 } from '@/modules/core/graph/generated/graphql'
+import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 
@@ -53,6 +54,8 @@ export type StoreStream = (
   }>
 ) => Promise<Stream>
 
+export type DeleteStreamRecords = (streamId: string) => Promise<number>
+
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateInput) & {
     ownerId: string
@@ -66,3 +69,12 @@ export type CreateStream = (
 export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
+
+export type DeleteStream = (
+  streamId: string,
+  deleterId: string,
+  deleterResourceAccessRules: ContextResourceAccessRules,
+  options?: {
+    skipAccessChecks?: boolean
+  }
+) => Promise<boolean>

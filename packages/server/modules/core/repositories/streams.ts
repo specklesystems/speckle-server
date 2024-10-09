@@ -77,7 +77,8 @@ import {
   GetCommitStreams,
   GetStream,
   GetStreamCollaborators,
-  GetStreams
+  GetStreams,
+  DeleteStreamRecords
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -905,20 +906,22 @@ export async function getUserStreamCounts(params: {
   return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
 }
 
-export async function deleteStream(streamId: string) {
-  // Delete stream commits (not automatically cascaded)
-  await knex.raw(
-    `
+export const deleteStreamFactory =
+  (deps: { db: Knex }): DeleteStreamRecords =>
+  async (streamId: string) => {
+    // Delete stream commits (not automatically cascaded)
+    await deps.db.raw(
+      `
       DELETE FROM commits WHERE id IN (
         SELECT sc."commitId" FROM streams s
         INNER JOIN stream_commits sc ON s.id = sc."streamId"
         WHERE s.id = ?
       )
       `,
-    [streamId]
-  )
-  return await Streams.knex().where(Streams.col.id, streamId).del()
-}
+      [streamId]
+    )
+    return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
+  }
 
 export async function getStreamsSourceApps(streamIds: string[]) {
   if (!streamIds?.length) return {}

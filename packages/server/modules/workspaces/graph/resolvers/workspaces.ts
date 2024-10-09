@@ -9,7 +9,8 @@ import {
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
-  getStreamFactory
+  getStreamFactory,
+  deleteStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
@@ -109,7 +110,6 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
-import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -184,6 +184,7 @@ const buildCreateAndSendWorkspaceInvite = () =>
         payload
       })
   })
+const deleteStream = deleteStreamFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 

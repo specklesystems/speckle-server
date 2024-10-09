@@ -1,7 +1,6 @@
 import { expect } from 'chai'
 import {
   updateStream,
-  deleteStream,
   getStreamUsers,
   grantPermissionsStream
 } from '@/modules/core/services/streams'
@@ -28,6 +27,7 @@ import {
 import {
   StreamWithOptionalRole,
   createStreamFactory,
+  deleteStreamFactory,
   getStreamFactory,
   markBranchStreamUpdated,
   markCommitStreamUpdated,
@@ -153,6 +153,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const deleteStream = deleteStreamFactory({ db })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -253,7 +254,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
 
-      await deleteStream({ streamId: id })
+      await deleteStream(id)
       const stream = await getStream({ streamId: id })
 
       expect(stream).to.not.be.ok
