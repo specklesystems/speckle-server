@@ -5,10 +5,10 @@ import {
   getOwnedFavoritesCountByUserIds,
   getStreamRoles,
   getStreamsSourceApps,
-  getCommitStreams,
   StreamWithCommitId,
   getUserStreamCounts,
-  getStreamsFactory
+  getStreamsFactory,
+  getCommitStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -117,6 +117,7 @@ const getCommitBranches = getCommitBranchesFactory({ db })
 const getStreamCommitCounts = getStreamCommitCountsFactory({ db })
 const getUserStreamCommitCounts = getUserStreamCommitCountsFactory({ db })
 const getUserAuthoredCommitCounts = getUserAuthoredCommitCountsFactory({ db })
+const getCommitStreams = getCommitStreamsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

@@ -57,9 +57,9 @@ const {
 const { db } = require('@/db/knex')
 const {
   markCommitStreamUpdated,
-  getCommitStream,
   getStreamFactory,
-  getStreamsFactory
+  getStreamsFactory,
+  getCommitStreamFactory
 } = require('@/modules/core/repositories/streams')
 const {
   markCommitBranchUpdatedFactory,
@@ -81,6 +81,7 @@ const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
 
+const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
