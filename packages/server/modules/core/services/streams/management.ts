@@ -14,7 +14,6 @@ import {
   StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getStreamFactory, updateStream } from '@/modules/core/repositories/streams'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -30,8 +29,6 @@ import {
   ContextResourceAccessRules,
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
-import { authorizeResolver } from '@/modules/shared'
-import db from '@/db/knex'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
@@ -46,8 +43,12 @@ import {
   CreateStream,
   DeleteStream,
   DeleteStreamRecords,
+  GetStream,
   LegacyCreateStream,
-  StoreStream
+  LegacyUpdateStream,
+  StoreStream,
+  UpdateStream,
+  UpdateStreamRecord
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
@@ -183,41 +184,57 @@ export const deleteStreamAndNotifyFactory =
 /**
  * Update stream metadata & notify users (emit events & save activity)
  */
-export async function updateStreamAndNotify(
-  update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: ContextResourceAccessRules
-) {
-  await authorizeResolver(
-    updaterId,
-    update.id,
-    Roles.Stream.Owner,
-    updaterResourceAccessRules
-  )
+export const updateStreamAndNotifyFactory =
+  (deps: {
+    authorizeResolver: AuthorizeResolver
+    getStream: GetStream
+    updateStream: UpdateStreamRecord
+    addStreamUpdatedActivity: typeof addStreamUpdatedActivity
+  }): UpdateStream =>
+  async (
+    update: StreamUpdateInput | ProjectUpdateInput,
+    updaterId: string,
+    updaterResourceAccessRules: ContextResourceAccessRules
+  ) => {
+    await deps.authorizeResolver(
+      updaterId,
+      update.id,
+      Roles.Stream.Owner,
+      updaterResourceAccessRules
+    )
 
-  const getStream = getStreamFactory({ db })
-  const oldStream = await getStream({ streamId: update.id, userId: updaterId })
-  if (!oldStream) {
-    throw new StreamUpdateError('Stream not found', {
-      info: { updaterId, streamId: update.id }
+    const oldStream = await deps.getStream({ streamId: update.id, userId: updaterId })
+    if (!oldStream) {
+      throw new StreamUpdateError('Stream not found', {
+        info: { updaterId, streamId: update.id }
+      })
+    }
+
+    const newStream = await deps.updateStream(update)
+    if (!newStream) {
+      return oldStream
+    }
+
+    await deps.addStreamUpdatedActivity({
+      streamId: update.id,
+      updaterId,
+      oldStream,
+      newStream,
+      update
     })
+
+    return newStream
   }
 
-  const newStream = await updateStream(update)
-  if (!newStream) {
-    return oldStream
+/**
+ * @deprecated Use updateStreamAndNotifyFactory() or the repo fn directly
+ */
+export const legacyUpdateStreamFactory =
+  (deps: { updateStream: UpdateStreamRecord }): LegacyUpdateStream =>
+  async (update) => {
+    const updatedStream = await deps.updateStream(update)
+    return updatedStream?.id || null
   }
-
-  await addStreamUpdatedActivity({
-    streamId: update.id,
-    updaterId,
-    oldStream,
-    newStream,
-    update
-  })
-
-  return newStream
-}
 
 type PermissionUpdateInput =
   | StreamUpdatePermissionInput

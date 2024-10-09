@@ -1,9 +1,5 @@
 import { expect } from 'chai'
-import {
-  updateStream,
-  getStreamUsers,
-  grantPermissionsStream
-} from '@/modules/core/services/streams'
+import { getStreamUsers, grantPermissionsStream } from '@/modules/core/services/streams'
 
 import { createObject } from '@/modules/core/services/objects'
 
@@ -31,7 +27,8 @@ import {
   getStreamFactory,
   markBranchStreamUpdated,
   markCommitStreamUpdated,
-  revokeStreamPermissions
+  revokeStreamPermissions,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
 import { Streams } from '@/modules/core/dbSchema'
@@ -75,7 +72,8 @@ import { addCommitCreatedActivity } from '@/modules/activitystream/services/comm
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
-  legacyCreateStreamFactory
+  legacyCreateStreamFactory,
+  legacyUpdateStreamFactory
 } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
@@ -154,6 +152,9 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 const deleteStream = deleteStreamFactory({ db })
+const updateStream = legacyUpdateStreamFactory({
+  updateStream: updateStreamFactory({ db })
+})
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {

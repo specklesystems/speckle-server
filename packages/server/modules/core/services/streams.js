@@ -6,7 +6,6 @@ const {
   getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
-  updateStream: updateStreamInDb,
   revokeStreamPermissions,
   grantStreamPermissions,
   getStreamFactory
@@ -25,15 +24,6 @@ const {
  */
 
 module.exports = {
-  /**
-   * @deprecated Use updateStreamAndNotify or use the repository function directly
-   * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
-   */
-  async updateStream(update) {
-    const updatedStream = await updateStreamInDb(update)
-    return updatedStream?.id || null
-  },
-
   setStreamFavorited,
 
   /**

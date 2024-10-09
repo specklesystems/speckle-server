@@ -11,7 +11,7 @@ import {
   createStreamFactory,
   getOnboardingBaseStream,
   getStreamFactory,
-  updateStream
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUser } from '@/modules/core/services/users'
 import {
@@ -51,6 +51,7 @@ export async function createOnboardingStream(
     )
   }
 
+  const updateStream = updateStreamFactory({ db })
   const addStreamCreatedActivity = addStreamCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish

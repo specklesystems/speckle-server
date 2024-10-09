@@ -30,12 +30,13 @@ import {
   getUserStreams,
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory
+  deleteStreamFactory,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
-  updateStreamAndNotify,
+  updateStreamAndNotifyFactory,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
@@ -67,7 +68,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity
+  addStreamDeletedActivity,
+  addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
@@ -105,6 +107,12 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   authorizeResolver,
   addStreamDeletedActivity,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity
 })
 
 const getUserStreamsCore = async (

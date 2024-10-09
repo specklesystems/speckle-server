@@ -2,7 +2,8 @@ import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity
+  addStreamDeletedActivity,
+  addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
@@ -23,7 +24,8 @@ import {
   getStreamFactory,
   getStreamCollaboratorsFactory,
   createStreamFactory,
-  deleteStreamFactory
+  deleteStreamFactory,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
 import {
@@ -33,7 +35,7 @@ import {
 import {
   createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
-  updateStreamAndNotify,
+  updateStreamAndNotifyFactory,
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
@@ -92,6 +94,12 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   authorizeResolver,
   addStreamDeletedActivity,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity
 })
 
 export = {
