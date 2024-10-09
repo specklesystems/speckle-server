@@ -10,6 +10,7 @@ import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
 import { ConditionalKeys, SetRequired } from 'type-fest'
 import pino from 'pino'
+import { BaseContext } from '@apollo/server'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -40,14 +41,15 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
     shutdown?: () => MaybeAsync<void>
   } & T
 
-export type GraphQLContext = AuthContext & {
-  /**
-   * Request-scoped GraphQL dataloaders
-   * @see https://github.com/graphql/dataloader
-   */
-  loaders: RequestDataLoaders
+export type GraphQLContext = BaseContext &
+  AuthContext & {
+    /**
+     * Request-scoped GraphQL dataloaders
+     * @see https://github.com/graphql/dataloader
+     */
+    loaders: RequestDataLoaders
 
-  log: pino.Logger
-}
+    log: pino.Logger
+  }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

@@ -79,13 +79,18 @@ export const useResolveInviteTargets = (params: {
    */
   excludeUserIds?: Ref<MaybeNullOrUndefined<string[]>>
   excludeEmails?: Ref<MaybeNullOrUndefined<string[]>>
+  /**
+   * Used for searching of users within a workspace context
+   */
+  workspaceId?: MaybeNullOrUndefined<string>
 }) => {
-  const { search, excludeUserIds, excludeEmails } = params
+  const { search, excludeUserIds, excludeEmails, workspaceId } = params
 
   const { userSearch, searchVariables, loading } = useUserSearch({
     variables: computed(() => ({
       query: search.value || '',
-      limit: 5
+      limit: 5,
+      workspaceId
     }))
   })
 

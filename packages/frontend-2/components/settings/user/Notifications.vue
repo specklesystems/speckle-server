@@ -3,7 +3,7 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader
         title="Notifications"
-        text="Manage your notification preferences"
+        text="Your notification preferences"
       />
       <table class="table-auto w-full rounded-t overflow-hidden">
         <thead class="text-foreground-1">
@@ -22,7 +22,7 @@
           <tr
             v-for="[type, settings] in Object.entries(localPreferences)"
             :key="type"
-            class="border-t"
+            class="border-t border-outline-3"
           >
             <td class="text-body-xs py-4">
               {{ notificationTypeMapping[type] || 'Unknown' }}

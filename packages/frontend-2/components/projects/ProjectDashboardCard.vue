@@ -26,6 +26,20 @@
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
         <div class="pt-3">
+          <NuxtLink
+            v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
+            :to="workspaceRoute(project.workspace.slug)"
+            class="my-3 flex items-center"
+          >
+            <WorkspaceAvatar
+              :logo="project.workspace.logo"
+              :default-logo-index="project.workspace.defaultLogoIndex"
+              size="sm"
+            />
+            <p class="text-body-2xs text-foreground ml-2 line-clamp-2">
+              {{ project.workspace.name }}
+            </p>
+          </NuxtLink>
           <FormButton
             :to="allProjectModelsRoute(project.id) + '/'"
             size="sm"
@@ -81,15 +95,17 @@ import {
 } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
+  showWorkspaceLink?: boolean
 }>()
 
 const router = useRouter()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const projectId = computed(() => props.project.id)
-
 const updatedAt = computed(() => {
   return {
     full: formattedFullDate(props.project.updatedAt),

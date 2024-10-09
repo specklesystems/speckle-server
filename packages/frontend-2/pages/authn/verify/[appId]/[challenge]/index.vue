@@ -192,7 +192,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Authorize Application'
+  title: 'Authorize application'
 })
 
 const apiOrigin = useApiOrigin()

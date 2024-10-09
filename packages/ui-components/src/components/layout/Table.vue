@@ -4,10 +4,7 @@
     <div
       class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar border border-outline-3 rounded-lg"
     >
-      <div
-        class="grid z-10 grid-cols-12 items-center space-x-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
-        :style="{ paddingRight: paddingRightStyle }"
-      >
+      <div :class="headerRowClasses" :style="{ paddingRight: paddingRightStyle }">
         <div
           v-for="(column, colIndex) in columns"
           :key="column.id"
@@ -47,21 +44,22 @@
                 </slot>
               </div>
             </template>
-            <div class="absolute right-1.5 space-x-1 flex items-center p-0 h-full">
-              <template v-if="buttons">
-                <div v-for="button in buttons" :key="button.label">
-                  <FormButton
-                    v-tippy="button.tooltip"
-                    :icon-left="button.icon"
-                    size="sm"
-                    color="outline"
-                    hide-text
-                    :class="button.class"
-                    :to="isString(button.action) ? button.action : undefined"
-                    @click.stop="!isString(button.action) ? button.action(item) : noop"
-                  />
-                </div>
-              </template>
+            <div
+              v-if="buttons"
+              class="absolute right-1.5 space-x-1 flex items-center p-0 h-full"
+            >
+              <div v-for="button in buttons" :key="button.label">
+                <FormButton
+                  v-tippy="button.tooltip"
+                  :icon-left="button.icon"
+                  size="sm"
+                  color="outline"
+                  hide-text
+                  :class="button.class"
+                  :to="isString(button.action) ? button.action : undefined"
+                  @click.stop="!isString(button.action) ? button.action(item) : noop"
+                />
+              </div>
             </div>
           </div>
         </template>
@@ -135,7 +133,7 @@ const rowsWrapperClasses = computed(() => {
   ]
 
   if (props.onRowClick && props.items?.length) {
-    classParts.push('cursor-pointer hover:bg-primary-muted')
+    classParts.push('cursor-pointer hover:bg-highlight-1')
   }
 
   switch (props.rowItemsAlign) {
@@ -193,4 +191,13 @@ const getClasses = (
 const handleRowClick = (item: T) => {
   props.onRowClick?.(item)
 }
+
+const headerRowClasses = computed(() => [
+  'z-10 grid grid-cols-12 items-center',
+  'w-full min-w-[750px] space-x-6',
+  'px-4 py-3',
+  'bg-foundation-page rounded-t-lg',
+  'font-medium text-body-2xs text-foreground-2',
+  'border-b border-outline-3'
+])
 </script>

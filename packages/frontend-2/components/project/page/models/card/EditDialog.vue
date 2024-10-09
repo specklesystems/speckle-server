@@ -5,14 +5,14 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'outline', fullWidth: true },
+        props: { color: 'outline' },
         onClick: () => {
           isOpen = false
         }
       },
       {
         text: 'Save',
-        props: { fullWidth: true },
+        props: {},
         onClick: () => {
           onSubmit()
         }
@@ -21,7 +21,7 @@
   >
     <template #header>Edit model</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="flex flex-col gap-6 my-2">
+      <div class="flex flex-col gap-4 mb-4">
         <FormTextInput
           v-model="newName"
           name="name"
@@ -29,7 +29,6 @@
           label="Model name"
           placeholder="model/name/here"
           :rules="rules"
-          show-required
           auto-focus
           color="foundation"
           :disabled="loading"
@@ -41,7 +40,8 @@
           name="description"
           show-label
           label="Model description"
-          placeholder="Description (optional)"
+          show-optional
+          placeholder="Description"
           color="foundation"
           :disabled="loading"
         />

@@ -1,4 +1,4 @@
-import { MaybeAsync } from '@speckle/shared'
+import { MaybeAsync, ServerScope } from '@speckle/shared'
 import type { Express, RequestHandler } from 'express'
 import type { Session, SessionData } from 'express-session'
 import type { TokenSet, UserinfoResponse } from 'openid-client'
@@ -41,6 +41,7 @@ export type AuthSessionData = {
   // More specific params used in OpenID based strategies
   tokenSet?: TokenSet
   userinfo?: UserinfoResponse
+  codeVerifier?: string
 }
 
 export type AuthRequestData = {
@@ -51,9 +52,26 @@ export type AuthRequestData = {
   authRedirectPath?: string
 }
 
+export type ScopeRecord = {
+  name: ServerScope
+  description: string
+  public: boolean
+}
+
 export type ServerAppsScopesRecord = {
   appId: string
-  scopeName: string
+  scopeName: ServerScope
+}
+
+export type UserServerAppTokenRecord = {
+  userId: string
+  appId: string
+  tokenId: string
+}
+
+export type TokenScopeRecord = {
+  tokenId: string
+  scopeName: ServerScope
 }
 
 export type AuthStrategyMetadata = {

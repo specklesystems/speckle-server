@@ -3,11 +3,6 @@ import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
 import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  Query,
-  QueryWorkspaceArgs,
-  QueryWorkspaceInviteArgs,
-  User,
-  UserWorkspacesArgs,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -35,6 +30,7 @@ import {
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
+import { useClipboard } from '~~/composables/browser'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -142,33 +138,33 @@ export const useProcessWorkspaceInvite = () => {
 
             if (accepted) {
               // Evict Query.workspace
-              modifyObjectField<Query['workspace'], QueryWorkspaceArgs>(
+              modifyObjectField(
                 cache,
                 ROOT_QUERY,
                 'workspace',
-                ({ variables, details: { DELETE } }) => {
-                  if (variables.id === workspaceId) return DELETE
+                ({ variables, helpers: { evict } }) => {
+                  if (variables.id === workspaceId) return evict()
                 }
               )
 
               // Evict all User.workspaces
-              modifyObjectField<User['workspaces'], UserWorkspacesArgs>(
+              modifyObjectField(
                 cache,
                 getCacheId('User', userId),
                 'workspaces',
-                ({ details: { DELETE } }) => DELETE
+                ({ helpers: { evict } }) => evict()
               )
             }
 
             // Set Query.workspaceInvite(id) = null (no invite)
-            modifyObjectField<Query['workspaceInvite'], QueryWorkspaceInviteArgs>(
+            modifyObjectField(
               cache,
               ROOT_QUERY,
               'workspaceInvite',
-              ({ value, variables, details: { readField } }) => {
+              ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const workspaceId = readField('workspaceId', value)
-                  if (workspaceId === workspaceId) return null
+                  const inviteWorkspaceId = readField(value, 'workspaceId')
+                  if (inviteWorkspaceId === workspaceId) return null
                 } else {
                   if (variables.workspaceId === workspaceId) return null
                 }
@@ -188,9 +184,17 @@ export const useProcessWorkspaceInvite = () => {
         type: ToastNotificationType.Success,
         title: input.accept ? 'Invite accepted' : 'Invite dismissed'
       })
+
+      mp.track('Workspace Joined', {
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+
       mp.track('Invite Action', {
         type: 'workspace invite',
-        accepted: input.accept
+        accepted: input.accept,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
       })
     } else {
       const err = getFirstErrorMessage(errors)
@@ -217,6 +221,7 @@ graphql(`
     id
     token
     workspaceId
+    workspaceSlug
     user {
       id
     }
@@ -279,6 +284,7 @@ export const useWorkspaceInviteManager = <
     if (!token.value || !invite.value) return false
 
     const workspaceId = invite.value.workspaceId
+    const workspaceSlug = invite.value.workspaceSlug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true
@@ -298,8 +304,8 @@ export const useWorkspaceInviteManager = <
 
           // Redirect
           if (accept) {
-            if (workspaceId) {
-              window.location.href = workspaceRoute(workspaceId)
+            if (workspaceSlug) {
+              window.location.href = workspaceRoute(workspaceSlug)
             } else {
               window.location.reload()
             }
@@ -333,6 +339,7 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
+  const mixpanel = useMixpanel()
 
   return async (
     input: WorkspaceCreateInput,
@@ -342,6 +349,12 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
+    }>,
+    eventProperties?: Partial<{
+      /**
+       * Used for sending the Mixpanel event
+       */
+      source: string
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -350,12 +363,38 @@ export function useCreateWorkspace() {
     const res = await apollo
       .mutate({
         mutation: createWorkspaceMutation,
-        variables: { input }
-        // TODO: Fix the cache update
+        variables: { input },
+        update: (cache, { data }) => {
+          const workspaceId = data?.workspaceMutations.create.id
+          if (!workspaceId) return
+          // Navigation to workspace is gonna fetch everything needed for the page, so we only
+          // really need to update workspace fields used in sidebar & settings: User.workspaces
+          modifyObjectField(
+            cache,
+            getCacheId('User', userId),
+            'workspaces',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [...items, ref('Workspace', workspaceId)])
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.workspaceMutations.create.id) {
+      mixpanel.track('Workspace Created', {
+        source: eventProperties?.source,
+        fields: Object.keys(input) as Array<keyof WorkspaceCreateInput>,
+        // eslint-disable-next-line camelcase
+        workspace_id: res.data?.workspaceMutations.create.id
+      })
+
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'
@@ -382,7 +421,32 @@ export const useWorkspaceUpdateRole = () => {
   const { triggerNotification } = useGlobalToast()
 
   return async (input: WorkspaceRoleUpdateInput) => {
-    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          if (!input.role) {
+            cache.evict({
+              id: getCacheId('WorkspaceCollaborator', input.userId)
+            })
+
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (totalCount) => totalCount - 1)
+                })
+              },
+              {
+                autoEvictFiltered: true
+              }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({
@@ -401,4 +465,17 @@ export const useWorkspaceUpdateRole = () => {
       })
     }
   }
+}
+
+export const copyWorkspaceLink = async (id: string) => {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+
+  await copy(url)
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Copied workspace link to clipboard'
+  })
 }

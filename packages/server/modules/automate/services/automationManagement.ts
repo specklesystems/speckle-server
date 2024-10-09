@@ -1,13 +1,7 @@
 import {
   InsertableAutomationRevision,
   InsertableAutomationRevisionFunction,
-  InsertableAutomationRevisionTrigger,
-  getAutomation,
-  getLatestVersionAutomationRuns,
-  storeAutomation,
-  storeAutomationRevision,
-  storeAutomationToken,
-  updateAutomation as updateDbAutomation
+  InsertableAutomationRevisionTrigger
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
@@ -19,10 +13,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
-import {
-  AuthCodePayloadAction,
-  createStoredAuthCode
-} from '@/modules/automate/services/authCode'
+import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
@@ -42,28 +33,41 @@ import {
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
-import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
-import {
-  getEncryptionKeyPair,
-  getFunctionInputDecryptor
-} from '@/modules/automate/services/encryption'
+import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import {
+  AutomationsEmitter,
+  AutomationsEventsEmit
+} from '@/modules/automate/events/automations'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
+import {
+  CreateAutomation,
+  CreateStoredAuthCode,
+  GetAutomation,
+  GetEncryptionKeyPair,
+  GetLatestVersionAutomationRuns,
+  StoreAutomation,
+  StoreAutomationRevision,
+  StoreAutomationToken,
+  UpdateAutomation
+} from '@/modules/automate/domain/operations'
+import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 
 export type CreateAutomationDeps = {
-  createAuthCode: ReturnType<typeof createStoredAuthCode>
+  createAuthCode: CreateStoredAuthCode
   automateCreateAutomation: typeof clientCreateAutomation
-  storeAutomation: typeof storeAutomation
-  storeAutomationToken: typeof storeAutomationToken
+  storeAutomation: StoreAutomation
+  storeAutomationToken: StoreAutomationToken
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
-export const createAutomation =
-  (deps: CreateAutomationDeps) =>
+export const createAutomationFactory =
+  (deps: CreateAutomationDeps): CreateAutomation =>
   async (params: {
     input: ProjectAutomationCreateInput
     projectId: string
@@ -80,7 +84,9 @@ export const createAutomation =
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
-      storeAutomationToken
+      storeAutomationToken,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     validateAutomationName(name)
@@ -123,7 +129,7 @@ export const createAutomation =
       automateToken: token
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+    await automationsEventsEmit(AutomationsEmitter.events.Created, {
       automation: automationRecord
     })
 
@@ -131,17 +137,19 @@ export const createAutomation =
   }
 
 export type CreateTestAutomationDeps = {
-  getEncryptionKeyPair: typeof getEncryptionKeyPair
+  getEncryptionKeyPair: GetEncryptionKeyPair
   getFunction: typeof getFunction
-  storeAutomation: typeof storeAutomation
-  storeAutomationRevision: typeof storeAutomationRevision
+  storeAutomation: StoreAutomation
+  storeAutomationRevision: StoreAutomationRevision
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
 /**
  * Create a test automation and its first revision in one request.
  * TODO: Reduce code duplication w/ createAutomation
  */
-export const createTestAutomation =
+export const createTestAutomationFactory =
   (deps: CreateTestAutomationDeps) =>
   async (params: {
     input: ProjectTestAutomationCreateInput
@@ -159,7 +167,9 @@ export const createTestAutomation =
       getEncryptionKeyPair,
       getFunction,
       storeAutomation,
-      storeAutomationRevision
+      storeAutomationRevision,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     validateAutomationName(name)
@@ -225,7 +235,7 @@ export const createTestAutomation =
       publicKey: encryptionKeyPair.publicKey
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
       automation: automationRecord,
       revision: automationRevisionRecord
     })
@@ -233,13 +243,15 @@ export const createTestAutomation =
     return automationRecord
   }
 
-export type UpdateAutomationDeps = {
-  getAutomation: typeof getAutomation
-  updateAutomation: typeof updateDbAutomation
+export type ValidateAndUpdateAutomationDeps = {
+  getAutomation: GetAutomation
+  updateAutomation: UpdateAutomation
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 }
 
-export const updateAutomation =
-  (deps: UpdateAutomationDeps) =>
+export const validateAndUpdateAutomationFactory =
+  (deps: ValidateAndUpdateAutomationDeps) =>
   async (params: {
     input: ProjectAutomationUpdateInput
     userId: string
@@ -249,7 +261,12 @@ export const updateAutomation =
      */
     projectId?: string
   }) => {
-    const { getAutomation, updateAutomation } = deps
+    const {
+      getAutomation,
+      updateAutomation,
+      validateStreamAccess,
+      automationsEventsEmit
+    } = deps
     const { input, userId, userResourceAccessRules, projectId } = params
 
     const existingAutomation = await getAutomation({
@@ -280,7 +297,7 @@ export const updateAutomation =
       id: input.id
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Updated, {
+    await automationsEventsEmit(AutomationsEmitter.events.Updated, {
       automation: res
     })
 
@@ -288,7 +305,7 @@ export const updateAutomation =
   }
 
 type ValidateNewTriggerDefinitionsDeps = {
-  getBranchesByIds: typeof getBranchesByIds
+  getBranchesByIds: GetBranchesByIds
 }
 
 const validateNewTriggerDefinitions =
@@ -373,15 +390,17 @@ const validateNewRevisionFunctions =
   }
 
 export type CreateAutomationRevisionDeps = {
-  getAutomation: typeof getAutomation
-  storeAutomationRevision: typeof storeAutomationRevision
-  getEncryptionKeyPair: typeof getEncryptionKeyPair
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getAutomation: GetAutomation
+  storeAutomationRevision: StoreAutomationRevision
+  getEncryptionKeyPair: GetEncryptionKeyPair
+  getFunctionInputDecryptor: FunctionInputDecryptor
   getFunctionReleases: typeof getFunctionReleases
+  validateStreamAccess: typeof validateStreamAccess
+  automationsEventsEmit: AutomationsEventsEmit
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
-export const createAutomationRevision =
+export const createAutomationRevisionFactory =
   (deps: CreateAutomationRevisionDeps) =>
   async (params: {
     input: ProjectAutomationRevisionCreateInput
@@ -395,7 +414,9 @@ export const createAutomationRevision =
       getAutomation,
       getEncryptionKeyPair,
       getFunctionInputDecryptor,
-      getFunctionReleases
+      getFunctionReleases,
+      validateStreamAccess,
+      automationsEventsEmit
     } = deps
 
     const existingAutomation = await getAutomation({
@@ -517,7 +538,7 @@ export const createAutomationRevision =
     }
     const res = await storeAutomationRevision(revisionInput)
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
       automation: existingAutomation,
       revision: res
     })
@@ -526,10 +547,10 @@ export const createAutomationRevision =
   }
 
 export type GetAutomationsStatusDeps = {
-  getLatestVersionAutomationRuns: typeof getLatestVersionAutomationRuns
+  getLatestVersionAutomationRuns: GetLatestVersionAutomationRuns
 }
 
-export const getAutomationsStatus =
+export const getAutomationsStatusFactory =
   (deps: GetAutomationsStatusDeps) =>
   async (params: {
     projectId: string

@@ -37,6 +37,7 @@ type AdminUserListArgs = CollectionQueryArgs & {
 export class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
   static code = 'INVALID_CURSOR_VALUE'
+  static statusCode = 400
 }
 
 export const parseCursorToDate = (cursor: string): Date => {

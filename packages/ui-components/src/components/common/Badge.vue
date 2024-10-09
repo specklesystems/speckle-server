@@ -3,7 +3,9 @@
     <svg v-if="dot" :class="dotClasses" fill="currentColor" viewBox="0 0 8 8">
       <circle cx="4" cy="4" r="3" />
     </svg>
-    <slot>Badge</slot>
+    <span class="whitespace-nowrap">
+      <slot>Badge</slot>
+    </span>
     <button v-if="iconLeft" :class="iconClasses" @click="onIconClick($event)">
       <Component :is="iconLeft" :class="['h-4 w-4', badgeDotIconColorClasses]" />
     </button>

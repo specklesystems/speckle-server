@@ -1,8 +1,14 @@
 import { db } from '@/db/knex'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import { getWorkspacesFactory } from '@/modules/workspaces/repositories/workspaces'
-import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import {
+  getWorkspaceDomainsFactory,
+  getWorkspacesFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import {
+  WorkspaceDomain,
+  WorkspaceWithOptionalRole
+} from '@/modules/workspacesCore/domain/types'
 import { keyBy } from 'lodash'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -14,6 +20,7 @@ declare module '@/modules/core/loaders' {
 
 const dataLoadersDefinition = defineRequestDataloaders(({ ctx, createLoader }) => {
   const getWorkspaces = getWorkspacesFactory({ db })
+  const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
 
   return {
     workspaces: {
@@ -29,6 +36,18 @@ const dataLoadersDefinition = defineRequestDataloaders(({ ctx, createLoader }) =
           return ids.map((id) => results[id] || null)
         }
       )
+    },
+    workspaceDomains: {
+      /**
+       * Get workspace, with the active user's role attached
+       */
+      getWorkspaceDomains: createLoader<string, WorkspaceDomain | null>(async (ids) => {
+        const results = keyBy(
+          await getWorkspaceDomains({ workspaceIds: ids.slice() }),
+          (w) => w.id
+        )
+        return ids.map((id) => results[id] || null)
+      })
     }
   }
 })

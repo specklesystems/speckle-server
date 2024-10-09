@@ -84,7 +84,7 @@ input WebhookUpdateInput {
   description: String
   secret: String
   enabled: Boolean
-  triggers: [String]
+  triggers: [String!]
 }
 
 input WebhookDeleteInput {

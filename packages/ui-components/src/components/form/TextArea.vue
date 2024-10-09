@@ -3,6 +3,8 @@
   <div :class="[fullWidth ? 'w-full' : '']">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
+      <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+      <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
     </label>
     <div class="relative">
       <textarea
@@ -91,6 +93,7 @@ const props = withDefaults(
     showClear?: boolean
     fullWidth?: boolean
     showRequired?: boolean
+    showOptional?: boolean
     color?: InputColor
     textareaClasses?: string
   }>(),

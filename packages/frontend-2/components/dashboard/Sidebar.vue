@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
+  <div class="group">
     <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
@@ -12,7 +12,7 @@
             @click="isOpenMobile = !isOpenMobile"
           >
             <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
-            <XMarkIcon v-else class="h-4 w-4 -ml-1 -mr-1" />
+            <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
           </FormButton>
         </div>
       </Portal>
@@ -26,7 +26,9 @@
         class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
         :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
-        <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebar
+          class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+        >
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
@@ -35,7 +37,7 @@
                   :active="isActive(homeRoute)"
                 >
                   <template #icon>
-                    <HomeIcon class="h-5 w-5 text-foreground-2" />
+                    <HomeIcon class="size-4 stroke-[1.5px]" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -46,26 +48,33 @@
                   :active="isActive(projectsRoute)"
                 >
                   <template #icon>
-                    <Squares2X2Icon class="h-5 w-5 text-foreground-2" />
+                    <IconProjects class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
             </LayoutSidebarMenuGroup>
 
-            <!-- Remove workspacesItems.length conditional at launch of Workspaces  -->
             <LayoutSidebarMenuGroup
-              v-if="isWorkspacesEnabled && workspacesItems.length"
+              v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
+              :plus-click="
+                isNotGuest
+                  ? () => {
+                      openWorkspaceCreateDialog()
+                    }
+                  : undefined
+              "
+              plus-text="Create workspace"
             >
-              <NuxtLink to="/workspaces/">
+              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
-                  :active="isActive('/workspaces/')"
-                  tag="NEW"
+                  :active="isActive(workspacesRoute)"
+                  tag="BETA"
                 >
                   <template #icon>
-                    <IconWorkspaces class="h-4 w-4 text-foreground-2" />
+                    <IconWorkspaces class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -78,6 +87,7 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  class="!pl-1"
                 >
                   <template #icon>
                     <WorkspaceAvatar
@@ -88,49 +98,49 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <LayoutSidebarMenuGroupItem
-                v-if="isUserAdmin"
-                label="Add workspace"
-                @click="showWorkspaceCreateDialog = true"
-              >
-                <template #icon>
-                  <PlusIcon class="h-4 w-4 text-foreground-2" />
-                </template>
-              </LayoutSidebarMenuGroupItem>
             </LayoutSidebarMenuGroup>
 
-            <LayoutSidebarMenuGroup title="Resources">
-              <NuxtLink :to="connectorsPageUrl" target="_blank">
+            <LayoutSidebarMenuGroup title="Resources" collapsible>
+              <NuxtLink
+                :to="connectorsPageUrl"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Connectors" external>
                   <template #icon>
-                    <IconConnectors class="h-4 w-4 ml-px text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
-              <NuxtLink to="https://speckle.community/" target="_blank">
-                <LayoutSidebarMenuGroupItem label="Community forum" external>
-                  <template #icon>
-                    <GlobeAltIcon class="h-5 w-5 text-foreground-2" />
+                    <IconConnectors class="size-4 ml-px text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
               <NuxtLink
-                to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
+                to="https://speckle.community/"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
-                <LayoutSidebarMenuGroupItem label="Give us feedback" external>
+                <LayoutSidebarMenuGroupItem label="Community forum" external>
                   <template #icon>
-                    <ChatBubbleLeftIcon class="h-5 w-5 text-foreground-2" />
+                    <IconCommunity class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink to="https://speckle.guide/" target="_blank">
+              <div @click="openFeedbackDialog">
+                <LayoutSidebarMenuGroupItem label="Give us feedback">
+                  <template #icon>
+                    <IconFeedback class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </div>
+
+              <NuxtLink
+                to="https://speckle.guide/"
+                target="_blank"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem label="Documentation" external>
                   <template #icon>
-                    <BriefcaseIcon class="h-5 w-5 text-foreground-2" />
+                    <IconDocumentation class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -138,39 +148,42 @@
               <NuxtLink
                 to="https://speckle.community/c/making-speckle/changelog"
                 target="_blank"
+                @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem label="Changelog" external>
                   <template #icon>
-                    <ClockIcon class="h-5 w-5 text-foreground-2" />
+                    <IconChangelog class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
+          <template #promo>
+            <LayoutSidebarPromo
+              title="SpeckleCon 2024"
+              text="Join us in London on Nov 13-14 for the ultimate community event."
+              button-text="Get tickets"
+              @on-click="onPromoClick"
+            />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
 
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
+
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success
+      event-source="sidebar"
     />
   </div>
 </template>
 <script setup lang="ts">
 import {
-  BriefcaseIcon,
-  XMarkIcon,
-  ChatBubbleLeftIcon,
-  GlobeAltIcon,
-  ClockIcon,
-  Squares2X2Icon,
-  HomeIcon,
-  PlusIcon
-} from '@heroicons/vue/24/outline'
-import {
   FormButton,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
@@ -181,37 +194,83 @@ import {
   homeRoute,
   projectsRoute,
   workspaceRoute,
+  workspacesRoute,
   connectorsPageUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { HomeIcon } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Roles } from '@speckle/shared'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
+const showFeedbackDialog = ref(false)
 
-const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
-  enabled: isWorkspacesEnabled.value
-})
+const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
+  settingsSidebarQuery,
+  null,
+  {
+    enabled: isWorkspacesEnabled.value
+  }
+)
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
 
-const isUserAdmin = computed(() => user.value?.role === 'server:admin')
+const isNotGuest = computed(
+  () => Roles.Server.Admin || user.value?.role === Roles.Server.User
+)
+
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.id),
+        to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex
       }))
     : []
 )
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
+onWorkspaceResult((result) => {
+  if (result.data?.activeUser) {
+    const workspaceIds = result.data.activeUser.workspaces.items.map(
+      (workspace) => workspace.id
+    )
+
+    if (workspaceIds.length > 0) {
+      mixpanel.people.set('workspace_id', workspaceIds)
+    }
+  }
+})
+
+const onPromoClick = () => {
+  mixpanel.track('Promo Banner Clicked', {
+    source: 'sidebar',
+    campaign: 'specklecon2024'
+  })
+
+  window.open('https://conf.speckle.systems/', '_blank')
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+  isOpenMobile.value = false
+}
 </script>

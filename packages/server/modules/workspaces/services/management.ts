@@ -3,19 +3,29 @@ import {
   DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
+  StoreWorkspaceDomain,
   QueryAllWorkspaceProjects,
   UpsertWorkspace,
-  UpsertWorkspaceRole
+  UpsertWorkspaceRole,
+  GetWorkspaceWithDomains,
+  GetWorkspaceDomains,
+  UpdateWorkspace,
+  GetWorkspaceBySlug,
+  UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
-import cryptoRandomString from 'crypto-random-string'
 import {
-  deleteStream,
-  grantStreamPermissions as repoGrantStreamPermissions,
-  revokeStreamPermissions as repoRevokeStreamPermissions
-} from '@/modules/core/repositories/streams'
-import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceDomain,
+  WorkspaceWithDomains
+} from '@/modules/workspacesCore/domain/types'
+import {
+  generateSlugFromName,
+  MaybeNullOrUndefined,
+  Roles,
+  validateWorkspaceSlug
+} from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -23,14 +33,16 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceAdminRequiredError,
-  WorkspaceInvalidDescriptionError,
-  WorkspaceNotFoundError
+  WorkspaceDomainBlockedError,
+  WorkspaceNotFoundError,
+  WorkspaceProtectedError,
+  WorkspaceUnverifiedDomainError,
+  WorkspaceNoVerifiedDomainsError,
+  WorkspaceSlugTakenError,
+  WorkspaceSlugInvalidError,
+  WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
-import {
-  isUserLastWorkspaceAdmin,
-  mapWorkspaceRoleToProjectRole
-} from '@/modules/workspaces/helpers/roles'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
@@ -40,15 +52,24 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import {
+  FindEmailsByUserId,
+  FindVerifiedEmailsByUserId
+} from '@/modules/core/domain/userEmails/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { chunk, isEmpty } from 'lodash'
+import { chunk, isEmpty, omit } from 'lodash'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
+import { blockedDomains } from '@speckle/shared'
+import { DeleteStreamRecords } from '@/modules/core/domain/streams/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
+    slug?: string | null
     description: string | null
     logo: string | null
     defaultLogoIndex: number
@@ -56,14 +77,58 @@ type WorkspaceCreateArgs = {
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
+type GenerateValidSlug = (args: { name: string }) => Promise<string>
+
+type ValidateWorkspaceSlug = (args: { slug: string }) => Promise<void>
+
+export const validateSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): ValidateWorkspaceSlug =>
+  async ({ slug }) => {
+    try {
+      validateWorkspaceSlug(slug)
+    } catch (err) {
+      if (err instanceof Error) throw new WorkspaceSlugInvalidError(err.message)
+      throw err
+    }
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: slug
+    })
+    if (maybeClashingWorkspace) throw new WorkspaceSlugTakenError()
+  }
+
+export const generateValidSlugFactory =
+  ({
+    getWorkspaceBySlug
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }): GenerateValidSlug =>
+  async ({ name }) => {
+    const generatedSlug = generateSlugFromName({ name })
+
+    const maybeClashingWorkspace = await getWorkspaceBySlug({
+      workspaceSlug: generatedSlug
+    })
+    return maybeClashingWorkspace
+      ? `${generatedSlug}-${cryptoRandomString({ length: 5 })}`
+      : generatedSlug
+  }
+
 export const createWorkspaceFactory =
   ({
     upsertWorkspace,
     upsertWorkspaceRole,
+    generateValidSlug,
+    validateSlug,
     emitWorkspaceEvent
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
+    validateSlug: ValidateWorkspaceSlug
+    generateValidSlug: GenerateValidSlug
     emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({
@@ -80,18 +145,30 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
+    let slug: string
+    if (workspaceInput.slug) {
+      await validateSlug({ slug: workspaceInput.slug })
+      slug = workspaceInput.slug
+    } else {
+      slug = await generateValidSlug(workspaceInput)
+    }
     const workspace = {
       ...workspaceInput,
+      slug,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      defaultProjectRole: Roles.Stream.Contributor,
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: false
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
     await upsertWorkspaceRole({
       userId,
       role: Roles.Workspace.Admin,
-      workspaceId: workspace.id
+      workspaceId: workspace.id,
+      createdAt: new Date()
     })
 
     // emit a workspace created event
@@ -100,51 +177,86 @@ export const createWorkspaceFactory =
       payload: { ...workspace, createdByUserId: userId }
     })
 
-    return workspace
+    return { ...workspace }
   }
 
-type WorkspaceUpdateArgs = {
-  workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
+type WorkspaceUpdateInput = Parameters<UpdateWorkspace>[0]['workspaceInput']
+
+const isValidInput = (input: WorkspaceUpdateInput): input is Partial<Workspace> => {
+  if (!!input.logo) {
+    validateImageString(input.logo)
   }
+
+  if (!!input.description) {
+    if (input.description.length > 512)
+      throw new WorkspaceInvalidUpdateError('Provided description is too long')
+  }
+
+  return true
+}
+
+const isValidWorkspace = (
+  input: WorkspaceUpdateInput,
+  workspace: WorkspaceWithDomains
+): boolean => {
+  const hasVerifiedDomains = workspace.domains.find((domain) => domain.verified)
+
+  if (input.discoverabilityEnabled && !workspace.discoverabilityEnabled) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+
+  if (
+    input.domainBasedMembershipProtectionEnabled &&
+    !workspace.domainBasedMembershipProtectionEnabled
+  ) {
+    if (!hasVerifiedDomains) throw new WorkspaceNoVerifiedDomainsError()
+  }
+
+  return true
+}
+
+const sanitizeInput = (input: Partial<Workspace>) => {
+  const sanitizedInput = structuredClone(input)
+
+  if (isEmpty(sanitizedInput.name)) {
+    // Do not allow setting an empty name (empty descriptions allowed)
+    delete sanitizedInput.name
+  }
+
+  return removeNullOrUndefinedKeys(sanitizedInput)
 }
 
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
+    validateSlug,
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
-    getWorkspace: GetWorkspace
+    getWorkspace: GetWorkspaceWithDomains
+    validateSlug: ValidateWorkspaceSlug
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
-  }) =>
-  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+  }): UpdateWorkspace =>
+  async ({ workspaceId, workspaceInput }) => {
     // Get existing workspace to merge with incoming changes
-    const currentWorkspace = await getWorkspace({ workspaceId })
+    const currentWorkspace = await getWorkspace({ id: workspaceId })
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
     }
 
-    // Validate incoming changes
-    if (!!workspaceInput.logo) {
-      validateImageString(workspaceInput.logo)
-    }
-    if (isEmpty(workspaceInput.name)) {
-      // Do not allow setting an empty name (empty descriptions allowed)
-      delete workspaceInput.name
-    }
-    if (!!workspaceInput.description && workspaceInput.description.length > 512) {
-      throw new WorkspaceInvalidDescriptionError()
+    if (
+      !isValidInput(workspaceInput) ||
+      !isValidWorkspace(workspaceInput, currentWorkspace)
+    ) {
+      throw new WorkspaceInvalidUpdateError()
     }
 
+    if (workspaceInput.slug) await validateSlug({ slug: workspaceInput.slug })
+
     const workspace = {
-      ...currentWorkspace,
-      ...removeNullOrUndefinedKeys(workspaceInput),
+      ...omit(currentWorkspace, 'domains'),
+      ...sanitizeInput(workspaceInput),
       updatedAt: new Date()
     }
 
@@ -166,7 +278,7 @@ export const deleteWorkspaceFactory =
     deleteAllResourceInvites
   }: {
     deleteWorkspace: DeleteWorkspace
-    deleteProject: typeof deleteStream
+    deleteProject: DeleteStreamRecords
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
   }) =>
@@ -191,7 +303,7 @@ export const deleteWorkspaceFactory =
       )
     ])
 
-    // Workspace delete cascades project delete, but some manual cleanup is required
+    // Workspace delete cascades-deletes stream table rows, but some manual cleanup is required
     // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
@@ -207,15 +319,11 @@ export const deleteWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
     deleteWorkspaceRole,
-    emitWorkspaceEvent,
-    getStreams,
-    revokeStreamPermissions
+    emitWorkspaceEvent
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    getStreams: typeof serviceGetStreams
-    revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
   async ({
     workspaceId,
@@ -231,20 +339,6 @@ export const deleteWorkspaceRoleFactory =
     const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
     if (!deletedRole) {
       return null
-    }
-
-    // Delete workspace project roles
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
-    })
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
-      workspaceId
-    })) {
-      await Promise.all(
-        projectsPage.map(({ id: streamId }) =>
-          revokeStreamPermissions({ streamId, userId })
-        )
-      )
     }
 
     // Emit deleted role
@@ -273,70 +367,171 @@ export const getWorkspaceRoleFactory =
 export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
+    getWorkspaceWithDomains,
+    findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
-    emitWorkspaceEvent,
-    getStreams,
-    grantStreamPermissions
+    emitWorkspaceEvent
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
+    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    // TODO: Create `core` domain and import type from there
-    getStreams: typeof serviceGetStreams
-    grantStreamPermissions: typeof repoGrantStreamPermissions
-  }) =>
+  }): UpdateWorkspaceRole =>
   async ({
     workspaceId,
     userId,
-    role,
-    skipProjectRoleUpdatesFor
-  }: WorkspaceAcl & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
+    role: nextWorkspaceRole,
+    skipProjectRoleUpdatesFor,
+    preventRoleDowngrade
   }): Promise<void> => {
-    // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+
+    // Return early if no work required
+    const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
+    if (previousWorkspaceRole?.role === nextWorkspaceRole) {
+      return
+    }
+
+    // prevent role downgrades (used during invite flow)
+    if (preventRoleDowngrade) {
+      if (previousWorkspaceRole) {
+        const roleWeights = workspaceRoleDefinitions
+        const existingRoleWeight = roleWeights.find(
+          (w) => w.name === previousWorkspaceRole.role
+        )!.weight
+        const newRoleWeight = roleWeights.find(
+          (w) => w.name === nextWorkspaceRole
+        )!.weight
+        if (newRoleWeight < existingRoleWeight) return
+      }
+    }
+
+    // Protect against removing last admin
     if (
       isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      role !== Roles.Workspace.Admin
+      nextWorkspaceRole !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
     }
 
-    // Perform upsert
-    await upsertWorkspaceRole({ userId, workspaceId, role })
+    // ensure domain compliance
+    if (nextWorkspaceRole !== Roles.Workspace.Guest) {
+      const workspace = await getWorkspaceWithDomains({ id: workspaceId })
+      if (!workspace) throw new WorkspaceNotFoundError()
+      if (workspace.domainBasedMembershipProtectionEnabled) {
+        const userEmails = await findVerifiedEmailsByUserId({ userId })
+        if (
+          !userEmailsCompliantWithWorkspaceDomains({
+            userEmails,
+            workspaceDomains: workspace.domains
+          })
+        ) {
+          throw new WorkspaceProtectedError()
+        }
+      }
+    }
 
-    // Emit new role
+    // Perform and emit change
+    await upsertWorkspaceRole({
+      userId,
+      workspaceId,
+      role: nextWorkspaceRole,
+      createdAt: previousWorkspaceRole?.createdAt ?? new Date()
+    })
+
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
-      payload: { userId, workspaceId, role }
+      payload: {
+        userId,
+        workspaceId,
+        role: nextWorkspaceRole,
+        flags: {
+          skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
+        }
+      }
+    })
+  }
+
+export const addDomainToWorkspaceFactory =
+  ({
+    findEmailsByUserId,
+    storeWorkspaceDomain,
+    getWorkspace,
+    upsertWorkspace,
+    emitWorkspaceEvent,
+    getDomains
+  }: {
+    findEmailsByUserId: FindEmailsByUserId
+    storeWorkspaceDomain: StoreWorkspaceDomain
+    getWorkspace: GetWorkspace
+    upsertWorkspace: UpsertWorkspace
+    getDomains: GetWorkspaceDomains
+    emitWorkspaceEvent: EventBus['emit']
+  }) =>
+  async ({
+    userId,
+    domain,
+    workspaceId
+  }: {
+    userId: string
+    domain: string
+    workspaceId: string
+  }) => {
+    // this function makes the assumption, that the user has a workspace admin role
+    const sanitizedDomain = domain.toLowerCase().trim()
+    if (blockedDomains.includes(sanitizedDomain))
+      throw new WorkspaceDomainBlockedError()
+    const userEmails = await findEmailsByUserId({
+      userId
     })
 
-    // Apply initial project role to existing workspace projects
-    const isFirstWorkspaceRole = !workspaceRoles.some((role) => role.userId === userId)
+    const email = userEmails.find(
+      (userEmail) =>
+        userEmail.verified && userEmail.email.split('@')[1] === sanitizedDomain
+    )
 
-    if (!isFirstWorkspaceRole || role === Roles.Workspace.Guest) {
-      // Guests do not get roles for existing workspace projects
-      return
+    if (!email) {
+      throw new WorkspaceUnverifiedDomainError()
+    }
+    // we're treating all user owned domains as verified, cause they have it in their verified emails list
+    const verified = true
+
+    const workspaceWithRole = await getWorkspace({ workspaceId, userId })
+
+    if (!workspaceWithRole) throw new WorkspaceAdminRequiredError()
+
+    const { role, ...workspace } = workspaceWithRole
+
+    if (role !== Roles.Workspace.Admin) {
+      throw new WorkspaceAdminRequiredError()
     }
 
-    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-      getStreams
+    const domains = await getDomains({ workspaceIds: [workspaceId] })
+
+    // idempotent operation
+    if (domains.find((domain) => domain.domain === sanitizedDomain)) return
+
+    const workspaceDomain: WorkspaceDomain = {
+      workspaceId,
+      id: cryptoRandomString({ length: 10 }),
+      domain: sanitizedDomain,
+      createdByUserId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      verified
+    }
+
+    await storeWorkspaceDomain({ workspaceDomain })
+
+    if (domains.length === 0) {
+      await upsertWorkspace({
+        workspace: { ...workspace, discoverabilityEnabled: true }
+      })
+    }
+
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Updated,
+      payload: workspace
     })
-    const projectRole = mapWorkspaceRoleToProjectRole(role)
-    for await (const projectsPage of queryAllWorkspaceProjectsGenerator({
-      workspaceId
-    })) {
-      await Promise.all(
-        projectsPage.map(({ id: streamId }) => {
-          if (skipProjectRoleUpdatesFor?.includes(streamId)) {
-            return
-          }
-
-          return grantStreamPermissions({ streamId, userId, role: projectRole })
-        })
-      )
-    }
   }

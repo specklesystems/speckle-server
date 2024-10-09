@@ -60,7 +60,8 @@
       allow-unset
       button-style="tinted"
       clearable
-      placeholder="Choose a GitHub organization (optional)"
+      show-optional
+      placeholder="Choose a GitHub organization"
       help="Choose an organization to publish your Git repository to. If left empty, it will be published to your personal account."
       :items="githubOrgs"
       mount-menu-on-body

@@ -766,6 +766,12 @@ function setupResponseResourceData(
   })
 
   onViewerLoadedResourcesError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad = !!viewerLoadedResourcesResult.value?.project.models.items
+    if (isWorkingLoad) {
+      return
+    }
+
     globalError.value = createError({
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
@@ -841,6 +847,13 @@ function setupResponseResourceData(
   const commentThreads = computed(() => commentThreadsMetadata.value?.items || [])
 
   onViewerLoadedThreadsError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad =
+      !!viewerLoadedThreadsResult.value?.project.commentThreads.items
+    if (isWorkingLoad) {
+      return
+    }
+
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Comment loading failed',

@@ -13,7 +13,7 @@ export type UserRecord = {
   company: Nullable<string>
   email: string
   verified: boolean
-  avatar: string
+  avatar: Nullable<string>
   profiles: Nullable<string>
   /**
    * Marked as optional, cause most queries delete it
@@ -29,6 +29,10 @@ export type LimitedUserRecord = Pick<
   UserRecord,
   'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
 >
+
+export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
+  role: ServerRoles
+}
 
 export type UsersMetaRecord<V = any> = {
   userId: string

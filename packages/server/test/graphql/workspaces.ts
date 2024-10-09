@@ -1,9 +1,10 @@
-import { gql } from 'apollo-server-express'
+import gql from 'graphql-tag'
 
 export const workspaceFragment = gql`
   fragment TestWorkspace on Workspace {
     id
     name
+    slug
     description
     createdAt
     updatedAt
@@ -15,6 +16,16 @@ export const workspaceCollaboratorFragment = gql`
   fragment TestWorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
+    user {
+      name
+    }
+    projectRoles {
+      role
+      project {
+        id
+        name
+      }
+    }
   }
 `
 
@@ -24,11 +35,6 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
-  }
-`
-
-export const workspaceTeamFragment = gql`
-  fragment TestWorkspaceTeam on Workspace {
     team {
       id
       role
@@ -59,11 +65,42 @@ export const getWorkspaceQuery = gql`
   query GetWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...TestWorkspace
-      ...TestWorkspaceTeam
+      team {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+      }
     }
   }
   ${workspaceFragment}
-  ${workspaceTeamFragment}
+  ${workspaceCollaboratorFragment}
+`
+
+export const getWorkspaceBySlugQuery = gql`
+  query GetWorkspaceBySlug($workspaceSlug: String!) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...TestWorkspace
+      team {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+      }
+    }
+  }
+  ${workspaceFragment}
+  ${workspaceCollaboratorFragment}
+`
+
+export const getActiveUserDiscoverableWorkspacesQuery = gql`
+  query getActiveUserDiscoverableWorkspaces {
+    activeUser {
+      discoverableWorkspaces {
+        id
+        name
+        description
+      }
+    }
+  }
 `
 
 export const updateWorkspaceQuery = gql`
@@ -95,12 +132,14 @@ export const updateWorkspaceRoleQuery = gql`
     workspaceMutations {
       updateRole(input: $input) {
         team {
-          id
-          role
+          items {
+            ...TestWorkspaceCollaborator
+          }
         }
       }
     }
   }
+  ${workspaceCollaboratorFragment}
 `
 
 export const createWorkspaceProjectQuery = gql`
@@ -135,10 +174,19 @@ export const getWorkspaceProjectsQuery = gql`
 `
 
 export const getWorkspaceTeamQuery = gql`
-  query GetWorkspaceTeam($workspaceId: String!, $filter: WorkspaceTeamFilter) {
+  query GetWorkspaceTeam(
+    $workspaceId: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
     workspace(id: $workspaceId) {
-      team(filter: $filter) {
-        ...TestWorkspaceCollaborator
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+        cursor
+        totalCount
       }
     }
   }
@@ -149,6 +197,39 @@ export const leaveWorkspaceMutation = gql`
   mutation ActiveUserLeaveWorkspace($id: ID!) {
     workspaceMutations {
       leave(id: $id)
+    }
+  }
+`
+
+export const getProjectWorkspaceQuery = gql`
+  query ActiveUserProjectsWorkspace {
+    activeUser {
+      projects {
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`
+
+export const moveProjectToWorkspaceMutation = gql`
+  mutation MoveProjectToWorkspace($projectId: String!, $workspaceId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
+          id
+          workspaceId
+          team {
+            id
+            role
+          }
+        }
+      }
     }
   }
 `

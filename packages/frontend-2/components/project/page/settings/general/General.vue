@@ -50,7 +50,6 @@ import type { ProjectUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamInternals } from '~/lib/projects/composables/team'
-import { skipLoggingErrorsIfOneFieldError } from '~/lib/common/helpers/graphql'
 
 const projectPageSettingsGeneralQuery = graphql(`
   query ProjectPageSettingsGeneral($projectId: String!) {
@@ -72,20 +71,9 @@ const updateProject = useUpdateProject()
 
 const projectId = computed(() => route.params.id as string)
 
-const { result: pageResult } = useQuery(
-  projectPageSettingsGeneralQuery,
-  () => ({
-    projectId: projectId.value
-  }),
-  () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: skipLoggingErrorsIfOneFieldError('invitedTeam')
-    }
-  })
-)
+const { result: pageResult } = useQuery(projectPageSettingsGeneralQuery, () => ({
+  projectId: projectId.value
+}))
 
 const project = computed(() => pageResult.value?.project)
 

@@ -406,11 +406,25 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/6221c985c0'
 
     // DUI3 Color Proxies
-    ' https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
+    // ' https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
     // 'https://app.speckle.systems/projects/b53a53697a/models/93fa215ba9'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/5ec85fc2a2'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@5af6d6a3f4'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@ebb895355d'
+    // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
+    // 'https://app.speckle.systems/projects/93200a735d/models/e3c3849167'
+    // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
+    // 'https://app.speckle.systems/projects/93200a735d/models/e3c3849167'
+
+    // Text with no material
+    // 'https://latest.speckle.systems/projects/731c6e2fd1/models/bcd3a4a706'
+
+    // BREPs as display values
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/b613d77690@046b56bf12'
+
+    // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
+
+    'https://app.speckle.systems/projects/6cf358a40e/models/e01ffbc891@f1ddc19011'
   )
 }
 

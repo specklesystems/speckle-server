@@ -5,7 +5,15 @@
         <!-- Nav -->
         <Portal to="navigation">
           <ViewerScope :state="state">
+            <template v-if="project?.workspace && isWorkspacesEnabled">
+              <HeaderNavLink
+                :to="workspaceRoute(project?.workspace.slug)"
+                :name="project?.workspace.name"
+                :separator="false"
+              ></HeaderNavLink>
+            </template>
             <HeaderNavLink
+              v-else
               :to="projectsRoute"
               name="Projects"
               :separator="false"
@@ -114,6 +122,7 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -121,6 +130,7 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const { showTour, showControls } = useViewerTour()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const modelId = computed(() => route.params.modelId as string)
 
@@ -148,6 +158,11 @@ graphql(`
     createdAt
     name
     visibility
+    workspace {
+      id
+      slug
+      name
+    }
   }
 `)
 

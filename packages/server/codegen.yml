@@ -1,6 +1,6 @@
 overwrite: true
 schema:
-  - 'modules/schema.js'
+  - 'modules/schema.ts'
 documents: null
 generates:
   modules/core/graph/generated/graphql.ts:
@@ -34,6 +34,7 @@ generates:
         AutomateMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ServerStats: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
@@ -56,10 +57,20 @@ generates:
         ProjectAutomationsUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectAutomationsUpdatedMessageGraphQLReturn'
         UserAutomateInfo: '@/modules/automate/helpers/graphTypes#UserAutomateInfoGraphQLReturn'
         Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceGraphQLReturn'
+        WorkspaceBilling: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceBillingGraphQLReturn'
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
+        WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
+        SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueSchema'
+        BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
+        ServerWorkspacesInfo: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ActivityCollection: '@/modules/activitystream/helpers/graphTypes#ActivityCollectionGraphQLReturn'
+        ProjectRole: '@/modules/workspacesCore/helpers/graphTypes#ProjectRoleGraphQLReturn'
+        ServerApp: '@/modules/auth/helpers/graphTypes#ServerAppGraphQLReturn'
+        ServerAppListItem: '@/modules/auth/helpers/graphTypes#ServerAppListItemGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

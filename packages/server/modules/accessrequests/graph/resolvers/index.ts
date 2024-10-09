@@ -1,19 +1,69 @@
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import { db } from '@/db/knex'
+import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
-  getPendingProjectRequests,
-  getPendingStreamRequests,
-  getUserProjectAccessRequest,
-  getUserStreamAccessRequest,
-  processPendingProjectRequest,
-  processPendingStreamRequest,
-  requestProjectAccess,
-  requestStreamAccess
+  AccessRequestType,
+  createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
+  getPendingAccessRequestsFactory,
+  getUsersPendingAccessRequestFactory
+} from '@/modules/accessrequests/repositories'
+import {
+  getPendingProjectRequestsFactory,
+  getPendingStreamRequestsFactory,
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
+  processPendingStreamRequestFactory,
+  requestProjectAccessFactory,
+  requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
+
+const getStream = getStreamFactory({ db })
+const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
+  getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+})
+
+const getUserStreamAccessRequest = getUserStreamAccessRequestFactory({
+  getUserProjectAccessRequest
+})
+
+const requestProjectAccess = requestProjectAccessFactory({
+  getUserStreamAccessRequest,
+  getStream,
+  createNewRequest: createNewRequestFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess
+})
+
+const getPendingProjectRequests = getPendingProjectRequestsFactory({
+  getPendingAccessRequests: getPendingAccessRequestsFactory({ db })
+})
+
+const getPendingStreamRequests = getPendingStreamRequestsFactory({
+  getPendingProjectRequests
+})
+
+const processPendingStreamRequest = processPendingStreamRequestFactory({
+  getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
+  validateStreamAccess,
+  addOrUpdateStreamCollaborator,
+  deleteRequestById: deleteRequestByIdFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const processPendingProjectRequest = processPendingStreamRequest
 
 const resolvers: Resolvers = {
   Mutation: {

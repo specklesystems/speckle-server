@@ -6,6 +6,7 @@ import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
+import type { LabelPosition } from './input'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
@@ -27,6 +28,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     useLabelInErrors?: boolean
     hideErrorMessage?: boolean
     color?: InputColor
+    labelPosition?: LabelPosition
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: V }): void
@@ -47,8 +49,9 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex text-body-xs font-medium',
-      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+      'flex text-body-xs font-medium gap-1 items-center',
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2',
+      unref(props.labelPosition) !== 'left' ? 'pb-1' : null
     ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
@@ -74,9 +77,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     ]
 
     if (error.value) {
-      classParts.push(
-        'focus:border-danger focus:ring-danger border-2 border-danger text-danger-darker'
-      )
+      classParts.push('!border-danger')
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
     }
@@ -113,7 +114,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['text-body-2xs']
+    const classParts = ['text-body-2xs break-words']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })

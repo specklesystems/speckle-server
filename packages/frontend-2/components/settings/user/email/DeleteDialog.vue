@@ -2,10 +2,10 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Delete email address"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
+    <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to delete
       <span class="font-medium">{{ email }}</span>
       from your account?
@@ -35,14 +35,14 @@ const { triggerNotification } = useGlobalToast()
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Delete',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
     }

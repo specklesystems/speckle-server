@@ -5,22 +5,18 @@ import {
   UserRecord
 } from '@/modules/core/helpers/types'
 import {
-  createStream,
-  getStream,
+  createStreamFactory,
+  getStreamFactory,
   StreamWithOptionalRole
 } from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
-  getBatchedStreamObjects,
-  insertObjects
-} from '@/modules/core/repositories/objects'
-import {
-  getBatchedStreamCommits,
   generateCommitId,
-  insertCommits,
-  insertStreamCommits,
-  getBatchedBranchCommits,
-  insertBranchCommits
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory,
+  getBatchedStreamCommitsFactory,
+  getBatchedBranchCommitsFactory,
+  insertCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash'
 import {
@@ -32,13 +28,21 @@ import {
   generateCommentId,
   getBatchedStreamComments,
   getCommentLinks,
-  insertCommentLinks,
-  insertComments
+  insertCommentLinksFactory,
+  insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
-import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { Knex } from 'knex'
+import { InsertCommentPayload } from '@/modules/comments/domain/operations'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import {
+  getBatchedStreamObjectsFactory,
+  insertObjectsFactory
+} from '@/modules/core/repositories/objects'
+import { addStreamClonedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -78,6 +82,7 @@ const prepareState = async (
   userId: string,
   sourceStreamId: string
 ): Promise<CloneStreamInitialState> => {
+  const getStream = getStreamFactory({ db })
   const targetStream = await getStream({ streamId: sourceStreamId })
   if (!targetStream) {
     throw new StreamCloneError('Clonable source stream not found', {
@@ -98,6 +103,7 @@ const prepareState = async (
 async function cloneStreamEntity(state: CloneStreamInitialState) {
   const { targetStream, user, trx } = state
 
+  const createStream = createStreamFactory({ db })
   const newStream = await createStream(
     {
       name: targetStream.name,
@@ -117,6 +123,9 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
   const { getNewDate } = incrementingDateGenerator()
+  const getBatchedStreamObjects = getBatchedStreamObjectsFactory({ db })
+  const insertObjects = insertObjectsFactory({ db })
+
   for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id, {
     trx: state.trx
   })) {
@@ -163,6 +172,8 @@ async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
+  const insertCommits = insertCommitsFactory({ db })
+  const getBatchedStreamCommits = getBatchedStreamCommitsFactory({ db })
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
     trx: state.trx
   })) {
@@ -190,7 +201,7 @@ async function createStreamCommitReferences(
   const batchedNewCommitIds = chunk(newCommitIds, batchSize)
 
   for (const newCommitIdBatch of batchedNewCommitIds) {
-    await insertStreamCommits(
+    await insertStreamCommitsFactory({ db })(
       newCommitIdBatch.map(
         (id): StreamCommitRecord => ({
           streamId: newStreamId,
@@ -235,6 +246,8 @@ async function createBranchCommitReferences(
   branchIdMap: Map<string, string>
 ) {
   const oldBranchIds = [...branchIdMap.keys()]
+  const getBatchedBranchCommits = getBatchedBranchCommitsFactory({ db })
+
   for await (const branchCommits of getBatchedBranchCommits(oldBranchIds, {
     trx: state.trx
   })) {
@@ -255,7 +268,7 @@ async function createBranchCommitReferences(
       return { commitId: newCommitId, branchId: newBranchId }
     })
 
-    await insertBranchCommits(newBranchCommits, { trx: state.trx })
+    await insertBranchCommitsFactory({ db })(newBranchCommits, { trx: state.trx })
   }
 }
 
@@ -297,7 +310,7 @@ async function cloneComments(
       withParentCommentOnly: !threads,
       trx: state.trx
     })) {
-      commentsBatch.forEach((c) => {
+      const finalBatch = commentsBatch.map((c): InsertCommentPayload => {
         const oldId = c.id
         const newDate = getNewDate()
 
@@ -322,9 +335,13 @@ async function cloneComments(
         }
 
         commentIdMap.set(oldId, c.id)
+        return {
+          ...c,
+          text: c.text as SmartTextEditorValueSchema
+        }
       })
 
-      await insertComments(commentsBatch, { trx: state.trx })
+      await insertCommentsFactory({ db })(finalBatch, { trx: state.trx })
     }
   }
 
@@ -383,7 +400,7 @@ async function cloneCommentLinks(
       }
     })
 
-    await insertCommentLinks(commentLinks, { trx })
+    await insertCommentLinksFactory({ db })(commentLinks, { trx })
   }
 }
 
@@ -416,7 +433,10 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
     // Create activity item
-    await addStreamClonedActivity(
+    await addStreamClonedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })(
       {
         sourceStreamId,
         newStream,

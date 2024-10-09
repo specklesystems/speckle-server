@@ -50,8 +50,13 @@ export type Activity = {
 export type ActivityCollection = {
   __typename?: 'ActivityCollection';
   cursor?: Maybe<Scalars['String']['output']>;
-  items?: Maybe<Array<Maybe<Activity>>>;
+  items: Array<Activity>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type AddDomainToWorkspaceInput = {
+  domain: Scalars['String']['input'];
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type AdminInviteList = {
@@ -823,6 +828,12 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export enum Currency {
+  Eur = 'EUR',
+  Gbp = 'GBP',
+  Usd = 'USD'
+}
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -844,6 +855,15 @@ export enum DiscoverableStreamsSortType {
 export type DiscoverableStreamsSortingInput = {
   direction: SortDirection;
   type: DiscoverableStreamsSortType;
+};
+
+export type DiscoverableWorkspace = {
+  __typename?: 'DiscoverableWorkspace';
+  defaultLogoIndex: Scalars['Int']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  logo?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
 };
 
 export type EditCommentInput = {
@@ -919,6 +939,10 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type JoinWorkspaceInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -974,6 +998,7 @@ export type LimitedUser = {
    */
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
+  workspaceDomainPolicyCompliant?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -1019,6 +1044,15 @@ export type LimitedUserTimelineArgs = {
   before?: InputMaybe<Scalars['DateTime']['input']>;
   cursor?: InputMaybe<Scalars['DateTime']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type MarkReceivedVersionInput = {
@@ -1735,6 +1769,7 @@ export type PendingWorkspaceCollaborator = {
   user?: Maybe<LimitedUser>;
   workspaceId: Scalars['String']['output'];
   workspaceName: Scalars['String']['output'];
+  workspaceSlug: Scalars['String']['output'];
 };
 
 export type PendingWorkspaceCollaboratorsFilter = {
@@ -1829,7 +1864,7 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
-  limit?: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -2264,6 +2299,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+export type ProjectRole = {
+  __typename?: 'ProjectRole';
+  project: Project;
+  role: Scalars['String']['output'];
+};
+
 export type ProjectTestAutomationCreateInput = {
   functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
@@ -2451,7 +2492,10 @@ export type Query = {
    * The query looks for matches in name & email
    */
   userSearch: UserSearchResultCollection;
+  /** Validates the slug, to make sure it contains only valid characters and its not taken. */
+  validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
+  workspaceBySlug: Workspace;
   /**
    * Look for an invitation to a workspace, for the current user (authed or not).
    *
@@ -2586,12 +2630,23 @@ export type QueryUserSearchArgs = {
 };
 
 
+export type QueryValidateWorkspaceSlugArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
 export type QueryWorkspaceArgs = {
   id: Scalars['String']['input'];
 };
 
 
+export type QueryWorkspaceBySlugArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
 export type QueryWorkspaceInviteArgs = {
+  options?: InputMaybe<WorkspaceInviteLookupOptions>;
   token?: InputMaybe<Scalars['String']['input']>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3368,6 +3423,8 @@ export type User = {
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Get discoverable workspaces with verified domains that match the active user's */
+  discoverableWorkspaces: Array<DiscoverableWorkspace>;
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   emails: Array<UserEmail>;
@@ -3817,18 +3874,28 @@ export type WebhookUpdateInput = {
   id: Scalars['String']['input'];
   secret?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-  triggers?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  triggers?: InputMaybe<Array<Scalars['String']['input']>>;
   url?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Billing data for Workspaces beta */
+  billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
+  /** The default role workspace members will receive for workspace projects. */
+  defaultProjectRole: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Enable/Disable discovery of the workspace */
+  discoverabilityEnabled: Scalars['Boolean']['output'];
+  /** Enable/Disable restriction to invite users to workspace as Guests only */
+  domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
+  /** Verified workspace domains */
+  domains?: Maybe<Array<WorkspaceDomain>>;
   id: Scalars['ID']['output'];
-  /** Only available to workspace owners */
+  /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
@@ -3836,7 +3903,8 @@ export type Workspace = {
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
-  team: Array<WorkspaceCollaborator>;
+  slug: Scalars['String']['output'];
+  team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -3854,14 +3922,31 @@ export type WorkspaceProjectsArgs = {
 
 
 export type WorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceTeamFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
+export type WorkspaceBilling = {
+  __typename?: 'WorkspaceBilling';
+  cost: WorkspaceCost;
+  versionsCount: WorkspaceVersionsCount;
+};
+
+/** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   user: LimitedUser;
+};
+
+export type WorkspaceCollaboratorCollection = {
+  __typename?: 'WorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type WorkspaceCollection = {
@@ -3871,10 +3956,51 @@ export type WorkspaceCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type WorkspaceCost = {
+  __typename?: 'WorkspaceCost';
+  /** Currency of the price */
+  currency: Currency;
+  /** Discount applied to the total */
+  discount?: Maybe<WorkspaceCostDiscount>;
+  items: Array<WorkspaceCostItem>;
+  /** Estimated cost of the workspace with no discount applied */
+  subTotal: Scalars['Float']['output'];
+  /** Total cost with discount applied */
+  total: Scalars['Float']['output'];
+};
+
+export type WorkspaceCostDiscount = {
+  __typename?: 'WorkspaceCostDiscount';
+  amount: Scalars['Float']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type WorkspaceCostItem = {
+  __typename?: 'WorkspaceCostItem';
+  cost: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type WorkspaceCreateInput = {
   defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Logo image as base64-encoded string */
+  logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceDomain = {
+  __typename?: 'WorkspaceDomain';
+  domain: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type WorkspaceDomainDeleteInput = {
+  id: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type WorkspaceInviteCreateInput = {
@@ -3886,6 +4012,11 @@ export type WorkspaceInviteCreateInput = {
   serverRole?: InputMaybe<ServerRole>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceInviteLookupOptions = {
+  /** If true, the query will assume workspaceId is actually the workspace slug, and do the lookup by slug */
+  useSlug?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type WorkspaceInviteMutations = {
@@ -3942,12 +4073,21 @@ export type WorkspaceInviteUseInput = {
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
+  addDomain: Workspace;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
+  deleteDomain: Workspace;
   invites: WorkspaceInviteMutations;
+  join: Workspace;
   leave: Scalars['Boolean']['output'];
+  projects: WorkspaceProjectMutations;
   update: Workspace;
   updateRole: Workspace;
+};
+
+
+export type WorkspaceMutationsAddDomainArgs = {
+  input: AddDomainToWorkspaceInput;
 };
 
 
@@ -3958,6 +4098,16 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceMutationsDeleteDomainArgs = {
+  input: WorkspaceDomainDeleteInput;
+};
+
+
+export type WorkspaceMutationsJoinArgs = {
+  input: JoinWorkspaceInput;
 };
 
 
@@ -3986,6 +4136,23 @@ export type WorkspaceProjectInviteCreateInput = {
   userId?: InputMaybe<Scalars['String']['input']>;
   /** Only taken into account, if project belongs to a workspace. Defaults to guest access. */
   workspaceRole?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceProjectMutations = {
+  __typename?: 'WorkspaceProjectMutations';
+  moveToWorkspace: Project;
+  updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsMoveToWorkspaceArgs = {
+  projectId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
 };
 
 export type WorkspaceProjectsFilter = {
@@ -4020,11 +4187,23 @@ export type WorkspaceTeamFilter = {
 
 export type WorkspaceUpdateInput = {
   defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
+  defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceVersionsCount = {
+  __typename?: 'WorkspaceVersionsCount';
+  /** Total number of versions of all projects in the workspace */
+  current: Scalars['Int']['output'];
+  /** Maximum number of version of all projects in the workspace with no additional cost */
+  max: Scalars['Int']['output'];
 };
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{

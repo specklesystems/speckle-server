@@ -29,7 +29,7 @@ const mp = useMixpanel()
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -38,7 +38,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     text: 'Leave',
     props: {
       color: 'danger',
-      fullWidth: true,
+
       submit: true
     },
     onClick: onLeave
@@ -47,6 +47,11 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
 
 const onLeave = async () => {
   await leaveProject(props.project.id, { goHome: true })
-  mp.track('Stream Action', { type: 'action', name: 'leave' })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'leave',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.project.workspace?.id
+  })
 }
 </script>

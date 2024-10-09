@@ -68,7 +68,7 @@ const borderClasses = computed(() => {
 
 const bgClasses = computed(() => {
   if (props.noBg) return ''
-  return 'bg-primary'
+  return 'bg-info-darker'
 })
 
 const hoverClasses = computed(() => {

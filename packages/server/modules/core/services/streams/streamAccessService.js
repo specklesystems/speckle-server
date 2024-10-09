@@ -1,25 +1,31 @@
 const { authorizeResolver } = require(`@/modules/shared`)
 
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { LogicError } = require('@/modules/shared/errors')
-const { ForbiddenError, UserInputError } = require('apollo-server-express')
+const {
+  LogicError,
+  ForbiddenError,
+  BadRequestError
+} = require('@/modules/shared/errors')
 const {
   StreamInvalidAccessError,
   StreamAccessUpdateError
 } = require('@/modules/core/errors/stream')
 const {
-  addStreamPermissionsAddedActivity,
-  addStreamPermissionsRevokedActivity,
-  addStreamInviteAcceptedActivity
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const {
-  getStream,
   revokeStreamPermissions,
-  grantStreamPermissions
+  grantStreamPermissions,
+  getStreamFactory
 } = require('@/modules/core/repositories/streams')
 
 const { ServerAcl } = require('@/modules/core/dbSchema')
 const { ensureError } = require('@speckle/shared')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
 
 /**
  * Check if user is a stream collaborator
@@ -28,6 +34,7 @@ const { ensureError } = require('@speckle/shared')
  * @returns
  */
 async function isStreamCollaborator(userId, streamId) {
+  const getStream = getStreamFactory({ db })
   const stream = await getStream({ streamId, userId })
   return !!stream.role
 }
@@ -116,7 +123,10 @@ async function removeStreamCollaborator(
 
   const stream = await revokeStreamPermissions({ streamId, userId })
 
-  await addStreamPermissionsRevokedActivity({
+  await addStreamPermissionsRevokedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db })
+  })({
     streamId,
     activityUserId: removedById,
     removedUserId: userId,
@@ -170,7 +180,7 @@ async function addOrUpdateStreamCollaborator(
   if (role === Roles.Stream.Owner) {
     const userServerRole = await ServerAcl.knex().where({ userId }).first()
     if (userServerRole.role === Roles.Server.Guest)
-      throw new UserInputError('Server guests cannot own streams')
+      throw new BadRequestError('Server guests cannot own streams')
   }
 
   const stream = await grantStreamPermissions({
@@ -180,7 +190,10 @@ async function addOrUpdateStreamCollaborator(
   })
 
   if (fromInvite) {
-    await addStreamInviteAcceptedActivity({
+    await addStreamInviteAcceptedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })({
       streamId,
       inviterId: addedById,
       inviteTargetId: userId,
@@ -188,7 +201,10 @@ async function addOrUpdateStreamCollaborator(
       stream
     })
   } else {
-    await addStreamPermissionsAddedActivity({
+    await addStreamPermissionsAddedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })({
       streamId,
       activityUserId: addedById,
       targetUserId: userId,

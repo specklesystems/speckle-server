@@ -1,33 +1,26 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Change role</template>
-    <div class="flex flex-col gap-6 text-sm text-foreground">
-      <p>
-        Are you sure you want to
-        <strong>change the role of</strong>
-        the selected user?
-      </p>
-      <div v-if="user && newRole && oldRole" class="flex flex-col gap-3">
-        <div class="flex items-center gap-2">
-          <UserAvatar :user="user" />
-          {{ user.name }}
-        </div>
-        <div class="flex gap-2 items-center">
-          <span class="capitalize">{{ getRoleLabel(oldRole) }}</span>
-          <ArrowLongRightIcon class="h-6 w-6" />
-          <strong class="capitalize">{{ getRoleLabel(newRole) }}</strong>
-        </div>
-      </div>
+  <LayoutDialog v-model:open="isOpen" max-width="xs" :buttons="dialogButtons">
+    <template #header>Update role</template>
+    <div class="flex flex-col gap-4 text-sm text-foreground mb-4">
+      <FormSelectServerRoles
+        v-model="selectedRole"
+        :allow-guest="isGuestMode"
+        allow-admin
+        show-label
+        allow-archived
+        :disabled="isCurrentUser"
+      />
 
       <div
-        v-if="user && newRole === Roles.Server.Admin"
-        class="flex gap-2 items-center bg-danger-lighter dark:bg-danger border-danger-darker dark:border-danger-lighter border rounded-lg p-2"
+        v-if="
+          user &&
+          selectedRole === Roles.Server.Admin &&
+          user.role !== Roles.Server.Admin
+        "
+        class="rounded-lg p-3 border bg-foundation-2"
       >
-        <ExclamationTriangleIcon
-          class="h-8 w-8 mt-0.5 text-danger-darker dark:text-danger-lighter"
-        />
-        <div>
-          <p>Make sure you trust {{ user.name }}!</p>
+        <div class="text-body-2xs text-foreground">
+          <p class="font-medium">Make sure you trust {{ user.name }}!</p>
           <p>An admin on the server has access to every resource.</p>
         </div>
       </div>
@@ -36,13 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles } from '@speckle/shared'
 import type { ServerRoles } from '@speckle/shared'
-import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
-import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
 import { changeRoleMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { useMutation } from '@vue/apollo-composable'
@@ -51,33 +41,33 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
+import { useServerInfo } from '~~/lib/core/composables/server'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const props = defineProps<{
-  open: boolean
   user: UserItem | null
-  oldRole: ServerRoles | undefined
-  newRole: ServerRoles | undefined
 }>()
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
+const { isGuestMode } = useServerInfo()
+const { activeUser } = useActiveUser()
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
+
+const selectedRole = ref<ServerRoles | undefined>(
+  props.user?.role as ServerRoles | undefined
+)
+
+const isCurrentUser = computed(() => props.user?.id === activeUser.value?.id)
 
 const changeUserRoleConfirmed = async () => {
-  if (!props.user || !props.newRole) {
+  if (!props.user || !selectedRole.value || selectedRole.value === props.user.role) {
     return
   }
 
-  const userId = props.user?.id
-  const newRoleVal = props.newRole
+  const userId = props.user.id
+  const newRoleVal = selectedRole.value
 
   const result = await mutateChangeRole(
     {
@@ -103,7 +93,7 @@ const changeUserRoleConfirmed = async () => {
       title: 'User role updated',
       description: 'The user role has been updated'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -112,19 +102,33 @@ const changeUserRoleConfirmed = async () => {
       description: errorMessage
     })
   }
-  emit('update:open', false)
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Change role',
-    props: { color: 'danger', fullWidth: true },
-    onClick: changeUserRoleConfirmed
+    text: 'Cancel',
+    props: { color: 'outline' },
+    onClick: () => {
+      isOpen.value = false
+    }
   },
   {
-    text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
-    onClick: () => emit('update:open', false)
+    text: 'Update',
+    props: {
+      color: 'primary',
+      disabled: !selectedRole.value || selectedRole.value === props.user?.role
+    },
+    onClick: changeUserRoleConfirmed
   }
 ])
+
+watch(
+  isOpen,
+  (open) => {
+    if (open && props.user?.role) {
+      selectedRole.value = props.user.role as ServerRoles
+    }
+  },
+  { immediate: true }
+)
 </script>

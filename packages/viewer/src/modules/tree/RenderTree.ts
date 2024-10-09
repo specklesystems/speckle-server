@@ -112,12 +112,12 @@ export class RenderTree {
   }
 
   private getColorMaterialNode(node: TreeNode): TreeNode | null {
-    if (node.model.raw.color) {
+    if (node.model.color) {
       return node
     }
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
-      if (ancestors[k].model.raw.color) {
+      if (ancestors[k].model.color) {
         return ancestors[k]
       }
     }

@@ -16,7 +16,7 @@
     </div>
     <NuxtLink
       :to="disableLink ? undefined : to"
-      class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2 select-none truncate"
+      class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2 select-none truncate font-medium"
       :class="disableLink ? '' : 'hover:!text-foreground'"
       active-class="group is-active !text-foreground"
     >

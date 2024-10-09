@@ -1,14 +1,14 @@
+import { buildApolloServer } from '@/app'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { readOtherUsersCommits, readOwnCommits } from '@/test/graphql/commits'
+import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 
 describe('Commits (GraphQL)', () => {
@@ -94,10 +94,13 @@ describe('Commits (GraphQL)', () => {
   })
 
   describe('when user authenticated', async () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
     })
 
     describe('and reading user commits', async () => {

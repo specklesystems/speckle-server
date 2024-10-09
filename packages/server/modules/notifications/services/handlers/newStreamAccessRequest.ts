@@ -1,6 +1,6 @@
 import {
   AccessRequestType,
-  getPendingAccessRequest
+  getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
 import { getUser } from '@/modules/core/repositories/users'
 import {
@@ -8,7 +8,6 @@ import {
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import { getStream } from '@/modules/core/repositories/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   buildAbsoluteFrontendUrlFromPath,
@@ -20,47 +19,62 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { getServerInfo } from '@/modules/core/services/generic'
+import { db } from '@/db/knex'
+import { GetPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
-async function validateMessage(msg: NewStreamAccessRequestMessage) {
-  const {
-    targetUserId,
-    data: { requestId }
-  } = msg
-
-  const [request, user] = await Promise.all([
-    getPendingAccessRequest(requestId, AccessRequestType.Stream),
-    getUser(targetUserId)
-  ])
-
-  if (!request)
-    throw new NotificationValidationError('Nonexistant stream access request')
-  if (!user) throw new NotificationValidationError('Nonexistant user')
-
-  const [streamWithRole, requester] = await Promise.all([
-    getStream({
-      streamId: request.resourceId,
-      userId: targetUserId
-    }),
-    getUser(request.requesterId)
-  ])
-
-  if (!streamWithRole) throw new NotificationValidationError('Nonexistant stream')
-  if (streamWithRole.role !== Roles.Stream.Owner)
-    throw new NotificationValidationError(
-      'Only stream owners can receive notifications about stream access requests'
-    )
-  if (!requester)
-    throw new NotificationValidationError('User who made the request no longer exists')
-
-  return {
-    request,
-    stream: streamWithRole,
-    targetUser: user,
-    requester
-  }
+type ValidateMessageDeps = {
+  getPendingAccessRequest: GetPendingAccessRequest
+  getUser: typeof getUser
+  getStream: GetStream
 }
 
-type ValidatedMessageState = Awaited<ReturnType<typeof validateMessage>>
+const validateMessageFactory =
+  (deps: ValidateMessageDeps) => async (msg: NewStreamAccessRequestMessage) => {
+    const {
+      targetUserId,
+      data: { requestId }
+    } = msg
+
+    const [request, user] = await Promise.all([
+      deps.getPendingAccessRequest(requestId, AccessRequestType.Stream),
+      deps.getUser(targetUserId)
+    ])
+
+    if (!request)
+      throw new NotificationValidationError('Nonexistant stream access request')
+    if (!user) throw new NotificationValidationError('Nonexistant user')
+
+    const [streamWithRole, requester] = await Promise.all([
+      deps.getStream({
+        streamId: request.resourceId,
+        userId: targetUserId
+      }),
+      deps.getUser(request.requesterId)
+    ])
+
+    if (!streamWithRole) throw new NotificationValidationError('Nonexistant stream')
+    if (streamWithRole.role !== Roles.Stream.Owner)
+      throw new NotificationValidationError(
+        'Only stream owners can receive notifications about stream access requests'
+      )
+    if (!requester)
+      throw new NotificationValidationError(
+        'User who made the request no longer exists'
+      )
+
+    return {
+      request,
+      stream: streamWithRole,
+      targetUser: user,
+      requester
+    }
+  }
+
+type ValidatedMessageState = Awaited<
+  ReturnType<ReturnType<typeof validateMessageFactory>>
+>
 
 function buildEmailTemplateHtml(
   state: ValidatedMessageState
@@ -105,22 +119,42 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
   }
 }
 
-const handler: NotificationHandler<NewStreamAccessRequestMessage> = async (msg) => {
-  const state = await validateMessage(msg)
-  const htmlTemplateParams = buildEmailTemplateParams(state)
-  const serverInfo = await getServerInfo()
-  const { html, text } = await renderEmail(
-    htmlTemplateParams,
-    serverInfo,
-    state.targetUser
-  )
+const newStreamAccessRequestHandlerFactory =
+  (
+    deps: {
+      getServerInfo: typeof getServerInfo
+      renderEmail: typeof renderEmail
+      sendEmail: typeof sendEmail
+    } & ValidateMessageDeps
+  ): NotificationHandler<NewStreamAccessRequestMessage> =>
+  async (msg) => {
+    const state = await validateMessageFactory(deps)(msg)
+    const htmlTemplateParams = buildEmailTemplateParams(state)
+    const serverInfo = await deps.getServerInfo()
+    const { html, text } = await deps.renderEmail(
+      htmlTemplateParams,
+      serverInfo,
+      state.targetUser
+    )
 
-  await sendEmail({
-    to: state.targetUser.email,
-    text,
-    html,
-    subject: 'A user requested access to your project'
+    await deps.sendEmail({
+      to: state.targetUser.email,
+      text,
+      html,
+      subject: 'A user requested access to your project'
+    })
+  }
+
+const handler: NotificationHandler<NewStreamAccessRequestMessage> = (...args) => {
+  const newStreamAccessRequestHandler = newStreamAccessRequestHandlerFactory({
+    getServerInfo,
+    renderEmail,
+    sendEmail,
+    getUser,
+    getStream: getStreamFactory({ db }),
+    getPendingAccessRequest: getPendingAccessRequestFactory({ db })
   })
+  return newStreamAccessRequestHandler(...args)
 }
 
 export default handler

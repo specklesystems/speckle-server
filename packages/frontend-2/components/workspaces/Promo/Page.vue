@@ -1,73 +1,87 @@
 <template>
   <div class="flex flex-col gap-12">
-    <WorkspacesPromoBanner
-      :is-admin="isAdmin"
-      @create="showWorkspaceCreateDialog = true"
-    />
+    <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
 
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
-        <FormButton :disabled="!isAdmin" @click="showWorkspaceCreateDialog = true">
-          Create workspace
-        </FormButton>
+        <FormButton @click="openWorkspaceCreateDialog">Create workspace</FormButton>
       </div>
 
       <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <CommonCard
           title="A space for your entire team"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
+          description="Safely collaborate with your entire team and manage guests: workspaces are the perfect home for departments and companies."
         >
-          <template #icon>icon</template>
+          <template #icon>
+            <UserGroupIcon class="size-6 text-foreground-2 ml-1" />
+          </template>
         </CommonCard>
 
         <CommonCard
-          title="All your projects in one place"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
+          title="Domain security & discoverability"
+          description="Manage your team and allow them to join your workspace automatically based on email domain policies."
         >
-          <template #icon>icon</template>
+          <template #icon>
+            <LockClosedIcon class="size-6 text-foreground-2 ml-1" />
+          </template>
         </CommonCard>
 
         <CommonCard
-          title="Security / SSO (coming soon!)"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
+          title="SSO"
+          badge="Coming soon"
+          description="Ensure compliance and security with workspace based SSO."
         >
-          <template #icon>icon</template>
+          <template #icon>
+            <KeyIcon class="size-6 text-foreground-2 ml-1" />
+          </template>
         </CommonCard>
 
         <CommonCard
-          title="Security / SSO (coming soon!)"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
+          title="Sovereign Data Regions"
+          badge="Coming soon"
+          description="Store each project's data in the geographical location that you need, with granular precision going beyond continents."
         >
-          <template #icon>icon</template>
+          <template #icon>
+            <GlobeAltIcon class="size-6 text-foreground-2 ml-1" />
+          </template>
         </CommonCard>
 
         <CommonCard
-          title="Security / SSO (coming soon!)"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
+          title="... and more!"
+          description="We will be rolling out new features, like advanced permissions, audit logs, bigger uploads and more over the coming months."
         >
-          <template #icon>icon</template>
-        </CommonCard>
-        <CommonCard
-          title="Security / SSO (coming soon!)"
-          description="Manage your Connectors and Accounts with ease. Get latest updates without"
-        >
-          <template #icon>icon</template>
+          <template #icon>
+            <PlusIcon class="size-6 text-foreground-2 ml-1" />
+          </template>
         </CommonCard>
       </div>
     </section>
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success
+      event-source="promo-page"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import {
+  UserGroupIcon,
+  LockClosedIcon,
+  KeyIcon,
+  GlobeAltIcon,
+  PlusIcon
+} from '@heroicons/vue/24/outline'
 
 const showWorkspaceCreateDialog = ref(false)
 
-const { activeUser: user } = useActiveUser()
+const mixpanel = useMixpanel()
 
-const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'promo-page'
+  })
+}
 </script>

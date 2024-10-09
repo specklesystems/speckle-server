@@ -10,7 +10,8 @@ export const LIMITED_USER_FIELDS: Array<keyof LimitedUserRecord> = [
   'bio',
   'company',
   'avatar',
-  'createdAt'
+  'createdAt',
+  'verified'
 ]
 
 /**

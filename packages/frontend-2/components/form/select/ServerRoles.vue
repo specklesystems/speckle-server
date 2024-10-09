@@ -5,13 +5,13 @@
     :multiple="multiple"
     :disabled-item-predicate="disabledItemPredicate"
     name="serverRoles"
-    label="Server roles"
+    label="Role"
+    :show-label="showLabel"
     class="min-w-[110px]"
     :fully-control-value="fullyControlValue"
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
-    size="sm"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -66,7 +66,8 @@ const props = defineProps({
   allowGuest: Boolean,
   allowAdmin: Boolean,
   allowArchived: Boolean,
-  fullyControlValue: Boolean
+  fullyControlValue: Boolean,
+  showLabel: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

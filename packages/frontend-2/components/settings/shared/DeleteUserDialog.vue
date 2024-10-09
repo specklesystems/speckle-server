@@ -1,10 +1,13 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Remove user</template>
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
+    <template #header>{{ title }}</template>
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
-      <p>Are you sure you want to remove the following user from the workspace?</p>
-      <p class="font-medium">
-        {{ name }}
+      <p>
+        Are you sure you want to remove
+        <span class="font-medium">
+          {{ name }}
+        </span>
+        from the workspace?
       </p>
     </div>
   </LayoutDialog>
@@ -18,19 +21,21 @@ const emit = defineEmits<{
 }>()
 
 defineProps<{
+  title: string
   name: string
 }>()
+
 const open = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => (open.value = false)
   },
   {
     text: 'Remove',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       open.value = false
       emit('removeUser')

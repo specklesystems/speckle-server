@@ -1,13 +1,12 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  PublishSubscription,
   pubsub,
   StreamSubscriptions as StreamPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { chunk, flatten } from 'lodash'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -22,6 +21,15 @@ import {
   publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import {
+  AddStreamCommentMentionActivity,
+  AddStreamInviteDeclinedActivity,
+  AddStreamInviteSentOutActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 /**
  * Save "stream updated" activity
@@ -36,7 +44,7 @@ export async function addStreamUpdatedActivity(params: {
   const { streamId, updaterId, oldStream, update, newStream } = params
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Stream,
       resourceId: streamId,
@@ -86,6 +94,7 @@ export async function addStreamDeletedActivity(params: {
   ])
 
   // Notify all stream users
+  const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
   const users = await getStreamCollaborators(streamId)
   const userBatches = chunk(users, 15)
   for (const userBatch of userBatches) {
@@ -109,7 +118,7 @@ export async function addStreamDeletedActivity(params: {
     )
   }
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId,
     resourceType: ResourceTypes.Stream,
     resourceId: streamId,
@@ -123,31 +132,38 @@ export async function addStreamDeletedActivity(params: {
 /**
  * Save "user cloned stream X" activity item
  */
-export async function addStreamClonedActivity(
-  params: {
-    sourceStreamId: string
-    newStream: StreamRecord
-    clonerId: string
-  },
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const { trx } = options || {}
-  const { sourceStreamId, newStream, clonerId } = params
-  const newStreamId = newStream.id
+export const addStreamClonedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (
+    params: {
+      sourceStreamId: string
+      newStream: StreamRecord
+      clonerId: string
+    },
+    options?: Partial<{ trx: Knex.Transaction }>
+  ) => {
+    const { trx } = options || {}
+    const { sourceStreamId, newStream, clonerId } = params
+    const newStreamId = newStream.id
 
-  const publishSubscriptions = async () =>
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: newStreamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: newStream
-      },
-      ownerId: clonerId
-    })
+    const publishSubscriptions = async () =>
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: newStreamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: newStream
+        },
+        ownerId: clonerId
+      })
 
-  await Promise.all([
-    saveActivity(
-      {
+    await Promise.all([
+      saveActivity({
         streamId: newStreamId,
         resourceType: ResourceTypes.Stream,
         resourceId: newStreamId,
@@ -155,281 +171,312 @@ export async function addStreamClonedActivity(
         userId: clonerId,
         info: { sourceStreamId, newStreamId, clonerId },
         message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-      },
-      { trx }
-    ),
-    !trx ? publishSubscriptions() : null
-  ])
+      }),
+      !trx ? publishSubscriptions() : null
+    ])
 
-  if (trx) {
-    // can't await this, cause it'll block everything
-    void trx.executionPromise.then(publishSubscriptions)
+    if (trx) {
+      // can't await this, cause it'll block everything
+      void trx.executionPromise.then(publishSubscriptions)
+    }
   }
-}
 
 /**
  * Save "user created stream" activity item
  */
-export async function addStreamCreatedActivity(params: {
-  streamId: string
-  creatorId: string
-  input: StreamCreateInput | ProjectCreateInput
-  stream: StreamRecord
-}) {
-  const { streamId, creatorId, input, stream } = params
+export const addStreamCreatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    creatorId: string
+    input: StreamCreateInput | ProjectCreateInput
+    stream: StreamRecord
+  }) => {
+    const { streamId, creatorId, input, stream } = params
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.Create,
-      userId: creatorId,
-      info: { input },
-      message: `Stream ${input.name} created`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: { id: streamId, ...input },
-      ownerId: creatorId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: stream
-      },
-      ownerId: creatorId
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.Create,
+        userId: creatorId,
+        info: { input },
+        message: `Stream ${input.name} created`
+      }),
+      publish(StreamPubsubEvents.UserStreamAdded, {
+        userStreamAdded: { id: streamId, ...input },
+        ownerId: creatorId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: stream
+        },
+        ownerId: creatorId
+      })
+    ])
+  }
 
 /**
  * Save "stream permissions granted to user" activity item
  */
-export async function addStreamPermissionsAddedActivity(params: {
-  streamId: string
-  activityUserId: string
-  targetUserId: string
-  role: StreamRoles
-  stream: StreamRecord
-}) {
-  const { streamId, activityUserId, targetUserId, role, stream } = params
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsAdd,
-      userId: activityUserId,
-      info: { targetUser: targetUserId, role },
-      message: `Permission granted to user ${targetUserId} (${role})`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: {
-        id: streamId,
-        sharedBy: activityUserId
-      },
-      ownerId: targetUserId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: stream
-      },
-      ownerId: targetUserId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamPermissionsAddedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    activityUserId: string
+    targetUserId: string
+    role: StreamRoles
+    stream: StreamRecord
+  }) => {
+    const { streamId, activityUserId, targetUserId, role, stream } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.PermissionsAdd,
+        userId: activityUserId,
+        info: { targetUser: targetUserId, role },
+        message: `Permission granted to user ${targetUserId} (${role})`
+      }),
+      publish(StreamPubsubEvents.UserStreamAdded, {
+        userStreamAdded: {
+          id: streamId,
+          sharedBy: activityUserId
+        },
+        ownerId: targetUserId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: stream
+        },
+        ownerId: targetUserId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user accepted stream invite" activity item
  */
-export async function addStreamInviteAcceptedActivity(params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  role: StreamRoles
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, role, stream } = params
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteAccepted,
-      userId: inviteTargetId,
-      info: { inviterUser: inviterId, role },
-      message: `User ${inviteTargetId} has accepted an invitation to become a ${role}`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: {
-        id: streamId,
-        sharedBy: inviterId
-      },
-      ownerId: inviteTargetId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Added,
-        project: stream
-      },
-      ownerId: inviteTargetId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamInviteAcceptedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    inviteTargetId: string
+    inviterId: string
+    role: StreamRoles
+    stream: StreamRecord
+  }) => {
+    const { streamId, inviteTargetId, inviterId, role, stream } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteAccepted,
+        userId: inviteTargetId,
+        info: { inviterUser: inviterId, role },
+        message: `User ${inviteTargetId} has accepted an invitation to become a ${role}`
+      }),
+      publish(StreamPubsubEvents.UserStreamAdded, {
+        userStreamAdded: {
+          id: streamId,
+          sharedBy: inviterId
+        },
+        ownerId: inviteTargetId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Added,
+          project: stream
+        },
+        ownerId: inviteTargetId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "stream permissions revoked for user" activity item
  */
-export async function addStreamPermissionsRevokedActivity(params: {
-  streamId: string
-  activityUserId: string
-  removedUserId: string
-  stream: StreamRecord
-}) {
-  const { streamId, activityUserId, removedUserId, stream } = params
-  const isVoluntaryLeave = activityUserId === removedUserId
+export const addStreamPermissionsRevokedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    streamId: string
+    activityUserId: string
+    removedUserId: string
+    stream: StreamRecord
+  }) => {
+    const { streamId, activityUserId, removedUserId, stream } = params
+    const isVoluntaryLeave = activityUserId === removedUserId
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsRemove,
-      userId: activityUserId,
-      info: { targetUser: removedUserId },
-      message: isVoluntaryLeave
-        ? `User ${removedUserId} left the stream`
-        : `Permission revoked for user ${removedUserId}`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
-      userStreamRemoved: {
-        id: streamId,
-        revokedBy: activityUserId
-      },
-      ownerId: removedUserId
-    }),
-    publish(UserSubscriptions.UserProjectsUpdated, {
-      userProjectsUpdated: {
-        id: streamId,
-        type: UserProjectsUpdatedMessageType.Removed,
-        project: null
-      },
-      ownerId: removedUserId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.PermissionsRemove,
+        userId: activityUserId,
+        info: { targetUser: removedUserId },
+        message: isVoluntaryLeave
+          ? `User ${removedUserId} left the stream`
+          : `Permission revoked for user ${removedUserId}`
+      }),
+      publish(StreamPubsubEvents.UserStreamRemoved, {
+        userStreamRemoved: {
+          id: streamId,
+          revokedBy: activityUserId
+        },
+        ownerId: removedUserId
+      }),
+      publish(UserSubscriptions.UserProjectsUpdated, {
+        userProjectsUpdated: {
+          id: streamId,
+          type: UserProjectsUpdatedMessageType.Removed,
+          project: null
+        },
+        ownerId: removedUserId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user invited another user to stream" activity item
  */
-export async function addStreamInviteSentOutActivity(params: {
-  streamId: string
-  inviteTargetId: string | null
-  inviterId: string
-  inviteTargetEmail: string | null
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, inviteTargetEmail, stream } = params
-  const targetDisplay = inviteTargetId || inviteTargetEmail
+export const addStreamInviteSentOutActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamInviteSentOutActivity =>
+  async ({ streamId, inviteTargetId, inviterId, inviteTargetEmail, stream }) => {
+    const targetDisplay = inviteTargetId || inviteTargetEmail
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteSent,
-      userId: inviterId,
-      message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
-      info: { targetId: inviteTargetId || null, targetEmail: inviteTargetEmail || null }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteSent,
+        userId: inviterId,
+        message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
+        info: {
+          targetId: inviteTargetId || null,
+          targetEmail: inviteTargetEmail || null
+        }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user declined an invite" activity item
  */
-export async function addStreamInviteDeclinedActivity(params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  stream: StreamRecord
-}) {
-  const { streamId, inviteTargetId, inviterId, stream } = params
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.InviteDeclined,
-      userId: inviteTargetId,
-      message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
-      info: { targetId: inviteTargetId, inviterId }
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: stream
-      }
-    })
-  ])
-}
+export const addStreamInviteDeclinedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamInviteDeclinedActivity =>
+  async ({ streamId, inviteTargetId, inviterId, stream }) => {
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.InviteDeclined,
+        userId: inviteTargetId,
+        message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
+        info: { targetId: inviteTargetId, inviterId }
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: stream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "user mentioned in stream comment" activity item
  */
-export async function addStreamCommentMentionActivity(params: {
-  streamId: string
-  mentionAuthorId: string
-  mentionTargetId: string
-  commentId: string
-  threadId: string
-}) {
-  const { streamId, mentionAuthorId, mentionTargetId, commentId, threadId } = params
-  await saveActivity({
-    streamId,
-    resourceType: ResourceTypes.Comment,
-    resourceId: commentId,
-    actionType: ActionTypes.Comment.Mention,
-    userId: mentionAuthorId,
-    message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
-    info: {
-      mentionAuthorId,
-      mentionTargetId,
-      commentId,
-      threadId
-    }
-  })
-}
+export const addStreamCommentMentionActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamCommentMentionActivity =>
+  async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
+    await saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Comment,
+      resourceId: commentId,
+      actionType: ActionTypes.Comment.Mention,
+      userId: mentionAuthorId,
+      message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+      info: {
+        mentionAuthorId,
+        mentionTargetId,
+        commentId,
+        threadId
+      }
+    })
+  }

@@ -4,10 +4,11 @@ export const workspaceUpdateRoleMutation = graphql(`
   mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {
     workspaceMutations {
       updateRole(input: $input) {
-        id
         team {
-          id
-          role
+          items {
+            id
+            role
+          }
         }
       }
     }
@@ -37,6 +38,7 @@ export const createWorkspaceMutation = graphql(`
     workspaceMutations {
       create(input: $input) {
         id
+        ...SettingsDialog_Workspace
       }
     }
   }

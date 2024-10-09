@@ -1,13 +1,15 @@
 'use strict'
 const { validateScopes, authorizeResolver } = require('@/modules/shared')
 
-const { getStream } = require('../services/streams')
 const { Roles, Scopes } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 const { DatabaseError } = require('@/modules/shared/errors')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
 
 module.exports = {
   async validatePermissionsReadStream(streamId, req) {
+    const getStream = getStreamFactory({ db })
     const stream = await getStream({ streamId, userId: req.context.userId })
     if (stream?.isPublic) return { result: true, status: 200 }
 
@@ -22,6 +24,7 @@ module.exports = {
     if (!stream) return { result: false, status: 404 }
 
     if (!stream.isPublic && req.context.auth === false) {
+      req.log.debug('User is not authenticated, so cannot read from non-public stream.')
       return { result: false, status: 401 }
     }
 
@@ -51,6 +54,7 @@ module.exports = {
 
   async validatePermissionsWriteStream(streamId, req) {
     if (!req.context || !req.context.auth) {
+      req.log.debug('User is not authenticated, so cannot write to stream.')
       return { result: false, status: 401 }
     }
 

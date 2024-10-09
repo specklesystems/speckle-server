@@ -1,8 +1,18 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
-  deleteRequestById,
-  getPendingAccessRequest
+  createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
+  getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
-import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
+import {
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
+  requestProjectAccessFactory,
+  requestStreamAccessFactory
+} from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   ServerAccessRequests,
@@ -13,7 +23,10 @@ import {
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
+import {
+  getStreamCollaboratorsFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaborator,
   removeStreamCollaborator
@@ -28,18 +41,32 @@ import {
   useStreamAccessRequest
 } from '@/test/graphql/accessRequests'
 import { StreamRole } from '@/test/graphql/generated/graphql'
+import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   buildNotificationsStateTracker,
   NotificationsStateManager
 } from '@/test/notificationsHelper'
-import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { noop } from 'lodash'
+
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+const getStream = getStreamFactory({ db })
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess: requestProjectAccessFactory({
+    getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
+      getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
+        getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+      })
+    }),
+    getStream,
+    createNewRequest: createNewRequestFactory({ db }),
+    accessRequestsEmitter: AccessRequestsEmitter.emit
+  })
+})
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -55,7 +82,7 @@ const cleanup = async () => {
 }
 
 describe('Stream access requests', () => {
-  let apollo: ApolloServer
+  let apollo: ServerAndContext
   let notificationsStateManager: NotificationsStateManager
 
   const me: BasicTestUser = {
@@ -105,7 +132,10 @@ describe('Stream access requests', () => {
       [otherGuysPublicStream, otherGuy],
       [myPrivateStream, me]
     ])
-    apollo = await buildAuthenticatedApolloServer(me.id)
+    apollo = {
+      apollo: await buildApolloServer(),
+      context: createAuthedTestContext(me.id)
+    }
     notificationsStateManager = buildNotificationsStateTracker()
   })
 
@@ -245,7 +275,7 @@ describe('Stream access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
@@ -365,7 +395,7 @@ describe('Stream access requests', () => {
         expect(results.data?.streamAccessRequestUse).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

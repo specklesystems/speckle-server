@@ -281,14 +281,14 @@ type SubscriptionTypeMap = {
    */
   [StreamSubscriptions.UserStreamAdded]: {
     payload: {
-      userStreamAdded: { id: string }
+      userStreamAdded: { id: string; sharedBy?: string }
       ownerId: string
     }
     variables: NoVariables
   }
   [StreamSubscriptions.UserStreamRemoved]: {
     payload: {
-      userStreamRemoved: { id: string }
+      userStreamRemoved: { id: string; revokedBy?: string }
       ownerId: string
     }
     variables: NoVariables
@@ -318,6 +318,8 @@ export const publish = <T extends SubscriptionEvent>(
   event: T,
   payload: SubscriptionTypeMap[T]['payload']
 ) => pubsub.publish(event, payload)
+
+export type PublishSubscription = typeof publish
 
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers

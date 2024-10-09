@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: (db?: Knex) => (knex || db)(aliasedTableName),
+      knex: (db?: Knex) => (db || knex)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
@@ -186,7 +186,11 @@ export function buildTableHelper<
 /**
  * Create meta table schema helper
  */
-function buildMetaTableHelper<T extends string, C extends string, MK extends string>(
+export function buildMetaTableHelper<
+  T extends string,
+  C extends string,
+  MK extends string
+>(
   tableName: T,
   extraColumns: C[],
   metaKeys: MK[],
@@ -604,6 +608,15 @@ export const UserEmails = buildTableHelper('user_emails', [
   'userId',
   'createdAt',
   'updatedAt'
+])
+
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight',
+  'public'
 ])
 
 export { knex }

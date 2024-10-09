@@ -1,8 +1,15 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
-    <div class="relative p-2">
+  <div
+    v-keyboard-clickable
+    :class="containerClasses"
+    @click="onCardClick"
+    @mouseleave=";(showActionsMenu = false), (hovered = false)"
+    @mouseenter="hovered = true"
+  >
+    <div class="relative p-2 h-full flex flex-col">
       <NuxtLink
         v-if="!defaultLinkDisabled"
         :to="modelRoute(projectId, model.id)"
@@ -11,9 +18,9 @@
       <div class="relative z-40 flex justify-between items-center h-10">
         <NuxtLink
           :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-          class="w-full"
+          class="truncate"
         >
-          <div class="px-2 select-none w-full max-w-[80%]">
+          <div class="px-1 select-none w-full">
             <div
               v-if="nameParts[0]"
               class="text-body-2xs text-foreground-2 relative truncate"
@@ -37,7 +44,7 @@
           @upload-version="triggerVersionUpload"
         />
       </div>
-      <div class="relative flex items-center justify-center my-1">
+      <div class="relative flex items-center justify-center my-1 flex-1">
         <div
           v-if="
             isAutomateModuleEnabled &&
@@ -55,7 +62,7 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full"
+          class="px-4 w-full h-full"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
@@ -167,10 +174,11 @@ const importArea = ref(
   }>
 )
 const showActionsMenu = ref(false)
+const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
   ]
 
   if (versionCount.value > 0) {

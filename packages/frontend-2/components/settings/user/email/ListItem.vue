@@ -1,5 +1,7 @@
 <template>
-  <li class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6">
+  <li
+    class="border-outline-2 border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 border-b-outline-3 last:border-b-outline-2"
+  >
     <div
       v-if="emailData.primary || !emailData.verified"
       class="flex w-full gap-x-2 pb-4 md:pb-3"

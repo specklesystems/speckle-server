@@ -8,7 +8,15 @@ export type AvatarUser = {
 
 export type AvatarUserWithId = AvatarUser & { id: string }
 
-export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'xxl' | 'editable'
+export type UserAvatarSize =
+  | '2xs'
+  | 'xs'
+  | 'sm'
+  | 'base'
+  | 'lg'
+  | 'xl'
+  | 'xxl'
+  | 'editable'
 
 export function useAvatarSizeClasses(params: {
   props: ToRefs<{
@@ -20,6 +28,8 @@ export function useAvatarSizeClasses(params: {
   const heightClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
+        return 'h-4'
       case 'xs':
         return 'h-5'
       case 'sm':
@@ -41,6 +51,8 @@ export function useAvatarSizeClasses(params: {
   const widthClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
+        return 'w-4'
       case 'xs':
         return 'w-5'
       case 'sm':
@@ -62,6 +74,7 @@ export function useAvatarSizeClasses(params: {
   const textClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
       case 'xs':
         return 'text-tiny'
       case 'sm':
@@ -83,6 +96,7 @@ export function useAvatarSizeClasses(params: {
   const iconClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
       case 'xs':
         return 'w-3 h-3'
       case 'sm':

@@ -1,10 +1,7 @@
 <template>
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader
-        title="Projects"
-        text="Manage projects across the server"
-      />
+      <SettingsSectionHeader title="Projects" text="Manage projects on your server" />
       <SettingsSharedProjects
         v-model:search="search"
         :projects="projects"

@@ -1,5 +1,10 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
 import { Streams, Users } from '@/modules/core/dbSchema'
-import { getStream, setStreamFavorited } from '@/modules/core/repositories/streams'
+import {
+  getStreamFactory,
+  setStreamFavorited
+} from '@/modules/core/repositories/streams'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -11,14 +16,14 @@ import {
   readDiscoverableStreams,
   updateStream
 } from '@/test/graphql/streams'
-import { truncateTables } from '@/test/hooks'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { truncateTables } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { wait } from '@speckle/shared'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import dayjs from 'dayjs'
 import { shuffle } from 'lodash'
@@ -26,9 +31,10 @@ import { shuffle } from 'lodash'
 const READABLE_DISCOVERABLE_STREAM_COUNT = 15
 
 const cleanup = async () => await truncateTables([Streams.name, Users.name])
+const getStream = getStreamFactory({ db })
 
 describe('Discoverable streams', () => {
-  let apollo: ApolloServer
+  let apollo: ServerAndContext
 
   const me: BasicTestUser = {
     name: 'itsaa meeee',
@@ -111,7 +117,10 @@ describe('Discoverable streams', () => {
       }
     }
 
-    apollo = await buildUnauthenticatedApolloServer()
+    apollo = {
+      apollo: await buildApolloServer(),
+      context: createTestContext()
+    }
   })
 
   after(async () => {
@@ -234,10 +243,13 @@ describe('Discoverable streams', () => {
   })
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
     })
 
     it('can be retrieved with role properly filled out', async () => {

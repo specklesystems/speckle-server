@@ -1,4 +1,4 @@
-import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+import { SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -32,11 +32,9 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3 } from 'three'
+import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-
-import { Color } from 'three'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -422,6 +420,15 @@ export default class Sandbox {
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
+    })
+
+    const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
+      title: 'Toggle Section Box Visibility'
+    })
+    toggleSectionBoxVisibility.on('click', () => {
+      this.viewer.getExtension(SectionTool).visible =
+        !this.viewer.getExtension(SectionTool).visible
+      this.viewer.requestRender()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
@@ -1211,6 +1218,7 @@ export default class Sandbox {
         // cubes
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // DUI3
 
         VisualDiffMode.COLORED,
         localStorage.getItem('AuthTokenLatest') as string

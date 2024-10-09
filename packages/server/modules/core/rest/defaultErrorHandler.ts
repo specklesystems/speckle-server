@@ -21,16 +21,21 @@ const resolveStatusCode = (e: Error): number => {
 
 const resolveErrorInfo = (e: Error): Record<string, unknown> => {
   const cause = getCause(e)
+  const message = e.message
+  let info = undefined
+  if (e instanceof BaseError) {
+    info = e.info()
+  }
 
   return {
-    message: e.message,
+    message,
     code: (e instanceof BaseError ? e.info().code : get(e, 'code')) || e.name,
     ...(isDevEnv()
       ? {
           stack: e.stack,
           ...(e instanceof BaseError
             ? {
-                info: e.info(),
+                info,
                 stack: VError.fullStack(e)
               }
             : {}),
@@ -49,8 +54,10 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   }
 
   const e = ensureError(err)
+  // Add the error to the request context, this allows it to be logged by pino-http
+  if (!req.context.err) req.context.err = e
   res.status(resolveStatusCode(e)).json({
     error: resolveErrorInfo(e)
   })
-  next()
+  next(err)
 }

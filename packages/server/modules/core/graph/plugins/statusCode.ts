@@ -1,8 +1,9 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { BaseError } from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
-import type { ApolloServerPlugin } from 'apollo-server-plugin-base'
+import type { ApolloServerPlugin } from '@apollo/server'
 import type { GraphQLError } from 'graphql'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const getErrorCode = (e: GraphQLError): Nullable<string> => {
   const extensionsCode = e.extensions?.code as string
@@ -15,7 +16,7 @@ const getErrorCode = (e: GraphQLError): Nullable<string> => {
   return infoCode
 }
 
-export const statusCodePlugin: ApolloServerPlugin = {
+export const statusCodePlugin: ApolloServerPlugin<GraphQLContext> = {
   requestDidStart: async () => {
     return {
       willSendResponse: async (reqCtx) => {

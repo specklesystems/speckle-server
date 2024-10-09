@@ -1,7 +1,7 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="isOpen" max-width="xs" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
-    <div class="flex flex-col gap-6 text-sm text-foreground">
+    <div class="flex flex-col gap-2 text-body-xs text-foreground mb-2">
       <p>
         Are you sure you want to
         <strong>permanently {{ lowerFirst(itemActionVerb) }}</strong>
@@ -68,11 +68,11 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const itemType = computed(() => {
   if (isToken(props.item)) {
-    return `Access Token`
+    return `access token`
   } else if (isApplication(props.item)) {
-    return `Application`
+    return `application`
   } else {
-    return 'Authorization'
+    return 'authorization'
   }
 })
 
@@ -194,12 +194,12 @@ const deleteConfirmed = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: (): boolean => (isOpen.value = false)
   },
   {
     text: itemActionVerb.value,
-    props: { color: 'danger', fullWidth: true },
+    props: { color: 'danger' },
     disabled: isLoading.value,
     onClick: deleteConfirmed
   }

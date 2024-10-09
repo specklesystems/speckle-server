@@ -1,3 +1,4 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   MutationStreamInviteUseArgs,
@@ -26,7 +27,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -57,7 +58,7 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createProjectInviteFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: GetStream }) =>
   async (params: {
     input: StreamInviteCreateInput | FullProjectInviteCreateInput
     inviterId: string
@@ -66,9 +67,15 @@ export const createProjectInviteFactory =
      * If invite also has secondary resource targets, you can specify the expected roles here
      */
     secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+    allowWorkspacedProjects?: boolean
   }) => {
-    const { input, inviterId, inviterResourceAccessRules, secondaryResourceRoles } =
-      params
+    const {
+      input,
+      inviterId,
+      inviterResourceAccessRules,
+      secondaryResourceRoles,
+      allowWorkspacedProjects
+    } = params
     const { email, userId, role } = input
 
     if (!email && !userId) {
@@ -85,6 +92,15 @@ export const createProjectInviteFactory =
       : input.projectId
     if (!resourceId?.length) {
       throw new InviteCreateValidationError('Invalid project ID specified')
+    }
+
+    // If workspace project, ensure secondaryResourceRoles are set (channeling users
+    // to the correct gql resolver)
+    const project = await deps.getStream({ streamId: resourceId })
+    if (!allowWorkspacedProjects && project && project?.workspaceId) {
+      throw new InviteCreateValidationError(
+        'Target project belongs to a workspace, you should use a workspace invite instead'
+      )
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!
@@ -200,7 +216,7 @@ export const getUserPendingProjectInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<

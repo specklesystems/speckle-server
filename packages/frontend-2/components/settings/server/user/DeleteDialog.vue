@@ -1,10 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Delete user</template>
-    <div class="flex flex-col gap-6">
+  <LayoutDialog v-model:open="isOpen" max-width="xs" :buttons="dialogButtons">
+    <template #header>Remove user</template>
+    <div class="flex flex-col gap-4">
       <p>
         Are you sure you want to
-        <strong>permanently delete</strong>
+        <strong>permanently remove</strong>
         the selected user?
       </p>
       <div v-if="user" class="flex items-center gap-2">
@@ -143,14 +143,14 @@ const deleteConfirmed = async () => {
 
 const dialogButtons: LayoutDialogButton[] = [
   {
-    text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
-    onClick: deleteConfirmed
+    text: 'Cancel',
+    props: { color: 'outline' },
+    onClick: () => (isOpen.value = false)
   },
   {
-    text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
-    onClick: () => (isOpen.value = false)
+    text: 'Remove',
+    props: { color: 'primary' },
+    onClick: deleteConfirmed
   }
 ]
 </script>

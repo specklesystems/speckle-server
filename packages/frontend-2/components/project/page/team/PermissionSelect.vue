@@ -10,33 +10,36 @@
     :disabled="disabled"
     :label-id="labelId"
     :button-id="buttonId"
+    :disabled-item-predicate="disabledItemPredicate"
     hide-checkmarks
     by="id"
-    class="min-w-[85px]"
+    class="w-28"
     mount-menu-on-body
+    size="sm"
   >
     <template #something-selected="{ value }">
-      <div class="text-normal text-right">
+      <div class="text-right text-foreground text-body-xs font-medium">
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
     <template #option="{ item, selected }">
-      <div class="flex flex-col">
-        <div
-          :class="[
-            'text-normal',
-            selected ? 'text-primary' : '',
-            item.id === 'delete' ? 'text-danger' : ''
-          ]"
-        >
-          {{ item.title }}
-        </div>
+      <div
+        :class="[
+          'text-foreground',
+          selected ? ' font-medium' : '',
+          item.id === 'delete' ? '!text-danger' : ''
+        ]"
+      >
+        {{ item.title }}
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { roleSelectItems } from '~~/lib/projects/helpers/components'
+import {
+  roleSelectItems,
+  type SelectableStreamRoleSelectItem
+} from '~~/lib/projects/helpers/components'
 import { Roles } from '@speckle/shared'
 import type { StreamRoles } from '@speckle/shared'
 import { reduce, isArray } from 'lodash-es'
@@ -53,6 +56,7 @@ const props = defineProps<{
   disabled?: boolean
   hideRemove?: boolean
   hideOwner?: boolean
+  disabledRoles?: StreamRoles[]
 }>()
 
 const labelId = useId()
@@ -91,4 +95,9 @@ const selectValue = computed({
     selectedValue.value = newVal.id
   }
 })
+
+const disabledItemPredicate = (item: SelectableStreamRoleSelectItem) => {
+  if (!props.disabledRoles?.length) return false
+  return (props.disabledRoles as string[]).includes(item.id)
+}
 </script>

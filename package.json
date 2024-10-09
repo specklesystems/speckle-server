@@ -78,7 +78,6 @@
     "core-js-compat/semver": "^7.5.4",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
-    "graphql": "^15.3.0",
     "levelup/bl": ">=1.2.3",
     "levelup/semver": ">=5.7.2",
     "mocha/serialize-javascript": ">=6.0.2",

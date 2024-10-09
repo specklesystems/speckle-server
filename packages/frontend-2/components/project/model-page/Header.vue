@@ -2,19 +2,18 @@
   <div>
     <Portal to="navigation">
       <HeaderNavLink
-        :to="projectsRoute"
-        name="Projects"
+        v-if="project.workspace && isWorkspacesEnabled"
+        :to="workspaceRoute(project.workspace.slug)"
+        :name="project.workspace.name"
         :separator="false"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="projectRoute(project.id)"
-        :name="project.name"
-      ></HeaderNavLink>
+      />
+      <HeaderNavLink v-else :to="projectsRoute" name="Projects" :separator="false" />
+      <HeaderNavLink :to="projectRoute(project.id)" :name="project.name" />
       <HeaderNavLink
         v-if="props.project.model"
         :to="modelVersionsRoute(project.id, props.project.model.id)"
         :name="props.project.model.name"
-      ></HeaderNavLink>
+      />
     </Portal>
 
     <CommonTitleDescription
@@ -32,6 +31,7 @@ import {
   modelVersionsRoute,
   projectsRoute
 } from '~~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectModelPageHeaderProject on Project {
@@ -42,10 +42,17 @@ graphql(`
       name
       description
     }
+    workspace {
+      id
+      slug
+      name
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectModelPageHeaderProjectFragment
 }>()
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 </script>

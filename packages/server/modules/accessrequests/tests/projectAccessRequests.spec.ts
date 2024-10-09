@@ -1,8 +1,16 @@
+import { db } from '@/db/knex'
+import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
-  deleteRequestById,
-  getPendingAccessRequest
+  createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
+  getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
-import { requestProjectAccess } from '@/modules/accessrequests/services/stream'
+import {
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
+  requestProjectAccessFactory
+} from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   ServerAccessRequests,
@@ -13,7 +21,10 @@ import {
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
+import {
+  getStreamCollaboratorsFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaborator,
   removeStreamCollaborator
@@ -39,6 +50,19 @@ import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { noop } from 'lodash'
+
+const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+const requestProjectAccess = requestProjectAccessFactory({
+  getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
+    getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
+      getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+    })
+  }),
+  getStream,
+  createNewRequest: createNewRequestFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -270,7 +294,7 @@ describe('Project access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getActiveUserReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
@@ -386,7 +410,7 @@ describe('Project access requests', () => {
         expect(results.data?.projectMutations.accessRequestMutations.use).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

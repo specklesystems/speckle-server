@@ -8,13 +8,27 @@ import {
   setPrimaryUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
-import { requestNewEmailVerification } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { getUser } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 export = {
   ActiveUserMutations: {

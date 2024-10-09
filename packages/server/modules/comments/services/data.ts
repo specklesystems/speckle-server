@@ -1,9 +1,9 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import {
-  getViewerResourcesForComments,
-  viewerResourcesToString
-} from '@/modules/core/services/commit/viewerResources'
+  ConvertLegacyDataToState,
+  GetViewerResourcesForComments
+} from '@/modules/comments/domain/operations'
+import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
+import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { has, get, intersection, isObjectLike } from 'lodash'
 
@@ -97,82 +97,89 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
   return ret
 }
 
-export async function convertLegacyDataToState(
-  data: LegacyData,
-  comment: CommentRecord
-): Promise<SerializedViewerState> {
-  const resources = await getViewerResourcesForComments(comment.streamId, [comment.id])
-  const sectionBox = data.filters?.sectionBox || data.sectionBox
+export const convertLegacyDataToStateFactory =
+  (deps: {
+    getViewerResourcesForComments: GetViewerResourcesForComments
+  }): ConvertLegacyDataToState =>
+  async (data, comment) => {
+    const resources = await deps.getViewerResourcesForComments(comment.streamId, [
+      comment.id
+    ])
+    const sectionBox = data.filters?.sectionBox || data.sectionBox
 
-  const ret: SerializedViewerState = {
-    projectId: comment.streamId,
-    sessionId: 'legacy-sessionId',
-    viewer: {
-      metadata: {
-        filteringState: {
-          passMax: data.filters?.passMax,
-          passMin: data.filters?.passMin
-        }
-      }
-    },
-    resources: {
-      request: {
-        resourceIdString: viewerResourcesToString(resources),
-        threadFilters: {
-          includeArchived: false,
-          loadedVersionsOnly: false
-        }
-      }
-    },
-    ui: {
-      threads: {
-        openThread: {
-          threadId: null,
-          isTyping: false,
-          newThreadEditor: true
-        }
-      },
-      spotlightUserSessionId: null,
-      explodeFactor: 0,
-      filters: {
-        isolatedObjectIds: data.filters?.isolatedIds || [],
-        hiddenObjectIds: data.filters?.hiddenIds || [],
-        selectedObjectIds: [],
-        propertyFilter: {
-          key: data.filters?.propertyInfoKey || null,
-          isApplied: true
-        }
-      },
-      camera: {
-        position: [data.camPos?.[0] || 0, data.camPos?.[1] || 0, data.camPos?.[2] || 0],
-        target: [data.camPos?.[3] || 0, data.camPos?.[4] || 0, data.camPos?.[5] || 0],
-        isOrthoProjection: !!data.camPos?.[6],
-        zoom: data.camPos?.[7] || 1
-      },
-      sectionBox: sectionBox
-        ? {
-            min: (sectionBox.min as number[]) || [0, 0, 0],
-            max: (sectionBox.max as number[]) || [0, 0, 0]
+    const ret: SerializedViewerState = {
+      projectId: comment.streamId,
+      sessionId: 'legacy-sessionId',
+      viewer: {
+        metadata: {
+          filteringState: {
+            passMax: data.filters?.passMax,
+            passMin: data.filters?.passMin
           }
-        : null,
-      lightConfig: {},
-      selection: data.location
-        ? [
-            data.location.x as number,
-            data.location.y as number,
-            data.location.z as number
-          ]
-        : null,
-      diff: {
-        command: null,
-        mode: 1,
-        time: 0.5
+        }
       },
-      measurement: {
-        enabled: false,
-        options: null
+      resources: {
+        request: {
+          resourceIdString: viewerResourcesToString(resources),
+          threadFilters: {
+            includeArchived: false,
+            loadedVersionsOnly: false
+          }
+        }
+      },
+      ui: {
+        threads: {
+          openThread: {
+            threadId: null,
+            isTyping: false,
+            newThreadEditor: true
+          }
+        },
+        spotlightUserSessionId: null,
+        explodeFactor: 0,
+        filters: {
+          isolatedObjectIds: data.filters?.isolatedIds || [],
+          hiddenObjectIds: data.filters?.hiddenIds || [],
+          selectedObjectIds: [],
+          propertyFilter: {
+            key: data.filters?.propertyInfoKey || null,
+            isApplied: true
+          }
+        },
+        camera: {
+          position: [
+            data.camPos?.[0] || 0,
+            data.camPos?.[1] || 0,
+            data.camPos?.[2] || 0
+          ],
+          target: [data.camPos?.[3] || 0, data.camPos?.[4] || 0, data.camPos?.[5] || 0],
+          isOrthoProjection: !!data.camPos?.[6],
+          zoom: data.camPos?.[7] || 1
+        },
+        sectionBox: sectionBox
+          ? {
+              min: (sectionBox.min as number[]) || [0, 0, 0],
+              max: (sectionBox.max as number[]) || [0, 0, 0]
+            }
+          : null,
+        lightConfig: {},
+        selection: data.location
+          ? [
+              data.location.x as number,
+              data.location.y as number,
+              data.location.z as number
+            ]
+          : null,
+        diff: {
+          command: null,
+          mode: 1,
+          time: 0.5
+        },
+        measurement: {
+          enabled: false,
+          options: null
+        }
       }
     }
+    return ret
   }
-  return ret
-}
