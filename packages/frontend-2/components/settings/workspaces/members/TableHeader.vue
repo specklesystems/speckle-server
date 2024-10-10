@@ -19,6 +19,7 @@
         fully-control-value
         clearable
         class="min-w-32"
+        :hide-items="[Roles.Workspace.Guest]"
       />
     </div>
     <FormButton
