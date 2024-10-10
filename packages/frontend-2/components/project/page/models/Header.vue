@@ -8,10 +8,9 @@
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
             color="outline"
-            :to="allModelsRoute"
             :disabled="project?.models.totalCount === 0"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            @click="trackFederateAll"
+            @click="onViewAllClick"
           >
             View all in 3D
           </FormButton>
@@ -68,10 +67,9 @@
           </div>
           <FormButton
             color="outline"
-            :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             :disabled="project?.models.totalCount === 0"
-            @click="trackFederateAll"
+            @click="onViewAllClick"
           >
             View all in 3D
           </FormButton>
@@ -140,15 +138,19 @@ const props = defineProps<{
 const localSearch = ref('')
 const sourceAppsLabelId = useId()
 const sourceAppsBtnId = useId()
-
+const router = useRouter()
 const mp = useMixpanel()
-const trackFederateAll = () =>
+
+const onViewAllClick = () => {
+  router.push(allModelsRoute.value)
+
   mp.track('Viewer Action', {
     type: 'action',
     name: 'federation',
     action: 'view-all',
     source: 'project page'
   })
+}
 
 const canContribute = computed(() =>
   props.project ? canModifyModels(props.project) : false
