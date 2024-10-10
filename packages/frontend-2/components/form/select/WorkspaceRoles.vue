@@ -100,7 +100,7 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
 const roles = computed(() => {
   if (props.hideItems && props.hideItems.length) {
     return Object.values(Roles.Workspace).filter(
-      (role) => !props.hideItems.includes(role)
+      (role) => !props.hideItems?.includes(role)
     )
   }
   return Object.values(Roles.Workspace)
