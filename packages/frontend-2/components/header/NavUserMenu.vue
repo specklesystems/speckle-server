@@ -4,7 +4,7 @@
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
-          <UserAvatar :user="activeUser" />
+          <UserAvatar hide-tooltip :user="activeUser" />
           <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
         </div>
       </MenuButton>
