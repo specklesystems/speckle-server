@@ -33,9 +33,8 @@
             v-on="on"
           />
           <div class="flex gap-2">
-            <div
-              v-tippy="isWorkspaceAdmin ? undefined : 'You must be a workspace admin'"
-            >
+            <!--- Conditionally apply tooltip only for non-admins and avoid v-tippy reactivity bug -->
+            <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
               <FormButton
                 :disabled="!isWorkspaceAdmin"
                 class="hidden md:block"
@@ -45,6 +44,14 @@
                 Move projects
               </FormButton>
             </div>
+            <FormButton
+              v-else
+              class="hidden md:block"
+              color="outline"
+              @click="showMoveProjectsDialog = true"
+            >
+              Move projects
+            </FormButton>
             <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
               New project
             </FormButton>
