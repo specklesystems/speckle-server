@@ -11,7 +11,7 @@ export function useServerFileUploadLimit() {
   const { result } = useQuery(serverInfoBlobSizeLimitQuery)
 
   const maxSizeInBytes = computed(
-    () => result.value?.serverInfo.blobSizeLimitBytes || 0
+    () => result.value?.serverInfo.configuration.blobSizeLimitBytes || 0
   )
   const maxSizeDisplayString = computed(() => prettyFileSize(maxSizeInBytes.value))
 
