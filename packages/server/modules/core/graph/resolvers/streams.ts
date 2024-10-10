@@ -32,7 +32,8 @@ import {
   deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -69,7 +70,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity,
+  addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
@@ -116,7 +117,11 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),
   authorizeResolver,
-  addStreamDeletedActivity,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db }),
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
 })
 const updateStreamAndNotify = updateStreamAndNotifyFactory({
