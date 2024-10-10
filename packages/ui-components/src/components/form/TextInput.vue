@@ -260,6 +260,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  customErrorMessage: {
+    type: String,
+    default: null
+  },
   wrapperClasses: {
     type: String,
     default: () => ''

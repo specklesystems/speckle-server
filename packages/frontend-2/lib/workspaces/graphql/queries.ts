@@ -71,3 +71,9 @@ export const moveProjectsDialogQuery = graphql(`
     }
   }
 `)
+
+export const validateWorkspaceSlugQuery = graphql(`
+  query ValidateWorkspaceSlug($slug: String!) {
+    validateWorkspaceSlug(slug: $slug)
+  }
+`)
