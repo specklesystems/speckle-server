@@ -161,11 +161,11 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const actionItems: LayoutMenuItem[][] = [
   [
     {
-      title: 'Change Role',
+      title: 'Change role',
       id: ActionTypes.ChangeRole
     },
     {
-      title: 'Remove User',
+      title: 'Remove user',
       id: ActionTypes.RemoveUser
     }
   ]

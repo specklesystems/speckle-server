@@ -163,8 +163,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
     filter: {
-      search: search.value,
-      roles: [Roles.Workspace.Guest]
+      search: search.value
     },
     workspaceId: props.workspaceId
   }),
