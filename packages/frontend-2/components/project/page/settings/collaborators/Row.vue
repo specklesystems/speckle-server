@@ -118,7 +118,7 @@ const roleTooltip = computed(() => {
 })
 
 const isTargettingWorkspaceGuest = computed(
-  () => props.collaborator.role === Roles.Workspace.Guest
+  () => props.collaborator.workspaceRole === Roles.Workspace.Guest
 )
 
 const onActionChosen = (

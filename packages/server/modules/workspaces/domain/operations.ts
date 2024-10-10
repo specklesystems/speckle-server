@@ -8,9 +8,17 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { PartialNullable, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  PartialNullable,
+  StreamRoles,
+  WorkspaceRoles
+} from '@speckle/shared'
 import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
+import { Stream } from '@/modules/core/domain/streams/types'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 
 /** Workspace */
 
@@ -183,6 +191,23 @@ type GrantWorkspaceProjectRolesArgs = {
 export type GrantWorkspaceProjectRoles = (
   args: GrantWorkspaceProjectRolesArgs
 ) => Promise<void>
+
+type UpdateWorkspaceProjectRoleArgs = {
+  role: {
+    projectId: string
+    userId: string
+    // Undefined or null role means delete role
+    role?: Nullable<string>
+  }
+  updater: {
+    userId: string
+    resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  }
+}
+
+export type UpdateWorkspaceProjectRole = (
+  args: UpdateWorkspaceProjectRoleArgs
+) => Promise<Stream | undefined>
 
 /** Events */
 
