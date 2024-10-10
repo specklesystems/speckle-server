@@ -2,7 +2,7 @@ import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity,
+  addStreamDeletedActivityFactory,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
@@ -92,7 +92,11 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),
   authorizeResolver,
-  addStreamDeletedActivity,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish,
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
 })
 const updateStreamAndNotify = updateStreamAndNotifyFactory({
