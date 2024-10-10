@@ -36,29 +36,25 @@
         <template v-if="isWorkspacesEnabled && !workspaceId">
           <div class="flex gap-y-2 flex-col">
             <p class="text-body-xs text-foreground font-medium">Workspace</p>
-            <div v-if="hasWorkspaces">
-              <div class="flex gap-x-2 items-center">
-                <ProjectsWorkspaceSelect
-                  v-model="selectedWorkspace"
-                  :items="workspaces"
-                  :disabled-roles="[Roles.Workspace.Guest]"
-                  disabled-item-tooltip="You dont have rights to create projects in this workspace"
-                  class="flex-1"
+            <div class="flex gap-x-2 items-center">
+              <ProjectsWorkspaceSelect
+                v-model="selectedWorkspace"
+                :items="workspaces"
+                :disabled-roles="[Roles.Workspace.Guest]"
+                :disabled="!hasWorkspaces"
+                disabled-item-tooltip="You dont have rights to create projects in this workspace"
+                class="flex-1"
+              />
+              <div v-tippy="'Create workspace'" class="flex">
+                <FormButton
+                  :icon-left="PlusIcon"
+                  hide-text
+                  class="flex"
+                  color="outline"
+                  @click="navigateToWorkspaceExplainer"
                 />
-                <div v-tippy="'Create workspace'" class="flex">
-                  <FormButton
-                    :icon-left="PlusIcon"
-                    hide-text
-                    class="flex"
-                    color="outline"
-                    @click="navigateToWorkspaceExplainer"
-                  />
-                </div>
               </div>
             </div>
-            <FormButton v-else color="outline" @click="navigateToWorkspaceExplainer">
-              New workspace
-            </FormButton>
             <p class="text-foreground-2 text-body-2xs">
               Workspaces offer better project management and higher data security.
             </p>
