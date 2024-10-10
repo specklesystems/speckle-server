@@ -1,24 +1,26 @@
 <template>
-  <Component
-    :is="to ? linkComponent : 'button'"
-    :href="to"
-    :to="to"
-    :type="buttonType"
-    :external="external"
-    :class="buttonClasses"
-    :disabled="isDisabled"
-    role="button"
-    :style="
-      color !== 'subtle' && !text
-        ? `box-shadow: -1px 1px 4px 0px #0000000a inset; box-shadow: 0px 2px 2px 0px #0000000d;`
-        : ''
-    "
-    @click="onClick"
-  >
-    <Component :is="finalLeftIcon" v-if="finalLeftIcon" :class="iconClasses" />
-    <slot v-if="!hideText">Button</slot>
-    <Component :is="iconRight" v-if="iconRight || !loading" :class="iconClasses" />
-  </Component>
+  <div :class="isDisabled ? 'cursor-not-allowed' : ''">
+    <Component
+      :is="to ? linkComponent : 'button'"
+      :href="to"
+      :to="to"
+      :type="buttonType"
+      :external="external"
+      :class="buttonClasses"
+      :disabled="isDisabled"
+      role="button"
+      :style="
+        color !== 'subtle' && !text
+          ? `box-shadow: -1px 1px 4px 0px #0000000a inset; box-shadow: 0px 2px 2px 0px #0000000d;`
+          : ''
+      "
+      @click="onClick"
+    >
+      <Component :is="finalLeftIcon" v-if="finalLeftIcon" :class="iconClasses" />
+      <slot v-if="!hideText">Button</slot>
+      <Component :is="iconRight" v-if="iconRight || !loading" :class="iconClasses" />
+    </Component>
+  </div>
 </template>
 <script setup lang="ts">
 import { isObjectLike } from 'lodash'
@@ -130,19 +132,27 @@ const bgAndBorderClasses = computed(() => {
   const colorsBgBorder = {
     subtle: [
       'bg-transparent border-transparent text-foreground font-medium',
-      'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
+      isDisabled.value
+        ? ''
+        : 'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
     ],
     outline: [
       'bg-foundation border-outline-2 text-foreground font-medium',
-      'hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation'
+      !isDisabled.value
+        ? ''
+        : 'hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation'
     ],
     danger: [
       'bg-danger border-danger-darker text-foundation font-medium',
-      'hover:bg-danger-darker disabled:hover:bg-danger focus-visible:border-foundation'
+      !isDisabled.value
+        ? ''
+        : 'hover:bg-danger-darker disabled:hover:bg-danger focus-visible:border-foundation'
     ],
     primary: [
       'bg-primary border-outline-1 text-foreground-on-primary font-semibold',
-      'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
+      !isDisabled.value
+        ? ''
+        : 'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
     ]
   }
 
@@ -248,7 +258,7 @@ const generalClasses = computed(() => {
     additionalClasses.push('max-w-max')
   }
   if (isDisabled.value) {
-    additionalClasses.push('cursor-not-allowed opacity-60')
+    additionalClasses.push('opacity-60 pointer-events-none')
   }
 
   return [...baseClasses, ...additionalClasses].join(' ')
