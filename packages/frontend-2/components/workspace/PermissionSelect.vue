@@ -21,10 +21,7 @@
     </template>
     <template #option="{ item }">
       <div class="flex flex-col space-y-0.5">
-        <span
-          class="truncate font-medium"
-          :class="item.id === 'delete' ? '!text-danger' : ''"
-        >
+        <span class="truncate font-medium">
           {{ item.title }}
         </span>
         <span v-if="item.description" class="text-body-2xs text-foreground-2">
@@ -49,7 +46,6 @@ const props = defineProps<{
   showLabel?: boolean
   name?: string
   disabled?: boolean
-  hideRemove?: boolean
   hideOwner?: boolean
 }>()
 
@@ -59,11 +55,7 @@ const items = ref(
   reduce(
     roleSelectItems,
     (results, item) => {
-      if (item.id === 'delete') {
-        if (!props.hideRemove) {
-          results[item.id] = item
-        }
-      } else if (item.id === Roles.Workspace.Admin) {
+      if (item.id === Roles.Workspace.Admin) {
         if (!props.hideOwner) {
           results[item.id] = item
         }

@@ -17,15 +17,14 @@ export type ProjectCollaboratorListItem = {
   workspaceRole: Nullable<WorkspaceRoles>
 }
 
-export type SelectableStreamRole = StreamRoles | 'delete'
 export type SelectableStreamRoleSelectItem = {
-  id: SelectableStreamRole
+  id: StreamRoles
   title: string
   description?: string
 }
 
 export const roleSelectItems: Record<
-  SelectableStreamRole | string,
+  StreamRoles | string,
   SelectableStreamRoleSelectItem
 > = {
   [Roles.Stream.Owner]: {
@@ -42,10 +41,6 @@ export const roleSelectItems: Record<
     id: Roles.Stream.Reviewer,
     title: RoleInfo.Stream[Roles.Stream.Reviewer].title,
     description: RoleInfo.Stream[Roles.Stream.Reviewer].description
-  },
-  ['delete']: {
-    id: 'delete',
-    title: 'Remove'
   }
 }
 

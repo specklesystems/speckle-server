@@ -26,10 +26,6 @@ export const roleSelectItems: Record<
     id: Roles.Workspace.Guest,
     title: RoleInfo.Workspace[Roles.Workspace.Guest].title,
     description: RoleInfo.Workspace[Roles.Workspace.Guest].description
-  },
-  ['delete']: {
-    id: 'delete',
-    title: 'Remove'
   }
 }
 

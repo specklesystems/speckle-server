@@ -18,7 +18,7 @@
         v-model="role"
         fully-control-value
         clearable
-        class="min-w-48"
+        class="!min-w-40"
         hide-description
       />
     </div>
