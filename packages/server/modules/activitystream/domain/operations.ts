@@ -191,3 +191,9 @@ export type AddStreamAccessRequestedActivity = (params: {
   streamId: string
   requesterId: string
 }) => Promise<void>
+
+export type AddStreamAccessRequestDeclinedActivity = (params: {
+  streamId: string
+  requesterId: string
+  declinerId: string
+}) => Promise<void>
