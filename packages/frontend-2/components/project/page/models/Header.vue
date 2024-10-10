@@ -70,6 +70,7 @@
             color="outline"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
+            :disabled="project?.models.totalCount === 0"
             @click="trackFederateAll"
           >
             View all in 3D
