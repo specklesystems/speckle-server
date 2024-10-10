@@ -1,7 +1,6 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivityFactory,
-  addStreamDeletedActivity,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import {
@@ -53,6 +52,7 @@ import {
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import { AddStreamDeletedActivity } from '@/modules/activitystream/domain/operations'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -141,7 +141,7 @@ export const deleteStreamAndNotifyFactory =
   (deps: {
     deleteStream: DeleteStreamRecords
     authorizeResolver: AuthorizeResolver
-    addStreamDeletedActivity: typeof addStreamDeletedActivity
+    addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
   }): DeleteStream =>
   async (
