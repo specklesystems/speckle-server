@@ -31,7 +31,7 @@
         @update:model-value="emit('changeRole', collaborator, $event)"
       />
       <div v-else class="flex items-center justify-end">
-        <span v-tippy="getRoleTooltip(collaborator)" class="shrink-0 text-body-2xs">
+        <span v-tippy="roleTooltip" class="shrink-0 text-body-2xs">
           {{ roleSelectItems[collaborator.role].title }}
         </span>
       </div>
@@ -105,7 +105,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [{ title: 'Remove user', id: ActionTypes.Remove, disabled: props.loading }]
 ])
 
-const getRoleTooltip = computed(() => {
+const roleTooltip = computed(() => {
   if (!props.canEdit) {
     return null
   }
