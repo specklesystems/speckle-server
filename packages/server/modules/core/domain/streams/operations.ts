@@ -61,6 +61,8 @@ export type StoreStream = (
 
 export type DeleteStreamRecords = (streamId: string) => Promise<number>
 
+export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
+
 export type UpdateStreamRecord = (
   update: StreamUpdateInput | ProjectUpdateInput
 ) => Promise<Nullable<Stream>>
@@ -153,4 +155,11 @@ export type RemoveStreamCollaborator = (
   userId: string,
   removedById: string,
   removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<Stream>
+
+export type CloneStream = (userId: string, sourceStreamId: string) => Promise<Stream>
+
+export type CreateOnboardingStream = (
+  targetUserId: string,
+  targetUserResourceAccessRules: ContextResourceAccessRules
 ) => Promise<Stream>

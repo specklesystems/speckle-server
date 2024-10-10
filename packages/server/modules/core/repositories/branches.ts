@@ -22,6 +22,7 @@ import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelp
 import {
   DeleteBranchById,
   GenerateBranchId,
+  GetBatchedStreamBranches,
   GetBranchById,
   GetBranchCommitCount,
   GetBranchCommitCounts,
@@ -39,6 +40,7 @@ import {
   GetStreamBranchCounts,
   GetStreamBranchesByName,
   GetStructuredProjectModels,
+  InsertBranches,
   MarkCommitBranchUpdated,
   StoreBranch,
   UpdateBranch
@@ -120,25 +122,25 @@ export const getStreamBranchByNameFactory =
     return first || null
   }
 
-export function getBatchedStreamBranches(
-  streamId: string,
-  options?: Partial<BatchedSelectOptions>
-) {
-  const baseQuery = Branches.knex<BranchRecord[]>()
-    .where(Branches.col.streamId, streamId)
-    .orderBy(Branches.col.id)
+export const getBatchedStreamBranchesFactory =
+  (deps: { db: Knex }): GetBatchedStreamBranches =>
+  (streamId: string, options?: Partial<BatchedSelectOptions>) => {
+    const baseQuery = tables
+      .branches(deps.db)
+      .select<BranchRecord[]>('*')
+      .where(Branches.col.streamId, streamId)
+      .orderBy(Branches.col.id)
 
-  return executeBatchedSelect(baseQuery, options)
-}
+    return executeBatchedSelect(baseQuery, options)
+  }
 
-export async function insertBranches(
-  branches: BranchRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = Branches.knex().insert(branches)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const insertBranchesFactory =
+  (deps: { db: Knex }): InsertBranches =>
+  async (branches: BranchRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
+    const q = tables.branches(deps.db).insert(branches)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }
 
 export const getStreamBranchCountsFactory =
   (deps: { db: Knex }): GetStreamBranchCounts =>
