@@ -182,6 +182,10 @@ const formIsDirty = computed(() => {
   return meta.value.dirty
 })
 
+const navigateToWorkspaceExplainer = () => {
+  router.push(workspacesRoute)
+}
+
 const confirmCloseDialog = () => {
   if (formIsDirty.value) {
     showConfirmCloseDialog.value = true
@@ -196,10 +200,6 @@ const confirmCreateWorkspace = () => {
   } else {
     navigateToWorkspaceExplainer()
   }
-}
-
-const navigateToWorkspaceExplainer = () => {
-  router.push(workspacesRoute)
 }
 
 watch(open, (newVal, oldVal) => {
