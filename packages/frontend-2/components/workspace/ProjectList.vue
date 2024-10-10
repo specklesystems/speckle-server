@@ -4,7 +4,7 @@
       <WorkspaceInviteBlock :invite="workspaceInvite" />
     </div>
     <template v-else>
-      <Portal to="navigation">
+      <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
           :name="workspace?.name"
