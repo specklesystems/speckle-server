@@ -61,7 +61,7 @@
               :plus-click="isNotGuest ? handlePlusClick : undefined"
               plus-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
+              <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
@@ -273,7 +273,17 @@ const handlePlusClick = () => {
   if (route.path === workspacesRoute) {
     openWorkspaceCreateDialog()
   } else {
+    mixpanel.track('Clicked Link to Workspace Explainer', {
+      source: 'sidebar'
+    })
     router.push(workspacesRoute)
   }
+}
+
+const handleIntroducingWorkspacesClick = () => {
+  isOpenMobile.value = false
+  mixpanel.track('Clicked Link to Workspace Explainer', {
+    source: 'sidebar'
+  })
 }
 </script>
