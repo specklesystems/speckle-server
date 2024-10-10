@@ -105,17 +105,17 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [{ title: 'Remove user', id: ActionTypes.Remove, disabled: props.loading }]
 ])
 
-const getRoleTooltip = (collaborator: ProjectCollaboratorListItem): string | null => {
+const getRoleTooltip = computed(() => {
   if (!props.canEdit) {
     return null
   }
 
-  if (collaborator.workspaceRole === Roles.Workspace.Admin) {
+  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
     return 'User is workspace admin'
   }
 
   return null
-}
+})
 
 const isTargettingWorkspaceGuest = computed(
   () => props.collaborator.role === Roles.Workspace.Guest
