@@ -21,7 +21,6 @@ const {
   validateToken,
   getUserTokens
 } = require('../services/tokens')
-const { grantPermissionsStream } = require('../services/streams')
 
 const { getBranchesByStreamId } = require('../services/branches')
 
@@ -51,7 +50,8 @@ const {
 const {
   markCommitStreamUpdated,
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
@@ -140,6 +140,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

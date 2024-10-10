@@ -1,9 +1,6 @@
 <template>
   <div>
-    <div
-      v-if="hasBanners"
-      class="bg-foundation divide-y divide-outline-3 mb-8 empty:mb-0"
-    >
+    <div v-if="hasBanners" class="space-y-2 mb-8 empty:mb-0">
       <ProjectsInviteBanners
         v-if="projectsInvites?.projectInvites?.length"
         :invites="projectsInvites"
