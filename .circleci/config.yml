@@ -415,11 +415,8 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -474,12 +471,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -569,12 +562,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -602,12 +591,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -647,12 +632,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -692,12 +673,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -726,12 +703,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -779,12 +752,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -818,11 +787,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1088,11 +1054,8 @@ jobs:
           keys:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1161,11 +1124,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1204,11 +1164,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
