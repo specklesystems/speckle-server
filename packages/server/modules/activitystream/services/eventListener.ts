@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import {
   AccessRequestsEmitter,
   AccessRequestsEvents,
@@ -7,28 +6,30 @@ import {
 import { AccessRequestType } from '@/modules/accessrequests/repositories'
 import {
   AddStreamAccessRequestDeclinedActivity,
-  AddStreamAccessRequestedActivity
+  AddStreamAccessRequestedActivity,
+  SaveActivity
 } from '@/modules/activitystream/domain/operations'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   UsersEmitter,
   UsersEvents,
   UsersEventsPayloads
 } from '@/modules/core/events/usersEmitter'
 
-async function onUserCreated(payload: UsersEventsPayloads[UsersEvents.Created]) {
-  const { user } = payload
+const onUserCreatedFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
+    const { user } = payload
 
-  await saveActivityFactory({ db })({
-    streamId: null,
-    resourceType: 'user',
-    resourceId: user.id,
-    actionType: 'user_create',
-    userId: user.id,
-    info: { user },
-    message: 'User created'
-  })
-}
+    await saveActivity({
+      streamId: null,
+      resourceType: 'user',
+      resourceId: user.id,
+      actionType: 'user_create',
+      userId: user.id,
+      info: { user },
+      message: 'User created'
+    })
+  }
 
 const onServerAccessRequestCreatedFactory =
   ({
@@ -83,14 +84,16 @@ const onServerAccessRequestFinalizedFactory =
 export const initializeEventListenerFactory =
   ({
     addStreamAccessRequestedActivity,
-    addStreamAccessRequestDeclinedActivity
+    addStreamAccessRequestDeclinedActivity,
+    saveActivity
   }: {
     addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
     addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
+    saveActivity: SaveActivity
   }) =>
   () => {
     const quitCbs = [
-      UsersEmitter.listen(UsersEvents.Created, onUserCreated),
+      UsersEmitter.listen(UsersEvents.Created, onUserCreatedFactory({ saveActivity })),
       AccessRequestsEmitter.listen(
         AccessRequestsEvents.Created,
         onServerAccessRequestCreatedFactory({ addStreamAccessRequestedActivity })
