@@ -31,12 +31,10 @@ import {
   UserWithRole
 } from '@/modules/core/helpers/types'
 import {
-  DiscoverableStreamsSortingInput,
   DiscoverableStreamsSortType,
   ProjectCreateInput,
   ProjectUpdateInput,
   ProjectVisibility,
-  QueryDiscoverableStreamsArgs,
   SortDirection,
   StreamCreateInput,
   StreamUpdateInput
@@ -82,7 +80,10 @@ import {
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
-  GetOnboardingBaseStream
+  GetOnboardingBaseStream,
+  GetDiscoverableStreamsParams,
+  CountDiscoverableStreams,
+  GetDiscoverableStreamsPage
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -525,28 +526,21 @@ export async function getStreamRoles(userId: string, streamIds: string[]) {
   )
 }
 
-export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
-  sort: DiscoverableStreamsSortingInput
-  /**
-   * Only allow streams with the specified IDs to be returned
-   */
-  streamIdWhitelist?: string[]
-}
+const buildDiscoverableStreamsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  <Result = Array<StreamRecord>>(params: GetDiscoverableStreamsParams) => {
+    const q = tables
+      .streams(deps.db)
+      .select<Result>(Streams.cols)
+      .where(Streams.col.isDiscoverable, true)
+      .andWhere(Streams.col.isPublic, true)
 
-function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>(
-  params: GetDiscoverableStreamsParams
-) {
-  const q = Streams.knex()
-    .select<Result>(Streams.cols)
-    .where(Streams.col.isDiscoverable, true)
-    .andWhere(Streams.col.isPublic, true)
+    if (params.streamIdWhitelist?.length) {
+      q.whereIn(Streams.col.id, params.streamIdWhitelist)
+    }
 
-  if (params.streamIdWhitelist?.length) {
-    q.whereIn(Streams.col.id, params.streamIdWhitelist)
+    return q
   }
-
-  return q
-}
 
 const decodeDiscoverableStreamsCursor = (
   sortType: DiscoverableStreamsSortType,
@@ -609,53 +603,58 @@ export const encodeDiscoverableStreamsCursor = (
 /**
  * Counts all discoverable streams
  */
-export async function countDiscoverableStreams(params: GetDiscoverableStreamsParams) {
-  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>(params)
-  q.clearSelect()
-  q.count()
+export const countDiscoverableStreamsFactory =
+  (deps: { db: Knex }): CountDiscoverableStreams =>
+  async (params: GetDiscoverableStreamsParams) => {
+    const q =
+      buildDiscoverableStreamsBaseQueryFactory(deps)<{ count: string }[]>(params)
+    q.clearSelect()
+    q.count()
 
-  const [res] = await q
-  return parseInt(res.count)
-}
+    const [res] = await q
+    return parseInt(res.count)
+  }
 
 /**
  * Paginated discoverable stream retrieval with support for multiple sorting approaches
  */
-export async function getDiscoverableStreams(params: GetDiscoverableStreamsParams) {
-  const { cursor, sort, limit } = params
-  const q = buildDiscoverableStreamsBaseQuery(params).limit(limit)
+export const getDiscoverableStreamsPage =
+  (deps: { db: Knex }): GetDiscoverableStreamsPage =>
+  async (params: GetDiscoverableStreamsParams) => {
+    const { cursor, sort, limit } = params
+    const q = buildDiscoverableStreamsBaseQueryFactory(deps)(params).limit(limit)
 
-  const decodedCursor = cursor
-    ? decodeDiscoverableStreamsCursor(sort.type, cursor)
-    : null
-  const sortOperator = sort.direction === SortDirection.Asc ? '>' : '<'
+    const decodedCursor = cursor
+      ? decodeDiscoverableStreamsCursor(sort.type, cursor)
+      : null
+    const sortOperator = sort.direction === SortDirection.Asc ? '>' : '<'
 
-  switch (sort.type) {
-    case DiscoverableStreamsSortType.CreatedDate: {
-      q.orderBy([
-        { column: Streams.col.createdAt, order: sort.direction },
-        { column: Streams.col.name }
-      ])
+    switch (sort.type) {
+      case DiscoverableStreamsSortType.CreatedDate: {
+        q.orderBy([
+          { column: Streams.col.createdAt, order: sort.direction },
+          { column: Streams.col.name }
+        ])
 
-      if (decodedCursor) {
-        q.andWhere(Streams.col.createdAt, sortOperator, decodedCursor)
+        if (decodedCursor) {
+          q.andWhere(Streams.col.createdAt, sortOperator, decodedCursor)
+        }
+
+        break
       }
+      case DiscoverableStreamsSortType.FavoritesCount: {
+        q.leftJoin(StreamFavorites.name, StreamFavorites.col.streamId, Streams.col.id)
+          .groupBy(Streams.col.id)
+          .orderByRaw(`COUNT("stream_favorites"."streamId") ${sort.direction}`)
+          .orderBy([{ column: Streams.col.name }])
 
-      break
+        if (decodedCursor) q.offset(decodedCursor as number)
+        break
+      }
     }
-    case DiscoverableStreamsSortType.FavoritesCount: {
-      q.leftJoin(StreamFavorites.name, StreamFavorites.col.streamId, Streams.col.id)
-        .groupBy(Streams.col.id)
-        .orderByRaw(`COUNT("stream_favorites"."streamId") ${sort.direction}`)
-        .orderBy([{ column: Streams.col.name }])
 
-      if (decodedCursor) q.offset(decodedCursor as number)
-      break
-    }
+    return await q
   }
-
-  return await q
-}
 
 /**
  * Get all stream collaborators. Optionally filter only specific roles.

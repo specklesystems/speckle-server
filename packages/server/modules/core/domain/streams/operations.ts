@@ -6,9 +6,11 @@ import {
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
+  DiscoverableStreamsSortingInput,
   ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
+  QueryDiscoverableStreamsArgs,
   StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput,
@@ -66,6 +68,22 @@ export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stre
 export type UpdateStreamRecord = (
   update: StreamUpdateInput | ProjectUpdateInput
 ) => Promise<Nullable<Stream>>
+
+export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
+  sort: DiscoverableStreamsSortingInput
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
+}
+
+export type CountDiscoverableStreams = (
+  params: GetDiscoverableStreamsParams
+) => Promise<number>
+
+export type GetDiscoverableStreamsPage = (
+  params: GetDiscoverableStreamsParams
+) => Promise<Stream[]>
 
 export type RevokeStreamPermissions = (params: {
   streamId: string
@@ -163,3 +181,12 @@ export type CreateOnboardingStream = (
   targetUserId: string,
   targetUserResourceAccessRules: ContextResourceAccessRules
 ) => Promise<Stream>
+
+export type GetDiscoverableStreams = (
+  args: QueryDiscoverableStreamsArgs,
+  streamIdWhitelist?: Optional<string[]>
+) => Promise<{
+  cursor: Nullable<string>
+  totalCount: number
+  items: Stream[]
+}>

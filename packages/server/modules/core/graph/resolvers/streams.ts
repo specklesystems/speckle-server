@@ -22,7 +22,6 @@ import {
   inviteUsersToProjectFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
 import { get } from 'lodash'
 import {
   getUserStreamsCount,
@@ -33,6 +32,8 @@ import {
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
+  getDiscoverableStreamsPage,
+  countDiscoverableStreamsFactory,
   getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -84,6 +85,7 @@ import {
   removeStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
+import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
 
 const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -159,6 +161,10 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     })
   }),
   removeStreamCollaborator
+})
+const getDiscoverableStreams = getDiscoverableStreamsFactory({
+  getDiscoverableStreamsPage: getDiscoverableStreamsPage({ db }),
+  countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
 })
 
 const getUserStreamsCore = async (
