@@ -94,6 +94,7 @@ graphql(`
         id
         user {
           id
+          role
         }
       }
     }
