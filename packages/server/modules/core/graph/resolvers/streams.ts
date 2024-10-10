@@ -1,7 +1,6 @@
 import {
   getStreamUsers,
   favoriteStream,
-  getFavoriteStreamsCollection,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
   getOwnedFavoritesCount
@@ -34,6 +33,8 @@ import {
   getDiscoverableStreamsPage,
   countDiscoverableStreamsFactory,
   legacyGetStreamsFactory,
+  getFavoritedStreamsCountFactory,
+  getFavoritedStreamsPageFactory,
   getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -86,7 +87,12 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
+import { getFavoriteStreamsCollectionFactory } from '@/modules/core/services/streams/favorite'
 
+const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
+  getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
+  getFavoritedStreamsPage: getFavoritedStreamsPageFactory({ db })
+})
 const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({

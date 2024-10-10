@@ -84,14 +84,17 @@ import {
   GetDiscoverableStreamsParams,
   CountDiscoverableStreams,
   GetDiscoverableStreamsPage,
-  LegacyGetStreams
+  LegacyGetStreams,
+  GetFavoritedStreamsPage,
+  GetFavoritedStreamsCount
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>(Streams.name),
   streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name),
-  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name)
+  streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
+  streamFavorites: (db: Knex) => db<StreamFavoriteRecord>(StreamFavorites.name)
 }
 
 /**
@@ -256,32 +259,32 @@ export const getCommitStreamFactory =
  * Get base query for finding or counting user favorited streams
  * @param {string} userId The user's ID
  */
-function getFavoritedStreamsQueryBase<
-  Result = Array<StreamFavoriteRecord & StreamRecord & StreamAclRecord>
->(userId: string, streamIdWhitelist?: Optional<string[]>) {
-  if (!userId)
-    throw new InvalidArgumentError(
-      'User ID must be specified to retrieve favorited streams'
-    )
+const getFavoritedStreamsQueryBaseFactory =
+  (deps: { db: Knex }) => (userId: string, streamIdWhitelist?: Optional<string[]>) => {
+    if (!userId)
+      throw new InvalidArgumentError(
+        'User ID must be specified to retrieve favorited streams'
+      )
 
-  const query = StreamFavorites.knex<Result>()
-    .where(StreamFavorites.col.userId, userId)
-    .innerJoin(Streams.name, Streams.col.id, StreamFavorites.col.streamId)
-    .leftJoin(StreamAcl.name, (q) =>
-      q
-        .on(StreamAcl.col.resourceId, '=', StreamFavorites.col.streamId)
-        .andOnVal(StreamAcl.col.userId, userId)
-    )
-    .andWhere((q) =>
-      q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
-    )
+    const query = tables
+      .streamFavorites(deps.db)
+      .where(StreamFavorites.col.userId, userId)
+      .innerJoin(Streams.name, Streams.col.id, StreamFavorites.col.streamId)
+      .leftJoin(StreamAcl.name, (q) =>
+        q
+          .on(StreamAcl.col.resourceId, '=', StreamFavorites.col.streamId)
+          .andOnVal(StreamAcl.col.userId, userId)
+      )
+      .andWhere((q) =>
+        q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+      )
 
-  if (streamIdWhitelist?.length) {
-    query.whereIn(Streams.col.id, streamIdWhitelist)
+    if (streamIdWhitelist?.length) {
+      query.whereIn(Streams.col.id, streamIdWhitelist)
+    }
+
+    return query
   }
-
-  return query
-}
 
 /**
  * Get favorited streams
@@ -290,52 +293,45 @@ function getFavoritedStreamsQueryBase<
  * @param {string} [p.cursor] ISO8601 timestamp after which to look for favoirtes
  * @param {number} [p.limit] Defaults to 25
  */
-export async function getFavoritedStreams(params: {
-  userId: string
-  cursor?: string
-  limit?: number
-  streamIdWhitelist?: Optional<string[]>
-}) {
-  const { userId, cursor, limit, streamIdWhitelist } = params
-  const finalLimit = _.clamp(limit || 25, 1, 25)
-  const query = getFavoritedStreamsQueryBase<
-    Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
-  >(userId, streamIdWhitelist)
-  query
-    .select([
-      ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
-      { favoritedDate: StreamFavorites.col.createdAt },
-      { favCursor: StreamFavorites.col.cursor }
-    ])
-    .limit(finalLimit)
-    .orderBy(StreamFavorites.col.cursor, 'desc')
+export const getFavoritedStreamsPageFactory =
+  (deps: { db: Knex }): GetFavoritedStreamsPage =>
+  async (params) => {
+    const { userId, cursor, limit, streamIdWhitelist } = params
+    const finalLimit = _.clamp(limit || 25, 1, 25)
+    const query = getFavoritedStreamsQueryBaseFactory(deps)(userId, streamIdWhitelist)
+    query
+      .select<
+        Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
+      >([
+        ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
+        { favoritedDate: StreamFavorites.col.createdAt },
+        { favCursor: StreamFavorites.col.cursor }
+      ])
+      .limit(finalLimit)
+      .orderBy(StreamFavorites.col.cursor, 'desc')
 
-  if (cursor) query.andWhere(StreamFavorites.col.cursor, '<', cursor)
+    if (cursor) query.andWhere(StreamFavorites.col.cursor, '<', cursor)
 
-  const rows = await query
+    const rows = await query
 
-  return {
-    streams: rows,
-    cursor: rows.length > 0 ? rows[rows.length - 1].favCursor : null
+    return {
+      streams: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].favCursor : null
+    }
   }
-}
 
 /**
  * Get total amount of streams favorited by user
  */
-export async function getFavoritedStreamsCount(
-  userId: string,
-  streamIdWhitelist?: Optional<string[]>
-) {
-  const query = getFavoritedStreamsQueryBase<[{ count: string }]>(
-    userId,
-    streamIdWhitelist
-  )
-  query.count()
+export const getFavoritedStreamsCountFactory =
+  (deps: { db: Knex }): GetFavoritedStreamsCount =>
+  async (userId: string, streamIdWhitelist?: Optional<string[]>) => {
+    const query = getFavoritedStreamsQueryBaseFactory(deps)(userId, streamIdWhitelist)
+    query.count()
 
-  const [res] = await query
-  return parseInt(res.count)
-}
+    const [res] = await query
+    return parseInt(res.count)
+  }
 
 /**
  * Set stream as favorited/unfavorited for a specific user

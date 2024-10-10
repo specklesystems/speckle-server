@@ -1,9 +1,5 @@
-'use strict'
-const _ = require('lodash')
 const { StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
-  getFavoritedStreams,
-  getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
   getStreamFactory
@@ -69,32 +65,6 @@ module.exports = {
 
     // Get updated stream info
     return await getStream({ streamId, userId })
-  },
-
-  /**
-   * Get user favorited streams & metadata
-   * @param {Object} p
-   * @param {string} p.userId
-   * @param {number} [p.limit] Defaults to 25
-   * @param {string|null} [p.cursor] Optionally specify date after which to look for favorites
-   * @param {string[] | undefined} [p.streamIdWhitelist] Optionally specify a list of stream IDs to filter by
-   * @returns
-   */
-  async getFavoriteStreamsCollection({ userId, limit, cursor, streamIdWhitelist }) {
-    limit = _.clamp(limit || 25, 1, 25)
-
-    // Get total count of favorited streams
-    const totalCount = await getFavoritedStreamsCount(userId, streamIdWhitelist)
-
-    // Get paginated streams
-    const { cursor: finalCursor, streams } = await getFavoritedStreams({
-      userId,
-      cursor,
-      limit,
-      streamIdWhitelist
-    })
-
-    return { totalCount, cursor: finalCursor, items: streams }
   },
 
   /**
