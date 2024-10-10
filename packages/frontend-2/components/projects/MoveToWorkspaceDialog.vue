@@ -36,9 +36,9 @@
           <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
             <p>
               Move
-              <span class="font-medium">{{ project.name }}</span>
+              <span class="font-medium truncate">{{ project.name }}</span>
               to
-              <span class="font-medium">
+              <span class="font-medium truncate">
                 {{ selectedWorkspace?.name ?? workspace?.name }}
               </span>
             </p>
