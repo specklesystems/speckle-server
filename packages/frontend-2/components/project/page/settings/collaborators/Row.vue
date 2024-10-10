@@ -102,7 +102,13 @@ const showActionsMenu = ref(false)
 const menuId = useId()
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Remove user', id: ActionTypes.Remove, disabled: props.loading }]
+  [
+    {
+      title: props.collaborator.inviteId ? 'Cancel invite' : 'Remove user',
+      id: ActionTypes.Remove,
+      disabled: props.loading
+    }
+  ]
 ])
 
 const roleTooltip = computed(() => {
