@@ -1,4 +1,5 @@
 import {
+  Color,
   DoubleSide,
   NearestFilter,
   OrthographicCamera,
@@ -9,7 +10,7 @@ import {
 } from 'three'
 import { BaseGPass } from './GPass.js'
 import { WorldTree } from '../../tree/WorldTree.js'
-import { GeometryType } from '../../batching/Batch.js'
+import { BatchUpdateRange, GeometryType } from '../../batching/Batch.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { MeshBatch } from '../../batching/MeshBatch.js'
 import { NodeRenderView } from '../../tree/NodeRenderView.js'
@@ -23,7 +24,11 @@ export class GBasitPass extends BaseGPass {
   protected tree: WorldTree
   protected speckleRenderer: SpeckleRenderer
   protected materialMap: {
-    [batchID: string]: [batch: MeshBatch, material: SpeckleStandardColoredMaterial]
+    [batchID: string]: [
+      batch: MeshBatch,
+      colorMap: Map<number, Array<NodeRenderView>>,
+      material: SpeckleStandardColoredMaterial
+    ]
   } = {}
 
   public constructor(tree: WorldTree, renderer: SpeckleRenderer) {
@@ -71,6 +76,7 @@ export class GBasitPass extends BaseGPass {
         const entry = colorMap.get(colorMaterial.color)
         if (entry) entry.push(rv)
       }
+
       const rampTexture = Assets.generateDiscreetRampTexture(
         Array.from(colorMap.keys())
       )
@@ -85,35 +91,50 @@ export class GBasitPass extends BaseGPass {
       material.clipShadows = true
       material.setGradientTexture(rampTexture)
 
-      this.materialMap[batch.id] = [batch, material]
+      this.materialMap[batch.id] = [batch, colorMap, material]
     }
-    // console.log(this.materialMap)
+  }
 
-    // const colorNodes = this.tree.findAll(
-    //   (node: TreeNode) =>
-    //     node.model.renderView &&
-    //     node.model.renderView.renderData.colorMaterial &&
-    //     node.model.renderView.geometryType === GeometryType.MESH
-    // )
-    // const colorMap: { [color: number]: Array<string> } = {}
-    // for (let k = 0; k < colorNodes.length; k++) {
-    //   const node = colorNodes[k]
+  protected applyColorIndices() {
+    for (const item in this.materialMap) {
+      const batch = this.materialMap[item][0]
+      const colorMap = this.materialMap[item][1]
 
-    //   const color: number = node.model.renderView.renderData.colorMaterial.color
-    //   if (!colorMap[color]) colorMap[color] = []
+      const updateRanges = []
+      let rampIndex = 0
+      for (const entry of colorMap.entries()) {
+        const color = entry[0]
+        updateRanges.push(
+          ...entry[1].map((value: NodeRenderView) => {
+            return {
+              offset: value.batchStart,
+              count: value.batchCount,
+              materialOptions: {
+                rampIndex: rampIndex / colorMap.size,
+                rampIndexColor: new Color(color),
+                rampWidth: entry[1].length * 4
+              }
+            } as BatchUpdateRange
+          })
+        )
+        rampIndex++
+      }
+      batch.setBatchBuffers(updateRanges)
+    }
+  }
 
-    //   colorMap[color].push(node.model.id)
-    // }
-    // const colorGroups = []
+  protected overrideMaterials() {
+    for (const k in this.materialMap) {
+      const tuple = this.materialMap[k]
+      ;(tuple[0].renderObject as SpeckleMesh).setOverrideMaterial(tuple[2])
+    }
+  }
 
-    // for (const color in colorMap) {
-    //   colorGroups.push({
-    //     objectIds: colorMap[color],
-    //     color: '#' + new Color(Number.parseInt(color)).getHexString()
-    //   })
-    // }
-    // console.log(colorGroups)
-    // this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
+  protected restoreMaterials() {
+    for (const k in this.materialMap) {
+      const tuple = this.materialMap[k]
+      ;(tuple[0].renderObject as SpeckleMesh).restoreMaterial()
+    }
   }
 
   public render(
@@ -125,11 +146,8 @@ export class GBasitPass extends BaseGPass {
 
     this.applyLayers(camera)
 
-    for (const k in this.materialMap) {
-      const tuple: [batch: MeshBatch, material: SpeckleStandardColoredMaterial] =
-        this.materialMap[k]
-      ;(tuple[0].renderObject as SpeckleMesh).setOverrideMaterial(tuple[1])
-    }
+    this.applyColorIndices()
+    this.overrideMaterials()
 
     renderer.setRenderTarget(this.outputTarget)
 
@@ -143,11 +161,8 @@ export class GBasitPass extends BaseGPass {
     renderer.render(scene, camera)
     if (this.onAfterRender) this.onAfterRender()
 
-    for (const k in this.materialMap) {
-      const tuple: [batch: MeshBatch, material: SpeckleStandardColoredMaterial] =
-        this.materialMap[k]
-      ;(tuple[0].renderObject as SpeckleMesh).restoreMaterial()
-    }
+    this.restoreMaterials()
+
     return false
   }
 }
