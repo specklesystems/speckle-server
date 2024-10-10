@@ -401,7 +401,7 @@ export function useCreateWorkspace() {
       })
 
       if (options?.navigateOnSuccess === true) {
-        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
