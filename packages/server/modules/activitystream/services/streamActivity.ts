@@ -2,7 +2,6 @@ import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/typ
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   PublishSubscription,
-  pubsub,
   StreamSubscriptions as StreamPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
@@ -18,16 +17,14 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   ProjectSubscriptions,
-  publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { db } from '@/db/knex'
 import {
   AddStreamCommentMentionActivity,
   AddStreamDeletedActivity,
   AddStreamInviteDeclinedActivity,
   AddStreamInviteSentOutActivity,
+  AddStreamUpdatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
@@ -35,40 +32,48 @@ import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations
 /**
  * Save "stream updated" activity
  */
-export async function addStreamUpdatedActivity(params: {
-  streamId: string
-  updaterId: string
-  oldStream: StreamRecord
-  newStream: StreamRecord
-  update: ProjectUpdateInput | StreamUpdateInput
-}) {
-  const { streamId, updaterId, oldStream, update, newStream } = params
+export const addStreamUpdatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddStreamUpdatedActivity =>
+  async (params: {
+    streamId: string
+    updaterId: string
+    oldStream: StreamRecord
+    newStream: StreamRecord
+    update: ProjectUpdateInput | StreamUpdateInput
+  }) => {
+    const { streamId, updaterId, oldStream, update, newStream } = params
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.Update,
-      userId: updaterId,
-      info: { old: oldStream, new: update },
-      message: 'Stream metadata changed'
-    }),
-    pubsub.publish(StreamPubsubEvents.StreamUpdated, {
-      streamUpdated: {
-        ...update
-      },
-      id: streamId
-    }),
-    publish(ProjectSubscriptions.ProjectUpdated, {
-      projectUpdated: {
-        id: streamId,
-        type: ProjectUpdatedMessageType.Updated,
-        project: newStream
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: streamId,
+        actionType: ActionTypes.Stream.Update,
+        userId: updaterId,
+        info: { old: oldStream, new: update },
+        message: 'Stream metadata changed'
+      }),
+      publish(StreamPubsubEvents.StreamUpdated, {
+        streamUpdated: {
+          ...update
+        },
+        id: streamId
+      }),
+      publish(ProjectSubscriptions.ProjectUpdated, {
+        projectUpdated: {
+          id: streamId,
+          type: ProjectUpdatedMessageType.Updated,
+          project: newStream
+        }
+      })
+    ])
+  }
 
 /**
  * Save "stream deleted" activity

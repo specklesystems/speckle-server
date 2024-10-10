@@ -7,7 +7,7 @@ import {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivity
+  addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import {
   getBatchedStreamCommentsFactory,
@@ -135,7 +135,7 @@ const updateStreamAndNotify = updateStreamAndNotifyFactory({
   authorizeResolver,
   getStream,
   updateStream: updateStreamFactory({ db }),
-  addStreamUpdatedActivity
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ saveActivity, publish })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
