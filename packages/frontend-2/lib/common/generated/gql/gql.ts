@@ -265,6 +265,8 @@ const documents = {
     "\n  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          email\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n": types.AdminPanelUsersListDocument,
     "\n  query AdminPanelProjectsList(\n    $query: String\n    $orderBy: String\n    $limit: Int!\n    $visibility: String\n    $cursor: String\n  ) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n        cursor: $cursor\n      ) {\n        cursor\n        ...SettingsServerProjects_ProjectCollection\n      }\n    }\n  }\n": types.AdminPanelProjectsListDocument,
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
+    "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n": types.UsersCountDocument,
+    "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
     "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
@@ -1360,6 +1362,14 @@ export function graphql(source: "\n  query AdminPanelProjectsList(\n    $query: 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query UsersCount {\n    admin {\n      userList {\n        totalCount\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
