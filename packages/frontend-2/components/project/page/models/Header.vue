@@ -9,6 +9,7 @@
           <FormButton
             color="outline"
             :to="allModelsRoute"
+            :disabled="project?.models.totalCount === 0"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
           >
@@ -36,7 +37,7 @@
           :show-clear="localSearch !== ''"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
-        ></FormTextInput>
+        />
         <div
           class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
         >
@@ -113,6 +114,9 @@ graphql(`
     name
     sourceApps
     role
+    models {
+      totalCount
+    }
     team {
       id
       user {
