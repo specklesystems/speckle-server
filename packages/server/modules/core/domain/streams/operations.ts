@@ -8,8 +8,11 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   ProjectCreateInput,
   ProjectUpdateInput,
+  ProjectUpdateRoleInput,
   StreamCreateInput,
-  StreamUpdateInput
+  StreamRevokePermissionInput,
+  StreamUpdateInput,
+  StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
@@ -62,6 +65,22 @@ export type UpdateStreamRecord = (
   update: StreamUpdateInput | ProjectUpdateInput
 ) => Promise<Nullable<Stream>>
 
+export type RevokeStreamPermissions = (params: {
+  streamId: string
+  userId: string
+}) => Promise<Optional<Stream>>
+
+export type GrantStreamPermissions = (
+  params: {
+    streamId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: {
+    trackProjectUpdate?: boolean
+  }
+) => Promise<Optional<Stream>>
+
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateInput) & {
     ownerId: string
@@ -94,3 +113,44 @@ export type UpdateStream = (
 export type LegacyUpdateStream = (
   update: StreamUpdateInput
 ) => Promise<Nullable<string>>
+
+export type PermissionUpdateInput =
+  | StreamUpdatePermissionInput
+  | StreamRevokePermissionInput
+  | ProjectUpdateRoleInput
+
+export type UpdateStreamRole = (
+  update: PermissionUpdateInput,
+  updaterId: string,
+  updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<Stream | undefined>
+
+export type IsStreamCollaborator = (
+  userId: string,
+  streamId: string
+) => Promise<boolean>
+
+export type ValidateStreamAccess = (
+  userId: MaybeNullOrUndefined<string>,
+  streamId: string,
+  expectedRole?: string | undefined,
+  userResourceAccessLimits?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<boolean>
+
+export type AddOrUpdateStreamCollaborator = (
+  streamId: string,
+  userId: string,
+  role: string,
+  addedById: string,
+  adderResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
+  options?: Partial<{
+    fromInvite: boolean
+  }>
+) => Promise<Stream>
+
+export type RemoveStreamCollaborator = (
+  streamId: string,
+  userId: string,
+  removedById: string,
+  removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<Stream>

@@ -32,9 +32,6 @@ const {
   batchDeleteCommits,
   batchMoveCommitsFactory
 } = require('@/modules/core/services/commit/batchCommitActions')
-const {
-  validateStreamAccess
-} = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
@@ -75,6 +72,9 @@ const {
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  validateStreamAccessFactory
+} = require('@/modules/core/services/streams/access')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -138,6 +138,7 @@ const batchMoveCommits = batchMoveCommitsFactory({
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
   addCommitMovedActivity
 })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 /**
  * @param {boolean} publicOnly

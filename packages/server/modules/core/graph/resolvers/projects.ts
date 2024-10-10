@@ -3,6 +3,9 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamCreatedActivityFactory,
   addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
@@ -25,21 +28,28 @@ import {
   getStreamCollaboratorsFactory,
   createStreamFactory,
   deleteStreamFactory,
-  updateStreamFactory
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import {
   createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory,
-  updateStreamRoleAndNotify
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import {
   deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
@@ -60,6 +70,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
+const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
@@ -84,7 +95,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
   addStreamCreatedActivity: addStreamCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
+    saveActivity,
     publish
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
@@ -104,6 +115,36 @@ const updateStreamAndNotify = updateStreamAndNotifyFactory({
   getStream,
   updateStream: updateStreamFactory({ db }),
   addStreamUpdatedActivity
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
 })
 
 export = {
