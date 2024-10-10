@@ -2,7 +2,7 @@
   <div
     class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
   >
-    <UserAvatar :user="collaborator.user" />
+    <UserAvatar hide-tooltip :user="collaborator.user" />
     <div class="flex flex-col grow">
       <span class="truncate text-body-xs">{{ collaborator.title }}</span>
       <span
