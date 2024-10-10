@@ -1,5 +1,6 @@
+import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -28,6 +29,8 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { isUndefined } from 'lodash'
+
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer

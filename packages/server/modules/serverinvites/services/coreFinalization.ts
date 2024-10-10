@@ -1,8 +1,10 @@
 import { AddStreamInviteDeclinedActivity } from '@/modules/activitystream/domain/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  AddOrUpdateStreamCollaborator,
+  GetStream
+} from '@/modules/core/domain/streams/operations'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
 import {
@@ -76,7 +78,7 @@ export const validateProjectInviteBeforeFinalizationFactory =
 type ProcessFinalizedProjectInviteFactoryDeps = {
   getProject: GetStream
   addInviteDeclinedActivity: AddStreamInviteDeclinedActivity
-  addProjectRole: typeof addOrUpdateStreamCollaborator
+  addProjectRole: AddOrUpdateStreamCollaborator
 }
 
 export const processFinalizedProjectInviteFactory =

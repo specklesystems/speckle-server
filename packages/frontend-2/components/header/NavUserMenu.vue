@@ -226,7 +226,7 @@ onMounted(() => {
       } else {
         triggerNotification({
           type: ToastNotificationType.Success,
-          title: 'Lekker bezig ah niffo'
+          title: 'SSO settings successfully updated'
         })
       }
     }

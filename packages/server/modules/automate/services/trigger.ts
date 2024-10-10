@@ -24,7 +24,6 @@ import {
   type TriggeredAutomationFunctionRun
 } from '@/modules/automate/clients/executionEngine'
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
@@ -48,6 +47,7 @@ import {
 } from '@/modules/automate/domain/operations'
 import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
+import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -467,7 +467,7 @@ export type ManuallyTriggerAutomationDeps = {
   getAutomation: GetAutomation
   getBranchLatestCommits: GetBranchLatestCommits
   triggerFunction: TriggerAutomationRevisionRun
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
 }
 
 export const manuallyTriggerAutomationFactory =
@@ -542,7 +542,7 @@ export type CreateTestAutomationRunDeps = {
   getLatestAutomationRevision: GetLatestAutomationRevision
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   upsertAutomationRun: UpsertAutomationRun
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps

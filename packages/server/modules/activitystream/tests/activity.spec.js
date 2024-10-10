@@ -7,14 +7,42 @@ const { createObject } = require('../../core/services/objects')
 
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const {
-  addOrUpdateStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
+
 const { Roles, Scopes } = require('@speckle/shared')
-const { getUserActivityFactory } = require('@/modules/activitystream/repositories')
+const {
+  getUserActivityFactory,
+  saveActivityFactory
+} = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
+const {
+  validateStreamAccessFactory,
+  addOrUpdateStreamCollaboratorFactory
+} = require('@/modules/core/services/streams/access')
+const { authorizeResolver } = require('@/modules/shared')
+const { getUser } = require('@/modules/core/repositories/users')
+const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
+const {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { publish } = require('@/modules/shared/utils/subscriptions')
 
 const getUserActivity = getUserActivityFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 let sendRequest
 

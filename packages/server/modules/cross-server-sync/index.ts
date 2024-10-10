@@ -45,7 +45,7 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   createStreamFactory,
-  getOnboardingBaseStream,
+  getOnboardingBaseStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated,
@@ -159,7 +159,7 @@ const crossServerSyncModule: SpeckleModule = {
       projectsEventsEmitter: ProjectsEmitter.emit
     })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
-      getOnboardingBaseStream,
+      getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db }),
       getFirstAdmin,
       downloadProject: downloadProjectFactory({
         downloadCommit: downloadCommitFactory({
