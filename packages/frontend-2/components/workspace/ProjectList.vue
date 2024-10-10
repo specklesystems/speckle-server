@@ -243,6 +243,11 @@ const emptyStateItems = computed(() => [
       'Projects are the place where your models and their versions live. Add one and start creating.',
     buttons: [
       {
+        text: 'Move project',
+        onClick: () => (showMoveProjectsDialog.value = true),
+        disabled: !isWorkspaceAdmin.value
+      },
+      {
         text: 'New project',
         onClick: () => (openNewProject.value = true),
         disabled: isWorkspaceGuest.value
