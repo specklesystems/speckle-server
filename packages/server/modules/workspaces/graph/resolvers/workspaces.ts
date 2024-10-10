@@ -12,10 +12,10 @@ import {
   getStreamFactory,
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  legacyGetStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
-import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   deleteAllResourceInvitesFactory,
@@ -396,6 +396,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           // Delete workspace and associated resources (i.e. invites)
+          const getStreams = legacyGetStreamsFactory({ db })
           const deleteWorkspace = deleteWorkspaceFactory({
             deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
             deleteProject: deleteStream,

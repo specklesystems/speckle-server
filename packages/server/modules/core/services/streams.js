@@ -1,6 +1,6 @@
 'use strict'
 const _ = require('lodash')
-const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
+const { StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
   getFavoritedStreams,
   getFavoritedStreamsCount,
@@ -23,93 +23,6 @@ const {
 
 module.exports = {
   setStreamFavorited,
-
-  /**
-   * @param {Object} p
-   * @param {string | Date | null} [p.cursor]
-   * @param {number} p.limit
-   * @param {string | null} [p.orderBy]
-   * @param {string | null} [p.visibility]
-   * @param {string | null} [p.searchQuery]
-   * @param {string[] | null} [p.streamIdWhitelist]
-   * @param {string[] | null} [p.workspaceIdWhitelist]
-   * @param {number | null} [p.offset]
-   * @param {boolean | null} [p.publicOnly]
-   * @deprecated Use getStreams() from the repository directly
-   */
-  async getStreams({
-    cursor,
-    limit,
-    orderBy,
-    visibility,
-    searchQuery,
-    streamIdWhitelist,
-    workspaceIdWhitelist,
-    offset,
-    publicOnly
-  }) {
-    const query = knex.select().from('streams')
-
-    const countQuery = Streams.knex()
-
-    if (searchQuery) {
-      const whereFunc = function () {
-        this.where('streams.name', 'ILIKE', `%${searchQuery}%`).orWhere(
-          'streams.description',
-          'ILIKE',
-          `%${searchQuery}%`
-        )
-      }
-      query.where(whereFunc)
-      countQuery.where(whereFunc)
-    }
-
-    if (publicOnly) {
-      visibility = 'public'
-    }
-
-    if (visibility && visibility !== 'all') {
-      if (!['private', 'public'].includes(visibility))
-        throw new Error('Stream visibility should be either private, public or all')
-      const isPublic = visibility === 'public'
-      const publicFunc = function () {
-        this.where({ isPublic })
-      }
-      query.andWhere(publicFunc)
-      countQuery.andWhere(publicFunc)
-    }
-
-    if (streamIdWhitelist?.length) {
-      query.whereIn('id', streamIdWhitelist)
-      countQuery.whereIn('id', streamIdWhitelist)
-    }
-
-    if (workspaceIdWhitelist?.length) {
-      query.whereIn('workspaceId', workspaceIdWhitelist)
-      countQuery.whereIn('workspaceId', workspaceIdWhitelist)
-    }
-
-    const [res] = await countQuery.count()
-    const count = parseInt(res.count)
-
-    if (!count) return { streams: [], totalCount: 0 }
-
-    orderBy = orderBy || 'updatedAt,desc'
-
-    const [columnName, order] = orderBy.split(',')
-
-    if (cursor) query.where(columnName, order === 'desc' ? '<' : '>', cursor)
-
-    query.orderBy(`${columnName}`, order).limit(limit)
-    if (offset) {
-      query.offset(offset)
-    }
-
-    const rows = await query
-
-    const cursorDate = rows.length ? rows.slice(-1)[0][columnName] : null
-    return { streams: rows, totalCount: count, cursorDate }
-  },
 
   /**
    * @returns {Promise<{role: string, id: string, name: string, company: string, avatar: string}[]>}

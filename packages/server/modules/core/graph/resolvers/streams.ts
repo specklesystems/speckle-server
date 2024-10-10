@@ -1,5 +1,4 @@
 import {
-  getStreams,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
@@ -34,6 +33,7 @@ import {
   grantStreamPermissionsFactory,
   getDiscoverableStreamsPage,
   countDiscoverableStreamsFactory,
+  legacyGetStreamsFactory,
   getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -166,6 +166,7 @@ const getDiscoverableStreams = getDiscoverableStreamsFactory({
   getDiscoverableStreamsPage: getDiscoverableStreamsPage({ db }),
   countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
 })
+const getStreams = legacyGetStreamsFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
