@@ -79,13 +79,14 @@ const guestCount = computed(
 )
 const invitedCount = computed(() => result.value?.workspace.invitedTeam?.length)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
-  { title: `Members (${memberCount.value})`, id: 'members' },
-  { title: `Guests (${guestCount.value})`, id: 'guests' },
+  { title: 'Members', id: 'members', count: memberCount.value },
+  { title: 'Guests', id: 'guests', count: guestCount.value },
   {
-    title: `Pending invites (${invitedCount.value})`,
+    title: 'Pending invites',
     id: 'invites',
     disabled: !isAdmin.value,
-    disabledMessage: 'Only workspace admins can manage invites'
+    disabledMessage: 'Only workspace admins can manage invites',
+    count: invitedCount.value
   }
 ])
 
