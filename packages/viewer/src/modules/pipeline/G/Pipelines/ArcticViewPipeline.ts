@@ -10,7 +10,7 @@ import { GViewportPass } from '../GViewportPass.js'
 
 export class ArcticViewPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
-  protected accumulationFrameCount: number = 16
+  protected accumulationFrameCount: number = 32
   protected dynamicStage: Array<GPass> = []
   protected progressiveStage: Array<GPass> = []
 
@@ -40,6 +40,10 @@ export class ArcticViewPipeline extends GPipeline {
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
+    progressiveAOPass.options = {
+      kernelRadius: 100,
+      kernelSize: 32
+    }
 
     const blendPass = new GBlendPass()
     blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
