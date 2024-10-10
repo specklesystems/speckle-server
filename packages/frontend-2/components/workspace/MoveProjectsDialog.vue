@@ -15,10 +15,10 @@
         class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
       >
         <div class="flex flex-col flex-1 truncate text-body-xs">
-          <span class="font-medium text-foreground">
+          <span class="font-medium text-foreground truncate">
             {{ project.name }}
           </span>
-          <span class="text-foreground-3">
+          <span class="text-foreground-3 truncate">
             {{ project.modelCount.totalCount }} model{{
               project.modelCount.totalCount !== 1 ? 's' : ''
             }}, {{ project.versions.totalCount }} version{{
