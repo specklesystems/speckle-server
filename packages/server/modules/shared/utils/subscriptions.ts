@@ -304,6 +304,7 @@ type SubscriptionTypeMap = {
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
+  | CommitSubscriptions
   | CommentSubscriptions
   | FileImportSubscriptions
   | ProjectSubscriptions

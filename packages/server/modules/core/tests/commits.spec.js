@@ -51,7 +51,6 @@ const {
 } = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity,
   addCommitUpdatedActivity
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
@@ -112,7 +111,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({

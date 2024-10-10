@@ -6,7 +6,7 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
@@ -128,7 +128,10 @@ const crossServerSyncModule: SpeckleModule = {
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createStreamReturnRecord = createStreamReturnRecordFactory({

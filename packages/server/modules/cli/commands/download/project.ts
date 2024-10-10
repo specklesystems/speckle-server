@@ -56,7 +56,6 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
@@ -71,6 +70,7 @@ import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 
 const command: CommandModule<
   unknown,
@@ -151,7 +151,10 @@ const command: CommandModule<
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createStreamReturnRecord = createStreamReturnRecordFactory({
