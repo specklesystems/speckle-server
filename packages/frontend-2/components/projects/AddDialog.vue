@@ -51,12 +51,12 @@
                     hide-text
                     class="flex"
                     color="outline"
-                    @click="confirmCreateWorkspace"
+                    @click="navigateToWorkspaceExplainer"
                   />
                 </div>
               </div>
             </div>
-            <FormButton v-else color="outline" @click="confirmCreateWorkspace">
+            <FormButton v-else color="outline" @click="navigateToWorkspaceExplainer">
               New workspace
             </FormButton>
             <p class="text-foreground-2 text-body-2xs">
@@ -68,11 +68,7 @@
     </form>
     <CommonConfirmDialog
       v-model:open="showConfirmDialog"
-      @confirm="navigateToWorkspaceExplainer()"
-    />
-    <CommonConfirmDialog
-      v-model:open="showConfirmCloseDialog"
-      @confirm="open = false"
+      @confirm="handleConfirmAction"
     />
   </LayoutDialog>
 </template>
@@ -134,7 +130,7 @@ const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, 
 const visibility = ref(ProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
 const showConfirmDialog = ref(false)
-const showConfirmCloseDialog = ref(false)
+const confirmActionType = ref<'navigate' | 'close' | null>(null)
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -166,7 +162,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     {
       text: 'Cancel',
       props: { color: 'outline' },
-      onClick: confirmCloseDialog
+      onClick: confirmCancel
     },
     {
       text: 'Create',
@@ -183,23 +179,30 @@ const formIsDirty = computed(() => {
 })
 
 const navigateToWorkspaceExplainer = () => {
-  router.push(workspacesRoute)
+  if (formIsDirty.value) {
+    confirmActionType.value = 'navigate'
+    showConfirmDialog.value = true
+  } else {
+    router.push(workspacesRoute)
+  }
 }
 
-const confirmCloseDialog = () => {
+const confirmCancel = () => {
   if (formIsDirty.value) {
-    showConfirmCloseDialog.value = true
+    confirmActionType.value = 'close'
+    showConfirmDialog.value = true
   } else {
     open.value = false
   }
 }
 
-const confirmCreateWorkspace = () => {
-  if (formIsDirty.value) {
-    showConfirmDialog.value = true
-  } else {
-    navigateToWorkspaceExplainer()
+const handleConfirmAction = () => {
+  if (confirmActionType.value === 'navigate') {
+    router.push(workspacesRoute)
+  } else if (confirmActionType.value === 'close') {
+    open.value = false
   }
+  confirmActionType.value = null
 }
 
 watch(open, (newVal, oldVal) => {
