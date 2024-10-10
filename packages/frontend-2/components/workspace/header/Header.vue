@@ -83,14 +83,6 @@
           >
             Invite
           </FormButton>
-          <FormButton
-            v-if="isWorkspaceAdmin"
-            class="hidden md:block"
-            color="subtle"
-            @click="$emit('show-move-projects-dialog')"
-          >
-            Move projects
-          </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -190,12 +182,19 @@ const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
+const isWorkspaceGuest = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Guest
+)
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     ...(isMobile.value
       ? [
-          { title: 'Move projects', id: ActionTypes.MoveProjects },
-          { title: 'Invite', id: ActionTypes.Invite }
+          ...(isWorkspaceAdmin.value
+            ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
+            : []),
+          ...(!isWorkspaceGuest.value
+            ? [{ title: 'Invite', id: ActionTypes.Invite }]
+            : [])
         ]
       : []),
     { title: 'Copy link', id: ActionTypes.CopyLink }
