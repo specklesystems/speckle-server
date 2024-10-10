@@ -91,11 +91,7 @@ router.get(
     }),
     query: oidcProvider
   }),
-  async ({ context, session, params, query, res }) => {
-    console.log('/validate')
-    console.log(context)
-    console.log(context.userId)
-
+  async ({ session, params, query, res }) => {
     try {
       const provider = query
       const encryptionKeyPair = await getEncryptionKeyPair()
