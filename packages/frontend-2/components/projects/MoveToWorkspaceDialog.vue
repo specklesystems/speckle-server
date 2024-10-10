@@ -51,10 +51,6 @@
             The project, including models and versions, will be moved to the target
             workspace, where all members and admins will have access.
             <span class="pt-2 block">
-              - Project collaborators who are server guests will become guests in the
-              target workspace, retaining their project roles.
-            </span>
-            <span class="pt-2 block">
               - All other collaborators will become workspace members, keeping their
               project roles.
             </span>

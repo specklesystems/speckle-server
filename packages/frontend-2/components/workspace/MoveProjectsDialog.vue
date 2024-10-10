@@ -14,8 +14,17 @@
         :key="project.id"
         class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
       >
-        <div class="flex items-center space-x-2 flex-1 truncate">
-          {{ project.name }}
+        <div class="flex flex-col flex-1 truncate text-body-xs">
+          <span class="font-medium text-foreground">
+            {{ project.name }}
+          </span>
+          <span class="text-foreground-3">
+            {{ project.modelCount.totalCount }} model{{
+              project.modelCount.totalCount !== 1 ? 's' : ''
+            }}, {{ project.versions.totalCount }} version{{
+              project.versions.totalCount !== 1 ? 's' : ''
+            }}
+          </span>
         </div>
         <span
           v-tippy="
@@ -29,7 +38,7 @@
             color="outline"
             @click="onMoveClick(project)"
           >
-            Move
+            Move...
           </FormButton>
         </span>
       </div>
