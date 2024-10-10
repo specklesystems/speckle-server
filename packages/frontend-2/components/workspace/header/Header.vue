@@ -136,6 +136,7 @@ graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
     id
+    slug
     role
     name
     logo
@@ -211,7 +212,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
 
   switch (item.id) {
     case ActionTypes.CopyLink:
-      copyWorkspaceLink(props.workspaceInfo.id)
+      copyWorkspaceLink(props.workspaceInfo.slug)
       break
     case ActionTypes.Settings:
       openSettingsDialog(SettingMenuKeys.Workspace.General)
