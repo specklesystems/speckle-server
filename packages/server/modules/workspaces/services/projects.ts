@@ -1,5 +1,4 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import { getUserStreams } from '@/modules/core/repositories/streams'
 import {
   GetWorkspace,
@@ -23,12 +22,12 @@ import { chunk } from 'lodash'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
+import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
 }: {
-  // TODO: Core service factory functions
-  getStreams: typeof serviceGetStreams
+  getStreams: LegacyGetStreams
 }): QueryAllWorkspaceProjects =>
   async function* queryAllWorkspaceProjects({
     workspaceId

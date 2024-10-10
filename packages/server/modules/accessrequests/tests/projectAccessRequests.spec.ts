@@ -12,6 +12,12 @@ import {
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import {
   ServerAccessRequests,
   StreamActivity,
@@ -23,13 +29,20 @@ import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getStreamCollaboratorsFactory,
-  getStreamFactory
+  getStreamFactory,
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
 import {
-  addOrUpdateStreamCollaborator,
-  removeStreamCollaborator
-} from '@/modules/core/services/streams/streamAccessService'
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 import { NotificationType } from '@/modules/notifications/helpers/types'
+import { authorizeResolver } from '@/modules/shared'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectAccessRequestDocument,
@@ -62,6 +75,34 @@ const requestProjectAccess = requestProjectAccessFactory({
   getStream,
   createNewRequest: createNewRequestFactory({ db }),
   accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
 })
 
 const isNotCollaboratorError = (e: unknown) =>

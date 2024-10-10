@@ -20,6 +20,7 @@
         clearable
         class="!min-w-40"
         hide-description
+        :hide-items="[Roles.Workspace.Guest]"
       />
     </div>
     <FormButton
