@@ -97,6 +97,21 @@ export type GetDiscoverableStreamsPage = (
   params: GetDiscoverableStreamsParams
 ) => Promise<Stream[]>
 
+export type GetFavoritedStreamsPage = (params: {
+  userId: string
+  cursor?: string | null
+  limit?: number
+  streamIdWhitelist?: Optional<string[]>
+}) => Promise<{
+  streams: Stream[]
+  cursor: Nullable<string>
+}>
+
+export type GetFavoritedStreamsCount = (
+  userId: string,
+  streamIdWhitelist?: Optional<string[]>
+) => Promise<number>
+
 export type RevokeStreamPermissions = (params: {
   streamId: string
   userId: string
@@ -202,3 +217,10 @@ export type GetDiscoverableStreams = (
   totalCount: number
   items: Stream[]
 }>
+
+export type GetFavoriteStreamsCollection = (params: {
+  userId: string
+  limit?: number | undefined
+  cursor?: string | null | undefined
+  streamIdWhitelist?: string[] | undefined
+}) => Promise<{ totalCount: number; cursor: Nullable<string>; items: Stream[] }>
