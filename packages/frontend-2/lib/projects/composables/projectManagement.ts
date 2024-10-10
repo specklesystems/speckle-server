@@ -31,7 +31,7 @@ import {
   modifyObjectFields,
   modifyObjectField
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -48,6 +48,7 @@ import {
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useRouter } from 'vue-router'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -414,10 +415,14 @@ export function useDeleteProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const navigateHome = useNavigateToHome()
+  const router = useRouter()
 
-  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+  return async (
+    id: string,
+    options?: Partial<{ goHome: boolean; workspaceSlug?: string }>
+  ) => {
     if (!activeUser.value) return
-    const { goHome } = options || {}
+    const { goHome, workspaceSlug } = options || {}
 
     const result = await apollo
       .mutate({
@@ -435,7 +440,11 @@ export function useDeleteProject() {
       })
 
       if (goHome) {
-        navigateHome()
+        if (workspaceSlug) {
+          router.push(workspaceRoute(workspaceSlug))
+        } else {
+          navigateHome()
+        }
       }
 
       // evict project from cache
