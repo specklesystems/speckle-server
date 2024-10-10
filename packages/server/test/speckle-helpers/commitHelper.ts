@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getBranchByIdFactory,
@@ -18,6 +19,7 @@ import {
   createCommitByBranchNameFactory
 } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
@@ -31,7 +33,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({

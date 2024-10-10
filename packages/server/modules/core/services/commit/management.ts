@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
+import { AddCommitCreatedActivity } from '@/modules/activitystream/domain/operations'
 import {
-  addCommitCreatedActivity,
   addCommitDeletedActivity,
   addCommitReceivedActivity,
   addCommitUpdatedActivity
@@ -89,7 +89,7 @@ export const createCommitByBranchIdFactory =
     markCommitStreamUpdated: typeof markCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     versionsEventEmitter: VersionsEventEmitter
-    addCommitCreatedActivity: typeof addCommitCreatedActivity
+    addCommitCreatedActivity: AddCommitCreatedActivity
   }): CreateCommitByBranchId =>
   async (
     params: {
