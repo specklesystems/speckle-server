@@ -69,7 +69,7 @@ const documents = {
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
     "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectPageModelsActions_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n    ...ProjectPageModelsActions_Project\n  }\n": types.ProjectPageModelsCardProjectFragmentDoc,
-    "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectModelsPageHeader_ProjectFragmentDoc,
+    "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    models {\n      totalCount\n    }\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectModelsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectModelsPageResults_Project on Project {\n    ...ProjectPageLatestItemsModels\n  }\n": types.ProjectModelsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsStructureItem_Project on Project {\n    id\n    ...ProjectPageModelsActions_Project\n  }\n": types.ProjectPageModelsStructureItem_ProjectFragmentDoc,
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
@@ -581,7 +581,7 @@ export function graphql(source: "\n  fragment ProjectPageModelsCardProject on Pr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    models {\n      totalCount\n    }\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    models {\n      totalCount\n    }\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
