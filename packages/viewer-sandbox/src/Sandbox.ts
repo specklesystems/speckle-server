@@ -1,5 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+import {
+  ArcticViewPipeline,
+  Box3,
+  EdgesPipeline,
+  PenViewPipeline,
+  SectionTool,
+  ShadedViewPipeline,
+  SpeckleStandardMaterial,
+  TreeNode
+} from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -490,38 +500,81 @@ export default class Sandbox {
         await waitForAnimation(1000)
       }
     })
+    this.tabs.pages[0].addSeparator()
 
-    const colors = this.tabs.pages[0].addButton({
-      title: `PM's Colors`
-    })
-    colors.on('click', async () => {
-      const colorNodes = this.viewer.getWorldTree().findAll(
-        (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          node.model.renderView &&
-          node.model.renderView.renderData.colorMaterial &&
-          node.model.renderView.geometryType === GeometryType.MESH
-      )
-      const colorMap: { [color: number]: Array<string> } = {}
-      for (let k = 0; k < colorNodes.length; k++) {
-        const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const color: number = node.model.renderView.renderData.colorMaterial.color
-        if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        colorMap[color].push(node.model.id)
-      }
-      const colorGroups = []
+    const pipeline = { output: 0 }
+    this.tabs.pages[0]
+      .addInput(pipeline, 'output', {
+        label: 'Pipeline',
+        options: {
+          DEFAULT: 0,
+          SHADED: 1,
+          PEN: 2,
+          ARCTIC: 3
+        }
+      })
+      .on('change', (value) => {
+        switch (value.value) {
+          case 0:
+            this.viewer.getRenderer().pipeline = new EdgesPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 1:
+            this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 2:
+            this.viewer.getRenderer().pipeline = new PenViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 3:
+            this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
 
-      for (const color in colorMap) {
-        colorGroups.push({
-          objectIds: colorMap[color],
-          color: '#' + new Color(Number.parseInt(color)).getHexString()
-        })
-      }
-      console.log(colorGroups)
-      this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
-    })
+          default:
+            break
+        }
+        this.viewer.resize()
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+
+    this.tabs.pages[0].addSeparator()
+    // const colors = this.tabs.pages[0].addButton({
+    //   title: `PM's Colors`
+    // })
+    // colors.on('click', async () => {
+    //   const colorNodes = this.viewer.getWorldTree().findAll(
+    //     (node: TreeNode) =>
+    //       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    //       node.model.renderView &&
+    //       node.model.renderView.renderData.colorMaterial &&
+    //       node.model.renderView.geometryType === GeometryType.MESH
+    //   )
+    //   const colorMap: { [color: number]: Array<string> } = {}
+    //   for (let k = 0; k < colorNodes.length; k++) {
+    //     const node = colorNodes[k]
+    //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    //     const color: number = node.model.renderView.renderData.colorMaterial.color
+    //     if (!colorMap[color]) colorMap[color] = []
+    //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    //     colorMap[color].push(node.model.id)
+    //   }
+    //   const colorGroups = []
+
+    //   for (const color in colorMap) {
+    //     colorGroups.push({
+    //       objectIds: colorMap[color],
+    //       color: '#' + new Color(Number.parseInt(color)).getHexString()
+    //     })
+    //   }
+    //   console.log(colorGroups)
+    //   this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
+    // })
 
     this.tabs.pages[0]
       .addInput({ dampening: 30 }, 'dampening', {
@@ -535,6 +588,8 @@ export default class Sandbox {
           damperDecay: value.value
         }
       })
+
+    this.tabs.pages[0].addSeparator()
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
@@ -1447,7 +1502,6 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)

@@ -61,7 +61,7 @@ import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
 import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
 import { GPipeline } from './pipeline/G/GPipeline.js'
-import { BasitPipeline } from './pipeline/G/Pipelines/BasitViewPipeline.js'
+import { EdgesPipeline } from './pipeline/G/Pipelines/EdgesPipeline.js'
 // import { DefaultPipeline } from './pipeline/G/Pipelines/DefaultPipeline.js'
 // import { EdgesPipeline } from './pipeline/G/Pipelines/EdgesPipeline.js'
 // import { TAAPipeline } from './pipeline/G/Pipelines/TAAPipeline.js'
@@ -357,7 +357,7 @@ export default class SpeckleRenderer {
     // this.pipeline = new Pipeline(this._renderer, this.batcher)
     // this.pipeline.configure()
     // this.pipeline.pipelineOptions = DefaultPipelineOptions
-    this.pipeline = new BasitPipeline(this, this.tree)
+    this.pipeline = new EdgesPipeline(this)
 
     this.input = new Input(this._renderer.domElement)
     this.input.on(InputEvent.Click, this.onClick.bind(this))

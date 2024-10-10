@@ -89,7 +89,7 @@ export class ShadedViewPipeline extends GPipeline {
       blendPass
     )
 
-    this.passList = this.dynamicStage
+    this.passList = this.progressiveStage
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {

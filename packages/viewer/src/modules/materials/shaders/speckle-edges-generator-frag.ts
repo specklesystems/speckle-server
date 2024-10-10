@@ -17,7 +17,6 @@ uniform mat4 cameraProjectionMatrix;
 uniform mat4 cameraInverseProjectionMatrix;
 
 #define NORMALS_TYPE 0
-
 // RGBA depth
 #include <packing>
 
@@ -504,7 +503,10 @@ void main() {
   float maxOutline = saturate(max(depthEdge, normalEdge));
 	float sobelOutline = 1. - maxOutline * uOutlineDensity;
 	// float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
-  vec4 background = texture2D(tBackground, vUv);
+  vec4 background = vec4(1.);
+  #ifdef PAPER_BACKGROUND
+    background = texture2D(tBackground, vUv);
+  #endif
   vec3 color = mix(vec3(sobelOutline), background.rgb * 0.25 + 0.75, 1. - maxOutline);
 	gl_FragColor = vec4(color, 1.);
 

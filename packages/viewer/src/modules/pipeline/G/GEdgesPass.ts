@@ -4,7 +4,6 @@ import {
   Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
-  RepeatWrapping,
   ShaderMaterial,
   Texture,
   Vector2,
@@ -16,10 +15,6 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import { BaseGPass } from './GPass.js'
 import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges-generator-frag.js'
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
-import { Assets } from '../../Assets.js'
-import paperTex from '../../../assets/paper.png'
-import { AssetType } from '../../../IViewer.js'
-import Logger from '../../utils/Logger.js'
 
 export class GEdgePass extends BaseGPass {
   public edgesMaterial: ShaderMaterial
@@ -57,25 +52,21 @@ export class GEdgePass extends BaseGPass {
         tBackground: { value: null }
       }
     })
-    Assets.getTexture({
-      id: 'paper',
-      src: paperTex,
-      type: AssetType.TEXTURE_8BPP
-    })
-      .then((value: Texture) => {
-        value.wrapS = RepeatWrapping
-        value.wrapT = RepeatWrapping
-        this.edgesMaterial.uniforms.tBackground.value = value
-      })
-      .catch((reason) => {
-        Logger.error(`Matcap texture failed to load ${reason}`)
-      })
 
     this.fsQuad = new FullScreenQuad(this.edgesMaterial)
   }
 
   public setTexture(uName: string, texture: Texture | undefined) {
     this.edgesMaterial.uniforms[uName].value = texture
+    this.edgesMaterial.needsUpdate = true
+  }
+
+  public setBackground(texture: Texture) {
+    if (!texture) {
+      delete this.edgesMaterial.defines['PAPER_BACKGROUND']
+    } else this.edgesMaterial.defines['PAPER_BACKGROUND'] = ''
+
+    this.edgesMaterial.uniforms.tBackground.value = texture
     this.edgesMaterial.needsUpdate = true
   }
 

@@ -1,4 +1,4 @@
-import { PerspectiveCamera, OrthographicCamera } from 'three'
+import { PerspectiveCamera, OrthographicCamera, RepeatWrapping, Texture } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GDepthPass, DepthType } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
@@ -6,7 +6,10 @@ import { GNormalsPass } from '../GNormalPass.js'
 import { GPass, ObjectVisibility, ProgressiveGPass } from '../GPass.js'
 import { GPipeline } from '../GPipeline.js'
 import { GTAAPass } from '../GTAAPass.js'
-import { ObjectLayers } from '../../../../IViewer.js'
+import { AssetType, ObjectLayers } from '../../../../IViewer.js'
+import { Assets } from '../../../Assets.js'
+import paperTex from '../../../../assets/paper.png'
+import Logger from '../../../utils/Logger.js'
 
 export class PenViewPipeline extends GPipeline {
   protected accumulationFrameIndex: number = 0
@@ -54,7 +57,23 @@ export class PenViewPipeline extends GPipeline {
     this.dynamicStage.push(depthPassDynamic, normalPassDynamic, edgesPassDynamic)
     this.progressiveStage.push(depthPass, normalPass, edgesPass, taaPass)
 
-    this.passList = this.dynamicStage
+    this.passList = this.progressiveStage
+
+    Assets.getTexture({
+      id: 'paper',
+      src: paperTex,
+      type: AssetType.TEXTURE_8BPP
+    })
+      .then((value: Texture) => {
+        value.wrapS = RepeatWrapping
+        value.wrapT = RepeatWrapping
+        edgesPass.setBackground(value)
+        edgesPassDynamic.setBackground(value)
+        this.accumulationFrameIndex = 0
+      })
+      .catch((reason) => {
+        Logger.error(`Matcap texture failed to load ${reason}`)
+      })
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {

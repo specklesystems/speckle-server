@@ -78,6 +78,11 @@ import { Assets } from './modules/Assets.js'
 import { SpecklePass } from './modules/pipeline/SpecklePass.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
 import { HybridCameraController } from './modules/extensions/HybridCameraController.js'
+import { DefaultPipeline } from './modules/pipeline/G/Pipelines/DefaultPipeline.js'
+import { EdgesPipeline } from './modules/pipeline/G/Pipelines/EdgesPipeline.js'
+import { PenViewPipeline } from './modules/pipeline/G/Pipelines/PenViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/G/Pipelines/ShadedViewPipeline.js'
+import { ArcticViewPipeline } from './modules/pipeline/G/Pipelines/ArcticViewPipeline.js'
 
 export {
   Viewer,
@@ -122,7 +127,12 @@ export {
   SpeckleGeometryConverter,
   Assets,
   AssetType,
-  HybridCameraController
+  HybridCameraController,
+  DefaultPipeline,
+  EdgesPipeline,
+  ShadedViewPipeline,
+  PenViewPipeline,
+  ArcticViewPipeline
 }
 
 export type {

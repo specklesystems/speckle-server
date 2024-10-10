@@ -52,7 +52,10 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
   private _generationBuffer: WebGLRenderTarget
 
-  public _options: ProgressiveAOPassOptions = DefaultProgressiveAOPassOptions
+  public _options: ProgressiveAOPassOptions = Object.assign(
+    {},
+    DefaultProgressiveAOPassOptions
+  )
 
   private fsQuad: FullScreenQuad
 
@@ -112,6 +115,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
     this.generationMaterial.extensions.derivatives = true
     this.generationMaterial.uniforms['size'].value.set(256, 256)
     this.generationMaterial.blending = NoBlending
+    this.generationMaterial.uniformsNeedUpdate = true
 
     this.accumulateMaterial = new ShaderMaterial({
       defines: {},

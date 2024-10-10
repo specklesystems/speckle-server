@@ -53,7 +53,7 @@ export class ArcticViewPipeline extends GPipeline {
     this.dynamicStage.push(viewportPass)
     this.progressiveStage.push(depthPass, viewportPass, progressiveAOPass, blendPass)
 
-    this.passList = this.dynamicStage
+    this.passList = this.progressiveStage
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {
