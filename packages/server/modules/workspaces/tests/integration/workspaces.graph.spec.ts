@@ -49,8 +49,10 @@ import {
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const createProjectWithVersions =
   ({ apollo }: { apollo: TestApolloServer }) =>

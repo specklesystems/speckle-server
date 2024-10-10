@@ -7,6 +7,10 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
+import {
+  ProjectUpdateInput,
+  StreamUpdateInput
+} from '@/modules/core/graph/generated/graphql'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 
 export type GetActivity = (
@@ -168,4 +172,17 @@ export type AddStreamInviteSentOutActivity = (params: {
   inviterId: string
   inviteTargetEmail: string | null
   stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamDeletedActivity = (params: {
+  streamId: string
+  deleterId: string
+}) => Promise<void>
+
+export type AddStreamUpdatedActivity = (params: {
+  streamId: string
+  updaterId: string
+  oldStream: StreamRecord
+  newStream: StreamRecord
+  update: ProjectUpdateInput | StreamUpdateInput
 }) => Promise<void>
