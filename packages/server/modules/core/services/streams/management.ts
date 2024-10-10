@@ -1,8 +1,5 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import {
-  addStreamCreatedActivityFactory,
-  addStreamUpdatedActivity
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   ProjectCreateInput,
   ProjectUpdateInput,
@@ -51,7 +48,10 @@ import {
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { AddStreamDeletedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddStreamDeletedActivity,
+  AddStreamUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -188,7 +188,7 @@ export const updateStreamAndNotifyFactory =
     authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
-    addStreamUpdatedActivity: typeof addStreamUpdatedActivity
+    addStreamUpdatedActivity: AddStreamUpdatedActivity
   }): UpdateStream =>
   async (
     update: StreamUpdateInput | ProjectUpdateInput,

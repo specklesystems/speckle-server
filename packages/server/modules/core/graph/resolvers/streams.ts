@@ -76,7 +76,7 @@ import {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivity
+  addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
@@ -136,7 +136,7 @@ const updateStreamAndNotify = updateStreamAndNotifyFactory({
   authorizeResolver,
   getStream,
   updateStream: updateStreamFactory({ db }),
-  addStreamUpdatedActivity
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ publish, saveActivity })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
