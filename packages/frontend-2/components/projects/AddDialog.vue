@@ -1,5 +1,11 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    :buttons="dialogButtons"
+    hide-closer
+    prevent-close-on-click-outside
+  >
     <template #header>Create a new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-y-4 mb-2">
@@ -62,8 +68,11 @@
     </form>
     <CommonConfirmDialog
       v-model:open="showConfirmDialog"
-      text="You have unsaved changes. Are you sure you want to leave and create a new workspace?"
       @confirm="navigateToWorkspaceExplainer()"
+    />
+    <CommonConfirmDialog
+      v-model:open="showConfirmCloseDialog"
+      @confirm="open = false"
     />
   </LayoutDialog>
 </template>
@@ -125,6 +134,7 @@ const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, 
 const visibility = ref(ProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
 const showConfirmDialog = ref(false)
+const showConfirmCloseDialog = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -156,9 +166,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     {
       text: 'Cancel',
       props: { color: 'outline' },
-      onClick: () => {
-        open.value = false
-      }
+      onClick: confirmCloseDialog
     },
     {
       text: 'Create',
@@ -173,6 +181,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
 const formIsDirty = computed(() => {
   return meta.value.dirty
 })
+
+const confirmCloseDialog = () => {
+  if (formIsDirty.value) {
+    showConfirmCloseDialog.value = true
+  } else {
+    open.value = false
+  }
+}
 
 const confirmCreateWorkspace = () => {
   if (formIsDirty.value) {
