@@ -26,7 +26,6 @@ const {
 
 let sendRequest
 let server
-let app
 
 const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
@@ -45,8 +44,19 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const {
+      app,
+      server: tmpServer,
+      graphqlServer,
+      readinessCheck
+    } = await beforeEachContext()
+    server = tmpServer
+    ;({ sendRequest } = await initializeTestServer({
+      server,
+      app,
+      graphqlServer,
+      readinessCheck
+    }))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

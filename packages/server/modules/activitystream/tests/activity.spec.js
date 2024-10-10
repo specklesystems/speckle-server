@@ -44,12 +44,10 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   })
 })
 
+let server
 let sendRequest
 
 describe('Activity @activity', () => {
-  let server
-  let app
-
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
@@ -106,8 +104,19 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    ;({ server, app } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const {
+      server: tmpServer,
+      app,
+      graphqlServer,
+      readinessCheck
+    } = await beforeEachContext()
+    server = tmpServer
+    ;({ sendRequest } = await initializeTestServer({
+      server,
+      app,
+      graphqlServer,
+      readinessCheck
+    }))
 
     const normalScopesList = [
       Scopes.Streams.Read,

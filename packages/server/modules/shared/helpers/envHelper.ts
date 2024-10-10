@@ -451,3 +451,7 @@ export function getS3BucketName() {
 export function createS3Bucket() {
   return getBooleanFromEnv('S3_CREATE_BUCKET')
 }
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
+}
