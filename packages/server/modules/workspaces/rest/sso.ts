@@ -120,7 +120,7 @@ router.get(
     }),
     query: oidcProvider
   }),
-  async ({ params }) => {
+  async ({ params, session, res }) => {
     const { workspaceSlug } = params
     const encryptionKeyPair = await getEncryptionKeyPair()
     const decryptor = await buildDecryptor(encryptionKeyPair)
@@ -130,11 +130,34 @@ router.get(
       })
       if (!workspace) throw new Error('No workspace found')
 
-      const provider = await getWorkspaceSsoProviderFactory({
+      const providerMetadata = await getWorkspaceSsoProviderFactory({
         db,
         decrypt: decryptor.decrypt
       })({ workspaceId: params.workspaceSlug })
-      if (!provider) throw new Error('No SSO provider registered for the workspace')
+      if (!providerMetadata) throw new Error('No SSO provider registered for the workspace')
+
+      // Redirect to OIDC provider to continue auth flow
+      const { provider } = providerMetadata
+      const encryptionKeyPair = await getEncryptionKeyPair()
+      const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
+      const codeVerifier = await startOIDCSsoProviderValidationFactory({
+        getOIDCProviderAttributes,
+        storeOIDCProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
+          redis: getGenericRedis(),
+          encrypt: encryptor.encrypt
+        }),
+        generateCodeVerifier: generators.codeVerifier
+      })({
+        provider
+      })
+      const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug, false)
+      const authorizationUrl = await getProviderAuthorizationUrl({
+        provider,
+        redirectUrl,
+        codeVerifier
+      })
+      session.codeVerifier = await encryptor.encrypt(codeVerifier)
+      res?.redirect(authorizationUrl.toString())
     } catch (err) {
       // if things fail, before sending you to the provider, we need to tell it to the user in a nice way
     }
@@ -327,8 +350,6 @@ router.get(
         const existingSpeckleUser: Pick<UserRecord, 'id' | 'email'> | null = await getUser(
           userEmail?.userId
         )
-
-        const isNewUser = !currentSessionUser && !existingSpeckleUser
 
         if (!currentSessionUser) {
           if (!existingSpeckleUser) {
