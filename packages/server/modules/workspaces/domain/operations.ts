@@ -79,9 +79,9 @@ export type GetWorkspaceCollaboratorsArgs = {
   cursor?: string
   filter?: {
     /**
-     * Optionally filter by workspace role
+     * Optionally filter by workspace role(s)
      */
-    role?: string
+    roles?: string[]
     /**
      * Optionally filter by user name or email
      */
