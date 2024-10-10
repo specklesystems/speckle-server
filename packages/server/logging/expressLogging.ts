@@ -56,8 +56,8 @@ export const LoggingExpressMiddleware = HttpLogger({
   genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
     const path = getRequestPath(req)
-    const shouldBeDebug =
-      ['/metrics', '/readiness', '/liveness'].includes(path || '') ?? false
+    const shouldBeDebug = ['/metrics', '/readiness', '/liveness'].includes(path || '')
+    if (shouldBeDebug) return 'debug'
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -67,7 +67,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return 'info'
     }
 
-    return shouldBeDebug ? 'debug' : 'info'
+    return 'info'
   },
 
   customReceivedMessage() {
