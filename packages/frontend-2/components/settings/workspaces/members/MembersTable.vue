@@ -222,7 +222,7 @@ const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
   // Allow role change if the active user is an admin
-  if (isWorkspaceAdmin.value) {
+  if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
     baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
   }
 
