@@ -42,16 +42,16 @@
                 {{ selectedWorkspace?.name ?? workspace?.name }}
               </span>
             </p>
-            <p>
+            <p class="text-foreground-3">
               {{ project.modelCount.totalCount }} {{ modelText }},
               {{ project.versions.totalCount }} {{ versionsText }}
             </p>
           </div>
           <p class="text-body-2xs text-foreground-2">
-            The project, including models and versions, will be moved to the target
-            workspace, where all members and admins will have access.
+            The project, including models and versions, will be moved to the workspace,
+            where all existing members and admins will have access.
             <span class="pt-2 block">
-              - All other collaborators will become workspace members, keeping their
+              The project's collaborators will become workspace members and keep their
               project roles.
             </span>
           </p>
