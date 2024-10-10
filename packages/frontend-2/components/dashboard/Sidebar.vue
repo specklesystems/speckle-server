@@ -58,13 +58,7 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="
-                isNotGuest
-                  ? () => {
-                      router.push(workspacesRoute)
-                    }
-                  : undefined
-              "
+              :plus-click="isNotGuest ? handlePlusClick : undefined"
               plus-text="Create workspace"
             >
               <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
@@ -266,5 +260,20 @@ const onPromoClick = () => {
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true
   isOpenMobile.value = false
+}
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
+const handlePlusClick = () => {
+  if (route.path === workspacesRoute) {
+    openWorkspaceCreateDialog()
+  } else {
+    router.push(workspacesRoute)
+  }
 }
 </script>
