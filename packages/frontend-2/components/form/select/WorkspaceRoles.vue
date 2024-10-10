@@ -77,6 +77,10 @@ const props = defineProps({
     required: false,
     type: Array as PropType<WorkspaceRoles[]>
   },
+  hideItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
   showLabel: Boolean,
   clearable: Boolean
 })
@@ -93,7 +97,14 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => Object.values(Roles.Workspace))
+const roles = computed(() => {
+  if (props.hideItems && props.hideItems.length) {
+    return Object.values(Roles.Workspace).filter(
+      (role) => !props.hideItems.includes(role)
+    )
+  }
+  return Object.values(Roles.Workspace)
+})
 
 const disabledItemPredicate = (item: WorkspaceRoles) =>
   props.disabledItems && props.disabledItems.length > 0
