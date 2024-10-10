@@ -32,9 +32,23 @@
             v-bind="bind"
             v-on="on"
           />
-          <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
-            New project
-          </FormButton>
+          <div class="flex gap-2">
+            <div
+              v-tippy="isWorkspaceAdmin ? undefined : 'You must be a workspace admin'"
+            >
+              <FormButton
+                :disabled="!isWorkspaceAdmin"
+                class="hidden md:block"
+                color="outline"
+                @click="showMoveProjectsDialog = true"
+              >
+                Move projects
+              </FormButton>
+            </div>
+            <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
+              New project
+            </FormButton>
+          </div>
         </div>
       </div>
 
@@ -184,6 +198,7 @@ const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
 const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showEmptyState = computed(() => {
   if (search.value) return false
 

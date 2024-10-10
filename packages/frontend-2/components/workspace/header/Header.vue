@@ -83,14 +83,6 @@
           >
             Invite
           </FormButton>
-          <FormButton
-            v-if="isWorkspaceAdmin"
-            class="hidden md:block"
-            color="subtle"
-            @click="$emit('show-move-projects-dialog')"
-          >
-            Move projects
-          </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
