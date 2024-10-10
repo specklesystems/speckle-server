@@ -12,10 +12,24 @@ import {
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { Nullable, Optional } from '@speckle/shared'
+import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 
 export type GenerateBranchId = () => string
+
+export type GetBatchedStreamBranches = (
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) => AsyncGenerator<Branch[], void, unknown>
+
+export type InsertBranches = (
+  branches: Branch[],
+  options?: Partial<{
+    trx: Knex.Transaction
+  }>
+) => Promise<number[]>
 
 export type GetBranchesByIds = (
   branchIds: string[],

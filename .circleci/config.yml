@@ -415,11 +415,8 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -439,7 +436,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:18.20.4-browsers
       - image: cimg/redis:7.2.4
       - image: cimg/postgres:14.11
         environment:
@@ -474,12 +471,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -560,7 +553,7 @@ jobs:
 
   test-frontend-2:
     docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+      - image: cimg/node:18.20.4-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -569,12 +562,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -602,12 +591,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -632,7 +617,7 @@ jobs:
 
   test-preview-service:
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:18.20.4-browsers
       - image: cimg/postgres:14.11
         environment:
           POSTGRES_DB: preview_service_test
@@ -647,12 +632,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -692,12 +673,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -726,12 +703,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -771,7 +744,7 @@ jobs:
   ui-components-chromatic:
     resource_class: medium+
     docker: &docker-node-image
-      - image: cimg/node:18.19.0
+      - image: cimg/node:18.20.4-browsers
     steps:
       - checkout
       - restore_cache:
@@ -779,12 +752,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -818,11 +787,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1088,11 +1054,8 @@ jobs:
           keys:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1161,11 +1124,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1204,11 +1164,8 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
+          name: Install Dependencies (twice, cause 1st run can randomly fail?)
+          command: yarn; yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}

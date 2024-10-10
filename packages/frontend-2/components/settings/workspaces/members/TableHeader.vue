@@ -18,7 +18,9 @@
         v-model="role"
         fully-control-value
         clearable
-        class="min-w-32"
+        class="!min-w-40"
+        hide-description
+        :hide-items="[Roles.Workspace.Guest]"
       />
     </div>
     <FormButton

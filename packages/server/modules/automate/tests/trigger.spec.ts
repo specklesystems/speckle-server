@@ -76,8 +76,9 @@ import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctio
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -99,6 +100,7 @@ const updateAutomationRevision = updateAutomationRevisionFactory({ db })
 const updateAutomationRun = updateAutomationRunFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const getCommit = getCommitFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
