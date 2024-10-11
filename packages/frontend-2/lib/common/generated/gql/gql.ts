@@ -115,7 +115,7 @@ const documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n    defaultLogoIndex\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      user {\n        id\n      }\n    }\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    ...SettingsWorkspacesSecuritySso_Workspace\n  }\n\n  fragment SettingsWorkspacesSecurity_User on User {\n    id\n    emails {\n      id\n      email\n      verified\n    }\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
@@ -765,7 +765,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditSlugD
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      user {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      user {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
