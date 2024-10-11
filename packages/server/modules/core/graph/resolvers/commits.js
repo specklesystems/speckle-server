@@ -2,7 +2,8 @@ const { CommitNotFoundError } = require('@/modules/core/errors/commit')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
-  CommitSubscriptions: CommitPubsubEvents
+  CommitSubscriptions: CommitPubsubEvents,
+  publish
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
@@ -66,15 +67,16 @@ const {
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity,
   addCommitUpdatedActivity,
-  addCommitMovedActivity
+  addCommitMovedActivity,
+  addCommitCreatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   validateStreamAccessFactory
 } = require('@/modules/core/services/streams/access')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -102,7 +104,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
