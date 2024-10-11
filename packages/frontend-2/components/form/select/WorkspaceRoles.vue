@@ -41,8 +41,13 @@
       </template>
     </template>
     <template #option="{ item }">
-      <div class="flex items-center">
-        <span class="truncate">{{ RoleInfo.Workspace[firstItem(item)].title }}</span>
+      <div class="flex flex-col space-y-0.5">
+        <span class="truncate" :class="{ 'font-medium': !hideDescription }">
+          {{ RoleInfo.Workspace[firstItem(item)].title }}
+        </span>
+        <span v-if="!hideDescription" class="text-body-2xs text-foreground-2">
+          {{ RoleInfo.Workspace[firstItem(item)].description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
@@ -77,12 +82,12 @@ const props = defineProps({
     required: false,
     type: Array as PropType<WorkspaceRoles[]>
   },
-  hideItems: {
-    required: false,
-    type: Array as PropType<WorkspaceRoles[]>
-  },
   showLabel: Boolean,
-  clearable: Boolean
+  clearable: Boolean,
+  hideDescription: {
+    required: false,
+    type: Boolean
+  }
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
@@ -97,14 +102,7 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => {
-  if (props.hideItems && props.hideItems.length) {
-    return Object.values(Roles.Workspace).filter(
-      (role) => !props.hideItems?.includes(role)
-    )
-  }
-  return Object.values(Roles.Workspace)
-})
+const roles = computed(() => Object.values(Roles.Workspace))
 
 const disabledItemPredicate = (item: WorkspaceRoles) =>
   props.disabledItems && props.disabledItems.length > 0

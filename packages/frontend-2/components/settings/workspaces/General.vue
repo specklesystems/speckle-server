@@ -287,7 +287,7 @@ const updateWorkspaceSlug = async (newSlug: string) => {
   if (result && result.data) {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Workspace slug updated'
+      title: 'Workspace short ID updated'
     })
 
     slug.value = newSlug

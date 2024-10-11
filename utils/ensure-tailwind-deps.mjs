@@ -1,5 +1,5 @@
 import mod from 'node:module'
-import { exec } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { lock, unlock, check } from 'lockfile'
@@ -105,25 +105,15 @@ async function doWork() {
       const now = performance.now()
       logger.log('Building tailwind deps...')
 
-      const proc = exec(
-        'yarn build:tailwind-deps',
-        { cwd: __dirname },
-        (err, stdout, stderr) => {
-          const logger = buildLogger(proc.pid)
-
-          if (stdout) {
-            logger.log(stdout)
-          }
-          if (err) {
-            logger.fatal(err)
-          }
-          if (stderr) {
-            logger.fatal(stderr)
-          }
-        }
+      const proc = spawn('yarn', ['build:tailwind-deps'], { cwd: __dirname })
+      const childLogger = buildLogger(proc.pid)
+      proc.stdout.on('data', (data) =>
+        childLogger.log(data?.toString ? data.toString() : data)
       )
-
-      proc.on('exit', (code) => {
+      proc.stderr.on('data', (data) =>
+        childLogger.error(data?.toString ? data.toString() : data)
+      )
+      proc.on('close', (code) => {
         logger.log(
           `...done w/ status ${code} [${Math.round(performance.now() - now)}ms]`
         )
