@@ -23,6 +23,7 @@
         label="Short ID"
         :help="getShortIdHelp"
         color="foundation"
+        :loading="loading"
         :rules="[
           isStringOfLength({ maxLength: 50, minLength: 3 }),
           isValidWorkspaceSlug
@@ -82,7 +83,7 @@ const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
 const customShortIdError = ref('')
 
-const { result, error } = useQuery(
+const { result, error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
     slug: workspaceShortId.value
