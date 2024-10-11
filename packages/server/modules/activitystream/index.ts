@@ -79,8 +79,7 @@ const activityModule: SpeckleModule = {
         addStreamAccessRequestDeclinedActivity:
           addStreamAccessRequestDeclinedActivityFactory({
             saveActivity: saveActivityFactory({ db })
-          }),
-        saveActivity: saveActivityFactory({ db })
+          })
       })()
       if (weeklyEmailDigestEnabled())
         scheduledTask = scheduleWeeklyActivityNotifications()
