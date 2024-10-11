@@ -96,7 +96,7 @@
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
               <NuxtLink
-                :to="connectorsPageUrl"
+                :to="managerDownloadUrl"
                 target="_blank"
                 @click="isOpenMobile = false"
               >
@@ -189,7 +189,7 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  connectorsPageUrl
+  managerDownloadUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
