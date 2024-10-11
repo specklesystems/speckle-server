@@ -63,7 +63,7 @@
                   link
                   :class="`${hasManager ? 'primary' : ''} mb-4`"
                   dark
-                  href="https://speckle.systems/features/connectors"
+                  href="https://v1.speckle.systems/features/connectors"
                   target="_blank"
                 >
                   <v-list-item-icon>
