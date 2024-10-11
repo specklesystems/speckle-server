@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { AddCommitCreatedActivity } from '@/modules/activitystream/domain/operations'
 import {
   AddCommitCreatedActivity,
   AddCommitUpdatedActivity
