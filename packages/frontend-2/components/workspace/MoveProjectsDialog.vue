@@ -74,6 +74,12 @@ graphql(`
     projects {
       items {
         id
+        modelCount: models(limit: 0) {
+          totalCount
+        }
+        versions(limit: 0) {
+          totalCount
+        }
       }
     }
   }
