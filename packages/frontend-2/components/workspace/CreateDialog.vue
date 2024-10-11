@@ -24,11 +24,8 @@
         :help="getShortIdHelp"
         color="foundation"
         :loading="loading"
-        :rules="[
-          isStringOfLength({ maxLength: 50, minLength: 3 }),
-          isValidWorkspaceSlug
-        ]"
-        :custom-error-message="customShortIdError"
+        :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+        :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
         @update:model-value="shortIdManuallyEdited = true"
       />
@@ -51,11 +48,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
-import {
-  isRequired,
-  isStringOfLength,
-  isValidWorkspaceSlug
-} from '~~/lib/common/helpers/validation'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { generateSlugFromName } from '@speckle/shared'
 import { debounce } from 'lodash'
 import { useQuery } from '@vue/apollo-composable'
@@ -83,7 +76,7 @@ const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
 const customShortIdError = ref('')
 
-const { result, error, loading } = useQuery(
+const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
     slug: workspaceShortId.value
@@ -119,7 +112,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       disabled:
         !workspaceName.value.trim() ||
         !workspaceShortId.value.trim() ||
-        !!customShortIdError.value
+        !!customShortIdError.value ||
+        error.value !== null
     }
   }
 ])
@@ -157,29 +151,11 @@ const reset = () => {
   customShortIdError.value = ''
 }
 
-const validateShortId = () => {
-  if (!workspaceShortId.value) {
-    customShortIdError.value = ''
-    return
-  }
-
-  if (error.value) {
-    customShortIdError.value =
-      error.value.graphQLErrors[0]?.message || 'An error occurred'
-  } else if (result.value?.validateWorkspaceSlug === true) {
-    customShortIdError.value = ''
-  }
-}
-
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     workspaceShortId.value = generateSlugFromName({ name: newName })
   }
 }, 600)
-
-watch([result, error], () => {
-  validateShortId()
-})
 
 watch(isOpen, (newVal) => {
   if (newVal) reset()
