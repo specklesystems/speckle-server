@@ -28,7 +28,7 @@
                 ]"
                 target="_blank"
                 external
-                :href="connectorsPageUrl"
+                :href="downloadManagerUrl"
               >
                 Connector downloads
               </NuxtLink>
@@ -143,7 +143,7 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { connectorsPageUrl } from '~/lib/common/helpers/route'
+import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
