@@ -451,3 +451,49 @@ export function getS3BucketName() {
 export function createS3Bucket() {
   return getBooleanFromEnv('S3_CREATE_BUCKET')
 }
+
+export function getStripeApiKey(): string {
+  if (!process.env.STRIPE_API_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable STRIPE_API_KEY is missing'
+    )
+  return process.env.STRIPE_API_KEY
+}
+
+export function getStripeEndpointSigningKey(): string {
+  if (!process.env.STRIPE_ENDPOINT_SIGNING_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable STRIPE_ENDPOINT_SIGNING_KEY is missing'
+    )
+  return process.env.STRIPE_ENDPOINT_SIGNING_KEY
+}
+
+export function getWorkspaceGuestSeatStripePriceId(): string {
+  if (!process.env.WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID is missing'
+    )
+  return process.env.WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID
+}
+export function getWorkspaceTeamSeatStripePriceId(): string {
+  if (!process.env.WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID is missing'
+    )
+  return process.env.WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID
+}
+
+export function getWorkspaceProSeatStripePriceId(): string {
+  if (!process.env.WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID is missing'
+    )
+  return process.env.WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID
+}
+export function getWorkspaceBusinessSeatStripePriceId(): string {
+  if (!process.env.WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID is missing'
+    )
+  return process.env.WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID
+}

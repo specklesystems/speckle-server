@@ -56,10 +56,23 @@ const baseFeatures = {
 export const workspacePlans = z.union([
   z.literal('team'),
   z.literal('pro'),
-  z.literal('business'),
-  z.literal('unlimited')
+  z.literal('business')
+  // this will be usefull in the enterprise and self hoster deployments
+  // z.literal('unlimited')
 ])
+// this includes the plans your workspace can be on
 export type WorkspacePlans = z.infer<typeof workspacePlans>
+
+// this includes the pricing plans a customer can sub to
+export type WorkspacePricingPlans = WorkspacePlans | 'guest'
+
+export const workspacePlanBillingIntervals = z.union([
+  z.literal('monthly'),
+  z.literal('yearly')
+])
+export type WorkspacePlanBillingIntervals = z.infer<
+  typeof workspacePlanBillingIntervals
+>
 
 const team: WorkspacePricingPlan = {
   ...baseFeatures,
@@ -85,19 +98,19 @@ const business: WorkspacePricingPlan = {
   uploadSize: 1000
 }
 
-const unlimited: WorkspacePricingPlan = {
-  ...baseFeatures,
-  oidcSso: true,
-  workspaceDataRegionSpecificity: true,
-  automateMinutes: null,
-  uploadSize: 1000
-}
+// const unlimited: WorkspacePricingPlan = {
+//   ...baseFeatures,
+//   oidcSso: true,
+//   workspaceDataRegionSpecificity: true,
+//   automateMinutes: null,
+//   uploadSize: 1000
+// }
 
 const workspacePricingPlans: Record<WorkspacePlans, WorkspacePricingPlan> = {
   team,
   pro,
-  business,
-  unlimited
+  business
+  //unlimited
 }
 
 export const pricingTable = {
