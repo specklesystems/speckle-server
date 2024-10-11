@@ -27,6 +27,7 @@
           isStringOfLength({ maxLength: 50, minLength: 3 }),
           isValidWorkspaceSlug
         ]"
+        :custom-error-message="customShortIdError"
         show-label
         @update:model-value="shortIdManuallyEdited = true"
       />
@@ -56,6 +57,8 @@ import {
 } from '~~/lib/common/helpers/validation'
 import { generateSlugFromName } from '@speckle/shared'
 import { debounce } from 'lodash'
+import { useQuery } from '@vue/apollo-composable'
+import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 
 const emit = defineEmits<(e: 'created') => void>()
 
@@ -78,6 +81,16 @@ const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
 const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
 const customShortIdError = ref('')
+
+const { result, error } = useQuery(
+  validateWorkspaceSlugQuery,
+  () => ({
+    slug: workspaceShortId.value
+  }),
+  () => ({
+    enabled: !!workspaceShortId.value
+  })
+)
 
 const baseUrl = useRuntimeConfig().public.baseUrl
 
@@ -143,11 +156,29 @@ const reset = () => {
   customShortIdError.value = ''
 }
 
+const validateShortId = () => {
+  if (!workspaceShortId.value) {
+    customShortIdError.value = ''
+    return
+  }
+
+  if (error.value) {
+    customShortIdError.value =
+      error.value.graphQLErrors[0]?.message || 'An error occurred'
+  } else if (result.value?.validateWorkspaceSlug === true) {
+    customShortIdError.value = ''
+  }
+}
+
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     workspaceShortId.value = generateSlugFromName({ name: newName })
   }
 }, 600)
+
+watch([result, error], () => {
+  validateShortId()
+})
 
 watch(isOpen, (newVal) => {
   if (newVal) reset()
