@@ -4,7 +4,7 @@
       <WorkspaceInviteBlock :invite="workspaceInvite" />
     </div>
     <template v-else>
-      <Portal to="navigation">
+      <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
           :name="workspace?.name"
@@ -32,9 +32,30 @@
             v-bind="bind"
             v-on="on"
           />
-          <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
-            New project
-          </FormButton>
+          <div class="flex gap-2">
+            <!--- Conditionally apply tooltip only for non-admins and avoid v-tippy reactivity bug -->
+            <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
+              <FormButton
+                :disabled="!isWorkspaceAdmin"
+                class="hidden md:block"
+                color="outline"
+                @click="showMoveProjectsDialog = true"
+              >
+                Move projects
+              </FormButton>
+            </div>
+            <FormButton
+              v-else
+              class="hidden md:block"
+              color="outline"
+              @click="showMoveProjectsDialog = true"
+            >
+              Move projects
+            </FormButton>
+            <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
+              New project
+            </FormButton>
+          </div>
         </div>
       </div>
 
@@ -184,6 +205,7 @@ const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
 const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showEmptyState = computed(() => {
   if (search.value) return false
 
@@ -227,6 +249,11 @@ const emptyStateItems = computed(() => [
     description:
       'Projects are the place where your models and their versions live. Add one and start creating.',
     buttons: [
+      {
+        text: 'Move project',
+        onClick: () => (showMoveProjectsDialog.value = true),
+        disabled: !isWorkspaceAdmin.value
+      },
       {
         text: 'New project',
         onClick: () => (openNewProject.value = true),

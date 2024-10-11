@@ -4,7 +4,7 @@
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
-          <UserAvatar :user="activeUser" />
+          <UserAvatar hide-tooltip :user="activeUser" />
           <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
         </div>
       </MenuButton>
@@ -28,7 +28,7 @@
                 ]"
                 target="_blank"
                 external
-                :href="connectorsPageUrl"
+                :href="downloadManagerUrl"
               >
                 Connector downloads
               </NuxtLink>
@@ -128,6 +128,7 @@
     <SettingsDialog
       v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
+      v-model:target-workspace-id="workspaceSettingsDialogTarget"
     />
     <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
@@ -142,7 +143,7 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { connectorsPageUrl } from '~/lib/common/helpers/route'
+import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
@@ -162,12 +163,13 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string | null>(null)
+const workspaceSettingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 const showFeedbackDialog = ref(false)
 
@@ -188,6 +190,9 @@ const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
+  delete currentQueryParams.workspace
+  delete currentQueryParams.error
+
   router.push({ query: currentQueryParams })
 }
 
@@ -197,6 +202,8 @@ const openFeedbackDialog = () => {
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
+  const workspaceQuery = route.query?.workspace
+  const errorQuery = route.query?.error
 
   if (settingsQuery && isString(settingsQuery)) {
     if (settingsQuery.includes('server') && !isAdmin.value) {
@@ -206,6 +213,22 @@ onMounted(() => {
       })
 
       return
+    }
+
+    if (workspaceQuery && isString(workspaceQuery)) {
+      workspaceSettingsDialogTarget.value = workspaceQuery
+
+      if (errorQuery && isString(errorQuery)) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: errorQuery
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'SSO settings successfully updated'
+        })
+      }
     }
 
     showSettingsDialog.value = true

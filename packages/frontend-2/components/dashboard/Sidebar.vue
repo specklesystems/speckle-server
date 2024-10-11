@@ -58,16 +58,10 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="
-                isNotGuest
-                  ? () => {
-                      openWorkspaceCreateDialog()
-                    }
-                  : undefined
-              "
+              :plus-click="isNotGuest ? handlePlusClick : undefined"
               plus-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
+              <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
@@ -102,7 +96,7 @@
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
               <NuxtLink
-                :to="connectorsPageUrl"
+                :to="downloadManagerUrl"
                 target="_blank"
                 @click="isOpenMobile = false"
               >
@@ -195,7 +189,7 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  connectorsPageUrl
+  downloadManagerUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -206,6 +200,7 @@ import { Roles } from '@speckle/shared'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const router = useRouter()
 const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
@@ -241,13 +236,6 @@ const workspacesItems = computed(() =>
     : []
 )
 
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'sidebar'
-  })
-}
-
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {
     const workspaceIds = result.data.activeUser.workspaces.items.map(
@@ -272,5 +260,30 @@ const onPromoClick = () => {
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true
   isOpenMobile.value = false
+}
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
+const handlePlusClick = () => {
+  if (route.path === workspacesRoute) {
+    openWorkspaceCreateDialog()
+  } else {
+    mixpanel.track('Clicked Link to Workspace Explainer', {
+      source: 'sidebar'
+    })
+    router.push(workspacesRoute)
+  }
+}
+
+const handleIntroducingWorkspacesClick = () => {
+  isOpenMobile.value = false
+  mixpanel.track('Clicked Link to Workspace Explainer', {
+    source: 'sidebar'
+  })
 }
 </script>

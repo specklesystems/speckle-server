@@ -23,7 +23,7 @@
             class="absolute inset-y-0 right-0 flex items-center pr-2"
             :class="disabled ? 'pointer-events-none' : ''"
           >
-            <WorkspacePermissionSelect v-model="role" hide-remove />
+            <WorkspacePermissionSelect v-model="role" />
           </div>
         </template>
       </FormTextInput>
