@@ -23,7 +23,10 @@
       :help="`${baseUrl}${workspaceRoute(workspaceShortId)}`"
       color="foundation"
       :rules="[isStringOfLength({ maxLength: 50, minLength: 3 }), isValidWorkspaceSlug]"
+      :custom-error-message="error?.graphQLErrors[0]?.message"
+      :loading="loading"
       show-label
+      @update:model-value="updateDebouncedShortId"
     />
   </LayoutDialog>
 </template>
@@ -38,6 +41,9 @@ import {
   isValidWorkspaceSlug
 } from '~~/lib/common/helpers/validation'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useQuery } from '@vue/apollo-composable'
+import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
+import { debounce } from 'lodash'
 
 graphql(`
   fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {
@@ -57,9 +63,20 @@ const emit = defineEmits<{
   (e: 'update:slug', newSlug: string): void
 }>()
 
-const { handleSubmit } = useForm<{ slug: string }>()
-
 const workspaceShortId = ref(props.workspace.slug)
+const debouncedWorkspaceShortId = ref(props.workspace.slug)
+
+const { error, loading } = useQuery(
+  validateWorkspaceSlugQuery,
+  () => ({
+    slug: debouncedWorkspaceShortId.value
+  }),
+  () => ({
+    enabled: debouncedWorkspaceShortId.value !== props.workspace.slug
+  })
+)
+
+const { handleSubmit, resetForm } = useForm<{ slug: string }>()
 
 const updateSlug = handleSubmit(() => {
   emit('update:slug', workspaceShortId.value)
@@ -83,11 +100,24 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 
+const updateDebouncedShortId = debounce((value: string) => {
+  debouncedWorkspaceShortId.value = value
+}, 300)
+
 watch(
   () => props.workspace.slug,
   (newValue) => {
     workspaceShortId.value = newValue
   },
   { immediate: true }
+)
+
+watch(
+  () => isOpen.value,
+  (newValue) => {
+    if (!newValue) {
+      resetForm()
+    }
+  }
 )
 </script>

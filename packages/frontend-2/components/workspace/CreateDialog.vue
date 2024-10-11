@@ -27,7 +27,7 @@
         :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
         :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
-        @update:model-value="shortIdManuallyEdited = true"
+        @update:model-value=";(shortIdManuallyEdited = true), updateDebouncedShortId"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -70,19 +70,19 @@ const { handleSubmit } = useForm<{ name: string; slug: string }>()
 
 const workspaceName = ref('')
 const workspaceShortId = ref('')
+const debouncedWorkspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
 const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
-const customShortIdError = ref('')
 
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
-    slug: workspaceShortId.value
+    slug: debouncedWorkspaceShortId.value
   }),
   () => ({
-    enabled: !!workspaceShortId.value
+    enabled: !!debouncedWorkspaceShortId.value
   })
 )
 
@@ -112,7 +112,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       disabled:
         !workspaceName.value.trim() ||
         !workspaceShortId.value.trim() ||
-        !!customShortIdError.value ||
         error.value !== null
     }
   }
@@ -145,17 +144,23 @@ const reset = () => {
   defaultLogoIndex.value = generateDefaultLogoIndex()
   workspaceName.value = ''
   workspaceShortId.value = ''
+  debouncedWorkspaceShortId.value = ''
   workspaceLogo.value = null
   editAvatarMode.value = false
   shortIdManuallyEdited.value = false
-  customShortIdError.value = ''
 }
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
-    workspaceShortId.value = generateSlugFromName({ name: newName })
+    const newSlug = generateSlugFromName({ name: newName })
+    workspaceShortId.value = newSlug
+    debouncedWorkspaceShortId.value = newSlug
   }
 }, 600)
+
+const updateDebouncedShortId = debounce((newSlug: string) => {
+  debouncedWorkspaceShortId.value = newSlug
+}, 300)
 
 watch(isOpen, (newVal) => {
   if (newVal) reset()
