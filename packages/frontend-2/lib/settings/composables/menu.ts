@@ -46,7 +46,7 @@ export const useSettingsMenu = () => {
       title: 'Regions',
       disabled: true,
       tooltipText: 'Set up regions for custom data residency',
-      permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     }
   })
 
