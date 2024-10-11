@@ -186,3 +186,8 @@ export type AddStreamUpdatedActivity = (params: {
   newStream: StreamRecord
   update: ProjectUpdateInput | StreamUpdateInput
 }) => Promise<void>
+
+export type AddStreamAccessRequestedActivity = (params: {
+  streamId: string
+  requesterId: string
+}) => Promise<void>

@@ -33,7 +33,7 @@
 
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
+          <UserAvatar v-if="isInvite(item)" hide-tooltip :user="item.invitedBy" />
           <span class="truncate">
             {{ isInvite(item) ? item.invitedBy.name : '' }}
           </span>

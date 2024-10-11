@@ -5,11 +5,9 @@ import {
   AccessRequestsEventsPayloads
 } from '@/modules/accessrequests/events/emitter'
 import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import { AddStreamAccessRequestedActivity } from '@/modules/activitystream/domain/operations'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamAccessRequestDeclinedActivity,
-  addStreamAccessRequestedActivity
-} from '@/modules/activitystream/services/accessRequestActivity'
+import { addStreamAccessRequestDeclinedActivity } from '@/modules/activitystream/services/accessRequestActivity'
 import {
   UsersEmitter,
   UsersEvents,
@@ -30,21 +28,25 @@ async function onUserCreated(payload: UsersEventsPayloads[UsersEvents.Created]) 
   })
 }
 
-async function onServerAccessRequestCreated(
-  payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]
-) {
-  const {
-    request: { resourceId, resourceType, requesterId }
-  } = payload
-  if (!resourceId) return
+const onServerAccessRequestCreatedFactory =
+  ({
+    addStreamAccessRequestedActivity
+  }: {
+    addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
+  }) =>
+  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
+    const {
+      request: { resourceId, resourceType, requesterId }
+    } = payload
+    if (!resourceId) return
 
-  if (resourceType === AccessRequestType.Stream) {
-    await addStreamAccessRequestedActivity({
-      streamId: resourceId,
-      requesterId
-    })
+    if (resourceType === AccessRequestType.Stream) {
+      await addStreamAccessRequestedActivity({
+        streamId: resourceId,
+        requesterId
+      })
+    }
   }
-}
 
 async function onServerAccessRequestFinalized(
   payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]
@@ -72,18 +74,24 @@ async function onServerAccessRequestFinalized(
  * Initialize event listener for tracking various Speckle events and responding
  * to them by creating activitystream entries
  */
-export function initializeEventListener() {
-  const quitCbs = [
-    UsersEmitter.listen(UsersEvents.Created, onUserCreated),
-    AccessRequestsEmitter.listen(
-      AccessRequestsEvents.Created,
-      onServerAccessRequestCreated
-    ),
-    AccessRequestsEmitter.listen(
-      AccessRequestsEvents.Finalized,
-      onServerAccessRequestFinalized
-    )
-  ]
+export const initializeEventListenerFactory =
+  ({
+    addStreamAccessRequestedActivity
+  }: {
+    addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
+  }) =>
+  () => {
+    const quitCbs = [
+      UsersEmitter.listen(UsersEvents.Created, onUserCreated),
+      AccessRequestsEmitter.listen(
+        AccessRequestsEvents.Created,
+        onServerAccessRequestCreatedFactory({ addStreamAccessRequestedActivity })
+      ),
+      AccessRequestsEmitter.listen(
+        AccessRequestsEvents.Finalized,
+        onServerAccessRequestFinalized
+      )
+    ]
 
-  return () => quitCbs.forEach((quit) => quit())
-}
+    return () => quitCbs.forEach((quit) => quit())
+  }
