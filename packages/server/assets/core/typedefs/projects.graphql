@@ -182,7 +182,7 @@ type Project {
   """
   Collaborators who have been invited, but not yet accepted.
   """
-  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
+  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_CONTRIBUTOR)
   """
   Source apps used in any models of this project
   """

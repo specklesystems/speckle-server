@@ -7,7 +7,7 @@
         onClick: () => {
           open = false
         },
-        props: { color: 'secondary', fullWidth: true }
+        props: { color: 'outline', fullWidth: true }
       },
       ...(run && projectId && run.trigger.model && run.trigger.version
         ? [
@@ -41,19 +41,19 @@
     </template>
     <div v-if="run && projectId && automationId" class="flex flex-col gap-2">
       <div class="grid gap-2 grid-cols-[auto,1fr] items-center">
-        <div class="font-bold">Run ID:</div>
+        <div class="font-medium">Run ID:</div>
         <div>{{ run.id }}</div>
-        <div class="font-bold">Status:</div>
+        <div class="font-medium">Status:</div>
         <AutomateRunsStatusBadge :run="run" />
         <template v-if="summary.errorMessage">
-          <div class="font-bold">Error:</div>
+          <div class="font-medium">Error:</div>
           <div>{{ summary.errorMessage }}</div>
         </template>
-        <div class="font-bold">Time started:</div>
+        <div class="font-medium">Time started:</div>
         <div>{{ runDate(run) }}</div>
-        <div class="font-bold">Duration:</div>
+        <div class="font-medium">Duration:</div>
         <div>{{ runDuration(run) }}</div>
-        <div class="font-bold">Log output:</div>
+        <div class="font-medium">Log output:</div>
         <CommonLoadingIcon v-if="showLoader" size="sm" />
       </div>
       <div class="flex flex-col gap-2">

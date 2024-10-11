@@ -8,7 +8,7 @@
         <div class="flex w-5 flex-shrink-0 justify-center overflow-hidden">
           <button
             v-if="isSingleCollection || isMultipleCollection"
-            class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
+            class="hover:bg-foundation-2 hover:text-primary flex h-full w-full items-center justify-center rounded"
             @click="manualUnfoldToggle()"
           >
             <ChevronDownIcon
@@ -20,8 +20,8 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 hover:shadow-md
-            ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
+          :class="`hover:bg-foundation-2 group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1
+            ${isSelected ? 'border-primary bg-foundation-2' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
           @mouseenter="highlightObject"
@@ -30,17 +30,17 @@
           @focusout="unhighlightObject"
         >
           <div
-            :class="`truncate ${unfold ? 'font-semibold' : ''} ${
+            :class="`truncate ${
               isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
                 ? 'text-foreground-2'
                 : ''
             }`"
           >
-            <div class="truncate text-sm">
+            <div :class="`truncate text-body-xs ${unfold ? 'font-medium' : ''}`">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>
-            <div class="text-tiny text-foreground-2 truncate">
+            <div class="text-body-3xs text-foreground-2 truncate -mt-0.5">
               {{ subHeader || headerAndSubheader.subheader }}
             </div>
             <div v-if="debug" class="text-tiny text-foreground-2">
@@ -130,7 +130,7 @@
           />
         </div>
         <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += pageSize">
+          <FormButton size="sm" text full-width @click="itemCount += pageSize">
             View More ({{ singleCollectionItems.length - itemCount }})
           </FormButton>
         </div>
@@ -308,8 +308,13 @@ const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
 const hiddenSpeckleTypes = [
-  'Objects.Other.DisplayStyle',
-  'Objects.Other.Revit.RevitMaterial',
+  'Objects.Other', // From a fast look at the current object model, and the new one, all of this can be safely ignored (partially be ready for complaints)
+  // 'Objects.Other.DisplayStyle',
+  // 'Objects.Other.Revit.RevitMaterial',
+  'ColorProxy',
+  'InstanceDefinitionProxy', // Note, but not InstanceProxy - wish we could just go for "*Proxy*" but...
+  'GroupProxy',
+  'RenderMaterialProxy', // It's now partially included in the objects.other namespace, but we might move the class around, so... better safe than sorry!
   'Objects.BuiltElements.Revit.ProjectInfo',
   'Objects.BuiltElements.View',
   'Objects.BuiltElements.View3D'

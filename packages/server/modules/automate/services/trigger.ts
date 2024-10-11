@@ -1,14 +1,4 @@
-import {
-  InsertableAutomationRun,
-  getActiveTriggerDefinitions,
-  getAutomation,
-  getFullAutomationRevisionMetadata,
-  getAutomationToken,
-  getAutomationTriggerDefinitions,
-  upsertAutomationRun,
-  getAutomationRevision,
-  getLatestAutomationRevision
-} from '@/modules/automate/repositories/automations'
+import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
   AutomationTriggerDefinitionRecord,
@@ -20,8 +10,6 @@ import {
   LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -36,28 +24,42 @@ import {
   type TriggeredAutomationFunctionRun
 } from '@/modules/automate/clients/executionEngine'
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
-import {
-  getEncryptionKeyPairFor,
-  getFunctionInputDecryptor
-} from '@/modules/automate/services/encryption'
+import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import {
+  AutomateRunsEmitter,
+  AutomateRunsEventsEmitter
+} from '@/modules/automate/events/runs'
+import {
+  GetActiveTriggerDefinitions,
+  GetAutomation,
+  GetAutomationRevision,
+  GetAutomationToken,
+  GetAutomationTriggerDefinitions,
+  GetEncryptionKeyPairFor,
+  GetFullAutomationRevisionMetadata,
+  GetLatestAutomationRevision,
+  TriggerAutomationRevisionRun,
+  UpsertAutomationRun
+} from '@/modules/automate/domain/operations'
+import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
+import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 
 export type OnModelVersionCreateDeps = {
-  getAutomation: typeof getAutomation
-  getAutomationRevision: typeof getAutomationRevision
-  getTriggers: typeof getActiveTriggerDefinitions
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  getAutomation: GetAutomation
+  getAutomationRevision: GetAutomationRevision
+  getTriggers: GetActiveTriggerDefinitions
+  triggerFunction: TriggerAutomationRevisionRun
 }
 
 /**
  * This should hook into the model version create event
  */
-export const onModelVersionCreate =
+export const onModelVersionCreateFactory =
   (deps: OnModelVersionCreateDeps) =>
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
@@ -110,9 +112,8 @@ export const onModelVersionCreate =
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
           automateLogger.error(
-            'Failure while triggering run onModelVersionCreate',
-            error,
-            params
+            { error, params },
+            'Failure while triggering run onModelVersionCreate'
           )
         }
       })
@@ -127,11 +128,11 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
 >
 
 type CreateAutomationRunDataDeps = {
-  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getEncryptionKeyPairFor: GetEncryptionKeyPairFor
+  getFunctionInputDecryptor: FunctionInputDecryptor
 }
 
-const createAutomationRunData =
+const createAutomationRunDataFactory =
   (deps: CreateAutomationRunDataDeps) =>
   async (params: {
     manifests: BaseTriggerManifest[]
@@ -210,19 +211,34 @@ const createAutomationRunData =
 
 export type TriggerAutomationRevisionRunDeps = {
   automateRunTrigger: typeof triggerAutomationRun
-} & CreateAutomationRunDataDeps
+  getAutomationToken: GetAutomationToken
+  createAppToken: typeof createAppToken
+  upsertAutomationRun: UpsertAutomationRun
+  automateRunsEmitter: AutomateRunsEventsEmitter
+  getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
+  getCommit: GetCommit
+} & CreateAutomationRunDataDeps &
+  ComposeTriggerDataDeps
 
 /**
  * This triggers a run for a specific automation revision
  */
-export const triggerAutomationRevisionRun =
-  (deps: TriggerAutomationRevisionRunDeps) =>
+export const triggerAutomationRevisionRunFactory =
+  (deps: TriggerAutomationRevisionRunDeps): TriggerAutomationRevisionRun =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
     source?: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
-    const { automateRunTrigger } = deps
+    const {
+      automateRunTrigger,
+      getAutomationToken,
+      createAppToken,
+      upsertAutomationRun,
+      automateRunsEmitter,
+      getFullAutomationRevisionMetadata,
+      getCommit
+    } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
@@ -231,18 +247,17 @@ export const triggerAutomationRevisionRun =
       )
     }
 
-    const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
-      {
+    const { automationWithRevision, userId, automateToken } =
+      await ensureRunConditionsFactory({
         revisionGetter: getFullAutomationRevisionMetadata,
         versionGetter: getCommit,
         automationTokenGetter: getAutomationToken
-      }
-    )({
-      revisionId,
-      manifest
-    })
+      })({
+        revisionId,
+        manifest
+      })
 
-    const triggerManifests = await composeTriggerData({
+    const triggerManifests = await composeTriggerDataFactory(deps)({
       manifest,
       projectId: automationWithRevision.projectId,
       triggerDefinitions: automationWithRevision.revision.triggers
@@ -269,7 +284,7 @@ export const triggerAutomationRevisionRun =
       ]
     })
 
-    const automationRun = await createAutomationRunData(deps)({
+    const automationRun = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision
     })
@@ -301,7 +316,7 @@ export const triggerAutomationRevisionRun =
       await upsertAutomationRun(automationRun)
     }
 
-    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
+    await automateRunsEmitter(AutomateRunsEmitter.events.Created, {
       run: automationRun,
       manifests: triggerManifests,
       automation: automationWithRevision,
@@ -312,11 +327,11 @@ export const triggerAutomationRevisionRun =
     return { automationRunId: automationRun.id }
   }
 
-export const ensureRunConditions =
+export const ensureRunConditionsFactory =
   (deps: {
-    revisionGetter: typeof getFullAutomationRevisionMetadata
-    versionGetter: typeof getCommit
-    automationTokenGetter: typeof getAutomationToken
+    revisionGetter: GetFullAutomationRevisionMetadata
+    versionGetter: GetCommit
+    automationTokenGetter: GetAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
@@ -393,62 +408,69 @@ export const ensureRunConditions =
     }
   }
 
-async function composeTriggerData(params: {
-  projectId: string
-  manifest: BaseTriggerManifest
-  triggerDefinitions: AutomationTriggerDefinitionRecord[]
-}): Promise<BaseTriggerManifest[]> {
-  const { projectId, manifest, triggerDefinitions } = params
+type ComposeTriggerDataDeps = {
+  getBranchLatestCommits: GetBranchLatestCommits
+}
 
-  const manifests: BaseTriggerManifest[] = [{ ...manifest }]
+const composeTriggerDataFactory =
+  (deps: ComposeTriggerDataDeps) =>
+  async (params: {
+    projectId: string
+    manifest: BaseTriggerManifest
+    triggerDefinitions: AutomationTriggerDefinitionRecord[]
+  }): Promise<BaseTriggerManifest[]> => {
+    const { projectId, manifest, triggerDefinitions } = params
 
-  /**
-   * The reason why we collect multiple triggers, even tho there's only one:
-   * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
-   * cause once the function already runs, there may be new versions already
-   */
+    const manifests: BaseTriggerManifest[] = [{ ...manifest }]
 
-  if (triggerDefinitions.length > 1) {
-    const associatedTriggers = triggerDefinitions.filter((t) => {
-      if (t.triggerType !== manifest.triggerType) return false
+    /**
+     * The reason why we collect multiple triggers, even tho there's only one:
+     * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
+     * cause once the function already runs, there may be new versions already
+     */
 
-      if (isVersionCreatedTriggerManifest(manifest)) {
-        return t.triggeringId === manifest.modelId
-      }
+    if (triggerDefinitions.length > 1) {
+      const associatedTriggers = triggerDefinitions.filter((t) => {
+        if (t.triggerType !== manifest.triggerType) return false
 
-      return false
-    })
+        if (isVersionCreatedTriggerManifest(manifest)) {
+          return t.triggeringId === manifest.modelId
+        }
 
-    // Version creation triggers
-    if (manifest.triggerType === VersionCreationTriggerType) {
-      const latestVersions = await getBranchLatestCommits(
-        associatedTriggers.map((t) => t.triggeringId),
-        projectId
-      )
-      manifests.push(
-        ...latestVersions.map(
-          (version): VersionCreatedTriggerManifest => ({
-            modelId: version.branchId,
-            projectId,
-            versionId: version.id,
-            triggerType: VersionCreationTriggerType
-          })
+        return false
+      })
+
+      // Version creation triggers
+      if (manifest.triggerType === VersionCreationTriggerType) {
+        const latestVersions = await deps.getBranchLatestCommits(
+          associatedTriggers.map((t) => t.triggeringId),
+          projectId
         )
-      )
+        manifests.push(
+          ...latestVersions.map(
+            (version): VersionCreatedTriggerManifest => ({
+              modelId: version.branchId,
+              projectId,
+              versionId: version.id,
+              triggerType: VersionCreationTriggerType
+            })
+          )
+        )
+      }
     }
+
+    return manifests
   }
 
-  return manifests
-}
-
 export type ManuallyTriggerAutomationDeps = {
-  getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
-  getAutomation: typeof getAutomation
-  getBranchLatestCommits: typeof getBranchLatestCommits
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  getAutomationTriggerDefinitions: GetAutomationTriggerDefinitions
+  getAutomation: GetAutomation
+  getBranchLatestCommits: GetBranchLatestCommits
+  triggerFunction: TriggerAutomationRevisionRun
+  validateStreamAccess: ValidateStreamAccess
 }
 
-export const manuallyTriggerAutomation =
+export const manuallyTriggerAutomationFactory =
   (deps: ManuallyTriggerAutomationDeps) =>
   async (params: {
     automationId: string
@@ -461,7 +483,8 @@ export const manuallyTriggerAutomation =
       getAutomationTriggerDefinitions,
       getAutomation,
       getBranchLatestCommits,
-      triggerFunction
+      triggerFunction,
+      validateStreamAccess
     } = deps
 
     const [automation, triggerDefs] = await Promise.all([
@@ -515,21 +538,28 @@ export const manuallyTriggerAutomation =
   }
 
 export type CreateTestAutomationRunDeps = {
-  getAutomation: typeof getAutomation
-  getLatestAutomationRevision: typeof getLatestAutomationRevision
-  getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
-} & CreateAutomationRunDataDeps
+  getAutomation: GetAutomation
+  getLatestAutomationRevision: GetLatestAutomationRevision
+  getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
+  upsertAutomationRun: UpsertAutomationRun
+  validateStreamAccess: ValidateStreamAccess
+  getBranchLatestCommits: GetBranchLatestCommits
+} & CreateAutomationRunDataDeps &
+  ComposeTriggerDataDeps
 
 /**
  * TODO: Reduce duplication w/ other fns in this service
  */
-export const createTestAutomationRun =
+export const createTestAutomationRunFactory =
   (deps: CreateTestAutomationRunDeps) =>
   async (params: { projectId: string; automationId: string; userId: string }) => {
     const {
       getAutomation,
       getLatestAutomationRevision,
-      getFullAutomationRevisionMetadata
+      getFullAutomationRevisionMetadata,
+      upsertAutomationRun,
+      validateStreamAccess,
+      getBranchLatestCommits
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -576,7 +606,7 @@ export const createTestAutomationRun =
       { limit: 1 }
     )
 
-    const triggerManifests = await composeTriggerData({
+    const triggerManifests = await composeTriggerDataFactory(deps)({
       projectId: automationRevisionRecord.projectId,
       triggerDefinitions: automationRevisionRecord.revision.triggers,
       manifest: <VersionCreatedTriggerManifest>{
@@ -587,7 +617,7 @@ export const createTestAutomationRun =
       }
     })
 
-    const automationRunRecord = await createAutomationRunData(deps)({
+    const automationRunRecord = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision: automationRevisionRecord
     })

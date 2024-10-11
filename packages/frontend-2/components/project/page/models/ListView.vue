@@ -1,43 +1,45 @@
 <template>
-  <div v-if="topLevelItems.length && project" class="space-y-4 max-w-full">
-    <div v-for="item in topLevelItems" :key="item.id">
-      <ProjectPageModelsStructureItem
-        :item="item"
-        :project="project"
-        :can-contribute="canContribute"
-        :is-search-result="isUsingSearch"
-        @model-updated="onModelUpdated"
-        @create-submodel="onCreateSubmodel"
+  <div>
+    <div v-if="topLevelItems.length && project" class="space-y-2 max-w-full">
+      <div v-for="item in topLevelItems" :key="item.id">
+        <ProjectPageModelsStructureItem
+          :item="item"
+          :project="project"
+          :can-contribute="canContribute"
+          :is-search-result="isUsingSearch"
+          @model-updated="onModelUpdated"
+          @create-submodel="onCreateSubmodel"
+        />
+      </div>
+      <FormButtonSecondaryViewAll
+        v-if="showViewAll"
+        :to="allProjectModelsRoute(projectId)"
       />
     </div>
-    <FormButtonSecondaryViewAll
-      v-if="showViewAll"
-      :to="allProjectModelsRoute(projectId)"
+    <template v-else-if="!areQueriesLoading">
+      <CommonEmptySearchState
+        v-if="
+          !topLevelItems.length &&
+          isFiltering &&
+          (baseResult?.project?.modelsTree.items || []).length === 0
+        "
+        @clear-search="$emit('clear-search')"
+      />
+      <div v-else>
+        <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
+      </div>
+    </template>
+    <InfiniteLoading
+      v-if="topLevelItems?.length && !disablePagination"
+      :settings="{ identifier: infiniteLoaderId }"
+      @infinite="infiniteLoad"
+    />
+    <ProjectPageModelsNewDialog
+      v-model:open="showNewDialog"
+      :project-id="projectId"
+      :parent-model-name="newSubmodelParent || undefined"
     />
   </div>
-  <template v-else-if="!areQueriesLoading">
-    <CommonEmptySearchState
-      v-if="
-        !topLevelItems.length &&
-        isFiltering &&
-        (baseResult?.project?.modelsTree.items || []).length === 0
-      "
-      @clear-search="$emit('clear-search')"
-    />
-    <div v-else>
-      <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
-    </div>
-  </template>
-  <InfiniteLoading
-    v-if="topLevelItems?.length && !disablePagination"
-    :settings="{ identifier: infiniteLoaderId }"
-    @infinite="infiniteLoad"
-  />
-  <ProjectPageModelsNewDialog
-    v-model:open="showNewDialog"
-    :project-id="projectId"
-    :parent-model-name="newSubmodelParent || undefined"
-  />
 </template>
 <script setup lang="ts">
 import type {

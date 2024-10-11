@@ -1,5 +1,12 @@
 import { automateLogger } from '@/logging/logging'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import {
+  GetFullAutomationRevisionMetadata,
+  GetFullAutomationRunById
+} from '@/modules/automate/domain/operations'
+import {
+  AutomateRunsEmitter,
+  AutomateRunsEventsListener
+} from '@/modules/automate/events/runs'
 import {
   AutomationFunctionRunRecord,
   AutomationRunRecord,
@@ -8,16 +15,11 @@ import {
   AutomationWithRevision,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import {
-  InsertableAutomationRun,
-  getFullAutomationRevisionMetadata,
-  getFullAutomationRunById
-} from '@/modules/automate/repositories/automations'
-import { getCommit } from '@/modules/core/repositories/commits'
+import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
-import dayjs from 'dayjs'
 
 const isFinished = (runStatus: AutomationRunStatus) => {
   const finishedStatuses: AutomationRunStatus[] = [
@@ -32,13 +34,13 @@ const isFinished = (runStatus: AutomationRunStatus) => {
 }
 
 export type AutomateTrackingDeps = {
-  getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
-  getFullAutomationRunById: typeof getFullAutomationRunById
-  getCommit: typeof getCommit
+  getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
+  getFullAutomationRunById: GetFullAutomationRunById
+  getCommit: GetCommit
   getUserById: typeof getUserById
 }
 
-const onAutomationRunStatusUpdated =
+const onAutomationRunStatusUpdatedFactory =
   (deps: AutomateTrackingDeps) =>
   async ({
     run,
@@ -67,7 +69,7 @@ const onAutomationRunStatusUpdated =
       return
     }
 
-    const userEmail = await getUserEmailFromAutomationRun(deps)(
+    const userEmail = await getUserEmailFromAutomationRunFactory(deps)(
       fullRun,
       automationWithRevision.projectId
     )
@@ -80,14 +82,12 @@ const onAutomationRunStatusUpdated =
       runId: run.id,
       functionRunId: functionRun.id,
       status: functionRun.status,
-      durationInSeconds: dayjs(functionRun.updatedAt).diff(
-        functionRun.createdAt,
-        'second'
-      )
+      durationInSeconds: functionRun.elapsed / 1000,
+      durationInMilliseconds: functionRun.elapsed
     })
   }
 
-const getUserEmailFromAutomationRun =
+const getUserEmailFromAutomationRunFactory =
   (deps: AutomateTrackingDeps) =>
   async (
     automationRun: Pick<InsertableAutomationRun, 'triggers'>,
@@ -115,7 +115,7 @@ const getUserEmailFromAutomationRun =
     return userEmail
   }
 
-const onRunCreated =
+const onRunCreatedFactory =
   (deps: AutomateTrackingDeps) =>
   async ({
     automation,
@@ -129,7 +129,7 @@ const onRunCreated =
     // all triggers, that are automatic result of an action are in a need to be tracked
     switch (source) {
       case RunTriggerSource.Automatic: {
-        const userEmail = await getUserEmailFromAutomationRun(deps)(
+        const userEmail = await getUserEmailFromAutomationRunFactory(deps)(
           automationRun,
           automation.projectId
         )
@@ -151,14 +151,23 @@ const onRunCreated =
     }
   }
 
-export const setupRunFinishedTracking = (deps: AutomateTrackingDeps) => () => {
-  const quitters = [
-    AutomateRunsEmitter.listen(
-      AutomateRunsEmitter.events.StatusUpdated,
-      onAutomationRunStatusUpdated(deps)
-    ),
-    AutomateRunsEmitter.listen(AutomateRunsEmitter.events.Created, onRunCreated(deps))
-  ]
+export const setupRunFinishedTrackingFactory =
+  (
+    deps: AutomateTrackingDeps & {
+      automateRunsEventListener: AutomateRunsEventsListener
+    }
+  ) =>
+  () => {
+    const quitters = [
+      deps.automateRunsEventListener(
+        AutomateRunsEmitter.events.StatusUpdated,
+        onAutomationRunStatusUpdatedFactory(deps)
+      ),
+      deps.automateRunsEventListener(
+        AutomateRunsEmitter.events.Created,
+        onRunCreatedFactory(deps)
+      )
+    ]
 
-  return () => quitters.forEach((quitter) => quitter())
-}
+    return () => quitters.forEach((quitter) => quitter())
+  }

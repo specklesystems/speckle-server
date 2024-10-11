@@ -8,21 +8,24 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 0"
-        class="border border-outline bg-foundation text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
+        class="border border-outline bg-foundation text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-2 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
-        <h2 class="text-center text-2xl font-bold">
+        <h2 class="text-center text-heading-lg font-medium">
           Welcome, {{ activeUser?.name?.split(' ')[0] }}!
         </h2>
-        <p class="text-center text-sm">
+        <p class="text-center text-body-2xs text-foreground2">
           Let's get to know each other. What industry do you work in?
         </p>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-3 pt-2">
           <FormButton
             v-for="val in OnboardingIndustry"
             :key="val"
             class="text-xs hover:scale-[1.05] capitalize"
+            size="sm"
+            color="outline"
+            full-width
             @click="setIndustry(val)"
             @mouseenter="rotateGently(Math.random() * 2)"
             @focus="rotateGently(Math.random() * 2)"
@@ -39,19 +42,22 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 1"
-        class="bg-foundation border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
+        class="bg-foundation border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-2 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
-        <h2 class="text-center text-2xl font-bold">Thanks!</h2>
-        <p class="text-center text-sm">
+        <h2 class="text-center text-heading-lg font-medium">Thanks!</h2>
+        <p class="text-center text-body-2xs text-foreground2">
           Last thing! Please select the role that best describes you:
         </p>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-3 pt-2">
           <FormButton
             v-for="val in OnboardingRole"
             :key="val"
             class="text-xs hover:scale-[1.05]"
+            size="sm"
+            color="outline"
+            full-width
             @click="setRole(val)"
             @mouseenter="rotateGently(Math.random() * 2)"
             @focus="rotateGently(Math.random() * 2)"

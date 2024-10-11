@@ -1,3 +1,5 @@
+<!-- eslint-disable vue/no-multiple-template-root -->
+<!-- eslint-disable vue/no-root-v-if -->
 <template>
   <slot v-if="!wrapper" />
   <div v-else>

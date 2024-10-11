@@ -18,8 +18,8 @@
             v-if="showIntro"
             class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
           >
-            <div>Quickstart checklist</div>
-            <div class="text-sm text-foreground-2">
+            <div class="text-heading-sm">Quickstart checklist</div>
+            <div class="text-body-sm text-foreground-2">
               Become a Speckle pro in four steps!
             </div>
             <div class="space-x-1">
@@ -28,8 +28,8 @@
               </FormButton>
               <FormButton
                 v-if="!allCompleted"
-                text
-                size="xs"
+                color="subtle"
+                size="sm"
                 @click="dismissChecklistForever()"
               >
                 Don't show again
@@ -59,7 +59,7 @@
                 "
               >
                 <div
-                  :class="`text-lg sm:text-xl font-bold flex items-center justify-between ${
+                  :class="`text-lg sm:text-xl font-medium flex items-center justify-between ${
                     step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
                   }`"
                 >
@@ -74,7 +74,7 @@
                 <div
                   :class="`${
                     step.active
-                      ? 'font-bold text-sm sm:text-base text-foreground-on-primary'
+                      ? 'font-medium text-sm sm:text-base text-foreground-on-primary'
                       : ''
                   }`"
                 >
@@ -91,9 +91,9 @@
                   >
                     <FormButton
                       v-if="!step.completed && step.active"
-                      size="sm"
                       :disabled="!step.active"
-                      color="invert"
+                      color="outline"
+                      size="sm"
                       @click.stop="step.action"
                     >
                       {{ step.cta }}
@@ -104,22 +104,20 @@
                       v-tippy="'Mark completed'"
                       text
                       link
-                      size="xs"
-                      color="invert"
+                      size="sm"
+                      color="outline"
                       @click.stop="markComplete(idx)"
                     >
                       <!-- Mark as complete -->
-                      <OutlineCheckCircleIcon class="w-4 h-4" />
+                      <OutlineCheckCircleIcon class="w-4 h-4 text-foundation" />
                     </FormButton>
-                    <span v-if="step.completed" class="text-xs font-bold">
+                    <span v-if="step.completed" class="text-xs font-medium">
                       Completed!
                     </span>
                     <FormButton
                       v-if="step.completed && step.active"
-                      text
-                      link
-                      size="xs"
-                      color="invert"
+                      size="sm"
+                      color="outline"
                       @click.stop="step.action"
                     >
                       {{ step.postCompletionCta }}
@@ -127,9 +125,8 @@
                   </div>
                   <div v-else-if="step.active" class="text-sm">
                     <FormButton
-                      link
-                      size="xs"
-                      color="invert"
+                      size="sm"
+                      color="outline"
                       @click.stop="goToFirstUncompletedStep()"
                     >
                       Complete the previous step!
@@ -148,8 +145,8 @@
             </FormButton>
             <FormButton
               v-if="!allCompleted"
-              text
-              size="xs"
+              color="subtle"
+              size="sm"
               @click="dismissChecklistForever()"
             >
               Don't show again
@@ -167,14 +164,14 @@
           <div class="text-sm max-w-lg text-center sm:text-left">
             <b>All done!</b>
             PS: the
-            <FormButton to="https://speckle.community" target="_blank" size="sm" link>
+            <FormButton to="https://speckle.community" target="_blank" link>
               Community Forum
             </FormButton>
             is there to help!
           </div>
           <div class="absolute right-2 top-3">
             <FormButton
-              color="secondary"
+              color="outline"
               :icon-left="XMarkIcon"
               hide-text
               @click="closeChecklist()"
@@ -192,7 +189,7 @@
       on the main dasboard page.  
     -->
     <div v-if="showBottomEscape && !allCompleted" class="text-center mt-2">
-      <FormButton size="sm" @click="$emit('dismiss')">
+      <FormButton @click="$emit('dismiss')">
         I'll do it later - let me explore first!
       </FormButton>
     </div>
@@ -216,7 +213,7 @@
     >
       <template #header>Your first upload</template>
     </OnboardingDialogFirstSend>
-    <ServerManagementInviteDialog
+    <SettingsServerUserInviteDialog
       v-model:open="showServerInviteDialog"
       @update:open="(v) => (!v ? markComplete(3) : '')"
     />

@@ -25,7 +25,7 @@ export type UserStreamRole = UserRoleData<StreamRoles> & {
 }
 
 export type UserWorkspaceRole = UserRoleData<WorkspaceRoles> & {
-  resourceTarget: 'workspace'
+  resourceTarget: 'workspaces'
   aclTableName: 'workspace_acl'
   name: WorkspaceRoles
 }

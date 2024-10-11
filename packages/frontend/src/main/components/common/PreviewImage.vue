@@ -83,7 +83,7 @@ export default {
         top:0;
         height: 100%;
         width: 100%;
-        background-size: cover;
+        background-size: contain;
         background-image:url(${this.previewImage});
         background-position: center center;
       `

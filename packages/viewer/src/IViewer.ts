@@ -25,6 +25,7 @@ export type SpeckleObject = {
   name?: string
   referencedId?: string
   units?: string
+  applicationId?: string
 }
 
 export interface ViewerParams {

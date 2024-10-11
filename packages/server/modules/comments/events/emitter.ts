@@ -18,3 +18,5 @@ const { emit, listen } = initializeModuleEventEmitter<{
 })
 
 export const CommentsEmitter = { emit, listen, events: CommentsEvents }
+export type CommentsEventsEmit = typeof emit
+export type CommentsEventsListen = typeof listen

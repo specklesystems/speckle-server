@@ -1,92 +1,111 @@
 <template>
   <div>
     <div
-      class="relative group flex flex-col items-start md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition overflow-hidden"
+      class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border border-outline-3 rounded-xl p-4 transition bg-foundation"
     >
       <div
-        class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
+        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-2 pr-6 py-2"
       >
-        <div class="text-xl sm:text-2xl font-bold transition">
+        <div class="flex flex-col">
           <NuxtLink
             :to="projectRoute(project.id)"
-            class="break-words hover:text-primary"
+            class="break-words hover:text-primary text-heading mb-2"
           >
             {{ project.name }}
           </NuxtLink>
-          <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
-        </div>
-        <div class="flex-grow"></div>
-        <div class="text-xs text-foreground-2 flex items-center">
-          <UserCircleIcon class="w-4 h-4 mr-1" />
-          <span class="-mt-px capitalize">
-            {{ project.role?.split(':').reverse()[0] }}
-          </span>
-        </div>
-        <!-- Note: commented out as we have the +x models indicator. Less clutter! -->
-        <!-- <div class="text-xs text-foreground-2 flex items-center">
-          <CubeIcon class="w-4 h-4 mr-1" />
-          {{ project.models.totalCount }} models
-        </div> -->
-        <div class="text-xs text-foreground-2 flex items-center">
-          <ClockIcon class="w-4 h-4 mr-1" />
-          <span v-tippy="updatedAt.full" class="-mt-px">
+          <span
+            v-tippy="updatedAt.full"
+            class="text-body-3xs mb-1 text-foreground-2 select-none"
+          >
             Updated
             {{ updatedAt.relative }}
           </span>
+          <span class="text-body-3xs capitalize mb-2 text-foreground-2 select-none">
+            {{ project.role?.split(':').reverse()[0] }}
+          </span>
+          <UserAvatarGroup :users="teamUsers" :max-count="2" />
+        </div>
+        <div class="pt-3">
+          <NuxtLink
+            v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
+            :to="workspaceRoute(project.workspace.slug)"
+            class="my-3 flex items-center"
+          >
+            <WorkspaceAvatar
+              :logo="project.workspace.logo"
+              :default-logo-index="project.workspace.defaultLogoIndex"
+              size="sm"
+            />
+            <p class="text-body-2xs text-foreground ml-2 line-clamp-2">
+              {{ project.workspace.name }}
+            </p>
+          </NuxtLink>
+          <FormButton
+            :to="allProjectModelsRoute(project.id) + '/'"
+            size="sm"
+            color="outline"
+            :icon-right="ChevronRightIcon"
+          >
+            {{
+              `${modelItemTotalCount} ${modelItemTotalCount === 1 ? 'model' : 'models'}`
+            }}
+          </FormButton>
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
+        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 flex-grow col-span-4 xl:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden xl:[&>*:nth-child(2)]:block"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
           :key="pendingModel.id"
           :model="pendingModel"
           :project="project"
+          show-versions
           :project-id="project.id"
-          height="h-52"
+          height="h-48"
+          show-actions
         />
         <ProjectPageModelsCard
           v-for="model in models"
           :key="model.id"
           :model="model"
           :project="project"
-          :show-versions="false"
-          :show-actions="false"
+          show-versions
+          show-actions
           :project-id="project.id"
-          height="h-52"
+          height="h-48"
+          @click="router.push(modelRoute(project.id, model.id))"
         />
         <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
-          class="h-36 col-span-4"
+          class="h-28 col-span-4"
         />
-      </div>
-      <div
-        v-if="modelItemTotalCount > 4"
-        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-bold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
-      >
-        <NuxtLink :to="allProjectModelsRoute(project.id) + '/'">
-          +{{ modelItemTotalCount - 4 }} more model{{
-            modelItemTotalCount - 4 !== 1 ? 's' : ''
-          }}
-        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
+import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
-import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
+import {
+  projectRoute,
+  allProjectModelsRoute,
+  modelRoute
+} from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
+  showWorkspaceLink?: boolean
 }>()
 
-const projectId = computed(() => props.project.id)
+const router = useRouter()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
+const projectId = computed(() => props.project.id)
 const updatedAt = computed(() => {
   return {
     full: formattedFullDate(props.project.updatedAt),
@@ -104,7 +123,7 @@ const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const pendingModels = computed(() => props.project.pendingImportedModels)
 const models = computed(() => {
   const items = props.project.models?.items || []
-  return items.slice(0, Math.max(0, 4 - pendingModels.value.length))
+  return items.slice(0, Math.max(0, 3 - pendingModels.value.length))
 })
 
 const hasNoModels = computed(() => !models.value.length && !pendingModels.value.length)

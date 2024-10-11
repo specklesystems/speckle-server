@@ -13,7 +13,7 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
    * Get `knex(tableName)` QueryBuilder instance. Use the generic argument to type the results of the query.
    */
-  knex: <TResult = any>() => Knex.QueryBuilder<any, TResult>
+  knex: <TResult = any>(db?: Knex) => Knex.QueryBuilder<any, TResult>
   /**
    * Get names of table columns. The names can be prefixed with the table name or not, depending
    * on whether `withoutTablePrefix` was set when accessing the helper.
@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: () => knex(aliasedTableName),
+      knex: (db?: Knex) => (db || knex)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
@@ -163,7 +163,7 @@ const createBaseInnerSchemaConfigBuilder =
  * @param tableName
  * @param columns
  */
-function buildTableHelper<
+export function buildTableHelper<
   T extends string,
   C extends string,
   M extends Optional<MetaSchemaConfig<any, any, any>>
@@ -186,7 +186,11 @@ function buildTableHelper<
 /**
  * Create meta table schema helper
  */
-function buildMetaTableHelper<T extends string, C extends string, MK extends string>(
+export function buildMetaTableHelper<
+  T extends string,
+  C extends string,
+  MK extends string
+>(
   tableName: T,
   extraColumns: C[],
   metaKeys: MK[],
@@ -338,13 +342,10 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
-  'used',
+  'updatedAt',
   'message',
-  'resourceTarget',
-  'resourceId',
-  'role',
-  'token',
-  'serverRole'
+  'resource',
+  'token'
 ])
 
 export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [
@@ -599,6 +600,23 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
   'responseImage'
 ])
 
-export { knex }
+export const UserEmails = buildTableHelper('user_emails', [
+  'id',
+  'email',
+  'primary',
+  'verified',
+  'userId',
+  'createdAt',
+  'updatedAt'
+])
 
-export const USER_EMAILS_TABLE_NAME = 'user_emails'
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight',
+  'public'
+])
+
+export { knex }

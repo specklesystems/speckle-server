@@ -3,12 +3,12 @@ import {
   getBatchUserFavoriteData,
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
-  getStreams,
   getStreamRoles,
   getStreamsSourceApps,
-  getCommitStreams,
   StreamWithCommitId,
-  getUserStreamCounts
+  getUserStreamCounts,
+  getStreamsFactory,
+  getCommitStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -16,7 +16,6 @@ import { AuthContext } from '@/modules/shared/authz'
 import {
   BranchRecord,
   CommitRecord,
-  LimitedUserRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UsersMetaRecord
@@ -24,37 +23,36 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  getCommitBranches,
-  getCommits,
-  getSpecificBranchCommits,
-  getStreamCommitCounts,
-  getUserAuthoredCommitCounts,
-  getUserStreamCommitCounts
+  getCommitBranchesFactory,
+  getCommitsFactory,
+  getSpecificBranchCommitsFactory,
+  getStreamCommitCountsFactory,
+  getUserAuthoredCommitCountsFactory,
+  getUserStreamCommitCountsFactory
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
-  getBranchCommentCounts,
-  getCommentParents,
-  getCommentReplyAuthorIds,
-  getCommentReplyCounts,
-  getCommentsResources,
-  getCommentsViewedAt,
-  getCommitCommentCounts,
-  getStreamCommentCounts
+  getBranchCommentCountsFactory,
+  getCommentParentsFactory,
+  getCommentReplyAuthorIdsFactory,
+  getCommentReplyCountsFactory,
+  getCommentsResourcesFactory,
+  getCommentsViewedAtFactory,
+  getCommitCommentCountsFactory,
+  getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
 import {
-  getBranchCommitCounts,
-  getBranchesByIds,
-  getBranchLatestCommits,
-  getStreamBranchCounts,
-  getStreamBranchesByName
+  getBranchCommitCountsFactory,
+  getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory,
+  getStreamBranchCountsFactory,
+  getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAppScopes } from '@/modules/auth/repositories'
 import {
   AutomateRevisionFunctionRecord,
   AutomationRecord,
@@ -63,13 +61,13 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
-  getAutomationRevisions,
-  getAutomationRunsTriggers,
-  getAutomations,
-  getFunctionAutomationCounts,
-  getLatestAutomationRevisions,
-  getRevisionsFunctions,
-  getRevisionsTriggerDefinitions
+  getAutomationRevisionsFactory,
+  getAutomationRunsTriggersFactory,
+  getAutomationsFactory,
+  getFunctionAutomationCountsFactory,
+  getLatestAutomationRevisionsFactory,
+  getRevisionsFunctionsFactory,
+  getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
   getFunction,
@@ -85,8 +83,41 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
+import { graphDataloadersBuilders } from '@/modules'
+import { getAppScopesFactory } from '@/modules/auth/repositories'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
+
+const getStreams = getStreamsFactory({ db })
+const getStreamPendingModels = getStreamPendingModelsFactory({ db })
+const getAppScopes = getAppScopesFactory({ db })
+const getAutomations = getAutomationsFactory({ db })
+const getAutomationRevisions = getAutomationRevisionsFactory({ db })
+const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
+const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
+const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
+const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
+const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
+const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
+const getCommentsResources = getCommentsResourcesFactory({ db })
+const getCommentsViewedAt = getCommentsViewedAtFactory({ db })
+const getCommitCommentCounts = getCommitCommentCountsFactory({ db })
+const getBranchCommentCounts = getBranchCommentCountsFactory({ db })
+const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
+const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
+const getCommentParents = getCommentParentsFactory({ db })
+const getBranchesByIds = getBranchesByIdsFactory({ db })
+const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getStreamBranchCounts = getStreamBranchCountsFactory({ db })
+const getBranchCommitCounts = getBranchCommitCountsFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const getSpecificBranchCommits = getSpecificBranchCommitsFactory({ db })
+const getCommitBranches = getCommitBranchesFactory({ db })
+const getStreamCommitCounts = getStreamCommitCountsFactory({ db })
+const getUserStreamCommitCounts = getUserStreamCommitCountsFactory({ db })
+const getUserAuthoredCommitCounts = getUserAuthoredCommitCountsFactory({ db })
+const getCommitStreams = getCommitStreamsFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -133,8 +164,14 @@ export function buildRequestLoaders(
   const userId = ctx.userId
 
   const createLoader = buildDataLoaderCreator(options?.cleanLoadersEarly || false)
+  const modulesLoaders = graphDataloadersBuilders()
 
   const loaders = {
+    ...(Object.assign(
+      {},
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      ...modulesLoaders.map((l) => l({ ctx, createLoader }))
+    ) as Record<string, unknown>),
     streams: {
       getAutomation: (() => {
         type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
@@ -442,15 +479,10 @@ export function buildRequestLoaders(
       /**
        * Get user from DB
        */
-      getUser: createLoader<string, Nullable<UserWithOptionalRole<LimitedUserRecord>>>(
-        async (userIds) => {
-          const results = keyBy(
-            await getUsers(userIds.slice(), { withRole: true }),
-            'id'
-          )
-          return userIds.map((i) => results[i] || null)
-        }
-      ),
+      getUser: createLoader<string, Nullable<UserWithOptionalRole>>(async (userIds) => {
+        const results = keyBy(await getUsers(userIds.slice(), { withRole: true }), 'id')
+        return userIds.map((i) => results[i] || null)
+      }),
 
       /**
        * Get meta values associated with one or more users
@@ -649,4 +681,7 @@ export function buildRequestLoaders(
   }
 }
 
-export type RequestDataLoaders = ReturnType<typeof buildRequestLoaders>
+export interface AllRequestDataLoaders {}
+
+export type RequestDataLoaders = ReturnType<typeof buildRequestLoaders> &
+  AllRequestDataLoaders

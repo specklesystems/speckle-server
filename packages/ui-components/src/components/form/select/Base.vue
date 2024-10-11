@@ -11,12 +11,13 @@
     >
       <ListboxLabel
         :id="labelId"
-        class="flex label text-foreground mb-1.5"
-        :class="{ 'sr-only': !showLabel }"
+        class="flex text-body-xs text-foreground font-medium pb-1"
+        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
         :for="buttonId"
       >
         {{ label }}
         <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
@@ -28,7 +29,7 @@
         >
           <div class="flex items-center justify-between w-full">
             <div
-              class="block truncate grow text-left text-xs sm:text-sm"
+              class="block truncate grow text-left text-xs sm:text-[13px]"
               :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
             >
               <template
@@ -98,7 +99,7 @@
                 <span class="sr-only label text-foreground">Search</span>
                 <div class="relative">
                   <div
-                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
+                    class="pointer-events-none absolute top-0 bottom-0 left-0 flex items-center pl-2"
                   >
                     <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
                   </div>
@@ -106,16 +107,13 @@
                     ref="searchInput"
                     v-model="searchValue"
                     type="text"
-                    class="py-1 pl-7 w-full bg-foundation-page rounded-[5px] placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-3 focus:border-outline-1 focus:ring-outline-1 text-sm"
+                    class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px]"
                     :placeholder="searchPlaceholder"
                     @keydown.stop
                   />
                 </div>
               </label>
-              <div
-                class="overflow-auto simple-scrollbar"
-                :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
-              >
+              <div class="overflow-auto simple-scrollbar max-h-60">
                 <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                   <CommonLoadingBar :loading="true" />
                 </div>
@@ -139,6 +137,9 @@
                     :disabled="disabledItemPredicate?.(item) || false"
                   >
                     <li
+                      v-tippy="
+                        disabledItemPredicate?.(item) ? disabledItemTooltip : undefined
+                      "
                       :class="
                         listboxOptionClasses({
                           active,
@@ -146,9 +147,19 @@
                         })
                       "
                     >
-                      <span :class="['block truncate']">
+                      <span
+                        class="block px-2 py-1.5 rounded-md"
+                        :class="[
+                          selected ? 'bg-highlight-3' : '',
+                          !hideCheckmarks ? 'pr-8' : 'pr-2',
+                          !disabledItemPredicate?.(item) && !selected
+                            ? 'hover:bg-highlight-1'
+                            : ''
+                        ]"
+                      >
                         <slot
                           name="option"
+                          class="truncate"
                           :item="item"
                           :active="active"
                           :selected="selected"
@@ -156,16 +167,15 @@
                         >
                           {{ simpleDisplayText(item) }}
                         </slot>
-                      </span>
 
-                      <span
-                        v-if="!hideCheckmarks && selected"
-                        :class="[
-                          active ? 'text-primary' : 'text-foreground',
-                          'absolute inset-y-0 right-0 flex items-center pr-4'
-                        ]"
-                      >
-                        <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                        <span
+                          v-if="!hideCheckmarks && selected"
+                          :class="[
+                            'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
+                          ]"
+                        >
+                          <CheckIcon class="h-4 w-4" aria-hidden="true" />
+                        </span>
                       </span>
                     </li>
                   </ListboxOption>
@@ -213,6 +223,7 @@ import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const isObjectLikeType = (v: unknown): v is Record<string, unknown> => isObjectLike(v)
 
@@ -221,6 +232,10 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps({
+  size: {
+    type: String as PropType<Optional<InputSize>>,
+    default: undefined
+  },
   multiple: {
     type: Boolean,
     default: false
@@ -360,6 +375,9 @@ const props = defineProps({
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * @deprecated Use size attribute instead
+   */
   fixedHeight: {
     type: Boolean,
     default: false
@@ -382,6 +400,13 @@ const props = defineProps({
     default: false
   },
   /**
+   * Whether to show the optional text
+   */
+  showOptional: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * Whether to mount the menu on the body instead of inside the component. Useful when select box is mounted within
    * dialog windows and the menu causes unnecessary overflow.
    */
@@ -396,6 +421,13 @@ const props = defineProps({
   buttonId: {
     type: String,
     default: undefined
+  },
+  /**
+   * Tooltip shown on disabled items
+   */
+  disabledItemTooltip: {
+    required: false,
+    type: String
   }
 })
 
@@ -451,27 +483,45 @@ const renderClearButton = computed(
   () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
 )
 
+const sizeClasses = computed((): string => {
+  if (!props.size) return ''
+
+  switch (props.size) {
+    case 'sm':
+      return 'h-6 text-body-sm'
+    case 'lg':
+      return 'h-10 text-[13px]'
+    case 'xl':
+      return 'h-14 text-sm'
+    case 'base':
+    default:
+      return 'h-8 text-body-sm'
+  }
+})
+
 const buttonsWrapperClasses = computed(() => {
   const classParts: string[] = ['relative flex group']
 
   if (error.value) {
     classParts.push('hover:shadow rounded-md')
-    classParts.push('text-danger-darker focus:border-danger focus:ring-danger')
+    classParts.push('text-danger-darker focus:border-danger')
 
     if (props.buttonStyle !== 'simple') {
-      classParts.push('outline outline-2 outline-danger')
+      classParts.push('border border-danger')
     }
   } else if (props.buttonStyle !== 'simple') {
     classParts.push('rounded-md border')
     if (isOpen.value) {
-      classParts.push('border-outline-1')
+      classParts.push('border-outline-4')
     } else {
-      classParts.push('border-outline-3')
+      classParts.push('border-outline-2 hover:border-outline-5 focus:outline-0')
     }
   }
 
   if (props.fixedHeight) {
     classParts.push('h-8')
+  } else if (sizeClasses.value?.length) {
+    classParts.push(sizeClasses.value)
   }
 
   return classParts.join(' ')
@@ -481,8 +531,6 @@ const commonButtonClasses = computed(() => {
   const classParts: string[] = []
 
   if (props.buttonStyle !== 'simple') {
-    // classParts.push('group-hover:shadow')
-    // classParts.push('outline outline-2 outline-primary-muted ')
     classParts.push(
       isDisabled.value ? 'bg-foundation-disabled text-foreground-disabled' : ''
     )
@@ -520,7 +568,7 @@ const buttonClasses = computed(() => {
   const classParts = [
     'relative z-[2]',
     'normal rounded-md cursor-pointer transition truncate flex-1',
-    'flex items-center',
+    'flex items-center focus:outline-outline-4 focus:outline-1',
     commonButtonClasses.value
   ]
 
@@ -529,7 +577,7 @@ const buttonClasses = computed(() => {
 
     if (!isDisabled.value) {
       if (props.buttonStyle === 'tinted') {
-        classParts.push('bg-foundation-page text-foreground')
+        classParts.push('bg-foundation text-foreground')
       } else {
         classParts.push('bg-foundation text-foreground')
       }
@@ -623,13 +671,13 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation-2 py-1 label label--light border border-outline-3 shadow-md mt-1 '
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
   ]
 
   if (props.mountMenuOnBody) {
     classParts.push('fixed z-50')
   } else {
-    classParts.push('absolute top-[100%] w-full z-10')
+    classParts.push('absolute top-[100%] w-full z-40')
   }
 
   return classParts.join(' ')
@@ -674,18 +722,14 @@ const triggerSearch = async () => {
 const debouncedSearch = debounce(triggerSearch, 1000)
 
 const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
-  const { active, disabled } = params || {}
-  const { hideCheckmarks } = props
+  const { disabled } = params || {}
 
-  const classParts = [
-    'relative transition cursor-pointer select-none py-1.5 pl-3',
-    !hideCheckmarks ? 'pr-9' : ''
-  ]
+  const classParts = ['relative transition select-none py-1 px-2']
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
   } else {
-    classParts.push(active ? 'text-primary' : 'text-foreground')
+    classParts.push('text-foreground cursor-pointer')
   }
 
   return classParts.join(' ')

@@ -70,8 +70,12 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.TextToGeometryData(node)
       case SpeckleType.Transform:
         return this.TransformToGeometryData(node)
+      case SpeckleType.InstanceProxy:
+        return this.InstanceProxyToGeometyData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
+        return null
+      default:
         return null
     }
   }
@@ -176,6 +180,12 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return null
   }
 
+  /** DUI3 INSTANCE PROXY */
+  private InstanceProxyToGeometyData(node: NodeData): GeometryData | null {
+    node
+    return null
+  }
+
   /**
    * POINT CLOUD
    */
@@ -268,6 +278,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
+      /** We want the colors in linear space */
       colors = this.unpackColors(colorsRaw, true)
     }
 
@@ -386,7 +397,29 @@ export class SpeckleGeometryConverter extends GeometryConverter {
      */
     const conversionFactor = getConversionFactor(node.raw.units)
 
-    const move = this.PointToVector3(node.raw.basePlane.origin)
+    const T = new Matrix4()
+    const R = new Matrix4()
+
+    if (node.raw.basePlane) {
+      T.setPosition(this.PointToVector3(node.raw.basePlane.origin))
+
+      const eps = 1e-7
+      const bX = new Vector3().copy(node.raw.basePlane.xdir)
+      const bY = new Vector3().copy(node.raw.basePlane.ydir)
+      const bZ = new Vector3().copy(node.raw.basePlane.normal)
+      if (
+        Math.abs(bX.dot(bY)) < eps &&
+        Math.abs(bX.dot(bZ)) < eps &&
+        Math.abs(bY.dot(bZ)) < eps
+      )
+        R.makeBasis(
+          node.raw.basePlane.xdir,
+          node.raw.basePlane.ydir,
+          node.raw.basePlane.normal
+        )
+      else Logger.warn(`Box ${node.raw.id} does not have orthogonal base plane vectors`)
+    } else Logger.warn(`Box ${node.raw.id} is missing it's base plane`)
+
     const width = (node.raw.xSize.end - node.raw.xSize.start) * conversionFactor
     const depth = (node.raw.ySize.end - node.raw.ySize.start) * conversionFactor
     const height = (node.raw.zSize.end - node.raw.zSize.start) * conversionFactor
@@ -431,7 +464,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       attributes: {
         POSITION: edges
       },
-      bakeTransform: new Matrix4().setPosition(move),
+      bakeTransform: new Matrix4().copy(T).multiply(R),
       transform: null
     } as GeometryData
   }

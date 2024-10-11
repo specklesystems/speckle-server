@@ -1,12 +1,44 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
-import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { initializeEventListenerFactory } from '@/modules/activitystream/services/eventListener'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { handleServerInvitesActivitiesFactory } from '@/modules/activitystream/services/serverInvitesActivity'
+import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
+import {
+  getActiveUserStreamsFactory,
+  saveActivityFactory
+} from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import { addStreamInviteSentOutActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  addStreamAccessRequestDeclinedActivityFactory,
+  addStreamAccessRequestedActivityFactory
+} from '@/modules/activitystream/services/accessRequestActivity'
 
 let scheduledTask: ReturnType<typeof scheduleExecution> | null = null
+let quitEventListeners: Optional<ReturnType<typeof initializeEventListeners>> =
+  undefined
+
+const initializeEventListeners = () => {
+  const handleServerInvitesActivities = handleServerInvitesActivitiesFactory({
+    eventBus: getEventBus(),
+    logger: activitiesLogger,
+    getStream: getStreamFactory({ db }),
+    addStreamInviteSentOutActivity: addStreamInviteSentOutActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })
+  })
+
+  const quitters = [handleServerInvitesActivities()]
+
+  return () => quitters.forEach((quitter) => quitter())
+}
 
 const scheduleWeeklyActivityNotifications = () => {
   // just to test stuff
@@ -27,7 +59,10 @@ const scheduleWeeklyActivityNotifications = () => {
       const end = now
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
-      await sendActivityNotifications(start, end, publishNotification)
+      await sendActivityNotificationsFactory({
+        publishNotification,
+        getActiveUserStreams: getActiveUserStreamsFactory({ db })
+      })(start, end)
     },
     10 * 60 * 1000
   )
@@ -37,13 +72,24 @@ const activityModule: SpeckleModule = {
   init: async (_, isInitial) => {
     moduleLogger.info('🤺 Init activity module')
     if (isInitial) {
-      initializeEventListener()
+      initializeEventListenerFactory({
+        addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
+          saveActivity: saveActivityFactory({ db })
+        }),
+        addStreamAccessRequestDeclinedActivity:
+          addStreamAccessRequestDeclinedActivityFactory({
+            saveActivity: saveActivityFactory({ db })
+          }),
+        saveActivity: saveActivityFactory({ db })
+      })()
       if (weeklyEmailDigestEnabled())
         scheduledTask = scheduleWeeklyActivityNotifications()
     }
+    quitEventListeners = initializeEventListeners()
   },
   shutdown: () => {
-    if (scheduledTask) scheduledTask.stop()
+    scheduledTask?.stop()
+    quitEventListeners?.()
   }
 }
 

@@ -74,7 +74,7 @@ export class SpeckleLoader extends Loader {
     const start = performance.now()
     let first = true
     let current = 0
-    let total = 0
+    const total = await this.loader.getTotalObjectCount()
     let viewerLoads = 0
     let firstObjectPromise = null
 
@@ -99,7 +99,6 @@ export class SpeckleLoader extends Loader {
           }
         )
         first = false
-        total = obj.totalChildrenCount as number
       }
       current++
       this.emit(LoaderEvent.LoadProgress, {
@@ -127,6 +126,9 @@ export class SpeckleLoader extends Loader {
     if (this.isCancelled) {
       return Promise.resolve(false)
     }
+
+    await this.converter.convertInstances()
+    await this.converter.applyMaterials()
 
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()

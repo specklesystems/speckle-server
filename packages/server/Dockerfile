@@ -1,7 +1,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as build-stage
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 WORKDIR /speckle-server
@@ -39,7 +39,7 @@ RUN yarn workspaces foreach -W run build
 
 # install only production dependencies
 # we need a clean environment, free of build dependencies
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as dependency-stage
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS dependency-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -56,28 +56,29 @@ COPY packages/objectloader/package.json ./packages/objectloader/
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
-ARG FILE_SIZE_LIMIT_MB=100
-ARG MAX_OBJECT_SIZE_MB=10
 
-ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB} \
-    MAX_OBJECT_SIZE_MB=${MAX_OBJECT_SIZE_MB} \
-    NODE_ENV=${NODE_ENV} \
+ENV NODE_ENV=${NODE_ENV} \
     SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
-WORKDIR /speckle-server
 COPY --from=build-stage /speckle-server/wait /wait
 COPY --from=build-stage /speckle-server/tini /tini
-COPY --from=build-stage /speckle-server/packages/shared /speckle-server/packages/shared
-COPY --from=build-stage /speckle-server/packages/objectloader /speckle-server/packages/objectloader
+
+WORKDIR /speckle-server
+COPY --from=build-stage /speckle-server/package.json ./package.json
+COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --from=build-stage /speckle-server/packages/objectloader ./packages/objectloader
 COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
+COPY --from=build-stage /speckle-server/packages/server/package.json ./package.json
 COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
+# Copy only if exists https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile/46801962#46801962
+COPY --from=dependency-stage /speckle-server/packages/server/node_module[s] ./node_modules
 
-ENTRYPOINT ["node"]
+ENTRYPOINT ["/nodejs/bin/node"]
 CMD ["bin/www"]

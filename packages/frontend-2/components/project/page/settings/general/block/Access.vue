@@ -2,11 +2,12 @@
   <ProjectPageSettingsBlock
     background
     title="Access"
-    :icon="LockClosedIcon"
     :disabled-message="disabled ? 'You must be a project owner' : undefined"
   >
     <template #introduction>
-      <p>Choose how you want to share this project with others.</p>
+      <p class="text-body-xs text-foreground">
+        Choose how you want to share this project with others.
+      </p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"

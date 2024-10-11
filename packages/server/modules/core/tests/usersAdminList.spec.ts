@@ -1,23 +1,75 @@
 import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
-import { createStream } from '@/modules/core/services/streams'
 import { times, clamp } from 'lodash'
-import { createInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
+import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'
-import { addLoadersToCtx } from '@/modules/shared/middleware'
-import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
-import { ApolloServer } from 'apollo-server-express'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
-import db from '@/db/knex'
+import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import {
+  createStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
-const createInviteDirectly = createInviteDirectlyFactory({ db })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const createInviteDirectly = createStreamInviteDirectly
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -60,7 +112,7 @@ describe('[Admin users list]', () => {
   const totalCount = USER_COUNT + SERVER_INVITE_COUNT + STREAM_INVITE_COUNT
   const totalInviteCount = SERVER_INVITE_COUNT + STREAM_INVITE_COUNT
 
-  let apollo: ApolloServer
+  let apollo: ServerAndContext
   let orderedUserIds: string[] = []
   let orderedInviteIds: string[] = []
 
@@ -177,16 +229,10 @@ describe('[Admin users list]', () => {
     orderedInviteIds = await getOrderedInviteIds()
     orderedUserIds = await getOrderedUserIds()
 
-    apollo = await buildApolloServer({
-      context: () =>
-        addLoadersToCtx({
-          auth: true,
-          userId: me.id,
-          role: Roles.Server.Admin,
-          token: 'asd',
-          scopes: AllScopes
-        })
-    })
+    apollo = {
+      apollo: await buildApolloServer(),
+      context: createAuthedTestContext(me.id!, { role: Roles.Server.Admin })
+    }
   })
 
   after(async () => {
@@ -214,8 +260,8 @@ describe('[Admin users list]', () => {
         offset
       })
 
-      expect(data?.adminUsers).to.be.ok
       expect(errors).to.be.not.ok
+      expect(data?.adminUsers).to.be.ok
 
       expect(data?.adminUsers?.totalCount).to.eq(totalCount)
       expect(data?.adminUsers?.items).to.have.length(expectedItemCount)

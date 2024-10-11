@@ -10,11 +10,9 @@
         <div class="text-foreground text-sm">Announcing the new Speckle web app</div>
       </div>
       <div class="flex gap-3">
-        <FormButton size="sm" color="default" text @click="emit('dismissed')">
-          Skip
-        </FormButton>
-        <FormButton size="sm" class="px-4" to="/" @click="showDialog = true">
-          See what's new
+        <FormButton color="primary" text @click="emit('dismissed')">Skip</FormButton>
+        <FormButton class="px-4" to="/" @click="showDialog = true">
+          See What's New
         </FormButton>
       </div>
     </div>

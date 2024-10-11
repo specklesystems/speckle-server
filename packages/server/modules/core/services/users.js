@@ -4,7 +4,8 @@ const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const {
   ServerAcl: ServerAclSchema,
-  Users: UsersSchema
+  Users: UsersSchema,
+  UserEmails
 } = require('@/modules/core/dbSchema')
 const {
   validateUserPassword,
@@ -15,11 +16,14 @@ const {
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
-const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const { getUserByEmail } = require('@/modules/core/repositories/users')
+const {
+  getUserByEmail,
+  getUsersBaseQuery,
+  getUser
+} = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
-const { pick } = require('lodash')
+const { pick, omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
   UserInputError,
@@ -28,8 +32,32 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
-const { createUserEmailFactory } = require('@/modules/core/repositories/userEmails')
+const {
+  createUserEmailFactory,
+  findPrimaryEmailForUserFactory,
+  findEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
 const { db } = require('@/db/knex')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -47,20 +75,14 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
-const userByEmailQuery = (email) => Users().whereRaw('lower(email) = lower(?)', [email])
-
-const getUsersBaseQuery = (searchQuery = null) => {
-  const query = Users()
-  if (searchQuery) {
-    query.where((queryBuilder) => {
-      queryBuilder
-        .where('email', 'ILIKE', `%${searchQuery}%`)
-        .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-        .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-    })
-  }
-  return query
-}
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 module.exports = {
   /*
@@ -75,6 +97,8 @@ module.exports = {
   async createUser(user, options = undefined) {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
+
+    if (!user.email?.length) throw new UserInputError('E-mail address is required')
 
     let expectedRole = null
     if (user.role) {
@@ -93,6 +117,8 @@ module.exports = {
     user.id = newId
     user.email = user.email.toLowerCase()
 
+    if (!user.name) throw new UserInputError('User name is required')
+
     if (user.avatar) {
       user.avatar = sanitizeImageUrl(user.avatar)
     }
@@ -104,8 +130,10 @@ module.exports = {
     }
     delete user.password
 
-    const usr = await userByEmailQuery(user.email).select('id').first()
-    if (usr) throw new UserInputError('Email taken. Try logging in?')
+    const userEmail = await findEmailFactory({ db })({
+      email: user.email
+    })
+    if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
@@ -117,10 +145,23 @@ module.exports = {
 
     await Acl().insert({ userId: newId, role: userRole })
 
-    await createUserEmailFactory({ db })({
+    const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    })
+
+    await validateAndCreateUserEmail({
       userEmail: {
         email: user.email,
-        userId: user.id
+        userId: user.id,
+        verified: user.verified,
+        primary: true
       }
     })
 
@@ -130,6 +171,7 @@ module.exports = {
   },
 
   /**
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,
@@ -137,10 +179,10 @@ module.exports = {
    * }>}
    */
   async findOrCreateUser({ user }) {
-    const existingUser = await userByEmailQuery(user.email)
-      .select(['id', 'email'])
-      .first()
-    if (existingUser) return existingUser
+    const userEmail = await findPrimaryEmailForUserFactory({ db })({
+      email: user.email
+    })
+    if (userEmail) return { id: userEmail.userId, email: userEmail.email }
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?
@@ -154,22 +196,54 @@ module.exports = {
   /**
    * @param {{userId: string}} param0
    * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
+   *TODO: this should be moved to repository
    */
   async getUserById({ userId }) {
-    const user = await Users().where({ id: userId }).select('*').first()
+    const user = await Users()
+      .where({ [UsersSchema.col.id]: userId })
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: userId })
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (user) delete user.passwordDigest
     return user
   },
 
   // TODO: deprecate
   async getUser(id) {
-    const user = await Users().where({ id }).select('*').first()
+    const user = await Users()
+      .where({ [UsersSchema.col.id]: id })
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (user) delete user.passwordDigest
     return user
   },
 
+  // TODO: this should be moved to repository
   async getUserByEmail({ email }) {
-    const user = await userByEmailQuery(email).select('*').first()
+    const user = await Users()
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ [UserEmails.col.primary]: true })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (!user) return null
     delete user.passwordDigest
     return user
@@ -203,11 +277,21 @@ module.exports = {
    * User search available for normal server users. It's more limited because of the lower access level.
    */
   async searchUsers(searchQuery, limit, cursor, archived = false, emailOnly = false) {
+    const prefixedLimitedUserFields = LIMITED_USER_FIELDS.map(
+      (field) => `users.${field}`
+    )
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
-      .select(...LIMITED_USER_FIELDS)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])).filter((col) =>
+          prefixedLimitedUserFields.includes(col)
+        ),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
       .where((queryBuilder) => {
-        queryBuilder.where({ email: searchQuery }) //match full email or partial name
+        queryBuilder.where({ [UserEmails.col.email]: searchQuery }) //match full email or partial name
         if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
         if (!archived) queryBuilder.andWhere('role', '!=', Roles.Server.ArchivedUser)
       })
@@ -237,9 +321,11 @@ module.exports = {
   },
 
   /**
+   * TODO: this should be moved to repository
    * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
    */
   deleteUser({ deleteAllUserInvites }) {
+    const deleteStream = deleteStreamFactory({ db })
     return async (id) => {
       //TODO: check for the last admin user to survive
       dbLogger.info('Deleting user ' + id)
@@ -266,7 +352,7 @@ module.exports = {
         [id]
       )
       for (const i in streams.rows) {
-        await deleteStream({ streamId: streams.rows[i].id })
+        await deleteStream(streams.rows[i].id)
       }
 
       // Delete all invites (they don't have a FK, so we need to do this manually)
@@ -278,8 +364,12 @@ module.exports = {
   },
 
   /**
+   * TODO: this should be moved to repositories
    * Get all users or filter them with the specified searchQuery. This is meant for
    * server admins, because it exposes the User object (& thus the email).
+   * @param {number} limit
+   * @param {number} offset
+   * @param {string | null} searchQuery
    * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
    */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
@@ -287,17 +377,36 @@ module.exports = {
     const maxLimit = 200
     if (limit > maxLimit) limit = maxLimit
 
-    const query = getUsersBaseQuery(searchQuery)
-    query.limit(limit).offset(offset)
+    const query = Users()
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .columns([
+        ...Object.values(
+          omit(UsersSchema.col, ['email', 'verified', 'passwordDigest'])
+        ),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
 
-    const users = await query
-    users.map((user) => delete user.passwordDigest)
-    return users
+    return getUsersBaseQuery(query, { searchQuery })
+      .groupBy(UsersSchema.col.id)
+      .orderBy(UsersSchema.col.createdAt)
+      .limit(limit)
+      .offset(offset)
   },
 
+  /**
+   * TODO: this should be moved to repositories
+   * @param {string|null} searchQuery
+   * @returns
+   */
   async countUsers(searchQuery = null) {
-    const query = getUsersBaseQuery(searchQuery)
-    const [userCount] = await query.count()
+    const query = Users().leftJoin(
+      UserEmails.name,
+      UserEmails.col.userId,
+      UsersSchema.col.id
+    )
+
+    const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
     return parseInt(userCount.count)
   },
 

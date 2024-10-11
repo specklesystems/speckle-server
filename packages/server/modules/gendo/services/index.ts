@@ -5,7 +5,17 @@ import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { Merge } from 'type-fest'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
-import { uploadFileStream } from '@/modules/blobstorage/services'
+import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
+import {
+  updateBlobFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories'
+import { db } from '@/db/knex'
+
+const uploadFileStream = uploadFileStreamFactory({
+  upsertBlob: upsertBlobFactory({ db }),
+  updateBlob: updateBlobFactory({ db })
+})
 
 export async function createGendoAIRenderRequest(
   input: GendoAiRenderInput & {

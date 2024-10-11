@@ -2,6 +2,7 @@ import { MathUtils } from 'three'
 import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
+  MinimalMaterial,
   type DisplayStyle,
   type RenderMaterial
 } from '../materials/Materials.js'
@@ -323,17 +324,20 @@ export default class Batcher {
 
     const geometryType =
       batchType !== undefined ? batchType : renderViews[0].geometryType
-    let matRef: RenderMaterial | DisplayStyle | null =
+    let matRef: RenderMaterial | DisplayStyle | MinimalMaterial | null =
       renderViews[0].renderData.renderMaterial
 
     if (geometryType === GeometryType.MESH) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.LINE) {
-      matRef = renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT) {
-      matRef =
-        renderViews[0].renderData.renderMaterial ||
-        renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.renderMaterial ||
+          renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {

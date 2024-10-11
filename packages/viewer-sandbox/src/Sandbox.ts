@@ -1,4 +1,4 @@
-import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+import { SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -32,7 +32,7 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3 } from 'three'
+import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 
@@ -141,6 +141,7 @@ export default class Sandbox {
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
@@ -375,6 +376,7 @@ export default class Sandbox {
       input.onchange = (e) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
@@ -418,6 +420,15 @@ export default class Sandbox {
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
+    })
+
+    const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
+      title: 'Toggle Section Box Visibility'
+    })
+    toggleSectionBoxVisibility.on('click', () => {
+      this.viewer.getExtension(SectionTool).visible =
+        !this.viewer.getExtension(SectionTool).visible
+      this.viewer.requestRender()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
@@ -470,9 +481,6 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
-      // this.viewer
-      //   .getExtension(FilteringExtension)
-      //   .hideObjects([this.viewer.getWorldTree().root.model.children[0].id])
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -490,6 +498,40 @@ export default class Sandbox {
         this.viewer.requestRender(UpdateFlags.RENDER_RESET)
         await waitForAnimation(1000)
       }
+    })
+
+    const colors = this.tabs.pages[0].addButton({
+      title: `PM's Colors`
+    })
+    colors.on('click', async () => {
+      const colorNodes = this.viewer.getWorldTree().findAll(
+        (node: TreeNode) =>
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+          node.model.renderView &&
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          node.model.renderView.renderData.colorMaterial &&
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          node.model.renderView.geometryType === GeometryType.MESH
+      )
+      const colorMap: { [color: number]: Array<string> } = {}
+      for (let k = 0; k < colorNodes.length; k++) {
+        const node = colorNodes[k]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const color: number = node.model.renderView.renderData.colorMaterial.color
+        if (!colorMap[color]) colorMap[color] = []
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        colorMap[color].push(node.model.id)
+      }
+      const colorGroups = []
+
+      for (const color in colorMap) {
+        colorGroups.push({
+          objectIds: colorMap[color],
+          color: '#' + new Color(Number.parseInt(color)).getHexString()
+        })
+      }
+      console.log(colorGroups)
+      this.viewer.getExtension(FilteringExtension).setUserObjectColors(colorGroups)
     })
 
     this.tabs.pages[0]
@@ -1176,6 +1218,7 @@ export default class Sandbox {
         // cubes
         // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // DUI3
 
         VisualDiffMode.COLORED,
         localStorage.getItem('AuthTokenLatest') as string

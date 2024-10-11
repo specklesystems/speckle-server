@@ -64,26 +64,31 @@ spec:
             exec:
               command: ["sleep", "5"]
 
+        startupProbe:
+          periodSeconds: 10
+          failureThreshold: 60 # 10*60 = 600s; accounts for long-running db migrations
+          timeoutSeconds: 3
+          httpGet:
+            path: /liveness
+            port: {{ include "server.port" $ }}
+
         livenessProbe:
-          # account for long-running migrations
-          initialDelaySeconds: 600
           periodSeconds: 60
           timeoutSeconds: 10
-          exec:
-            command:
-              - node
-              - -e
-              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/liveness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+          failureThreshold: 3
+          httpGet:
+            path: /liveness
+            port: {{ include "objects.port" $ }}
 
         readinessProbe:
           initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 10
-          exec:
-            command:
-              - node
-              - -e
-              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/readiness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+          periodSeconds: 4
+          timeoutSeconds: 2
+          failureThreshold: 1
+
+          httpGet:
+            path: /readiness
+            port: {{ include "objects.port" $ }}
 
         env:
 {{ include "server.env" $ | indent 10 }}

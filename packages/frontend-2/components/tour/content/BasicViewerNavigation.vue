@@ -43,7 +43,7 @@
     </div>
 
     <div class="text-sm">
-      <div v-if="hasMovedCamera" class="font-bold flex items-center">
+      <div v-if="hasMovedCamera" class="font-medium flex items-center">
         <CheckIcon class="w-4 h-4 text-success mr-2" />
         <p>{{ encouragements[controlEndCounts] }}</p>
       </div>

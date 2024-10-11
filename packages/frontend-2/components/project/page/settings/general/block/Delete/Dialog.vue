@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Delete project</template>
-    <div class="space-y-4">
+    <div class="space-y-4 text-body-xs">
       <p>
         Are you sure you want to permanently
         <strong>delete “{{ project.name }}”</strong>
@@ -61,7 +61,7 @@ const discussionText = computed(() =>
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
       projectNameInput.value = ''
@@ -71,8 +71,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     text: 'Delete',
     props: {
       color: 'danger',
-      fullWidth: true,
-      outline: true,
+
       disabled: projectNameInput.value !== props.project.name
     },
     onClick: async () => {
@@ -80,7 +79,10 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
         projectNameInput.value === props.project.name &&
         props.project.role === Roles.Stream.Owner
       ) {
-        await deleteProject(props.project.id, { goHome: true })
+        await deleteProject(props.project.id, {
+          goHome: true,
+          workspaceSlug: props.project.workspace?.slug
+        })
         isOpen.value = false
         mp.track('Stream Action', { type: 'action', name: 'delete' })
       }

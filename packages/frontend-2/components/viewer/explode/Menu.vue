@@ -29,7 +29,7 @@
               max="1"
               step="0.01"
             />
-            <label class="text-xs sm:text-sm text-foreground-2" for="intensity">
+            <label class="text-body-xs text-foreground-2" for="intensity">
               Intensity
             </label>
           </div>

@@ -6,6 +6,7 @@
         v-for="strat in thirdPartyStrategies"
         :key="strat.id"
         to="javascript:;"
+        :server-info="serverInfo"
         @click="() => onClick(strat)"
       />
     </div>
@@ -35,6 +36,7 @@ graphql(`
       name
       url
     }
+    ...AuthThirdPartyLoginButtonOIDC_ServerInfo
   }
 `)
 
@@ -42,13 +44,12 @@ const props = defineProps<{
   serverInfo: AuthStategiesServerInfoFragmentFragment
   challenge: string
   appId: string
+  newsletterConsent: boolean
 }>()
 
 const apiOrigin = useApiOrigin()
 const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
-
-const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const NuxtLink = resolveComponent('NuxtLink')
 const GoogleButton = resolveComponent('AuthThirdPartyLoginButtonGoogle')
@@ -69,7 +70,7 @@ const buildAuthUrl = (strat: StrategyType) => {
     url.searchParams.set('token', inviteToken.value)
   }
 
-  if (newsletterConsent?.value) {
+  if (props.newsletterConsent) {
     url.searchParams.set('newsletter', 'true')
   }
 

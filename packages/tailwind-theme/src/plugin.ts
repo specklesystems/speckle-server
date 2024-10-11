@@ -3,10 +3,10 @@ import preset from './preset.js'
 
 export const lightThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#f1f5f9',
+  '--foundation-page': '#FAFAFA',
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#fcfcfc',
-  '--foundation-2': '#fcfcfc',
+  '--foundation': '#FFFFFF',
+  '--foundation-2': '#F5F5F5',
   '--foundation-3': '#fcfcfc',
   '--foundation-4': '#fcfcfc',
   '--foundation-5': '#fcfcfc',
@@ -16,55 +16,60 @@ export const lightThemeVariables = {
   '--foundation-disabled': '#e5e5e5',
 
   /* default foreground color */
-  '--foreground': '#334155',
+  '--foreground': '#1A1A1A',
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#94a3b8',
-  /* disabled foreground color */
-  '--foreground-disabled': '#a3a3a3',
-  /* primary color when used for text directly on top of foundation-page */
-  '--foreground-primary': '#3b82f6',
+  '--foreground-2': '#626263',
+  '--foreground-3': '#7C7C7D',
   /* foreground color when put on top of a primary colored background */
   '--foreground-on-primary': '#fff',
+  '--foreground-disabled': '#1A1A1A50',
 
   /* primary color */
-  '--primary': '#3b82f6',
+  '--primary': '#136CFF',
   /* focused primary color */
-  '--primary-focus': '#2563eb',
+  '--primary-focus': '#0057E5',
   /* muted primary color */
-  '--primary-muted': '#e8eff8',
+  '--primary-muted': '#EDEDED',
 
   /* outline variations */
-  '--outline-1': '#3b82f6',
-  '--outline-2': '#93c5fd',
-  '--outline-3': '#cbd5e1',
+  '--outline-1': '#276FE5',
+  '--outline-2': '#DFDFDF',
+  '--outline-3': '#E2E8F0',
+  '--outline-4': '#4B40C9',
+  '--outline-5': '#C4C4C4',
+
+  /* highlight variations */
+  '--highlight-1': '#F4F4F4',
+  '--highlight-2': '#F2F2F2',
+  '--highlight-3': '#EDEDED',
 
   /* success variations */
-  '--success': '#34d399',
-  '--success-lighter': '#d1fae5',
-  '--success-darker': '#064e3b',
+  '--success': '#34D399',
+  '--success-lighter': '#53EDB5',
+  '--success-darker': '#1CBA80',
 
   /* warning variations */
-  '--warning': '#fbbf24',
-  '--warning-lighter': '#fef3c7',
-  '--warning-darker': '#78350f',
+  '--warning': '#FBBF24',
+  '--warning-lighter': '#FFD770',
+  '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#38bdf8',
-  '--info-lighter': '#e0f2fe',
-  '--info-darker': '#0c4a6e',
+  '--info': '#B9B8CC',
+  '--info-lighter': '#D2D1E5',
+  '--info-darker': '#6D6B99',
 
   /* danger variations */
-  '--danger': '#f87171',
-  '--danger-lighter': '#fee2e2',
-  '--danger-darker': '#7f1d1d'
+  '--danger': '#C45959',
+  '--danger-lighter': '#F78888',
+  '--danger-darker': '#913333'
 }
 
 export const darkThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#18181b',
+  '--foundation-page': '#101012',
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#27272a',
-  '--foundation-2': '#303034',
+  '--foundation': '#15161C',
+  '--foundation-2': '#191A22',
   '--foundation-3': '#52525b',
   '--foundation-4': '#71717a',
   '--foundation-5': '#a1a1aa',
@@ -74,47 +79,51 @@ export const darkThemeVariables = {
   '--foundation-disabled': '#3c3c3d',
 
   /* default foreground color */
-  '--foreground': '#f4f4f5',
+  '--foreground': '#FFFFFF',
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#71717a',
-  /* disabled foreground color */
-  '--foreground-disabled': '#5a5a5f',
-  /* primary color when used for text directly on top of foundation-page */
-  '--foreground-primary': '#bfdbfe',
-  /* foreground color when put on top of a primary colored background */
-  '--foreground-on-primary': '#fafafa',
+  '--foreground-2': '#B0B1B5',
+  '--foreground-3': '#7E7F82',
+  '--foreground-on-primary': '#FFFFFF',
+  '--foreground-disabled': '#FFFFFF50',
 
   /* primary color */
-  '--primary': '#3b82f6',
+  '--primary': '#136CFF',
   /* focused primary color */
-  '--primary-focus': '#60a5fa',
+  '--primary-focus': '#458CFF',
   /* muted primary color */
-  '--primary-muted': '#1d1d20',
+  '--primary-muted': '#292B39',
 
   /* outline variations */
-  '--outline-1': '#a1a1aa',
-  '--outline-2': '#52525b',
-  '--outline-3': '#3f3f46',
+  '--outline-1': '#2B7CFF',
+  '--outline-2': '#2E313F',
+  '--outline-3': '#282833',
+  '--outline-4': '#4B40C9',
+  '--outline-5': '#434559',
+
+  /* highlight variations */
+  '--highlight-1': '#22242E',
+  '--highlight-2': '#292B39',
+  '--highlight-3': '#323445',
 
   /* success variations */
-  '--success': '#34d399',
-  '--success-lighter': '#a7f3d0',
-  '--success-darker': '#064e3b',
+  '--success': '#34D399',
+  '--success-lighter': '#53EDB5',
+  '--success-darker': '#1CBA80',
 
   /* warning variations */
-  '--warning': '#facc15',
-  '--warning-lighter': '#fef08a',
-  '--warning-darker': '#78350f',
+  '--warning': '#FBBF24',
+  '--warning-lighter': '#FFD770',
+  '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#38bdf8',
-  '--info-lighter': '#bae6fd',
-  '--info-darker': '#0c4a6e',
+  '--info': '#B9B8CC',
+  '--info-lighter': '#D2D1E5',
+  '--info-darker': '#6D6B99',
 
   /* danger variations */
-  '--danger': '#f87171',
-  '--danger-lighter': '#fecaca',
-  '--danger-darker': '#7f1d1d'
+  '--danger': '#F87171',
+  '--danger-lighter': '#FF8F8F',
+  '--danger-darker': '#AB3E3E'
 }
 
 export default plugin(function ({ addComponents, addBase }) {
@@ -242,30 +251,45 @@ export default plugin(function ({ addComponents, addBase }) {
   addComponents({
     // Fancy gradient text
     '.text-fancy-gradient': {
-      '@apply font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
+      '@apply font-semibold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
         {}
     },
-    // Font sizes
-    '.h1': {
-      '@apply text-5xl leading-10': {}
+    // New heading styles
+    '.text-heading-2xl, .h1': {
+      '@apply font-medium text-3xl leading-10 tracking-[-0.63px]': {}
     },
-    '.h2': {
-      '@apply text-4xl leading-10': {}
+    '.text-heading-xl, .h2': {
+      '@apply font-medium text-2xl leading-8 tracking-[-0.456px]': {}
     },
-    '.h3': {
-      '@apply text-3xl leading-9': {}
+    '.text-heading-lg, .h3': {
+      '@apply font-medium text-lg leading-6 tracking-[-0.252px]': {}
     },
-    '.h4': {
-      '@apply text-2xl leading-8': {}
+    '.text-heading, .h4': {
+      '@apply font-medium text-base leading-6 tracking-[-0.176px]': {}
     },
-    '.h5': {
-      '@apply text-xl leading-7': {}
+    '.text-heading-sm, .h5, .h6': {
+      '@apply font-medium text-sm leading-6 tracking-[-0.084px]': {}
     },
-    '.h6': {
-      '@apply text-lg leading-6': {}
+
+    // New body styles
+    '.text-body': {
+      '@apply text-base leading-6 tracking-[-0.176px]': {}
     },
+    '.text-body-sm': {
+      '@apply text-sm leading-6 tracking-[-0.084px]': {}
+    },
+    '.text-body-xs': {
+      '@apply text-[13px] leading-6 tracking-[-0.032px]': {}
+    },
+    '.text-body-2xs': {
+      '@apply text-xs leading-4': {}
+    },
+    '.text-body-3xs': {
+      '@apply text-[11px] leading-4 tracking-[0.055px]': {}
+    },
+
     '.label': {
-      '@apply text-sm font-medium leading-5': {}
+      '@apply text-[13px] font-medium leading-5': {}
     },
     '.label--light': {
       '@apply font-normal': {}
@@ -308,7 +332,7 @@ export default plugin(function ({ addComponents, addBase }) {
     // Simple scrollbar (OSX-like) to use instead of the ugly browser one
     '.simple-scrollbar': {
       'scrollbar-width': 'var(--simple-scrollbar-width)',
-      'scrollbar-color': 'var(--foreground-2)',
+      'scrollbar-color': 'var(--outline-5)',
       '&::-webkit-scrollbar': {
         width: 'var(--simple-scrollbar-width)',
         height: '6px'
@@ -319,10 +343,10 @@ export default plugin(function ({ addComponents, addBase }) {
       },
       '&::-webkit-scrollbar-thumb': {
         'border-radius': '15px',
-        background: 'var(--foreground-2)'
+        background: 'var(--outline-5)'
       },
       '&::-webkit-scrollbar-thumb:hover': {
-        background: 'var(--foreground-2)'
+        background: 'var(--outline-5)'
       },
       '&::-webkit-scrollbar-thumb:active': {
         background: 'rgba(90 90 90 10100%)'

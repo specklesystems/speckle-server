@@ -58,13 +58,14 @@ import {
 } from '~~/src/composables/common/window'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
-import LayoutTabsHoriztonal from '~~/src/components/layout/tabs/Horizontal.vue'
+import LayoutTabsHorizontal from '~~/src/components/layout/tabs/Horizontal.vue'
 import LayoutTabsVertical from '~~/src/components/layout/tabs/Vertical.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import LayoutSidebar from '~~/src/components/layout/sidebar/Sidebar.vue'
+import LayoutSidebarPromo from '~~/src/components/layout/sidebar/Promo.vue'
 import LayoutSidebarMenu from '~~/src/components/layout/sidebar/menu/Menu.vue'
 import LayoutSidebarMenuGroup from '~~/src/components/layout/sidebar/menu/group/Group.vue'
 import LayoutSidebarMenuGroupItem from '~~/src/components/layout/sidebar/menu/group/Item.vue'
@@ -94,8 +95,10 @@ export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
-
 export { vKeyboardClickable } from '~~/src/directives/accessibility'
+export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
+export type { UserAvatarSize } from '~~/src/composables/user/avatar'
+import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
 
 export {
   CommonLoadingIcon,
@@ -147,10 +150,11 @@ export {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
-  LayoutTabsHoriztonal,
+  LayoutTabsHorizontal,
   LayoutTabsVertical,
   LayoutTable,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem,
@@ -162,7 +166,8 @@ export {
   FormTags,
   keyboardClick,
   useDebouncedTextInput,
-  buildManualPromise
+  buildManualPromise,
+  CommonProgressBar
 }
 export type {
   LayoutDialogButton,

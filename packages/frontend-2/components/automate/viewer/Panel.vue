@@ -8,7 +8,7 @@
           <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6" />
         </div>
         <div class="flex min-w-0 flex-col gap-1">
-          <h4 :class="[`label font-bold whitespace-normal`, summary.titleColor]">
+          <h4 :class="[`label font-medium whitespace-normal`, summary.titleColor]">
             {{ summary.title }}
           </h4>
           <div class="caption text-foreground-2 whitespace-normal">

@@ -1,10 +1,12 @@
 <template>
   <div>
-    <ProjectPageSettingsBlock background title="Delete project" :icon="TrashIcon">
-      <p>
+    <ProjectPageSettingsBlock background title="Delete project">
+      <div
+        class="rounded border bg-foundation-page border-outline-3 text-body-xs text-foreground py-4 px-6"
+      >
         Permanently delete this project and all of its content from the Speckle
         platform. This action is not reversible.
-      </p>
+      </div>
       <template #bottom-buttons>
         <FormButton color="danger" @click="showDeleteDialog = true">
           Delete project
@@ -20,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -34,6 +35,9 @@ graphql(`
     }
     commentThreads(limit: 0) {
       totalCount
+    }
+    workspace {
+      slug
     }
   }
 `)

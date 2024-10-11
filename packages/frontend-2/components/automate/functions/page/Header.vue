@@ -7,14 +7,14 @@
         <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate functions'" />
       </Portal>
 
-      <h1 class="h3 font-bold">Automate functions</h1>
+      <h1 class="text-heading-xl">Automate functions</h1>
       <div class="flex flex-col sm:flex-row gap-2">
         <FormTextInput
           name="search"
           placeholder="Search functions..."
           show-clear
-          :model-value="bind.modelValue.value"
           color="foundation"
+          v-bind="bind"
           v-on="on"
         />
         <FormButton

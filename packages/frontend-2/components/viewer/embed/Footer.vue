@@ -16,12 +16,12 @@
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
           <div class="flex items-center gap-1 w-full">
-            <h2 class="font-bold text-base text-sm truncate text-foreground">
+            <h2 class="text-heading-sm truncate text-foreground">
               {{ name }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
-          <span v-if="date" class="text-xs text-foreground-2">
+          <span v-if="date" class="text-body-2xs text-foreground-2">
             {{ date }}
           </span>
         </NuxtLink>

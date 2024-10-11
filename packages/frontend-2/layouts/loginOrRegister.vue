@@ -1,11 +1,11 @@
 <template>
   <main class="flex items-center justify-center">
     <div class="absolute inset-0 pointer-events-none p-4 text-right">
-      <FormButton size="xs" text class="pointer-events-auto" @click="toggleTheme">
+      <FormButton size="sm" text class="pointer-events-auto" @click="toggleTheme">
         <Icon class="w-4 h-4" />
       </FormButton>
     </div>
-    <div class="relative mt-24 mx-2 mb-8">
+    <div class="relative mt-24 mx-4 mb-8 w-full max-w-sm">
       <slot />
     </div>
   </main>

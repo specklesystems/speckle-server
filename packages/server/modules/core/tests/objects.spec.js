@@ -8,7 +8,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const { createUser } = require('../services/users')
-const { createStream } = require('../services/streams')
 const {
   createObject,
   createObjects,
@@ -19,6 +18,40 @@ const {
   getObjectChildrenQuery,
   getObjectChildrenStream
 } = require('../services/objects')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { getUsers } = require('@/modules/core/repositories/users')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -43,6 +76,38 @@ const sampleObject = JSON.parse(`{
   "speckleType": "Tests.Polyline"
 }`)
 
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
 describe('Objects @core-objects', () => {
   const userOne = {
     name: 'Dimitrie Stefanescu',
@@ -63,8 +128,8 @@ describe('Objects @core-objects', () => {
   })
 
   it('Should create objects', async () => {
-    sampleObject.id = await createObject(stream.id, sampleObject)
-    sampleCommit.id = await createObject(stream.id, sampleCommit)
+    sampleObject.id = await createObject({ streamId: stream.id, object: sampleObject })
+    sampleCommit.id = await createObject({ streamId: stream.id, object: sampleCommit })
   })
 
   const objCount_1 = 10
@@ -80,7 +145,7 @@ describe('Objects @core-objects', () => {
       })
     }
 
-    const ids = await createObjects(stream.id, objs)
+    const ids = await createObjects({ streamId: stream.id, objects: objs })
 
     expect(ids).to.have.lengthOf(objCount_1)
   }).timeout(30000)
@@ -109,7 +174,7 @@ describe('Objects @core-objects', () => {
       })
     }
 
-    const myIds = await createObjects(stream.id, objs2)
+    const myIds = await createObjects({ streamId: stream.id, objects: objs2 })
 
     myIds.forEach((h, i) => (objs2[i].id = h))
 
@@ -127,7 +192,7 @@ describe('Objects @core-objects', () => {
         return obj
       }, {})
     }
-    const id = await createObject(stream.id, obj)
+    const id = await createObject({ streamId: stream.id, object: obj })
     expect(id).to.be.ok
   })
 
@@ -156,16 +221,16 @@ describe('Objects @core-objects', () => {
 
   it('Should get object children', async () => {
     const objs_1 = createManyObjects(100, 'noise__')
-    const ids = await createObjects(stream.id, objs_1)
+    const ids = await createObjects({ streamId: stream.id, objects: objs_1 })
     // console.log( ids )
     // console.log(ids[ 0 ])
 
     // The below are just performance benchmarking.
     // let objs_2 = createManyObjects( 20000, 'noise_2' )
-    // let ids2 = await createObjects( objs_2 )
+    // let ids2 = await createObjects( {streamId: stream.id, objects: objs_2} )
 
     // let objs_3 = createManyObjects( 100000, 'noise_3' )
-    // let ids3 = await createObjects( objs_3 )
+    // let ids3 = await createObjects( {streamId: stream.id, objects: objs_3} )
 
     // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
     // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
@@ -494,7 +559,7 @@ describe('Objects @core-objects', () => {
     const objs = createManyObjects(3333, 'perlin merlin magic')
     commitId = objs[0].id
 
-    await createObjectsBatched(stream.id, objs)
+    await createObjectsBatched({ streamId: stream.id, objects: objs })
 
     const parent = await getObject({ streamId: stream.id, objectId: commitId })
     expect(parent.totalChildrenCount).to.equal(3333)
@@ -539,7 +604,10 @@ describe('Objects @core-objects', () => {
 
     const promisses = []
     for (let i = 0; i < shuffledVersions.length; i++) {
-      const promise = createObjectsBatched(stream.id, shuffledVersions[i])
+      const promise = createObjectsBatched({
+        streamId: stream.id,
+        objects: shuffledVersions[i]
+      })
       promise.catch(() => {})
       promisses.push(promise)
     }

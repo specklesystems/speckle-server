@@ -3,9 +3,12 @@ declare global {
     interface Assertion {
       /**
        * Check if GraphQLResponse object has any errors
-       * @param message Optionally check if any of the errors contain the specified message
+       * @param messageOrOptions Optionally check if any of the errors contain the specified message
+       * or pass an options object to check for specific error properties
        */
-      haveGraphQLErrors(message?: string): void
+      haveGraphQLErrors(
+        messageOrOptions?: string | ({ message: string } | { code: string })
+      ): void
     }
   }
 }

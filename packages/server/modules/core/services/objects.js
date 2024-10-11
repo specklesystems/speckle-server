@@ -17,9 +17,10 @@ const Closures = () => knex('object_children_closure')
 
 module.exports = {
   /**
+   * @param {{streamId, object, logger?}} params
    * @returns {Promise<string>}
    */
-  async createObject(streamId, object) {
+  async createObject({ streamId, object, logger = servicesLogger }) {
     const insertionObject = prepInsertionObject(streamId, object)
 
     const closures = []
@@ -57,10 +58,12 @@ module.exports = {
       }
     }
 
+    logger.debug({ objectId: insertionObject.id }, 'Inserted object: {objectId}')
+
     return insertionObject.id
   },
 
-  async createObjectsBatched(streamId, objects) {
+  async createObjectsBatched({ streamId, objects, logger = servicesLogger }) {
     const closures = []
     const objsToInsert = []
     const ids = []
@@ -112,10 +115,7 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(
-          { objectCount: batch.length },
-          'Inserted ${objectCount} objects'
-        )
+        logger.info({ objectCount: batch.length }, 'Inserted {objectCount} objects')
       }
     }
 
@@ -126,16 +126,17 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
-        servicesLogger.info(
-          { batchLength: batch.length },
-          'Inserted ${batchLength} closures'
-        )
+        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} closures')
       }
     }
     return true
   },
 
-  async createObjectsBatchedAndNoClosures(streamId, objects) {
+  async createObjectsBatchedAndNoClosures({
+    streamId,
+    objects,
+    logger = servicesLogger
+  }) {
     const objsToInsert = []
     const ids = []
 
@@ -159,10 +160,7 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(
-          { batchLength: batch.length },
-          'Inserted {batchLength} objects'
-        )
+        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} objects.')
       }
     }
 
@@ -172,7 +170,7 @@ module.exports = {
   /**
    * @returns {Promise<string[]>}
    */
-  async createObjects(streamId, objects) {
+  async createObjects({ streamId, objects, logger = servicesLogger }) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
     const batches = []
@@ -236,12 +234,16 @@ module.exports = {
       }
 
       const t1 = performance.now()
-      servicesLogger.info(
-        `Batch ${index + 1}/${batches.length}: Stored ${
-          closures.length + objsToInsert.length
-        } objects in ${t1 - t0}ms.`
+
+      logger.info(
+        {
+          batchIndex: index + 1,
+          totalCountOfBatches: batches.length,
+          countStoredObjects: closures.length + objsToInsert.length,
+          elapsedTimeMs: t1 - t0
+        },
+        'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'
       )
-      // logger.debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
     }
 
     const promises = batches.map((batch, index) => insertBatch(batch, index))
@@ -696,7 +698,7 @@ function prepInsertionObject(streamId, obj) {
   const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
   if (objectByteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
-      `Object too large. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`
+      `Object too large. Object ID: ${obj.id}. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`
     )
   }
   return {

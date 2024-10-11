@@ -1,6 +1,6 @@
 <template>
   <div class="bg-foundation-page p-4 text-foreground space-y-4">
-    <div class="font-bold">
+    <div class="font-semibold">
       Click on any of the color links to copy the color name to your clipboard!
     </div>
     <div
@@ -8,9 +8,9 @@
       :key="colorBase"
       class="flex flex-col space-y-4"
     >
-      <span class="h3 font-bold leading-9 uppercase block">{{ colorBase }}</span>
+      <span class="text-heading-xl uppercase block">{{ colorBase }}</span>
       <p class="block">{{ definition.description }}</p>
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap space-x-4">
         <div
           v-for="(variation, i) in definition.variations"
           :key="i"
@@ -60,6 +60,10 @@ const colorDefinitions: Ref<Record<string, ColorDefinition>> = ref({
   },
   outline: {
     description: 'Outline/border/divider colors',
+    variations: ['1', '2', '3', '4', '5']
+  },
+  highlight: {
+    description: 'Used in hover states or anywhere to signal interaction',
     variations: ['1', '2', '3']
   },
   success: {
@@ -132,6 +136,11 @@ markClassesUsed([
   'bg-danger-darker',
   'bg-outline-1',
   'bg-outline-2',
-  'bg-outline-3'
+  'bg-outline-3',
+  'bg-outline-4',
+  'bg-outline-5',
+  'bg-highlight-1',
+  'bg-highlight-2',
+  'bg-highlight-3'
 ])
 </script>

@@ -4,14 +4,45 @@ const expect = require('chai').expect
 const { createUser } = require('../../core/services/users')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createObject } = require('../../core/services/objects')
-const { getUserActivity } = require('../services')
 
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const {
-  addOrUpdateStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
+
 const { Roles, Scopes } = require('@speckle/shared')
+const {
+  getUserActivityFactory,
+  saveActivityFactory
+} = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
+const {
+  validateStreamAccessFactory,
+  addOrUpdateStreamCollaboratorFactory
+} = require('@/modules/core/services/streams/access')
+const { authorizeResolver } = require('@/modules/shared')
+const { getUser } = require('@/modules/core/repositories/users')
+const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
+const {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+
+const getUserActivity = getUserActivityFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 let sendRequest
 
@@ -129,7 +160,7 @@ describe('Activity @activity', () => {
     streamSecret.id = resStream1.body.data.streamCreate
 
     // create commit (cr2)
-    testObj2.id = await createObject(streamSecret.id, testObj2)
+    testObj2.id = await createObject({ streamId: streamSecret.id, object: testObj2 })
     const resCommit1 = await sendRequest(userCr.token, {
       query: `mutation { commitCreate(commit: {streamId: "${streamSecret.id}", branchName: "main", objectId: "${testObj2.id}", message: "first commit"})}`
     })
@@ -152,7 +183,7 @@ describe('Activity @activity', () => {
     branchPublic.id = resBranch.body.data.branchCreate
 
     // create commit #2 (iz3)
-    testObj.id = await createObject(streamPublic.id, testObj)
+    testObj.id = await createObject({ streamId: streamPublic.id, object: testObj })
     const resCommit2 = await sendRequest(userIz.token, {
       query: `mutation { commitCreate(commit: { streamId: "${streamPublic.id}", branchName: "${branchPublic.name}", objectId: "${testObj.id}", message: "first commit" })}`
     })

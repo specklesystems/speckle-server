@@ -1,34 +1,37 @@
 <template>
-  <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
-    <template #header>
-      <span class="h5 font-medium leading-7">
-        One step closer to resetting your password.
-      </span>
-    </template>
-    <template #default>
-      <div class="flex flex-col space-y-8">
-        <FormTextInput
-          type="password"
-          name="password"
-          label="Password"
-          :rules="passwordRules"
-          show-label
-          show-required
-        />
-        <FormTextInput
-          type="password"
-          name="password-repeat"
-          label="Password (repeat)"
-          :rules="passwordRepeatRules"
-          show-label
-          show-required
-        />
-      </div>
-    </template>
-    <template #footer>
-      <FormButton submit full-width :disabled="loading">Save new password</FormButton>
-    </template>
-  </LayoutPanel>
+  <form class="mx-auto w-full px-2" @submit="onSubmit">
+    <h1 class="text-heading-xl text-center inline-block mb-4">Reset your password</h1>
+
+    <div class="flex flex-col space-y-2 text-body-sm">
+      <div class="mb-4">One step closer to resetting your password</div>
+      <FormTextInput
+        type="password"
+        name="password"
+        label="Password"
+        placeholder="New password"
+        color="foundation"
+        size="lg"
+        :rules="passwordRules"
+        show-label
+        show-required
+      />
+      <FormTextInput
+        type="password"
+        name="password-repeat"
+        label="Password (confirmation)"
+        color="foundation"
+        size="lg"
+        :rules="passwordRepeatRules"
+        placeholder="Confirm new password"
+        show-label
+        show-required
+      />
+    </div>
+
+    <FormButton class="mt-4" submit full-width size="lg" :disabled="loading">
+      Reset password
+    </FormButton>
+  </form>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'

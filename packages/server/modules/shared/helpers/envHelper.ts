@@ -1,6 +1,15 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import { ensureError } from '@speckle/shared'
+
+export function getSessionSecret() {
+  if (!process.env.SESSION_SECRET) {
+    throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
+  }
+
+  return process.env.SESSION_SECRET
+}
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -93,6 +102,68 @@ export function getOidcName() {
   return process.env.OIDC_NAME
 }
 
+export function getGoogleClientId() {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('GOOGLE_CLIENT_ID env var not configured')
+  }
+
+  return process.env.GOOGLE_CLIENT_ID
+}
+
+export function getGoogleClientSecret() {
+  if (!process.env.GOOGLE_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError(
+      'GOOGLE_CLIENT_SECRET env var not configured'
+    )
+  }
+
+  return process.env.GOOGLE_CLIENT_SECRET
+}
+
+export function getGithubClientId() {
+  if (!process.env.GITHUB_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('GITHUB_CLIENT_ID env var not configured')
+  }
+
+  return process.env.GITHUB_CLIENT_ID
+}
+
+export function getGithubClientSecret() {
+  if (!process.env.GITHUB_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError(
+      'GITHUB_CLIENT_SECRET env var not configured'
+    )
+  }
+
+  return process.env.GITHUB_CLIENT_SECRET
+}
+
+export function getAzureAdIdentityMetadata() {
+  if (!process.env.AZURE_AD_IDENTITY_METADATA) {
+    throw new MisconfiguredEnvironmentError(
+      'AZURE_AD_IDENTITY_METADATA env var not configured'
+    )
+  }
+
+  return process.env.AZURE_AD_IDENTITY_METADATA
+}
+
+export function getAzureAdClientId() {
+  if (!process.env.AZURE_AD_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('AZURE_AD_CLIENT_ID env var not configured')
+  }
+
+  return process.env.AZURE_AD_CLIENT_ID
+}
+
+export function getAzureAdIssuer() {
+  return process.env.AZURE_AD_ISSUER || undefined
+}
+
+export function getAzureAdClientSecret() {
+  return process.env.AZURE_AD_CLIENT_SECRET || undefined
+}
+
 export function getMailchimpStatus() {
   return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
 }
@@ -169,7 +240,24 @@ export function getServerOrigin() {
     )
   }
 
-  return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
+  try {
+    return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
+  } catch (e) {
+    const err = ensureError(e)
+    if (e instanceof TypeError && e.message === 'Invalid URL') {
+      throw new MisconfiguredEnvironmentError(
+        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${err.message}`,
+        {
+          cause: e,
+          info: {
+            value: process.env.CANONICAL_URL
+          }
+        }
+      )
+    }
+
+    throw err
+  }
 }
 
 /**
@@ -202,7 +290,7 @@ export function getServerMovedTo() {
 }
 
 export function adminOverrideEnabled() {
-  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
 }
 
 export function enableMixpanel() {
@@ -221,7 +309,7 @@ export function speckleAutomateUrl() {
 }
 
 export function weeklyEmailDigestEnabled() {
-  return process.env.WEEKLY_DIGEST_ENABLED === 'true'
+  return getBooleanFromEnv('WEEKLY_DIGEST_ENABLED')
 }
 
 /**
@@ -229,6 +317,14 @@ export function weeklyEmailDigestEnabled() {
  */
 export function ignoreMissingMigrations() {
   return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
+}
+
+/**
+ * Whether to enable GQL API mocks
+ */
+export const mockedApiModules = () => {
+  const base = process.env.MOCKED_API_MODULES
+  return (base || '').split(',').map((x) => x.trim())
 }
 
 /**
@@ -298,6 +394,60 @@ export function getGendoAIAPIEndpoint() {
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
 
+export function getLicenseToken(): string | undefined {
+  return process.env.LICENSE_TOKEN
+}
+
 export function isEmailEnabled() {
-  return process.env.EMAIL === 'true'
+  return getBooleanFromEnv('EMAIL')
+}
+
+export function postgresMaxConnections() {
+  return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
+}
+
+export function highFrequencyMetricsCollectionPeriodMs() {
+  return getIntFromEnv('HIGH_FREQUENCY_METRICS_COLLECTION_PERIOD_MS', '100')
+}
+
+export function maximumObjectUploadFileSizeMb() {
+  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
+}
+
+export function getS3AccessKey() {
+  if (!process.env.S3_ACCESS_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_ACCESS_KEY is missing'
+    )
+  return process.env.S3_ACCESS_KEY
+}
+
+export function getS3SecretKey() {
+  if (!process.env.S3_SECRET_KEY)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_SECRET_KEY is missing'
+    )
+  return process.env.S3_SECRET_KEY
+}
+
+export function getS3Endpoint() {
+  if (!process.env.S3_ENDPOINT)
+    throw new MisconfiguredEnvironmentError(
+      'Environment variable S3_ENDPOINT is missing'
+    )
+  return process.env.S3_ENDPOINT
+}
+
+export function getS3Region(aDefault: string = 'us-east-1') {
+  return process.env.S3_REGION || aDefault
+}
+
+export function getS3BucketName() {
+  if (!process.env.S3_BUCKET)
+    throw new MisconfiguredEnvironmentError('Environment variable S3_BUCKET is missing')
+  return process.env.S3_BUCKET
+}
+
+export function createS3Bucket() {
+  return getBooleanFromEnv('S3_CREATE_BUCKET')
 }

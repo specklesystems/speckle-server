@@ -1,4 +1,3 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   CommitSubscriptions as CommitPubsubEvents,
@@ -14,6 +13,8 @@ import {
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
 
 /**
  * Save "new commit created" activity item
@@ -29,7 +30,7 @@ export async function addCommitCreatedActivity(params: {
 }) {
   const { commitId, input, streamId, userId, branchName, commit } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -84,7 +85,7 @@ export async function addCommitUpdatedActivity(params: {
       }
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -120,7 +121,7 @@ export async function addCommitMovedActivity(params: {
 }) {
   const { commitId, streamId, userId, originalBranchId, newBranchId, commit } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -150,7 +151,7 @@ export async function addCommitDeletedActivity(params: {
 }) {
   const { commitId, streamId, userId, commit, branchId } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -181,7 +182,7 @@ export async function addCommitReceivedActivity(params: {
 }) {
   const { input, userId } = params
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId: input.streamId,
     resourceType: ResourceTypes.Commit,
     resourceId: input.commitId,

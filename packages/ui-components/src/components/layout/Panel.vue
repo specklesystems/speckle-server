@@ -2,7 +2,7 @@
   <div class="relative group">
     <div
       v-if="fancyGlow"
-      class="absolute -inset-1 bg-blue-300 dark:bg-blue-500 opacity-5 dark:opacity-0 rounded-md blur-sm group-hover:opacity-60 dark:group-hover:opacity-30 transition duration-500"
+      class="absolute -top-1 -left-1 -right-1 -bottom-1 bg-blue-300 dark:bg-blue-500 opacity-5 dark:opacity-0 rounded-md blur-sm group-hover:opacity-60 dark:group-hover:opacity-30 transition duration-500"
     ></div>
     <Component
       :is="form ? 'form' : 'div'"

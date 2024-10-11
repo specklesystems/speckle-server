@@ -3,7 +3,7 @@
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
       <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
-        <FormButton size="xs" text color="secondary" @click.stop="hideOrShowSelection">
+        <FormButton size="sm" text color="outline" @click.stop="hideOrShowSelection">
           <div
             v-if="!isHidden"
             class="flex items-center gap-1 text-foreground hover:text-primary"
@@ -16,7 +16,7 @@
             Hidden
           </div>
         </FormButton>
-        <FormButton size="xs" text @click.stop="isolateOrUnisolateSelection">
+        <FormButton size="sm" text @click.stop="isolateOrUnisolateSelection">
           <div class="flex items-center gap-1">
             <div
               v-if="!isIsolated"
@@ -33,7 +33,7 @@
         </FormButton>
         <div class="flex justify-end w-full">
           <div v-tippy="`Open selection in new window`" class="max-w-max">
-            <FormButton size="xs" text :to="selectionLink" target="_blank">
+            <FormButton size="sm" text :to="selectionLink" target="_blank">
               <span class="sr-only">Open selection in new window</span>
               <ArrowTopRightOnSquareIcon
                 class="w-4 text-foreground hover:text-primary"
@@ -53,18 +53,19 @@
           />
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += 10">
-            View more ({{ objects.length - itemCount }})
+          <FormButton size="sm" text full-width @click="itemCount += 10">
+            View More ({{ objects.length - itemCount }})
           </FormButton>
         </div>
       </div>
       <template v-if="!isSmallerOrEqualSm" #footer>
-        <div class="text-foreground-2 text-xs select-none">
+        <div class="text-foreground-2 text-body-2xs select-none">
           Hold "shift" to select multiple objects
         </div>
       </template>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import {

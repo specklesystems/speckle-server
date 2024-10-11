@@ -17,10 +17,15 @@ workflows:
                 - hotfix*
 
       - test-server:
+          context:
+            - speckle-server-licensing
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
+
+      - test-server-no-ff:
+          filters: *filters-allow-all
 
       - test-frontend-2:
           filters: *filters-allow-all
@@ -29,6 +34,9 @@ workflows:
           filters: *filters-allow-all
 
       - test-objectsender:
+          filters: *filters-allow-all
+
+      - test-preview-service:
           filters: *filters-allow-all
 
       - test-ui-components:
@@ -50,39 +58,33 @@ workflows:
             tags:
               ignore: /.*/
 
-      - deployment-test-docker-compose:
+      #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+      # - deployment-test-docker-compose:
+      #     filters: &filters-deployment-testing
+      #       tags:
+      #         # run tests for any commit on any branch, including any tags
+      #         only: /.*/
+      #     requires:
+      #       - get-version
+      #       - deployment-testing-approval
+      #       - docker-build-server
+      #       - docker-build-frontend
+      #       - docker-build-frontend-2
+      #       - docker-build-previews
+      #       - docker-build-webhooks
+      #       - docker-build-file-imports
+      #       - docker-build-test-container
+      #       - docker-build-monitor-container
+      #       - docker-build-docker-compose-ingress
+
+      - deployment-test-helm-chart:
           filters: &filters-deployment-testing
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
           requires:
             - get-version
-            - pre-commit
             - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - docker-build-server
-            - docker-build-frontend
-            - docker-build-frontend-2
-            - docker-build-previews
-            - docker-build-webhooks
-            - docker-build-file-imports
-            - docker-build-test-container
-            - docker-build-monitor-container
-            - docker-build-docker-compose-ingress
-
-      - deployment-test-helm-chart:
-          filters: *filters-deployment-testing
-          requires:
-            - get-version
-            - pre-commit
-            - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2
@@ -176,6 +178,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-frontend:
           context: *docker-hub-context
@@ -189,6 +193,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -202,6 +208,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -215,6 +223,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -228,6 +238,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -241,6 +253,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -254,6 +268,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -267,6 +283,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
@@ -280,6 +298,8 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-server-no-ff
+            - test-preview-service
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -288,7 +308,7 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - deployment-test-docker-compose
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
@@ -318,10 +338,12 @@ workflows:
           requires:
             - get-version
             - test-server
+            - test-server-no-ff
             - test-ui-components
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
@@ -376,7 +398,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: xlarge
     working_directory: *work-dir
     steps:
       - checkout
@@ -395,9 +417,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -415,7 +434,7 @@ jobs:
           name: git diff
           when: on_fail
 
-  test-server:
+  test-server: &test-server-job
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
@@ -444,7 +463,6 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      FF_AUTOMATE_MODULE_ENABLED: 'true'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
     steps:
       - checkout
@@ -454,10 +472,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -513,6 +527,30 @@ jobs:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
 
+  test-server-no-ff:
+    <<: *test-server-job
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
+      PGDATABASE: speckle2_test
+      PGUSER: speckle
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
+      FF_WORKSPACES_MODULE_ENABLED: 'false'
+      FF_WORKSPACES_SSO_ENABLED: 'false'
+      FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
+      FF_GENDOAI_MODULE_ENABLED: 'false'
+
   test-frontend-2:
     docker: &docker-node-browsers-image
       - image: cimg/node:18.19.0-browsers
@@ -525,10 +563,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -548,8 +582,7 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: large
     steps:
       - checkout
@@ -559,10 +592,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -586,10 +615,16 @@ jobs:
           command: yarn test
           working_directory: 'packages/viewer'
 
-  test-objectsender:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+  test-preview-service:
+    docker:
+      - image: cimg/node:18.19.0
+      - image: cimg/postgres:14.11
+        environment:
+          POSTGRES_DB: preview_service_test
+          POSTGRES_PASSWORD: preview_service_test
+          POSTGRES_USER: preview_service_test
     resource_class: large
+    environment: {}
     steps:
       - checkout
       - restore_cache:
@@ -600,8 +635,45 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
       - run:
-          name: Install Dependencies v2 (.node files missing bug)
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint everything
+          command: yarn lint:ci
+          working_directory: 'packages/preview-service'
+
+      - run:
+          name: Copy .env.example to .env
+          command: |
+            #!/usr/bin/env bash
+            cp packages/preview-service/.env.example packages/preview-service/.env
+            sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/preview-service'
+
+  test-objectsender:
+    docker: *docker-node-browsers-image
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
           command: yarn
 
       - save_cache:
@@ -632,10 +704,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -687,10 +755,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -714,7 +778,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: *docker-node-image
-    resource_class: small
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -724,9 +788,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -740,7 +801,7 @@ jobs:
 
   deployment-test-docker-compose:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.05.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
@@ -770,7 +831,7 @@ jobs:
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: nix-shell --run "tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
@@ -844,7 +905,7 @@ jobs:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
@@ -879,7 +940,7 @@ jobs:
 
   docker-build-frontend-2:
     <<: *build-job
-    resource_class: large
+    resource_class: xlarge
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
@@ -995,9 +1056,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1068,9 +1126,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1110,9 +1165,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache

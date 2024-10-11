@@ -10,14 +10,79 @@ const envHelperMock = mockRequireModule(
 const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
-const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 
 const { validateScopes, authorizeResolver } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
-const { ForbiddenError } = require('apollo-server-express')
 const { Roles, Scopes } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+const { ForbiddenError } = require('@/modules/shared/errors')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { getUsers } = require('@/modules/core/repositories/users')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -157,30 +222,31 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.resetMockedFunctions()
     })
     it('should allow stream:owners to be stream:owners', async () => {
-      const role = await authorizeResolver(
+      await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
-      expect(role).to.equal(Roles.Stream.Owner)
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {
       envHelperMock.enable()
       envHelperMock.mockFunction('adminOverrideEnabled', () => true)
-      const role = await authorizeResolver(
+      await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
-      expect(role).to.equal(Roles.Stream.Contributor)
     })
     it('should not allow server:admins to be anything if adminOverride is disabled', async () => {
       try {
         await authorizeResolver(
           serverOwner.id,
           notMyStream.id,
-          Roles.Stream.Contributor
+          Roles.Stream.Contributor,
+          null
         )
         throw 'This should have thrown'
       } catch (e) {
@@ -192,17 +258,22 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.enable()
       envHelperMock.mockFunction('adminOverrideEnabled', () => true)
 
-      const role = await authorizeResolver(
+      await authorizeResolver(
         serverOwner.id,
         notMyStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
-      expect(role).to.equal(Roles.Stream.Contributor)
     })
 
     it('should not allow server:users to be anything if adminOverride is disabled', async () => {
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
+        await authorizeResolver(
+          otherGuy.id,
+          myStream.id,
+          Roles.Stream.Contributor,
+          null
+        )
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)
@@ -213,7 +284,12 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.enable()
       envHelperMock.mockFunction('adminOverrideEnabled', () => true)
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
+        await authorizeResolver(
+          otherGuy.id,
+          myStream.id,
+          Roles.Stream.Contributor,
+          null
+        )
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)

@@ -41,6 +41,12 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
   noClosureWrites: false
+  ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
+  workspaceModuleEnabled: false
+  ## @param featureFlags.workspaceSsoEnabled High level flag fully toggles the workspaces dynamic sso
+  workspaceSsoEnabled: false
+  ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
+  multipleEmailsModuleEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -420,7 +426,9 @@ server:
   weeklyDigestEnabled: false
 
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
+  max_object_size_mb: 100
+  ## @param server.max_object_upload_file_size_mb Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server. It should be greater than or equal to max_object_size_mb.
+  max_object_upload_file_size_mb: 100
   ## @param server.max_project_models_per_page The maximum number of models that can be returned in a single page of a query for all models of a project
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
@@ -452,6 +460,14 @@ server:
   ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
   encryptionKeys:
     path: '/encryption-keys/keys.json'
+
+  licenseTokenSecret:
+    ## @param server.licenseTokenSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
+    secretName: ''
+    ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
+    ##
+    secretKey: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -739,17 +755,10 @@ server:
         secretKey: ''
     ## @param server.monitoring.mp (Optional) If server.monitoring.mp.enabled is set to false, metrics will not be collected by the Speckle server.
     mp: {}
-  ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
-  ## Sentry.io allows events within Speckle to be monitored
-  ##
-
-  sentry_dns: ''
   ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
-  ## Setting this value to false requires `sentry_dns` to be set
   ##
   disable_tracking: false
   ## @param server.disable_tracing If set to true, will prevent tracing metrics from being collected
-  ## Setting this value to false requires `sentry_dns` to be set
   ##
   disable_tracing: false
   networkPolicy:
@@ -798,9 +807,6 @@ objects:
     enabled: false
     ## @param objects.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
-
-  ## @param objects.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
-  max_object_size_mb: 10
 
   requests:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
@@ -948,6 +954,9 @@ frontend_2:
   ## @param frontend_2.image The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
+  ## @param frontend_2.ghostApiKey API Key for Ghost, which provides the blog content for the new web application frontend.
+  ##
+  ghostApiKey: ''
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
   logClientApiToken: ''
@@ -1043,6 +1052,12 @@ preview_service:
   monitoring:
     ## @param preview_service.monitoring.metricsPort The port on which the metrics server will be exposed.
     metricsPort: '9094'
+
+  puppeteer:
+    ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.
+    userDataDirectory: ''
+    ## @param preview_service.puppeteer.timeoutMilliseconds The timeout in milliseconds for the Puppeteer service.
+    timeoutMilliseconds: '3600000'
 
   requests:
     ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.

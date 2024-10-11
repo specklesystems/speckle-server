@@ -31,7 +31,7 @@ module.exports = class ServerAPI {
       obj.id = crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex')
     }
 
-    await this.createObject(this.streamId, obj)
+    await this.createObject({ streamId: this.streamId, object: obj })
 
     return obj.id
   }
@@ -40,7 +40,7 @@ module.exports = class ServerAPI {
     return await this.createObjectsBatched(this.streamId, objs)
   }
 
-  async createObject(streamId, object) {
+  async createObject({ streamId, object }) {
     const insertionObject = this.prepInsertionObject(streamId, object)
 
     const closures = []

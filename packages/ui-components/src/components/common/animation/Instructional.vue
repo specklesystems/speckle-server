@@ -15,7 +15,7 @@
         class="absolute -top-5 -left-4 h-12 w-12 -rotate-12 text-foreground"
         :class="[{ hidden: !isClicked }]"
       />
-      <MouseIcon class="absolute inset-0 h-11 w-11" />
+      <MouseIcon class="absolute top-0 left-0 right-0 bottom-0 h-11 w-11" />
     </div>
     <div class="w-full h-full overflow-hidden">
       <slot name="background"></slot>

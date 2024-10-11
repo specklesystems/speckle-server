@@ -7,7 +7,7 @@
           class="animate-ping absolute bg-primary rounded-full h-8 w-8"
         ></div>
         <div
-          class="sm:absolute bg-foundation group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
+          class="sm:absolute bg-foundation group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-medium"
         >
           <span>{{ index + 1 }}</span>
           <!-- <span v-if="!expanded">{{ index + 1 }}</span>
@@ -45,20 +45,17 @@
 
           <div class="flex items-center justify-between pointer-events-auto mt-4">
             <slot name="actions">
-              <FormButton text outlined size="sm" @click="$emit('skip')">
-                Skip
-              </FormButton>
+              <FormButton text color="outline" @click="$emit('skip')">Skip</FormButton>
               <div class="flex justify-center space-x-2">
                 <FormButton
                   v-show="index !== 0"
                   :icon-left="ArrowLeftIcon"
                   text
-                  size="sm"
                   @click="prev(index)"
                 >
                   Previous
                 </FormButton>
-                <FormButton :icon-right="ArrowRightIcon" size="sm" @click="next(index)">
+                <FormButton :icon-right="ArrowRightIcon" @click="next(index)">
                   Next
                 </FormButton>
               </div>

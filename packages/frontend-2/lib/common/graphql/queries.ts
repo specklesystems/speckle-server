@@ -19,7 +19,13 @@ export const mentionsUserSearchQuery = graphql(`
 `)
 
 export const userSearchQuery = graphql(`
-  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {
+  query UserSearch(
+    $query: String!
+    $limit: Int
+    $cursor: String
+    $archived: Boolean
+    $workspaceId: String
+  ) {
     userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
       cursor
       items {
@@ -30,6 +36,7 @@ export const userSearchQuery = graphql(`
         avatar
         verified
         role
+        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
       }
     }
   }

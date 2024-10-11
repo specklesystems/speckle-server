@@ -7,11 +7,11 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import { UserEmails } from '@/modules/core/dbSchema'
 import { updateUser } from '@/modules/core/repositories/users'
 import { expectToThrow } from '@/test/assertionHelper'
 
-const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
+const userEmailsDB = db(UserEmails.name)
 
 describe('Users @core-users', () => {
   beforeEach(async () => {
@@ -47,7 +47,7 @@ describe('Users @core-users', () => {
     const updated = await getUser(userId)
     const updatedUserEmail = await userEmailsDB.where({ userId, primary: true }).first()
 
-    expect(updated.email).eq(newEmail)
-    expect(updatedUserEmail.email).eq(newEmail)
+    expect(updated.email.toLowerCase()).eq(newEmail.toLowerCase())
+    expect(updatedUserEmail.email.toLowerCase()).eq(newEmail.toLowerCase())
   })
 })

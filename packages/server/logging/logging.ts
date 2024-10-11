@@ -29,6 +29,7 @@ export const graphqlLogger = extendLoggerComponent(logger, 'graphql')
 export const authLogger = extendLoggerComponent(logger, 'auth')
 export const crossServerSyncLogger = extendLoggerComponent(logger, 'cross-server-sync')
 export const automateLogger = extendLoggerComponent(logger, 'automate')
+export const subscriptionLogger = extendLoggerComponent(logger, 'subscription')
 
 export type Logger = typeof logger
 export { extendLoggerComponent, Observability }

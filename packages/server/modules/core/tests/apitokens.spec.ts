@@ -1,4 +1,3 @@
-import { createApp } from '@/modules/auth/services/apps'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
@@ -25,6 +24,10 @@ import cryptoRandomString from 'crypto-random-string'
 import { difference } from 'lodash'
 import type { Express } from 'express'
 import request from 'supertest'
+import { createAppFactory } from '@/modules/auth/repositories/apps'
+import { db } from '@/db/knex'
+
+const createApp = createAppFactory({ db })
 
 /**
  * Older API token test cases can be found in `graph.spec.js`
@@ -198,7 +201,8 @@ describe('API Tokens', () => {
         name: cryptoRandomString({ length: 10 }),
         public: true,
         scopes: AllScopes,
-        redirectUrl: 'http://127.0.0.1:1337'
+        redirectUrl: 'http://127.0.0.1:1337',
+        authorId: user1.id
       })
       testApp1Id = testApp1.id
 

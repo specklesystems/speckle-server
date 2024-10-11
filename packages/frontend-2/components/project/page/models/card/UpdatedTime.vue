@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="select-none">
     Updated
     <span v-tippy="updatedAtFormatted.full">
       {{ updatedAtFormatted.relative }}

@@ -23,7 +23,7 @@ export const Default: StoryObj = {
     <div class="bg-foundation">
       <DialogSection v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
-          <div class="h4 font-bold">Hello world!</div>
+          <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
         </div>
       </DialogSection>
@@ -31,7 +31,6 @@ export const Default: StoryObj = {
   }),
   args: {
     title: 'Dialog Section Title',
-    color: 'primary',
     icon: FaceSmileIcon,
     borderT: true,
     borderB: true

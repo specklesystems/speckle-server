@@ -4,9 +4,15 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
+import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
+
+export enum RoleResourceTargets {
+  Streams = 'streams',
+  Server = 'server',
+  Workspaces = 'workspaces'
+}
 
 export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
 
@@ -20,11 +26,13 @@ export const resourceAccessRuleToIdentifier = (
 }
 
 export const roleResourceTypeToTokenResourceType = (
-  type: string
+  type: RoleResourceTargets | UserRole['resourceTarget']
 ): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
-    case ResourceTargets.Streams:
+    case RoleResourceTargets.Streams:
       return 'project'
+    case RoleResourceTargets.Workspaces:
+      return 'workspace'
     default:
       return null
   }

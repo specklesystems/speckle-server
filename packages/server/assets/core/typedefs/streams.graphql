@@ -316,7 +316,6 @@ input StreamCreateInput {
   Optionally specify user IDs of users that you want to invite to be contributors to this stream
   """
   withContributors: [String!]
-  workspaceId: String
 }
 
 input StreamUpdateInput {

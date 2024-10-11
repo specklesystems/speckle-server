@@ -12,7 +12,8 @@ module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
 
   app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
-    const boundLogger = logger.child({
+    const boundLogger = (req.log || logger).child({
+      requestId: req.id,
       userId: req.context.userId || '-',
       streamId: req.params.streamId,
       objectId: req.params.objectId
@@ -71,7 +72,8 @@ module.exports = (app) => {
 
   app.options('/objects/:streamId/:objectId/single', corsMiddleware())
   app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
-    const boundLogger = logger.child({
+    const boundLogger = (req.log || logger).child({
+      requestId: req.id,
       userId: req.context.userId || '-',
       streamId: req.params.streamId,
       objectId: req.params.objectId

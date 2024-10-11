@@ -1,8 +1,8 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="lg">
+  <LayoutDialog v-model:open="open" max-width="md">
     <template #header>Add model</template>
     <div class="flex flex-col gap-y-4">
-      <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
+      <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
           <ViewerResourcesAddModelDialogModelTab
             v-if="activeItem.id === 'model'"
@@ -13,13 +13,12 @@
             @chosen="onObjectsChosen"
           />
         </template>
-      </LayoutTabsHoriztonal>
+      </LayoutTabsHorizontal>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
-import { LayoutTabsHoriztonal } from '@speckle/ui-components'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'

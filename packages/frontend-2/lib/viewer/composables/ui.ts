@@ -9,7 +9,8 @@ import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
   useInjectedViewerInterfaceState,
-  useInjectedViewerState
+  useInjectedViewerState,
+  type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
@@ -98,10 +99,14 @@ export function useCameraUtilities() {
   }
 }
 
-export function useFilterUtilities() {
-  // const { instance } = useInjectedViewer()
-  const { filters, explodeFactor } = useInjectedViewerInterfaceState()
-  const { viewer } = useInjectedViewerState()
+export function useFilterUtilities(
+  options?: Partial<{ state: InjectableViewerState }>
+) {
+  const state = options?.state || useInjectedViewerState()
+  const {
+    viewer,
+    ui: { filters, explodeFactor }
+  } = state
 
   const isolateObjects = (
     objectIds: string[],

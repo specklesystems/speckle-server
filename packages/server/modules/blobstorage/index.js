@@ -1,10 +1,10 @@
 const Busboy = require('busboy')
 const {
-  streamReadPermissions,
-  streamWritePermissions,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-  allowAnonymousUsersOnPublicStreams
+  allowAnonymousUsersOnPublicStreams,
+  streamWritePermissionsPipelineFactory,
+  streamReadPermissionsPipelineFactory
 } = require('@/modules/shared/authz')
 const {
   ensureStorageAccess,
@@ -15,20 +15,6 @@ const {
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-
-const {
-  uploadFileStream,
-  getFileStream,
-  markUploadError,
-  markUploadSuccess,
-  markUploadOverFileSizeLimit,
-  deleteBlob,
-  getBlobMetadata,
-  getBlobMetadataCollection,
-  getAllStreamBlobIds,
-  getFileSizeLimit
-} = require('@/modules/blobstorage/services')
-
 const { isArray } = require('lodash')
 
 const {
@@ -37,6 +23,51 @@ const {
   BadRequestError
 } = require('@/modules/shared/errors')
 const { moduleLogger, logger } = require('@/logging/logging')
+const {
+  getAllStreamBlobIdsFactory,
+  upsertBlobFactory,
+  updateBlobFactory,
+  getBlobMetadataFactory,
+  getBlobMetadataCollectionFactory,
+  deleteBlobFactory
+} = require('@/modules/blobstorage/repositories')
+const { db } = require('@/db/knex')
+const {
+  uploadFileStreamFactory,
+  getFileStreamFactory,
+  getFileSizeLimit,
+  markUploadSuccessFactory,
+  markUploadErrorFactory,
+  markUploadOverFileSizeLimitFactory,
+  fullyDeleteBlobFactory
+} = require('@/modules/blobstorage/services/management')
+const { getRolesFactory } = require('@/modules/shared/repositories/roles')
+const {
+  getAutomationProjectFactory
+} = require('@/modules/automate/repositories/automations')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
+
+const getStream = getStreamFactory({ db })
+const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
+const updateBlob = updateBlobFactory({ db })
+const uploadFileStream = uploadFileStreamFactory({
+  upsertBlob: upsertBlobFactory({ db }),
+  updateBlob
+})
+const getBlobMetadata = getBlobMetadataFactory({ db })
+const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
+const getFileStream = getFileStreamFactory({ getBlobMetadata })
+const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
+const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
+const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+  getBlobMetadata,
+  updateBlob
+})
+const deleteBlob = fullyDeleteBlobFactory({
+  getBlobMetadata,
+  deleteBlob: deleteBlobFactory({ db })
+})
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -71,6 +102,18 @@ const errorHandler = async (req, res, callback) => {
 
 exports.init = async (app) => {
   await ensureConditions()
+  const streamWritePermissions = streamWritePermissionsPipelineFactory({
+    getRoles: getRolesFactory({ db }),
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  })
+  const streamReadPermissions = streamReadPermissionsPipelineFactory({
+    adminOverrideEnabled,
+    getRoles: getRolesFactory({ db }),
+    getStream,
+    getAutomationProject: getAutomationProjectFactory({ db })
+  })
+
   app.post(
     '/api/stream/:streamId/blob',
     authMiddlewareCreator([

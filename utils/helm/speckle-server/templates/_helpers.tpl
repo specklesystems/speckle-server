@@ -563,6 +563,23 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_AUTOMATE_MODULE_ENABLED
   value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
 
+- name: FF_WORKSPACES_MODULE_ENABLED
+  value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+
+- name: FF_WORKSPACES_SSO_ENABLED
+  value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+
+{{- if .Values.featureFlags.workspaceModuleEnabled }}
+- name: LICENSE_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.licenseTokenSecret.secretName }}"
+      key: {{ default "license_token" .Values.server.licenseTokenSecret.secretKey }}
+{{- end }}
+
+- name: FF_MULTIPLE_EMAILS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
@@ -590,6 +607,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAX_OBJECT_SIZE_MB
   value: {{ .Values.server.max_object_size_mb | quote }}
+
+- name: MAX_OBJECT_UPLOAD_FILE_SIZE_MB
+  value: {{ .Values.server.max_object_upload_file_size_mb | quote }}
 
   {{- if .Values.server.migration.movedFrom }}
 - name: MIGRATION_SERVER_MOVED_FROM
@@ -820,18 +840,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAILCHIMP_ONBOARDING_STEP_ID
   value: "{{ .Values.server.mailchimp.onboardingStepId}}"
-{{- end }}
-
-# *** Tracking / Tracing ***
-- name: SENTRY_DSN
-  value: {{ .Values.server.sentry_dns }}
-{{- if .Values.server.disable_tracing }}
-- name: DISABLE_TRACING
-  value: "true"
-{{- end }}
-{{- if .Values.server.disable_tracking }}
-- name: DISABLE_TRACKING
-  value: "true"
 {{- end }}
 
 # Monitoring - Apollo

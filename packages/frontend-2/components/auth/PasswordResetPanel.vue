@@ -1,31 +1,32 @@
 <template>
-  <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
-    <template #header>
-      <span class="h5 font-medium leading-7">Reset your account password</span>
-    </template>
-    <template #default>
-      <div class="flex flex-col space-y-8">
-        <div>
-          Type in the email address you used, so we can verify your account. We will
-          send you instructions on how to reset your password.
-        </div>
-        <div>
-          <FormTextInput
-            name="resetEmail"
-            type="email"
-            placeholder="email@example.com"
-            :rules="emailRules"
-          />
-        </div>
+  <form class="mx-auto w-full px-2" @submit="onSubmit">
+    <h1 class="text-heading-xl text-center inline-block mb-4">Reset your password</h1>
+    <div class="flex flex-col space-y-4 text-body-xs">
+      <div>
+        Type in the email address you used, so we can verify your account. We will send
+        you instructions on how to reset your password.
       </div>
-    </template>
-    <template #footer>
-      <div class="flex flex-col gap-y-2">
-        <FormButton submit full-width :disabled="loading">Send reset e-mail</FormButton>
-        <FormButton color="secondary" :to="homeRoute">Go home</FormButton>
+      <div>
+        <FormTextInput
+          name="resetEmail"
+          color="foundation"
+          size="lg"
+          type="email"
+          placeholder="email@example.com"
+          :rules="emailRules"
+        />
       </div>
-    </template>
-  </LayoutPanel>
+    </div>
+
+    <div class="flex flex-col gap-y-2 mt-4">
+      <FormButton submit full-width size="lg" :disabled="loading">
+        Send password reset email
+      </FormButton>
+      <FormButton color="outline" size="lg" full-width :to="homeRoute">
+        Go home
+      </FormButton>
+    </div>
+  </form>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'

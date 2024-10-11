@@ -42,6 +42,7 @@ const config: Config = {
         foreground: {
           DEFAULT: 'var(--foreground)',
           2: 'var(--foreground-2)',
+          3: 'var(--foreground-3)',
           disabled: 'var(--foreground-disabled)',
           'on-primary': 'var(--foreground-on-primary)',
           primary: 'var(--foreground-primary)'
@@ -54,7 +55,14 @@ const config: Config = {
         outline: {
           1: 'var(--outline-1)',
           2: 'var(--outline-2)',
-          3: 'var(--outline-3)'
+          3: 'var(--outline-3)',
+          4: 'var(--outline-4)',
+          5: 'var(--outline-5)'
+        },
+        highlight: {
+          1: 'var(--highlight-1)',
+          2: 'var(--highlight-2)',
+          3: 'var(--highlight-3)'
         },
         success: {
           DEFAULT: 'var(--success)',

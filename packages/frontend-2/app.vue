@@ -17,14 +17,14 @@ const { isDarkTheme } = useTheme()
 
 useHead({
   // Title suffix
-  titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} - Speckle` : 'Speckle'),
+  titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} | Speckle` : 'Speckle'),
   htmlAttrs: {
     class: computed(() => (isDarkTheme.value ? `dark` : ``)),
     lang: 'en'
   },
   bodyAttrs: {
     class:
-      'simple-scrollbar overflow-y-scroll has-[.viewer]:overflow-auto bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
+      'bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
   }
 })
 

@@ -1,80 +1,127 @@
-import { ServerInvites, Streams } from '@/modules/core/dbSchema'
+import { knex, ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import {
   getUserByEmail,
   getUser,
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
-import { ResourceNotResolvableError } from '@/modules/serverinvites/errors'
+import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import { isObjectLike, uniq } from 'lodash'
 import {
-  resolveTarget,
-  ResourceTargets,
-  buildUserTarget,
-  isServerInvite
-} from '@/modules/serverinvites/helpers/inviteHelper'
-import { uniq } from 'lodash'
-import { StreamWithOptionalRole, getStream } from '@/modules/core/repositories/streams'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+  InviteResourceTarget,
+  InviteResourceTargetType,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import { Knex } from 'knex'
 import {
   CountServerInvites,
-  DeleteAllStreamInvites,
+  DeleteAllResourceInvites,
   DeleteAllUserInvites,
   DeleteInvite,
   DeleteInvitesByTarget,
   DeleteServerOnlyInvites,
-  DeleteStreamInvite,
   FindInvite,
   FindInviteByToken,
   FindServerInvite,
   FindServerInvites,
-  FindStreamInvite,
   InsertInviteAndDeleteOld,
-  QueryAllStreamInvites,
-  QueryAllUserStreamInvites,
+  MarkInviteUpdated,
+  QueryAllResourceInvites,
+  QueryAllUserResourceInvites,
   QueryInvites,
   QueryServerInvites,
   UpdateAllInviteTargets
 } from '@/modules/serverinvites/domain/operations'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
+import { isNonNullable, SetValuesNullable } from '@speckle/shared'
+import { LogicError } from '@/modules/shared/errors'
+
+export type ServerInviteResourceFilter<
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
+> = Partial<
+  SetValuesNullable<
+    Pick<InviteResourceTarget<TargetType, RoleType>, 'resourceId' | 'resourceType'>
+  >
+>
+
+export type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
+
+const projectInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
+  let finalQ = q.leftJoin(
+    knex.raw(
+      ":streams: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :streamIdCol:",
+      {
+        streams: Streams.name,
+        resourceCol: ServerInvites.col.resource,
+        resourceType: ProjectInviteResourceType,
+        streamIdCol: Streams.col.id
+      }
+    )
+  )
+
+  finalQ = finalQ.where((w1) => {
+    w1.whereNot((w2) =>
+      filterByResource(w2, { resourceType: ProjectInviteResourceType })
+    ).orWhereNotNull(Streams.col.id)
+  })
+
+  return finalQ
+}
 
 /**
  * Use this wherever you're retrieving invites, not necessarily where you're writing to them
  */
 const buildInvitesBaseQuery =
   ({ db }: { db: Knex }) =>
-  (sort: 'asc' | 'desc' = 'asc') => {
-    // join just to ensure we don't retrieve invalid invites
-    const q = db<ServerInviteRecord>(ServerInvites.name)
-      .select(ServerInvites.cols)
-      .leftJoin(Streams.name, (j) => {
-        j.onNotNull(ServerInvites.col.resourceId)
-          .andOnVal(ServerInvites.col.resourceTarget, ResourceTargets.Streams)
-          .andOn(Streams.col.id, ServerInvites.col.resourceId)
-      })
-      .where((w1) => {
-        w1.whereNull(ServerInvites.col.resourceId).orWhereNotNull(Streams.col.id)
-      })
-      .orderBy(ServerInvites.col.createdAt, sort)
+  <Result = ServerInviteRecord[]>(
+    options?: Partial<{
+      /**
+       * Sort order. Defaults to 'asc'.
+       */
+      sort: 'asc' | 'desc'
+      /**
+       * Optionally add extra filters to query
+       */
+      filterQuery?: InvitesRetrievalValidityFilter
+    }>
+  ) => {
+    const { sort = 'asc', filterQuery } = options || {}
+
+    const q = db(ServerInvites.name)
+      .select<Result>(ServerInvites.cols)
+      .orderBy(ServerInvites.col.updatedAt, sort)
+
+    // single built in filter
+    projectInviteValidityFilter(q)
+
+    if (filterQuery) {
+      filterQuery(q)
+    }
+
     return q
   }
 
-/**
- * Resolve resource from invite
- */
-export const findResourceFactory =
-  () =>
-  async (invite: {
-    resourceId?: string | null
-    resourceTarget?: typeof ResourceTargets.Streams | null
-  }): Promise<StreamWithOptionalRole | undefined | null> => {
-    if (isServerInvite(invite)) return null
-
-    const { resourceId, resourceTarget } = invite
-    if (resourceTarget === ResourceTargets.Streams) {
-      return getStream({ streamId: resourceId ?? undefined })
-    } else {
-      throw new ResourceNotResolvableError('Unexpected invite resource type')
-    }
+export const filterByResource = <Q extends Knex.QueryBuilder>(
+  query: Q,
+  filter: ServerInviteResourceFilter
+) => {
+  if (filter.resourceId) {
+    query.whereRaw(`?? ->> 'resourceId' = ?`, [
+      ServerInvites.col.resource,
+      filter.resourceId
+    ])
   }
+
+  if (filter.resourceType) {
+    query.whereRaw(`?? ->> 'resourceType' = ?`, [
+      ServerInvites.col.resource,
+      filter.resourceType
+    ])
+  }
+}
 
 /**
  * Try to find a user using the target value
@@ -102,71 +149,70 @@ export const insertInviteAndDeleteOldFactory =
     )
 
     // Delete old
-    await db<ServerInviteRecord>(ServerInvites.name)
-      .where({
-        [ServerInvites.col.resourceId]: invite.resourceId || null,
-        [ServerInvites.col.resourceTarget]: invite.resourceTarget || null
-      })
+    const deleteQ = db<ServerInviteRecord>(ServerInvites.name)
+      .where((q) => filterByResource(q, invite.resource))
       .whereIn(ServerInvites.col.target, allTargets)
       .delete()
 
+    const deleted = (await deleteQ) || 0
+
     // Insert new
     invite.target = invite.target.toLowerCase() // Extra safety cause our schema is case sensitive
-    return db<ServerInviteRecord>(ServerInvites.name).insert(invite)
+    const [newInvite] = await db<ServerInviteRecord>(ServerInvites.name).insert(
+      invite,
+      '*'
+    )
+    return { deleted, invite: newInvite }
   }
 
-/**
- * Get all invitations to streams that the specified user has
- */
-export const queryAllUserStreamInvitesFactory =
-  ({ db }: { db: Knex }): QueryAllUserStreamInvites =>
-  async (userId) => {
+export const queryAllUserResourceInvitesFactory =
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryAllUserResourceInvites =>
+  async <
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
+  >(params: {
+    userId: string
+    resourceType: TargetType
+  }) => {
+    const { userId, resourceType } = params
     if (!userId) return []
+
     const target = buildUserTarget(userId)
 
-    return buildInvitesBaseQuery({ db })().where({
-      [ServerInvites.col.target]: target,
-      [ServerInvites.col.resourceTarget]: ResourceTargets.Streams
-    })
-  }
-
-/**
- * Retrieve a stream invite for the specified target, token or both.
- * Note: Either the target, inviteId or token must be set
- */
-export const findStreamInviteFactory =
-  ({ db }: { db: Knex }): FindStreamInvite =>
-  async (streamId, { target = null, token = null, inviteId = null } = {}) => {
-    if (!target && !token && !inviteId) return null
-
-    const q = buildInvitesBaseQuery({ db })().where({
-      [ServerInvites.col.resourceTarget]: ResourceTargets.Streams,
-      [ServerInvites.col.resourceId]: streamId
-    })
-
-    if (target) {
-      q.andWhere({
-        [ServerInvites.col.target]: target.toLowerCase()
+    const q = buildInvitesBaseQuery({ db })<
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
+    >({ filterQuery })
+      .where({
+        [ServerInvites.col.target]: target
       })
-    } else if (inviteId) {
-      q.andWhere({
-        [ServerInvites.col.id]: inviteId
-      })
-    } else if (token) {
-      q.andWhere({
-        [ServerInvites.col.token]: token
-      })
-    }
+      .where((q) =>
+        filterByResource(q, {
+          resourceType
+        })
+      )
+    const res = await q
 
-    return q.first()
+    return res
   }
 
 export const findServerInviteFactory =
-  ({ db }: { db: Knex }): FindServerInvite =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindServerInvite =>
   async (email, token) => {
     if (!email && !token) return null
 
-    const q = buildInvitesBaseQuery({ db })()
+    const q = buildInvitesBaseQuery({ db })({ filterQuery })
 
     if (email) {
       q.andWhere({
@@ -178,27 +224,66 @@ export const findServerInviteFactory =
       q.andWhere(ServerInvites.col.token, token)
     }
 
-    return q.first()
+    return (await q.first()) || null
   }
 
-export const queryAllStreamInvitesFactory =
-  ({ db }: { db: Knex }): QueryAllStreamInvites =>
-  async (streamId) => {
-    if (!streamId) return []
+export const queryAllResourceInvitesFactory =
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryAllResourceInvites =>
+  async <
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
+  >(
+    filter: Pick<
+      InviteResourceTarget<TargetType, RoleType>,
+      'resourceId' | 'resourceType'
+    > & { search?: string }
+  ) => {
+    if (!filter.resourceId) return []
 
-    return buildInvitesBaseQuery({ db })().where({
-      [ServerInvites.col.resourceTarget]: ResourceTargets.Streams,
-      [ServerInvites.col.resourceId]: streamId
-    })
+    const q = buildInvitesBaseQuery({ db })<
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
+    >({ filterQuery })
+
+    q.where((q) => filterByResource(q, filter))
+
+    if (filter.search) {
+      q.leftJoin(
+        Users.name,
+        Users.col.id,
+        knex.raw('SUBSTRING(?? FROM 2)', [ServerInvites.col.target])
+      ).where((w1) => {
+        w1.where(ServerInvites.col.target, 'ILIKE', `%${filter.search}%`).orWhere(
+          Users.col.name,
+          'ILIKE',
+          `%${filter.search}%`
+        )
+      })
+    }
+
+    return await q
   }
 
-export const deleteAllStreamInvitesFactory =
-  ({ db }: { db: Knex }): DeleteAllStreamInvites =>
-  async (streamId) => {
-    if (!streamId) return false
+export const deleteAllResourceInvitesFactory =
+  ({ db }: { db: Knex }): DeleteAllResourceInvites =>
+  async <
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
+  >(
+    filter: Pick<
+      InviteResourceTarget<TargetType, RoleType>,
+      'resourceId' | 'resourceType'
+    >
+  ) => {
+    if (!filter.resourceId) return false
+
     await db(ServerInvites.name)
-      .where(ServerInvites.col.resourceId, streamId)
-      .andWhere(ServerInvites.col.resourceTarget, ResourceTargets.Streams)
+      .where((q) => filterByResource(q, filter))
       .delete()
     return true
   }
@@ -209,9 +294,13 @@ export const deleteServerOnlyInvitesFactory =
     if (!email) return
 
     return db<ServerInviteRecord>(ServerInvites.name)
+      .where((q) => {
+        q.where((q1) =>
+          filterByResource(q1, { resourceType: ServerInviteResourceType })
+        ).orWhere((q2) => filterByResource(q2, { resourceType: null }))
+      })
       .where({
-        [ServerInvites.col.target]: email.toLowerCase(),
-        [ServerInvites.col.resourceTarget]: null
+        [ServerInvites.col.target]: email.toLowerCase()
       })
       .delete()
   }
@@ -224,30 +313,17 @@ export const updateAllInviteTargetsFactory =
     oldTargets = oldTargets.map((t) => t.toLowerCase())
     if (!oldTargets.length) return
 
-    // PostgreSQL doesn't support aliases in update calls for some reason...
+    // PostgreSQL doesn't support aliases in update calls
     const ServerInvitesCols = ServerInvites.with({ withoutTablePrefix: true }).col
     return db(ServerInvites.name)
       .whereIn(ServerInvitesCols.target, oldTargets)
       .update(ServerInvitesCols.target, newTarget.toLowerCase())
   }
 
-export const deleteStreamInviteFactory =
-  ({ db }: { db: Knex }): DeleteStreamInvite =>
-  async (inviteId) => {
-    if (!inviteId) return
-
-    return db(ServerInvites.name)
-      .where({
-        [ServerInvites.col.id]: inviteId,
-        [ServerInvites.col.resourceTarget]: ResourceTargets.Streams
-      })
-      .delete()
-  }
-
 const findServerInvitesBaseQueryFactory =
-  ({ db }: { db: Knex }) =>
+  ({ db, filterQuery }: { db: Knex; filterQuery?: InvitesRetrievalValidityFilter }) =>
   (searchQuery: string | null, sort: 'asc' | 'desc' = 'asc'): Knex.QueryBuilder => {
-    const q = buildInvitesBaseQuery({ db })(sort)
+    const q = buildInvitesBaseQuery({ db })({ sort, filterQuery })
 
     if (searchQuery) {
       // TODO: Is this safe from SQL injection?
@@ -260,9 +336,15 @@ const findServerInvitesBaseQueryFactory =
   }
 
 export const countServerInvitesFactory =
-  ({ db }: { db: Knex }): CountServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): CountServerInvites =>
   async (searchQuery) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(searchQuery)
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(searchQuery)
     const [count] = await db()
       .count()
       .from((q as Knex.QueryBuilder).as('sq1'))
@@ -270,18 +352,33 @@ export const countServerInvitesFactory =
   }
 
 export const findServerInvitesFactory =
-  ({ db }: { db: Knex }): FindServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindServerInvites =>
   async (searchQuery, limit, offset) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(
       searchQuery
     ) as Knex.QueryBuilder
     return q.limit(limit).offset(offset) as Promise<ServerInviteRecord[]>
   }
 
 export const queryServerInvitesFactory =
-  ({ db }: { db: Knex }): QueryServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryServerInvites =>
   async (searchQuery, limit, cursor) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(searchQuery, 'desc')
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(
+      searchQuery,
+      'desc'
+    )
     q.limit(limit)
 
     if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor.toISOString())
@@ -289,10 +386,49 @@ export const queryServerInvitesFactory =
   }
 
 export const findInviteFactory =
-  ({ db }: { db: Knex }): FindInvite =>
-  async (inviteId) => {
-    if (!inviteId) return null
-    return buildInvitesBaseQuery({ db })().where(ServerInvites.col.id, inviteId).first()
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindInvite =>
+  async <
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
+  >(params: {
+    inviteId?: string
+    token?: string
+    target?: string
+    resourceFilter?: ServerInviteResourceFilter<TargetType, RoleType>
+  }) => {
+    if (!isObjectLike(params)) {
+      throw new LogicError('Invalid params - expected a params object')
+    }
+    if (!Object.values(params).filter(isNonNullable).length) return null
+    const { inviteId, target, token, resourceFilter } = params
+
+    const q = buildInvitesBaseQuery({ db })<
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
+    >({ filterQuery }).first()
+
+    if (inviteId) {
+      q.where(ServerInvites.col.id, inviteId)
+    }
+
+    if (target) {
+      q.where(ServerInvites.col.target, target)
+    }
+
+    if (token) {
+      q.where(ServerInvites.col.token, token)
+    }
+
+    if (resourceFilter) {
+      q.where((w1) => filterByResource(w1, resourceFilter))
+    }
+
+    return (await q) || null
   }
 
 export const deleteInviteFactory =
@@ -309,16 +445,13 @@ export const deleteInviteFactory =
  */
 export const deleteInvitesByTargetFactory =
   ({ db }: { db: Knex }): DeleteInvitesByTarget =>
-  async (targets, resourceTarget, resourceId) => {
+  async (targets, resourceType, resourceId) => {
     if (!targets) return false
     targets = Array.isArray(targets) ? targets : [targets]
     if (!targets.length) return false
 
     await db(ServerInvites.name)
-      .where({
-        [ServerInvites.col.resourceTarget]: resourceTarget,
-        [ServerInvites.col.resourceId]: resourceId
-      })
+      .where((q) => filterByResource(q, { resourceType, resourceId }))
       .whereIn(ServerInvites.col.target, targets)
       .delete()
 
@@ -326,10 +459,19 @@ export const deleteInvitesByTargetFactory =
   }
 
 export const queryInvitesFactory =
-  ({ db }: { db: Knex }): QueryInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryInvites =>
   async (inviteIds) => {
     if (!inviteIds?.length) return []
-    return buildInvitesBaseQuery({ db })().whereIn(ServerInvites.col.id, inviteIds)
+    return buildInvitesBaseQuery({ db })({ filterQuery }).whereIn(
+      ServerInvites.col.id,
+      inviteIds
+    )
   }
 
 export const deleteAllUserInvitesFactory =
@@ -343,10 +485,28 @@ export const deleteAllUserInvitesFactory =
   }
 
 export const findInviteByTokenFactory =
-  ({ db }: { db: Knex }): FindInviteByToken =>
-  async (inviteToken) => {
-    if (!inviteToken) return null
-    return buildInvitesBaseQuery({ db })()
-      .where(ServerInvites.col.token, inviteToken)
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindInviteByToken =>
+  async ({ token }) => {
+    if (!token?.length) return null
+    const q = buildInvitesBaseQuery({ db })({ filterQuery })
+      .where(ServerInvites.col.token, token)
       .first()
+
+    return (await q) || null
+  }
+
+export const markInviteUpdatedfactory =
+  ({ db }: { db: Knex }): MarkInviteUpdated =>
+  async ({ inviteId }) => {
+    const cols = ServerInvites.with({ withoutTablePrefix: true }).col
+    const ret = await db(ServerInvites.name)
+      .where(ServerInvites.col.id, inviteId)
+      .update(cols.updatedAt, new Date())
+    return !!ret
   }

@@ -21,7 +21,7 @@
             !unfold ? '-rotate-90' : 'rotate-0'
           }`"
         />
-        <div :class="`truncate text-xs font-bold ${headerClasses}`">
+        <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
@@ -41,18 +41,18 @@
         class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 w-full pl-2 ${
+          :class="`grid grid-cols-3 w-full pl-2 py-0.5 ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
           <div
-            class="col-span-1 truncate text-xs font-bold mr-2"
+            class="col-span-1 truncate text-body-3xs mr-2 font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
+            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center"
             :title="(kvp.value as string)"
           >
             <div class="flex gap-1 items-center w-full">
@@ -93,7 +93,7 @@
       >
         <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
@@ -107,7 +107,7 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-bold pl-2"
+            class="col-span-1 truncate text-xs font-medium pl-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}

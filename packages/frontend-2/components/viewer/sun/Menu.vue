@@ -25,7 +25,7 @@
                 :show-label="false"
               />
             </div>
-            <span class="text-foreground text-sm">Sun shadows</span>
+            <span class="text-foreground text-body-sm">Sun shadows</span>
           </div>
           <div class="flex items-center gap-1 px-2">
             <input
@@ -38,7 +38,7 @@
               max="10"
               step="0.05"
             />
-            <label class="text-xs sm:text-sm text-foreground-2" for="intensity">
+            <label class="text-body-xs text-foreground-2" for="intensity">
               Intensity
             </label>
           </div>
@@ -53,7 +53,7 @@
               :max="Math.PI"
               step="0.05"
             />
-            <label class="text-xs sm:text-sm text-foreground-2" for="elevation">
+            <label class="text-body-xs text-foreground-2" for="elevation">
               Elevation
             </label>
           </div>
@@ -68,9 +68,7 @@
               :max="Math.PI * 0.5"
               step="0.05"
             />
-            <label class="text-xs sm:text-sm text-foreground-2" for="azimuth">
-              Azimuth
-            </label>
+            <label class="text-body-xs text-foreground-2" for="azimuth">Azimuth</label>
           </div>
           <div class="flex items-center gap-1 px-2 pb-2">
             <input
@@ -83,7 +81,7 @@
               max="5"
               step="0.05"
             />
-            <label class="text-xs sm:text-sm text-foreground-2" for="indirect">
+            <label class="text-body-xs text-foreground-2" for="indirect">
               Indirect
             </label>
           </div>

@@ -51,10 +51,6 @@ spec:
 {{- if .Values.server.monitoring.apollo.enabled }}
               - matchPattern: "*.api.apollographql.com"
 {{- end }}
-{{- if .Values.server.sentry_dns }}
-              # DNS lookup for sentry
-              - matchPattern: "*.ingest.sentry.io"
-{{- end }}
 {{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
               - matchName: 'analytics.speckle.systems'
 {{- end }}
@@ -99,15 +95,6 @@ spec:
 {{- if .Values.server.monitoring.apollo.enabled }}
     - toFQDNs:
         - matchPattern: "*.api.apollographql.com"
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-{{- end }}
-{{- if .Values.server.sentry_dns }}
-    # egress to sentry
-    - toCIDRSet:
-        - cidr: 34.120.195.249/32
       toPorts:
         - ports:
             - port: "443"

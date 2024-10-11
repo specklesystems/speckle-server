@@ -30,7 +30,16 @@ import {
   ViewerUserActivityMessage,
   GendoAiRender,
   SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
-  SubscriptionProjectVersionGendoAiRenderCreatedArgs
+  SubscriptionProjectVersionGendoAiRenderCreatedArgs,
+  CommentThreadActivityMessage,
+  SubscriptionCommentThreadActivityArgs,
+  MutationUserViewerActivityBroadcastArgs,
+  SubscriptionUserViewerActivityArgs,
+  SubscriptionCommentActivityArgs,
+  StreamUpdateInput,
+  ProjectUpdateInput,
+  SubscriptionStreamUpdatedArgs,
+  SubscriptionStreamDeletedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -44,6 +53,7 @@ import {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -237,13 +247,69 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectAutomationsUpdatedArgs
   }
+  [CommentSubscriptions.CommentThreadActivity]: {
+    payload: {
+      commentThreadActivity: Partial<CommentThreadActivityMessage> &
+        Pick<CommentThreadActivityMessage, 'type'>
+      streamId: string
+      commentId: string
+    }
+    variables: SubscriptionCommentThreadActivityArgs
+  }
+  [CommentSubscriptions.ViewerActivity]: {
+    payload: {
+      userViewerActivity: MutationUserViewerActivityBroadcastArgs
+      streamId: string
+      resourceId: string
+      authorId: string
+    }
+    variables: SubscriptionUserViewerActivityArgs
+  }
+  [CommentSubscriptions.CommentActivity]: {
+    payload: {
+      commentActivity: {
+        type: 'comment-added'
+        comment: CommentRecord
+      }
+      streamId: string
+      resourceIds: string[]
+    }
+    variables: SubscriptionCommentActivityArgs
+  }
+  /**
+   * OLD ONES
+   */
+  [StreamSubscriptions.UserStreamAdded]: {
+    payload: {
+      userStreamAdded: { id: string; sharedBy?: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.UserStreamRemoved]: {
+    payload: {
+      userStreamRemoved: { id: string; revokedBy?: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.StreamUpdated]: {
+    payload: { streamUpdated: StreamUpdateInput | ProjectUpdateInput; id: string }
+    variables: SubscriptionStreamUpdatedArgs
+  }
+  [StreamSubscriptions.StreamDeleted]: {
+    payload: { streamDeleted: { streamId: string }; streamId: string }
+    variables: SubscriptionStreamDeletedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
-  | UserSubscriptions
-  | ProjectSubscriptions
-  | ViewerSubscriptions
+  | CommentSubscriptions
   | FileImportSubscriptions
+  | ProjectSubscriptions
+  | StreamSubscriptions
+  | UserSubscriptions
+  | ViewerSubscriptions
 
 /**
  * Publish a GQL subscription event
@@ -252,6 +318,8 @@ export const publish = <T extends SubscriptionEvent>(
   event: T,
   payload: SubscriptionTypeMap[T]['payload']
 ) => pubsub.publish(event, payload)
+
+export type PublishSubscription = typeof publish
 
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers

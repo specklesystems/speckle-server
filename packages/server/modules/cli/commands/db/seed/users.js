@@ -3,28 +3,36 @@ const { Users, ServerAcl } = require('@/modules/core/dbSchema')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { faker } = require('@faker-js/faker')
 const { range } = require('lodash')
+const { UniqueEnforcer } = require('enforce-unique')
 
 const RETRY_COUNT = 3
 const UNIQUE_MAX_TIME = 500
 
+const uniqueEnforcer = new UniqueEnforcer()
+
 function createFakeUser() {
   return {
-    id: faker.unique(faker.random.alphaNumeric, [10], { maxTime: UNIQUE_MAX_TIME }),
-    name: faker.name.firstName() + ' ' + faker.name.lastName(),
+    id: uniqueEnforcer.enforce(() => faker.string.alphanumeric(10), {
+      maxTime: UNIQUE_MAX_TIME
+    }),
+    name: faker.person.firstName() + ' ' + faker.person.lastName(),
     bio: faker.lorem.lines(5),
-    company: faker.company.companyName(),
-    email: faker.unique(
-      faker.internet.email,
-      [
-        faker.unique(faker.random.alphaNumeric, [10]),
-        faker.unique(faker.random.alphaNumeric, [10])
-      ],
-      { maxTime: UNIQUE_MAX_TIME }
+    company: faker.company.name(),
+    email: uniqueEnforcer.enforce(
+      () =>
+        faker.internet.email({
+          firstName: faker.string.alphanumeric(),
+          lastName: faker.string.alphanumeric()
+        }),
+      {
+        maxTime: UNIQUE_MAX_TIME,
+        maxRetries: RETRY_COUNT
+      }
     ),
     verified: faker.datatype.boolean(),
-    avatar: faker.random.alphaNumeric(255),
+    avatar: faker.string.alphanumeric(255),
     ip: faker.internet.ipv4(),
-    passwordDigest: faker.random.alphaNumeric(255)
+    passwordDigest: faker.string.alphanumeric(255)
   }
 }
 

@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
 import './bootstrap'
 import http from 'http'
@@ -10,30 +11,25 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger } from '@/logging/logging'
+import { startupLogger, shutdownLogger, subscriptionLogger } from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
-  LoggingExpressMiddleware
+  LoggingExpressMiddleware,
+  sanitizeHeaders
 } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
-import {
-  ApolloServer,
-  ForbiddenError,
-  ApolloServerExpressConfig,
-  ApolloError
-} from 'apollo-server-express'
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginUsageReportingDisabled,
-  ApolloServerPluginUsageReporting
-} from 'apollo-server-core'
+import { ApolloServer } from '@apollo/server'
+import { expressMiddleware } from '@apollo/server/express4'
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
+import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
+import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
 
-import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
+import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
+import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -44,7 +40,8 @@ import {
   isDevEnv,
   isTestEnv,
   useNewFrontend,
-  isApolloMonitoringEnabled
+  isApolloMonitoringEnabled,
+  enableMixpanel
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -56,7 +53,7 @@ import {
   authContextMiddleware,
   buildContext,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddleware
+  mixpanelTrackerHelperMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -64,8 +61,14 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
+import { BaseError, ForbiddenError } from '@/modules/shared/errors'
+import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
+import { getUser } from '@/modules/core/repositories/users'
 
-let graphqlServer: ApolloServer
+const GRAPHQL_PATH = '/graphql'
+
+let graphqlServer: ApolloServer<GraphQLContext>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
@@ -92,13 +95,14 @@ function logSubscriptionOperation(params: {
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
-      if (
-        (error instanceof GraphQLError && error.extensions?.code === 'FORBIDDEN') ||
-        error instanceof ApolloError
-      ) {
-        logger.info(error, errMsg)
+      let errorLogger = logger
+      if (error instanceof BaseError) {
+        errorLogger = errorLogger.child({ ...error.info() })
+      }
+      if (shouldLogAsInfoLevel(error)) {
+        errorLogger.info({ err: error }, errMsg)
       } else {
-        logger.error(error, errMsg)
+        errorLogger.error({ err: error }, errMsg)
       }
     }
   } else if (response?.data) {
@@ -111,10 +115,7 @@ function logSubscriptionOperation(params: {
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-function buildApolloSubscriptionServer(
-  apolloServer: ApolloServer,
-  server: http.Server
-): SubscriptionServer {
+function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer {
   const schema = ModulesSetup.graphSchema()
 
   // Init metrics
@@ -152,22 +153,32 @@ function buildApolloSubscriptionServer(
       schema,
       execute,
       subscribe,
-      validationRules: apolloServer.requestOptions.validationRules,
-      onConnect: async (connectionParams: Record<string, unknown>) => {
+      onConnect: async (
+        connectionParams: Record<string, unknown>,
+        webSocket: WebSocket,
+        connContext: ConnectionContext
+      ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+
+        const logger = connContext.request.log || subscriptionLogger
+
+        const possiblePaths = [
+          'Authorization',
+          'authorization',
+          'headers.Authorization',
+          'headers.authorization'
+        ]
 
         // Resolve token
         let token: string
         try {
+          const requestId = get(connectionParams, 'headers.x-request-id') as string
+          logger.debug(
+            { requestId, headers: sanitizeHeaders(connContext.request.headers) },
+            'New websocket connection'
+          )
           let header: Optional<string>
-
-          const possiblePaths = [
-            'Authorization',
-            'authorization',
-            'headers.Authorization',
-            'headers.authorization'
-          ]
 
           for (const possiblePath of possiblePaths) {
             if (has(connectionParams, possiblePath)) {
@@ -191,12 +202,35 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token, cleanLoadersEarly: false })
+          const buildCtx = await buildContext({
+            req: null,
+            token,
+            cleanLoadersEarly: false
+          })
+          buildCtx.log.info(
+            {
+              userId: buildCtx.userId,
+              ws_protocol: webSocket.protocol,
+              ws_url: webSocket.url,
+              headers: sanitizeHeaders(connContext.request.headers)
+            },
+            'Websocket connected and subscription context built.'
+          )
+          return buildCtx
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
       },
-      onDisconnect: () => {
+      onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
+        const logger = connContext.request.log || subscriptionLogger
+        logger.debug(
+          {
+            ws_protocol: webSocket.protocol,
+            ws_url: webSocket.url,
+            headers: sanitizeHeaders(connContext.request.headers)
+          },
+          'Websocket disconnected.'
+        )
         metricConnectedClients.dec()
       },
       onOperation: (...params: [() => void, ExecutionParams]) => {
@@ -207,6 +241,18 @@ function buildApolloSubscriptionServer(
           subscriptionType: baseParams.operationName
         })
         const ctx = baseParams.context as GraphQLContext
+
+        const logger = ctx.log || subscriptionLogger
+        logger.debug(
+          {
+            graphql_operation_name: baseParams.operationName,
+            userId: baseParams.context.userId,
+            graphql_query: baseParams.query.toString(),
+            graphql_variables: redactSensitiveVariables(baseParams.variables),
+            graphql_operation_type: 'subscription'
+          },
+          'Subscription started for {graphqlOperationName}'
+        )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
@@ -229,45 +275,42 @@ function buildApolloSubscriptionServer(
         }
 
         return baseParams
-      }
+      },
+      keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
     {
       server,
-      path: apolloServer.graphqlPath
+      path: GRAPHQL_PATH
     }
   )
 }
 
 /**
  * Create Apollo Server instance
- * @param optionOverrides Optionally override ctor options
- * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
- * pass in a callable that resolves the subscription server
  */
-export async function buildApolloServer(
-  optionOverrides?: Partial<ApolloServerExpressConfig>,
-  subscriptionServerResolver?: () => SubscriptionServer
-): Promise<ApolloServer> {
-  const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
+export async function buildApolloServer(options?: {
+  subscriptionServer?: SubscriptionServer
+}): Promise<ApolloServer<GraphQLContext>> {
+  const includeStacktraceInErrorResponses = isDevEnv() || isTestEnv()
+  const subscriptionServer = options?.subscriptionServer
   const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
     schema,
-    context: buildContext,
     plugins: [
       statusCodePlugin,
-      require('@/logging/apolloPlugin'),
+      loggingPlugin,
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
       }),
-      ...(subscriptionServerResolver
+      ...(subscriptionServer
         ? [
             {
               async serverWillStart() {
                 return {
                   async drainServer() {
-                    subscriptionServerResolver().close()
+                    subscriptionServer?.close()
                   }
                 }
               }
@@ -287,9 +330,8 @@ export async function buildApolloServer(
     cache: 'bounded',
     persistedQueries: false,
     csrfPrevention: true,
-    formatError: buildErrorFormatter(debug),
-    debug,
-    ...optionOverrides
+    formatError: buildErrorFormatter({ includeStacktraceInErrorResponses }),
+    includeStacktraceInErrorResponses
   })
   await server.start()
 
@@ -333,20 +375,35 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
-  app.use(mixpanelTrackerHelperMiddleware)
-
-  app.use(Sentry.Handlers.errorHandler())
+  app.use(
+    async (
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+      next()
+    }
+  )
+  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
 
+  // Init HTTP server & subscription server
+  const server = http.createServer(app)
+  const subscriptionServer = buildApolloSubscriptionServer(server)
+
   // Initialize graphql server
-  // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,
-  // and the SubscriptionServer ctor needs ApolloServer...hence the callback passed into buildApolloServer)
-  // eslint-disable-next-line prefer-const
-  let subscriptionServer: SubscriptionServer
-  graphqlServer = await buildApolloServer(undefined, () => subscriptionServer)
-  graphqlServer.applyMiddleware({ app })
+  graphqlServer = await buildApolloServer({
+    subscriptionServer
+  })
+  app.use(
+    GRAPHQL_PATH,
+    expressMiddleware(graphqlServer, {
+      context: buildContext
+    })
+  )
 
   // Expose prometheus metrics
   app.get('/metrics', async (req, res) => {
@@ -358,10 +415,6 @@ export async function init() {
     }
   })
 
-  // Init HTTP server & subscription server
-  const server = http.createServer(app)
-  subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
-
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
 
@@ -372,7 +425,8 @@ export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
 }
 
-const shouldUseFrontendProxy = () => process.env.NODE_ENV === 'development'
+const shouldUseFrontendProxy = () =>
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'

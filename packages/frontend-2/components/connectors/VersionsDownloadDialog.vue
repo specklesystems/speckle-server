@@ -28,7 +28,7 @@
         </FormButton>
       </div>
       <div class="flex items-center justify-between pt-5 gap-6 border-t">
-        <div class="h6 font-bold">All releases</div>
+        <div class="h6 font-medium">All releases</div>
         <div class="w-full max-w-[50%]">
           <FormTextInput
             v-model="searchString"
@@ -57,7 +57,7 @@
             </div>
             <div class="px-4">
               <FormButton size="sm" text @click="downloadVersion(version)">
-                <span class="text-xs font-bold">
+                <span class="text-xs font-medium">
                   {{ version.Os === 0 ? 'Windows' : 'MacOS' }}
                 </span>
                 <CloudArrowDownIcon class="w-4 h-4" />

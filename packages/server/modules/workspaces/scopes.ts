@@ -13,6 +13,11 @@ export const workspaceScopes: TokenScopeData[] = [
     public: true
   },
   {
+    name: Scopes.Workspaces.Read,
+    description: 'Required for reading workspace data',
+    public: true
+  },
+  {
     name: Scopes.Workspaces.Delete,
     description: 'Required for deleting workspaces',
     public: true

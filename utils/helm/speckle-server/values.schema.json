@@ -49,6 +49,21 @@
           "type": "boolean",
           "description": "Toggles whether to stop writing to the closure table",
           "default": false
+        },
+        "workspaceModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces module",
+          "default": false
+        },
+        "workspaceSsoEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces dynamic sso",
+          "default": false
+        },
+        "multipleEmailsModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles multiple emails",
+          "default": false
         }
       }
     },
@@ -544,7 +559,12 @@
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
+          "default": 100
+        },
+        "max_object_upload_file_size_mb": {
+          "type": "number",
+          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server. It should be greater than or equal to max_object_size_mb.",
+          "default": 100
         },
         "max_project_models_per_page": {
           "type": "number",
@@ -628,6 +648,21 @@
               "type": "string",
               "description": "The path where the encryption keys should be loaded from",
               "default": "/encryption-keys/keys.json"
+            }
+          }
+        },
+        "licenseTokenSecret": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
+              "default": ""
             }
           }
         },
@@ -1193,11 +1228,6 @@
             }
           }
         },
-        "sentry_dns": {
-          "type": "string",
-          "description": "(Optional) The Data Source Name that was provided by Sentry.io",
-          "default": ""
-        },
         "disable_tracking": {
           "type": "boolean",
           "description": "If set to true, will prevent tracking metrics from being collected",
@@ -1279,11 +1309,6 @@
               "default": "7000"
             }
           }
-        },
-        "max_object_size_mb": {
-          "type": "number",
-          "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
         },
         "requests": {
           "type": "object",
@@ -1499,6 +1524,11 @@
           "description": "The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "ghostApiKey": {
+          "type": "string",
+          "description": "API Key for Ghost, which provides the blog content for the new web application frontend.",
+          "default": ""
+        },
         "logClientApiToken": {
           "type": "string",
           "description": "SEQ API token",
@@ -1638,6 +1668,21 @@
               "type": "string",
               "description": "The port on which the metrics server will be exposed.",
               "default": "9094"
+            }
+          }
+        },
+        "puppeteer": {
+          "type": "object",
+          "properties": {
+            "userDataDirectory": {
+              "type": "string",
+              "description": "The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.",
+              "default": ""
+            },
+            "timeoutMilliseconds": {
+              "type": "string",
+              "description": "The timeout in milliseconds for the Puppeteer service.",
+              "default": "3600000"
             }
           }
         },

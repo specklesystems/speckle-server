@@ -30,15 +30,20 @@ const customRelativeTime = (date: ConfigType, capitalize?: boolean): string => {
 }
 
 /**
- * Determines if the given date input is formatting with a clock unit (seconds, minutes, or hours).
- * Only meant to be used by formattedRelativeDate() and formattedFullDate()
+ * Determines if the given date input is using timeframe formatting
  * @example
- * isClockUnit('2023-07-16') - returns false
- * isClockUnit(new Date()) - returns true or false depending on the current time
+ * isTimeframe('2023-07-16') - returns false
+ * isTimeframe(new Date()) - returns true or false depending on the current time
  */
-const isClockUnit = (date: ConfigType) => {
+const isTimeframe = (date: ConfigType) => {
   const unit = customRelativeTime(date)
-  return unit.includes('second') || unit.includes('minute') || unit.includes('hour')
+  return (
+    unit.includes('second') ||
+    unit.includes('minute') ||
+    unit.includes('hour') ||
+    unit.includes('day') ||
+    unit.includes('just now')
+  )
 }
 
 /**
@@ -63,7 +68,7 @@ export const formattedRelativeDate = (
   options?: Partial<{ prefix: boolean; capitalize: boolean }>
 ): string => {
   if (options?.prefix) {
-    return isClockUnit(date)
+    return isTimeframe(date)
       ? customRelativeTime(date, options?.capitalize)
       : `on ${customRelativeTime(date)}`
   } else {

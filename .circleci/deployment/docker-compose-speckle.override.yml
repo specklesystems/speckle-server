@@ -1,0 +1,29 @@
+services:
+  speckle-ingress:
+    image: speckle/speckle-docker-compose-ingress
+
+  speckle-frontend-2:
+    image: speckle/speckle-frontend-2
+    # environment:
+    #   LOG_PRETTY: 'true' #FIXME currently causes a failure
+
+  speckle-server:
+    image: speckle/speckle-server
+    environment:
+      ENABLE_MP: 'false'
+      LOG_PRETTY: 'true'
+
+  preview-service:
+    image: speckle/speckle-preview-service
+    environment:
+      LOG_PRETTY: 'true'
+
+  webhook-service:
+    image: speckle/speckle-webhook-service
+    environment:
+      LOG_PRETTY: 'true'
+
+  fileimport-service:
+    image: speckle/speckle-fileimport-service
+    environment:
+      LOG_PRETTY: 'true'

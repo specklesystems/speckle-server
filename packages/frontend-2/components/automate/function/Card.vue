@@ -7,14 +7,14 @@
     :target="externalMoreInfo ? '_blank' : undefined"
   >
     <div
-      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative"
+      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative h-full"
     >
       <div class="flex gap-3 items-center" :class="{ 'w-4/5': hasLabel }">
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
           <div
             :class="[
-              'normal font-semibold text-foreground truncate',
+              'text-heading text-foreground truncate',
               noButtons ? '' : 'hover:underline'
             ]"
           >
@@ -26,20 +26,19 @@
               {{ fn.name }}
             </Component>
           </div>
-          <div class="label-light flex items-center space-x-1">
+          <div class="text-body-xs flex items-center space-x-1 -mt-1">
             <span>by</span>
             <Component
               :is="noButtons ? 'div' : CommonTextLink"
               external
               :to="fn.repo.url"
-              size="sm"
             >
               {{ fn.repo.owner }}
             </Component>
           </div>
         </div>
       </div>
-      <div class="label-light text-foreground-2 line-clamp-3 h-16 whitespace-normal">
+      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18 whitespace-normal">
         {{ plaintextDescription }}
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row sm:self-end gap-2">
@@ -47,7 +46,7 @@
           <FormButton
             :icon-left="PencilIcon"
             full-width
-            outlined
+            color="outline"
             @click="$emit('edit')"
           >
             Edit Details
@@ -73,7 +72,7 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1"
+          class="rounded-bl-lg rounded-tr-[7px] text-body-2xs px-2 py-1"
           :class="{
             'bg-foundation-focus text-foreground': fn.isFeatured,
             'bg-warning text-foreground-on-primary': isOutdated

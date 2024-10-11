@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import gql from 'graphql-tag'
 
 const basicProjectAccessRequestFragment = gql`
   fragment BasicProjectAccessRequestFields on ProjectAccessRequest {

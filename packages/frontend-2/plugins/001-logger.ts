@@ -1,5 +1,4 @@
-import type { Optional } from '@speckle/shared'
-import { get, omit } from 'lodash-es'
+import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import {
@@ -21,15 +20,7 @@ import {
   type AbstractUnhandledErrorHandler
 } from '~~/lib/core/helpers/observability'
 
-class CustomDeserializedError extends Error {
-  code: string
-
-  constructor(params: { code: string; message: string; stack: string }) {
-    super(params.message)
-    this.code = params.code
-    this.stack = params.stack
-  }
-}
+const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
 
 /**
  * - Setting up Pino logger in SSR, basic console.log fallback in CSR
@@ -217,16 +208,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   // Global error handler - handle all transports besides the core pino/console.log logger
   const transports = useGetErrorLoggingTransports()
-  let serverFatalError: Optional<AbstractErrorHandlerParams> = undefined
   logger = enableCustomErrorHandling({
     logger,
     onError: (params, helpers) => {
-      const { otherData } = params
-
-      if (import.meta.server && otherData?.isAppError) {
-        serverFatalError = params
-      }
-
       transports.forEach((handler) => handler.onError(params, helpers))
     }
   })
@@ -276,50 +260,34 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   })
 
   // Hydrate server fatal error to CSR
-  if (import.meta.server) {
-    nuxtApp.hook('app:rendered', () => {
-      let serializableError: Optional<AbstractErrorHandlerParams> = undefined
-      try {
-        serializableError = serverFatalError
-          ? (JSON.parse(JSON.stringify(serverFatalError)) as AbstractErrorHandlerParams)
+  if (!import.meta.server) {
+    nuxtApp.hook('app:mounted', () => {
+      const serverFatalError = nuxtApp.payload.error
+      if (serverFatalError && serverFatalError.statusCode >= 500) {
+        const msg = serverFatalError.message || 'Fatal server error'
+        const stack = serverFatalError.stack
+          ? simpleStripHtml(serverFatalError.stack)
           : undefined
-        if (serializableError && serverFatalError?.firstError) {
-          serializableError.firstError = {
-            code: get(serverFatalError.firstError, 'code', 'unknown') as string,
-            message: get(serverFatalError.firstError, 'message', 'unknown') as string,
-            stack: get(serverFatalError.firstError, 'stack', 'unknown') as string
-          } as unknown as Error // fakin it
-        }
-      } catch (e) {
-        serializableError = {
-          args: [],
-          firstString: 'Failed to serialize serverFatalError',
-          firstError: e as Error,
-          otherData: {},
+        const finalStack = `${msg}${stack ? `\n${stack}` : ''}`
+
+        const nuxtError = createError({
+          ...serverFatalError,
+          ...(finalStack ? { stack: finalStack } : {})
+        })
+
+        const payload: AbstractErrorHandlerParams = {
+          args: ['Fatal server error', serverFatalError],
+          firstError: nuxtError,
+          firstString: 'Fatal server error',
+          otherData: { isAppError: true },
           nonObjectOtherData: []
         }
-      }
-
-      nuxtApp.ssrContext!.payload.serverFatalError = serializableError
-    })
-  } else {
-    nuxtApp.hook('app:mounted', () => {
-      const serverFatalError = nuxtApp.payload.serverFatalError
-      if (serverFatalError) {
-        if (serverFatalError.firstError) {
-          serverFatalError.firstError = new CustomDeserializedError({
-            message: get(serverFatalError.firstError, 'message', 'unknown') as string,
-            code: get(serverFatalError.firstError, 'code', 'unknown') as string,
-            stack: get(serverFatalError.firstError, 'stack', 'unknown') as string
-          })
-        }
-
-        invokeTransportsWithPayload(serverFatalError)
+        invokeTransportsWithPayload(payload)
 
         if (import.meta.dev) {
           // intentionally skipping error pipeline:
           // eslint-disable-next-line no-console
-          console.error('Fatal error occurred on server:', serverFatalError)
+          console.error('Fatal error occurred on server:', payload)
         }
       }
     })

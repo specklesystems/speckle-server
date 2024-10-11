@@ -2,7 +2,7 @@
   <div class="flex flex-col items-start w-full">
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
       <div class="flex flex-col items-start gap-1">
-        <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
+        <CommonTextLink :icon-left="ArrowLeftIcon" size="sm" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
         <div class="flex flow-row justify-start items-center z-20">
@@ -10,7 +10,7 @@
             v-model="name"
             :disabled="loading"
             :custom-classes="{
-              input: 'h4 font-bold',
+              input: 'h4',
               pencil: 'ml-2 mt-2 w-4 h-4'
             }"
             class="relative top-1.5"

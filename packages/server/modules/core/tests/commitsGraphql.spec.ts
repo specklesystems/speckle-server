@@ -1,15 +1,44 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { readOtherUsersCommits, readOwnCommits } from '@/test/graphql/commits'
+import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
+
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 describe('Commits (GraphQL)', () => {
   const readableUserCommitsCount = 15
@@ -94,10 +123,13 @@ describe('Commits (GraphQL)', () => {
   })
 
   describe('when user authenticated', async () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
     })
 
     describe('and reading user commits', async () => {

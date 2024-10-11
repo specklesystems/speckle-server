@@ -3,19 +3,23 @@
     <div class="p-4 flex flex-col gap-6 rounded-lg max-w-2xl mx-auto items-center">
       <ProjectPageAutomationsScaleImpactImage />
       <div class="gap-2 flex flex-col text-center">
-        <div class="h3 leading-10 text-fancy-gradient">Scale your digital impact</div>
-        <div class="text-foreground normal">
+        <div class="text-heading-2xl text-fancy-gradient">
+          Scale your digital impact
+        </div>
+        <div class="text-foreground text-body-sm">
           Speckle Automate empowers you to continuously monitor your published models,
           automatically ensuring project data standards, identifying potential design
           faults, and effortlessly creating delivery artifacts.
-          <CommonTextLink
+          <FormButton
             :icon-right="ArrowTopRightOnSquareIcon"
             target="_blank"
             external
+            color="outline"
+            class="mx-auto my-2"
             to="https://speckle.systems/blog/automate-with-speckle/"
           >
             Learn more
-          </CommonTextLink>
+          </FormButton>
         </div>
       </div>
       <div>
@@ -43,8 +47,8 @@
     </div>
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
-        <h2 class="h5 font-bold">Featured functions</h2>
-        <FormButton color="secondary" class="shrink-0" :to="automationFunctionsRoute">
+        <h2 class="text-heading-xl">Featured functions</h2>
+        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
           Explore all functions
         </FormButton>
       </div>

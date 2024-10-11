@@ -1,7 +1,24 @@
-import db from '@/db/knex'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamClonedActivityFactory,
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamUpdatedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import {
+  getBatchedStreamCommentsFactory,
+  getCommentLinksFactory,
+  insertCommentLinksFactory,
+  insertCommentsFactory
+} from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   ProjectVisibility,
   Resolvers,
@@ -11,55 +28,178 @@ import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
+  createBranchFactory,
+  getBatchedStreamBranchesFactory,
+  insertBranchesFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getBatchedBranchCommitsFactory,
+  getBatchedStreamCommitsFactory,
+  insertBranchCommitsFactory,
+  insertCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
   getUserStreamsCount,
   getUserStreams,
-  getStreamCollaborators,
-  getStream
+  getStreamFactory,
+  getStreamCollaboratorsFactory,
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory,
+  getOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
-  createStreamReturnRecord,
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
-  updateStreamRoleAndNotify
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
+import {
+  createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
-import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
+import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
+import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import {
-  deleteInvitesByTargetFactory,
-  deleteStreamInviteFactory,
-  findResourceFactory,
-  findStreamInviteFactory,
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  queryAllStreamInvitesFactory,
-  queryAllUserStreamInvitesFactory
+  insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
-import {
-  cancelStreamInviteFactory,
-  finalizeStreamInviteFactory
-} from '@/modules/serverinvites/services/inviteProcessingService'
-import {
-  getPendingStreamCollaboratorsFactory,
-  getUserPendingStreamInvitesFactory
-} from '@/modules/serverinvites/services/inviteRetrievalService'
-import {
-  createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotifyFactory
-} from '@/modules/serverinvites/services/management'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
+  publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { chunk, has } from 'lodash'
+import { has } from 'lodash'
+
+const saveActivity = saveActivityFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory(),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        })
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addStreamCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish,
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ saveActivity, publish })
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
+})
+
+const updateStream = updateStreamFactory({ db })
+const cloneStream = cloneStreamFactory({
+  getStream: getStreamFactory({ db }),
+  getUser,
+  db,
+  createStream: createStreamFactory({ db }),
+  insertCommits: insertCommitsFactory({ db }),
+  getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
+  insertBranches: insertBranchesFactory({ db }),
+  getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
+  insertComments: insertCommentsFactory({ db }),
+  getCommentLinks: getCommentLinksFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  addStreamClonedActivity: addStreamClonedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createOnboardingStream = createOnboardingStreamFactory({
+  getOnboardingBaseProject: getOnboardingBaseProjectFactory({
+    getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
+  }),
+  cloneStream,
+  createStreamReturnRecord,
+  getUser,
+  updateStream
+})
 
 export = {
   Query: {
@@ -161,92 +301,6 @@ export = {
     },
     invites: () => ({})
   },
-  ProjectInviteMutations: {
-    async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-      const createAndSendInvite = createAndSendInviteFactory({
-        findResource: findResourceFactory(),
-        findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
-      })
-      await createStreamInviteAndNotifyFactory({
-        createAndSendInvite
-      })(
-        {
-          ...args.input,
-          projectId: args.projectId
-        },
-        ctx.userId!,
-        ctx.resourceAccessRules
-      )
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    },
-    async batchCreate(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-
-      const inviteCount = args.input.length
-      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
-        throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
-        )
-      }
-
-      const inputBatches = chunk(args.input, 10)
-      for (const batch of inputBatches) {
-        await Promise.all(
-          batch.map((i) =>
-            createStreamInviteAndNotifyFactory({
-              createAndSendInvite: createAndSendInviteFactory({
-                findResource: findResourceFactory(),
-                findUserByTarget: findUserByTargetFactory(),
-                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-                  db
-                })
-              })
-            })(
-              { ...i, projectId: args.projectId },
-              ctx.userId!,
-              ctx.resourceAccessRules
-            )
-          )
-        )
-      }
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    },
-    async use(_parent, args, ctx) {
-      await useStreamInviteAndNotifyFactory({
-        finalizeStreamInvite: finalizeStreamInviteFactory({
-          findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          findResource: findResourceFactory()
-        })
-      })(args.input, ctx.userId!, ctx.resourceAccessRules)
-      return true
-    },
-    async cancel(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-      await cancelStreamInviteFactory({
-        findStreamInvite: findStreamInviteFactory({ db }),
-        deleteStreamInvite: deleteStreamInviteFactory({ db })
-      })(args.projectId, args.inviteId)
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    }
-  },
   User: {
     async projects(_parent, args, ctx) {
       // If limit=0 & no filter, short-cut full execution and use data loader
@@ -277,14 +331,6 @@ export = {
       })
 
       return { totalCount, cursor, items: streams }
-    },
-    async projectInvites(_parent, _args, context) {
-      const { userId } = context
-      return await getUserPendingStreamInvitesFactory({
-        queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
-          db
-        })
-      })(userId!)
     }
   },
   Project: {
@@ -305,11 +351,7 @@ export = {
     async sourceApps(parent, _args, ctx) {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
-    async invitedTeam(parent) {
-      return getPendingStreamCollaboratorsFactory({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
-      })(parent.id)
-    },
+
     async visibility(parent) {
       const { isPublic, isDiscoverable } = parent
       if (!isPublic) return ProjectVisibility.Private

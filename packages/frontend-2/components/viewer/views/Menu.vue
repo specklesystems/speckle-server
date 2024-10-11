@@ -18,7 +18,7 @@
         <!-- Canonical views first -->
         <div v-for="view in canonicalViews" :key="view.name">
           <button
-            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-body-xs py-1"
             @click="setView(view.name.toLowerCase() as CanonicalView)"
           >
             {{ view.name }}
@@ -28,7 +28,7 @@
         <!-- Any model other views -->
         <div v-for="view in views" :key="view.id">
           <button
-            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-body-xs py-1 transition"
             :title="view.name"
             @click="setView(view)"
           >

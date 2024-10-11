@@ -2,22 +2,84 @@ const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
 const { createUser } = require('@/modules/core/services/users')
-const { createStream } = require('@/modules/core/services/streams')
 
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { createInviteDirectlyFactory } = require('@/test/speckle-helpers/inviteHelper')
+const { createStreamInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
 const {
-  findInviteFactory
+  findInviteFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { getUsers } = require('@/modules/core/repositories/users')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
 
-const createInviteDirectly = createInviteDirectlyFactory({ db })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createInviteDirectly = createStreamInviteDirectly
 const findInvite = findInviteFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
 const expect = chai.expect
 
 let app
@@ -160,7 +222,7 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = await findInvite(inviteId)
+        const inviteRecord = await findInvite({ inviteId })
         if (streamInvite) {
           expect(inviteRecord).to.be.ok
         } else {

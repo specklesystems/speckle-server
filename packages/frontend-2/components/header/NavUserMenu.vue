@@ -3,10 +3,10 @@
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
-        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
-          <XMarkIcon class="w-5 h-5" />
-        </UserAvatar>
+        <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
+          <UserAvatar hide-tooltip :user="activeUser" />
+          <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
+        </div>
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -17,177 +17,223 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <MenuItem v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
-              ]"
-              target="_blank"
-              external
-              :href="connectorsPageUrl"
-            >
-              <CloudArrowDownIcon class="w-5 h-5" />
-              Connector downloads
-            </NuxtLink>
-          </MenuItem>
+          <div class="border-b border-outline-3 py-1 mb-1">
+            <MenuItem v-slot="{ active }">
+              <NuxtLink
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-primary cursor-pointer transition mx-1 rounded'
+                ]"
+                target="_blank"
+                external
+                :href="downloadManagerUrl"
+              >
+                Connector downloads
+              </NuxtLink>
+            </MenuItem>
+          </div>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="() => (showProfileEditDialog = true)"
+              @click="toggleSettingsDialog(SettingMenuKeys.User.Profile)"
             >
-              <UserAvatar :user="activeUser" size="sm" class="-ml-0.5 mr-px" />
-              Edit profile
+              Settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="goToServerManagement()"
+              @click="toggleSettingsDialog(SettingMenuKeys.Server.General)"
             >
-              <Cog6ToothIcon class="w-5 h-5" />
-              Server management
+              Server settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
-              <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
-              <EnvelopeIcon class="w-5 h-5" />
               Invite to Speckle
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              target="_blank"
-              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-              external
+              class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
+              @click="openFeedbackDialog"
             >
-              <ChatBubbleLeftRightIcon class="w-5 h-5" />
               Feedback
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="activeUser" v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-danger cursor-pointer transition mx-1 rounded'
-              ]"
-              @click="logout"
-            >
-              <ArrowLeftOnRectangleIcon class="w-5 h-5" />
-              Sign out
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-primary cursor-pointer transition mx-1 rounded'
-              ]"
-              :to="loginUrl"
-            >
-              <ArrowRightOnRectangleIcon class="w-5 h-5" />
-              Sign in
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-if="version">
-            <div class="px-2 pl-4 pb-1 text-tiny text-foreground-2">
-              Version {{ version }}
+          <div class="border-t border-outline-3 py-1 mt-1">
+            <MenuItem v-if="activeUser" v-slot="{ active }">
+              <NuxtLink
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+                @click="logout"
+              >
+                Log out
+              </NuxtLink>
+            </MenuItem>
+            <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
+              <NuxtLink
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'flex px-2 py-1 text-body-xs text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+                :to="loginUrl"
+              >
+                Log in
+              </NuxtLink>
+            </MenuItem>
+            <div v-if="version" class="border-t border-outline-3 py-1 mt-1">
+              <MenuItem>
+                <div class="px-3 pt-1 text-tiny text-foreground-2">
+                  Version {{ version }}
+                </div>
+              </MenuItem>
             </div>
-          </MenuItem>
+          </div>
         </MenuItems>
       </Transition>
     </Menu>
-    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
-    <UserProfileEditDialog v-model:open="showProfileEditDialog" />
+    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
+    <SettingsDialog
+      v-model:open="showSettingsDialog"
+      v-model:target-menu-item="settingsDialogTarget"
+      v-model:target-workspace-id="workspaceSettingsDialogTarget"
+    />
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
+import { isString } from 'lodash'
+import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import {
-  XMarkIcon,
-  ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
-  SunIcon,
-  MoonIcon,
-  EnvelopeIcon,
-  Cog6ToothIcon,
-  CloudArrowDownIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { useServerInfo } from '~/lib/core/composables/server'
-import { homeRoute, profileRoute, connectorsPageUrl } from '~/lib/common/helpers/route'
+import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useServerInfo } from '~/lib/core/composables/server'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
 }>()
 
+const route = useRoute()
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
-const { serverInfo } = useServerInfo()
 const router = useRouter()
-const route = useRoute()
+const { triggerNotification } = useGlobalToast()
+const { serverInfo } = useServerInfo()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const showInviteDialog = ref(false)
-const showProfileEditDialog = ref(false)
+const showSettingsDialog = ref(false)
+const settingsDialogTarget = ref<string | null>(null)
+const workspaceSettingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
+const isMobile = breakpoints.smaller('md')
+const showFeedbackDialog = ref(false)
 
-const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
-const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
-const goToServerManagement = () => {
-  router.push('/server-management')
+const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
+  showSettingsDialog.value = true
+
+  // On mobile open the modal but dont set the target
+  settingsDialogTarget.value = !isMobile.value ? target : null
 }
 
-watch(
-  isProfileRoute,
-  (newVal, oldVal) => {
-    if (newVal && !oldVal) {
-      showProfileEditDialog.value = true
-      void router.replace({ path: homeRoute, force: true }) // in-place replace
+const deleteSettingsQuery = (): void => {
+  const currentQueryParams = { ...route.query }
+  delete currentQueryParams.settings
+  delete currentQueryParams.workspace
+  delete currentQueryParams.error
+
+  router.push({ query: currentQueryParams })
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+}
+
+onMounted(() => {
+  const settingsQuery = route.query?.settings
+  const workspaceQuery = route.query?.workspace
+  const errorQuery = route.query?.error
+
+  if (settingsQuery && isString(settingsQuery)) {
+    if (settingsQuery.includes('server') && !isAdmin.value) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "You don't have access to server settings"
+      })
+
+      return
     }
-  },
-  { immediate: true }
-)
+
+    if (workspaceQuery && isString(workspaceQuery)) {
+      workspaceSettingsDialogTarget.value = workspaceQuery
+
+      if (errorQuery && isString(errorQuery)) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: errorQuery
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'SSO settings successfully updated'
+        })
+      }
+    }
+
+    showSettingsDialog.value = true
+    settingsDialogTarget.value = settingsQuery
+    deleteSettingsQuery()
+  }
+})
 </script>

@@ -1,16 +1,21 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div>
+  <div class="relative">
     <LayoutMenu
       v-model:open="showActionsMenu"
       :menu-id="menuId"
       :items="actionsItems"
+      :menu-position="menuPosition ? menuPosition : HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
     >
-      <FormButton size="sm" text @click="onButtonClick">
-        <EllipsisVerticalIcon class="w-4 h-4" />
-      </FormButton>
+      <FormButton
+        color="subtle"
+        hide-text
+        :icon-right="EllipsisHorizontalIcon"
+        class="!text-foreground-2"
+        @click="onButtonClick"
+      ></FormButton>
     </LayoutMenu>
     <ProjectPageModelsCardEditDialog
       v-model:open="isRenameDialogOpen"
@@ -39,17 +44,12 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
-import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import {
-  TrashIcon,
-  PencilIcon,
-  LinkIcon,
-  FingerPrintIcon,
-  ArrowUpTrayIcon,
-  CodeBracketIcon
-} from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { modelVersionsRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -69,6 +69,7 @@ enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
   Share = 'share',
+  ViewVersions = 'view-versions',
   UploadVersion = 'upload-version',
   CopyId = 'copy-id',
   Embed = 'embed'
@@ -86,11 +87,14 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
   canEdit?: boolean
+  menuPosition?: HorizontalDirection
 }>()
 
 const copyModelLink = useCopyModelLink()
 const { copy } = useClipboard()
 const menuId = useId()
+const { isLoggedIn } = useActiveUser()
+const router = useRouter()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
@@ -98,34 +102,47 @@ const embedDialogOpen = ref(false)
 
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  ...(isLoggedIn.value
+    ? [
+        [
+          {
+            title: 'Edit model...',
+            id: ActionTypes.Rename,
+            disabled: !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
+          }
+        ]
+      ]
+    : []),
   [
     {
-      title: 'Edit',
-      id: ActionTypes.Rename,
-      disabled: !props.canEdit,
-      icon: PencilIcon
+      title: 'View versions',
+      id: ActionTypes.ViewVersions
     },
     {
-      title: 'Upload new version',
+      title: 'Upload new version...',
       id: ActionTypes.UploadVersion,
       disabled: !props.canEdit,
-      icon: ArrowUpTrayIcon
+      disabledTooltip: 'Insufficient permissions'
     }
   ],
   [
-    { title: 'Copy link', id: ActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
-    { title: 'Embed model', id: ActionTypes.Embed, icon: CodeBracketIcon }
+    { title: 'Copy link', id: ActionTypes.Share },
+    { title: 'Copy ID', id: ActionTypes.CopyId },
+    { title: 'Embed model...', id: ActionTypes.Embed }
   ],
-  [
-    {
-      title: 'Delete',
-      id: ActionTypes.Delete,
-      disabled: isMain.value || !props.canEdit,
-      icon: TrashIcon,
-      color: 'danger'
-    }
-  ]
+  ...(isLoggedIn.value
+    ? [
+        [
+          {
+            title: 'Delete...',
+            id: ActionTypes.Delete,
+            disabled: isMain.value || !props.canEdit,
+            disabledTooltip: 'Insufficient permissions'
+          }
+        ]
+      ]
+    : [])
 ])
 
 const isRenameDialogOpen = computed({
@@ -150,6 +167,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })
       copyModelLink(props.project.id, props.model.id)
+      break
+    case ActionTypes.ViewVersions:
+      router.push(modelVersionsRoute(props.project.id, props.model.id))
       break
     case ActionTypes.UploadVersion:
       emit('upload-version')

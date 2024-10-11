@@ -3,6 +3,7 @@ import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import mjml2html from 'mjml'
 import * as ejs from 'ejs'
+import sanitizeHtml from 'sanitize-html'
 
 export type EmailTemplateServerInfo = {
   name: string
@@ -112,4 +113,13 @@ const renderEmailText = async (
     { cache: false, outputFunctionName: 'print' }
   )
   return fullText
+}
+
+/**
+ * Sanitize message that potentially has HTML in it
+ */
+export function sanitizeMessage(message: string, stripAll: boolean = false): string {
+  return sanitizeHtml(message, {
+    allowedTags: stripAll ? [] : ['b', 'i', 'em', 'strong']
+  })
 }

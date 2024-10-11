@@ -4,7 +4,6 @@ import { expect } from 'chai'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
 import { createUser } from '@/modules/core/services/users'
-import { createStream } from '@/modules/core/services/streams'
 import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
@@ -12,6 +11,62 @@ import request from 'supertest'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
 import cryptoRandomString from 'crypto-random-string'
 import { noErrors } from '@/test/helpers'
+import {
+  createStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 
 describe('FileUploads @fileuploads', () => {
   let server: Server
@@ -46,8 +101,7 @@ describe('FileUploads @fileuploads', () => {
     ;({ token: userOneToken } = await createToken({
       userId: userOneId,
       name: 'test token',
-      scopes: [Scopes.Streams.Write],
-      lifespan: 3600
+      scopes: [Scopes.Streams.Write]
     }))
   })
 
@@ -57,7 +111,7 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
-    await server.close()
+    await server?.close()
   })
 
   describe('Uploads files', () => {

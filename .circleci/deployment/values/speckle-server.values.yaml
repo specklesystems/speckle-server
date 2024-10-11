@@ -46,7 +46,7 @@ objects:
 
 frontend_2:
   enabled: true
-  logPretty: true
+  logPretty: false #FIX: FE2 does not yet support 'true' https://linear.app/speckle/issue/WEB-1166/frontend-2-does-not-support-nuxt-public-log-pretty=true-in-docker
 
 preview_service:
   replicas: 0

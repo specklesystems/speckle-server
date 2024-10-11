@@ -1,9 +1,7 @@
 <template>
   <div class="flex flex-col items-center space-y-8">
-    <ErrorPageProjectAccessErrorBlock
-      v-if="isNoProjectAccessError"
-      :error="finalError"
-    />
+    <ErrorPageProjectAccessErrorBlock v-if="isNoProjectAccessError" />
+    <ErrorPageWorkspaceAccessErrorBlock v-else-if="isNoWorkspaceAccessError" />
     <ErrorPageGenericErrorBlock v-else :error="finalError" />
   </div>
 </template>
@@ -23,5 +21,10 @@ const isNoProjectAccessError = computed(
   () =>
     finalError.value.statusCode === 403 &&
     finalError.value.message.includes('You do not have access to this project')
+)
+const isNoWorkspaceAccessError = computed(
+  () =>
+    finalError.value.statusCode === 403 &&
+    finalError.value.message.includes('You do not have access to this workspace')
 )
 </script>

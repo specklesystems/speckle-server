@@ -1,18 +1,32 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getCommits } from '@/modules/core/repositories/commits'
-import { createBranch } from '@/modules/core/services/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getCommitsFactory } from '@/modules/core/repositories/commits'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
-import { truncateTables } from '@/test/hooks'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { truncateTables } from '@/test/hooks'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { describe } from 'mocha'
@@ -21,6 +35,24 @@ enum BatchActionType {
   Move,
   Delete
 }
+
+const createBranch = createBranchFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const cleanup = async () => {
   await truncateTables([Streams.name, Users.name, Commits.name])
@@ -120,7 +152,7 @@ describe('Batch commits', () => {
   ]
 
   const buildBatchActionInvoker =
-    (apollo: ApolloServer) => (type: BatchActionType, commitIds: string[]) => {
+    (apollo: ServerAndContext) => (type: BatchActionType, commitIds: string[]) => {
       if (type === BatchActionType.Delete) {
         return deleteCommits(apollo, { input: { commitIds } })
       } else if (type === BatchActionType.Move) {
@@ -135,11 +167,14 @@ describe('Batch commits', () => {
   type BatchActionInvoker = ReturnType<typeof buildBatchActionInvoker>
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createAuthedTestContext(me.id)
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
@@ -268,11 +303,14 @@ describe('Batch commits', () => {
   })
 
   describe('when not authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: createTestContext()
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 

@@ -5,7 +5,6 @@
       <CommonTextLink
         text
         link
-        size="sm"
         class="ml-1"
         to="https://gendo.ai?utm=speckle"
         target="_blank"
@@ -40,7 +39,6 @@
         <CommonTextLink
           text
           link
-          size="sm"
           class="ml-1"
           to="https://gendo.ai?utm=speckle"
           target="_blank"

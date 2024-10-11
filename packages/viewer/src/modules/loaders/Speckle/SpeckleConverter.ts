@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { MathUtils } from 'three'
+import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
-import type { SpeckleObject } from '../../../index.js'
+import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
 
@@ -21,7 +21,13 @@ export default class SpeckleConverter {
   private maxChildrenPromises: number
   private spoofIDs = false
   private tree: WorldTree
+  private subtree: TreeNode
   private typeLookupTable: { [type: string]: string } = {}
+  private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
+  private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
+  private instanceProxies: { [id: string]: TreeNode } = {}
+  private renderMaterialMap: { [id: string]: SpeckleObject } = {}
+  private colorMap: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -44,6 +50,10 @@ export default class SpeckleConverter {
     RevitInstance: this.RevitInstanceToNode.bind(this),
     Text: this.TextToNode.bind(this),
     Dimension: this.DimensionToNode.bind(this),
+    InstanceDefinitionProxy: this.InstanceDefinitionProxyToNode.bind(this),
+    InstanceProxy: this.InstanceProxyToNode.bind(this),
+    RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
+    ColorProxy: this.ColorProxyToNode.bind(this),
     Parameter: null
   }
 
@@ -114,15 +124,15 @@ export default class SpeckleConverter {
 
     if (node === null) {
       /** We're adding a parent for the entire model (subtree) */
-      const subtreeNode: TreeNode = this.tree.parse({
+      this.subtree = this.tree.parse({
         id: objectURL,
         /* Hack required by frontend*/
         raw: { id: objectURL, children: [obj] },
         atomic: true,
         children: []
       })
-      this.tree.addSubtree(subtreeNode)
-      this.tree.addNode(childNode, subtreeNode)
+      this.tree.addSubtree(this.subtree)
+      this.tree.addNode(childNode, this.subtree)
     } else {
       this.tree.addNode(childNode, node)
     }
@@ -166,8 +176,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(displayValue, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(displayValue, nestedNode)
           await callback()
         } catch (e) {
           Logger.warn(
@@ -186,8 +196,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(val, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(val, nestedNode)
           await callback()
         }
       }
@@ -517,6 +527,296 @@ export default class SpeckleConverter {
       for (const element of elements as SpeckleObject[]) {
         const elementObj = await this.resolveReference(element)
         void this.parseInstanceElement(obj, elementObj, node)
+      }
+    }
+  }
+
+  private async InstanceDefinitionProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance Definition Proxy ${obj.id} has no applicationId`)
+      return
+    }
+    this.instanceDefinitionLookupTable[obj.applicationId] = node
+  }
+
+  private async InstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance proxy ${obj.id} has no application id`)
+      return
+    }
+    this.instanceProxies[obj.applicationId] = node
+    return
+  }
+
+  private async RenderMaterialProxyToNode(obj: SpeckleObject, _node: TreeNode) {
+    if (!obj.value) {
+      Logger.error(`Render Material Proxy ${obj.id} has no render material value!`)
+      return
+    }
+    if (!obj.objects || !Array.isArray(obj.objects) || obj.objects.length === 0) {
+      Logger.warn(`Render Material Proxy ${obj.id} has no target objects!`)
+    }
+    const renderMaterialValue = obj.value as SpeckleObject
+    const targetObjects = obj.objects as []
+    for (let k = 0; k < targetObjects.length; k++) {
+      if (this.renderMaterialMap[targetObjects[k]]) {
+        Logger.error(`Overwritting renderMaterial ${targetObjects[k]}`)
+      }
+      this.renderMaterialMap[targetObjects[k]] = renderMaterialValue
+    }
+  }
+
+  private async ColorProxyToNode(obj: SpeckleObject, _node: TreeNode) {
+    if (!obj.value || typeof obj.value !== 'number') {
+      Logger.error(`Color ${obj.id} has no value, or value is not a number!`)
+      return
+    }
+    if (!obj.objects || !Array.isArray(obj.objects) || obj.objects.length === 0) {
+      Logger.warn(`Color Proxy ${obj.id} has no target objects!`)
+      return
+    }
+    const targetObjects = obj.objects as []
+    for (let k = 0; k < targetObjects.length; k++) {
+      if (this.colorMap[targetObjects[k]]) {
+        Logger.error(`Overwritting color ${targetObjects[k]}`)
+      }
+      this.colorMap[targetObjects[k]] = obj
+    }
+  }
+
+  private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
+    return (obj.DefinitionId || obj.definitionId) as string
+  }
+
+  private getInstanceProxyTransform(obj: SpeckleObject): Array<number> {
+    if (!(obj.transform || obj.Transform)) {
+      return new Matrix4().toArray()
+    }
+    return (obj.transform || obj.Transform) as Array<number>
+  }
+
+  private getInstanceProxyDefinitionObjects(obj: SpeckleObject): Array<string> {
+    return (obj.Objects || obj.objects) as Array<string>
+  }
+
+  private createTransformNode(obj: SpeckleObject) {
+    const transformNodeId = MathUtils.generateUUID()
+    const transformData = this.getEmptyTransformData(transformNodeId)
+    transformData.units = obj.units as string
+    transformData.matrix = this.getInstanceProxyTransform(obj)
+    return this.tree.parse({
+      id: transformNodeId,
+      raw: transformData,
+      atomic: false,
+      children: []
+    })
+  }
+
+  private async ConvertInstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    const definitionId = this.getInstanceProxyDefinitionId(obj)
+    if (!definitionId) {
+      Logger.warn(`Instance Proxy ${obj.id} has no definitionId`)
+      return
+    }
+    const definition = this.instanceDefinitionLookupTable[definitionId]
+    const transformNode = this.createTransformNode(obj)
+
+    this.tree.addNode(transformNode, node)
+    const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
+      definition.model.raw
+    )
+    for (const objectApplicationId of objectApplicationIds) {
+      const speckleData = this.instancedObjectsLookupTable[objectApplicationId]
+      // NOTE: see https://linear.app/speckle/issue/CNX-115/viewer-handle-gracefully-instances-with-elements-that-failed-to
+      // This prevents the viewer not loading anything if a instance component is missing from its defintion. This is a likely scenario from connectors; even though we're guarding against it we'll never be able to fully enforce it.
+      if (!speckleData) {
+        Logger.warn(
+          `Object ${objectApplicationId} is is missing from definition ${definitionId}. Someone probably sent an instance containing unsopprted elements - this is ok, do not panic.`
+        )
+        continue
+      }
+      const instancedNode = this.tree.parse({
+        id: this.getCompoundId(speckleData.id, this.instanceCounter++),
+        raw: speckleData,
+        atomic: false,
+        children: [],
+        instanced: true
+      })
+      this.tree.addNode(instancedNode, transformNode)
+      await this.convertToNode(speckleData, instancedNode)
+    }
+  }
+
+  public async convertInstances() {
+    /** uh, oh */
+    this.NodeConverterMapping.InstanceProxy = this.ConvertInstanceProxyToNode.bind(this)
+
+    /** Find the nodes that need to be 'consumed' */
+    const consumeApplicationIds: { [id: string]: TreeNode | null } = {}
+    let consumeApplicationIdsCount = 0
+    for (const k in this.instanceDefinitionLookupTable) {
+      const definition = this.instanceDefinitionLookupTable[k]
+      const objects = this.getInstanceProxyDefinitionObjects(definition.model.raw)
+      for (let i = 0; i < objects.length; i++) {
+        consumeApplicationIds[objects[i].toString()] = null
+        consumeApplicationIdsCount++
+      }
+    }
+
+    /** Do a short async walk */
+    await this.tree.walkAsync((node: TreeNode) => {
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (consumeApplicationIds[applicationId] !== undefined) {
+        consumeApplicationIds[applicationId] = node
+        consumeApplicationIdsCount--
+      }
+      /** Break out when all applicationIds are accounted for*/
+      if (consumeApplicationIdsCount === 0) return false
+      return true
+    }, this.subtree)
+
+    /** Consume them */
+    for (const k in consumeApplicationIds) {
+      const objectNode = consumeApplicationIds[k]
+      if (!objectNode) {
+        Logger.error(`Consumable applicationId ${k} could not be found`)
+        continue
+      }
+
+      /** Store the speckle object data */
+      this.instancedObjectsLookupTable[k] = objectNode.model.raw
+      /** This part is catering to color proxies source and
+       *  I hate this the most
+       *  We store the definition geometry (which can be an instance if nested) parent layer color
+       *  We do that because these get consumed, so they can no longer be accessed via the WorldTree
+       */
+      if (!this.instanceProxies[k]) {
+        this.instancedObjectsLookupTable[k].parentLayerApplicationId =
+          objectNode.parent.model.raw.applicationId
+      } else {
+        const definitionId = this.instanceProxies[k].model.raw.definitionId
+        const proxies = Object.values(this.instanceProxies)
+        proxies.forEach((value: TreeNode) => {
+          if (value.model.raw.definitionId === definitionId) {
+            value.model.raw.parentLayerApplicationId =
+              value.parent.model.raw.applicationId
+          }
+        })
+      }
+      /** Remove the instance from the list (if needed) */
+      delete this.instanceProxies[k]
+      /** Remove the node from the world tree */
+      this.tree.removeNode(objectNode, true)
+    }
+
+    let count = 0
+    /** Remaining instance proxies should all be valid */
+    for (const k in this.instanceProxies) {
+      const node = this.instanceProxies[k]
+      /** Create the final instances */
+      await this.convertToNode(node.model.raw, node)
+      count++
+      // if (count === 3) break
+    }
+  }
+
+  public async applyMaterials() {
+    let renderMaterialCount = Object.keys(this.renderMaterialMap).length
+    let colorCount = Object.keys(this.colorMap).length
+    if (renderMaterialCount === 0 && colorCount === 0) return
+
+    /** Do a short async walk */
+    await this.tree.walkAsync((node: TreeNode) => {
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (this.renderMaterialMap[applicationId] !== undefined) {
+        node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
+        renderMaterialCount--
+      }
+
+      /** For non-instanced objects just use the color if any is present */
+      if (this.colorMap[applicationId] !== undefined && !node.model.instanced) {
+        node.model.color = this.colorMap[applicationId].value
+        colorCount--
+      }
+      /** Break out when all applicationIds are accounted for*/
+      if (renderMaterialCount === 0 && colorCount === 0) return false
+      return true
+    }, this.subtree)
+
+    /** For instances, we need some additional parsing */
+    for (const k in this.instanceProxies) {
+      /** Find the maxDepth. This is weird because the InstanceProxy's `maxDepth` is more
+       *  like an `inverseMaxDepth`
+       */
+      const maxDepth = this.tree
+        .findAll(
+          (node: TreeNode) =>
+            this.getSpeckleType(node.model.raw) === SpeckleType.InstanceProxy,
+          this.instanceProxies[k]
+        )
+        .reduce((prev, current) =>
+          prev && prev.model.raw.maxDepth > current.model.raw.maxDepth ? prev : current
+        ).model.raw.maxDepth
+      /** Get all the leaf InstanceProxy nodes. There might be nested instances
+       *  bu we want the leaf ones
+       */
+      const instanceProxyNodes = this.tree.findAll(
+        (node: TreeNode) => node.model.raw.maxDepth === maxDepth,
+        this.instanceProxies[k]
+      )
+      /** Go over them */
+      for (let i = 0; i < instanceProxyNodes.length; i++) {
+        /** Get the color of the instance.
+         *  Or it's definition geometry's layer color  */
+        const instanceColor =
+          this.colorMap[instanceProxyNodes[i].model.raw.applicationId] ||
+          this.colorMap[instanceProxyNodes[i].model.raw.parentLayerApplicationId]
+        /** Get the geometry nodes */
+        const instancedNodes = instanceProxyNodes[i].children[0].children
+        for (let j = 0; j < instancedNodes.length; j++) {
+          /** Get the geometry definition's color
+           *  In the viewer the geometry definition is stored and shared across potential instances
+           *  as the speckle object in `raw`
+           */
+          const geometryColor = this.colorMap[instancedNodes[j].model.raw.applicationId]
+          /** Get the definition geometry's layer color */
+          const geometryLayerColor =
+            this.colorMap[instancedNodes[j].model.raw.parentLayerApplicationId]
+          /** If definition geometry has no color, use it's layer color */
+          if (!geometryColor) {
+            instancedNodes[j].model.color = geometryLayerColor?.value
+            /** If definition geometry color source is object or layer use the definition's color */
+          } else if (
+            geometryColor.source === 'object' ||
+            geometryColor.source === 'layer'
+          ) {
+            instancedNodes[j].model.color = geometryColor.value
+            /** If definition geometry color source is block, we need some extra stuff */
+          } else if (geometryColor.source === 'block') {
+            /** If there is an color for the instance and the source is object just use it */
+            if (instanceColor) {
+              if (instanceColor.source === 'object') {
+                instancedNodes[j].model.color = instanceColor.value
+                /** If there is a color for the instance and the source is block, search upwards */
+              } else if (instanceColor.source === 'block') {
+                /** Get the parent instance, or itself if it's not nested */
+                const parentInstance =
+                  this.tree
+                    .getAncestors(instanceProxyNodes[i])
+                    .find(
+                      (value: TreeNode) =>
+                        this.getSpeckleType(value.model.raw) ===
+                        SpeckleType.InstanceProxy
+                    ) || instanceProxyNodes[i]
+                /** Use the parent instance or self instance color */
+                const color = this.colorMap[parentInstance.model.raw.applicationId]
+                instancedNodes[j].model.color = color?.value
+              }
+            }
+          }
+        }
       }
     }
   }

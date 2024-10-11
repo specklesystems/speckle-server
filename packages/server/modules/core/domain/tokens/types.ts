@@ -1,5 +1,6 @@
 export const TokenResourceIdentifierType = {
-  Project: 'project'
+  Project: 'project',
+  Workspace: 'workspace'
 } as const
 
 export type TokenResourceIdentifierType =

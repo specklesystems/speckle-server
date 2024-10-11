@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col w-full">
     <div class="flex items-center justify-between h-6 mb-6">
-      <h2 class="h6 font-bold">Runs</h2>
+      <h2 class="h6 font-medium">Runs</h2>
       <FormButton
         v-if="!automation.isTestAutomation"
         :icon-left="ArrowPathIcon"

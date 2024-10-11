@@ -6,7 +6,8 @@
         <FormButton
           v-tippy="'Change filter'"
           text
-          size="xs"
+          color="subtle"
+          size="sm"
           :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
           class="capitalize"
           @click="showAllFilters = !showAllFilters"
@@ -15,12 +16,12 @@
             {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex gap-1 divide-x divide-outline-3">
+        <div class="flex divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
             text
-            size="xs"
-            class="flex gap-1"
+            size="sm"
+            class="flex gap-1 pr-2"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
@@ -32,12 +33,14 @@
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
-            size="xs"
+            class="pl-2"
+            size="sm"
+            color="subtle"
             text
             @click="toggleColors()"
           >
-            <IconColouringOutline v-if="!colors" class="w-4 h-4 text-primary" />
-            <IconColouring v-else class="w-4 h-4 text-primary" />
+            <IconColouringOutline v-if="!colors" class="w-4 h-4" />
+            <IconColouring v-else class="w-4 h-4" />
           </FormButton>
         </div>
       </div>
@@ -74,7 +77,7 @@
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += 30">
+          <FormButton size="sm" text full-width @click="itemCount += 30">
             View More ({{ relevantFiltersSearched.length - itemCount }})
           </FormButton>
         </div>
@@ -118,6 +121,10 @@ const showAllFilters = ref(false)
 const props = defineProps<{
   filters: PropertyInfo[]
 }>()
+
+const isRevitProperty = (key: string): boolean => {
+  return revitPropertyRegex.test(key)
+}
 
 const relevantFilters = computed(() => {
   return props.filters.filter((f) => {
@@ -233,10 +240,6 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   // removePropertyFilter()
   applyPropertyFilter()
-}
-
-const isRevitProperty = (key: string): boolean => {
-  return revitPropertyRegex.test(key)
 }
 
 const getPropertyName = (key: string): string => {

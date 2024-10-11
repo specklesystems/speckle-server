@@ -4,11 +4,14 @@ import {
   createObjects,
   getObjectChildren,
   getObjectChildrenQuery
-} from '../../services/objects'
+} from '@/modules/core/services/objects'
 
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getObject } from '@/modules/core/repositories/objects'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+
+const getObject = getObjectFactory({ db })
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
@@ -66,10 +69,10 @@ export = {
         context.resourceAccessRules
       )
 
-      const ids = await createObjects(
-        args.objectInput.streamId,
-        args.objectInput.objects
-      )
+      const ids = await createObjects({
+        streamId: args.objectInput.streamId,
+        objects: args.objectInput.objects
+      })
       return ids
     }
   }

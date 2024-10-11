@@ -2,12 +2,10 @@ import { truncateTables } from '@/test/hooks'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { StreamActivity, Users } from '@/modules/core/dbSchema'
 import {
-  createActivitySummary,
-  sendActivityNotifications
+  createActivitySummaryFactory,
+  sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
-import { createStream, deleteStream } from '@/modules/core/services/streams'
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
@@ -15,10 +13,76 @@ import {
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
 import { sleep } from '@/test/helpers'
+import {
+  getActivityFactory,
+  saveActivityFactory
+} from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import {
+  createStreamFactory,
+  deleteStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getUsers } from '@/modules/core/repositories/users'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
+
+const getStream = getStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const createActivitySummary = createActivitySummaryFactory({
+  getStream,
+  getActivity: getActivityFactory({ db })
+})
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const deleteStream = deleteStreamFactory({ db })
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {
@@ -32,12 +96,12 @@ describe('Activity summary @activity', () => {
   })
   describe('create activity summary', () => {
     it('returns null for non existing users', async () => {
-      const summary = await createActivitySummary(
-        'notAUserId',
-        ['someStreamIds'],
-        new Date(),
-        new Date()
-      )
+      const summary = await createActivitySummary({
+        userId: 'notAUserId',
+        streamIds: ['someStreamIds'],
+        start: new Date(),
+        end: new Date()
+      })
       expect(summary).to.be.null
     })
     it('no activity returns empty summary', async () => {
@@ -48,12 +112,12 @@ describe('Activity summary @activity', () => {
         )
       )
 
-      const summary = await createActivitySummary(
-        userA.id,
+      const summary = await createActivitySummary({
+        userId: userA.id,
         streamIds,
         start,
-        new Date()
-      )
+        end: new Date()
+      })
 
       expect(summary?.streamActivities).to.have.length(0)
     })
@@ -74,12 +138,12 @@ describe('Activity summary @activity', () => {
         message: 'foo'
       })
       await sleep(100)
-      const summary = await createActivitySummary(
-        userA.id,
+      const summary = await createActivitySummary({
+        userId: userA.id,
         streamIds,
         start,
-        new Date()
-      )
+        end: new Date()
+      })
 
       expect(summary?.streamActivities).to.have.length(1)
     })
@@ -100,13 +164,13 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
-      await deleteStream({ streamId })
-      const summary = await createActivitySummary(
-        userA.id,
-        [streamId],
+      await deleteStream(streamId)
+      const summary = await createActivitySummary({
+        userId: userA.id,
+        streamIds: [streamId],
         start,
-        new Date()
-      )
+        end: new Date()
+      })
 
       expect(summary?.streamActivities).to.have.length(1)
       expect(summary?.streamActivities[0].stream).to.be.null
@@ -137,12 +201,10 @@ describe('Activity summary @activity', () => {
   describe('send activity notifications', () => {
     it('sends no notifications if there are no active streams', async () => {
       const notificationPublisher = new FakeNotificationPublisher()
-      await sendActivityNotifications(
-        new Date(),
-        new Date(),
-        notificationPublisher.publish.bind(notificationPublisher),
-        async () => []
-      )
+      await sendActivityNotificationsFactory({
+        publishNotification: notificationPublisher.publish.bind(notificationPublisher),
+        getActiveUserStreams: async () => []
+      })(new Date(), new Date())
 
       expect(notificationPublisher.notifications.length).to.equal(0)
     })
@@ -153,12 +215,10 @@ describe('Activity summary @activity', () => {
         { userId: 'boo', streamIds: ['tic', 'tac', 'toe'] }
       ]
       const notificationPublisher = new FakeNotificationPublisher()
-      await sendActivityNotifications(
-        new Date(),
-        new Date(),
-        notificationPublisher.publish.bind(notificationPublisher),
-        async () => userStreams
-      )
+      await sendActivityNotificationsFactory({
+        publishNotification: notificationPublisher.publish.bind(notificationPublisher),
+        getActiveUserStreams: async () => userStreams
+      })(new Date(), new Date())
 
       expect(
         notificationPublisher.notifications
