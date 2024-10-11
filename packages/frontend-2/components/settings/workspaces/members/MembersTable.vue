@@ -29,7 +29,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item" />
+          <UserAvatar hide-tooltip :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <div
             v-if="
@@ -219,7 +219,7 @@ const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
   // Allow role change if the active user is an admin
-  if (isWorkspaceAdmin.value) {
+  if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
     baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
   }
 

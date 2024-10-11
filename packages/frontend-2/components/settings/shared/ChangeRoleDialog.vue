@@ -4,10 +4,11 @@
     <div class="flex flex-col gap-4 mb-4 -mt-1">
       <FormSelectWorkspaceRoles
         v-model="newRole"
-        label="Role"
+        label="New role"
         fully-control-value
         :disabled-items="disabledItems"
         show-label
+        show-description
       />
       <div
         v-if="

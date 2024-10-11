@@ -345,9 +345,9 @@ input WorkspaceProjectsFilter {
 
 input WorkspaceTeamFilter {
   """
-  Limit team members to provided role
+  Limit team members to provided role(s)
   """
-  role: String
+  roles: [String!]
   """
   Search for team members by name or email
   """

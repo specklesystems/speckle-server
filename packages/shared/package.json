@@ -12,7 +12,7 @@
   "main": "./dist/commonjs/index.js",
   "types": "./dist/commonjs/index.d.ts",
   "scripts": {
-    "build": "NODE_ENV=production tshy",
+    "build": "echo \"Building shared...\" && NODE_ENV=production tshy && echo \"Done building shared!\"",
     "dev": "tshy --watch",
     "prepack": "yarn build",
     "lint:eslint": "eslint .",
