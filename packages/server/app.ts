@@ -365,7 +365,15 @@ export async function init() {
   }
 
   app.use(corsMiddleware())
-  app.use(express.json({ limit: '100mb' }))
+  // there are some paths, that need the raw body
+  app.use((req, res, next) => {
+    const rawPaths = ['/api/v1/billing/webhooks']
+    if (rawPaths.includes(req.path)) {
+      express.raw({ type: 'application/json' })(req, res, next)
+    } else {
+      express.json({ limit: '100mb' })(req, res, next)
+    }
+  })
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)

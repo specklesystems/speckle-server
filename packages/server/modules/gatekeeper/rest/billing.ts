@@ -139,7 +139,12 @@ router.post('/api/v1/billing/webhooks', async (req, res) => {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret)
+    event = stripe.webhooks.constructEvent(
+      // yes, the express json middleware auto parses the payload and stri need it in a string
+      req.body,
+      sig,
+      endpointSecret
+    )
   } catch (err) {
     res.status(400).send(`Webhook Error: ${ensureError(err).message}`)
     return
