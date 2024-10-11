@@ -15,7 +15,10 @@ import { db } from '@/db/knex'
 import { addStreamInviteSentOutActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { addStreamAccessRequestedActivityFactory } from '@/modules/activitystream/services/accessRequestActivity'
+import {
+  addStreamAccessRequestDeclinedActivityFactory,
+  addStreamAccessRequestedActivityFactory
+} from '@/modules/activitystream/services/accessRequestActivity'
 
 let scheduledTask: ReturnType<typeof scheduleExecution> | null = null
 let quitEventListeners: Optional<ReturnType<typeof initializeEventListeners>> =
@@ -72,7 +75,11 @@ const activityModule: SpeckleModule = {
       initializeEventListenerFactory({
         addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
           saveActivity: saveActivityFactory({ db })
-        })
+        }),
+        addStreamAccessRequestDeclinedActivity:
+          addStreamAccessRequestDeclinedActivityFactory({
+            saveActivity: saveActivityFactory({ db })
+          })
       })()
       if (weeklyEmailDigestEnabled())
         scheduledTask = scheduleWeeklyActivityNotifications()

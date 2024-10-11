@@ -5,9 +5,11 @@ import {
   AccessRequestsEventsPayloads
 } from '@/modules/accessrequests/events/emitter'
 import { AccessRequestType } from '@/modules/accessrequests/repositories'
-import { AddStreamAccessRequestedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddStreamAccessRequestDeclinedActivity,
+  AddStreamAccessRequestedActivity
+} from '@/modules/activitystream/domain/operations'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamAccessRequestDeclinedActivity } from '@/modules/activitystream/services/accessRequestActivity'
 import {
   UsersEmitter,
   UsersEvents,
@@ -48,27 +50,31 @@ const onServerAccessRequestCreatedFactory =
     }
   }
 
-async function onServerAccessRequestFinalized(
-  payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]
-) {
-  const {
-    approved,
-    finalizedBy,
-    request: { resourceId, resourceType, requesterId }
-  } = payload
-  if (!resourceId) return
+const onServerAccessRequestFinalizedFactory =
+  ({
+    addStreamAccessRequestDeclinedActivity
+  }: {
+    addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
+  }) =>
+  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]) => {
+    const {
+      approved,
+      finalizedBy,
+      request: { resourceId, resourceType, requesterId }
+    } = payload
+    if (!resourceId) return
 
-  if (resourceType === AccessRequestType.Stream) {
-    // If user was added to stream, an activity stream item was already added from 'addOrUpdateStreamCollaborator'
-    if (approved) return
+    if (resourceType === AccessRequestType.Stream) {
+      // If user was added to stream, an activity stream item was already added from 'addOrUpdateStreamCollaborator'
+      if (approved) return
 
-    await addStreamAccessRequestDeclinedActivity({
-      streamId: resourceId,
-      requesterId,
-      declinerId: finalizedBy
-    })
+      await addStreamAccessRequestDeclinedActivity({
+        streamId: resourceId,
+        requesterId,
+        declinerId: finalizedBy
+      })
+    }
   }
-}
 
 /**
  * Initialize event listener for tracking various Speckle events and responding
@@ -76,9 +82,11 @@ async function onServerAccessRequestFinalized(
  */
 export const initializeEventListenerFactory =
   ({
-    addStreamAccessRequestedActivity
+    addStreamAccessRequestedActivity,
+    addStreamAccessRequestDeclinedActivity
   }: {
     addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
+    addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
   }) =>
   () => {
     const quitCbs = [
@@ -89,7 +97,9 @@ export const initializeEventListenerFactory =
       ),
       AccessRequestsEmitter.listen(
         AccessRequestsEvents.Finalized,
-        onServerAccessRequestFinalized
+        onServerAccessRequestFinalizedFactory({
+          addStreamAccessRequestDeclinedActivity
+        })
       )
     ]
 

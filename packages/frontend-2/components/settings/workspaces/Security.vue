@@ -133,6 +133,7 @@ import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { blockedDomains } from '@speckle/shared'
+import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
