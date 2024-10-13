@@ -28,7 +28,10 @@ import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
 import { noop } from 'lodash'
 import { OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
-import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  getWorkspaceBySlugFactory,
+  getWorkspaceCollaboratorsFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
@@ -134,7 +137,8 @@ router.get(
         db,
         decrypt: decryptor.decrypt
       })({ workspaceId: params.workspaceSlug })
-      if (!providerMetadata) throw new Error('No SSO provider registered for the workspace')
+      if (!providerMetadata)
+        throw new Error('No SSO provider registered for the workspace')
 
       // Redirect to OIDC provider to continue auth flow
       const { provider } = providerMetadata
@@ -291,12 +295,19 @@ router.get(
       if (!ssoProviderUserInfo || !ssoProviderUserInfo.email)
         throw new Error('This should never happen, we are asking for an email claim')
 
+      // Get information about the workspace we are signing in to
+      const workspace = await getWorkspaceBySlugFactory({ db })({
+        workspaceSlug: req.params.workspaceSlug
+      })
+      if (!workspace) throw new WorkspaceNotFoundError()
+
+      const workspaceRoles = await getWorkspaceCollaboratorsFactory({ db })({
+        workspaceId: workspace.id,
+        limit: 100
+      })
+
       if (isValidationFlow) {
         // OIDC configuration verification flow: the user is attempting to configure SSO for their workspace
-        const workspace = await getWorkspaceBySlugFactory({ db })({
-          workspaceSlug: req.params.workspaceSlug
-        })
-        if (!workspace) throw new WorkspaceNotFoundError()
 
         // Only workspace admins may configure SSO
         await authorizeResolver(
@@ -347,14 +358,19 @@ router.get(
         const userEmail = await findEmailFactory({ db })({
           email: ssoProviderUserInfo.email
         })
-        const existingSpeckleUser: Pick<UserRecord, 'id' | 'email'> | null = await getUser(
-          userEmail?.userId
-        )
+        const existingSpeckleUser: Pick<UserRecord, 'id' | 'email'> | null =
+          await getUser(userEmail?.userId)
+
+        // TODO: Validate link between SSO user email and Speckle user
+        // Link occurs when an already signed-in user signs in with SSO
+        // Create link here implicitly if conditions are met and no link exists already
 
         if (!currentSessionUser) {
           if (!existingSpeckleUser) {
             // Sign up flow with SSO:
-            // No session user, and no existing user with given SSO provider email
+            // User is not signed in, and no Speckle user is associated with SSO provider user
+
+            // Check if user has email-based invite to given workspace
 
             // let invite
             // if (!req.inviteToken) {
@@ -373,7 +389,7 @@ router.get(
             // GO AWAY!!!!
             //}
 
-            // Create speckle user
+            // Create Speckle user
             const { name, email, email_verified } = ssoProviderUserInfo
 
             if (!email_verified) {
@@ -387,15 +403,17 @@ router.get(
             }
             const newSpeckleUserId = await createUser(newSpeckleUser)
 
-            // Link SSO provider email with user email
+            // Add user to workspace with role specified in invite
 
             // Assert sign in
-            req.user = { id: newSpeckleUserId, email: newSpeckleUser.email, isNewUser: true }
+            req.user = {
+              id: newSpeckleUserId,
+              email: newSpeckleUser.email,
+              isNewUser: true
+            }
           } else {
             // Sign in flow with SSO:
-            // No session user, but existing user with given SSO provider email
-
-            // TODO: Validate link between SSO provider user and existing speckle user
+            // User is not signed in, but there is a Speckle user associated with the SSO user
 
             // Assert sign in
             req.user = { id: existingSpeckleUser.id, email: existingSpeckleUser.email }
@@ -403,22 +421,16 @@ router.get(
         } else {
           if (!existingSpeckleUser) {
             // Sign in flow with SSO:
-            // Active session user, but no existing user with given SSO provider email
-
-            // Link SSO provider email with speckle user on session
-            // (1) add to user emails
-            // (2) store link between speckle user and SSO provider user
-
-            // Perform sign in
+            // User is already signed in, but no Speckle user is associated with the SSO user
+            // Continue to sign in
           } else {
             // Sign in flow with SSO:
-            // Active session user, and existing user with given SSO provider email
-
+            // User is already signed in, and there is already a Speckle user associated with the SSO user
             // Verify session user id matches existing user id
           }
         }
 
-        // Verify req.user is part of the workspace
+        // Confirm that req.user is a member of the given workspace
 
         // Update timeout for SSO session
 
@@ -427,7 +439,9 @@ router.get(
           `workspaces/${req.params.workspaceSlug}`
         ]
         if (isValidationFlow) {
-          redirectUrlFragments.push(`?settings=workspace/security&workspace=${workspaceSlug}`)
+          redirectUrlFragments.push(
+            `?settings=workspace/security&workspace=${workspaceSlug}`
+          )
         }
         req.authRedirectPath = redirectUrlFragments.join()
 
