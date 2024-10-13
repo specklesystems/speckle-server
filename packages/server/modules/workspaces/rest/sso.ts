@@ -92,12 +92,20 @@ const ssoVerificationStatusKey = 'ssoVerificationStatus'
 const buildErrorUrl = ({
   err,
   url,
-  searchParams
+  searchParams,
+  isValidationFlow
 }: {
   err: unknown
   url: URL
-  searchParams?: Record<string, string>
+  searchParams?: Record<string, string>,
+  isValidationFlow: boolean
 }): URL => {
+  // TODO: Redirect to workspace-specific sign in page
+  if (!isValidationFlow) {
+    url.pathname = '/authn/login'
+    return url
+  }
+
   const settingsSearch = url.searchParams.get('settings')
   url.searchParams.forEach((key) => {
     url.searchParams.delete(key)
@@ -221,7 +229,8 @@ router.get(
       const url = buildErrorUrl({
         err,
         url: buildFinalizeUrl(params.workspaceSlug, true),
-        searchParams: query
+        searchParams: query,
+        isValidationFlow: true
       })
       res?.redirect(url.toString())
     }
@@ -233,7 +242,6 @@ router.get(
 // - add new user to workspace with role
 // - return new provider id on create
 // - `user_sso_sessions` table `lifespan` => `validUntil`
-// - Better catch block error messages
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
@@ -484,16 +492,18 @@ router.get(
         return next()
       }
     } catch (err) {
+      const warnMessage = isValidationFlow ?
+        `Failed to verify OIDC sso provider for workspace ${workspaceSlug}`
+        : `Failed to sign in to ${workspaceSlug}`
       logger.warn(
         { error: err },
-        // this is only valid for the validate errors, not really for login !!!!
-        `Failed to verify OIDC sso provider for workspace ${workspaceSlug}`
+        warnMessage
       )
-      // in case of this is a login error, we need to redirect to the login page with the error
       redirectUrl = buildErrorUrl({
         err,
         url: redirectUrl,
-        searchParams: provider || undefined
+        searchParams: provider || undefined,
+        isValidationFlow
       })
       res.redirect(redirectUrl.toString())
     }
