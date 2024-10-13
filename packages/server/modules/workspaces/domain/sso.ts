@@ -44,7 +44,7 @@ export type UserSsoSession = {
   lifespan: number
 }
 
-export type StoreUserSsoSession = (args: {
+export type UpsertUserSsoSession = (args: {
   userSsoSession: UserSsoSession
 }) => Promise<void>
 

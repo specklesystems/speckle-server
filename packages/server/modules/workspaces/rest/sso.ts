@@ -19,7 +19,7 @@ import {
   getOIDCProviderFactory,
   associateSsoProviderWithWorkspaceFactory,
   storeProviderRecordFactory,
-  storeUserSsoSessionFactory,
+  upsertUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
@@ -228,6 +228,12 @@ router.get(
   }
 )
 
+// TODO:
+// - tryGetWorkspaceInvite
+// - add new user to workspace with role
+// - return new provider id on create
+// - `user_sso_sessions` table `lifespan` => `validUntil`
+// - Better catch block error messages
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
@@ -244,6 +250,7 @@ router.get(
     const isValidationFlow = req.query.validate === 'true'
 
     let provider: OIDCProvider | null = null
+    let providerId: string | null = null
     let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
 
     // TODO: Billing check - verify workspace has SSO enabled
@@ -280,6 +287,7 @@ router.get(
         if (!providerMetadata?.provider) throw new Error('Could not find SSO provider')
 
         provider = providerMetadata.provider
+        providerId = providerMetadata.providerId
       }
 
       const { client } = await initializeIssuerAndClient({ provider })
@@ -301,11 +309,6 @@ router.get(
       })
       if (!workspace) throw new WorkspaceNotFoundError()
 
-      const workspaceRoles = await getWorkspaceCollaboratorsFactory({ db })({
-        workspaceId: workspace.id,
-        limit: 100
-      })
-
       if (isValidationFlow) {
         // OIDC configuration verification flow: the user is attempting to configure SSO for their workspace
 
@@ -320,6 +323,7 @@ router.get(
 
         // Write SSO configuration
         const trx = await db.transaction()
+        // TODO: Return new provider record and store id
         const saveSsoProviderRegistration = saveSsoProviderRegistrationFactory({
           getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
             db: trx,
@@ -332,7 +336,7 @@ router.get(
             db,
             encrypt: encryptor.encrypt
           }),
-          storeUserSsoSession: storeUserSsoSessionFactory({ db: trx }),
+          storeUserSsoSession: upsertUserSsoSessionFactory({ db: trx }),
           createUserEmail: createUserEmailFactory({ db: trx }),
           updateUserEmail: updateUserEmailFactory({ db: trx }),
           findEmailsByUserId: findEmailsByUserIdFactory({ db: trx })
@@ -368,7 +372,7 @@ router.get(
         if (!currentSessionUser) {
           if (!existingSpeckleUser) {
             // Sign up flow with SSO:
-            // User is not signed in, and no Speckle user is associated with SSO provider user
+            // User is not signed in, and no Speckle user is associated with SSO user
 
             // Check if user has email-based invite to given workspace
 
@@ -427,12 +431,44 @@ router.get(
             // Sign in flow with SSO:
             // User is already signed in, and there is already a Speckle user associated with the SSO user
             // Verify session user id matches existing user id
+            if (currentSessionUser.id !== existingSpeckleUser.id) {
+              throw new Error('SSO user already associated with another Speckle account')
+            }
           }
         }
 
         // Confirm that req.user is a member of the given workspace
+        const workspaceRoles = await getWorkspaceCollaboratorsFactory({ db })({
+          workspaceId: workspace.id,
+          limit: 100
+        })
 
-        // Update timeout for SSO session
+        if (!req.user || !req.user?.id) {
+          // This should not happen
+          throw new Error('Unhandled failure to sign in')
+        }
+
+        if (!workspaceRoles.some((role) => role.id === req.user?.id)) {
+          throw new Error('User is not a member of the given workspace and cannot sign in with SSO')
+        }
+
+        // Update validUntil for SSO session
+        if (!providerId) {
+          throw new Error('Unhandled failure to find SSO provider')
+        }
+
+        const validUntil = new Date()
+        validUntil.setDate(validUntil.getDate() + 7)
+
+        await upsertUserSsoSessionFactory({ db })({
+          userSsoSession: {
+            userId: req.user.id,
+            providerId,
+            createdAt: new Date(),
+            // TODO: Use `validUntil`
+            lifespan: 100
+          }
+        })
 
         // Construct final redirect
         const redirectUrlFragments: string[] = [
