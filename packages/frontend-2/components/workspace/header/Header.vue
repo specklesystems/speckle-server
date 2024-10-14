@@ -26,7 +26,7 @@
             v-if="hasOverflow"
             color="subtle"
             size="sm"
-            class="md:opacity-0 group-hover:opacity-100 md:pointer-events-none group-hover:pointer-events-auto items-center text-foreground text-body-2xs"
+            class="md:invisible group-hover:visible items-center text-foreground text-body-2xs"
             @click="showDescriptionDialog"
           >
             Read more
