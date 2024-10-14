@@ -65,6 +65,16 @@ export type GetStreamCollaborators = (
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
+export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
+  {
+    role: string
+    id: string
+    name: string
+    company: string
+    avatar: string
+  }[]
+>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateInput,
   options?: Partial<{

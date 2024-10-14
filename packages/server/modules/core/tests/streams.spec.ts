@@ -1,6 +1,4 @@
 import { expect } from 'chai'
-import { getStreamUsers } from '@/modules/core/services/streams'
-
 import { createObject } from '@/modules/core/services/objects'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
@@ -22,6 +20,7 @@ import {
   deleteStreamFactory,
   getStreamFactory,
   grantStreamPermissionsFactory,
+  legacyGetStreamUsersFactory,
   markBranchStreamUpdated,
   markCommitStreamUpdated,
   revokeStreamPermissionsFactory,
@@ -188,6 +187,7 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {

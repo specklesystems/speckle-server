@@ -1,5 +1,4 @@
 import {
-  getStreamUsers,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
   getOwnedFavoritesCount
@@ -36,7 +35,8 @@ import {
   getFavoritedStreamsPageFactory,
   getStreamCollaboratorsFactory,
   canUserFavoriteStreamFactory,
-  setStreamFavoritedFactory
+  setStreamFavoritedFactory,
+  legacyGetStreamUsersFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -182,6 +182,7 @@ const favoriteStream = favoriteStreamFactory({
   setStreamFavorited: setStreamFavoritedFactory({ db }),
   getStream
 })
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
