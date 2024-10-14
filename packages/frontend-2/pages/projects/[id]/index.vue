@@ -29,14 +29,9 @@
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
-            <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-            <FormButton
-              v-if="canEdit"
-              color="outline"
-              :to="projectCollaboratorsRoute(project.id)"
-            >
-              Manage
-            </FormButton>
+            <NuxtLink :to="canEdit ? projectCollaboratorsRoute(project.id) : undefined">
+              <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
+            </NuxtLink>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
