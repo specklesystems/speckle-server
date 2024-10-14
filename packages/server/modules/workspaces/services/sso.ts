@@ -55,16 +55,16 @@ export const startOIDCSsoProviderValidationFactory =
     storeOIDCProviderValidationRequest: StoreOIDCProviderValidationRequest
     generateCodeVerifier: () => string
   }) =>
-    async ({ provider }: { provider: OIDCProvider }): Promise<string> => {
-      // get client information
-      const providerAttributes = await getOIDCProviderAttributes({ provider })
-      // validate issuer and client data
-      validateOIDCProviderAttributes(providerAttributes)
-      // store provider validation with an id token
-      const codeVerifier = generateCodeVerifier()
-      await storeOIDCProviderValidationRequest({ token: codeVerifier, provider })
-      return codeVerifier
-    }
+  async ({ provider }: { provider: OIDCProvider }): Promise<string> => {
+    // get client information
+    const providerAttributes = await getOIDCProviderAttributes({ provider })
+    // validate issuer and client data
+    validateOIDCProviderAttributes(providerAttributes)
+    // store provider validation with an id token
+    const codeVerifier = generateCodeVerifier()
+    await storeOIDCProviderValidationRequest({ token: codeVerifier, provider })
+    return codeVerifier
+  }
 
 export const saveSsoProviderRegistrationFactory =
   ({
@@ -84,70 +84,72 @@ export const saveSsoProviderRegistrationFactory =
     updateUserEmail: UpdateUserEmail
     findEmailsByUserId: FindEmailsByUserId
   }) =>
-    async ({
+  async ({
+    provider,
+    workspaceId,
+    userId,
+    ssoProviderUserInfo
+  }: {
+    provider: OIDCProvider
+    userId: string
+    workspaceId: string
+    ssoProviderUserInfo: { email: string }
+  }): Promise<string> => {
+    // create OIDC provider record with ID
+    const providerId = cryptoRandomString({ length: 10 })
+    const providerRecord: OIDCProviderRecord = {
       provider,
-      workspaceId,
-      userId,
-      ssoProviderUserInfo
-    }: {
-      provider: OIDCProvider
-      userId: string
-      workspaceId: string
-      ssoProviderUserInfo: { email: string }
-    }) => {
-      // create OIDC provider record with ID
-      const providerId = cryptoRandomString({ length: 10 })
-      const providerRecord: OIDCProviderRecord = {
-        provider,
-        providerType: 'oidc',
+      providerType: 'oidc',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      id: providerId
+    }
+    const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
+    // replace with a proper error
+    if (maybeExistingSsoProvider)
+      throw new Error('Workspace already has an SSO provider')
+    await storeProviderRecord({ providerRecord })
+    // associate provider with workspace
+    await associateSsoProviderWithWorkspace({ workspaceId, providerId })
+    // create and associate userSso session
+    // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
+    await upsertUserSsoSession({
+      userSsoSession: {
+        userId,
+        providerId,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        id: providerId
+        validUntil: getDefaultSsoSessionExpirationDate()
       }
-      const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
-      // replace with a proper error
-      if (maybeExistingSsoProvider)
-        throw new Error('Workspace already has an SSO provider')
-      await storeProviderRecord({ providerRecord })
-      // associate provider with workspace
-      await associateSsoProviderWithWorkspace({ workspaceId, providerId })
-      // create and associate userSso session
-      // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
-      await upsertUserSsoSession({
-        userSsoSession: {
+    })
+
+    const currentUserEmails = await findEmailsByUserId({ userId })
+    const currentSsoEmailEntry = currentUserEmails.find(
+      (entry) => entry.email === ssoProviderUserInfo.email
+    )
+
+    if (!currentSsoEmailEntry) {
+      await createUserEmail({
+        userEmail: {
           userId,
-          providerId,
-          createdAt: new Date(),
-          validUntil: getDefaultSsoSessionExpirationDate()
+          email: ssoProviderUserInfo.email,
+          verified: true
         }
       })
-
-      const currentUserEmails = await findEmailsByUserId({ userId })
-      const currentSsoEmailEntry = currentUserEmails.find(
-        (entry) => entry.email === ssoProviderUserInfo.email
-      )
-
-      if (!currentSsoEmailEntry) {
-        await createUserEmail({
-          userEmail: {
-            userId,
-            email: ssoProviderUserInfo.email,
-            verified: true
-          }
-        })
-        return
-      }
-
-      if (!currentSsoEmailEntry.verified) {
-        await updateUserEmail({
-          query: {
-            id: currentSsoEmailEntry.id,
-            userId
-          },
-          update: {
-            verified: true
-          }
-        })
-        return
-      }
+      return providerId
     }
+
+    if (!currentSsoEmailEntry.verified) {
+      await updateUserEmail({
+        query: {
+          id: currentSsoEmailEntry.id,
+          userId
+        },
+        update: {
+          verified: true
+        }
+      })
+      return providerId
+    }
+
+    return providerId
+  }

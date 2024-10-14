@@ -27,10 +27,15 @@ import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
 import { noop } from 'lodash'
-import { getDefaultSsoSessionExpirationDate, OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
+import {
+  getDefaultSsoSessionExpirationDate,
+  OIDCProvider,
+  oidcProvider
+} from '@/modules/workspaces/domain/sso'
 import {
   getWorkspaceBySlugFactory,
-  getWorkspaceCollaboratorsFactory
+  getWorkspaceCollaboratorsFactory,
+  upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
@@ -49,6 +54,8 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 
 const router = Router()
 
@@ -97,7 +104,7 @@ const buildErrorUrl = ({
 }: {
   err: unknown
   url: URL
-  searchParams?: Record<string, string>,
+  searchParams?: Record<string, string>
   isValidationFlow: boolean
 }): URL => {
   // TODO: Redirect to workspace-specific sign in page
@@ -237,10 +244,6 @@ router.get(
   }
 )
 
-// TODO:
-// - tryGetWorkspaceInvite
-// - add new user to workspace with role
-// - return new provider id on create
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
@@ -348,7 +351,7 @@ router.get(
           updateUserEmail: updateUserEmailFactory({ db: trx }),
           findEmailsByUserId: findEmailsByUserIdFactory({ db: trx })
         })
-        await withTransaction(
+        providerId = await withTransaction(
           saveSsoProviderRegistration({
             provider,
             userId,
@@ -382,23 +385,20 @@ router.get(
             // User is not signed in, and no Speckle user is associated with SSO user
 
             // Check if user has email-based invite to given workspace
+            const invite = await findInviteFactory({ db })({
+              token: req.context.token, // TODO: Is this the invite token?
+              target: ssoProviderUserInfo.email,
+              resourceFilter: {
+                resourceId: workspace.id, // TODO: Are invites still id-based?
+                resourceType: 'workspace'
+              }
+            })
 
-            // let invite
-            // if (!req.inviteToken) {
-            // try to get an invite from the db, based on the oidc user info email
-            // -> invite
-            // } else {
-            // get the invite from the db based on the invite token
-            // -> invite
-            //}
-            // if (invite) {
-            // make sure, the invite is an invite to the current workspace and it doesn't target a user,
-            // the target must be, the same email,
-            // that comes back from the oidc provider
-            // use invite if its not part of the finalize flow?!
-            //} else {
-            // GO AWAY!!!!
-            //}
+            if (!invite) {
+              throw new Error(
+                'Cannot sign up with SSO without a valid workspace invite.'
+              )
+            }
 
             // Create Speckle user
             const { name, email, email_verified } = ssoProviderUserInfo
@@ -415,6 +415,16 @@ router.get(
             const newSpeckleUserId = await createUser(newSpeckleUser)
 
             // Add user to workspace with role specified in invite
+            const { role: workspaceRole } = invite.resource
+
+            if (!isWorkspaceRole(workspaceRole)) throw new Error('Invalid role')
+
+            await upsertWorkspaceRoleFactory({ db })({
+              userId: newSpeckleUserId,
+              workspaceId: workspace.id,
+              role: workspaceRole,
+              createdAt: new Date()
+            })
 
             // Assert sign in
             req.user = {
@@ -439,7 +449,9 @@ router.get(
             // User is already signed in, and there is already a Speckle user associated with the SSO user
             // Verify session user id matches existing user id
             if (currentSessionUser.id !== existingSpeckleUser.id) {
-              throw new Error('SSO user already associated with another Speckle account')
+              throw new Error(
+                'SSO user already associated with another Speckle account'
+              )
             }
           }
         }
@@ -456,7 +468,9 @@ router.get(
         }
 
         if (!workspaceRoles.some((role) => role.id === req.user?.id)) {
-          throw new Error('User is not a member of the given workspace and cannot sign in with SSO')
+          throw new Error(
+            'User is not a member of the given workspace and cannot sign in with SSO'
+          )
         }
 
         // Update validUntil for SSO session
@@ -487,13 +501,10 @@ router.get(
         return next()
       }
     } catch (err) {
-      const warnMessage = isValidationFlow ?
-        `Failed to verify OIDC sso provider for workspace ${workspaceSlug}`
+      const warnMessage = isValidationFlow
+        ? `Failed to verify OIDC sso provider for workspace ${workspaceSlug}`
         : `Failed to sign in to ${workspaceSlug}`
-      logger.warn(
-        { error: err },
-        warnMessage
-      )
+      logger.warn({ error: err }, warnMessage)
       redirectUrl = buildErrorUrl({
         err,
         url: redirectUrl,
