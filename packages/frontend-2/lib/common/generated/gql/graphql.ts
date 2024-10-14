@@ -4507,12 +4507,6 @@ export type WorkspaceInviteDiscoverableWorkspaceBanner_WorkspaceFragment = { __t
 
 export type WorkspacePageVersionCount_WorkspaceVersionsCountFragment = { __typename?: 'WorkspaceVersionsCount', current: number, max: number };
 
-export type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment = { __typename?: 'DiscoverableWorkspace', id: string, name: string, description?: string | null, logo?: string | null, defaultLogoIndex: number };
-
-export type WorkspaceInviteDiscoverableWorkspaceBanner_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, description?: string | null, createdAt: string, updatedAt: string, logo?: string | null, defaultLogoIndex: number, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean };
-
-export type WorkspacePageVersionCount_WorkspaceVersionsCountFragment = { __typename?: 'WorkspaceVersionsCount', current: number, max: number };
-
 export type ActiveUserMainMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -5635,10 +5629,6 @@ export type OnViewerCommentsUpdatedSubscription = { __typename?: 'Subscription',
 export type LinkableCommentFragment = { __typename?: 'Comment', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> };
 
 export type UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, token?: string | null, workspaceId: string, workspaceSlug: string, user?: { __typename?: 'LimitedUser', id: string } | null };
-
-export type WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string };
-
-export type WorkspaceMixpanelUpdateGroup_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, description?: string | null, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean, billing?: { __typename?: 'WorkspaceBilling', cost: { __typename?: 'WorkspaceCost', total: number }, versionsCount: { __typename?: 'WorkspaceVersionsCount', current: number, max: number } } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string }> } };
 
 export type WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string };
 
