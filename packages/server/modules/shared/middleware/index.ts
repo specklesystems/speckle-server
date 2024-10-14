@@ -5,7 +5,7 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction, Handler } from 'express'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { validateToken } from '@/modules/core/services/tokens'
@@ -26,6 +26,7 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
+import { subscriptionLogger } from '@/logging/logging'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -122,9 +123,15 @@ export async function authContextMiddleware(
   if (!authContext.auth && authContext.err) {
     let message = 'Unknown Auth context error'
     let status = 500
-    message = authContext.err?.message || message
-    if (authContext.err instanceof UnauthorizedError) status = 401
-    if (authContext.err instanceof ForbiddenError) status = 403
+    if (authContext.err instanceof UnauthorizedError) {
+      status = 401
+      message = authContext.err?.message || message
+    }
+    if (authContext.err instanceof ForbiddenError) {
+      status = 403
+      message = authContext.err?.message || message
+    }
+    if (status === 500) req.log.error({ err: authContext.err }, 'Auth context error')
     return res.status(status).json({ error: message })
   }
   req.context = authContext
@@ -150,7 +157,7 @@ export async function buildContext({
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
-  token: Nullable<string>
+  token?: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
   const ctx =
@@ -158,7 +165,7 @@ export async function buildContext({
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
   const log = Observability.extendLoggerComponent(
-    req?.log || Observability.getLogger(),
+    req?.log || subscriptionLogger,
     'graphql'
   )
 
@@ -181,18 +188,16 @@ export async function buildContext({
 /**
  * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
  */
-export async function mixpanelTrackerHelperMiddleware(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) {
-  const ctx = req.context
-  const user = ctx.userId ? await getUser(ctx.userId) : null
-  const mp = mixpanel({ userEmail: user?.email, req })
+export const mixpanelTrackerHelperMiddlewareFactory =
+  (deps: { getUser: typeof getUser }): Handler =>
+  async (req: Request, _res: Response, next: NextFunction) => {
+    const ctx = req.context
+    const user = ctx.userId ? await deps.getUser(ctx.userId) : null
+    const mp = mixpanel({ userEmail: user?.email, req })
 
-  req.mixpanel = mp
-  next()
-}
+    req.mixpanel = mp
+    next()
+  }
 
 const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 /**

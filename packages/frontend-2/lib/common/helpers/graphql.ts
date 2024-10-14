@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { isUndefinedOrVoid } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
+import { isNullOrUndefined, isUndefinedOrVoid } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type {
   FetchResult,
@@ -13,23 +13,56 @@ import type {
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
-import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
-import type { Modifier, Reference } from '@apollo/client/cache'
-import type { PartialDeep } from 'type-fest'
+import {
+  flatten,
+  has,
+  isFunction,
+  isString,
+  isArray,
+  intersection,
+  get,
+  set,
+  cloneDeep,
+  isObjectLike
+} from 'lodash-es'
+import type { Modifier, ModifierDetails, Reference } from '@apollo/client/cache'
+import type { Get, PartialDeep, Paths, ReadonlyDeep, Tagged } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 import dayjs from 'dayjs'
 import { base64Encode } from '~/lib/common/helpers/encodeDecode'
+import type { ErrorResponse } from '@apollo/client/link/error'
+import type {
+  AllObjectFieldArgTypes,
+  AllObjectTypes
+} from '~/lib/common/generated/gql/graphql'
+
+/**
+ * Cache key of a specific cached GQL object. Tends to look like `Type:id`.
+ */
+export type ApolloCacheObjectKey<Type extends keyof AllObjectTypes> = Tagged<
+  string,
+  Type
+>
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
 export const isServerParseError = (err: Error): err is ServerParseError =>
   has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
 
-export const ROOT_QUERY = 'ROOT_QUERY'
-export const ROOT_MUTATION = 'ROOT_MUTATION'
-export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
+export const ROOT_QUERY = 'ROOT_QUERY' as ApolloCacheObjectKey<'Query'>
+export const ROOT_MUTATION = 'ROOT_MUTATION' as ApolloCacheObjectKey<'Mutation'>
+export const ROOT_SUBSCRIPTION =
+  'ROOT_SUBSCRIPTION' as ApolloCacheObjectKey<'Subscription'>
+
+type ModifyFnCacheDataSingle<Data> = Data extends Record<string, unknown>
+  ? Data extends { id: string; __typename?: infer TypeName }
+    ? CacheObjectReference<TypeName extends keyof AllObjectTypes ? TypeName : string>
+    : PartialDeep<{
+        [key in keyof Data]: ModifyFnCacheData<Data[key]>
+      }>
+  : Data
 
 /**
  * Utility type for typing cached data in Apollo modify functions.
@@ -37,33 +70,24 @@ export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
  * to CacheObjectReference objects and additionally all properties are optional as you can never know what exactly has been requested & cached
  * and what hasn't
  */
-export type ModifyFnCacheData<Data> = Data extends
-  | Record<string, unknown>
-  | Record<string, unknown>[]
-  ? Data extends { id: string }
-    ? CacheObjectReference
-    : Data extends { id: string }[]
-    ? CacheObjectReference[]
-    : PartialDeep<{
-        [key in keyof Data]: Data[key] extends { id: string }
-          ? CacheObjectReference
-          : Data[key] extends { id: string }[]
-          ? CacheObjectReference[]
-          : ModifyFnCacheData<Data[key]>
-      }>
-  : Data
+export type ModifyFnCacheData<Data> = Data extends Array<infer ArrayItem>
+  ? ModifyFnCacheDataSingle<ArrayItem>[]
+  : ModifyFnCacheDataSingle<Data>
 
 /**
  * Get a cached object's identifier
  */
-export function getCacheId(typeName: string, id: string) {
+export function getCacheId<Type extends keyof AllObjectTypes>(
+  typeName: Type,
+  id: string
+): ApolloCacheObjectKey<Type> {
   const cachedId = defaultDataIdFromObject({
     __typename: typeName,
     id
   })
   if (!cachedId) throw new Error('Unable to build Apollo cache ID')
 
-  return cachedId
+  return cachedId as ApolloCacheObjectKey<Type>
 }
 
 export function isInvalidAuth(error: ApolloError | NetworkError) {
@@ -98,6 +122,18 @@ export function convertThrowIntoFetchResult(
   if (err instanceof ApolloError) {
     gqlErrors = err.graphQLErrors
     apolloError = err
+
+    if (!gqlErrors.length) {
+      if (
+        err.networkError &&
+        'result' in err.networkError &&
+        !isString(err.networkError.result) &&
+        isArray(err.networkError.result.errors)
+      ) {
+        const errors = err.networkError.result.errors as Array<{ message: string }>
+        gqlErrors = errors.map((e) => new GraphQLError(e.message))
+      }
+    }
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
@@ -256,16 +292,23 @@ export function getStoreFieldName(
  * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
  * identifiable objects or object arrays
  */
-export type CacheObjectReference = Reference
+export type CacheObjectReference<Type extends string = string> = {
+  readonly __ref: Type extends keyof AllObjectTypes
+    ? ApolloCacheObjectKey<Type>
+    : string
+}
 
 /**
  * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
  * if you want to add new ones you shouldn't add the entire object, but only its reference
  */
-export function getObjectReference(typeName: string, id: string): CacheObjectReference {
+export function getObjectReference<Type extends keyof AllObjectTypes>(
+  typeName: Type,
+  id: string
+): CacheObjectReference<Type> {
   return {
     __ref: getCacheId(typeName, id)
-  }
+  } as CacheObjectReference<Type>
 }
 
 export function isReference(obj: unknown): obj is CacheObjectReference {
@@ -278,7 +321,7 @@ export function isReference(obj: unknown): obj is CacheObjectReference {
  * @param storeFieldName
  * @param fieldName
  */
-const revolveFieldNameAndVariables = <
+export const revolveFieldNameAndVariables = <
   V extends Optional<Record<string, unknown>> = undefined
 >(
   storeFieldName: string,
@@ -311,6 +354,7 @@ const revolveFieldNameAndVariables = <
  * better filtering capabilities to filter filters to update (e.g. you can actually get each field's variables)
  * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
  * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ * @deprecated Use modifyObjectField instead
  */
 export function modifyObjectFields<
   Variables extends Optional<Record<string, unknown>> = undefined,
@@ -329,7 +373,8 @@ export function modifyObjectFields<
   ) =>
     | Optional<ModifyFnCacheData<FieldData>>
     | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['DELETE']
-    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE'],
+    | Parameters<Modifier<ModifyFnCacheData<FieldData>>>[1]['INVALIDATE']
+    | void,
   options?: Partial<{
     fieldNameWhitelist: string[]
     debug: boolean
@@ -370,22 +415,27 @@ export function modifyObjectFields<
       )
 
       log('invoking updater', { fieldName, variables, fieldValue })
-      const res = updater(
-        fieldName,
-        (variables || {}) as Variables,
-        fieldValue as ModifyFnCacheData<FieldData>,
-        {
-          ...details,
-          ref: getObjectReference,
-          revolveFieldNameAndVariables
-        }
-      )
+      try {
+        const res = updater(
+          fieldName,
+          (variables || {}) as Variables,
+          fieldValue as ModifyFnCacheData<FieldData>,
+          {
+            ...details,
+            ref: getObjectReference,
+            revolveFieldNameAndVariables
+          }
+        )
 
-      if (isUndefined(res)) {
-        return fieldValue as unknown
-      } else {
-        log('updater returned', { res })
-        return res
+        if (isUndefinedOrVoid(res)) {
+          return fieldValue as unknown
+        } else {
+          log('updater returned', { res })
+          return res
+        }
+      } catch (e) {
+        log('updater threw an error', e)
+        throw e
       }
     }
   })
@@ -395,6 +445,7 @@ export function modifyObjectFields<
  * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
  * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
  * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ * @deprecated Use modifyObjectField instead, just return the evict() call from the updater
  */
 export function evictObjectFields<
   V extends Optional<Record<string, unknown>> = undefined,
@@ -440,7 +491,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
@@ -448,7 +499,7 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
   if (
     errors.some((e) =>
       ['NOT_FOUND_ERROR', 'STREAM_NOT_FOUND', 'AUTOMATION_NOT_FOUND'].includes(
-        e.extensions?.code || ''
+        (e.extensions?.code || '') as string
       )
     )
   )
@@ -475,4 +526,224 @@ export const getDateCursorFromReference = (params: {
 
   const iso = date.toISOString()
   return base64Encode(iso)
+}
+
+/**
+ * Build skipLoggingErrors function that skips logging errors if there's only one error and it's related to a specific field
+ */
+export const skipLoggingErrorsIfOneFieldError =
+  (fieldName: string | string[]) =>
+  (err: ErrorResponse): boolean => {
+    const fieldNames = isArray(fieldName) ? fieldName : [fieldName]
+    return (
+      err.graphQLErrors?.length === 1 &&
+      err.graphQLErrors.some((e) => intersection(e.path || [], fieldNames).length > 0)
+    )
+  }
+
+type NonUndefined<T> = T extends undefined ? never : T
+
+/**
+ * Update field at specific path in object, only if it exists. Useful for cache modification
+ * when fields should only be updated if they exist.
+ */
+export const updatePathIfExists = <Value, Path extends Paths<Value> & string>(
+  val: Value,
+  path: Path,
+  updater: (val: NonUndefined<Get<Value, Path>>) => NonUndefined<Get<Value, Path>>
+) => {
+  if (!val) return val
+
+  if (has(val, path)) {
+    const pathVal = get(val, path) as NonUndefined<Get<Value, Path>>
+    const newVal = updater(pathVal)
+    set(val, path, newVal)
+  }
+
+  return val
+}
+
+/**
+ * Get value from specific path in object, only if it exists.
+ */
+export const getFromPathIfExists = <Value, Path extends Paths<Value> & string>(
+  val: MaybeNullOrUndefined<Value>,
+  path: Path
+): Optional<Get<Value, Path>> => {
+  if (!val) return undefined
+  if (!has(val, path)) return undefined
+  return get(val, path) as Get<Value, Path>
+}
+
+type ModifyObjectFieldValue<
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+> = ModifyFnCacheData<AllObjectTypes[Type][Field]>
+
+/**
+ * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
+ * @see modifyObjectFields
+ */
+export const modifyObjectField = <
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+>(
+  cache: ApolloCache<unknown>,
+  key: ApolloCacheObjectKey<Type>,
+  fieldName: Field,
+  updater: (params: {
+    fieldName: string
+    variables: Field extends keyof AllObjectFieldArgTypes[Type]
+      ? AllObjectFieldArgTypes[Type][Field]
+      : never
+    /**
+     * Value found in the cache. Read-only and should not be mutated directly. Use the
+     * createUpdatedValue() helper to build a new value with updated fields.
+     */
+    value: ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
+    helpers: {
+      /**
+       * Build new value with the values at specific paths updated with the provided updater functions,
+       * ONLY if the paths exist in the cache.
+       *
+       * This function operates on a deeply cloned value that is safe to mutate
+       */
+      createUpdatedValue: (
+        updateHandler: (params: {
+          /**
+           * Invoke this function to update one specific path in the object
+           */
+          update: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+            path: Path,
+            pathUpdate: (
+              val: NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+            ) => NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+          ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+        }) => void
+      ) => ModifyObjectFieldValue<Type, Field>
+      /**
+       * Get value from specific path, only if it exists in the cache value
+       */
+      get: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+        path: Path
+      ) => Optional<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+      /**
+       * Invoke and return this out from the modify call to evict the field from the cache
+       */
+      evict: () => ModifierDetails['DELETE']
+      /**
+       * Read field data from a Reference object
+       */
+      readField: <
+        ReadFieldType extends keyof AllObjectTypes,
+        ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
+      >(
+        ref: CacheObjectReference<ReadFieldType>,
+        fieldName: ReadFieldName
+      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      /**
+       * Build a reference object for a specific object in the cache
+       */
+      ref: typeof getObjectReference
+    }
+  }) =>
+    | Optional<ModifyObjectFieldValue<Type, Field>>
+    | ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
+    | ModifierDetails['DELETE']
+    | ModifierDetails['INVALIDATE']
+    | void,
+  options?: Partial<{
+    debug: boolean
+    /**
+     * Whether to auto evict values that have variables with common filters in them (e.g. a 'filter' or
+     * 'search' prop). Often its better to evict filtered values, because we can't tell if the newly
+     * added item should be included in the filtered list or not.
+     */
+    autoEvictFiltered: boolean
+  }>
+) => {
+  const { autoEvictFiltered } = options || {}
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modifyObjectFields<any, any>(
+    cache,
+    key,
+    (field, variables, value, details) => {
+      if (field !== fieldName) return
+
+      // Auto evict filtered values?
+      if (autoEvictFiltered && isObjectLike(variables)) {
+        const checkFilter = (filter: string) => {
+          if (!has(variables, filter)) return false
+          const val = get(variables, filter)
+
+          // True, if any primitive value (e.g. string, number) && arrays
+          if (isNullOrUndefined(val)) return false
+          if (isArray(val)) return true
+          if (!isObjectLike(val)) return true
+          return false
+        }
+
+        const commonFilters = ['query', 'filter', 'search', 'filter.search']
+        const hasFilter = commonFilters.some(checkFilter)
+
+        if (hasFilter) {
+          return details.DELETE
+        }
+      }
+
+      // Build helpers & clone value to allow for direct mutation
+      const createUpdatedValue = (
+        updateHandler: (params: {
+          update: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+            path: Path,
+            pathUpdate: (
+              val: NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+            ) => NonUndefined<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+          ) => MaybeNullOrUndefined<ModifyObjectFieldValue<Type, Field>>
+        }) => void
+      ) => {
+        let clonedValue = cloneDeep(value) as ModifyObjectFieldValue<Type, Field>
+        updateHandler({
+          update: (path, pathUpdate) => {
+            clonedValue = updatePathIfExists(clonedValue, path, pathUpdate)
+            return clonedValue
+          }
+        })
+        return clonedValue
+      }
+
+      const getIfExists = <
+        Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string
+      >(
+        path: Path
+      ) => getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(value, path)
+      const evict = () => details.DELETE
+      const readField = <
+        ReadFieldType extends keyof AllObjectTypes,
+        ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
+      >(
+        ref: CacheObjectReference<ReadFieldType>,
+        fieldName: ReadFieldName
+      ) =>
+        details.readField(
+          fieldName,
+          ref
+        ) as AllObjectTypes[ReadFieldType][ReadFieldName]
+
+      return updater({
+        fieldName: field,
+        variables,
+        value,
+        helpers: {
+          createUpdatedValue,
+          get: getIfExists,
+          evict,
+          readField,
+          ref: getObjectReference
+        }
+      })
+    },
+    options
+  )
 }

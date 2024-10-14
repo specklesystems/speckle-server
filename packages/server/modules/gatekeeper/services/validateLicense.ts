@@ -2,7 +2,8 @@ import * as jose from 'jose'
 import {
   isDevEnv,
   getServerOrigin,
-  getLicenseToken
+  getLicenseToken,
+  isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { LicenseTokenClaims, EnabledModules } from '@/modules/gatekeeper/domain/types'
 
@@ -69,7 +70,7 @@ export const validateModuleLicense = async ({
 }: {
   requiredModules: LicensedModuleNames
 }): Promise<boolean> => {
-  if (isDevEnv()) return true
+  if (isDevEnv() || isTestEnv()) return true
   const licenseToken = getLicenseToken()
   if (!licenseToken) return false
   const publicKey = await getPublicKey()

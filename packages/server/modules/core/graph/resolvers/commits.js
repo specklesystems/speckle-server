@@ -1,29 +1,27 @@
-'use strict'
-
 const { CommitNotFoundError } = require('@/modules/core/errors/commit')
-const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
-  CommitSubscriptions: CommitPubsubEvents
+  CommitSubscriptions: CommitPubsubEvents,
+  publish
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  getCommitById,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByUserId
 } = require('../../services/commits')
 const {
   getPaginatedStreamCommits,
-  getPaginatedBranchCommits
+  getPaginatedBranchCommitsFactory
 } = require('@/modules/core/services/commit/retrieval')
 const {
-  createCommitByBranchName,
-  updateCommitAndNotify,
-  deleteCommitAndNotify,
-  markCommitReceivedAndNotify
+  markCommitReceivedAndNotify,
+  deleteCommitAndNotifyFactory,
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory,
+  updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -32,20 +30,124 @@ const {
   getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
-  batchMoveCommits,
-  batchDeleteCommits
+  batchDeleteCommits,
+  batchMoveCommitsFactory
 } = require('@/modules/core/services/commit/batchCommitActions')
-const {
-  validateStreamAccess
-} = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
+const { BadRequestError } = require('@/modules/shared/errors')
+const {
+  getCommitFactory,
+  deleteCommitFactory,
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory,
+  getCommitBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory,
+  getSpecificBranchCommitsFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getBranchCommitsTotalCountFactory,
+  getCommitsFactory,
+  moveCommitsToBranchFactory
+} = require('@/modules/core/repositories/commits')
+const { db } = require('@/db/knex')
+const {
+  getStreamFactory,
+  getStreamsFactory,
+  getCommitStreamFactory,
+  markCommitStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  markCommitBranchUpdatedFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  createBranchFactory
+} = require('@/modules/core/repositories/branches')
+const {
+  addCommitDeletedActivity,
+  addCommitMovedActivity,
+  addCommitCreatedActivityFactory,
+  addCommitUpdatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  validateStreamAccessFactory
+} = require('@/modules/core/services/streams/access')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
+
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getCommitStream = getCommitStreamFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreams = getStreamsFactory({ db })
+const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  deleteCommit: deleteCommitFactory({ db }),
+  addCommitDeletedActivity
+})
+
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+
+const batchMoveCommits = batchMoveCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
+  addCommitMovedActivity
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 /**
  * @param {boolean} publicOnly
@@ -61,7 +163,7 @@ const getUserCommits = async (publicOnly, userId, args, streamIdWhitelist) => {
     streamIdWhitelist
   })
   if (args.limit && args.limit > 100)
-    throw new UserInputError(
+    throw new BadRequestError(
       'Cannot return more than 100 items, please use pagination.'
     )
   const { commits: items, cursor } = await getCommitsByUserId({
@@ -141,7 +243,7 @@ module.exports = {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent, args) {
+    async commit(parent, args, ctx) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -152,7 +254,9 @@ module.exports = {
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
-      const c = await getCommitById({ streamId: parent.id, id: args.id })
+      const c = await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
       return c
     }
   },

@@ -10,8 +10,8 @@ import {
   ReadStreamBranchCommitsQuery,
   ReadStreamBranchCommitsQueryVariables
 } from '@/test/graphql/generated/graphql'
-import { executeOperation } from '@/test/graphqlHelper'
-import { ApolloServer, gql } from 'apollo-server-express'
+import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import gql from 'graphql-tag'
 
 const baseCommitFieldsFragment = gql`
   fragment BaseCommitFields on Commit {
@@ -108,7 +108,7 @@ const deleteCommitsMutation = gql`
 `
 
 export const readOwnCommits = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: ReadOwnCommitsQueryVariables
 ) =>
   executeOperation<ReadOwnCommitsQuery, ReadOwnCommitsQueryVariables>(
@@ -118,7 +118,7 @@ export const readOwnCommits = (
   )
 
 export const readOtherUsersCommits = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: ReadOtherUsersCommitsQueryVariables
 ) =>
   executeOperation<ReadOtherUsersCommitsQuery, ReadOtherUsersCommitsQueryVariables>(
@@ -128,7 +128,7 @@ export const readOtherUsersCommits = (
   )
 
 export const readStreamBranchCommits = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: ReadStreamBranchCommitsQueryVariables
 ) =>
   executeOperation<ReadStreamBranchCommitsQuery, ReadStreamBranchCommitsQueryVariables>(
@@ -138,7 +138,7 @@ export const readStreamBranchCommits = (
   )
 
 export const moveCommits = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: MoveCommitsMutationVariables
 ) =>
   executeOperation<MoveCommitsMutation, MoveCommitsMutationVariables>(
@@ -148,7 +148,7 @@ export const moveCommits = (
   )
 
 export const deleteCommits = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: DeleteCommitsMutationVariables
 ) =>
   executeOperation<DeleteCommitsMutation, DeleteCommitsMutationVariables>(

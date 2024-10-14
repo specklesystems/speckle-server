@@ -4,7 +4,6 @@
     max-width="sm"
     title="Invite people to workspace"
     :buttons="buttons"
-    buttons-wrapper-classes="flex-row-reverse"
   >
     <div>
       <FormTextInput
@@ -24,7 +23,7 @@
             class="absolute inset-y-0 right-0 flex items-center pr-2"
             :class="disabled ? 'pointer-events-none' : ''"
           >
-            <WorkspacePermissionSelect v-model="role" hide-remove />
+            <WorkspacePermissionSelect v-model="role" />
           </div>
         </template>
       </FormTextInput>
@@ -39,6 +38,7 @@
             :user="user"
             :disabled="disabled"
             :is-owner-role="isOwnerRole"
+            :target-role="role"
             @invite-user="() => onInviteUser(user)"
           />
         </template>
@@ -48,6 +48,7 @@
           :disabled="disabled"
           :is-owner-role="isOwnerRole"
           :is-guest-mode="isGuestMode"
+          :unmatching-domain-policy="unmatchingDomainPolicy"
           class="p-2"
           @invite-emails="({ serverRole }) => onInviteUser(emails, serverRole)"
         />
@@ -82,11 +83,19 @@ import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 
 graphql(`
   fragment WorkspaceInviteDialog_Workspace on Workspace {
+    domainBasedMembershipProtectionEnabled
+    domains {
+      domain
+      id
+    }
     id
     team {
-      id
-      user {
+      items {
         id
+        user {
+          id
+          role
+        }
       }
     }
     invitedTeam(filter: $invitesFilter) {
@@ -111,11 +120,12 @@ const { on, bind, value: search } = useDebouncedTextInput({ debouncedBy: 500 })
 const { users, emails, hasTargets } = useResolveInviteTargets({
   search,
   excludeUserIds: computed(() => [
-    ...(props.workspace?.team.map((c) => c.user.id) || []),
+    ...(props.workspace?.team?.items.map((c) => c.user.id) || []),
     ...(props.workspace?.invitedTeam?.map((c) => c.user?.id).filter(isNonNullable) ||
       [])
   ]),
-  excludeEmails: computed(() => props.workspace?.invitedTeam?.map((c) => c.title))
+  excludeEmails: computed(() => props.workspace?.invitedTeam?.map((c) => c.title)),
+  workspaceId: props.workspaceId
 })
 const { isGuestMode } = useServerInfo()
 
@@ -133,7 +143,18 @@ const buttons = computed((): LayoutDialogButton[] => [
 ])
 
 const isOwnerRole = computed(() => role.value === Roles.Workspace.Admin)
+const allowedDomains = computed(() => props.workspace?.domains?.map((c) => c.domain))
+const unmatchingDomainPolicy = computed(() => {
+  if (props.workspace?.domainBasedMembershipProtectionEnabled) {
+    return role.value === Roles.Workspace.Guest
+      ? false
+      : !emails.value?.every((email) =>
+          allowedDomains.value?.includes(email.split('@')[1])
+        )
+  }
 
+  return false
+})
 const onInviteUser = async (
   user: UserSearchItemOrEmail | UserSearchItemOrEmail[],
   serverRole: ServerRoles = Roles.Server.User
@@ -167,7 +188,9 @@ const onInviteUser = async (
     multiple: inputs.length !== 1,
     count: inputs.length,
     hasProject: true,
-    to: isEmail ? 'email' : 'existing user'
+    to: isEmail ? 'email' : 'existing user',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
   })
 
   disabled.value = false

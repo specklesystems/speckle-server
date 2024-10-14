@@ -119,7 +119,7 @@ export const viewerLoadedThreadsQuery = graphql(`
     $projectId: String!
     $filter: ProjectCommentsFilter!
     $cursor: String
-    $limit: Int = 25
+    $limit: Int
   ) {
     project(id: $projectId) {
       id

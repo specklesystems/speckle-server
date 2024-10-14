@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col space-y-6">
-    <SettingsSectionHeader title="Change password" subheading />
+    <SettingsSectionHeader title="Password change" subheading />
     <p class="text-body-xs text-foreground">
       Press the button below to start the password reset process.
       <br />
@@ -12,12 +12,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { UserProfileEditDialogChangePassword_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsUserProfileChangePassword_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 
 graphql(`
-  fragment UserProfileEditDialogChangePassword_User on User {
+  fragment SettingsUserProfileChangePassword_User on User {
     id
     email
   }
@@ -26,7 +26,7 @@ graphql(`
 const { sendResetEmail } = usePasswordReset()
 
 const props = defineProps<{
-  user: UserProfileEditDialogChangePassword_UserFragment
+  user: SettingsUserProfileChangePassword_UserFragment
 }>()
 
 const onClick = async () => {

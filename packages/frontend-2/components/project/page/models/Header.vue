@@ -1,23 +1,22 @@
 <template>
   <div>
     <div
-      class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
+      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4"
     >
-      <div class="flex justify-between items-center flex-wrap sm:flex-nowrap">
+      <div class="flex justify-between items-center flex-wrap xl:flex-nowrap">
         <h1 class="block text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
             color="outline"
-            :to="allModelsRoute"
+            :disabled="project?.models.totalCount === 0"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            @click="trackFederateAll"
+            @click="onViewAllClick"
           >
             View all in 3D
           </FormButton>
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New model
@@ -25,7 +24,7 @@
         </div>
       </div>
       <div
-        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
+        class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:items-center xl:space-x-2"
       >
         <FormTextInput
           v-model="localSearch"
@@ -33,11 +32,11 @@
           :show-label="false"
           placeholder="Search models..."
           color="foundation"
-          wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
+          wrapper-classes="grow lg:grow-0 xl:ml-2 xl:w-40 min-w-40 shrink-0"
           :show-clear="localSearch !== ''"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
-        ></FormTextInput>
+        />
         <div
           class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
         >
@@ -68,16 +67,15 @@
           </div>
           <FormButton
             color="outline"
-            :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
-            @click="trackFederateAll"
+            :disabled="project?.models.totalCount === 0"
+            @click="onViewAllClick"
           >
             View all in 3D
           </FormButton>
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New model
@@ -89,7 +87,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/outline'
 import { SourceApps, SpeckleViewer } from '@speckle/shared'
 import type { SourceAppDefinition } from '@speckle/shared'
 import { debounce } from 'lodash-es'
@@ -116,6 +113,9 @@ graphql(`
     name
     sourceApps
     role
+    models {
+      totalCount
+    }
     team {
       id
       user {
@@ -138,15 +138,19 @@ const props = defineProps<{
 const localSearch = ref('')
 const sourceAppsLabelId = useId()
 const sourceAppsBtnId = useId()
-
+const router = useRouter()
 const mp = useMixpanel()
-const trackFederateAll = () =>
+
+const onViewAllClick = () => {
+  router.push(allModelsRoute.value)
+
   mp.track('Viewer Action', {
     type: 'action',
     name: 'federation',
     action: 'view-all',
     source: 'project page'
   })
+}
 
 const canContribute = computed(() =>
   props.project ? canModifyModels(props.project) : false

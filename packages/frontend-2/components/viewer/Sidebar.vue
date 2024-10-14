@@ -8,7 +8,7 @@
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
         ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[4.2rem] sm:h-[calc(100dvh-4.2rem)]'
+        : 'sm:top-[3.8rem] sm:h-[calc(100dvh-3.8rem)]'
     ]"
   >
     <div
@@ -27,7 +27,7 @@
           <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
         </div>
         <div
-          class="relative z-30 w-1 h-full pt-[4.2rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
+          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
           @mousedown="startResizing"
         ></div>
       </div>
@@ -54,14 +54,14 @@
             </div>
           </div>
           <div v-if="$slots.actions" class="w-full px-3 h-8">
-            <div class="flex items-center gap-2 h-full">
+            <div class="flex items-center justify-end md:justify-start gap-2 h-full">
               <slot name="actions"></slot>
             </div>
           </div>
         </div>
         <div class="w-full" :class="$slots.actions ? 'h-[4.5rem]' : 'h-10'"></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md"
+          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
         >
           <slot></slot>
         </div>

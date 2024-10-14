@@ -3,10 +3,10 @@
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
-        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
-          <XMarkIcon class="w-5 h-5" />
-        </UserAvatar>
+        <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
+          <UserAvatar hide-tooltip :user="activeUser" />
+          <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
+        </div>
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -24,11 +24,11 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-primary cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-primary cursor-pointer transition mx-1 rounded'
                 ]"
                 target="_blank"
                 external
-                :href="connectorsPageUrl"
+                :href="downloadManagerUrl"
               >
                 Connector downloads
               </NuxtLink>
@@ -38,9 +38,9 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(settingsQueries.user.profile)"
+              @click="toggleSettingsDialog(SettingMenuKeys.User.Profile)"
             >
               Settings
             </NuxtLink>
@@ -49,9 +49,9 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(settingsQueries.server.general)"
+              @click="toggleSettingsDialog(SettingMenuKeys.Server.General)"
             >
               Server settings
             </NuxtLink>
@@ -60,7 +60,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
@@ -71,7 +71,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
@@ -82,11 +82,10 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              target="_blank"
-              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-              external
+              class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
+              @click="openFeedbackDialog"
             >
               Feedback
             </NuxtLink>
@@ -96,7 +95,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 @click="logout"
               >
@@ -107,7 +106,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'flex px-2 py-1.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                  'flex px-2 py-1 text-body-xs text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >
@@ -129,23 +128,29 @@
     <SettingsDialog
       v-model:open="showSettingsDialog"
       v-model:target-menu-item="settingsDialogTarget"
+      v-model:target-workspace-id="workspaceSettingsDialogTarget"
     />
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
 import { isString } from 'lodash'
 import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
+import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
+import {
+  SettingMenuKeys,
+  type AvailableSettingsMenuKeys
+} from '~/lib/settings/helpers/types'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -158,13 +163,15 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string | null>(null)
+const workspaceSettingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
+const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
@@ -173,7 +180,7 @@ const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
-const toggleSettingsDialog = (target: string) => {
+const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   showSettingsDialog.value = true
 
   // On mobile open the modal but dont set the target
@@ -183,11 +190,20 @@ const toggleSettingsDialog = (target: string) => {
 const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
+  delete currentQueryParams.workspace
+  delete currentQueryParams.error
+
   router.push({ query: currentQueryParams })
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
 }
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
+  const workspaceQuery = route.query?.workspace
+  const errorQuery = route.query?.error
 
   if (settingsQuery && isString(settingsQuery)) {
     if (settingsQuery.includes('server') && !isAdmin.value) {
@@ -197,6 +213,22 @@ onMounted(() => {
       })
 
       return
+    }
+
+    if (workspaceQuery && isString(workspaceQuery)) {
+      workspaceSettingsDialogTarget.value = workspaceQuery
+
+      if (errorQuery && isString(errorQuery)) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: errorQuery
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'SSO settings successfully updated'
+        })
+      }
     }
 
     showSettingsDialog.value = true

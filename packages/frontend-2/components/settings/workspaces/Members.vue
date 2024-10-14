@@ -5,6 +5,7 @@
         hide-divider
         title="Members"
         text="Manage users in your workspace"
+        class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
@@ -13,7 +14,11 @@
             :workspace="workspace"
             :workspace-id="workspaceId"
           />
-          <div v-if="activeItem.id === 'guests'">Guests</div>
+          <SettingsWorkspacesMembersGuestsTable
+            v-if="activeItem.id === 'guests'"
+            :workspace="workspace"
+            :workspace-id="workspaceId"
+          />
           <SettingsWorkspacesMembersInvitesTable
             v-if="activeItem.id === 'invites'"
             :workspace-id="workspaceId"
@@ -36,6 +41,17 @@ graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
     id
     role
+    team {
+      items {
+        id
+        role
+      }
+    }
+    invitedTeam(filter: $invitesFilter) {
+      user {
+        id
+      }
+    }
   }
 `)
 
@@ -43,36 +59,36 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
-const { result } = useQuery(
-  settingsWorkspacesMembersQuery,
-  () => ({
-    workspaceId: props.workspaceId
-  }),
-  () => ({
-    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
-    // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => e.path?.includes('invitedTeam'))
-    }
-  })
-)
+const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
+  workspaceId: props.workspaceId
+}))
 
 const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
+const workspace = computed(() => result.value?.workspace)
+const memberCount = computed(
+  () =>
+    result.value?.workspace.team.items.filter(
+      (item) => item.role !== Roles.Workspace.Guest
+    ).length
+)
+const guestCount = computed(
+  () =>
+    result.value?.workspace.team.items.filter(
+      (item) => item.role === Roles.Workspace.Guest
+    ).length
+)
+const invitedCount = computed(() => result.value?.workspace.invitedTeam?.length)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
-  { title: 'Members', id: 'members' },
-  { title: 'Guests', id: 'guests' },
+  { title: 'Members', id: 'members', count: memberCount.value },
+  { title: 'Guests', id: 'guests', count: guestCount.value },
   {
     title: 'Pending invites',
     id: 'invites',
     disabled: !isAdmin.value,
-    disabledMessage: 'Only workspace admins can manage invites'
+    disabledMessage: 'Only workspace admins can manage invites',
+    count: invitedCount.value
   }
 ])
 
 const activeTab = ref(tabItems.value[0])
-
-const workspace = computed(() => result.value?.workspace)
 </script>

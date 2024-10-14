@@ -9,6 +9,16 @@ export const dashboardProjectsPageQuery = graphql(`
           ...DashboardProjectCard_Project
         }
       }
+      ...ProjectsDashboardHeaderProjects_User
+    }
+  }
+`)
+
+export const dashboardProjectsPageWorkspacesQuery = graphql(`
+  query DashboardProjectsPageWorkspaceQuery {
+    activeUser {
+      id
+      ...ProjectsDashboardHeaderWorkspaces_User
     }
   }
 `)

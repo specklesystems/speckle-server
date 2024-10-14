@@ -4,12 +4,17 @@ import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import dayjs from 'dayjs'
 import type { Survicate } from '@survicate/survicate-web-surveys-wrapper'
 import type { Nullable } from '@speckle/shared'
+import { useRoute } from 'vue-router'
 
 export default defineNuxtPlugin(async () => {
   const { isLoggedIn } = useActiveUser()
+  const route = useRoute()
   let survicateInstance = null as Nullable<Survicate>
 
-  if (!isLoggedIn.value) {
+  // Check if the current route is the auth verify application page
+  const isAuthVerifyPage = computed(() => route.name === 'authorize-app')
+
+  if (!isLoggedIn.value || isAuthVerifyPage.value) {
     return {
       provide: {
         survicate: survicateInstance
@@ -105,10 +110,10 @@ function checkSurveyDisplayConditions(
   onboardingOrFeedbackDate: Date,
   projectVersionCount: ComputedRef<number | undefined>
 ): boolean {
-  const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(3, 'day')
+  const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(7, 'day')
   const isAfterOnboardingPeriod = dayjs().isAfter(threeDaysAfterOnboarding)
 
-  const minimumThreeVersions = (projectVersionCount?.value ?? 0) > 2
+  const minimumThreeVersions = (projectVersionCount?.value ?? 0) > 9
 
   return isAfterOnboardingPeriod && minimumThreeVersions
 }

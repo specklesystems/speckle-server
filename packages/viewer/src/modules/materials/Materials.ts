@@ -21,9 +21,8 @@ const defaultGradient: Asset = {
   type: AssetType.TEXTURE_8BPP
 }
 
-export interface RenderMaterial {
+export interface RenderMaterial extends MinimalMaterial {
   id: string
-  color: number
   emissive: number
   opacity: number
   roughness: number
@@ -31,11 +30,14 @@ export interface RenderMaterial {
   vertexColors: boolean
 }
 
-export interface DisplayStyle {
+export interface DisplayStyle extends MinimalMaterial {
   id: string
-  color: number
   lineWeight: number
   opacity?: number
+}
+
+export interface MinimalMaterial {
+  color: number
 }
 
 export enum FilterMaterialType {
@@ -164,6 +166,18 @@ export default class Materials {
     return displayStyle
   }
 
+  public static colorMaterialFromNode(node: TreeNode | null): MinimalMaterial | null {
+    if (!node) return null
+
+    let colorMaterial: MinimalMaterial | null = null
+    if (node.model.color) {
+      colorMaterial = {
+        color: node.model.color
+      }
+    }
+    return colorMaterial
+  }
+
   public static fastCopy(from: Material, to: Material) {
     ;(to as unknown as SpeckleMaterial).fastCopy(from, to)
     /** Doing it via three.js is slow as hell */
@@ -192,6 +206,10 @@ export default class Materials {
       displayStyle.lineWeight?.toString() +
       displayStyle.opacity?.toString()
     return plm
+  }
+
+  private static minimalMaterialToString(minimalMaterial: MinimalMaterial) {
+    return minimalMaterial.color.toString()
   }
 
   private static hashCode(s: string): number {
@@ -244,20 +262,34 @@ export default class Materials {
     renderView: NodeRenderView,
     materialData?: RenderMaterial | DisplayStyle | MaterialOptions | null
   ): number {
+    /** See if we need to get the hash from the DUI3 color material. In DUI3, Points and Lines
+     *  always use the color material exclusively. Any other render material or display style is ignored
+     */
+    const colorMaterialData = renderView.renderData.colorMaterial
+    let mat = ''
+    const useColorMaterialHash =
+      colorMaterialData &&
+      !materialData &&
+      (renderView.geometryType === GeometryType.LINE ||
+        renderView.geometryType === GeometryType.POINT)
+
     if (!materialData) {
       materialData =
         renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
-    let mat = ''
-    if (materialData) {
+    /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
+     *  The technical material will contribute to the material hash
+     */
+    if (useColorMaterialHash) {
+      mat += Materials.minimalMaterialToString(colorMaterialData)
+    } else if (materialData) {
       mat =
         Materials.isRendeMaterial(materialData) &&
         (renderView.geometryType === GeometryType.MESH ||
-          renderView.geometryType === GeometryType.POINT ||
+          renderView.geometryType === GeometryType.POINT || // Maybe even include GeometryType.POINT_CLOUD actually?
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
-            // && renderView.geometryType !== GeometryType.POINT // Allow Points to use displayStyle
             renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
           : ''
@@ -268,6 +300,7 @@ export default class Materials {
         mat += '/' + (materialData as MaterialOptions).pointSize
       }
     }
+
     let geometry = ''
     if (renderView.renderData.geometry.attributes)
       geometry = renderView.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
@@ -276,9 +309,7 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT && materialData
-        ? renderView.renderData.id
-        : '') +
+      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
       (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }
@@ -382,6 +413,7 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).vertexColors = true
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).toneMapped = false
 
     this.lineColoredMaterial = new SpeckleLineMaterial(
       {
@@ -400,6 +432,7 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).vertexColors = true
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).toneMapped = false
 
     this.lineHiddenMaterial = new SpeckleLineMaterial(
       {
@@ -704,6 +737,7 @@ export default class Materials {
     mat.vertexColors = true
     mat.pixelThreshold = 0.5
     mat.resolution = new Vector2()
+    mat.toneMapped = false
 
     return mat
   }
@@ -724,14 +758,16 @@ export default class Materials {
     const mat = new SpecklePointMaterial(
       {
         color: safeColor,
-        opacity: materialData.opacity,
-        vertexColors: materialData.vertexColors,
+        ...(materialData.opacity !== undefined && { opacity: materialData.opacity }),
+        ...(materialData.vertexColors !== undefined && {
+          vertexColors: materialData.vertexColors
+        }),
         size: 2,
         sizeAttenuation: false
       },
       ['USE_RTE']
     )
-    mat.transparent = mat.opacity < 1 ? true : false
+    if (mat.opacity !== undefined) mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.toneMapped = false
     mat.color.convertSRGBToLinear()
@@ -739,6 +775,12 @@ export default class Materials {
   }
 
   private makeTextMaterial(materialData: DisplayStyle): Material {
+    /** !This should not be neccessary anymore once we implement proper text batching!
+     *  If the text had no render material or display style, we simply use the default
+     *  null text material
+     */
+    if (!materialData) return this.materialMap[Materials.NullTextDisplayStyle]
+
     const mat = new SpeckleTextMaterial(
       {
         color: materialData.color,
@@ -757,7 +799,7 @@ export default class Materials {
 
   public getMaterial(
     hash: number,
-    material: RenderMaterial | DisplayStyle | null,
+    material: RenderMaterial | DisplayStyle | MinimalMaterial | null,
     type: GeometryType
   ): Material {
     let mat

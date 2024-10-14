@@ -5,14 +5,19 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-const createFakeWorkspace = (): Workspace => {
+const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
   return {
     id: cryptoRandomString({ length: 10 }),
+    slug: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
     logo: null,
+    defaultLogoIndex: 0,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
-    createdAt: new Date()
+    createdAt: new Date(),
+    defaultProjectRole: Roles.Stream.Contributor,
+    domainBasedMembershipProtectionEnabled: false,
+    discoverabilityEnabled: false
   }
 }
 
@@ -130,10 +135,14 @@ describe('Event Bus', () => {
       const workspacePayload = {
         ...createFakeWorkspace(),
         createdByUserId: cryptoRandomString({ length: 10 }),
-        eventName: WorkspaceEvents.Created
+        eventName: WorkspaceEvents.Created,
+        domains: []
       }
 
-      await bus1.emit({ eventName: WorkspaceEvents.Created, payload: workspacePayload })
+      await bus1.emit({
+        eventName: WorkspaceEvents.Created,
+        payload: { ...workspacePayload }
+      })
 
       expect(workspaces.length).to.equal(2)
       expect(workspaces).to.deep.equal([workspacePayload, workspacePayload])
@@ -151,8 +160,6 @@ describe('Event Bus', () => {
           case 'workspace.role-deleted':
             events.push(payload.userId)
             break
-          default:
-            events.push('default')
         }
       })
 
@@ -177,12 +184,7 @@ describe('Event Bus', () => {
         payload: workspaceAcl
       })
 
-      await eventBus.emit({
-        eventName: WorkspaceEvents.RoleUpdated,
-        payload: workspaceAcl
-      })
-
-      expect([workspace.id, workspaceAcl.userId, 'default']).to.deep.equal(events)
+      expect([workspace.id, workspaceAcl.userId]).to.deep.equal(events)
     })
   })
 })

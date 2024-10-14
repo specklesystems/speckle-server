@@ -8,8 +8,8 @@ import {
   GetCommentsQuery,
   GetCommentsQueryVariables
 } from '@/test/graphql/generated/graphql'
-import { executeOperation } from '@/test/graphqlHelper'
-import { ApolloServer, gql } from 'apollo-server-express'
+import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+import { gql } from 'graphql-tag'
 
 const commentWithRepliesFragment = gql`
   fragment CommentWithReplies on Comment {
@@ -76,7 +76,7 @@ const getCommentsQuery = gql`
 `
 
 export const createComment = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: CreateCommentMutationVariables
 ) =>
   executeOperation<CreateCommentMutation, CreateCommentMutationVariables>(
@@ -86,7 +86,7 @@ export const createComment = (
   )
 
 export const createReply = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: CreateReplyMutationVariables
 ) =>
   executeOperation<CreateReplyMutation, CreateReplyMutationVariables>(
@@ -95,7 +95,10 @@ export const createReply = (
     variables
   )
 
-export const getComment = (apollo: ApolloServer, variables: GetCommentQueryVariables) =>
+export const getComment = (
+  apollo: ExecuteOperationServer,
+  variables: GetCommentQueryVariables
+) =>
   executeOperation<GetCommentQuery, GetCommentQueryVariables>(
     apollo,
     getCommentQuery,
@@ -103,7 +106,7 @@ export const getComment = (apollo: ApolloServer, variables: GetCommentQueryVaria
   )
 
 export const getComments = (
-  apollo: ApolloServer,
+  apollo: ExecuteOperationServer,
   variables: GetCommentsQueryVariables
 ) =>
   executeOperation<GetCommentsQuery, GetCommentsQueryVariables>(

@@ -566,6 +566,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
 
+- name: FF_WORKSPACES_SSO_ENABLED
+  value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+
 {{- if .Values.featureFlags.workspaceModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -837,18 +840,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAILCHIMP_ONBOARDING_STEP_ID
   value: "{{ .Values.server.mailchimp.onboardingStepId}}"
-{{- end }}
-
-# *** Tracking / Tracing ***
-- name: SENTRY_DSN
-  value: {{ .Values.server.sentry_dns }}
-{{- if .Values.server.disable_tracing }}
-- name: DISABLE_TRACING
-  value: "true"
-{{- end }}
-{{- if .Values.server.disable_tracking }}
-- name: DISABLE_TRACKING
-  value: "true"
 {{- end }}
 
 # Monitoring - Apollo

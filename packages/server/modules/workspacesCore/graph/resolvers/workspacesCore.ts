@@ -9,6 +9,13 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       Query: {
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+
+        workspaceBySlug: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvite: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       Mutation: {
@@ -27,6 +34,18 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         updateRole: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        addDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        deleteDomain: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        join: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        leave: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
@@ -40,6 +59,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         },
         cancel: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        resend: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },
@@ -55,16 +77,26 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         projects: async () => {
           throw new WorkspacesModuleDisabledError()
+        },
+        domains: async () => {
+          throw new WorkspacesModuleDisabledError()
         }
       },
       User: {
+        discoverableWorkspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         workspaces: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
+        workspaceInvites: async () => {
           throw new WorkspacesModuleDisabledError()
         }
       },
       Project: {
         workspace: async () => {
-          throw new WorkspacesModuleDisabledError()
+          // Return type is always workspace or null, to make the FE implementation easier we force return null in this case
+          return null
         }
       },
       AdminQueries: {
@@ -72,10 +104,14 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         }
       },
-      ActiveUserMutations: {
-        workspaceMutations: async () => {
-          throw new WorkspacesModuleDisabledError()
-        }
+      LimitedUser: {
+        workspaceDomainPolicyCompliant: async () => null
+      },
+      ServerInfo: {
+        workspaces: () => ({})
+      },
+      ServerWorkspacesInfo: {
+        workspacesEnabled: () => false
       }
     } as Resolvers)
   : {}

@@ -4,13 +4,16 @@
     :items="roles"
     :multiple="multiple"
     name="workspaceRoles"
-    label="Workspace roles"
+    :label="label"
     class="min-w-[110px]"
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    :show-label="showLabel"
     :fully-control-value="fullyControlValue"
-    size="sm"
+    :disabled="disabled"
+    :disabled-item-predicate="disabledItemPredicate"
+    :clearable="clearable"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -38,14 +41,19 @@
       </template>
     </template>
     <template #option="{ item }">
-      <div class="flex items-center">
-        <span class="truncate">{{ RoleInfo.Workspace[firstItem(item)].title }}</span>
+      <div class="flex flex-col space-y-0.5">
+        <span class="truncate" :class="{ 'font-medium': !hideDescription }">
+          {{ RoleInfo.Workspace[firstItem(item)].title }}
+        </span>
+        <span v-if="!hideDescription" class="text-body-2xs text-foreground-2">
+          {{ RoleInfo.Workspace[firstItem(item)].description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-// Todo: Refactor this to have one component for project/server/workspace roles
+// TODO: Refactor this to have one component for project/server/workspace roles
 
 import { Roles, RoleInfo } from '@speckle/shared'
 import type { Nullable, WorkspaceRoles } from '@speckle/shared'
@@ -64,7 +72,26 @@ const props = defineProps({
     type: [String, Array] as PropType<ValueType>,
     default: undefined
   },
-  fullyControlValue: Boolean
+  fullyControlValue: Boolean,
+  label: {
+    type: String,
+    default: 'Workspace Roles'
+  },
+  disabled: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
+  showLabel: Boolean,
+  clearable: Boolean,
+  hideItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
+  hideDescription: {
+    required: false,
+    type: Boolean
+  }
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
@@ -79,5 +106,17 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => Object.values(Roles.Workspace))
+const roles = computed(() => {
+  if (props.hideItems && props.hideItems.length) {
+    return Object.values(Roles.Workspace).filter(
+      (role) => !props.hideItems?.includes(role)
+    )
+  }
+  return Object.values(Roles.Workspace)
+})
+
+const disabledItemPredicate = (item: WorkspaceRoles) =>
+  props.disabledItems && props.disabledItems.length > 0
+    ? props.disabledItems.includes(item)
+    : false
 </script>

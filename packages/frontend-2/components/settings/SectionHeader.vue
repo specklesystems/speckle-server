@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col">
-    <div class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between">
+    <div
+      class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between"
+      :class="{ 'md:items-center': subheading }"
+    >
       <h2 v-if="subheading" class="text-heading-lg">{{ title }}</h2>
       <h1 v-else class="text-heading-xl hidden md:block">
         {{ title }}
@@ -24,7 +27,7 @@
     >
       {{ text }}
     </p>
-    <hr v-if="!subheading && !hideDivider" class="my-6 md:my-10" />
+    <hr v-if="!subheading && !hideDivider" class="my-6 border-outline-2" />
     <slot />
   </div>
 </template>

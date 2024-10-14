@@ -36,30 +36,32 @@ COPY packages/preview-service ./packages/preview-service/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach -W run build
 
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS node
+# google-chrome-stable is only available for amd64 so we have to fix the platform
+# hadolint ignore=DL3029
+FROM --platform=linux/amd64 node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS node
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-# hadolint ignore=DL3008,DL3015
+# Install tini and fonts
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    # --no-install-recommends # This is causing issues with the google-chrome-stable install as not all gpg components are installed if recommended installs are disabled
-    tini=0.19.0-1 \
-    # wget has different versions for different architectures
-    wget \
-    gnupg=2.2.40-1.1 && \
-    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg && \
-    sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] https://dl-ssl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
-    # Install Chrome and fonts
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
-    google-chrome-stable \
+    # up to date ca-certs are required for downloading the google signing key
+    ca-certificates=20230311 \
+    tini=0.19.0-1 \
     fonts-ipafont-gothic=00303-23 \
     fonts-wqy-zenhei=0.9.45-8 \
     fonts-thai-tlwg=1:0.7.3-1 \
     fonts-kacst=2.01+mry-15 \
     fonts-freefont-ttf=20120503-10 \
     libxss1=1:1.2.3-1 && \
+    # Clean up
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3015
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    # --no-install-recommends # This is causing issues with the google-chrome-stable install as not all gpg components are installed if recommended installs are disabled
+    gnupg=2.2.40-1.1 && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -74,7 +76,7 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-# Onyl copy in the relevant package.json files for the dependencies
+# Only copy in the relevant package.json files for the dependencies
 COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/preview-service/package.json ./packages/preview-service/
 
@@ -96,7 +98,31 @@ RUN groupadd -g 30000 -r pptruser && \
     chown -R pptruser:pptruser ./node_modules && \
     chown -R pptruser:pptruser ./package.json
 
+# overriding this value via `--build-arg CACHE_BUST=$(date +%s)` will cause the latest google chrome to be fetched
+ARG CACHE_BUST=1
+
+# install google chrome
+# hadolint ignore=DL3008
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    --no-install-recommends \
+    # wget has different versions for different architectures so we cannot pin version
+    wget && \
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg && \
+    sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] https://dl-ssl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
+    # remove wget after use
+    DEBIAN_FRONTEND=noninteractive apt-get remove -y \
+    wget && \
+    # update packages in order to use google chrome repo
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    --no-install-recommends \
+    google-chrome-stable && \
+    # Clean up
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Run everything after as non-privileged user.
 USER pptruser
 
-ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]

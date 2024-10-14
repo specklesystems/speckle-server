@@ -59,16 +59,14 @@ export const HeaderAndFooter = {
         text: 'Close',
         props: {
           color: 'outline',
-          link: false,
-          fullWidth: true
+          link: false
         }
       },
       {
         text: 'Save',
         props: {
           color: 'default',
-          link: false,
-          fullWidth: true
+          link: false
         }
       }
     ]
@@ -93,8 +91,7 @@ export const WithSubmit = {
         text: 'Submit',
         props: {
           color: 'default',
-          submit: true,
-          fullWidth: true
+          submit: true
         }
       }
     ]

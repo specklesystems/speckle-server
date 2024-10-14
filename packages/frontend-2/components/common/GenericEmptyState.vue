@@ -1,6 +1,6 @@
 <template>
   <CommonEmptyState :cta="cta">
-    {{ search ? 'No items matching your search query found!' : message }}
+    {{ search ? 'No items matching your search query found' : message }}
   </CommonEmptyState>
 </template>
 <script setup lang="ts">

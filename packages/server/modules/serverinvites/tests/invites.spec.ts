@@ -40,9 +40,9 @@ import {
   StreamInviteCreateInput,
   UseStreamInviteDocument
 } from '@/test/graphql/generated/graphql'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { reduce } from 'lodash'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -50,6 +50,7 @@ async function cleanup() {
 
 const findInvite = findInviteFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const mailerMock = EmailSendingServiceMock
 
@@ -227,7 +228,7 @@ describe('[Stream & Server Invites]', () => {
             streamId: otherGuyAlreadyInvitedStream.id
           })
 
-          expect(data?.serverInviteCreate).to.be.not.ok
+          expect(data?.streamInviteCreate).to.be.not.ok
           expect(errors).to.be.ok
           expect(errors!.map((e) => e.message).join('|')).to.contain(
             'user is already a collaborator'

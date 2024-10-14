@@ -35,7 +35,7 @@ const config: CodegenConfig = {
         fragmentMasking: false,
         dedupeFragments: true
       },
-      plugins: []
+      plugins: ['./tools/gqlCacheHelpersCodegenPlugin.js']
     }
   }
 }

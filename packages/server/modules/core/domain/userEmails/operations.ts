@@ -2,6 +2,21 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
+/**
+ * Validate and insert new user email
+ */
+export type ValidateAndCreateUserEmail = (params: {
+  userEmail: Pick<UserEmail, 'email' | 'userId'> & {
+    primary?: boolean
+    verified?: boolean
+  }
+}) => Promise<UserEmail>
+
+export type EnsureNoPrimaryEmailForUser = (params: { userId: string }) => Promise<void>
+
+/**
+ * Insert new user email (no validation)
+ */
 export type CreateUserEmail = ({
   userEmail
 }: {
@@ -48,6 +63,15 @@ export type FindEmail = (query: Partial<UserEmail>) => Promise<Optional<UserEmai
 export type FindEmailsByUserId = ({
   userId
 }: Pick<Partial<UserEmail>, 'userId'>) => Promise<UserEmail[]>
+
+export type FindVerifiedEmailsByUserId = ({
+  userId
+}: Pick<UserEmail, 'userId'>) => Promise<UserEmail[]>
+
+export type FindVerifiedEmailByUserIdAndDomain = ({
+  userId,
+  domain
+}: Pick<UserEmail, 'userId'> & { domain: string }) => Promise<UserEmail | null>
 
 export type CountEmailsByUserId = ({
   userId

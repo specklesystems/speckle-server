@@ -1,5 +1,9 @@
 import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
+import {
+  LimitedUserRecord,
+  UserRecord,
+  UserWithRole
+} from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -16,10 +20,6 @@ export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = 
    * (this can be the server role or stream role depending on how and where this was retrieved)
    */
   role?: ServerRoles
-}
-
-export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
-  role: ServerRoles
 }
 
 export type GetUserParams = Partial<{
@@ -206,7 +206,7 @@ export async function markUserAsVerified(email: string) {
 export async function markOnboardingComplete(userId: string) {
   if (!userId) return false
 
-  const meta = metaHelpers(Users)
+  const meta = metaHelpers(Users, db)
   const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
 
   return !!newMeta.value

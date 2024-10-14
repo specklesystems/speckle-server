@@ -1,7 +1,24 @@
+import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getUserByEmail } from '@/modules/core/repositories/users'
-import { getPendingToken } from '@/modules/emails/repositories'
-import { requestEmailVerification } from '@/modules/emails/services/verification/request'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { getUser, getUserByEmail } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import {
+  deleteOldAndInsertNewVerificationFactory,
+  getPendingTokenFactory
+} from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+
+const requestEmailVerification = requestEmailVerificationFactory({
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+  sendEmail,
+  renderEmail
+})
 
 export = {
   User: {
@@ -9,7 +26,7 @@ export = {
       const email = parent.email
       if (!email) return false
 
-      const token = await getPendingToken({ email })
+      const token = await getPendingTokenFactory({ db })({ email })
       return !!token
     }
   },

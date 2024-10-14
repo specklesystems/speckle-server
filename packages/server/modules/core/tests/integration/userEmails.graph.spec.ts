@@ -1,13 +1,14 @@
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
-import { createUser } from '@/modules/core/services/users'
+import { createUser, getUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import {
   createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
@@ -18,6 +19,37 @@ import {
   SetPrimaryUserEmailDocument
 } from '@/test/graphql/generated/graphql'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+
+const createUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification
+})
 
 describe('User emails graphql @core', () => {
   before(async () => {
@@ -69,7 +101,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const { id } = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmail({
         userEmail: {
           email,
           userId,
@@ -99,7 +131,7 @@ describe('User emails graphql @core', () => {
       })
       const email = createRandomEmail()
 
-      const { id } = await createUserEmailFactory({ db })({
+      const { id } = await createUserEmail({
         userEmail: {
           email,
           userId,

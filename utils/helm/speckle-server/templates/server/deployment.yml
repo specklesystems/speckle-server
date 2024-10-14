@@ -73,11 +73,9 @@ spec:
           periodSeconds: 10
           failureThreshold: 60 # 10*60 = 600s; accounts for long-running db migrations
           timeoutSeconds: 3
-          exec:
-            command:
-              - node
-              - -e
-              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/liveness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+          httpGet:
+            path: /liveness
+            port: {{ include "server.port" $ }}
 
         livenessProbe:
           periodSeconds: 60

@@ -36,6 +36,9 @@ workflows:
       - test-objectsender:
           filters: *filters-allow-all
 
+      - test-preview-service:
+          filters: *filters-allow-all
+
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -63,13 +66,7 @@ workflows:
       #         only: /.*/
       #     requires:
       #       - get-version
-      #       - pre-commit
       #       - deployment-testing-approval
-      #       - test-frontend-2
-      #       - test-viewer
-      #       - test-objectsender
-      #       - test-server
-      #       - test-server-no-ff
       #       - docker-build-server
       #       - docker-build-frontend
       #       - docker-build-frontend-2
@@ -87,13 +84,7 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - pre-commit
             - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - test-server-no-ff
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2
@@ -188,6 +179,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-frontend:
           context: *docker-hub-context
@@ -202,6 +194,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -216,6 +209,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -230,6 +224,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -244,6 +239,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -258,6 +254,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -272,6 +269,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -286,6 +284,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
@@ -300,6 +299,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-preview-service
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -343,6 +343,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
@@ -397,7 +398,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: xlarge
     working_directory: *work-dir
     steps:
       - checkout
@@ -415,9 +416,6 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -474,10 +472,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -553,6 +547,7 @@ jobs:
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
       FF_WORKSPACES_MODULE_ENABLED: 'false'
+      FF_WORKSPACES_SSO_ENABLED: 'false'
       FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
       FF_GENDOAI_MODULE_ENABLED: 'false'
 
@@ -568,10 +563,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -591,8 +582,7 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:22.6.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: large
     steps:
       - checkout
@@ -602,10 +592,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -629,10 +615,16 @@ jobs:
           command: yarn test
           working_directory: 'packages/viewer'
 
-  test-objectsender:
-    docker: &docker-node-browsers-image
+  test-preview-service:
+    docker:
       - image: cimg/node:22.6.0-browsers
+      - image: cimg/postgres:14.11
+        environment:
+          POSTGRES_DB: preview_service_test
+          POSTGRES_PASSWORD: preview_service_test
+          POSTGRES_USER: preview_service_test
     resource_class: large
+    environment: {}
     steps:
       - checkout
       - restore_cache:
@@ -643,8 +635,45 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
       - run:
-          name: Install Dependencies v2 (.node files missing bug)
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint everything
+          command: yarn lint:ci
+          working_directory: 'packages/preview-service'
+
+      - run:
+          name: Copy .env.example to .env
+          command: |
+            #!/usr/bin/env bash
+            cp packages/preview-service/.env.example packages/preview-service/.env
+            sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/preview-service'
+
+  test-objectsender:
+    docker: *docker-node-browsers-image
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
           command: yarn
 
       - save_cache:
@@ -675,10 +704,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -730,10 +755,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -757,7 +778,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: *docker-node-image
-    resource_class: small
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -767,9 +788,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -922,7 +940,7 @@ jobs:
 
   docker-build-frontend-2:
     <<: *build-job
-    resource_class: large
+    resource_class: xlarge
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
@@ -1038,9 +1056,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1111,9 +1126,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1153,9 +1165,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache

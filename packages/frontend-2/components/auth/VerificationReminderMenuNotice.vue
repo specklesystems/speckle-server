@@ -1,24 +1,14 @@
 <template>
-  <div
-    v-if="shouldShowBanner"
-    class="flex flex-col mx-2 mt-1 mb-2 px-2 py-1.5 text-dark border border-outline-2 bg-foundation-1 rounded-md"
-  >
-    <div class="text-body-xs">{{ verifyBannerText }}</div>
-    <div class="">
-      <FormButton
-        size="sm"
-        text
-        :disabled="loading"
-        link
-        class="font-medium text-danger-darker"
-        @click="requestVerification"
-      >
-        {{ verifyBannerCtaText }}
-      </FormButton>
-      <!-- <CommonTextLink @click="dismiss">
-        <XMarkIcon class="h-6 w-6" />
-      </CommonTextLink> -->
-    </div>
+  <div v-if="shouldShowBanner" class="flex flex-col px-3 pb-3">
+    <div class="text-body-2xs text-foreground mb-3">{{ verifyBannerText }}</div>
+    <FormButton
+      size="sm"
+      color="outline"
+      :disabled="loading"
+      @click="requestVerification"
+    >
+      {{ verifyBannerCtaText }}
+    </FormButton>
   </div>
   <div v-else-if="noticeLoading">
     <CommonLoadingIcon size="sm" class="my-2 mx-auto" />

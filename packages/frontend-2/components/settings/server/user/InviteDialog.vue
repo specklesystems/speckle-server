@@ -2,41 +2,34 @@
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Get your colleagues in!</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-y-4 text-foreground">
-        <p class="text-body-xs mb-1">
+      <div class="flex flex-col gap-y-3 text-foreground mb-4">
+        <p class="text-body-xs">
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
           with commas.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4">
-          <div class="w-full sm:w-8/12">
-            <FormTextInput
-              :custom-icon="EnvelopeIcon"
-              name="emailsString"
-              color="foundation"
-              label="E-mail"
-              show-label
-              placeholder="example@example.com, example2@example.com"
-              :rules="[isRequired, isOneOrMultipleEmails]"
-              :disabled="anyMutationsLoading"
-            />
-          </div>
-          <div class="w-full sm:w-4/12">
-            <FormSelectServerRoles
-              v-if="allowServerRoleSelect"
-              v-model="serverRole"
-              label="Select server role"
-              show-label
-              fixed-height
-              :allow-guest="isGuestMode"
-              :allow-admin="isAdmin"
-              mount-menu-on-body
-            />
-          </div>
-        </div>
-
+        <FormTextInput
+          name="emailsString"
+          color="foundation"
+          label="E-mail"
+          show-label
+          placeholder="example@example.com, example2@example.com"
+          :rules="[isRequired, isOneOrMultipleEmails]"
+          :disabled="anyMutationsLoading"
+        />
+        <FormSelectServerRoles
+          v-if="allowServerRoleSelect"
+          v-model="serverRole"
+          label="Select server role"
+          class="w-full sm:w-60"
+          show-label
+          :allow-guest="isGuestMode"
+          :allow-admin="isAdmin"
+          mount-menu-on-body
+        />
         <FormTextArea
           name="message"
+          show-optional
           show-label
           label="Message"
           color="foundation"
@@ -46,11 +39,11 @@
         />
         <FormSelectProjects
           v-model="selectedProject"
-          label="(Optional) Select project to invite to"
+          label="Select project to invite to"
           class="w-full sm:w-60"
           owned-only
+          show-optional
           mount-menu-on-body
-          fixed-height
           show-label
         />
       </div>
@@ -58,7 +51,6 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { EnvelopeIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import type { Optional, ServerRoles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
@@ -127,7 +119,7 @@ const onSubmit = handleSubmit(async (values) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -135,7 +127,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Send',
     props: {
-      fullWidth: true,
       submit: true,
       disabled: anyMutationsLoading.value
     },

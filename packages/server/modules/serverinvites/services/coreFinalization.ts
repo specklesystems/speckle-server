@@ -1,8 +1,10 @@
-import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { AddStreamInviteDeclinedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddOrUpdateStreamCollaborator,
+  GetStream
+} from '@/modules/core/domain/streams/operations'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { getStream } from '@/modules/core/repositories/streams'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
 import {
@@ -13,7 +15,7 @@ import {
 import { Roles } from '@speckle/shared'
 
 type ValidateProjectInviteBeforeFinalizationFactoryDeps = {
-  getProject: typeof getStream
+  getProject: GetStream
 }
 
 export const validateProjectInviteBeforeFinalizationFactory =
@@ -29,6 +31,11 @@ export const validateProjectInviteBeforeFinalizationFactory =
         'Attempting to finalize non-project invite as project invite',
         { info: { invite, finalizerUserId } }
       )
+    }
+
+    // If decline, skip all further validation
+    if (action === InviteFinalizationAction.DECLINE) {
+      return
     }
 
     const project = await getProject({
@@ -69,9 +76,9 @@ export const validateProjectInviteBeforeFinalizationFactory =
   }
 
 type ProcessFinalizedProjectInviteFactoryDeps = {
-  getProject: typeof getStream
-  addInviteDeclinedActivity: typeof addStreamInviteDeclinedActivity
-  addProjectRole: typeof addOrUpdateStreamCollaborator
+  getProject: GetStream
+  addInviteDeclinedActivity: AddStreamInviteDeclinedActivity
+  addProjectRole: AddOrUpdateStreamCollaborator
 }
 
 export const processFinalizedProjectInviteFactory =
@@ -81,6 +88,20 @@ export const processFinalizedProjectInviteFactory =
     const { invite, finalizerUserId, action } = params
 
     const project = await getProject({ streamId: invite.resource.resourceId })
+
+    if (action === InviteFinalizationAction.DECLINE) {
+      // Skip validation so user can get rid of the invite regardless
+      if (project) {
+        await addInviteDeclinedActivity({
+          streamId: invite.resource.resourceId,
+          inviteTargetId: finalizerUserId,
+          inviterId: invite.inviterId,
+          stream: project
+        })
+      }
+      return
+    }
+
     if (!project) {
       throw new InviteFinalizingError(
         'Attempting to finalize invite to a non-existant project'
@@ -106,12 +127,5 @@ export const processFinalizedProjectInviteFactory =
           'Original inviter no longer has the rights to invite you to this project'
         )
       }
-    } else if (action === InviteFinalizationAction.DECLINE) {
-      await addInviteDeclinedActivity({
-        streamId: invite.resource.resourceId,
-        inviteTargetId: finalizerUserId,
-        inviterId: invite.inviterId,
-        stream: project
-      })
     }
   }

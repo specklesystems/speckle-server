@@ -55,6 +55,11 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
+        "workspaceSsoEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces dynamic sso",
+          "default": false
+        },
         "multipleEmailsModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles multiple emails",
@@ -554,12 +559,12 @@
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
+          "default": 100
         },
         "max_object_upload_file_size_mb": {
           "type": "number",
-          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server",
-          "default": 50
+          "description": "Objects are batched together and uploaded to the /objects endpoint as http POST form data. This determines the maximum size of that form data which can be uploaded to the server. It should be greater than or equal to max_object_size_mb.",
+          "default": 100
         },
         "max_project_models_per_page": {
           "type": "number",
@@ -1223,11 +1228,6 @@
             }
           }
         },
-        "sentry_dns": {
-          "type": "string",
-          "description": "(Optional) The Data Source Name that was provided by Sentry.io",
-          "default": ""
-        },
         "disable_tracking": {
           "type": "boolean",
           "description": "If set to true, will prevent tracking metrics from being collected",
@@ -1309,11 +1309,6 @@
               "default": "7000"
             }
           }
-        },
-        "max_object_size_mb": {
-          "type": "number",
-          "description": "The maximum size of an individual object which can be uploaded to the server",
-          "default": 10
         },
         "requests": {
           "type": "object",
@@ -1673,6 +1668,21 @@
               "type": "string",
               "description": "The port on which the metrics server will be exposed.",
               "default": "9094"
+            }
+          }
+        },
+        "puppeteer": {
+          "type": "object",
+          "properties": {
+            "userDataDirectory": {
+              "type": "string",
+              "description": "The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.",
+              "default": ""
+            },
+            "timeoutMilliseconds": {
+              "type": "string",
+              "description": "The timeout in milliseconds for the Puppeteer service.",
+              "default": "3600000"
             }
           }
         },

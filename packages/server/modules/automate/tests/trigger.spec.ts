@@ -4,10 +4,10 @@ import {
 } from '@/modules/automate/errors/runs'
 import {
   ManuallyTriggerAutomationDeps,
-  ensureRunConditions,
-  manuallyTriggerAutomation,
-  onModelVersionCreate,
-  triggerAutomationRevisionRun
+  ensureRunConditionsFactory,
+  manuallyTriggerAutomationFactory,
+  onModelVersionCreateFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
   AutomationRecord,
@@ -33,25 +33,27 @@ import {
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
-  getAutomation,
-  getFullAutomationRunById,
-  getAutomationTriggerDefinitions,
-  getFunctionRun,
-  storeAutomation,
-  storeAutomationRevision,
-  updateAutomation,
-  updateAutomationRevision,
-  updateAutomationRun,
-  upsertAutomationRun,
-  upsertAutomationFunctionRun,
-  storeAutomationToken
+  storeAutomationFactory,
+  storeAutomationTokenFactory,
+  storeAutomationRevisionFactory,
+  getAutomationFactory,
+  updateAutomationFactory,
+  getFunctionRunFactory,
+  upsertAutomationFunctionRunFactory,
+  getFullAutomationRunByIdFactory,
+  upsertAutomationRunFactory,
+  getAutomationTokenFactory,
+  getAutomationTriggerDefinitionsFactory,
+  getFullAutomationRevisionMetadataFactory,
+  updateAutomationRevisionFactory,
+  updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getLatestStreamBranch
+  getBranchLatestCommitsFactory,
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 import {
   buildAutomationCreate,
@@ -62,17 +64,43 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { reportFunctionRunStatus } from '@/modules/automate/services/runsManagement'
+import { reportFunctionRunStatusFactory } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
-  getFunctionInputDecryptor
+  getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
+import { db } from '@/db/knex'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { createAppToken } from '@/modules/core/services/tokens'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const updateAutomation = updateAutomationFactory({ db })
+const getFunctionRun = getFunctionRunFactory({ db })
+const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
+const getFullAutomationRunById = getFullAutomationRunByIdFactory({ db })
+const upsertAutomationRun = upsertAutomationRunFactory({ db })
+const getAutomationToken = getAutomationTokenFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
+const updateAutomationRevision = updateAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getCommit = getCommitFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -124,7 +152,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       ])
 
       const [projectModel, newAutomation] = await Promise.all([
-        getLatestStreamBranch(testUserStream.id),
+        getLatestStreamBranchFactory({ db })(testUserStream.id),
         createAutomation({
           userId: testUser.id,
           projectId: testUserStream.id,
@@ -162,7 +190,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
     describe('On model version create', () => {
       it('No trigger no run', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
@@ -179,7 +207,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       })
       it('Does not trigger test automations', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({ isTestAutomation: true } as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
@@ -213,7 +241,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
         const versionId = cryptoRandomString({ length: 10 })
         const projectId = cryptoRandomString({ length: 10 })
 
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
@@ -258,7 +286,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
         ]
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
-        await onModelVersionCreate({
+        await onModelVersionCreateFactory({
           getAutomation: async () => ({} as AutomationRecord),
           getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
@@ -285,12 +313,21 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
     describe('Triggering an automation revision run', () => {
       it('Throws if run conditions are not met', async () => {
         try {
-          await triggerAutomationRevisionRun({
+          await triggerAutomationRevisionRunFactory({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-            getEncryptionKeyPairFor
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
+            getEncryptionKeyPairFor,
+            createAppToken,
+            automateRunsEmitter: AutomateRunsEmitter.emit,
+            getAutomationToken,
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits,
+            getCommit
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -370,12 +407,21 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           ]
         })
         const thrownError = 'trigger failed'
-        const { automationRunId } = await triggerAutomationRevisionRun({
+        const { automationRunId } = await triggerAutomationRevisionRunFactory({
           automateRunTrigger: async () => {
             throw new Error(thrownError)
           },
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-          getEncryptionKeyPairFor
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
+          getEncryptionKeyPairFor,
+          createAppToken,
+          automateRunsEmitter: AutomateRunsEmitter.emit,
+          getAutomationToken,
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -461,12 +507,21 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           ]
         })
         const executionEngineRunId = cryptoRandomString({ length: 10 })
-        const { automationRunId } = await triggerAutomationRevisionRun({
+        const { automationRunId } = await triggerAutomationRevisionRunFactory({
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
           }),
-          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-          getEncryptionKeyPairFor
+          getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+            buildDecryptor
+          }),
+          getEncryptionKeyPairFor,
+          createAppToken,
+          automateRunsEmitter: AutomateRunsEmitter.emit,
+          getAutomationToken,
+          upsertAutomationRun,
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -492,7 +547,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
     describe('Run conditions are NOT met if', () => {
       it("the referenced revision doesn't exist", async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => null,
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
@@ -514,7 +569,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       })
       it('the automation is not enabled', async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -557,7 +612,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       })
       it('the revision is not active', async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -600,7 +655,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       })
       it("the revision doesn't have the referenced trigger", async () => {
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               createdAt: new Date(),
@@ -650,7 +705,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -699,7 +754,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -749,7 +804,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
         }
 
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -812,7 +867,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           projectId: cryptoRandomString({ length: 10 })
         }
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -873,7 +928,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           projectId: cryptoRandomString({ length: 10 })
         }
         try {
-          await ensureRunConditions({
+          await ensureRunConditionsFactory({
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
@@ -932,17 +987,27 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       const buildManuallyTriggerAutomation = (
         overrides?: Partial<ManuallyTriggerAutomationDeps>
       ) => {
-        const trigger = manuallyTriggerAutomation({
+        const trigger = manuallyTriggerAutomationFactory({
           getAutomationTriggerDefinitions,
           getAutomation,
           getBranchLatestCommits,
-          triggerFunction: triggerAutomationRevisionRun({
+          triggerFunction: triggerAutomationRevisionRunFactory({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-            getEncryptionKeyPairFor
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
+            getEncryptionKeyPairFor,
+            createAppToken,
+            automateRunsEmitter: AutomateRunsEmitter.emit,
+            getAutomationToken,
+            upsertAutomationRun,
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits,
+            getCommit
           }),
+          validateStreamAccess,
           ...(overrides || {})
         })
         return trigger
@@ -1157,10 +1222,11 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
       describe('status update report', () => {
         const buildReportFunctionRunStatus = () => {
-          const report = reportFunctionRunStatus({
+          const report = reportFunctionRunStatusFactory({
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun
+            automationRunUpdater: updateAutomationRun,
+            runEventEmit: AutomateRunsEmitter.emit
           })
 
           return report

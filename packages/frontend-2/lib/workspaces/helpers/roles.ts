@@ -1,27 +1,31 @@
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, RoleInfo } from '@speckle/shared'
 import { WorkspaceRole } from '~/lib/common/generated/gql/graphql'
 
 export type SelectableWorkspaceRole = WorkspaceRoles | 'delete'
+export type SelectableWorkspaceRoleSelectItem = {
+  id: SelectableWorkspaceRole
+  title: string
+  description?: string
+}
 
 export const roleSelectItems: Record<
   SelectableWorkspaceRole | string,
-  { id: SelectableWorkspaceRole; title: string }
+  SelectableWorkspaceRoleSelectItem
 > = {
   [Roles.Workspace.Admin]: {
     id: Roles.Workspace.Admin,
-    title: 'Admin'
+    title: RoleInfo.Workspace[Roles.Workspace.Admin].title,
+    description: RoleInfo.Workspace[Roles.Workspace.Admin].description
   },
   [Roles.Workspace.Member]: {
     id: Roles.Workspace.Member,
-    title: 'Can edit'
+    title: RoleInfo.Workspace[Roles.Workspace.Member].title,
+    description: RoleInfo.Workspace[Roles.Workspace.Member].description
   },
   [Roles.Workspace.Guest]: {
     id: Roles.Workspace.Guest,
-    title: 'Can view'
-  },
-  ['delete']: {
-    id: 'delete',
-    title: 'Remove'
+    title: RoleInfo.Workspace[Roles.Workspace.Guest].title,
+    description: RoleInfo.Workspace[Roles.Workspace.Guest].description
   }
 }
 

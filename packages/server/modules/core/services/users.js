@@ -16,11 +16,11 @@ const {
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
-const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
-  getUsersBaseQuery
+  getUsersBaseQuery,
+  getUser
 } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -35,9 +35,29 @@ const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 const {
   createUserEmailFactory,
   findPrimaryEmailForUserFactory,
-  findEmailFactory
+  findEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
 } = require('@/modules/core/repositories/userEmails')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
 const { db } = require('@/db/knex')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -54,6 +74,15 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
     }
   }
 }
+
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail: findEmailFactory({ db }),
+  getUser,
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
 
 module.exports = {
   /*
@@ -116,11 +145,23 @@ module.exports = {
 
     await Acl().insert({ userId: newId, role: userRole })
 
-    await createUserEmailFactory({ db })({
+    const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    })
+
+    await validateAndCreateUserEmail({
       userEmail: {
         email: user.email,
         userId: user.id,
-        verified: user.verified
+        verified: user.verified,
+        primary: true
       }
     })
 
@@ -130,7 +171,7 @@ module.exports = {
   },
 
   /**
-   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles}, bio?: string}} param0
+   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
    * @returns {Promise<{
    *  id: string,
    *  email: string,
@@ -284,6 +325,7 @@ module.exports = {
    * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
    */
   deleteUser({ deleteAllUserInvites }) {
+    const deleteStream = deleteStreamFactory({ db })
     return async (id) => {
       //TODO: check for the last admin user to survive
       dbLogger.info('Deleting user ' + id)
@@ -310,7 +352,7 @@ module.exports = {
         [id]
       )
       for (const i in streams.rows) {
-        await deleteStream({ streamId: streams.rows[i].id })
+        await deleteStream(streams.rows[i].id)
       }
 
       // Delete all invites (they don't have a FK, so we need to do this manually)

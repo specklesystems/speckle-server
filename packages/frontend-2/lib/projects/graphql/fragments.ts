@@ -23,11 +23,17 @@ export const projectDashboardItemFragment = graphql(`
   fragment ProjectDashboardItem on Project {
     id
     ...ProjectDashboardItemNoModels
-    models(limit: 4, filter: { onlyWithVersions: true }) {
+    models(limit: 4) {
       totalCount
       items {
         ...ProjectPageLatestItemsModelItem
       }
+    }
+    workspace {
+      id
+      slug
+      name
+      ...WorkspaceAvatar_Workspace
     }
     pendingImportedModels(limit: 4) {
       ...PendingFileUpload

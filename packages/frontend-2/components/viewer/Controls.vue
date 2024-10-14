@@ -5,7 +5,7 @@
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
       :class="
         showNavbar && !isEmbedEnabled
-          ? 'pt-[4.2rem]'
+          ? 'pt-[3.8rem]'
           : isTransparent
           ? 'pt-2'
           : 'pt-2 pb-16'
@@ -152,12 +152,12 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.3rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
       @mousedown="startResizing"
     >
       <div
-        class="relative z-30 w-1 mt-2 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
+        class="relative z-30 w-1 mt-2 ml-1 h-full pt-[2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
       ></div>
       <div
         class="w-7 h-8 mr-1 bg-transparent group-hover:bg-primary rounded-r -translate-x-1 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
@@ -173,7 +173,7 @@
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
-      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
+      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
@@ -264,7 +264,8 @@ import {
 } from '@speckle/ui-components'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerInterfaceState
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -356,6 +357,8 @@ const {
   camera: { isOrthoProjection }
 } = useCameraUtilities()
 
+const { ui } = useInjectedViewerState()
+
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
 
@@ -419,7 +422,16 @@ const measureShortcut = ref(
   `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
 )
 
+const isTypingComment = computed(() => {
+  const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
+  const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
+  return isNewThreadEditorOpen || isExistingThreadEditorOpen
+})
+
 const handleKeyboardAction = (action: ViewerKeyboardActions) => {
+  if (isTypingComment.value) {
+    return
+  }
   switch (action) {
     case ViewerKeyboardActions.ToggleModels:
       toggleActiveControl('models')

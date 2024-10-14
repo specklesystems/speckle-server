@@ -4,7 +4,7 @@
       class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border border-outline-3 rounded-xl p-4 transition bg-foundation"
     >
       <div
-        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-4 pr-6 py-2"
+        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-2 pr-6 py-2"
       >
         <div class="flex flex-col">
           <NuxtLink
@@ -26,6 +26,20 @@
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
         <div class="pt-3">
+          <NuxtLink
+            v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
+            :to="workspaceRoute(project.workspace.slug)"
+            class="my-3 flex items-center"
+          >
+            <WorkspaceAvatar
+              :logo="project.workspace.logo"
+              :default-logo-index="project.workspace.defaultLogoIndex"
+              size="sm"
+            />
+            <p class="text-body-2xs text-foreground ml-2 line-clamp-2">
+              {{ project.workspace.name }}
+            </p>
+          </NuxtLink>
           <FormButton
             :to="allProjectModelsRoute(project.id) + '/'"
             size="sm"
@@ -39,7 +53,7 @@
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-grow col-span-4 lg:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden lg:[&>*:nth-child(2)]:block"
+        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 flex-grow col-span-4 xl:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden xl:[&>*:nth-child(2)]:block"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
@@ -81,15 +95,17 @@ import {
 } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
+  showWorkspaceLink?: boolean
 }>()
 
 const router = useRouter()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const projectId = computed(() => props.project.id)
-
 const updatedAt = computed(() => {
   return {
     full: formattedFullDate(props.project.updatedAt),

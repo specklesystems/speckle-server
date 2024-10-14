@@ -6,56 +6,19 @@
       </p>
     </template>
     <template #top-buttons>
-      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-        Invite
-      </FormButton>
+      <FormButton @click="toggleInviteDialog">Invite</FormButton>
     </template>
 
     <div class="flex flex-col mt-6">
-      <div
+      <ProjectPageSettingsCollaboratorsRow
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
-      >
-        <UserAvatar :user="collaborator.user" />
-        <span class="grow truncate text-body-xs">{{ collaborator.title }}</span>
-
-        <template v-if="!collaborator.inviteId">
-          <ProjectPageTeamPermissionSelect
-            v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
-            class="shrink-0"
-            :model-value="collaborator.role"
-            :disabled="loading"
-            :hide-owner="collaborator.serverRole === Roles.Server.Guest"
-            @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
-            @delete="onCollaboratorRoleChange(collaborator, null)"
-          />
-          <span v-else class="shrink-0 text-body-2xs">
-            {{ roleSelectItems[collaborator.role].title }}
-          </span>
-        </template>
-        <template v-else-if="canEdit">
-          <div class="flex items-end sm:items-center shrink-0 gap-3">
-            <span class="shrink-0 text-foreground-2 text-sm">
-              {{ roleSelectItems[collaborator.role].title }}
-            </span>
-            <FormButton
-              class="shrink-0"
-              color="danger"
-              size="sm"
-              :disabled="loading"
-              @click="
-                cancelInvite({
-                  projectId,
-                  inviteId: collaborator.inviteId || ''
-                })
-              "
-            >
-              Cancel invite
-            </FormButton>
-          </div>
-        </template>
-      </div>
+        :can-edit="canEdit"
+        :collaborator="collaborator"
+        :loading="loading"
+        @cancel-invite="onCancelInvite"
+        @change-role="onCollaboratorRoleChange"
+      />
     </div>
 
     <ProjectPageInviteDialog
@@ -68,11 +31,13 @@
   </ProjectPageSettingsBlock>
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
-import type { Nullable, StreamRoles } from '@speckle/shared'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Project } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
+import type { Nullable, StreamRoles } from '@speckle/shared'
+import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   getCacheId,
   getObjectReference,
@@ -82,12 +47,6 @@ import {
   useCancelProjectInvite,
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
-import { useTeamInternals } from '~~/lib/projects/composables/team'
-import { roleSelectItems } from '~~/lib/projects/helpers/components'
-import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import { UserPlusIcon } from '@heroicons/vue/24/outline'
-import { useMixpanel } from '~~/lib/core/composables/mp'
-import { graphql } from '~~/lib/common/generated/gql'
 
 const projectPageSettingsCollaboratorsQuery = graphql(`
   query ProjectPageSettingsCollaborators($projectId: String!) {
@@ -99,12 +58,19 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
   }
 `)
 
+const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
+  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...ProjectPageTeamInternals_Workspace
+    }
+  }
+`)
+
 const route = useRoute()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const apollo = useApolloClient().client
-const updateRole = useUpdateUserRole()
-const cancelInvite = useCancelProjectInvite()
-const { activeUser } = useActiveUser()
 const mp = useMixpanel()
+const cancelInvite = useCancelProjectInvite()
 
 const showInviteDialog = ref(false)
 const loading = ref(false)
@@ -114,10 +80,28 @@ const projectId = computed(() => route.params.id as string)
 const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
+const { result: workspaceResult } = useQuery(
+  projectPageSettingsCollaboratorWorkspaceQuery,
+  () => ({
+    workspaceId: pageResult.value!.project.workspaceId!
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspaceId
+  })
+)
 
 const project = computed(() => pageResult.value?.project)
+const workspace = computed(() => workspaceResult.value?.workspace)
+const updateRole = useUpdateUserRole(project)
 
-const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(project)
+const toggleInviteDialog = () => {
+  showInviteDialog.value = true
+}
+
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
+  project,
+  workspace
+)
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
@@ -138,7 +122,9 @@ const onCollaboratorRoleChange = async (
   mp.track('Stream Action', {
     type: 'action',
     name: 'update',
-    action: 'team member role'
+    action: 'team member role',
+    // eslint-disable-next-line camelcase
+    workspace_id: workspace.value?.id
   })
 
   if (!newRole) {
@@ -161,7 +147,10 @@ const onCollaboratorRoleChange = async (
   }
 }
 
-const toggleInviteDialog = () => {
-  showInviteDialog.value = true
+const onCancelInvite = (inviteId: string) => {
+  cancelInvite({
+    projectId: projectId.value,
+    inviteId
+  })
 }
 </script>

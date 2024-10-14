@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutSidebar from '~~/src/components/layout/sidebar/Sidebar.vue'
+import LayoutSidebarPromo from '~~/src/components/layout/sidebar/Promo.vue'
 import LayoutSidebarMenu from '~~/src/components/layout/sidebar/menu/Menu.vue'
 import LayoutSidebarMenuGroup from '~~/src/components/layout/sidebar/menu/group/Group.vue'
 import LayoutSidebarMenuGroupItem from '~~/src/components/layout/sidebar/menu/group/Item.vue'
@@ -20,6 +21,7 @@ export const Dashboard: StoryObj = {
   render: (args) => ({
     components: {
       LayoutSidebar,
+      LayoutSidebarPromo,
       LayoutSidebarMenu,
       LayoutSidebarMenuGroup,
       LayoutSidebarMenuGroupItem,
@@ -51,7 +53,7 @@ export const Dashboard: StoryObj = {
             <LayoutSidebarMenuGroupItem label="Group Item with no Icon" to="/" />
             <LayoutSidebarMenuGroupItem label="Group Item with Child" to="/">
               <LayoutSidebarMenuGroupItem label="Group Item child with Child" to="/">
-                <LayoutSidebarMenuGroupItem label="Group Item child" to="/">
+                <LayoutSidebarMenuGroupItem label="Group Item child" to="/" external>
                   <template #icon>
                     <HomeIcon class="h-5 w-5" />
                   </template>
@@ -68,6 +70,9 @@ export const Dashboard: StoryObj = {
             </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
+        <template #promo>
+          <LayoutSidebarPromo title="Example Title" text="An example piece of text" />
+        </template>
       </LayoutSidebar>
     `
   })

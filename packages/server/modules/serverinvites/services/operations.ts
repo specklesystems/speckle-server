@@ -10,6 +10,7 @@ import {
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
+import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
 
 export type InviteResult = {
@@ -27,9 +28,18 @@ export type FinalizeInvite = (params: {
   accept: boolean
   token: string
   resourceType?: InviteResourceTargetType
+  /**
+   * If true, finalization also allows accepting an invite that technically belongs to a different
+   * email, one that is not yet attached to any user account.
+   * If the invite is accepted, the email will be attached to the user account as well in a verified state.
+   */
+  allowAttachingNewEmail?: boolean
 }) => Promise<void>
 
-export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>
+export type ResendInviteEmail = (params: {
+  inviteId: string
+  resourceFilter?: ServerInviteResourceFilter
+}) => Promise<void>
 
 export type CollectAndValidateResourceTargets = (params: {
   input: CreateInviteParams
@@ -38,6 +48,11 @@ export type CollectAndValidateResourceTargets = (params: {
   target: ResolvedTargetData
   targetUser: MaybeNullOrUndefined<UserWithOptionalRole>
   serverInfo: ServerInfo
+  /**
+   * Primarily these functions are used to validate on invite creation, but they also get ran on invite finalization.
+   * In those circumstances this flag will be set.
+   */
+  finalizingInvite?: boolean
 }) => MaybeAsync<Array<InviteResourceTarget | PrimaryInviteResourceTarget>>
 
 export type BuildInviteEmailContents = (params: {
@@ -82,3 +97,15 @@ export type ProcessFinalizedResourceInvite = (params: {
 export type GetInvitationTargetUsers = (params: {
   invites: ServerInviteRecord[]
 }) => Promise<{ [key: string]: UserWithOptionalRole }>
+
+export type ValidateServerInvite = (
+  email?: string,
+  token?: string
+) => Promise<ServerInviteRecord>
+
+export type FinalizeInvitedServerRegistration = (
+  email: string,
+  userId: string
+) => Promise<void>
+
+export type ResolveAuthRedirectPath = (invite?: ServerInviteRecord) => string

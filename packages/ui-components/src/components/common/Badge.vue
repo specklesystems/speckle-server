@@ -3,7 +3,9 @@
     <svg v-if="dot" :class="dotClasses" fill="currentColor" viewBox="0 0 8 8">
       <circle cx="4" cy="4" r="3" />
     </svg>
-    <slot>Badge</slot>
+    <span class="whitespace-nowrap">
+      <slot>Badge</slot>
+    </span>
     <button v-if="iconLeft" :class="iconClasses" @click="onIconClick($event)">
       <Component :is="iconLeft" :class="['h-4 w-4', badgeDotIconColorClasses]" />
     </button>
@@ -53,7 +55,7 @@ const props = defineProps<{
 }>()
 
 const badgeColorClasses = computed(
-  () => props.colorClasses || 'bg-blue-100 text-blue-800'
+  () => props.colorClasses || 'bg-info-lighter text-outline-4'
 )
 
 const badgeDotIconColorClasses = computed(
@@ -62,20 +64,26 @@ const badgeDotIconColorClasses = computed(
 
 const badgeClasses = computed(() => {
   const classParts: string[] = [
-    'inline-flex items-center',
+    'inline-flex items-center select-none',
     badgeColorClasses.value,
-    props.size === 'lg' ? 'px-3 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+    props.size === 'lg'
+      ? 'px-3 py-0.5 text-body-2xs'
+      : 'p-1 text-body-3xs text-body-3xs font-medium'
   ]
 
   if (props.rounded) {
     classParts.push('rounded')
     classParts.push(
-      props.size === 'lg' ? 'px-2 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+      props.size === 'lg'
+        ? 'px-2 py-0.5 text-body-2xs'
+        : 'px-1.1 py-0.5 text-body-3xs font-medium'
     )
   } else {
     classParts.push('rounded-full')
     classParts.push(
-      props.size === 'lg' ? 'px-2.5 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+      props.size === 'lg'
+        ? 'px-2.5 py-0.5 text-body-2xs'
+        : 'px-2.5 py-0.5 text-body-3xs font-medium'
     )
   }
 

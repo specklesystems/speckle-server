@@ -159,7 +159,12 @@ export default class SpeckleInstancedMesh extends Group {
     for (let k = 0; k < this.groups.length; k++) {
       const materialIndex = this.groups[k].materialIndex
       const material = this.materials[materialIndex]
-      const group = new InstancedMesh(this.instanceGeometry, material, 0)
+
+      const group = new InstancedMesh(
+        this.getInstanceGeometryShallowCopy(),
+        material,
+        0
+      )
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(
           this.groups[k].start,
@@ -236,6 +241,19 @@ export default class SpeckleInstancedMesh extends Group {
       return null
     }
     return this.materials[group.materialIndex]
+  }
+
+  /** Three's 'clone' and 'copy' from geometry and buffer attributes
+   *  create duplicates of arrays and we don't want that. Most of the
+   *  buffer attributes need to be shared to avoid redundancy
+   */
+  private getInstanceGeometryShallowCopy(): BufferGeometry {
+    const geometry = new BufferGeometry()
+    for (const attr in this.instanceGeometry?.attributes) {
+      geometry.setAttribute(attr, this.instanceGeometry.attributes[attr])
+    }
+    geometry.setIndex(this.instanceGeometry?.index as BufferAttribute)
+    return geometry
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast

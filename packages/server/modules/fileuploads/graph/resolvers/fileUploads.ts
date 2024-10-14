@@ -1,16 +1,22 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  getStreamFileUploads,
-  getFileInfo,
-  getStreamPendingModels,
-  getBranchPendingVersions
+  getBranchPendingVersionsFactory,
+  getFileInfoFactory,
+  getStreamFileUploadsFactory,
+  getStreamPendingModelsFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { authorizeResolver } from '@/modules/shared'
 import {
   FileImportSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
+import { db } from '@/db/knex'
+
+const getFileInfo = getFileInfoFactory({ db })
+const getStreamFileUploads = getStreamFileUploadsFactory({ db })
+const getStreamPendingModels = getStreamPendingModelsFactory({ db })
+const getBranchPendingVersions = getBranchPendingVersionsFactory({ db })
 
 export = {
   Stream: {

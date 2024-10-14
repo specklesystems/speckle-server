@@ -1,13 +1,13 @@
 <template>
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
-      <SettingsSectionHeader title="Profile" text="Manage your profile information" />
+      <SettingsSectionHeader title="Profile" text="Manage your profile" />
       <SettingsUserProfileDetails :user="user" />
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsUserProfileChangePassword :user="user" />
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsUserProfileDeleteAccount :user="user" />
-      <hr class="my-6 md:my-10" />
+      <hr class="my-6 md:my-8 border-outline-2" />
       <div class="text-xs text-foreground-2 w-full flex flex-col space-y-2">
         <div class="flex">
           User ID: #{{ user.id }}
@@ -36,9 +36,9 @@ import { ClipboardIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsUserProfile_User on User {
-    ...UserProfileEditDialogChangePassword_User
-    ...UserProfileEditDialogDeleteAccount_User
-    ...UserProfileEditDialogBio_User
+    ...SettingsUserProfileChangePassword_User
+    ...SettingsUserProfileDeleteAccount_User
+    ...SettingsUserProfileDetails_User
   }
 `)
 

@@ -21,7 +21,7 @@
     <div
       v-if="$slots.introduction"
       class="text-foreground text-body-sm"
-      :class="background ? 'px-4 sm:px-6 pt-4' : 'pt-6'"
+      :class="background ? 'px-4 sm:px-6 pt-4' : 'pt-4'"
     >
       <slot name="introduction" />
     </div>

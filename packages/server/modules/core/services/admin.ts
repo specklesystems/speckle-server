@@ -1,8 +1,8 @@
 import db from '@/db/knex'
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
-import { getStreams } from '@/modules/core/services/streams'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   countServerInvitesFactory,
@@ -37,6 +37,7 @@ type AdminUserListArgs = CollectionQueryArgs & {
 export class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
   static code = 'INVALID_CURSOR_VALUE'
+  static statusCode = 400
 }
 
 export const parseCursorToDate = (cursor: string): Date => {
@@ -102,6 +103,7 @@ export const adminProjectList = async (
   args: AdminProjectListArgs & { streamIdWhitelist?: string[] }
 ): Promise<Collection<StreamRecord>> => {
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+  const getStreams = legacyGetStreamsFactory({ db })
   const { streams, totalCount, cursorDate } = await getStreams({
     ...args,
     searchQuery: args.query,

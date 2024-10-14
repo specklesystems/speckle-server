@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-10 flex flex-col space-y-4 md:space-y-6">
+  <div class="relative z-10 flex flex-col !mt-0">
     <!-- Left Arrow Button -->
     <div
       class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
@@ -24,7 +24,7 @@
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
-      <div ref="buttonContainer" class="flex w-full space-x-2 sm:space-x-3">
+      <div ref="buttonContainer" class="flex w-full space-x-4">
         <button
           v-for="item in items"
           :key="item.id"
@@ -43,7 +43,7 @@
             "
             class="absolute top-0 right-0 left-0 bottom-0"
           ></div>
-          <div class="flex space-x-2 items-center px-2">
+          <div class="flex space-x-2 items-center">
             <component
               :is="item.icon"
               v-if="item.icon"
@@ -84,7 +84,7 @@
         <ArrowLongRightIcon class="h-4 w-4" />
       </button>
     </div>
-    <div>
+    <div class="pt-4">
       <slot :active-item="activeItem" />
     </div>
   </div>
@@ -119,8 +119,7 @@ const buttonClass = computed(() => {
       'flex',
       'items-center',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
-      'text-body-sm',
-      'space-x-1.5',
+      'text-body-xs',
       'hover:sm:border-outline-2',
       'pb-2',
       'border-b-[2px]',

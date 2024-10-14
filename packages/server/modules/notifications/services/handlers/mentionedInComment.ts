@@ -1,8 +1,13 @@
-import { ExtendedComment, getComment } from '@/modules/comments/repositories/comments'
+import { db } from '@/db/knex'
+import { GetComment } from '@/modules/comments/domain/operations'
+import { ExtendedComment } from '@/modules/comments/domain/types'
+import { getCommentFactory } from '@/modules/comments/repositories/comments'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
@@ -157,45 +162,73 @@ function buildEmailTemplateParams(
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
-const handler: NotificationHandler<MentionedInCommentMessage> = async (msg) => {
-  const {
-    targetUserId,
-    data: { threadId, authorId, streamId, commentId }
-  } = msg
+const mentionedInCommentHandlerFactory =
+  (deps: {
+    getUser: typeof getUser
+    getStream: GetStream
+    getComment: GetComment
+    getServerInfo: typeof getServerInfo
+    renderEmail: typeof renderEmail
+    sendEmail: typeof sendEmail
+  }): NotificationHandler<MentionedInCommentMessage> =>
+  async (msg) => {
+    const {
+      targetUserId,
+      data: { threadId, authorId, streamId, commentId }
+    } = msg
 
-  const isCommentAndThreadTheSame = threadId === commentId
+    const isCommentAndThreadTheSame = threadId === commentId
 
-  const [targetUser, author, stream, threadComment, comment, serverInfo] =
-    await Promise.all([
-      getUser(targetUserId),
-      getUser(authorId),
-      getStream({ streamId }),
-      getComment({ id: threadId }),
-      isCommentAndThreadTheSame ? null : getComment({ id: commentId }),
-      getServerInfo()
-    ])
+    const [targetUser, author, stream, threadComment, comment, serverInfo] =
+      await Promise.all([
+        deps.getUser(targetUserId),
+        deps.getUser(authorId),
+        deps.getStream({ streamId }),
+        deps.getComment({ id: threadId }),
+        isCommentAndThreadTheSame ? null : deps.getComment({ id: commentId }),
+        deps.getServerInfo()
+      ])
 
-  const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
+    const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
 
-  // Validate message
-  const state = validate({
-    targetUser,
-    author,
-    stream,
-    threadComment,
-    mentionComment,
-    msg,
-    serverInfo
+    // Validate message
+    const state = validate({
+      targetUser,
+      author,
+      stream,
+      threadComment,
+      mentionComment,
+      msg,
+      serverInfo
+    })
+
+    const templateParams = buildEmailTemplateParams(state)
+    const { text, html } = await deps.renderEmail(
+      templateParams,
+      serverInfo,
+      targetUser
+    )
+    await deps.sendEmail({
+      to: state.targetUser.email,
+      text,
+      html,
+      subject: "You've just been mentioned in a Speckle comment"
+    })
+  }
+
+/**
+ * Notification that is triggered when a user is mentioned in a comment
+ */
+const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
+  const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
+    getUser,
+    getStream: getStreamFactory({ db }),
+    getComment: getCommentFactory({ db }),
+    getServerInfo,
+    renderEmail,
+    sendEmail
   })
-
-  const templateParams = buildEmailTemplateParams(state)
-  const { text, html } = await renderEmail(templateParams, serverInfo, targetUser)
-  await sendEmail({
-    to: state.targetUser.email,
-    text,
-    html,
-    subject: "You've just been mentioned in a Speckle comment"
-  })
+  return mentionedInCommentHandler(...args)
 }
 
 export default handler

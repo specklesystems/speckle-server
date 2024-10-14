@@ -1,35 +1,30 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div
-    v-keyboard-clickable
-    class="space-y-4 relative"
-    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
-    @click="onCardClick"
-    @mouseleave="showActionsMenu = false"
-  >
+  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
-        <div
-          class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
-        >
-          <span class="text-heading text-foreground">
-            {{ name }}
-          </span>
-          <span
-            v-if="model"
-            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
-          >
+        <div class="flex gap-2 items-center">
+          <NuxtLink :to="modelLink || undefined">
+            <span class="text-heading text-foreground hover:text-primary">
+              {{ name }}
+            </span>
+          </NuxtLink>
+          <span v-if="model">
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
               :can-edit="canContribute"
+              :menu-position="
+                itemType === StructureItemType.EmptyModel
+                  ? HorizontalDirection.Right
+                  : HorizontalDirection.Left
+              "
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
@@ -126,7 +121,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -235,6 +230,7 @@ import { has } from 'lodash-es'
 import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -385,7 +381,9 @@ const modelLink = computed(() => {
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.project.id, `$${props.item.fullName}`)
+  const fullName = props.item.fullName
+  const encodedFullName = `$${fullName}`.replace(/\//g, '%2F')
+  return modelRoute(props.project.id, encodedFullName)
 })
 
 const {
@@ -405,10 +403,6 @@ const {
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
 
-const isEmptyModel = computed(() => {
-  return itemType.value === StructureItemType.EmptyModel
-})
-
 const onModelUpdated = () => {
   emit('model-updated')
   refetchChildren()
@@ -416,12 +410,6 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
-}
-
-const onCardClick = () => {
-  if (model.value && !isEmptyModel.value) {
-    router.push(modelRoute(props.project.id, model.value.id))
-  }
 }
 
 const onVersionsClick = () => {

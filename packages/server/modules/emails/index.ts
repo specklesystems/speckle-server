@@ -1,7 +1,17 @@
 /* istanbul ignore file */
+import { db } from '@/db/knex'
 import { moduleLogger } from '@/logging/logging'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { getUser } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import * as SendingService from '@/modules/emails/services/sending'
-import { initializeVerificationOnRegistration } from '@/modules/emails/services/verification/request'
+import {
+  initializeVerificationOnRegistrationFactory,
+  requestEmailVerificationFactory
+} from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
@@ -19,6 +29,21 @@ const emailsModule: SpeckleModule = {
 
     // init event listeners
     if (isInitial) {
+      const initializeVerificationOnRegistration =
+        initializeVerificationOnRegistrationFactory({
+          userEmitterListener: UsersEmitter.listen,
+          requestEmailVerification: requestEmailVerificationFactory({
+            getUser,
+            getServerInfo,
+            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
+              { db }
+            ),
+            findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+            sendEmail: SendingService.sendEmail,
+            renderEmail
+          })
+        })
+
       quitVerificationListeners = initializeVerificationOnRegistration()
     }
   },

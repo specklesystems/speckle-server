@@ -121,7 +121,7 @@ extend type Commit {
 type ActivityCollection {
   totalCount: Int!
   cursor: String
-  items: [Activity]
+  items: [Activity!]!
 }
 
 type Activity {

@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import {
   ServerAcl,
   ApiTokens,
@@ -13,9 +13,10 @@ import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { Optional, ServerRoles } from '@speckle/shared'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 
 /*
   Tokens
@@ -129,6 +130,7 @@ export async function validateToken(
     return { valid: false }
   }
 
+  const getTokenAppInfo = getTokenAppInfoFactory({ db })
   const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
 
   if (valid) {
@@ -162,8 +164,7 @@ export async function validateToken(
 export async function revokeToken(tokenId: string, userId: string) {
   tokenId = tokenId.slice(0, 10)
   const delCount = await ApiTokens.knex().where({ id: tokenId, owner: userId }).del()
-
-  if (delCount === 0) throw new Error('Did not revoke token')
+  if (delCount === 0) throw new UserInputError('Did not revoke token')
   return true
 }
 

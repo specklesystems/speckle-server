@@ -1,7 +1,10 @@
+import { db } from '@/db/knex'
+import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { canCreateAppToken } from '@/modules/core/helpers/token'
-import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { createAppToken } from '@/modules/core/services/tokens'
+
+const getTokenAppInfo = getTokenAppInfoFactory({ db })
 
 export = {
   Query: {

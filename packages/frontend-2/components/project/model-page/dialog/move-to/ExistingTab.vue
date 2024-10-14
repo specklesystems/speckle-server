@@ -1,6 +1,6 @@
 <template>
   <form @submit="onSubmit">
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col gap-y-4">
       <div class="">
         Please select the target branch to move
         <template v-if="versions.length > 1">all of the selected versions</template>

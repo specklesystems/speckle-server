@@ -7,14 +7,18 @@
       :workspace="workspace"
     />
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
         { id: 'role', header: 'Role', classes: 'col-span-2' },
-        { id: 'lastRemindedOn', header: 'Last reminded on', classes: 'col-span-3' }
+        { id: 'lastRemindedOn', header: 'Last reminded on', classes: 'col-span-2' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
-      :buttons="buttons"
       :items="invites"
       :loading="searchResultLoading"
       :empty-message="
@@ -25,13 +29,13 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="item.user" :user="item.user" />
+          <UserAvatar v-if="item.user" hide-tooltip :user="item.user" />
           <span class="truncate text-body-xs text-foreground">{{ item.title }}</span>
         </div>
       </template>
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item.invitedBy" />
+          <UserAvatar hide-tooltip :user="item.invitedBy" />
           <span class="truncate text-body-xs text-foreground">
             {{ item.invitedBy.name }}
           </span>
@@ -47,20 +51,44 @@
           {{ formattedFullDate(item.updatedAt) }}
         </span>
       </template>
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionsItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
   </div>
 </template>
+
 <script setup lang="ts">
-import { EnvelopeIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
 import { useQuery } from '@vue/apollo-composable'
 import { capitalize } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesMembersInvitesTable_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  useCancelWorkspaceInvite,
+  useResendWorkspaceInvite
+} from '~/lib/settings/composables/workspaces'
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
+    inviteId
     role
     title
     updatedAt
@@ -91,11 +119,16 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+const showActionsMenu = ref<Record<string, boolean>>({})
 
+const cancelInvite = useCancelWorkspaceInvite()
+const resendInvite = useResendWorkspaceInvite()
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesInvitesSearchQuery,
   () => ({
-    invitesSearch: search.value,
+    invitesFilter: {
+      search: search.value
+    },
     workspaceId: props.workspaceId
   }),
   () => ({
@@ -105,20 +138,40 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const invites = computed(() =>
   search.value.length
-    ? searchResult.value?.workspace.invitedTeam || props.workspace?.invitedTeam
+    ? searchResult.value?.workspace.invitedTeam
     : props.workspace?.invitedTeam
 )
-const buttons = computed(() => [
-  {
-    label: 'Resend invite',
-    icon: EnvelopeIcon,
-    action: () => ({})
-  },
-  {
-    label: 'Delete invite',
-    icon: XMarkIcon,
-    action: () => ({})
+
+const actionsItems: LayoutMenuItem[][] = [
+  [{ title: 'Resend invite', id: 'resend-invite' }],
+  [{ title: 'Delete invite', id: 'delete-invite' }]
+]
+
+const onActionChosen = async (
+  actionItem: LayoutMenuItem,
+  item: NonNullable<typeof invites.value>[0]
+) => {
+  switch (actionItem.id) {
+    case 'resend-invite':
+      await resendInvite({
+        input: {
+          workspaceId: props.workspaceId,
+          inviteId: item.inviteId
+        }
+      })
+      break
+    case 'delete-invite':
+      await cancelInvite({
+        workspaceId: props.workspaceId,
+        inviteId: item.inviteId
+      })
+      break
   }
-])
+}
+
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
 const roleDisplayName = (role: string) => capitalize(role.split(':')[1])
 </script>

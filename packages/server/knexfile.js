@@ -10,6 +10,7 @@ const {
   ignoreMissingMigrations,
   postgresMaxConnections
 } = require('@/modules/shared/helpers/envHelper')
+const { dbLogger: logger } = require('./logging/logging')
 
 function walk(dir) {
   let results = []
@@ -75,7 +76,28 @@ const commonConfig = {
     loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
     directory: migrationDirs
   },
-  pool: { min: 0, max: postgresMaxConnections() }
+  log: {
+    warn(message) {
+      logger.warn(message)
+    },
+    error(message) {
+      logger.error(message)
+    },
+    deprecate(message) {
+      logger.info(message)
+    },
+    debug(message) {
+      logger.debug(message)
+    }
+  },
+  // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
+  compileSqlOnError: false,
+  pool: {
+    min: 0,
+    max: postgresMaxConnections(),
+    acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
+    createTimeoutMillis: 5000
+  }
 }
 
 /** @type {Object<string, import('knex').Knex.Config>} */
@@ -86,6 +108,7 @@ const config = {
       connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test',
       application_name: 'speckle_server'
     },
+    compileSqlOnError: true,
     asyncStackTraces: true
   },
   development: {
@@ -94,6 +117,7 @@ const config = {
       connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev',
       application_name: 'speckle_server'
     },
+    compileSqlOnError: true,
     asyncStackTraces: true
   },
   production: {
