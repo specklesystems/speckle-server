@@ -9,9 +9,13 @@
         />
       </div>
       <div v-else-if="!showChart && isAutomationRunning">
-        Generating visual report
-        <!-- <DotLottieVue
+        <DotLotVue
+          style="height: 300px; width: 300px"
+          autoplay
+          loop
           src="https://lottie.host/ffc5ea7d-8c2e-49aa-b84d-9b336ca7b963/ZPSkZUvsE7.json"
+        />
+        <!-- <DotLottieVue
           background="transparent"
           speed="1"
           style="width: 300px; height: 300px"
@@ -62,6 +66,8 @@ const showChart = computed(() => {
   const maybeMatchingRun = props.automationRuns.find(
     (r) => r.id === expectedRunId.value
   )
+  console.log(expectedRunId.value)
+  console.log(maybeMatchingRun)
   if (maybeMatchingRun) {
     return maybeMatchingRun.functionRuns[0].status === AutomateRunStatus.Succeeded
   } else {
@@ -95,6 +101,8 @@ const report = ref<Report>({
 watch(
   props,
   () => {
+    console.log(props.automationRuns)
+    console.log(expectedRunId)
     const run = props.automationRuns.find((run) => run.id === expectedRunId.value)
 
     console.log(run)

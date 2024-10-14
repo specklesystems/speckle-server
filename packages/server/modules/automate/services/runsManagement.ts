@@ -129,7 +129,7 @@ export const reportFunctionRunStatusFactory =
     const currentStatus = currentFunctionRunRecord.status
     const nextStatus = statusReportData.status
 
-    validateStatusChange(currentStatus, nextStatus)
+    // validateStatusChange(currentStatus, nextStatus)
 
     const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
 

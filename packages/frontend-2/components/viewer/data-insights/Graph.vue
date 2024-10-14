@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full grid grid-cols-[min-content_1fr] grid-flow-row gap-2">
+  <div class="w-full grid grid-cols-[min-content_1fr] grid-flow-row gap-2 p-6">
     <div class="col-span-2 row-span-1">{{ report.name }}</div>
     <template v-for="(entry, i) in report.entries" :key="i">
       <div class="pl-2 pr-4 h-6 flex items-center">
@@ -34,7 +34,6 @@
       </div>
     </div>
   </div>
-  <FormButton @click="">GO</FormButton>
 </template>
 
 <script setup lang="ts">

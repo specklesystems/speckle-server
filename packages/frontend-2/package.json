@@ -31,7 +31,7 @@
     "@jsonforms/core": "^3.3.0",
     "@jsonforms/vue": "^3.3.0",
     "@jsonforms/vue-vanilla": "^3.3.0",
-    "@lottiefiles/dotlottie-vue": "^0.4.15",
+    "@lottiefiles/dotlottie-vue": "^0.4.16",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",
     "@speckle/ui-components-nuxt": "workspace:^",

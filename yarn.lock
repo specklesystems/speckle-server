@@ -12152,21 +12152,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lottiefiles/dotlottie-vue@npm:^0.4.15":
-  version: 0.4.15
-  resolution: "@lottiefiles/dotlottie-vue@npm:0.4.15"
+"@lottiefiles/dotlottie-vue@npm:^0.4.16":
+  version: 0.4.16
+  resolution: "@lottiefiles/dotlottie-vue@npm:0.4.16"
   dependencies:
-    "@lottiefiles/dotlottie-web": "npm:0.34.0"
+    "@lottiefiles/dotlottie-web": "npm:0.35.0"
   peerDependencies:
     vue: ^3.3.4
-  checksum: 10/689bb422ce930901713b2ddd772711dd0248a56a67536d82de94f77a062ffaf921fca6f2a8490b39420e623f2e04e1b6bb2e5743230814b78ed9c4bb31716a58
+  checksum: 10/9638b8a140a13ee912cd347026876d57260a84b554c967c68ba14fe32770a8b90094388c759802ffabbf1362389146f6dc9083de56fc598a819cc5c7e722c034
   languageName: node
   linkType: hard
 
-"@lottiefiles/dotlottie-web@npm:0.34.0":
-  version: 0.34.0
-  resolution: "@lottiefiles/dotlottie-web@npm:0.34.0"
-  checksum: 10/39400d1164bba345db8bba2b62796d2dd517903bf12e86822752f286854583e20b9e95883a52a3a49aaeeec9abc511a161567944b4489e7c8dcd0b2276bd1eaa
+"@lottiefiles/dotlottie-web@npm:0.35.0":
+  version: 0.35.0
+  resolution: "@lottiefiles/dotlottie-web@npm:0.35.0"
+  checksum: 10/dd9332509dbc5127e05854f470c239acb7da2c3947185da7275bea2fd3246dd511864dbc192bafed0cb986816243b84eeb290c02fa9704d5653815046b75d490
   languageName: node
   linkType: hard
 
@@ -16283,7 +16283,7 @@ __metadata:
     "@jsonforms/core": "npm:^3.3.0"
     "@jsonforms/vue": "npm:^3.3.0"
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
-    "@lottiefiles/dotlottie-vue": "npm:^0.4.15"
+    "@lottiefiles/dotlottie-vue": "npm:^0.4.16"
     "@nuxt/devtools": "npm:^1.3.9"
     "@nuxt/eslint": "npm:^0.3.13"
     "@nuxtjs/tailwindcss": "npm:^6.3.0"
