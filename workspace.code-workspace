@@ -90,12 +90,6 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "cSpell.words": ["Automations", "Bursty", "discoverability", "Insertable", "mjml"],
-=======
-=======
->>>>>>> main
     "cSpell.words": [
       "Automations",
       "Bursty",
@@ -105,10 +99,6 @@
       "mjml",
       "OIDC"
     ],
-<<<<<<< HEAD
->>>>>>> main
-=======
->>>>>>> main
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
     },
