@@ -29,10 +29,10 @@ const {
   addBranchDeletedActivity
 } = require('@/modules/activitystream/services/branchActivity')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   createStreamFactory,
-  markBranchStreamUpdatedFactory
+  markBranchStreamUpdatedFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
 const {
@@ -81,6 +81,7 @@ const {
 const db = knex
 const Commits = () => knex('commits')
 
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db: knex })
 const getBranchById = getBranchByIdFactory({ db: knex })

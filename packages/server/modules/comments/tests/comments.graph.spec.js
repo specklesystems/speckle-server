@@ -48,11 +48,11 @@ const {
   createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   createStreamFactory,
   updateStreamFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
@@ -89,6 +89,7 @@ const {
   addCommitCreatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })

@@ -4,7 +4,7 @@ import { cliLogger } from '@/logging/logging'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
@@ -94,6 +94,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })

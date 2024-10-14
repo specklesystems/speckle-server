@@ -44,10 +44,10 @@ const {
   updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   getCommitStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const {
   addCommitDeletedActivity,
@@ -84,6 +84,7 @@ const {
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })

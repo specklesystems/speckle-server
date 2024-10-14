@@ -184,6 +184,8 @@ export type GetUserStreamsCount = (
 
 export type MarkBranchStreamUpdated = (branchId: string) => Promise<boolean>
 
+export type MarkCommitStreamUpdated = (commitId: string) => Promise<boolean>
+
 export type GetBatchUserFavoriteData = (params: {
   userId: string
   streamIds: string[]
