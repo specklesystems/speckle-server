@@ -1,8 +1,7 @@
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   CommitSubscriptions as CommitPubsubEvents,
-  PublishSubscription,
-  pubsub
+  PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import {
   CommitCreateInput,
@@ -12,12 +11,13 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
+  AddCommitDeletedActivity,
   AddCommitUpdatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
@@ -172,39 +172,47 @@ export const addCommitMovedActivityFactory =
     ])
   }
 
-export async function addCommitDeletedActivity(params: {
-  commitId: string
-  streamId: string
-  userId: string
-  commit: CommitRecord
-  branchId: string
-}) {
-  const { commitId, streamId, userId, commit, branchId } = params
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: commitId,
-      actionType: ActionTypes.Commit.Delete,
-      userId,
-      info: { commit },
-      message: `Commit deleted: ${commitId}`
-    }),
-    pubsub.publish(CommitPubsubEvents.CommitDeleted, {
-      commitDeleted: { ...commit, streamId, branchId },
-      streamId
-    }),
-    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
-      projectId: streamId,
-      projectVersionsUpdated: {
-        id: commitId,
-        type: ProjectVersionsUpdatedMessageType.Deleted,
-        version: null,
-        modelId: branchId
-      }
-    })
-  ])
-}
+export const addCommitDeletedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddCommitDeletedActivity =>
+  async (params: {
+    commitId: string
+    streamId: string
+    userId: string
+    commit: CommitRecord
+    branchId: string
+  }) => {
+    const { commitId, streamId, userId, commit, branchId } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Commit,
+        resourceId: commitId,
+        actionType: ActionTypes.Commit.Delete,
+        userId,
+        info: { commit },
+        message: `Commit deleted: ${commitId}`
+      }),
+      publish(CommitPubsubEvents.CommitDeleted, {
+        commitDeleted: { ...commit, streamId, branchId },
+        streamId
+      }),
+      publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+        projectId: streamId,
+        projectVersionsUpdated: {
+          id: commitId,
+          type: ProjectVersionsUpdatedMessageType.Deleted,
+          version: null,
+          modelId: branchId
+        }
+      })
+    ])
+  }
 
 export async function addCommitReceivedActivity(params: {
   input: CommitReceivedInput
