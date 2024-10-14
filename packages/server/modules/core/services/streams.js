@@ -1,4 +1,3 @@
-const { StreamAcl } = require('@/modules/core/dbSchema')
 const { InvalidArgumentError } = require('@/modules/shared/errors')
 
 /**
@@ -9,21 +8,6 @@ const { InvalidArgumentError } = require('@/modules/shared/errors')
  */
 
 module.exports = {
-  /**
-   * @returns {Promise<{role: string, id: string, name: string, company: string, avatar: string}[]>}
-   */
-  async getStreamUsers({ streamId }) {
-    const query = StreamAcl.knex()
-      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
-      .select()
-      .where({ resourceId: streamId })
-      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
-      .select('stream_acl.role', 'name', 'id', 'company', 'avatar')
-      .orderBy('stream_acl.role')
-
-    return await query
-  },
-
   /**
    * Get active user stream favorite date (using dataloader)
    * @param {Object} p

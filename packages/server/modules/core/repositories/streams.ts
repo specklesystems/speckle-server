@@ -88,7 +88,8 @@ import {
   GetFavoritedStreamsPage,
   GetFavoritedStreamsCount,
   SetStreamFavorited,
-  CanUserFavoriteStream
+  CanUserFavoriteStream,
+  LegacyGetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -680,7 +681,32 @@ export const getStreamCollaboratorsFactory =
     return items
   }
 
-// TODO: Inject db
+/**
+ * @deprecated Use getStreamCollaborators instead
+ */
+export const legacyGetStreamUsersFactory =
+  (deps: { db: Knex }): LegacyGetStreamCollaborators =>
+  async ({ streamId }) => {
+    const query = tables
+      .streamAcl(deps.db)
+      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
+      .select()
+      .where({ resourceId: streamId })
+      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
+      .select<
+        {
+          role: string
+          id: string
+          name: string
+          company: string
+          avatar: string
+        }[]
+      >('stream_acl.role', 'name', 'id', 'company', 'avatar')
+      .orderBy('stream_acl.role')
+
+    return await query
+  }
+
 export const getProjectCollaboratorsFactory =
   (deps: { db: Knex }): GetProjectCollaborators =>
   async ({ projectId }) => {
