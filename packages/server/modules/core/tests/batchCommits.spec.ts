@@ -1,9 +1,22 @@
 import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getCommits } from '@/modules/core/repositories/commits'
-import { createBranch } from '@/modules/core/services/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getCommitsFactory } from '@/modules/core/repositories/commits'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
 import {
@@ -22,6 +35,24 @@ enum BatchActionType {
   Move,
   Delete
 }
+
+const createBranch = createBranchFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const cleanup = async () => {
   await truncateTables([Streams.name, Users.name, Commits.name])

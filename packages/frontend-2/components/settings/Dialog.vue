@@ -85,15 +85,17 @@
                 />
               </template>
             </LayoutSidebarMenuGroup>
-            <LayoutSidebarMenuGroupItem
+            <NuxtLink
               v-if="canCreateWorkspace"
-              label="Add workspace"
-              @click="openWorkspaceCreateDialog"
+              :to="workspacesRoute"
+              @click="isOpen = false"
             >
-              <template #icon>
-                <PlusIcon class="h-4 w-4 text-foreground-2" />
-              </template>
-            </LayoutSidebarMenuGroupItem>
+              <LayoutSidebarMenuGroupItem label="Create workspace">
+                <template #icon>
+                  <PlusIcon class="h-4 w-4 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -136,11 +138,13 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { workspacesRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
     id
+    slug
     role
     name
   }
@@ -205,13 +209,6 @@ const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean
     // eslint-disable-next-line camelcase
     workspace_id: id,
     item: target
-  })
-}
-
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'settings'
   })
 }
 

@@ -10,7 +10,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { NoInviteFoundError } from '@/modules/serverinvites/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -139,7 +139,7 @@ const localStrategyBuilderFactory =
           switch (e.constructor) {
             case PasswordTooShortError:
             case UserInputError:
-            case NoInviteFoundError:
+            case InviteNotFoundError:
               req.log.info({ err }, 'Error while registering.')
               return res.status(400).send({ err: e.message })
             default:

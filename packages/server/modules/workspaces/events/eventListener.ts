@@ -5,7 +5,8 @@ import {
 } from '@/modules/core/events/projectsEmitter'
 import {
   deleteProjectRoleFactory,
-  getStream,
+  getStreamFactory,
+  legacyGetStreamsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -42,9 +43,9 @@ import {
   queryAllWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory
 } from '@/modules/workspaces/services/projects'
-import { getStreams } from '@/modules/core/services/streams'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 export const onProjectCreatedFactory =
   ({
@@ -89,7 +90,7 @@ export const onProjectCreatedFactory =
 
 export const onInviteFinalizedFactory =
   (deps: {
-    getStream: typeof getStream
+    getStream: GetStream
     logger: typeof logger
     updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }) =>
@@ -199,11 +200,14 @@ export const onWorkspaceRoleUpdatedFactory =
             return
           }
 
-          await upsertProjectRole({
-            projectId,
-            userId,
-            role: nextProjectRole
-          })
+          await upsertProjectRole(
+            {
+              projectId,
+              userId,
+              role: nextProjectRole
+            },
+            { trackProjectUpdate: false }
+          )
         })
       )
     }
@@ -213,6 +217,7 @@ export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
+    const getStreams = legacyGetStreamsFactory({ db })
     const quitCbs = [
       ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
         const onProjectCreated = onProjectCreatedFactory({
@@ -227,7 +232,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
         const onInviteFinalized = onInviteFinalizedFactory({
-          getStream,
+          getStream: getStreamFactory({ db }),
           logger: moduleLogger,
           updateWorkspaceRole: updateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),

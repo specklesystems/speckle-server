@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package",
+    "build": "echo \"Building tailwind-theme\" && rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package && echo \"Done building tailwind-theme!\"",
     "viewer": "tailwind-config-viewer -o -c tailwind.test.config.cjs",
     "lint:js": "eslint  .",
     "lint:tsc": "tsc --noEmit",

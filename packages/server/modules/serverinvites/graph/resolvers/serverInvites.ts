@@ -43,7 +43,6 @@ import {
 } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { getStream } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
@@ -58,8 +57,11 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
-import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamInviteDeclinedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -71,7 +73,34 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -287,7 +316,10 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
+              saveActivity: saveActivityFactory({ db }),
+              publish
+            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
@@ -429,7 +461,10 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivity,
+            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
+              saveActivity: saveActivityFactory({ db }),
+              publish
+            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),

@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
-    <template #header>Remove user</template>
+    <template #header>{{ title }}</template>
     <div class="flex flex-col gap-4 text-body-xs text-foreground">
       <p>
         Are you sure you want to remove
@@ -21,8 +21,10 @@ const emit = defineEmits<{
 }>()
 
 defineProps<{
+  title: string
   name: string
 }>()
+
 const open = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [

@@ -1,6 +1,4 @@
-import { type SpecklePass } from '@speckle/viewer'
 import { Extension } from '@speckle/viewer'
-import type SpeckleRenderer from '@speckle/viewer/dist/modules/SpeckleRenderer'
 import type { WebGLRenderTarget } from 'three'
 import { Vector3, Vector4 } from 'three'
 
@@ -12,23 +10,23 @@ export class PassReader extends Extension {
 
   public async read(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      const renderer: SpeckleRenderer = this.viewer.getRenderer()
+      // const renderer: SpeckleRenderer = this.viewer.getRenderer()
 
-      const dephPass: SpecklePass = renderer.pipeline.composer
-        .passes[0] as unknown as SpecklePass
-      // o_0
+      // const dephPass: SpecklePass = renderer.pipeline.composer
+      //   .passes[0] as unknown as SpecklePass
+      // // o_0
 
-      this.renderTarget = dephPass.outputRenderTarget
-      if (!this.renderTarget) {
-        reject('Issue with depth pass render target')
-        return
-      }
+      // this.renderTarget = dephPass.outputRenderTarget
+      // if (!this.renderTarget) {
+      reject('Issue with depth pass render target')
+      //   return
+      // }
 
-      const bufferSize = this.renderTarget.width * this.renderTarget.height * 4
-      if (this.outputBuffer.length !== bufferSize)
-        this.outputBuffer = new Uint8Array(bufferSize)
-      this.needsRead = true
-      this.readbackExecutor = resolve
+      // const bufferSize = this.renderTarget.width * this.renderTarget.height * 4
+      // if (this.outputBuffer.length !== bufferSize)
+      //   this.outputBuffer = new Uint8Array(bufferSize)
+      // this.needsRead = true
+      // this.readbackExecutor = resolve
     })
   }
 

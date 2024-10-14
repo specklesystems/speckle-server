@@ -399,7 +399,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/4dc5265453'
 
     // DUI3 Render materials
-    'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb'
+    // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/7a5e738c76'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/0a4181c73b'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/bcf086cdc4'
@@ -429,6 +429,13 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93@31654f1e2c'
     // Homepage
     // 'https://app.speckle.systems/projects/0c1ea0ca62/models/729a6f557d@9bff3c6f1f'
+
+    // BREPs as display values
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/b613d77690@046b56bf12'
+
+    // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
+
+    'https://app.speckle.systems/projects/6cf358a40e/models/e01ffbc891@f1ddc19011'
   )
 }
 

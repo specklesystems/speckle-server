@@ -1,3 +1,4 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   MutationStreamInviteUseArgs,
@@ -8,7 +9,6 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getStream } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
@@ -27,7 +27,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -58,7 +58,7 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createProjectInviteFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: typeof getStream }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: GetStream }) =>
   async (params: {
     input: StreamInviteCreateInput | FullProjectInviteCreateInput
     inviterId: string
@@ -216,7 +216,7 @@ export const getUserPendingProjectInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<

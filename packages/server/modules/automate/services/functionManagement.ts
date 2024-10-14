@@ -36,8 +36,7 @@ import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   AuthCodePayload,
-  AuthCodePayloadAction,
-  createStoredAuthCode
+  AuthCodePayloadAction
 } from '@/modules/automate/services/authCode'
 import {
   getServerOrigin,
@@ -46,6 +45,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
+import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -117,12 +117,12 @@ export const convertFunctionReleaseToGraphQLReturn = (
 }
 
 export type CreateFunctionDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
   getUser: typeof getUser
 }
 
-export const createFunctionFromTemplate =
+export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
   async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
     const { input, userId } = params
@@ -184,10 +184,10 @@ export const createFunctionFromTemplate =
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: typeof getFunction
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const updateFunction =
+export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
     const { updateFunction, createStoredAuthCode } = deps
@@ -230,10 +230,10 @@ export const updateFunction =
   }
 
 export type StartAutomateFunctionCreatorAuthDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const startAutomateFunctionCreatorAuth =
+export const startAutomateFunctionCreatorAuthFactory =
   (deps: StartAutomateFunctionCreatorAuthDeps) =>
   async (params: { req: Request; res: Response }) => {
     const { createStoredAuthCode } = deps
@@ -260,7 +260,7 @@ export const startAutomateFunctionCreatorAuth =
     return res.redirect(redirectUrl.toString())
   }
 
-export const handleAutomateFunctionCreatorAuthCallback =
+export const handleAutomateFunctionCreatorAuthCallbackFactory =
   () => async (params: { req: Request; res: Response }) => {
     const { req, res } = params
     const {

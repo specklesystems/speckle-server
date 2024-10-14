@@ -8,7 +8,10 @@ import {
 
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getObject } from '@/modules/core/repositories/objects'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+
+const getObject = getObjectFactory({ db })
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {

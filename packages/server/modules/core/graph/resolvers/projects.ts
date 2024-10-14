@@ -1,6 +1,24 @@
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamClonedActivityFactory,
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamUpdatedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import {
+  getBatchedStreamCommentsFactory,
+  getCommentLinksFactory,
+  insertCommentLinksFactory,
+  insertCommentsFactory
+} from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   ProjectVisibility,
   Resolvers,
@@ -10,31 +28,178 @@ import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
+  createBranchFactory,
+  getBatchedStreamBranchesFactory,
+  insertBranchesFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getBatchedBranchCommitsFactory,
+  getBatchedStreamCommitsFactory,
+  insertBranchCommitsFactory,
+  insertCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
   getUserStreamsCount,
   getUserStreams,
-  getStreamCollaborators,
-  getStream
+  getStreamFactory,
+  getStreamCollaboratorsFactory,
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory,
+  getOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
-  createStreamReturnRecord,
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
-  updateStreamRoleAndNotify
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
+import {
+  createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
+import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
+import {
+  deleteAllResourceInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
+  publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
+
+const saveActivity = saveActivityFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory(),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        })
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addStreamCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish,
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ saveActivity, publish })
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
+})
+
+const updateStream = updateStreamFactory({ db })
+const cloneStream = cloneStreamFactory({
+  getStream: getStreamFactory({ db }),
+  getUser,
+  db,
+  createStream: createStreamFactory({ db }),
+  insertCommits: insertCommitsFactory({ db }),
+  getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
+  insertBranches: insertBranchesFactory({ db }),
+  getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
+  insertComments: insertCommentsFactory({ db }),
+  getCommentLinks: getCommentLinksFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  addStreamClonedActivity: addStreamClonedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createOnboardingStream = createOnboardingStreamFactory({
+  getOnboardingBaseProject: getOnboardingBaseProjectFactory({
+    getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
+  }),
+  cloneStream,
+  createStreamReturnRecord,
+  getUser,
+  updateStream
+})
 
 export = {
   Query: {

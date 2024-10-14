@@ -1,7 +1,7 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   CommitSubscriptions as CommitPubsubEvents,
+  PublishSubscription,
   pubsub
 } from '@/modules/shared/utils/subscriptions'
 import {
@@ -14,53 +14,67 @@ import {
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import {
+  AddCommitCreatedActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 
 /**
  * Save "new commit created" activity item
  */
-export async function addCommitCreatedActivity(params: {
-  commitId: string
-  streamId: string
-  userId: string
-  input: CommitCreateInput
-  branchName: string
-  modelId: string
-  commit: CommitRecord
-}) {
-  const { commitId, input, streamId, userId, branchName, commit } = params
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: commitId,
-      actionType: ActionTypes.Commit.Create,
-      userId,
-      info: {
-        id: commitId,
-        commit: {
-          ...input,
-          projectId: streamId,
-          modelId: params.modelId,
-          versionId: commit.id
+export const addCommitCreatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddCommitCreatedActivity =>
+  async (params: {
+    commitId: string
+    streamId: string
+    userId: string
+    input: CommitCreateInput
+    branchName: string
+    modelId: string
+    commit: CommitRecord
+  }) => {
+    const { commitId, input, streamId, userId, branchName, commit } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Commit,
+        resourceId: commitId,
+        actionType: ActionTypes.Commit.Create,
+        userId,
+        info: {
+          id: commitId,
+          commit: {
+            ...input,
+            projectId: streamId,
+            modelId: params.modelId,
+            versionId: commit.id
+          }
+        },
+        message: `Commit created on branch ${branchName}: ${commitId} (${input.message})`
+      }),
+      publish(CommitPubsubEvents.CommitCreated, {
+        commitCreated: { ...input, id: commitId, authorId: userId },
+        streamId
+      }),
+      publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+        projectId: streamId,
+        projectVersionsUpdated: {
+          id: commit.id,
+          version: commit,
+          type: ProjectVersionsUpdatedMessageType.Created,
+          modelId: null
         }
-      },
-      message: `Commit created on branch ${branchName}: ${commitId} (${input.message})`
-    }),
-    pubsub.publish(CommitPubsubEvents.CommitCreated, {
-      commitCreated: { ...input, id: commitId, authorId: userId },
-      streamId
-    }),
-    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
-      projectId: streamId,
-      projectVersionsUpdated: {
-        id: commit.id,
-        version: commit,
-        type: ProjectVersionsUpdatedMessageType.Created,
-        modelId: null
-      }
-    })
-  ])
-}
+      })
+    ])
+  }
 
 const isOldVersionUpdateInput = (
   i: CommitUpdateInput | UpdateVersionInput
@@ -84,7 +98,7 @@ export async function addCommitUpdatedActivity(params: {
       }
 
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -120,7 +134,7 @@ export async function addCommitMovedActivity(params: {
 }) {
   const { commitId, streamId, userId, originalBranchId, newBranchId, commit } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -150,7 +164,7 @@ export async function addCommitDeletedActivity(params: {
 }) {
   const { commitId, streamId, userId, commit, branchId } = params
   await Promise.all([
-    saveActivity({
+    saveActivityFactory({ db })({
       streamId,
       resourceType: ResourceTypes.Commit,
       resourceId: commitId,
@@ -181,7 +195,7 @@ export async function addCommitReceivedActivity(params: {
 }) {
   const { input, userId } = params
 
-  await saveActivity({
+  await saveActivityFactory({ db })({
     streamId: input.streamId,
     resourceType: ResourceTypes.Commit,
     resourceId: input.commitId,

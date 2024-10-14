@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
-import { streamWritePermissions } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { moduleLogger } from '@/logging/logging'
 import { listenForImportUpdatesFactory } from '@/modules/fileuploads/services/resultListener'
@@ -11,14 +10,19 @@ import {
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-  getStreamBranchByName,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   saveUploadFile: saveUploadFileFactory({ db }),
   publish
 })
+const getStream = getStreamFactory({ db })
 
 const saveFileUploads = async ({
   userId,
@@ -60,7 +64,13 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getRoles: getRolesFactory({ db }),
+        getStream,
+        getAutomationProject: getAutomationProjectFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
@@ -105,7 +115,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
     const listenForImportUpdates = listenForImportUpdatesFactory({
       getFileInfo: getFileInfoFactory({ db }),
       publish,
-      getStreamBranchByName
+      getStreamBranchByName: getStreamBranchByNameFactory({ db })
     })
 
     listenForImportUpdates()

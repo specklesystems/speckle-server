@@ -417,9 +417,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -475,10 +472,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -554,6 +547,7 @@ jobs:
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
       FF_WORKSPACES_MODULE_ENABLED: 'false'
+      FF_WORKSPACES_SSO_ENABLED: 'false'
       FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
       FF_GENDOAI_MODULE_ENABLED: 'false'
 
@@ -569,10 +563,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -602,10 +592,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -649,10 +635,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -694,10 +676,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -726,10 +704,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -781,10 +755,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -808,7 +778,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: *docker-node-image
-    resource_class: small
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -818,9 +788,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -1089,9 +1056,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1162,9 +1126,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1204,9 +1165,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache

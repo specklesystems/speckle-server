@@ -27,7 +27,7 @@ import {
 import {
   InviteCreateValidationError,
   InviteFinalizingError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -57,6 +57,7 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   GetWorkspace,
+  GetWorkspaceBySlug,
   GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
@@ -70,7 +71,7 @@ import {
   anyEmailCompliantWithWorkspaceDomains,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
-import { getStream } from '@/modules/core/repositories/streams'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -123,7 +124,7 @@ type CollectAndValidateWorkspaceTargetsFactoryDeps =
     getWorkspace: GetWorkspace
     getWorkspaceDomains: GetWorkspaceDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
-    getStream: typeof getStream
+    getStream: GetStream
   }
 
 export const collectAndValidateWorkspaceTargetsFactory =
@@ -319,7 +320,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const subject = `${inviter.name} has invited you to the "${workspace.name}" Speckle workspace`
     const inviteLink = new URL(
-      `${getWorkspaceRoute(workspace.id)}?token=${invite.token}&accept=true`,
+      `${getWorkspaceRoute(workspace.slug)}?token=${invite.token}&accept=true`,
       getFrontendOrigin()
     ).toString()
 
@@ -378,19 +379,27 @@ function buildPendingWorkspaceCollaboratorModel(
 }
 
 export const getUserPendingWorkspaceInviteFactory =
-  (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
+  (deps: {
+    findInvite: FindInvite
+    getUser: typeof getUser
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }) =>
   async (params: {
-    workspaceId: MaybeNullOrUndefined<string>
+    workspaceId?: MaybeNullOrUndefined<string>
+    workspaceSlug?: MaybeNullOrUndefined<string>
     userId: MaybeNullOrUndefined<string>
     token: MaybeNullOrUndefined<string>
   }) => {
-    const { workspaceId, userId, token } = params
-    if (!userId?.length && !token?.length) return null
-    if (!token?.length && !workspaceId?.length) return null
+    const { userId, token, workspaceSlug } = params
+    let { workspaceId } = params
 
-    // TODO: Test w/o token & workspace, or w/ just token
+    if (!userId?.length && !token?.length) return null
+    if (!token?.length && !(workspaceId?.length || workspaceSlug?.length)) return null
 
     const userTarget = userId ? buildUserTarget(userId) : undefined
+    if (!workspaceId?.length && workspaceSlug?.length) {
+      workspaceId = (await deps.getWorkspaceBySlug({ workspaceSlug }))?.id
+    }
 
     const invite = await deps.findInvite<
       typeof WorkspaceInviteResourceType,
@@ -425,7 +434,7 @@ export const getUserPendingWorkspaceInvitesFactory =
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<

@@ -265,7 +265,7 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, role } = filter || {}
+    const { search, roles } = filter || {}
 
     if (search) {
       query.andWhere((builder) => {
@@ -275,8 +275,18 @@ export const getWorkspaceCollaboratorsFactory =
       })
     }
 
-    if (role) {
-      query.andWhere(DbWorkspaceAcl.col.role, role)
+    if (roles) {
+      query.andWhere((builder) => {
+        builder.whereIn(DbWorkspaceAcl.col.role, roles)
+      })
+    }
+
+    if (cursor) {
+      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
+    }
+
+    if (limit) {
+      query.limit(clamp(limit, 0, 100))
     }
 
     if (cursor) {

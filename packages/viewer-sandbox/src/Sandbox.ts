@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ArcticViewPipeline,
-  Box3,
   EdgesPipeline,
   PenViewPipeline,
   SectionTool,
@@ -43,7 +44,7 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Color, Euler, Vector3 } from 'three'
+import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 
@@ -430,6 +431,15 @@ export default class Sandbox {
       this.viewer.getExtension(SectionTool).toggle()
     })
 
+    const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
+      title: 'Toggle Section Box Visibility'
+    })
+    toggleSectionBoxVisibility.on('click', () => {
+      this.viewer.getExtension(SectionTool).visible =
+        !this.viewer.getExtension(SectionTool).visible
+      this.viewer.requestRender()
+    })
+
     const toggleProjection = this.tabs.pages[0].addButton({
       title: 'Toggle Projection'
     })
@@ -556,10 +566,10 @@ export default class Sandbox {
       const colorMap: { [color: number]: Array<string> } = {}
       for (let k = 0; k < colorNodes.length; k++) {
         const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         const color: number = node.model.renderView.renderData.colorMaterial.color
         if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
         colorMap[color].push(node.model.id)
       }
       const colorGroups = []
@@ -605,122 +615,122 @@ export default class Sandbox {
             .setCameraView(sides[k] as CanonicalView, true)
         })
     }
-    const edgesParams = {
-      depthMultiplier: 1,
-      depthBias: 0.001,
-      normalMultiplier: 1,
-      normalBias: 1,
-      outlineDensity: 0.5,
-      outlineThickness: 1,
-      smaa: false,
-      taa: true
-    }
-    const edgesFolder = this.tabs.pages[0].addFolder({
-      title: 'Edges',
-      expanded: true
-    })
-    edgesFolder
-      .addInput(edgesParams, 'depthMultiplier', {
-        label: 'depthMultiplier',
-        min: 0,
-        max: 1,
-        step: 0.01
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uDepthMultiplier'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'depthBias', {
-        label: 'depthBias',
-        min: 0,
-        max: 1,
-        step: 0.0001
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uDepthBias'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'normalMultiplier', {
-        label: 'normalMultiplier',
-        min: 0,
-        max: 1,
-        step: 0.01
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uNormalMultiplier'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'normalBias', {
-        label: 'normalBias',
-        min: 0,
-        max: 50,
-        step: 0.1
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uNormalBias'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'outlineDensity', {
-        label: 'outlineDensity',
-        min: 0,
-        max: 1,
-        step: 0.01
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uOutlineDensity'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'outlineThickness', {
-        label: 'outlineThickness',
-        min: 0,
-        max: 10,
-        step: 0.1
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-          'uOutlineThickness'
-        ].value = value.value
-        this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'smaa', {
-        label: 'SMAA'
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.smaaPass.enabled = edgesParams.smaa
-        this.viewer.getRenderer().pipeline.pipelineOutput = 8
-        this.viewer.requestRender()
-      })
-    edgesFolder
-      .addInput(edgesParams, 'taa', {
-        label: 'TAA'
-      })
-      .on('change', (value) => {
-        this.viewer.getRenderer().pipeline.taaPass.enabled = edgesParams.taa
-        this.viewer.getRenderer().pipeline.pipelineOutput = 8
-        this.viewer.requestRender()
-      })
+    // const edgesParams = {
+    //   depthMultiplier: 1,
+    //   depthBias: 0.001,
+    //   normalMultiplier: 1,
+    //   normalBias: 1,
+    //   outlineDensity: 0.5,
+    //   outlineThickness: 1,
+    //   smaa: false,
+    //   taa: true
+    // }
+    // const edgesFolder = this.tabs.pages[0].addFolder({
+    //   title: 'Edges',
+    //   expanded: true
+    // })
+    // edgesFolder
+    //   .addInput(edgesParams, 'depthMultiplier', {
+    //     label: 'depthMultiplier',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uDepthMultiplier'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'depthBias', {
+    //     label: 'depthBias',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.0001
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uDepthBias'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'normalMultiplier', {
+    //     label: 'normalMultiplier',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uNormalMultiplier'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'normalBias', {
+    //     label: 'normalBias',
+    //     min: 0,
+    //     max: 50,
+    //     step: 0.1
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uNormalBias'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'outlineDensity', {
+    //     label: 'outlineDensity',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uOutlineDensity'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'outlineThickness', {
+    //     label: 'outlineThickness',
+    //     min: 0,
+    //     max: 10,
+    //     step: 0.1
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uOutlineThickness'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'smaa', {
+    //     label: 'SMAA'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.smaaPass.enabled = edgesParams.smaa
+    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'taa', {
+    //     label: 'TAA'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.taaPass.enabled = edgesParams.taa
+    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
+    //     this.viewer.requestRender()
+    //   })
   }
 
   makeSceneUI() {

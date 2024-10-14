@@ -3,7 +3,10 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
-    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <PromoBannersWrapper
+      v-if="promoBanners && promoBanners.length"
+      :banners="promoBanners"
+    />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
       :workspaces-invites="workspacesResult?.activeUser || undefined"
@@ -23,7 +26,16 @@
           </div>
         </section>
         <section>
-          <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+            <FormButton
+              color="outline"
+              size="sm"
+              @click.stop="router.push(projectsRoute)"
+            >
+              View all
+            </FormButton>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
             <template v-if="hasProjects">
               <DashboardProjectCard
@@ -66,14 +78,17 @@ import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import GhostContentAPI from '@tryghost/content-api'
-import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/route'
+import {
+  docsPageUrl,
+  forumPageUrl,
+  homeRoute,
+  projectsRoute
+} from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
-import submitImage from '~/assets/images/banners/submit.gif'
-import earlybirdImage from '~/assets/images/banners/earlybird.gif'
 
 useHead({ title: 'Dashboard' })
 
@@ -98,6 +113,7 @@ const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, 
   server: false
 })
 const { isGuest } = useActiveUser()
+const router = useRouter()
 
 const openNewProject = ref(false)
 
@@ -188,22 +204,5 @@ const onDownloadManager = (extension: ManagerExtension) => {
   }
 }
 
-const promoBanners = ref<PromoBanner[]>([
-  {
-    primaryText: 'Specklecon - Submit your proposal',
-    url: 'https://conf.speckle.systems/',
-    priority: 1,
-    expiryDate: '2024-09-02',
-    image: submitImage,
-    isBackgroundImage: true
-  },
-  {
-    primaryText: 'Specklecon - Early Bird Tickets',
-    url: 'https://conf.speckle.systems/',
-    priority: 2,
-    expiryDate: '2024-09-15',
-    image: earlybirdImage,
-    isBackgroundImage: true
-  }
-])
+const promoBanners = ref<PromoBanner[]>()
 </script>
