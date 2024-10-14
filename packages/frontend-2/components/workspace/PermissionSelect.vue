@@ -10,9 +10,8 @@
     :disabled="disabled"
     :label-id="labelId"
     :button-id="buttonId"
-    hide-checkmarks
     by="id"
-    class="min-w-[85px]"
+    class="min-w-60"
     mount-menu-on-body
   >
     <template #something-selected="{ value }">
@@ -20,17 +19,14 @@
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
-    <template #option="{ item, selected }">
-      <div class="flex flex-col">
-        <div
-          :class="[
-            'text-normal',
-            selected ? 'text-primary' : '',
-            item.id === 'delete' ? 'text-danger' : ''
-          ]"
-        >
+    <template #option="{ item }">
+      <div class="flex flex-col space-y-0.5">
+        <span class="truncate font-medium">
           {{ item.title }}
-        </div>
+        </span>
+        <span v-if="item.description" class="text-body-2xs text-foreground-2">
+          {{ item.description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
@@ -50,7 +46,6 @@ const props = defineProps<{
   showLabel?: boolean
   name?: string
   disabled?: boolean
-  hideRemove?: boolean
   hideOwner?: boolean
 }>()
 
@@ -60,11 +55,7 @@ const items = ref(
   reduce(
     roleSelectItems,
     (results, item) => {
-      if (item.id === 'delete') {
-        if (!props.hideRemove) {
-          results[item.id] = item
-        }
-      } else if (item.id === Roles.Workspace.Admin) {
+      if (item.id === Roles.Workspace.Admin) {
         if (!props.hideOwner) {
           results[item.id] = item
         }

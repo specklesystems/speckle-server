@@ -345,9 +345,9 @@ input WorkspaceProjectsFilter {
 
 input WorkspaceTeamFilter {
   """
-  Limit team members to provided role
+  Limit team members to provided role(s)
   """
-  role: String
+  roles: [String!]
   """
   Search for team members by name or email
   """
@@ -381,6 +381,7 @@ type PendingWorkspaceCollaborator {
   inviteId: String!
   workspaceId: String!
   workspaceName: String!
+  workspaceSlug: String!
   """
   E-mail address if target is unregistered or primary e-mail of target registered user
   if token was specified to retrieve this invite

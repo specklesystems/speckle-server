@@ -281,14 +281,14 @@ type SubscriptionTypeMap = {
    */
   [StreamSubscriptions.UserStreamAdded]: {
     payload: {
-      userStreamAdded: { id: string }
+      userStreamAdded: { id: string; sharedBy?: string }
       ownerId: string
     }
     variables: NoVariables
   }
   [StreamSubscriptions.UserStreamRemoved]: {
     payload: {
-      userStreamRemoved: { id: string }
+      userStreamRemoved: { id: string; revokedBy?: string }
       ownerId: string
     }
     variables: NoVariables
@@ -304,6 +304,7 @@ type SubscriptionTypeMap = {
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
+  | CommitSubscriptions
   | CommentSubscriptions
   | FileImportSubscriptions
   | ProjectSubscriptions

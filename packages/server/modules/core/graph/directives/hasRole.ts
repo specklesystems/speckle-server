@@ -18,8 +18,9 @@ import {
   getUserAclRoleFactory,
   getUserServerRoleFactory
 } from '@/modules/shared/repositories/acl'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
+const getStream = getStreamFactory({ db })
 const throwForNotHavingServerRole = throwForNotHavingServerRoleFactory({
   validateServerRole: validateServerRoleBuilderFactory({
     getRoles: getRolesFactory({ db })

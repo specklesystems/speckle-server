@@ -1,12 +1,11 @@
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
+import { initializeEventListenerFactory } from '@/modules/activitystream/services/eventListener'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { handleServerInvitesActivitiesFactory } from '@/modules/activitystream/services/serverInvitesActivity'
-import { getStream } from '@/modules/core/repositories/streams'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
   getActiveUserStreamsFactory,
@@ -15,6 +14,11 @@ import {
 import { db } from '@/db/knex'
 import { addStreamInviteSentOutActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  addStreamAccessRequestDeclinedActivityFactory,
+  addStreamAccessRequestedActivityFactory
+} from '@/modules/activitystream/services/accessRequestActivity'
 
 let scheduledTask: ReturnType<typeof scheduleExecution> | null = null
 let quitEventListeners: Optional<ReturnType<typeof initializeEventListeners>> =
@@ -24,7 +28,7 @@ const initializeEventListeners = () => {
   const handleServerInvitesActivities = handleServerInvitesActivitiesFactory({
     eventBus: getEventBus(),
     logger: activitiesLogger,
-    getStream,
+    getStream: getStreamFactory({ db }),
     addStreamInviteSentOutActivity: addStreamInviteSentOutActivityFactory({
       saveActivity: saveActivityFactory({ db }),
       publish
@@ -68,7 +72,16 @@ const activityModule: SpeckleModule = {
   init: async ({ isInitial }) => {
     moduleLogger.info('🤺 Init activity module')
     if (isInitial) {
-      initializeEventListener()
+      initializeEventListenerFactory({
+        addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
+          saveActivity: saveActivityFactory({ db })
+        }),
+        addStreamAccessRequestDeclinedActivity:
+          addStreamAccessRequestDeclinedActivityFactory({
+            saveActivity: saveActivityFactory({ db })
+          }),
+        saveActivity: saveActivityFactory({ db })
+      })()
       if (weeklyEmailDigestEnabled())
         scheduledTask = scheduleWeeklyActivityNotifications()
     }

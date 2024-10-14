@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
@@ -45,6 +44,7 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
 export type BasicTestWorkspace = {
   /**
@@ -207,6 +207,7 @@ export const createWorkspaceInviteDirectly = async (
   args: CreateWorkspaceInviteMutationVariables,
   inviterId: string
 ) => {
+  const getStream = getStreamFactory({ db })
   const createAndSendInvite = createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory(),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),

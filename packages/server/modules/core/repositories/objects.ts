@@ -6,46 +6,56 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
+import {
+  GetBatchedStreamObjects,
+  GetObject,
+  GetStreamObjects,
+  StoreObjects
+} from '@/modules/core/domain/objects/operations'
 
-export async function getStreamObjects(
-  streamId: string,
-  objectIds: string[]
-): Promise<ObjectRecord[]> {
-  if (!objectIds?.length) return []
-
-  const q = Objects.knex<ObjectRecord[]>()
-    .where(Objects.col.streamId, streamId)
-    .whereIn(Objects.col.id, objectIds)
-
-  return await q
+const tables = {
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name)
 }
 
-export async function getObject(
-  objectId: string,
-  streamId: string
-): Promise<Optional<ObjectRecord>> {
-  return await Objects.knex<ObjectRecord[]>()
-    .where(Objects.col.id, objectId)
-    .andWhere(Objects.col.streamId, streamId)
-    .first()
-}
+export const getStreamObjectsFactory =
+  (deps: { db: Knex }): GetStreamObjects =>
+  async (streamId: string, objectIds: string[]): Promise<ObjectRecord[]> => {
+    if (!objectIds?.length) return []
 
-export function getBatchedStreamObjects(
-  streamId: string,
-  options?: Partial<BatchedSelectOptions>
-) {
-  const baseQuery = Objects.knex<ObjectRecord[]>()
-    .where(Objects.col.streamId, streamId)
-    .orderBy(Objects.col.id)
+    const q = tables
+      .objects(deps.db)
+      .where(Objects.col.streamId, streamId)
+      .whereIn(Objects.col.id, objectIds)
 
-  return executeBatchedSelect(baseQuery, options)
-}
+    return await q
+  }
 
-export async function insertObjects(
-  objects: ObjectRecord[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = Objects.knex().insert(objects)
-  if (options?.trx) q.transacting(options.trx)
-  return await q
-}
+export const getObjectFactory =
+  (deps: { db: Knex }): GetObject =>
+  async (objectId: string, streamId: string): Promise<Optional<ObjectRecord>> => {
+    return await tables
+      .objects(deps.db)
+      .where(Objects.col.id, objectId)
+      .andWhere(Objects.col.streamId, streamId)
+      .first()
+  }
+
+export const getBatchedStreamObjectsFactory =
+  (deps: { db: Knex }): GetBatchedStreamObjects =>
+  (streamId: string, options?: Partial<BatchedSelectOptions>) => {
+    const baseQuery = tables
+      .objects(deps.db)
+      .select<ObjectRecord[]>('*')
+      .where(Objects.col.streamId, streamId)
+      .orderBy(Objects.col.id)
+
+    return executeBatchedSelect(baseQuery, options)
+  }
+
+export const insertObjectsFactory =
+  (deps: { db: Knex }): StoreObjects =>
+  async (objects: ObjectRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
+    const q = tables.objects(deps.db).insert(objects)
+    if (options?.trx) q.transacting(options.trx)
+    return await q
+  }

@@ -2,10 +2,8 @@ import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles, timeoutAt } from '@speckle/shared'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
@@ -31,6 +29,11 @@ import {
 } from '@/modules/comments/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
+import { GetObject } from '@/modules/core/domain/objects/operations'
+import {
+  GetStream,
+  GetStreamCollaborators
+} from '@/modules/core/domain/streams/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -218,9 +221,9 @@ const parseIncomingUrl = async (url: string, token?: string) => {
 }
 
 type GetLocalResourcesDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
   getStreamBranchByName: GetStreamBranchByName
-  getStreamCollaborators: typeof getStreamCollaborators
+  getStreamCollaborators: GetStreamCollaborators
   getUser: typeof getUser
 }
 
@@ -489,7 +492,7 @@ const saveNewCommitFactory =
 
 type CreateNewObjectDeps = {
   createObject: typeof createObject
-  getObject: typeof getObject
+  getObject: GetObject
 }
 
 const createNewObjectFactory =

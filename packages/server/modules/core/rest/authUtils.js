@@ -1,13 +1,15 @@
 'use strict'
 const { validateScopes, authorizeResolver } = require('@/modules/shared')
 
-const { getStream } = require('../services/streams')
 const { Roles, Scopes } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 const { DatabaseError } = require('@/modules/shared/errors')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
 
 module.exports = {
   async validatePermissionsReadStream(streamId, req) {
+    const getStream = getStreamFactory({ db })
     const stream = await getStream({ streamId, userId: req.context.userId })
     if (stream?.isPublic) return { result: true, status: 200 }
 

@@ -2,8 +2,8 @@ import { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger } from '@/logging/logging'
 import {
-  getStream,
-  getStreamCollaborators,
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
 import {
@@ -15,7 +15,10 @@ import {
 } from '@/modules/core/repositories/branches'
 import { getUser } from '@/modules/core/repositories/users'
 import { createObject } from '@/modules/core/services/objects'
-import { getObject, getStreamObjects } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  getStreamObjectsFactory
+} from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
@@ -26,7 +29,7 @@ import {
 } from '@/modules/core/services/commit/viewerResources'
 import {
   createCommitFactory,
-  getAllBranchCommits,
+  getAllBranchCommitsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
@@ -47,8 +50,10 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const command: CommandModule<
   unknown,
@@ -89,6 +94,9 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getStream = getStreamFactory({ db })
+    const getObject = getObjectFactory({ db })
+    const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
     const validateInputAttachments = validateInputAttachmentsFactory({
       getBlobs: getBlobsFactory({ db })
@@ -102,7 +110,7 @@ const command: CommandModule<
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits
+        getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
@@ -134,9 +142,13 @@ const command: CommandModule<
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,
       getStreamBranchByName: getStreamBranchByNameFactory({ db }),

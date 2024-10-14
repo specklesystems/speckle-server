@@ -1,15 +1,13 @@
 import {
-  getStream,
-  getStreams,
   getStreamUsers,
   favoriteStream,
-  getFavoriteStreamsCollection,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
   getOwnedFavoritesCount
 } from '@/modules/core/services/streams'
 import {
   filteredSubscribe,
+  publish,
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -17,20 +15,33 @@ import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
-import { getPendingProjectCollaboratorsFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import {
+  getPendingProjectCollaboratorsFactory,
+  inviteUsersToProjectFactory
+} from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
-import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
 import { get } from 'lodash'
 import {
   getUserStreamsCount,
-  getUserStreams
+  getUserStreams,
+  getStreamFactory,
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory,
+  getDiscoverableStreamsPage,
+  countDiscoverableStreamsFactory,
+  legacyGetStreamsFactory,
+  getFavoritedStreamsCountFactory,
+  getFavoritedStreamsPageFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import {
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
-  createStreamReturnRecord,
-  updateStreamRoleAndNotify
+  createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
@@ -44,11 +55,124 @@ import {
   TokenResourceIdentifierType,
   UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  deleteAllResourceInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  queryAllResourceInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { BadRequestError } from '@/modules/shared/errors'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamUpdatedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
+import { getFavoriteStreamsCollectionFactory } from '@/modules/core/services/streams/favorite'
+
+const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
+  getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
+  getFavoritedStreamsPage: getFavoritedStreamsPageFactory({ db })
+})
+const saveActivity = saveActivityFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory(),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        })
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addStreamCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db }),
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ publish, saveActivity })
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
+})
+const getDiscoverableStreams = getDiscoverableStreamsFactory({
+  getDiscoverableStreamsPage: getDiscoverableStreamsPage({ db }),
+  countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
+})
+const getStreams = legacyGetStreamsFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,

@@ -1,9 +1,11 @@
 import { db } from '@/db/knex'
 import {
-  addCommitCreatedActivity,
+  AddCommitCreatedActivity,
+  AddCommitUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
+import {
   addCommitDeletedActivity,
-  addCommitReceivedActivity,
-  addCommitUpdatedActivity
+  addCommitReceivedActivity
 } from '@/modules/activitystream/services/commitActivity'
 import {
   GetBranchById,
@@ -16,10 +18,16 @@ import {
   DeleteCommit,
   DeleteCommitAndNotify,
   GetCommit,
+  GetCommitBranch,
   InsertBranchCommits,
   InsertStreamCommits,
-  StoreCommit
+  StoreCommit,
+  SwitchCommitBranch,
+  UpdateCommit,
+  UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
+import { GetObject } from '@/modules/core/domain/objects/operations'
+import { GetCommitStream, GetStream } from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -37,22 +45,8 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import {
-  getStreamBranchByNameFactory,
-  markCommitBranchUpdatedFactory
-} from '@/modules/core/repositories/branches'
-import {
-  getCommitBranch,
-  getCommitFactory,
-  switchCommitBranch,
-  updateCommit
-} from '@/modules/core/repositories/commits'
-import { getObject } from '@/modules/core/repositories/objects'
-import {
-  getCommitStream,
-  getStream,
-  markCommitStreamUpdated
-} from '@/modules/core/repositories/streams'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -90,14 +84,14 @@ export async function markCommitReceivedAndNotify(params: {
 export const createCommitByBranchIdFactory =
   (deps: {
     createCommit: StoreCommit
-    getObject: typeof getObject
+    getObject: GetObject
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits
     markCommitStreamUpdated: typeof markCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     versionsEventEmitter: VersionsEventEmitter
-    addCommitCreatedActivity: typeof addCommitCreatedActivity
+    addCommitCreatedActivity: AddCommitCreatedActivity
   }): CreateCommitByBranchId =>
   async (
     params: {
@@ -255,99 +249,111 @@ const isOldVersionUpdateInput = (
   i: CommitUpdateInput | UpdateVersionInput
 ): i is CommitUpdateInput => has(i, 'streamId')
 
-export async function updateCommitAndNotify(
-  params: CommitUpdateInput | UpdateVersionInput,
-  userId: string
-) {
-  const {
-    message,
-    newBranchName,
-    streamId,
-    id: commitId
-  } = isOldVersionUpdateInput(params)
-    ? params
-    : {
-        message: params.message,
-        id: params.versionId,
-        streamId: null,
-        newBranchName: null
-      }
+export const updateCommitAndNotifyFactory =
+  (deps: {
+    getCommit: GetCommit
+    getStream: GetStream
+    getCommitStream: GetCommitStream
+    getStreamBranchByName: GetStreamBranchByName
+    getCommitBranch: GetCommitBranch
+    switchCommitBranch: SwitchCommitBranch
+    updateCommit: UpdateCommit
+    addCommitUpdatedActivity: AddCommitUpdatedActivity
+    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitBranchUpdated: MarkCommitBranchUpdated
+  }): UpdateCommitAndNotify =>
+  async (params: CommitUpdateInput | UpdateVersionInput, userId: string) => {
+    const {
+      message,
+      newBranchName,
+      streamId,
+      id: commitId
+    } = isOldVersionUpdateInput(params)
+      ? params
+      : {
+          message: params.message,
+          id: params.versionId,
+          streamId: null,
+          newBranchName: null
+        }
 
-  if (!message && !newBranchName) {
-    throw new CommitUpdateError('Nothing to update', {
-      info: { ...params, userId }
-    })
-  }
-
-  const [commit, stream] = await Promise.all([
-    getCommitFactory({ db })(commitId),
-    streamId ? getStream({ streamId, userId }) : getCommitStream({ commitId, userId })
-  ])
-  if (!commit) {
-    throw new CommitUpdateError("Can't update nonexistant commit", {
-      info: { ...params, userId }
-    })
-  }
-  if (!stream) {
-    throw new CommitUpdateError("Can't resolve commit stream", {
-      info: { ...params, userId }
-    })
-  }
-  if (commit.author !== userId && stream.role !== Roles.Stream.Owner) {
-    throw new CommitUpdateError(
-      'Only the author of a commit or a stream owner may update it',
-      {
-        info: { ...params, userId, streamRole: stream.role }
-      }
-    )
-  }
-
-  if (newBranchName) {
-    try {
-      const [newBranch, oldBranch] = await Promise.all([
-        getStreamBranchByNameFactory({ db })(streamId, newBranchName),
-        getCommitBranch(commitId)
-      ])
-
-      if (!newBranch || !oldBranch) {
-        throw new Error("Couldn't resolve branch")
-      }
-      if (!commit) {
-        throw new Error("Couldn't find commit")
-      }
-
-      await switchCommitBranch(commitId, newBranch.id, oldBranch.id)
-    } catch (e) {
-      throw new CommitUpdateError('Failed to update commit branch', {
-        cause: ensureError(e),
-        info: params
+    if (!message && !newBranchName) {
+      throw new CommitUpdateError('Nothing to update', {
+        info: { ...params, userId }
       })
     }
-  }
 
-  let newCommit: CommitRecord = commit
-  if (message) {
-    newCommit = await updateCommit(commitId, { message })
-  }
-
-  if (commit) {
-    await addCommitUpdatedActivity({
-      commitId,
-      streamId: stream.id,
-      userId,
-      originalCommit: commit,
-      update: params,
-      newCommit
-    })
-
-    await Promise.all([
-      markCommitStreamUpdated(commit.id),
-      markCommitBranchUpdatedFactory({ db })(commit.id)
+    const [commit, stream] = await Promise.all([
+      deps.getCommit(commitId),
+      streamId
+        ? deps.getStream({ streamId, userId })
+        : deps.getCommitStream({ commitId, userId })
     ])
-  }
+    if (!commit) {
+      throw new CommitUpdateError("Can't update nonexistant commit", {
+        info: { ...params, userId }
+      })
+    }
+    if (!stream) {
+      throw new CommitUpdateError("Can't resolve commit stream", {
+        info: { ...params, userId }
+      })
+    }
+    if (commit.author !== userId && stream.role !== Roles.Stream.Owner) {
+      throw new CommitUpdateError(
+        'Only the author of a commit or a stream owner may update it',
+        {
+          info: { ...params, userId, streamRole: stream.role }
+        }
+      )
+    }
 
-  return newCommit
-}
+    if (newBranchName) {
+      try {
+        const [newBranch, oldBranch] = await Promise.all([
+          deps.getStreamBranchByName(streamId, newBranchName),
+          deps.getCommitBranch(commitId)
+        ])
+
+        if (!newBranch || !oldBranch) {
+          throw new Error("Couldn't resolve branch")
+        }
+        if (!commit) {
+          throw new Error("Couldn't find commit")
+        }
+
+        await deps.switchCommitBranch(commitId, newBranch.id, oldBranch.id)
+      } catch (e) {
+        throw new CommitUpdateError('Failed to update commit branch', {
+          cause: ensureError(e),
+          info: params
+        })
+      }
+    }
+
+    let newCommit: CommitRecord = commit
+    if (message) {
+      newCommit = await deps.updateCommit(commitId, { message })
+    }
+
+    if (commit) {
+      await deps.addCommitUpdatedActivity({
+        commitId,
+        streamId: stream.id,
+        userId,
+        originalCommit: commit,
+        update: params,
+        newCommit
+      })
+
+      await Promise.all([
+        deps.markCommitStreamUpdated(commit.id),
+        deps.markCommitBranchUpdated(commit.id)
+      ])
+    }
+
+    return newCommit
+  }
 
 export const deleteCommitAndNotifyFactory =
   (deps: {

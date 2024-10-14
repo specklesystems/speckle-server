@@ -1,7 +1,8 @@
+import { db } from '@/db/knex'
 import { moduleLogger } from '@/logging/logging'
 import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { initializeEventListenerFactory } from '@/modules/accessrequests/services/eventListener'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
@@ -13,7 +14,7 @@ const ServerAccessRequestsModule: SpeckleModule = {
 
     if (isInitial) {
       const initializeEventListener = initializeEventListenerFactory({
-        getStreamCollaborators,
+        getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
         publishNotification,
         accessRequestsEventListener: AccessRequestsEmitter.listen
       })

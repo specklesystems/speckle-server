@@ -2,7 +2,8 @@ const { CommitNotFoundError } = require('@/modules/core/errors/commit')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
-  CommitSubscriptions: CommitPubsubEvents
+  CommitSubscriptions: CommitPubsubEvents,
+  publish
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
@@ -13,14 +14,14 @@ const {
 } = require('../../services/commits')
 const {
   getPaginatedStreamCommits,
-  getPaginatedBranchCommits
+  getPaginatedBranchCommitsFactory
 } = require('@/modules/core/services/commit/retrieval')
 const {
-  updateCommitAndNotify,
   markCommitReceivedAndNotify,
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
-  createCommitByBranchNameFactory
+  createCommitByBranchNameFactory,
+  updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
@@ -29,12 +30,9 @@ const {
   getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
-  batchMoveCommits,
-  batchDeleteCommits
+  batchDeleteCommits,
+  batchMoveCommitsFactory
 } = require('@/modules/core/services/commit/batchCommitActions')
-const {
-  validateStreamAccess
-} = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
 const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
@@ -44,27 +42,50 @@ const {
   deleteCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory,
+  getSpecificBranchCommitsFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getBranchCommitsTotalCountFactory,
+  getCommitsFactory,
+  moveCommitsToBranchFactory
 } = require('@/modules/core/repositories/commits')
 const { db } = require('@/db/knex')
-const { markCommitStreamUpdated } = require('@/modules/core/repositories/streams')
+const {
+  markCommitStreamUpdated,
+  getStreamFactory,
+  getStreamsFactory,
+  getCommitStreamFactory
+} = require('@/modules/core/repositories/streams')
 const {
   markCommitBranchUpdatedFactory,
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity
+  addCommitMovedActivity,
+  addCommitCreatedActivityFactory,
+  addCommitUpdatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
-const { getObject } = require('@/modules/core/repositories/objects')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  validateStreamAccessFactory
+} = require('@/modules/core/services/streams/access')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
 
+const getCommitStream = getCommitStreamFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreams = getStreamsFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   getCommit: getCommitFactory({ db }),
   markCommitStreamUpdated,
@@ -73,6 +94,7 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   addCommitDeletedActivity
 })
 
+const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
   getObject,
@@ -82,7 +104,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -90,6 +115,38 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+
+const batchMoveCommits = batchMoveCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
+  addCommitMovedActivity
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 /**
  * @param {boolean} publicOnly

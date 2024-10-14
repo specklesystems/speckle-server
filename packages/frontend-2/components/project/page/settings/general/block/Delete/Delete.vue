@@ -36,6 +36,9 @@ graphql(`
     commentThreads(limit: 0) {
       totalCount
     }
+    workspace {
+      slug
+    }
   }
 `)
 

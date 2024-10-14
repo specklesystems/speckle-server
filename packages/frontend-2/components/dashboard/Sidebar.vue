@@ -26,7 +26,9 @@
         class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
         :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
-        <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebar
+          class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+        >
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
@@ -56,16 +58,10 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="
-                isNotGuest
-                  ? () => {
-                      openWorkspaceCreateDialog()
-                    }
-                  : undefined
-              "
+              :plus-click="isNotGuest ? handlePlusClick : undefined"
               plus-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
+              <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
@@ -100,7 +96,7 @@
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
               <NuxtLink
-                :to="connectorsPageUrl"
+                :to="downloadManagerUrl"
                 target="_blank"
                 @click="isOpenMobile = false"
               >
@@ -123,17 +119,13 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink
-                to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Give us feedback" external>
+              <div @click="openFeedbackDialog">
+                <LayoutSidebarMenuGroupItem label="Give us feedback">
                   <template #icon>
                     <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+              </div>
 
               <NuxtLink
                 to="https://speckle.guide/"
@@ -160,9 +152,19 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
+          <template #promo>
+            <LayoutSidebarPromo
+              title="SpeckleCon 2024"
+              text="Join us in London on Nov 13-14 for the ultimate community event."
+              button-text="Get tickets"
+              @on-click="onPromoClick"
+            />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
+
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
 
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
@@ -175,6 +177,7 @@
 import {
   FormButton,
   LayoutSidebar,
+  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
@@ -186,7 +189,7 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  connectorsPageUrl
+  downloadManagerUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -197,11 +200,13 @@ import { Roles } from '@speckle/shared'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const router = useRouter()
 const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showWorkspaceCreateDialog = ref(false)
+const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -231,13 +236,6 @@ const workspacesItems = computed(() =>
     : []
 )
 
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'sidebar'
-  })
-}
-
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {
     const workspaceIds = result.data.activeUser.workspaces.items.map(
@@ -249,4 +247,43 @@ onWorkspaceResult((result) => {
     }
   }
 })
+
+const onPromoClick = () => {
+  mixpanel.track('Promo Banner Clicked', {
+    source: 'sidebar',
+    campaign: 'specklecon2024'
+  })
+
+  window.open('https://conf.speckle.systems/', '_blank')
+}
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+  isOpenMobile.value = false
+}
+
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
+const handlePlusClick = () => {
+  if (route.path === workspacesRoute) {
+    openWorkspaceCreateDialog()
+  } else {
+    mixpanel.track('Clicked Link to Workspace Explainer', {
+      source: 'sidebar'
+    })
+    router.push(workspacesRoute)
+  }
+}
+
+const handleIntroducingWorkspacesClick = () => {
+  isOpenMobile.value = false
+  mixpanel.track('Clicked Link to Workspace Explainer', {
+    source: 'sidebar'
+  })
+}
 </script>
