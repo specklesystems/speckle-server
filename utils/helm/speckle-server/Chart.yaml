@@ -8,7 +8,7 @@ apiVersion: v2
 appVersion: '0.1.0-local'
 description: Speckle Server
 home: 'https://speckle.systems/'
-icon: 'https://app.speckle.systems/logo.svg'
+icon: 'https://app.speckle.systems/images/logo.png'
 maintainers:
   - name: Speckle Systems
     url: 'https://speckle.systems/'
