@@ -87,12 +87,12 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 enum InviteByTarget {
   Email = 'email',
@@ -105,6 +105,7 @@ const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
+const getUser = getUserFactory({ db })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,

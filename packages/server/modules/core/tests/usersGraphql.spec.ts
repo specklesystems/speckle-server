@@ -30,12 +30,13 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildApolloServer } from '@/app'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
+const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,

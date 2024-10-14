@@ -9,7 +9,6 @@ import {
   getUserStreamCountsFactory,
   getStreamsSourceAppsFactory
 } from '@/modules/core/repositories/streams'
-import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
 import { AuthContext } from '@/modules/shared/authz'
 import {
@@ -85,6 +84,10 @@ import db from '@/db/knex'
 import { graphDataloadersBuilders } from '@/modules'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
 import { StreamWithCommitId } from '@/modules/core/domain/streams/types'
+import {
+  getUsersFactory,
+  UserWithOptionalRole
+} from '@/modules/core/repositories/users'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -124,6 +127,7 @@ const getOwnedFavoritesCountByUserIds = getOwnedFavoritesCountByUserIdsFactory({
 const getStreamRoles = getStreamRolesFactory({ db })
 const getUserStreamCounts = getUserStreamCountsFactory({ db })
 const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
+const getUsers = getUsersFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

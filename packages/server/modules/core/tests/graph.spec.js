@@ -33,8 +33,9 @@ const {
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getUser } = require('@/modules/core/repositories/users')
+const { getUserFactory } = require('@/modules/core/repositories/users')
 
+const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })

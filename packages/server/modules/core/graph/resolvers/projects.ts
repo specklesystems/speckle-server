@@ -51,7 +51,7 @@ import {
   getUserStreamsPageFactory,
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -91,13 +91,15 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
-      findUserByTarget: findUserByTargetFactory(),
+      findUserByTarget: findUserByTargetFactory({ db }),
       insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
       collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
         getStream
@@ -109,7 +111,8 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
         getEventBus().emit({
           eventName,
           payload
-        })
+        }),
+      getUser
     }),
     getUsers
   }),

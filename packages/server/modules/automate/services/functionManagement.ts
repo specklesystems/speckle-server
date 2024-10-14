@@ -16,7 +16,6 @@ import {
   CreateAutomateFunctionInput,
   AutomateFunctionTemplateLanguage
 } from '@/modules/core/graph/generated/graphql'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   MaybeNullOrUndefined,
   Nullable,
@@ -46,6 +45,7 @@ import {
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -119,7 +119,7 @@ export const convertFunctionReleaseToGraphQLReturn = (
 export type CreateFunctionDeps = {
   createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 export const createFunctionFromTemplateFactory =

@@ -23,7 +23,7 @@ import {
   createStreamFactory,
   getStreamFactory
 } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { CommandModule } from 'yargs'
@@ -46,6 +46,8 @@ const command: CommandModule<
   },
   handler: async (argv) => {
     const { sourceStreamId, targetUserId } = argv
+
+    const getUser = getUserFactory({ db })
     const cloneStream = cloneStreamFactory({
       getStream: getStreamFactory({ db }),
       getUser,

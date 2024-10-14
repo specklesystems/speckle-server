@@ -4,8 +4,8 @@ import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
   countUsers,
-  getUser,
   getUserByEmail,
+  getUserFactory,
   listUsers,
   markUserAsVerified
 } from '@/modules/core/repositories/users'
@@ -42,6 +42,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 
+const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
