@@ -955,3 +955,40 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
 {{- end }}
 {{- end }}
+
+{{/*
+Generate the secrets to which the service account should allow access for the Speckle server and Speckle objects deployments
+*/}}
+{{- define "server.serviceAccountSecrets" -}}
+{{- $secretNames := list ( default .Values.secretName .Values.db.connectionString.secretName ) }}
+{{- $secretNames := append $secretNames ( default .Values.secretName .Values.redis.connectionString.secretName ) }}
+{{- $secretNames := append $secretNames ( default .Values.secretName .Values.s3.secret_key.secretName ) }}
+{{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.sessionSecret.secretName ) }}
+{{- if .Values.server.auth.google.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.auth.google.clientSecret.secretName ) }}
+{{- end }}
+{{- if .Values.server.auth.github.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.auth.github.clientSecret.secretName ) }}
+{{- end }}
+{{- if .Values.server.auth.azure_ad.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.auth.azure_ad.clientSecret.secretName ) }}
+{{- end }}
+{{- if .Values.server.auth.oidc.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.auth.oidc.clientSecret.secretName ) }}
+{{- end }}
+{{- if .Values.server.email.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.email.password.secretName ) }}
+{{- end }}
+{{- if .Values.server.monitoring.apollo.enabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.monitoring.apollo.key.secretName ) }}
+{{- end }}
+{{- if .Values.featureFlags.automateModuleEnabled }}
+  {{- $secretNames := append $secretNames "encryption-keys" }}
+{{- end }}
+{{- if .Values.featureFlags.workspaceModuleEnabled }}
+  {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.licenseTokenSecret.secretName ) }}
+{{- end }}
+{{- range $secretName := uniq $secretNames }}
+  - name: {{ $secretName }}
+{{- end }}
+{{- end }}
