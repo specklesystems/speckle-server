@@ -1,5 +1,6 @@
 import {
   LimitedUserRecord,
+  StreamFavoriteRecord,
   StreamRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
@@ -7,6 +8,7 @@ import { StreamRoles } from '@speckle/shared'
 
 export type Stream = StreamRecord
 export type Project = Stream
+export type StreamFavoriteMetadata = StreamFavoriteRecord
 
 export type StreamWithOptionalRole = Stream & {
   /**

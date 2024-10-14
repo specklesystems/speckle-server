@@ -110,10 +110,10 @@ function checkSurveyDisplayConditions(
   onboardingOrFeedbackDate: Date,
   projectVersionCount: ComputedRef<number | undefined>
 ): boolean {
-  const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(3, 'day')
+  const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(7, 'day')
   const isAfterOnboardingPeriod = dayjs().isAfter(threeDaysAfterOnboarding)
 
-  const minimumThreeVersions = (projectVersionCount?.value ?? 0) > 2
+  const minimumThreeVersions = (projectVersionCount?.value ?? 0) > 9
 
   return isAfterOnboardingPeriod && minimumThreeVersions
 }

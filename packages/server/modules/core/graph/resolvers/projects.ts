@@ -40,8 +40,6 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
-  getUserStreamsCount,
-  getUserStreams,
   getStreamFactory,
   getStreamCollaboratorsFactory,
   createStreamFactory,
@@ -49,7 +47,9 @@ import {
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  getOnboardingBaseStreamFactory
+  getOnboardingBaseStreamFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
@@ -200,6 +200,8 @@ const createOnboardingStream = createOnboardingStreamFactory({
   getUser,
   updateStream
 })
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 export = {
   Query: {
