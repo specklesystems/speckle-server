@@ -73,6 +73,17 @@ export type StoreStream = (
   }>
 ) => Promise<Stream>
 
+export type SetStreamFavorited = (params: {
+  streamId: string
+  userId: string
+  favorited?: boolean
+}) => Promise<void>
+
+export type CanUserFavoriteStream = (params: {
+  userId: string
+  streamId: string
+}) => Promise<boolean>
+
 export type DeleteStreamRecords = (streamId: string) => Promise<number>
 
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
@@ -224,3 +235,10 @@ export type GetFavoriteStreamsCollection = (params: {
   cursor?: string | null | undefined
   streamIdWhitelist?: string[] | undefined
 }) => Promise<{ totalCount: number; cursor: Nullable<string>; items: Stream[] }>
+
+export type FavoriteStream = (params: {
+  userId: string
+  streamId: string
+  favorited?: boolean | undefined
+  userResourceAccessRules?: ContextResourceAccessRules
+}) => Promise<Stream>
