@@ -10,7 +10,6 @@ import {
   createObjectsBatchedAndNoClosures
 } from '@/modules/core/services/objects'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
-import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
 import { Logger } from 'pino'
 import { Router } from 'express'
@@ -78,30 +77,28 @@ export default (app: Router) => {
     let totalObjectsProcessed = 0
 
     let requestDropped = false
+    const batchStartTime = Date.now()
+    const objects: object[] = []
+    let size = 0
 
-    busboy.on('file', (id, file, info) => {
+    busboy.on('file', (_, file, info) => {
       const { mimeType } = info
 
       if (requestDropped) return
 
       if (mimeType === 'application/json') {
-        const data: Uint8Array[] = []
-        let dataLength = 0
+        let buffer = ''
         file.on('data', (data) => {
-          data.push(data)
-          dataLength += data.length
+          if (data) buffer += data
         })
 
         file.on('end', async () => {
           if (requestDropped) return
-          const batchStartTime = Date.now()
           let obj = null
-          let objString = ''
-          const fileData = Buffer.concat(data, dataLength)
-          if (fileData.length > MAX_FILE_SIZE) {
+          if (buffer.length > MAX_FILE_SIZE) {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesWith1DecimalPlace(fileData.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -111,17 +108,17 @@ export default (app: Router) => {
             if (!requestDropped)
               res
                 .status(400)
-                .send(`File size too large (${fileData.length} > ${MAX_FILE_SIZE})`)
+                .send(`File size too large (${buffer.length} > ${MAX_FILE_SIZE})`)
             requestDropped = true
           }
 
           try {
-            objString = fileData.toString()
-            obj = JSON.parse(objString)
+            obj = JSON.parse(buffer)
+            size += buffer.length
           } catch {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesWith1DecimalPlace(fileData.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -135,7 +132,7 @@ export default (app: Router) => {
           if (obj === null) {
             req.log.error(
               calculateLogMetadata({
-                batchSizeMb: toMegabytesWith1DecimalPlace(fileData.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
@@ -151,67 +148,18 @@ export default (app: Router) => {
             requestDropped = true
           }
           //FIXME should we exit here if requestDropped is true
-
-          totalObjectsProcessed += 1
+          objects.push(obj)
           req.log.debug(
             {
               ...calculateLogMetadata({
-                batchSizeMb: toMegabytesWith1DecimalPlace(fileData.length),
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
                 totalObjectsProcessed
               }),
-              objectCount: fileData.length
+              objectCount: buffer.length
             },
             'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalObjectsProcessed}. This batch has taken {batchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
-          )
-          const promise = objectInsertionService({
-            streamId: req.params.streamId,
-            objects: [obj],
-            logger: req.log
-          }).catch((e) => {
-            req.log.error(
-              {
-                ...calculateLogMetadata({
-                  batchSizeMb: toMegabytesWith1DecimalPlace(fileData.length),
-                  start,
-                  batchStartTime,
-                  totalObjectsProcessed
-                }),
-                err: e
-              },
-              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
-            )
-            if (!requestDropped)
-              switch (e.constructor) {
-                case ObjectHandlingError:
-                  res
-                    .status(400)
-                    .send(`Error inserting object in the database. ${e.message}`)
-                  break
-                default:
-                  res
-                    .status(400)
-                    .send(
-                      'Error inserting object in the database. Check server logs for details'
-                    )
-              }
-            requestDropped = true
-          })
-
-          await promise
-          req.log.info(
-            {
-              ...calculateLogMetadata({
-                batchSizeMb: estimateStringMegabyteSize(objString),
-                start,
-                batchStartTime,
-                totalObjectsProcessed
-              }),
-              objectCount: 1,
-              crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
-            },
-            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalObjectsProcessed}. This batch took {batchElapsedTimeMs}ms.'
           )
         })
       } else {
@@ -234,6 +182,56 @@ export default (app: Router) => {
 
     busboy.on('finish', async () => {
       if (requestDropped) return
+
+      totalObjectsProcessed += 1
+      const promise = objectInsertionService({
+        streamId: req.params.streamId,
+        objects,
+        logger: req.log
+      }).catch((e) => {
+        req.log.error(
+          {
+            ...calculateLogMetadata({
+              batchSizeMb: toMegabytesWith1DecimalPlace(size),
+              start,
+              batchStartTime,
+              totalObjectsProcessed
+            }),
+            err: e
+          },
+          `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
+        )
+        if (!requestDropped)
+          switch (e.constructor) {
+            case ObjectHandlingError:
+              res
+                .status(400)
+                .send(`Error inserting object in the database. ${e.message}`)
+              break
+            default:
+              res
+                .status(400)
+                .send(
+                  'Error inserting object in the database. Check server logs for details'
+                )
+          }
+        requestDropped = true
+      })
+
+      await promise
+      req.log.info(
+        {
+          ...calculateLogMetadata({
+            batchSizeMb: toMegabytesWith1DecimalPlace(size),
+            start,
+            batchStartTime,
+            totalObjectsProcessed
+          }),
+          objectCount: 1,
+          crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
+        },
+        'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalObjectsProcessed}. This batch took {batchElapsedTimeMs}ms.'
+      )
 
       req.log.info(
         {
