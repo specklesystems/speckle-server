@@ -1,9 +1,11 @@
 import { db } from '@/db/knex'
-import { AddCommitCreatedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddCommitCreatedActivity,
+  AddCommitUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
 import {
   addCommitDeletedActivity,
-  addCommitReceivedActivity,
-  addCommitUpdatedActivity
+  addCommitReceivedActivity
 } from '@/modules/activitystream/services/commitActivity'
 import {
   GetBranchById,
@@ -256,7 +258,7 @@ export const updateCommitAndNotifyFactory =
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
-    addCommitUpdatedActivity: typeof addCommitUpdatedActivity
+    addCommitUpdatedActivity: AddCommitUpdatedActivity
     markCommitStreamUpdated: typeof markCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
   }): UpdateCommitAndNotify =>
