@@ -38,11 +38,7 @@ import {
   StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import {
-  MaybeNullOrUndefined,
-  Nullable,
-  Optional
-} from '@/modules/shared/helpers/typeHelper'
+import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
@@ -94,7 +90,12 @@ import {
   GetOwnedFavoritesCountByUserIds,
   GetStreamRoles,
   GetUserStreamCounts,
-  GetStreamsSourceApps
+  GetStreamsSourceApps,
+  BaseUserStreamsQueryParams,
+  UserStreamsQueryParams,
+  UserStreamsQueryCountParams,
+  GetUserStreamsPage,
+  GetUserStreamsCount
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -696,132 +697,93 @@ export const getProjectCollaboratorsFactory =
     return await getStreamCollaboratorsFactory(deps)(projectId)
   }
 
-type BaseUserStreamsQueryParams = {
-  /**
-   * User whose streams we wish to find
-   */
-  userId: string
-  /**
-   * Filter streams by name/description/id
-   */
-  searchQuery?: string
-  /**
-   * Whether this data is retrieved for another user, and thus the data set
-   * should be limited to only show publicly accessible (discoverable) streams
-   */
-  forOtherUser?: boolean
-  /**
-   * Only return streams owned by userId
-   */
-  ownedOnly?: boolean
-
-  /**
-   * Only return streams where user has the specified roles
-   */
-  withRoles?: StreamRoles[]
-
-  /**
-   * Only allow streams with the specified IDs to be returned
-   */
-  streamIdWhitelist?: string[]
-  workspaceId?: string
-}
-
-export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
-  /**
-   * Max amount of streams per page. Defaults to 25, max is 50.
-   */
-  limit?: MaybeNullOrUndefined<number>
-  /**
-   * Pagination cursor
-   */
-  cursor?: MaybeNullOrUndefined<string>
-}
-
-export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
-
 /**
  * Get base query for finding or counting user streams
  */
-function getUserStreamsQueryBase<
-  S extends StreamRecord = StreamRecord & StreamAclRecord
->({
-  userId,
-  searchQuery,
-  forOtherUser,
-  ownedOnly,
-  withRoles,
-  streamIdWhitelist,
-  workspaceId
-}: BaseUserStreamsQueryParams) {
-  const query = StreamAcl.knex<Array<S>>()
-    .where(StreamAcl.col.userId, userId)
-    .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+const getUserStreamsQueryBaseFactory =
+  (deps: { db: Knex }) =>
+  ({
+    userId,
+    searchQuery,
+    forOtherUser,
+    ownedOnly,
+    withRoles,
+    streamIdWhitelist,
+    workspaceId
+  }: BaseUserStreamsQueryParams) => {
+    const query = tables
+      .streamAcl(deps.db)
+      .where(StreamAcl.col.userId, userId)
+      .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
 
-  if (workspaceId) {
-    query.andWhere(Streams.col.workspaceId, workspaceId)
+    if (workspaceId) {
+      query.andWhere(Streams.col.workspaceId, workspaceId)
+    }
+
+    if (ownedOnly || withRoles?.length) {
+      const roles: StreamRoles[] = [
+        ...(withRoles || []),
+        ...(ownedOnly ? [Roles.Stream.Owner] : [])
+      ]
+      query.whereIn(StreamAcl.col.role, roles)
+    }
+
+    if (forOtherUser) {
+      query
+        .andWhere(Streams.col.isDiscoverable, true)
+        .andWhere(Streams.col.isPublic, true)
+    }
+
+    if (searchQuery) {
+      query.andWhere(function () {
+        this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
+          .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
+          .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
+      })
+    }
+
+    if (streamIdWhitelist?.length) {
+      query.whereIn(Streams.col.id, streamIdWhitelist)
+    }
+
+    return query
   }
-
-  if (ownedOnly || withRoles?.length) {
-    const roles: StreamRoles[] = [
-      ...(withRoles || []),
-      ...(ownedOnly ? [Roles.Stream.Owner] : [])
-    ]
-    query.whereIn(StreamAcl.col.role, roles)
-  }
-
-  if (forOtherUser) {
-    query
-      .andWhere(Streams.col.isDiscoverable, true)
-      .andWhere(Streams.col.isPublic, true)
-  }
-
-  if (searchQuery) {
-    query.andWhere(function () {
-      this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
-        .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
-        .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
-    })
-  }
-
-  if (streamIdWhitelist?.length) {
-    query.whereIn(Streams.col.id, streamIdWhitelist)
-  }
-
-  return query
-}
 
 /**
  * Get streams the user is a collaborator on
  */
-export async function getUserStreams(params: UserStreamsQueryParams) {
-  const { limit, cursor } = params
-  const finalLimit = clamp(limit || 25, 1, 50)
+export const getUserStreamsPageFactory =
+  (deps: { db: Knex }): GetUserStreamsPage =>
+  async (params: UserStreamsQueryParams) => {
+    const { limit, cursor } = params
+    const finalLimit = clamp(limit || 25, 1, 50)
 
-  const query = getUserStreamsQueryBase<StreamWithOptionalRole>(params)
-  query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
+    const query = getUserStreamsQueryBaseFactory(deps)(params)
+    query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
 
-  if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
+    if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
 
-  query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
+    query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
 
-  const rows = await query
-  return {
-    streams: rows,
-    cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+    const rows = (await query) as StreamWithOptionalRole[]
+    return {
+      streams: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+    }
   }
-}
 
 /**
  * Get the total amount of streams the user is a collaborator on
  */
-export async function getUserStreamsCount(params: UserStreamsQueryCountParams) {
-  const query = getUserStreamsQueryBase(params)
-  const countQuery = query.count<{ count: string }[]>()
+export const getUserStreamsCountFactory =
+  (deps: { db: Knex }): GetUserStreamsCount =>
+  async (params: UserStreamsQueryCountParams) => {
+    const query = getUserStreamsQueryBaseFactory(deps)(params)
+    const countQuery = query.count<{ count: string }[]>()
 
-  const [res] = await countQuery
-  return parseInt(res.count)
-}
+    const [res] = await countQuery
+    return parseInt(res.count)
+  }
 
 export const createStreamFactory =
   (deps: { db: Knex }): StoreStream =>

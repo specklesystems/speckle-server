@@ -4,8 +4,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
   getProjectFactory,
-  getUserStreams,
-  getUserStreamsCount,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -13,7 +11,9 @@ import {
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory
+  legacyGetStreamsFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
@@ -230,6 +230,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   }),
   removeStreamCollaborator
 })
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
