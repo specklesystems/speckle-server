@@ -2,7 +2,8 @@ import {
   StreamWithCommitId,
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
-  Stream
+  Stream,
+  StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
@@ -126,6 +127,37 @@ export type GetFavoritedStreamsPage = (params: {
 }) => Promise<{
   streams: Stream[]
   cursor: Nullable<string>
+}>
+
+export type GetBatchUserFavoriteData = (params: {
+  userId: string
+  streamIds: string[]
+}) => Promise<{ [streamId: string]: StreamFavoriteMetadata }>
+
+export type GetBatchStreamFavoritesCounts = (streamIds: string[]) => Promise<{
+  [streamId: string]: number
+}>
+
+export type GetOwnedFavoritesCountByUserIds = (userIds: string[]) => Promise<{
+  [userId: string]: number
+}>
+
+export type GetStreamRoles = (
+  userId: string,
+  streamIds: string[]
+) => Promise<{
+  [streamId: string]: Nullable<string>
+}>
+
+export type GetUserStreamCounts = (params: {
+  userIds: string[]
+  publicOnly?: boolean
+}) => Promise<{
+  [userId: string]: number
+}>
+
+export type GetStreamsSourceApps = (streamIds: string[]) => Promise<{
+  [streamId: string]: string[]
 }>
 
 export type GetFavoritedStreamsCount = (
