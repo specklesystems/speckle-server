@@ -1,4 +1,4 @@
-import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import { Nullable } from '@speckle/shared'
 
 export type GetUserParams = Partial<{
@@ -22,3 +22,5 @@ export type GetUser = (
   userId: string,
   params?: GetUserParams
 ) => Promise<Nullable<UserWithOptionalRole>>
+
+export type LegacyGetUser = (id: string) => Promise<User>

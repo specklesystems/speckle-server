@@ -20,7 +20,8 @@ const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
   getUsersBaseQuery,
-  getUserFactory
+  getUserFactory,
+  legacyGetUserFactory
 } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -195,41 +196,11 @@ module.exports = {
   },
 
   /**
-   * @param {{userId: string}} param0
-   * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
-   *TODO: this should be moved to repository
+   * @deprecated Use getUser instead
    */
   async getUserById({ userId }) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: userId })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: userId })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
-  },
-
-  // TODO: deprecate
-  async getUser(id) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: id })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
+    const getUser = legacyGetUserFactory({ db })
+    return await getUser(userId)
   },
 
   // TODO: this should be moved to repository
