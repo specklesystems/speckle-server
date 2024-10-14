@@ -60,8 +60,9 @@ import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
 import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
-import { GPipeline } from './pipeline/G/GPipeline.js'
+import { GPipeline } from './pipeline/G/Pipelines/GPipeline.js'
 import { DefaultPipeline } from './pipeline/G/Pipelines/DefaultPipeline.js'
+import { GProgressivePipeline } from './pipeline/G/Pipelines/GProgressivePipeline.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -230,11 +231,11 @@ export default class SpeckleRenderer {
     this._speckleCamera = value
     this._speckleCamera.on(CameraEvent.Dynamic, () => {
       this._needsRender = true
-      this.pipeline.onStationaryEnd()
+      this.pipeline instanceof GProgressivePipeline && this.pipeline.onStationaryEnd()
     })
     this._speckleCamera.on(CameraEvent.Stationary, () => {
       this._needsRender = true
-      this.pipeline.onStationaryBegin()
+      this.pipeline instanceof GProgressivePipeline && this.pipeline.onStationaryBegin()
     })
     this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
       this.needsRender = needsUpdate

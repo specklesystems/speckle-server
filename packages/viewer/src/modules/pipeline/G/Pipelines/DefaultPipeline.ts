@@ -1,21 +1,15 @@
-import { OrthographicCamera, PerspectiveCamera } from 'three'
 import { ObjectLayers } from '../../../../index.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GColorPass } from '../GColorPass.js'
 import { DepthType, GDepthPass } from '../GDepthPass.js'
-import { GPass, ObjectVisibility, ProgressiveGPass } from '../GPass.js'
-import { GPipeline } from '../GPipeline.js'
+import { ObjectVisibility } from '../GPass.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GOutputPass, InputType } from '../GOutputPass.js'
 import { GTAAPass } from '../GTAAPass.js'
+import { GProgressivePipeline } from './GProgressivePipeline.js'
 
-export class DefaultPipeline extends GPipeline {
-  protected accumulationFrameIndex: number = 0
-  protected accumulationFrameCount: number = 16
-  protected dynamicStage: Array<GPass> = []
-  protected progressiveStage: Array<GPass> = []
-
+export class DefaultPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
@@ -23,11 +17,6 @@ export class DefaultPipeline extends GPipeline {
     depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
-
-    // const normalPass = new GNormalsPass()
-    // normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    // normalPass.setJitter(true)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -113,36 +102,5 @@ export class DefaultPipeline extends GPipeline {
     )
 
     this.passList = this.progressiveStage
-  }
-
-  public update(camera: PerspectiveCamera | OrthographicCamera): void {
-    this.passList.forEach((pass: GPass) => {
-      pass.enabled && pass.update?.(camera)
-      if (pass instanceof ProgressiveGPass) {
-        pass.frameIndex = this.accumulationFrameIndex
-      }
-    })
-    this.accumulationFrameIndex++
-
-    if (this.accumulationFrameIndex === this.accumulationFrameCount)
-      this.onAccumulationComplete()
-  }
-
-  public resize(width: number, height: number) {
-    this.dynamicStage.forEach((pass: GPass) => pass.setSize?.(width, height))
-    this.progressiveStage.forEach((pass: GPass) => pass.setSize?.(width, height))
-  }
-
-  public onStationaryBegin() {
-    this.accumulationFrameIndex = 0
-    this.passList = this.progressiveStage
-  }
-
-  public onStationaryEnd() {
-    this.passList = this.dynamicStage
-  }
-
-  public onAccumulationComplete() {
-    console.warn('Accumulation Complete')
   }
 }

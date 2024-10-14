@@ -1,7 +1,7 @@
 import { Matrix4, OrthographicCamera, PerspectiveCamera, Plane, Vector2 } from 'three'
-import { GPass, ObjectVisibility } from './GPass.js'
-import SpeckleRenderer from '../../SpeckleRenderer.js'
-import { BatchUpdateRange } from '../../batching/Batch.js'
+import { GPass, ObjectVisibility } from '../GPass.js'
+import SpeckleRenderer from '../../../SpeckleRenderer.js'
+import { BatchUpdateRange } from '../../../batching/Batch.js'
 
 export abstract class GPipeline {
   protected speckleRenderer: SpeckleRenderer
@@ -105,12 +105,6 @@ export abstract class GPipeline {
   public resize(width: number, height: number) {
     this.passList.forEach((pass: GPass) => pass.setSize?.(width, height))
   }
-
-  public onStationaryBegin() {}
-
-  public onStationaryEnd() {}
-
-  public onAccumulationComplete() {}
 
   /**
    * Generate a number in the Halton Sequence at a given index. This is

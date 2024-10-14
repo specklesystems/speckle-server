@@ -1,21 +1,14 @@
-import { PerspectiveCamera, OrthographicCamera } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GDepthPass, DepthType } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
-import { GPass, ProgressiveGPass } from '../GPass.js'
-import { GPipeline } from '../GPipeline.js'
 import { GTAAPass } from '../GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 import { GMatcapPass } from '../GMatcapPass.js'
+import { GProgressivePipeline } from './GProgressivePipeline.js'
 
-export class ShadedViewPipeline extends GPipeline {
-  protected accumulationFrameIndex: number = 0
-  protected accumulationFrameCount: number = 16
-  protected dynamicStage: Array<GPass> = []
-  protected progressiveStage: Array<GPass> = []
-
+export class ShadedViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
@@ -90,36 +83,5 @@ export class ShadedViewPipeline extends GPipeline {
     )
 
     this.passList = this.progressiveStage
-  }
-
-  public update(camera: PerspectiveCamera | OrthographicCamera): void {
-    this.passList.forEach((pass: GPass) => {
-      pass.enabled && pass.update?.(camera)
-      if (pass instanceof ProgressiveGPass) {
-        pass.frameIndex = this.accumulationFrameIndex
-      }
-    })
-    this.accumulationFrameIndex++
-
-    if (this.accumulationFrameIndex === this.accumulationFrameCount)
-      this.onAccumulationComplete()
-  }
-
-  public resize(width: number, height: number) {
-    this.dynamicStage.forEach((pass: GPass) => pass.setSize?.(width, height))
-    this.progressiveStage.forEach((pass: GPass) => pass.setSize?.(width, height))
-  }
-
-  public onStationaryBegin() {
-    this.accumulationFrameIndex = 0
-    this.passList = this.progressiveStage
-  }
-
-  public onStationaryEnd() {
-    this.passList = this.dynamicStage
-  }
-
-  public onAccumulationComplete() {
-    console.warn('Accumulation Complete')
   }
 }
