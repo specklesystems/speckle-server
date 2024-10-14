@@ -27,7 +27,7 @@
         :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
         :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
-        @update:model-value=";(shortIdManuallyEdited = true), updateDebouncedShortId"
+        @update:model-value="onSlugChange"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -148,13 +148,14 @@ const reset = () => {
   workspaceLogo.value = null
   editAvatarMode.value = false
   shortIdManuallyEdited.value = false
+  error.value = null
 }
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     const newSlug = generateSlugFromName({ name: newName })
     workspaceShortId.value = newSlug
-    debouncedWorkspaceShortId.value = newSlug
+    updateDebouncedShortId(newSlug)
   }
 }, 600)
 
@@ -162,7 +163,15 @@ const updateDebouncedShortId = debounce((newSlug: string) => {
   debouncedWorkspaceShortId.value = newSlug
 }, 300)
 
+const onSlugChange = (newSlug: string) => {
+  workspaceShortId.value = newSlug
+  shortIdManuallyEdited.value = true
+  updateDebouncedShortId(newSlug)
+}
+
 watch(isOpen, (newVal) => {
-  if (newVal) reset()
+  if (!newVal) {
+    reset()
+  }
 })
 </script>
