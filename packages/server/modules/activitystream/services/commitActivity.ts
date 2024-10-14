@@ -18,6 +18,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
+  AddCommitUpdatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 
@@ -80,49 +81,57 @@ const isOldVersionUpdateInput = (
   i: CommitUpdateInput | UpdateVersionInput
 ): i is CommitUpdateInput => has(i, 'streamId')
 
-export async function addCommitUpdatedActivity(params: {
-  commitId: string
-  streamId: string
-  userId: string
-  originalCommit: CommitRecord
-  update: CommitUpdateInput | UpdateVersionInput
-  newCommit: CommitRecord
-}) {
-  const { commitId, streamId, userId, originalCommit, update, newCommit } = params
-  const legacyUpdateStruct: CommitUpdateInput = isOldVersionUpdateInput(update)
-    ? update
-    : {
-        id: update.versionId,
-        message: update.message,
-        streamId
-      }
+export const addCommitUpdatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddCommitUpdatedActivity =>
+  async (params: {
+    commitId: string
+    streamId: string
+    userId: string
+    originalCommit: CommitRecord
+    update: CommitUpdateInput | UpdateVersionInput
+    newCommit: CommitRecord
+  }) => {
+    const { commitId, streamId, userId, originalCommit, update, newCommit } = params
+    const legacyUpdateStruct: CommitUpdateInput = isOldVersionUpdateInput(update)
+      ? update
+      : {
+          id: update.versionId,
+          message: update.message,
+          streamId
+        }
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: commitId,
-      actionType: ActionTypes.Commit.Update,
-      userId,
-      info: { old: originalCommit, new: update },
-      message: `Commit updated: ${commitId}`
-    }),
-    pubsub.publish(CommitPubsubEvents.CommitUpdated, {
-      commitUpdated: { ...legacyUpdateStruct },
-      streamId,
-      commitId
-    }),
-    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
-      projectId: streamId,
-      projectVersionsUpdated: {
-        id: commitId,
-        version: newCommit,
-        type: ProjectVersionsUpdatedMessageType.Updated,
-        modelId: null
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Commit,
+        resourceId: commitId,
+        actionType: ActionTypes.Commit.Update,
+        userId,
+        info: { old: originalCommit, new: update },
+        message: `Commit updated: ${commitId}`
+      }),
+      publish(CommitPubsubEvents.CommitUpdated, {
+        commitUpdated: { ...legacyUpdateStruct },
+        streamId,
+        commitId
+      }),
+      publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+        projectId: streamId,
+        projectVersionsUpdated: {
+          id: commitId,
+          version: newCommit,
+          type: ProjectVersionsUpdatedMessageType.Updated,
+          modelId: null
+        }
+      })
+    ])
+  }
 
 export async function addCommitMovedActivity(params: {
   commitId: string

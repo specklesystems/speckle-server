@@ -9,8 +9,10 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import {
   CommitCreateInput,
+  CommitUpdateInput,
   ProjectUpdateInput,
-  StreamUpdateInput
+  StreamUpdateInput,
+  UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import {
   CommitRecord,
@@ -211,4 +213,13 @@ export type AddCommitCreatedActivity = (params: {
   branchName: string
   modelId: string
   commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitUpdatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalCommit: CommitRecord
+  update: CommitUpdateInput | UpdateVersionInput
+  newCommit: CommitRecord
 }) => Promise<void>

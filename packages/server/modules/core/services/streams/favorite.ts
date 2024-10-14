@@ -1,8 +1,15 @@
 import {
+  CanUserFavoriteStream,
+  FavoriteStream,
   GetFavoritedStreamsCount,
   GetFavoritedStreamsPage,
-  GetFavoriteStreamsCollection
+  GetFavoriteStreamsCollection,
+  GetStream,
+  SetStreamFavorited
 } from '@/modules/core/domain/streams/operations'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
+import { UnauthorizedError } from '@/modules/shared/errors'
 import { clamp } from 'lodash'
 
 /**
@@ -34,4 +41,35 @@ export const getFavoriteStreamsCollectionFactory =
     })
 
     return { totalCount, cursor: finalCursor, items: streams }
+  }
+
+/**
+ * Favorite or unfavorite a stream
+ */
+export const favoriteStreamFactory =
+  (deps: {
+    canUserFavoriteStream: CanUserFavoriteStream
+    setStreamFavorited: SetStreamFavorited
+    getStream: GetStream
+  }): FavoriteStream =>
+  async ({ userId, streamId, favorited, userResourceAccessRules }) => {
+    // Check if user has access to stream
+    const canFavorite = await deps.canUserFavoriteStream({ userId, streamId })
+    const hasResourceAccess = isResourceAllowed({
+      resourceId: streamId,
+      resourceAccessRules: userResourceAccessRules,
+      resourceType: TokenResourceIdentifierType.Project
+    })
+    if (!canFavorite || !hasResourceAccess) {
+      throw new UnauthorizedError("User doesn't have access to the specified stream", {
+        info: { userId, streamId }
+      })
+    }
+
+    // Favorite/unfavorite the stream
+    await deps.setStreamFavorited({ streamId, userId, favorited })
+
+    // Get updated stream info
+    const stream = await deps.getStream({ streamId, userId })
+    return stream! // It should exist, cause we already checked that it does
   }

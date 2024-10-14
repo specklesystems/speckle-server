@@ -1,14 +1,5 @@
-const { StreamAcl, knex } = require('@/modules/core/dbSchema')
-const {
-  setStreamFavorited,
-  canUserFavoriteStream,
-  getStreamFactory
-} = require('@/modules/core/repositories/streams')
-const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
-const { isResourceAllowed } = require('@/modules/core/helpers/token')
-const {
-  TokenResourceIdentifierType
-} = require('@/modules/core/graph/generated/graphql')
+const { StreamAcl } = require('@/modules/core/dbSchema')
+const { InvalidArgumentError } = require('@/modules/shared/errors')
 
 /**
  * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
@@ -18,8 +9,6 @@ const {
  */
 
 module.exports = {
-  setStreamFavorited,
-
   /**
    * @returns {Promise<{role: string, id: string, name: string, company: string, avatar: string}[]>}
    */
@@ -33,38 +22,6 @@ module.exports = {
       .orderBy('stream_acl.role')
 
     return await query
-  },
-
-  /**
-   * Favorite or unfavorite a stream
-   * @param {Object} p
-   * @param {string} p.userId
-   * @param {string} p.streamId
-   * @param {boolean} [p.favorited] Whether to favorite or unfavorite (true by default)
-   * @param {import('@/modules/core/helpers/token').ContextResourceAccessRules} [p.userResourceAccessRules] Resource access rules (if any) for the user doing the favoriting
-   * @returns {Promise<import('@/modules/core/helpers/types').StreamRecord>} Updated stream
-   */
-  async favoriteStream({ userId, streamId, favorited, userResourceAccessRules }) {
-    // Check if user has access to stream
-    const canFavorite = await canUserFavoriteStream({ userId, streamId })
-    const hasResourceAccess = isResourceAllowed({
-      resourceId: streamId,
-      resourceAccessRules: userResourceAccessRules,
-      resourceType: TokenResourceIdentifierType.Project
-    })
-    if (!canFavorite || !hasResourceAccess) {
-      throw new UnauthorizedError("User doesn't have access to the specified stream", {
-        info: { userId, streamId }
-      })
-    }
-
-    // Favorite/unfavorite the stream
-    await setStreamFavorited({ streamId, userId, favorited })
-
-    const getStream = getStreamFactory({ db: knex })
-
-    // Get updated stream info
-    return await getStream({ streamId, userId })
   },
 
   /**

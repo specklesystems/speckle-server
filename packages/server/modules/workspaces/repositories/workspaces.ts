@@ -289,14 +289,6 @@ export const getWorkspaceCollaboratorsFactory =
       query.limit(clamp(limit, 0, 100))
     }
 
-    if (cursor) {
-      query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
-    }
-
-    if (limit) {
-      query.limit(clamp(limit, 0, 100))
-    }
-
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
