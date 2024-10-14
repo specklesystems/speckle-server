@@ -499,7 +499,7 @@ export function buildRequestLoaders(
         string
       >(
         async (requests) => {
-          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users, db)
           const results = await meta.getMultiple(
             requests.map((r) => ({
               id: r.userId,

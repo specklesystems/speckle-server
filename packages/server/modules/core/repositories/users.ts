@@ -206,7 +206,7 @@ export async function markUserAsVerified(email: string) {
 export async function markOnboardingComplete(userId: string) {
   if (!userId) return false
 
-  const meta = metaHelpers(Users)
+  const meta = metaHelpers(Users, db)
   const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
 
   return !!newMeta.value
