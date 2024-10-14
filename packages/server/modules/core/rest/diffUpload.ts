@@ -60,6 +60,34 @@ export default (params: { app: Application; openApiDocument: OpenApiDocument }) 
   })
   openApiDocument.registerOperation('/api/diff/{streamId}', HttpMethod.POST, {
     description: 'Options for getting the diff of objects for a project (stream)',
+    parameters: [
+      {
+        name: 'streamId',
+        in: 'path',
+        description: 'ID of the stream',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              objects: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'A diff was successfully computed.'

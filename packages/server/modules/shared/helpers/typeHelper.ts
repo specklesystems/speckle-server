@@ -11,20 +11,20 @@ import { Express } from 'express'
 import { ConditionalKeys, SetRequired } from 'type-fest'
 import pino from 'pino'
 import { BaseContext } from '@apollo/server'
-import { OpenAPIV2 } from 'openapi-types'
+import { OpenAPIV3 } from 'openapi-types'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
   ConditionalKeys<T, NonNullable<unknown>>
 >
 
-export const HttpMethod = OpenAPIV2.HttpMethods
+export const HttpMethod = OpenAPIV3.HttpMethods
 
 export type OpenApiDocument = {
   registerOperation: (
     path: string,
-    httpMethod: OpenAPIV2.HttpMethods,
-    operation: OpenAPIV2.OperationObject
+    httpMethod: OpenAPIV3.HttpMethods,
+    operation: OpenAPIV3.OperationObject
   ) => void
 }
 

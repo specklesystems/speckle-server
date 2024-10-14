@@ -79,6 +79,23 @@ const localStrategyBuilderFactory =
     )
     openApiDocument.registerOperation('/auth/local/login', HttpMethod.POST, {
       description: 'Login with email and password',
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                email: {
+                  type: 'string'
+                },
+                password: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      },
       responses: {
         200: {
           description: 'User logged in successfully'
@@ -165,6 +182,23 @@ const localStrategyBuilderFactory =
     )
     openApiDocument.registerOperation('/auth/local/register', HttpMethod.POST, {
       description: 'Register with email and password',
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                email: {
+                  type: 'string'
+                },
+                password: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      },
       responses: {
         200: {
           description: 'User registered successfully'

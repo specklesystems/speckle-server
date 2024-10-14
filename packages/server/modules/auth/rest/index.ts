@@ -87,9 +87,38 @@ export default function (params: { app: Express; openApiDocument: OpenApiDocumen
   })
   openApiDocument.registerOperation('/auth/accesscode', HttpMethod.GET, {
     description: 'Generates an access code for an app.',
+    parameters: [
+      {
+        name: 'appId',
+        in: 'query',
+        description: 'ID of application',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      },
+      {
+        name: 'challenge',
+        in: 'query',
+        description: 'challenge string',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      },
+      {
+        name: 'token',
+        in: 'query',
+        description: 'Token for the user',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       200: {
-        description: 'Returns an access code in the body'
+        description: 'Returns the redirect url in the body'
       },
       302: {
         description: 'Redirects with access code in url query'
@@ -174,6 +203,33 @@ export default function (params: { app: Express; openApiDocument: OpenApiDocumen
   })
   openApiDocument.registerOperation('/auth/token', HttpMethod.POST, {
     description: 'Generates a new API token',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              refreshToken: {
+                type: 'string'
+              },
+              appId: {
+                type: 'string'
+              },
+              appSecret: {
+                type: 'string'
+              },
+              accessCode: {
+                type: 'string'
+              },
+              challenge: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      },
+      required: true
+    },
     responses: {
       200: {
         description: 'Generates a new API token'
@@ -204,6 +260,23 @@ export default function (params: { app: Express; openApiDocument: OpenApiDocumen
   })
   openApiDocument.registerOperation('/auth/logout', HttpMethod.POST, {
     description: 'Logs a user out by invalidating token and refresh token',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              token: {
+                type: 'string'
+              },
+              refreshToken: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'Successfully logged out'

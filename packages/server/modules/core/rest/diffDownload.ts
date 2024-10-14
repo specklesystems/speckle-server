@@ -12,6 +12,17 @@ export default (params: { app: Application; openApiDocument: OpenApiDocument }) 
   app.options('/api/getobjects/:streamId', corsMiddleware())
   openApiDocument.registerOperation('/api/getobjects/{streamId}', HttpMethod.OPTIONS, {
     description: 'Options for the endpoint',
+    parameters: [
+      {
+        name: 'streamId',
+        in: 'path',
+        description: 'ID of the stream',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       200: {
         description: 'Options were retrieved.'
@@ -107,6 +118,34 @@ export default (params: { app: Application; openApiDocument: OpenApiDocument }) 
   })
   openApiDocument.registerOperation('/api/getobjects/{streamId}', HttpMethod.POST, {
     description: 'Get all objects for a project (stream)',
+    parameters: [
+      {
+        name: 'streamId',
+        in: 'path',
+        description: 'ID of the stream',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              objects: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'All objects were successfully retrieved.'

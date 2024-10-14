@@ -1,6 +1,6 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/logging/logging'
-import { OpenAPIV2 } from 'openapi-types'
+import { OpenAPIV3 } from 'openapi-types'
 import { RequestHandler } from 'express'
 
 export const openApiJsonPath = '/openapi/json'
@@ -43,7 +43,7 @@ const openApiHtml: RequestHandler = (_req, res) => {
 }
 
 export const openApiJsonHandlerFactory: (params: {
-  openApiDocument: OpenAPIV2.Document
+  openApiDocument: OpenAPIV3.Document
 }) => RequestHandler =
   ({ openApiDocument }) =>
   (_req, res) => {
@@ -53,7 +53,7 @@ export const openApiJsonHandlerFactory: (params: {
 export const init: SpeckleModule['init'] = async ({ app, openApiDocument }) => {
   moduleLogger.info('📖 Init OpenAPI documentation module')
   app.get(openApiHtmlPath, openApiHtml)
-  openApiDocument.registerOperation(openApiHtmlPath, OpenAPIV2.HttpMethods.GET, {
+  openApiDocument.registerOperation(openApiHtmlPath, OpenAPIV3.HttpMethods.GET, {
     summary: 'OpenAPI HTML',
     description: 'Returns the OpenAPI documentation in HTML format',
     responses: {
@@ -62,7 +62,7 @@ export const init: SpeckleModule['init'] = async ({ app, openApiDocument }) => {
       }
     }
   })
-  openApiDocument.registerOperation(openApiJsonPath, OpenAPIV2.HttpMethods.GET, {
+  openApiDocument.registerOperation(openApiJsonPath, OpenAPIV3.HttpMethods.GET, {
     summary: 'OpenAPI JSON',
     description: 'Returns the OpenAPI documentation in JSON format',
     responses: {

@@ -221,6 +221,21 @@ exports.init = async ({ app, openApiDocument }) => {
         required: true
       }
     ],
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            properties: {
+              files: {
+                type: 'array',
+                items: { type: 'string', format: 'binary' }
+              }
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'Successfully uploaded a blob to the project'
@@ -260,6 +275,18 @@ exports.init = async ({ app, openApiDocument }) => {
         required: true
       }
     ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+            items: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description:

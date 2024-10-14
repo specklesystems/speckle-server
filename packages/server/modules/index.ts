@@ -12,7 +12,7 @@ import { moduleLogger } from '@/logging/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { isNonNullable } from '@speckle/shared'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { OpenApiDocument, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions } from '@apollo/server'
@@ -97,13 +97,17 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-export const init = async (app: Express) => {
+export const init = async (params: {
+  app: Express
+  openApiDocument: OpenApiDocument
+}) => {
+  const { app, openApiDocument } = params
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
   // Stage 1: initialise all modules
   for (const module of modules) {
-    await module.init?.(app, isInitial)
+    await module.init?.({ app, openApiDocument, isInitial })
   }
 
   // Stage 2: finalize init all modules

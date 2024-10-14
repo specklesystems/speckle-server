@@ -1,27 +1,25 @@
 import { getServerVersion } from '@/modules/shared/helpers/envHelper'
-import type { OpenAPIV2 } from 'openapi-types'
+import type { OpenAPIV3 } from 'openapi-types'
 import { OpenApiDocument } from '@/modules/shared/helpers/typeHelper'
 
-const defaultOpenAPIDoc: OpenAPIV2.Document = {
-  swagger: '2.0',
-  basePath: '/',
+const defaultOpenAPIDoc: OpenAPIV3.Document = {
+  openapi: '2.0',
   info: {
     title: 'Speckle.',
     version: getServerVersion()
   },
-  definitions: {},
   paths: {}
 }
 
 export const openApiDocument: () => OpenApiDocument & {
-  getDocument: () => OpenAPIV2.Document
+  getDocument: () => OpenAPIV3.Document
 } = () => {
   const _openApiDoc = defaultOpenAPIDoc
 
   return {
     registerOperation: (path, httpMethod, operation) => {
       _openApiDoc.paths[path] = _openApiDoc.paths[path] || {}
-      _openApiDoc.paths[path][httpMethod] = operation
+      _openApiDoc.paths[path]![httpMethod] = operation
     },
     getDocument: () => _openApiDoc
   }

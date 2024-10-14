@@ -84,6 +84,24 @@ module.exports = ({ app, openApiDocument }) => {
   })
   openApiDocument.registerOperation('/objects/{streamId}/{objectId}', HttpMethod.GET, {
     description: 'Download objects from a project (stream)',
+    parameters: [
+      {
+        in: 'path',
+        name: 'streamId',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      },
+      {
+        in: 'path',
+        name: 'objectId',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       200: {
         description: 'Objects were downloaded.'
@@ -97,6 +115,24 @@ module.exports = ({ app, openApiDocument }) => {
     HttpMethod.OPTIONS,
     {
       description: 'Options for downloading a single object from a project (stream)',
+      parameters: [
+        {
+          in: 'path',
+          name: 'streamId',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        },
+        {
+          in: 'path',
+          name: 'objectId',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
       responses: {
         200: {
           description: 'Options were retrieved.'
@@ -139,6 +175,24 @@ module.exports = ({ app, openApiDocument }) => {
     HttpMethod.GET,
     {
       description: 'Options for downloading a single object from a project (stream)',
+      parameters: [
+        {
+          in: 'path',
+          name: 'streamId',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        },
+        {
+          in: 'path',
+          name: 'objectId',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
       responses: {
         200: {
           description: 'An object was retrieved.'

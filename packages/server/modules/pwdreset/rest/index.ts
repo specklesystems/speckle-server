@@ -41,6 +41,22 @@ export default function (params: { app: Express; openApiDocument: OpenApiDocumen
   })
   openApiDocument.registerOperation('/auth/pwdreset/request', HttpMethod.POST, {
     description: 'Reset a password',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              email: {
+                type: 'string',
+                format: 'email'
+              }
+            },
+            required: ['email']
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'The password reset workflow was successfully started.'
@@ -70,6 +86,24 @@ export default function (params: { app: Express; openApiDocument: OpenApiDocumen
   })
   openApiDocument.registerOperation('/auth/pwdreset/finalize', HttpMethod.GET, {
     description: 'Finish resetting a password',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              tokenId: {
+                type: 'string'
+              },
+              password: {
+                type: 'string'
+              }
+            },
+            required: ['tokenId', 'password']
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'The password was successfully reset.'

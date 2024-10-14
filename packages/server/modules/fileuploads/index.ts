@@ -119,6 +119,50 @@ export const init: SpeckleModule['init'] = async ({
     HttpMethod.POST,
     {
       description: 'Uploads a file to a project (stream)',
+      parameters: [
+        {
+          name: 'fileType',
+          in: 'path',
+          description: 'Type of the file',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        },
+        {
+          name: 'streamId',
+          in: 'path',
+          description: 'ID of the stream',
+          required: true,
+          schema: {
+            type: 'string'
+          }
+        },
+        {
+          name: 'branchName',
+          in: 'path',
+          description: 'Name of the branch',
+          required: false,
+          schema: {
+            type: 'string'
+          }
+        }
+      ],
+      requestBody: {
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: {
+                file: {
+                  type: 'array',
+                  items: { type: 'string', format: 'binary' }
+                }
+              }
+            }
+          }
+        }
+      },
       responses: {
         200: {
           description: 'file successfully uploaded to the project (stream)'

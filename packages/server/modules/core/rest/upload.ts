@@ -34,6 +34,17 @@ export default (params: { app: Router; openApiDocument: OpenApiDocument }) => {
   app.options('/objects/:streamId', corsMiddleware())
   openApiDocument.registerOperation('/objects/{streamId}', HttpMethod.OPTIONS, {
     description: 'The options for this endpoint',
+    parameters: [
+      {
+        name: 'streamId',
+        in: 'path',
+        description: 'ID of the stream',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       200: {
         description: 'Options were retrieved.'
@@ -425,6 +436,32 @@ export default (params: { app: Router; openApiDocument: OpenApiDocument }) => {
   })
   openApiDocument.registerOperation('/objects/{streamId}', HttpMethod.POST, {
     description: 'Upload objects to the project (stream)',
+    parameters: [
+      {
+        name: 'streamId',
+        in: 'path',
+        description: 'ID of the stream',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            properties: {
+              files: {
+                type: 'array',
+                items: { type: 'string', format: 'binary' }
+              }
+            }
+          }
+        }
+      }
+    },
     responses: {
       200: {
         description: 'Objects were successfully uploaded.'

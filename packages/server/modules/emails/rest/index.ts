@@ -40,6 +40,17 @@ export = (params: { app: Express; openApiDocument: OpenApiDocument }) => {
   openApiDocument.registerOperation('/auth/verifyemail', HttpMethod.GET, {
     summary: 'Verify email',
     description: 'Verifies an email address',
+    parameters: [
+      {
+        name: 't',
+        in: 'query',
+        description: 'Token to verify email',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       302: {
         description: 'Redirects to the home page.'
