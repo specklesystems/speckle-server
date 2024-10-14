@@ -1,6 +1,5 @@
 import {
   getStreamUsers,
-  favoriteStream,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
   getOwnedFavoritesCount
@@ -35,7 +34,9 @@ import {
   legacyGetStreamsFactory,
   getFavoritedStreamsCountFactory,
   getFavoritedStreamsPageFactory,
-  getStreamCollaboratorsFactory
+  getStreamCollaboratorsFactory,
+  canUserFavoriteStreamFactory,
+  setStreamFavoritedFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -87,7 +88,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
-import { getFavoriteStreamsCollectionFactory } from '@/modules/core/services/streams/favorite'
+import {
+  favoriteStreamFactory,
+  getFavoriteStreamsCollectionFactory
+} from '@/modules/core/services/streams/favorite'
 
 const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
   getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
@@ -173,6 +177,11 @@ const getDiscoverableStreams = getDiscoverableStreamsFactory({
   countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
 })
 const getStreams = legacyGetStreamsFactory({ db })
+const favoriteStream = favoriteStreamFactory({
+  canUserFavoriteStream: canUserFavoriteStreamFactory({ db }),
+  setStreamFavorited: setStreamFavoritedFactory({ db }),
+  getStream
+})
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
