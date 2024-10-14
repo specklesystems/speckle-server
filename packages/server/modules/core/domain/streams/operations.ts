@@ -182,6 +182,8 @@ export type GetUserStreamsCount = (
   params: UserStreamsQueryCountParams
 ) => Promise<number>
 
+export type MarkBranchStreamUpdated = (branchId: string) => Promise<boolean>
+
 export type GetBatchUserFavoriteData = (params: {
   userId: string
   streamIds: string[]
