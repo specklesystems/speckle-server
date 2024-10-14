@@ -4,7 +4,7 @@ import { cliLogger } from '@/logging/logging'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
@@ -50,8 +50,10 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const command: CommandModule<
   unknown,
@@ -92,6 +94,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
@@ -140,7 +143,10 @@ const command: CommandModule<
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })

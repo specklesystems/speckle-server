@@ -23,10 +23,10 @@
         :hide-items="[Roles.Workspace.Guest]"
       />
     </div>
-    <FormButton
-      v-if="isWorkspaceAdmin"
-      @click="() => (isInviteDialogOpen = !isInviteDialogOpen)"
-    >
+    <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
+      <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
+    </div>
+    <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
       Invite
     </FormButton>
     <WorkspaceInviteDialog
