@@ -133,36 +133,44 @@ export const addCommitUpdatedActivityFactory =
     ])
   }
 
-export async function addCommitMovedActivity(params: {
-  commitId: string
-  streamId: string
-  userId: string
-  originalBranchId: string
-  newBranchId: string
-  commit: CommitRecord
-}) {
-  const { commitId, streamId, userId, originalBranchId, newBranchId, commit } = params
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: commitId,
-      actionType: ActionTypes.Commit.Move,
-      userId,
-      info: { originalBranchId, newBranchId },
-      message: `Commit moved: ${commitId}`
-    }),
-    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
-      projectId: streamId,
-      projectVersionsUpdated: {
-        id: commitId,
-        version: commit,
-        type: ProjectVersionsUpdatedMessageType.Updated,
-        modelId: null
-      }
-    })
-  ])
-}
+export const addCommitMovedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }) =>
+  async (params: {
+    commitId: string
+    streamId: string
+    userId: string
+    originalBranchId: string
+    newBranchId: string
+    commit: CommitRecord
+  }) => {
+    const { commitId, streamId, userId, originalBranchId, newBranchId, commit } = params
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Commit,
+        resourceId: commitId,
+        actionType: ActionTypes.Commit.Move,
+        userId,
+        info: { originalBranchId, newBranchId },
+        message: `Commit moved: ${commitId}`
+      }),
+      publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+        projectId: streamId,
+        projectVersionsUpdated: {
+          id: commitId,
+          version: commit,
+          type: ProjectVersionsUpdatedMessageType.Updated,
+          modelId: null
+        }
+      })
+    ])
+  }
 
 export async function addCommitDeletedActivity(params: {
   commitId: string

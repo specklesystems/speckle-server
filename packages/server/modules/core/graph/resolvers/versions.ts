@@ -49,7 +49,7 @@ import {
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
-  addCommitMovedActivity,
+  addCommitMovedActivityFactory,
   addCommitUpdatedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
@@ -97,7 +97,10 @@ const batchMoveCommits = batchMoveCommitsFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
-  addCommitMovedActivity
+  addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 export = {
