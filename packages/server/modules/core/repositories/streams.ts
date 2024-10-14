@@ -23,7 +23,6 @@ import {
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
-  LimitedUserRecord,
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
@@ -89,7 +88,13 @@ import {
   GetFavoritedStreamsCount,
   SetStreamFavorited,
   CanUserFavoriteStream,
-  LegacyGetStreamCollaborators
+  LegacyGetStreamCollaborators,
+  GetBatchUserFavoriteData,
+  GetBatchStreamFavoritesCounts,
+  GetOwnedFavoritesCountByUserIds,
+  GetStreamRoles,
+  GetUserStreamCounts,
+  GetStreamsSourceApps
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -379,47 +384,44 @@ export const setStreamFavoritedFactory =
 
 /**
  * Get favorite metadata for specified user and all specified stream IDs
- * @param {Object} p
- * @param {string} p.userId
- * @param {string[]} p.streamIds
- * @returns Favorite metadata keyed by stream ID
  */
-export async function getBatchUserFavoriteData(params: {
-  userId: string
-  streamIds: string[]
-}) {
-  const { userId, streamIds } = params
-  if (!userId || !streamIds || !streamIds.length)
-    throw new InvalidArgumentError('Invalid user ID or stream IDs', {
-      info: { userId, streamIds }
-    })
+export const getBatchUserFavoriteDataFactory =
+  (deps: { db: Knex }): GetBatchUserFavoriteData =>
+  async (params: { userId: string; streamIds: string[] }) => {
+    const { userId, streamIds } = params
+    if (!userId || !streamIds || !streamIds.length)
+      throw new InvalidArgumentError('Invalid user ID or stream IDs', {
+        info: { userId, streamIds }
+      })
 
-  const query = StreamFavorites.knex<StreamFavoriteRecord[]>()
-    .select()
-    .where(StreamFavorites.col.userId, userId)
-    .whereIn(StreamFavorites.col.streamId, streamIds)
+    const query = tables
+      .streamFavorites(deps.db)
+      .select()
+      .where(StreamFavorites.col.userId, userId)
+      .whereIn(StreamFavorites.col.streamId, streamIds)
 
-  const rows = await query
-  return _.keyBy(rows, 'streamId')
-}
+    const rows = await query
+    return _.keyBy(rows, 'streamId')
+  }
 
 /**
  * Get favorites counts for all specified streams
- * @param {string[]} streamIds
- * @returns {Promise<Object<string, number>>} Favorite counts keyed by stream ids
  */
-export async function getBatchStreamFavoritesCounts(streamIds: string[]) {
-  const query = StreamFavorites.knex()
-    .columns<{ streamId: string; count: string }[]>([
-      StreamFavorites.col.streamId,
-      knex.raw('COUNT(*) as count')
-    ])
-    .whereIn(StreamFavorites.col.streamId, streamIds)
-    .groupBy(StreamFavorites.col.streamId)
+export const getBatchStreamFavoritesCountsFactory =
+  (deps: { db: Knex }): GetBatchStreamFavoritesCounts =>
+  async (streamIds: string[]) => {
+    const query = tables
+      .streamFavorites(deps.db)
+      .columns<{ streamId: string; count: string }[]>([
+        StreamFavorites.col.streamId,
+        knex.raw('COUNT(*) as count')
+      ])
+      .whereIn(StreamFavorites.col.streamId, streamIds)
+      .groupBy(StreamFavorites.col.streamId)
 
-  const rows = await query
-  return _.mapValues(_.keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
-}
+    const rows = await query
+    return _.mapValues(_.keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
+  }
 
 /**
  * Check if user can favorite a stream
@@ -455,71 +457,52 @@ export const canUserFavoriteStreamFactory =
 
 /**
  * Find total favorites of owned streams for specified users
- * @param {string[]} userIds
- * @returns {Promise<Record<string, number>>}
  */
-export async function getOwnedFavoritesCountByUserIds(userIds: string[]) {
-  const query = StreamAcl.knex()
-    .select<Array<{ userId: string; count: string }>>([
-      StreamAcl.col.userId,
-      knex.raw('COUNT(*)')
-    ])
-    .join(StreamFavorites.name, function () {
-      this.andOn(StreamFavorites.col.streamId, StreamAcl.col.resourceId)
-    })
-    .whereIn(StreamAcl.col.userId, userIds)
-    .andWhere(StreamAcl.col.role, Roles.Stream.Owner)
-    .groupBy(StreamAcl.col.userId)
+export const getOwnedFavoritesCountByUserIdsFactory =
+  (deps: { db: Knex }): GetOwnedFavoritesCountByUserIds =>
+  async (userIds: string[]) => {
+    const query = tables
+      .streamAcl(deps.db)
+      .select<Array<{ userId: string; count: string }>>([
+        StreamAcl.col.userId,
+        knex.raw('COUNT(*)')
+      ])
+      .join(StreamFavorites.name, function () {
+        this.andOn(StreamFavorites.col.streamId, StreamAcl.col.resourceId)
+      })
+      .whereIn(StreamAcl.col.userId, userIds)
+      .andWhere(StreamAcl.col.role, Roles.Stream.Owner)
+      .groupBy(StreamAcl.col.userId)
 
-  const results = await query
-  return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
-}
-
-/**
- * Get user & role, only if they are a stream collaborator
- */
-export async function getStreamCollaborator(streamId: string, userId: string) {
-  const query = StreamAcl.knex()
-    .select<Array<LimitedUserRecord & { role: string }>>(
-      StreamAcl.col.role,
-      Users.col.id,
-      Users.col.name,
-      Users.col.bio,
-      Users.col.company,
-      Users.col.avatar,
-      Users.col.verified,
-      Users.col.createdAt
-    )
-    .where({ [StreamAcl.col.resourceId]: streamId, [Users.col.id]: userId })
-    .rightJoin(Users.name, Users.col.id, StreamAcl.col.userId)
-    .first()
-
-  const res = await query
-  return res
-}
+    const results = await query
+    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
+  }
 
 /**
  * Get user's role in all of the specified streams
  */
-export async function getStreamRoles(userId: string, streamIds: string[]) {
-  const q = Streams.knex()
-    .select<{ id: string; role: Nullable<string> }[]>([
-      Streams.col.id,
-      StreamAcl.col.role
-    ])
-    .leftJoin(StreamAcl.name, (q) =>
-      q
-        .on(StreamAcl.col.resourceId, '=', Streams.col.id)
-        .andOnVal(StreamAcl.col.userId, userId)
-    )
-    .whereIn(Streams.col.id, streamIds)
+export const getStreamRolesFactory =
+  (deps: { db: Knex }): GetStreamRoles =>
+  async (userId: string, streamIds: string[]) => {
+    const q = tables
+      .streams(deps.db)
+      .select<{ id: string; role: Nullable<string> }[]>([
+        Streams.col.id,
+        StreamAcl.col.role
+      ])
+      .leftJoin(StreamAcl.name, (q) =>
+        q
+          .on(StreamAcl.col.resourceId, '=', Streams.col.id)
+          .andOnVal(StreamAcl.col.userId, userId)
+      )
+      .whereIn(Streams.col.id, streamIds)
 
-  const results = await q
-  return _.mapValues(
-    _.keyBy(results, (r) => r.id),
-    (v) => v.role
-  )
-}
+    const results = await q
+    return _.mapValues(
+      _.keyBy(results, (r) => r.id),
+      (v) => v.role
+    )
+  }
 
 const buildDiscoverableStreamsBaseQueryFactory =
   (deps: { db: Knex }) =>
@@ -901,33 +884,36 @@ export const createStreamFactory =
     return newStream
   }
 
-export async function getUserStreamCounts(params: {
-  userIds: string[]
-  /**
-   * If true, will only count public & discoverable streams
-   */
-  publicOnly?: boolean
-}) {
-  const { userIds, publicOnly = false } = params
-  if (!userIds.length) return {}
+export const getUserStreamCountsFactory =
+  (deps: { db: Knex }): GetUserStreamCounts =>
+  async (params: {
+    userIds: string[]
+    /**
+     * If true, will only count public & discoverable streams
+     */
+    publicOnly?: boolean
+  }) => {
+    const { userIds, publicOnly = false } = params
+    if (!userIds.length) return {}
 
-  const q = StreamAcl.knex()
-    .select<{ userId: string; count: string }[]>([
-      StreamAcl.col.userId,
-      knex.raw('COUNT(*)')
-    ])
-    .whereIn(StreamAcl.col.userId, userIds)
-    .groupBy(StreamAcl.col.userId)
+    const q = tables
+      .streamAcl(deps.db)
+      .select<{ userId: string; count: string }[]>([
+        StreamAcl.col.userId,
+        knex.raw('COUNT(*)')
+      ])
+      .whereIn(StreamAcl.col.userId, userIds)
+      .groupBy(StreamAcl.col.userId)
 
-  if (publicOnly) {
-    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
-      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
-    })
+    if (publicOnly) {
+      q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
+        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+      })
+    }
+
+    const results = await q
+    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
   }
-
-  const results = await q
-  return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
-}
 
 export const deleteStreamFactory =
   (deps: { db: Knex }): DeleteStreamRecords =>
@@ -946,33 +932,36 @@ export const deleteStreamFactory =
     return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
   }
 
-export async function getStreamsSourceApps(streamIds: string[]) {
-  if (!streamIds?.length) return {}
+export const getStreamsSourceAppsFactory =
+  (deps: { db: Knex }): GetStreamsSourceApps =>
+  async (streamIds: string[]) => {
+    if (!streamIds?.length) return {}
 
-  const q = Streams.knex()
-    .select<{ id: string; sourceApplication: string }[]>([
-      Streams.col.id,
-      Commits.col.sourceApplication
-    ])
-    .whereIn(Streams.col.id, streamIds)
-    .whereNotNull(Commits.col.sourceApplication)
-    .innerJoin(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
-    .innerJoin(Commits.name, StreamCommits.col.commitId, Commits.col.id)
+    const q = tables
+      .streams(deps.db)
+      .select<{ id: string; sourceApplication: string }[]>([
+        Streams.col.id,
+        Commits.col.sourceApplication
+      ])
+      .whereIn(Streams.col.id, streamIds)
+      .whereNotNull(Commits.col.sourceApplication)
+      .innerJoin(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
+      .innerJoin(Commits.name, StreamCommits.col.commitId, Commits.col.id)
 
-  const results = await q
-  const mappedToSets = reduce(
-    results,
-    (result, item) => {
-      const set = result[item.id] || new Set<string>()
-      if (item.sourceApplication?.length) set.add(item.sourceApplication)
-      result[item.id] = set
+    const results = await q
+    const mappedToSets = reduce(
+      results,
+      (result, item) => {
+        const set = result[item.id] || new Set<string>()
+        if (item.sourceApplication?.length) set.add(item.sourceApplication)
+        result[item.id] = set
 
-      return result
-    },
-    {} as Record<string, Set<string>>
-  )
-  return mapValues(mappedToSets, (v) => [...v.values()])
-}
+        return result
+      },
+      {} as Record<string, Set<string>>
+    )
+    return mapValues(mappedToSets, (v) => [...v.values()])
+  }
 
 const isProjectUpdateInput = (
   i: StreamUpdateInput | ProjectUpdateInput
