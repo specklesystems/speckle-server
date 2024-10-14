@@ -24,3 +24,13 @@ export type GetUser = (
 ) => Promise<Nullable<UserWithOptionalRole>>
 
 export type LegacyGetUser = (id: string) => Promise<User>
+
+export type LegacyGetPaginatedUsers = (
+  limit?: number,
+  offset?: number,
+  searchQuery?: string | null
+) => Promise<User[]>
+
+export type LegacyGetPaginatedUsersCount = (
+  searchQuery?: string | null
+) => Promise<number>

@@ -14,6 +14,8 @@ import {
   GetUser,
   GetUserParams,
   GetUsers,
+  LegacyGetPaginatedUsers,
+  LegacyGetPaginatedUsersCount,
   LegacyGetUser
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
@@ -28,9 +30,7 @@ function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
   return user
 }
 
-// This function is exported because it is used in services
-// Once we will refactor services this one should not be exported
-export const getUsersBaseQuery = (
+const getUsersBaseQuery = (
   query: Knex.QueryBuilder,
   { searchQuery, role }: { searchQuery: string | null; role?: string | null }
 ) => {
@@ -277,4 +277,49 @@ export const legacyGetUserFactory =
       .first()
     if (user) delete user.passwordDigest
     return user!
+  }
+
+/**
+ * Get all users or filter them with the specified searchQuery. This is meant for
+ * server admins, because it exposes the User object (& thus the email).
+ *
+ * @deprecated Use listUsers instead
+ */
+export const legacyGetPaginatedUsersFactory =
+  (deps: { db: Knex }): LegacyGetPaginatedUsers =>
+  async (limit = 10, offset = 0, searchQuery = null) => {
+    // sanitize limit
+    const maxLimit = 200
+    if (limit > maxLimit) limit = maxLimit
+
+    const query = tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .columns([
+        ...Object.values(omit(Users.col, ['email', 'verified', 'passwordDigest'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+
+    const res = await getUsersBaseQuery(query, { searchQuery })
+      .groupBy(Users.col.id)
+      .orderBy(Users.col.createdAt)
+      .limit(limit)
+      .offset(offset)
+
+    return res as UserRecord[]
+  }
+
+/**
+ * @deprecated Use countUsers instead
+ */
+export const legacyGetPaginatedUsersCount =
+  (deps: { db: Knex }): LegacyGetPaginatedUsersCount =>
+  async (searchQuery = null) => {
+    const query = tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+
+    const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
+    return parseInt(userCount.count)
   }
