@@ -95,7 +95,8 @@ import {
   UserStreamsQueryParams,
   UserStreamsQueryCountParams,
   GetUserStreamsPage,
-  GetUserStreamsCount
+  GetUserStreamsCount,
+  MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -987,17 +988,20 @@ export const updateProjectFactory =
     return updatedStream
   }
 
-export async function markBranchStreamUpdated(branchId: string) {
-  const q = Streams.knex()
-    .whereIn(Streams.col.id, (w) => {
-      w.select(Branches.col.streamId)
-        .from(Branches.name)
-        .where(Branches.col.id, branchId)
-    })
-    .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
-  const updates = await q
-  return updates > 0
-}
+export const markBranchStreamUpdatedFactory =
+  (deps: { db: Knex }): MarkBranchStreamUpdated =>
+  async (branchId: string) => {
+    const q = tables
+      .streams(deps.db)
+      .whereIn(Streams.col.id, (w) => {
+        w.select(Branches.col.streamId)
+          .from(Branches.name)
+          .where(Branches.col.id, branchId)
+      })
+      .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
+    const updates = await q
+    return updates > 0
+  }
 
 export async function markCommitStreamUpdated(commitId: string) {
   const q = Streams.knex()

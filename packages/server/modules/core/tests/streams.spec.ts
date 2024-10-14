@@ -21,7 +21,7 @@ import {
   getStreamFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamUsersFactory,
-  markBranchStreamUpdated,
+  markBranchStreamUpdatedFactory,
   markCommitStreamUpdated,
   revokeStreamPermissionsFactory,
   updateStreamFactory
@@ -96,6 +96,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
