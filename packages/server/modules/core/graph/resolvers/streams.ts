@@ -15,8 +15,6 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { get } from 'lodash'
 import {
-  getUserStreamsCount,
-  getUserStreams,
   getStreamFactory,
   createStreamFactory,
   deleteStreamFactory,
@@ -31,7 +29,9 @@ import {
   getStreamCollaboratorsFactory,
   canUserFavoriteStreamFactory,
   setStreamFavoritedFactory,
-  legacyGetStreamUsersFactory
+  legacyGetStreamUsersFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -178,6 +178,8 @@ const favoriteStream = favoriteStreamFactory({
   getStream
 })
 const getStreamUsers = legacyGetStreamUsersFactory({ db })
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,

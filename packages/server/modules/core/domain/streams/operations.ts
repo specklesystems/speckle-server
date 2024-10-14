@@ -129,6 +129,59 @@ export type GetFavoritedStreamsPage = (params: {
   cursor: Nullable<string>
 }>
 
+export type BaseUserStreamsQueryParams = {
+  /**
+   * User whose streams we wish to find
+   */
+  userId: string
+  /**
+   * Filter streams by name/description/id
+   */
+  searchQuery?: string
+  /**
+   * Whether this data is retrieved for another user, and thus the data set
+   * should be limited to only show publicly accessible (discoverable) streams
+   */
+  forOtherUser?: boolean
+  /**
+   * Only return streams owned by userId
+   */
+  ownedOnly?: boolean
+
+  /**
+   * Only return streams where user has the specified roles
+   */
+  withRoles?: StreamRoles[]
+
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
+  workspaceId?: string
+}
+
+export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
+  /**
+   * Max amount of streams per page. Defaults to 25, max is 50.
+   */
+  limit?: MaybeNullOrUndefined<number>
+  /**
+   * Pagination cursor
+   */
+  cursor?: MaybeNullOrUndefined<string>
+}
+
+export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
+
+export type GetUserStreamsPage = (params: UserStreamsQueryParams) => Promise<{
+  streams: StreamWithOptionalRole[]
+  cursor: string | null
+}>
+
+export type GetUserStreamsCount = (
+  params: UserStreamsQueryCountParams
+) => Promise<number>
+
 export type GetBatchUserFavoriteData = (params: {
   userId: string
   streamIds: string[]
