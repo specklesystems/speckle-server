@@ -3,7 +3,7 @@ import { db } from '@/db/knex'
 import { Streams, Users } from '@/modules/core/dbSchema'
 import {
   getStreamFactory,
-  setStreamFavorited
+  setStreamFavoritedFactory
 } from '@/modules/core/repositories/streams'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
@@ -32,6 +32,7 @@ const READABLE_DISCOVERABLE_STREAM_COUNT = 15
 
 const cleanup = async () => await truncateTables([Streams.name, Users.name])
 const getStream = getStreamFactory({ db })
+const setStreamFavorited = setStreamFavoritedFactory({ db })
 
 describe('Discoverable streams', () => {
   let apollo: ServerAndContext
