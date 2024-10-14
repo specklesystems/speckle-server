@@ -596,7 +596,7 @@ export const countDiscoverableStreamsFactory =
 /**
  * Paginated discoverable stream retrieval with support for multiple sorting approaches
  */
-export const getDiscoverableStreamsPage =
+export const getDiscoverableStreamsPageFactory =
   (deps: { db: Knex }): GetDiscoverableStreamsPage =>
   async (params: GetDiscoverableStreamsParams) => {
     const { cursor, sort, limit } = params
