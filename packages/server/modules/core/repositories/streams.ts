@@ -86,7 +86,10 @@ import {
   GetDiscoverableStreamsPage,
   LegacyGetStreams,
   GetFavoritedStreamsPage,
-  GetFavoritedStreamsCount
+  GetFavoritedStreamsCount,
+  SetStreamFavorited,
+  CanUserFavoriteStream,
+  LegacyGetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -341,39 +344,38 @@ export const getFavoritedStreamsCountFactory =
  * @param {boolean} [p.favorited] By default favorites the stream, but you can set this
  * to false to unfavorite it
  */
-export async function setStreamFavorited(params: {
-  streamId: string
-  userId: string
-  favorited?: boolean
-}) {
-  const { streamId, userId, favorited = true } = params
+export const setStreamFavoritedFactory =
+  (deps: { db: Knex }): SetStreamFavorited =>
+  async (params: { streamId: string; userId: string; favorited?: boolean }) => {
+    const { streamId, userId, favorited = true } = params
 
-  if (!userId || !streamId)
-    throw new InvalidArgumentError('Invalid stream or user ID', {
-      info: { userId, streamId }
+    if (!userId || !streamId)
+      throw new InvalidArgumentError('Invalid stream or user ID', {
+        info: { userId, streamId }
+      })
+
+    const favoriteQuery = tables.streamFavorites(deps.db).where({
+      streamId,
+      userId
     })
 
-  const favoriteQuery = StreamFavorites.knex().where({
-    streamId,
-    userId
-  })
+    if (!favorited) {
+      await favoriteQuery.del()
+      return
+    }
 
-  if (!favorited) {
-    await favoriteQuery.del()
+    // Upserting the favorite
+    await tables
+      .streamFavorites(deps.db)
+      .insert({
+        userId,
+        streamId
+      })
+      .onConflict(['streamId', 'userId'])
+      .ignore()
+
     return
   }
-
-  // Upserting the favorite
-  await StreamFavorites.knex()
-    .insert({
-      userId,
-      streamId
-    })
-    .onConflict(['streamId', 'userId'])
-    .ignore()
-
-  return
-}
 
 /**
  * Get favorite metadata for specified user and all specified stream IDs
@@ -421,39 +423,35 @@ export async function getBatchStreamFavoritesCounts(streamIds: string[]) {
 
 /**
  * Check if user can favorite a stream
- * @param {Object} p
- * @param {string} userId
- * @param {string} streamId
- * @returns {Promise<boolean>}
  */
-export async function canUserFavoriteStream(params: {
-  userId: string
-  streamId: string
-}) {
-  const { userId, streamId } = params
+export const canUserFavoriteStreamFactory =
+  (deps: { db: Knex }): CanUserFavoriteStream =>
+  async (params: { userId: string; streamId: string }) => {
+    const { userId, streamId } = params
 
-  if (!userId || !streamId)
-    throw new InvalidArgumentError('Invalid stream or user ID', {
-      info: { userId, streamId }
-    })
+    if (!userId || !streamId)
+      throw new InvalidArgumentError('Invalid stream or user ID', {
+        info: { userId, streamId }
+      })
 
-  const query = Streams.knex()
-    .select<Array<Pick<StreamRecord, 'id'>>>([Streams.col.id])
-    .leftJoin(StreamAcl.name, function () {
-      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
-        StreamAcl.col.userId,
-        userId
-      )
-    })
-    .where(Streams.col.id, streamId)
-    .andWhere(function () {
-      this.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
-    })
-    .limit(1)
+    const query = tables
+      .streams(deps.db)
+      .select<Array<Pick<StreamRecord, 'id'>>>([Streams.col.id])
+      .leftJoin(StreamAcl.name, function () {
+        this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+      .where(Streams.col.id, streamId)
+      .andWhere(function () {
+        this.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+      })
+      .limit(1)
 
-  const result = await query
-  return result?.length > 0
-}
+    const result = await query
+    return result?.length > 0
+  }
 
 /**
  * Find total favorites of owned streams for specified users
@@ -683,7 +681,32 @@ export const getStreamCollaboratorsFactory =
     return items
   }
 
-// TODO: Inject db
+/**
+ * @deprecated Use getStreamCollaborators instead
+ */
+export const legacyGetStreamUsersFactory =
+  (deps: { db: Knex }): LegacyGetStreamCollaborators =>
+  async ({ streamId }) => {
+    const query = tables
+      .streamAcl(deps.db)
+      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
+      .select()
+      .where({ resourceId: streamId })
+      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
+      .select<
+        {
+          role: string
+          id: string
+          name: string
+          company: string
+          avatar: string
+        }[]
+      >('stream_acl.role', 'name', 'id', 'company', 'avatar')
+      .orderBy('stream_acl.role')
+
+    return await query
+  }
+
 export const getProjectCollaboratorsFactory =
   (deps: { db: Knex }): GetProjectCollaborators =>
   async ({ projectId }) => {

@@ -65,6 +65,16 @@ export type GetStreamCollaborators = (
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
+export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
+  {
+    role: string
+    id: string
+    name: string
+    company: string
+    avatar: string
+  }[]
+>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateInput,
   options?: Partial<{
@@ -72,6 +82,17 @@ export type StoreStream = (
     trx: Knex.Transaction
   }>
 ) => Promise<Stream>
+
+export type SetStreamFavorited = (params: {
+  streamId: string
+  userId: string
+  favorited?: boolean
+}) => Promise<void>
+
+export type CanUserFavoriteStream = (params: {
+  userId: string
+  streamId: string
+}) => Promise<boolean>
 
 export type DeleteStreamRecords = (streamId: string) => Promise<number>
 
@@ -224,3 +245,10 @@ export type GetFavoriteStreamsCollection = (params: {
   cursor?: string | null | undefined
   streamIdWhitelist?: string[] | undefined
 }) => Promise<{ totalCount: number; cursor: Nullable<string>; items: Stream[] }>
+
+export type FavoriteStream = (params: {
+  userId: string
+  streamId: string
+  favorited?: boolean | undefined
+  userResourceAccessRules?: ContextResourceAccessRules
+}) => Promise<Stream>

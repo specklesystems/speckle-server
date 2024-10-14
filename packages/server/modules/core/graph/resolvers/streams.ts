@@ -1,11 +1,4 @@
 import {
-  getStreamUsers,
-  favoriteStream,
-  getActiveUserStreamFavoriteDate,
-  getStreamFavoritesCount,
-  getOwnedFavoritesCount
-} from '@/modules/core/services/streams'
-import {
   filteredSubscribe,
   publish,
   StreamSubscriptions
@@ -35,7 +28,10 @@ import {
   legacyGetStreamsFactory,
   getFavoritedStreamsCountFactory,
   getFavoritedStreamsPageFactory,
-  getStreamCollaboratorsFactory
+  getStreamCollaboratorsFactory,
+  canUserFavoriteStreamFactory,
+  setStreamFavoritedFactory,
+  legacyGetStreamUsersFactory
 } from '@/modules/core/repositories/streams'
 import {
   createStreamReturnRecordFactory,
@@ -64,7 +60,7 @@ import {
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, InvalidArgumentError } from '@/modules/shared/errors'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -87,7 +83,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
-import { getFavoriteStreamsCollectionFactory } from '@/modules/core/services/streams/favorite'
+import {
+  favoriteStreamFactory,
+  getFavoriteStreamsCollectionFactory
+} from '@/modules/core/services/streams/favorite'
 
 const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
   getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
@@ -173,6 +172,12 @@ const getDiscoverableStreams = getDiscoverableStreamsFactory({
   countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
 })
 const getStreams = legacyGetStreamsFactory({ db })
+const favoriteStream = favoriteStreamFactory({
+  canUserFavoriteStream: canUserFavoriteStreamFactory({ db }),
+  setStreamFavorited: setStreamFavoritedFactory({ db }),
+  getStream
+})
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
@@ -281,13 +286,29 @@ export = {
 
     async favoritedDate(parent, _args, ctx) {
       const { id: streamId } = parent
-      return await getActiveUserStreamFavoriteDate({ ctx, streamId })
+
+      if (!ctx.userId) {
+        return null
+      }
+
+      if (!streamId) {
+        throw new InvalidArgumentError('Invalid stream ID')
+      }
+
+      return (
+        (await ctx.loaders.streams.getUserFavoriteData.load(streamId))?.createdAt ||
+        null
+      )
     },
 
     async favoritesCount(parent, _args, ctx) {
       const { id: streamId } = parent
 
-      return await getStreamFavoritesCount({ ctx, streamId })
+      if (!streamId) {
+        throw new InvalidArgumentError('Invalid stream ID')
+      }
+
+      return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
     },
 
     async isDiscoverable(parent) {
@@ -336,7 +357,11 @@ export = {
 
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-      return await getOwnedFavoritesCount({ ctx, userId })
+      if (!userId) {
+        throw new InvalidArgumentError('Invalid user ID')
+      }
+
+      return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
     }
   },
   LimitedUser: {
@@ -353,7 +378,11 @@ export = {
     },
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-      return await getOwnedFavoritesCount({ ctx, userId })
+      if (!userId) {
+        throw new InvalidArgumentError('Invalid user ID')
+      }
+
+      return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
     }
   },
   Mutation: {
