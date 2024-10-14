@@ -65,6 +65,7 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUser } from '@/modules/core/repositories/users'
+import { initOpenTelemetry } from '@/otel'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -342,6 +343,7 @@ export async function buildApolloServer(options?: {
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
+  initOpenTelemetry()
   if (useNewFrontend()) {
     startupLogger.info('🖼️  Serving for frontend-2...')
   }
