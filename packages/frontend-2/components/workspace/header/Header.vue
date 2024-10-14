@@ -86,7 +86,7 @@
           <FormButton
             v-if="isWorkspaceAdmin"
             class="hidden md:block"
-            color="subtle"
+            color="outline"
             @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
           >
             Settings
@@ -96,6 +96,7 @@
             :items="actionsItems"
             :menu-position="HorizontalDirection.Left"
             :menu-id="menuId"
+            class="md:hidden"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
@@ -197,16 +198,16 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     ...(isMobile.value
       ? [
-          ...(isWorkspaceAdmin.value
-            ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
-            : []),
+          { title: 'Settings', id: ActionTypes.Settings },
+
           ...(!isWorkspaceGuest.value
             ? [{ title: 'Invite', id: ActionTypes.Invite }]
             : []),
-          { title: 'Settings...', id: ActionTypes.Settings }
+          ...(isWorkspaceAdmin.value
+            ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
+            : [])
         ]
-      : []),
-    { title: 'Copy link', id: ActionTypes.CopyLink }
+      : [])
   ]
 ])
 
