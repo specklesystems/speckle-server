@@ -49,7 +49,7 @@ import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory,
-  markOnboardingBaseStream
+  markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getFirstAdmin, getUser, getUsers } from '@/modules/core/repositories/users'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
@@ -82,6 +82,7 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
     const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })

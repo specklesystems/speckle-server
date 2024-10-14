@@ -51,7 +51,6 @@ import {
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { db } from '@/db/knex'
 import {
   DeleteProjectRole,
   GetProject,
@@ -97,7 +96,8 @@ import {
   GetUserStreamsPage,
   GetUserStreamsCount,
   MarkBranchStreamUpdated,
-  MarkCommitStreamUpdated
+  MarkCommitStreamUpdated,
+  MarkOnboardingBaseStream
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -1177,18 +1177,20 @@ export const revokeStreamPermissionsFactory =
 /**
  * Mark stream as the onboarding base stream from which user onboarding streams will be cloned
  */
-export async function markOnboardingBaseStream(streamId: string, version: string) {
-  const stream = await getStreamFactory({ db })({ streamId })
-  if (!stream) {
-    throw new Error(`Stream ${streamId} not found`)
+export const markOnboardingBaseStreamFactory =
+  (deps: { db: Knex }): MarkOnboardingBaseStream =>
+  async (streamId: string, version: string) => {
+    const stream = await getStreamFactory(deps)({ streamId })
+    if (!stream) {
+      throw new Error(`Stream ${streamId} not found`)
+    }
+    await updateStreamFactory(deps)({
+      id: streamId,
+      name: 'Onboarding Stream Local Source - Do Not Delete'
+    })
+    const meta = metaHelpers(Streams, deps.db)
+    await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)
   }
-  await updateStreamFactory({ db })({
-    id: streamId,
-    name: 'Onboarding Stream Local Source - Do Not Delete'
-  })
-  const meta = metaHelpers(Streams)
-  await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)
-}
 
 /**
  * Get onboarding base stream, if any

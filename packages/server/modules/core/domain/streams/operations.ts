@@ -186,6 +186,11 @@ export type MarkBranchStreamUpdated = (branchId: string) => Promise<boolean>
 
 export type MarkCommitStreamUpdated = (commitId: string) => Promise<boolean>
 
+export type MarkOnboardingBaseStream = (
+  streamId: string,
+  version: string
+) => Promise<void>
+
 export type GetBatchUserFavoriteData = (params: {
   userId: string
   streamIds: string[]
