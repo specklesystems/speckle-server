@@ -18,10 +18,22 @@
     <p class="text-body-xs text-foreground">
       This action
       <span class="font-medium">cannot</span>
-      be undone.
+      be undone. To confirm deletion, type the workspace name below.
     </p>
+    <FormTextInput
+      v-model="workspaceNameInput"
+      name="workspaceNameConfirm"
+      label="Workspace name"
+      size="lg"
+      placeholder="Type the workspace name here..."
+      full-width
+      hide-error-message
+      class="text-sm mt-2"
+      color="foundation"
+    />
   </LayoutDialog>
 </template>
+
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
@@ -29,7 +41,7 @@ import type {
   UserWorkspacesArgs,
   User
 } from '~/lib/common/generated/gql/graphql'
-import type { LayoutDialogButton } from '@speckle/ui-components'
+import { FormTextInput, type LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import { deleteWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import {
@@ -64,7 +76,11 @@ const router = useRouter()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 
+const workspaceNameInput = ref('')
+
 const onDelete = async () => {
+  if (workspaceNameInput.value !== props.workspace.name) return
+
   router.push(homeRoute)
   isOpen.value = false
 
@@ -124,14 +140,20 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
+      workspaceNameInput.value = ''
     }
   },
   {
     text: 'Delete',
     props: {
-      color: 'danger'
+      color: 'danger',
+      disabled: workspaceNameInput.value !== props.workspace.name
     },
     onClick: onDelete
   }
 ])
+
+watch(isOpen, () => {
+  workspaceNameInput.value = ''
+})
 </script>
