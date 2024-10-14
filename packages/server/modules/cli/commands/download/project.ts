@@ -6,7 +6,7 @@ import {
   createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   createBranchFactory,
@@ -106,6 +106,7 @@ const command: CommandModule<
   handler: async (argv) => {
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 
     const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
