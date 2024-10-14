@@ -13,11 +13,6 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-              {{ project.modelCount.totalCount || 0 }} Model{{
-                project.modelCount.totalCount === 1 ? '' : 's'
-              }}
-            </CommonBadge>
             <CommonBadge
               v-if="project.role"
               rounded
@@ -30,7 +25,11 @@
           </div>
           <div class="flex flex-row gap-x-3">
             <NuxtLink :to="canEdit ? projectCollaboratorsRoute(project.id) : undefined">
-              <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
+              <UserAvatarGroup
+                :users="teamUsers"
+                :max-count="2"
+                class="max-w-[104px]"
+              />
             </NuxtLink>
           </div>
           <LayoutMenu

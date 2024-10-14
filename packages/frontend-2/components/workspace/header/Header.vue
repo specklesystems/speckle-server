@@ -72,6 +72,7 @@
           >
             <UserAvatarGroup
               :users="team.map((teamMember) => teamMember.user)"
+              :max-count="2"
               class="max-w-[104px]"
             />
           </button>
