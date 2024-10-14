@@ -1,4 +1,4 @@
-export const speckleBasicFrag = /* glsl */ `
+export const speckleViewportFrag = /* glsl */ `
 uniform vec3 diffuse;
 uniform float opacity;
 #ifndef FLAT_SHADED
@@ -21,6 +21,9 @@ uniform float opacity;
 #include <specularmap_pars_fragment>
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
+
+varying float dotValue;
+uniform float falloff;
 void main() {
 	#include <clipping_planes_fragment>
 	vec4 diffuseColor = vec4( diffuse, opacity );
@@ -52,8 +55,9 @@ void main() {
 	#ifdef USE_TRANSMISSION
 		diffuseColor.a *= transmissionAlpha + 0.1;
 	#endif
-
-	gl_FragColor = vec4( outgoingLight * diffuseColor.a, diffuseColor.a );
+    float d = max((gl_FrontFacing ? dotValue : -dotValue), 0.075);
+	vec3 color = mix(outgoingLight, outgoingLight * d, pow(d, falloff));
+	gl_FragColor = vec4( color * diffuseColor.a, 1. );
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>

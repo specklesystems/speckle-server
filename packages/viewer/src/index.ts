@@ -81,6 +81,11 @@ import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
 import LineBatch from './modules/batching/LineBatch.js'
 import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
+import { ArcticViewPipeline } from './modules/pipeline/G/Pipelines/ArcticViewPipeline.js'
+import { DefaultPipeline } from './modules/pipeline/G/Pipelines/DefaultPipeline.js'
+import { EdgesPipeline } from './modules/pipeline/G/Pipelines/EdgesPipeline.js'
+import { PenViewPipeline } from './modules/pipeline/G/Pipelines/PenViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/G/Pipelines/ShadedViewPipeline.js'
 
 export {
   Viewer,
@@ -128,7 +133,12 @@ export {
   SpeckleGeometryConverter,
   Assets,
   AssetType,
-  HybridCameraController
+  HybridCameraController,
+  DefaultPipeline,
+  EdgesPipeline,
+  ShadedViewPipeline,
+  PenViewPipeline,
+  ArcticViewPipeline
 }
 
 export type {

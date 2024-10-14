@@ -1,32 +1,30 @@
 /* eslint-disable camelcase */
-import { speckleNormalVert } from './shaders/speckle-normal-vert.js'
-import { speckleNormalFrag } from './shaders/speckle-normal-frag.js'
 import {
   BufferGeometry,
   Camera,
   Material,
+  MeshMatcapMaterialParameters,
   Object3D,
   Scene,
   ShaderLib,
   Vector3,
-  type IUniform,
-  type MeshNormalMaterialParameters
+  type IUniform
 } from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial.js'
+import { ExtendedMatcapMaterial, type Uniforms } from './SpeckleMaterial.js'
 import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
-class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
+class SpeckleMatcapMaterial extends ExtendedMatcapMaterial {
   protected get vertexProgram(): string {
-    return speckleNormalVert
+    return ShaderLib.matcap.vertexShader
   }
 
   protected get fragmentProgram(): string {
-    return speckleNormalFrag
+    return ShaderLib.matcap.fragmentShader
   }
 
   protected get baseUniforms(): { [uniform: string]: IUniform } {
-    return ShaderLib.normal.uniforms
+    return ShaderLib.matcap.uniforms
   }
 
   protected get uniformsDef(): Uniforms {
@@ -38,7 +36,7 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
     }
   }
 
-  constructor(parameters: MeshNormalMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshMatcapMaterialParameters, defines = []) {
     super(parameters)
     this.init(defines)
   }
@@ -72,4 +70,4 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   }
 }
 
-export default SpeckleNormalMaterial
+export default SpeckleMatcapMaterial
