@@ -23,7 +23,7 @@ import {
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  getDiscoverableStreamsPage,
+  getDiscoverableStreamsPageFactory,
   countDiscoverableStreamsFactory,
   legacyGetStreamsFactory,
   getFavoritedStreamsCountFactory,
@@ -168,7 +168,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   removeStreamCollaborator
 })
 const getDiscoverableStreams = getDiscoverableStreamsFactory({
-  getDiscoverableStreamsPage: getDiscoverableStreamsPage({ db }),
+  getDiscoverableStreamsPage: getDiscoverableStreamsPageFactory({ db }),
   countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
 })
 const getStreams = legacyGetStreamsFactory({ db })
