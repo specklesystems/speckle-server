@@ -50,7 +50,7 @@ import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
   addCommitMovedActivity,
-  addCommitUpdatedActivity
+  addCommitUpdatedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
@@ -82,7 +82,10 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   getCommitBranch: getCommitBranchFactory({ db }),
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
-  addCommitUpdatedActivity,
+  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
