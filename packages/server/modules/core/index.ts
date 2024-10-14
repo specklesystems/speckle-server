@@ -8,6 +8,7 @@ import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import staticRest from '@/modules/core/rest/static'
 import uploadRest from '@/modules/core/rest/upload'
+import uploadV2Rest from '@/modules/core/rest/uploadV2'
 import downloadRest from '@/modules/core/rest/download'
 import diffUpload from '@/modules/core/rest/diffUpload'
 import diffDownload from '@/modules/core/rest/diffDownload'
@@ -38,6 +39,7 @@ const coreModule: SpeckleModule<{
 
     // Initialises the two main bulk upload/download endpoints
     uploadRest(app)
+    uploadV2Rest(app)
     downloadRest(app)
 
     // Initialises the two diff-based upload/download endpoints

@@ -68,17 +68,19 @@ import { getUser } from '@/modules/core/repositories/users'
 
 import { AlwaysOnSampler, NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { Resource } from '@opentelemetry/resources'
-import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { KnexInstrumentation } from '@opentelemetry/instrumentation-knex'
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
 
+import opentelemetry from '@opentelemetry/api'
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 
 const GRAPHQL_PATH = '/graphql'
+const OTEL_NAME = 'speckle'
 
 let graphqlServer: ApolloServer<GraphQLContext>
 
@@ -356,7 +358,7 @@ export async function buildApolloServer(options?: {
 export async function init() {
   const provider = new NodeTracerProvider({
     resource: new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: 'speckle-service'
+      [ATTR_SERVICE_NAME]: OTEL_NAME
     }),
     sampler: new AlwaysOnSampler()
   })
@@ -366,7 +368,6 @@ export async function init() {
     instrumentations: [
       // Express instrumentation expects HTTP layer to be instrumented
       new HttpInstrumentation(),
-      new ExpressInstrumentation(),
       new GraphQLInstrumentation({
         // optional params
         // allowValues: true,
@@ -375,6 +376,7 @@ export async function init() {
         // ignoreTrivialResolveSpans: true,
         // ignoreResolveSpans: true,
       }),
+      new ExpressInstrumentation(),
       new KnexInstrumentation({
         maxQueryLength: 100
       })
@@ -382,6 +384,7 @@ export async function init() {
   })
   provider.addSpanProcessor(new SimpleSpanProcessor(new OTLPTraceExporter({})))
   provider.register()
+  opentelemetry.trace.getTracer(OTEL_NAME)
 
   if (useNewFrontend()) {
     startupLogger.info('🖼️  Serving for frontend-2...')
