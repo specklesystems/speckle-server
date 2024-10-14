@@ -1,17 +1,12 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import {
-  addStreamCreatedActivityFactory,
-  addStreamDeletedActivity,
-  addStreamUpdatedActivity
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   StreamCreateInput,
   StreamRevokePermissionInput,
-  StreamUpdateInput,
-  StreamUpdatePermissionInput
+  StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -20,11 +15,6 @@ import {
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { has } from 'lodash'
-import {
-  addOrUpdateStreamCollaborator,
-  isStreamCollaborator,
-  removeStreamCollaborator
-} from '@/modules/core/services/streams/streamAccessService'
 import {
   ContextResourceAccessRules,
   isNewResourceAllowed
@@ -40,19 +30,28 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
+  AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
   DeleteStreamRecords,
   GetStream,
+  IsStreamCollaborator,
   LegacyCreateStream,
   LegacyUpdateStream,
+  PermissionUpdateInput,
+  RemoveStreamCollaborator,
   StoreStream,
   UpdateStream,
-  UpdateStreamRecord
+  UpdateStreamRecord,
+  UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import {
+  AddStreamDeletedActivity,
+  AddStreamUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -141,7 +140,7 @@ export const deleteStreamAndNotifyFactory =
   (deps: {
     deleteStream: DeleteStreamRecords
     authorizeResolver: AuthorizeResolver
-    addStreamDeletedActivity: typeof addStreamDeletedActivity
+    addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
   }): DeleteStream =>
   async (
@@ -189,7 +188,7 @@ export const updateStreamAndNotifyFactory =
     authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
-    addStreamUpdatedActivity: typeof addStreamUpdatedActivity
+    addStreamUpdatedActivity: AddStreamUpdatedActivity
   }): UpdateStream =>
   async (
     update: StreamUpdateInput | ProjectUpdateInput,
@@ -236,11 +235,6 @@ export const legacyUpdateStreamFactory =
     return updatedStream?.id || null
   }
 
-type PermissionUpdateInput =
-  | StreamUpdatePermissionInput
-  | StreamRevokePermissionInput
-  | ProjectUpdateRoleInput
-
 const isProjectUpdateRoleInput = (
   i: PermissionUpdateInput
 ): i is ProjectUpdateRoleInput => has(i, 'projectId')
@@ -248,53 +242,59 @@ const isStreamRevokePermissionInput = (
   i: PermissionUpdateInput
 ): i is StreamRevokePermissionInput => has(i, 'streamId') && !has(i, 'role')
 
-export async function updateStreamRoleAndNotify(
-  update: PermissionUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-) {
-  const smallestStreamRole = Roles.Stream.Reviewer
-  const params = {
-    streamId: isProjectUpdateRoleInput(update) ? update.projectId : update.streamId,
-    userId: update.userId,
-    role:
-      isStreamRevokePermissionInput(update) || !update.role
-        ? null
-        : update.role.toLowerCase() || smallestStreamRole
-  }
-
-  if (params.role) {
-    // Updating role
-    if (!(Object.values(Roles.Stream) as string[]).includes(params.role)) {
-      throw new StreamUpdateError('Invalid role specified', {
-        info: { params }
-      })
+export const updateStreamRoleAndNotifyFactory =
+  (deps: {
+    isStreamCollaborator: IsStreamCollaborator
+    addOrUpdateStreamCollaborator: AddOrUpdateStreamCollaborator
+    removeStreamCollaborator: RemoveStreamCollaborator
+  }): UpdateStreamRole =>
+  async (
+    update: PermissionUpdateInput,
+    updaterId: string,
+    updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  ) => {
+    const smallestStreamRole = Roles.Stream.Reviewer
+    const params = {
+      streamId: isProjectUpdateRoleInput(update) ? update.projectId : update.streamId,
+      userId: update.userId,
+      role:
+        isStreamRevokePermissionInput(update) || !update.role
+          ? null
+          : update.role.toLowerCase() || smallestStreamRole
     }
 
-    // We only allow changing roles, not adding access - for that the user must use stream invites
-    const isCollaboratorAlready = await isStreamCollaborator(
-      params.userId,
-      params.streamId
-    )
-    if (!isCollaboratorAlready) {
-      throw new StreamUpdateError(
-        "Cannot grant permissions to users who aren't collaborators already - invite the user to the stream first"
+    if (params.role) {
+      // Updating role
+      if (!(Object.values(Roles.Stream) as string[]).includes(params.role)) {
+        throw new StreamUpdateError('Invalid role specified', {
+          info: { params }
+        })
+      }
+
+      // We only allow changing roles, not adding access - for that the user must use stream invites
+      const isCollaboratorAlready = await deps.isStreamCollaborator(
+        params.userId,
+        params.streamId
+      )
+      if (!isCollaboratorAlready) {
+        throw new StreamUpdateError(
+          "Cannot grant permissions to users who aren't collaborators already - invite the user to the stream first"
+        )
+      }
+
+      return await deps.addOrUpdateStreamCollaborator(
+        params.streamId,
+        params.userId,
+        params.role,
+        updaterId,
+        updaterResourceAccessRules
+      )
+    } else {
+      return await deps.removeStreamCollaborator(
+        params.streamId,
+        params.userId,
+        updaterId,
+        updaterResourceAccessRules
       )
     }
-
-    return await addOrUpdateStreamCollaborator(
-      params.streamId,
-      params.userId,
-      params.role,
-      updaterId,
-      updaterResourceAccessRules
-    )
-  } else {
-    return await removeStreamCollaborator(
-      params.streamId,
-      params.userId,
-      updaterId,
-      updaterResourceAccessRules
-    )
   }
-}

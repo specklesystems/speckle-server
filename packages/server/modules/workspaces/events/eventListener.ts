@@ -6,6 +6,7 @@ import {
 import {
   deleteProjectRoleFactory,
   getStreamFactory,
+  legacyGetStreamsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -42,7 +43,6 @@ import {
   queryAllWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory
 } from '@/modules/workspaces/services/projects'
-import { getStreams } from '@/modules/core/services/streams'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { GetStream } from '@/modules/core/domain/streams/operations'
@@ -217,6 +217,7 @@ export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
+    const getStreams = legacyGetStreamsFactory({ db })
     const quitCbs = [
       ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
         const onProjectCreated = onProjectCreatedFactory({

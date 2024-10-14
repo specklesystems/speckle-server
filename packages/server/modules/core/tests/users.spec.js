@@ -21,7 +21,6 @@ const {
   validateToken,
   getUserTokens
 } = require('../services/tokens')
-const { grantPermissionsStream } = require('../services/streams')
 
 const { getBranchesByStreamId } = require('../services/branches')
 
@@ -51,12 +50,10 @@ const {
 const {
   markCommitStreamUpdated,
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const {
-  addCommitCreatedActivity
-} = require('@/modules/activitystream/services/commitActivity')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -86,6 +83,9 @@ const {
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
 
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -101,7 +101,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -140,6 +143,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

@@ -30,6 +30,7 @@
             <ProjectPageTeamPermissionSelect
               :model-value="projectRole.role"
               :disabled="false"
+              mount-menu-on-body
               hide-owner
               @update:model-value="
                 (newRole) => updateProjectRole(projectRole.project.id, newRole)

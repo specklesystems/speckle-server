@@ -1,20 +1,28 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   createStreamFactory,
-  getStreamFactory
+  getStreamFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
+import {
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
 } from '@/modules/core/services/streams/management'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
@@ -23,6 +31,7 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -59,6 +68,21 @@ const createStream = legacyCreateStreamFactory({
     createBranch: createBranchFactory({ db }),
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
   })
 })
 

@@ -4,7 +4,6 @@ const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { grantPermissionsStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
 const { createObject } = require('@/modules/core/services/objects')
@@ -52,12 +51,10 @@ const {
   markCommitStreamUpdated,
   getStreamFactory,
   createStreamFactory,
-  updateStreamFactory
+  updateStreamFactory,
+  grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const {
-  addCommitCreatedActivity
-} = require('@/modules/activitystream/services/commitActivity')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -88,6 +85,9 @@ const {
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
 
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -115,7 +115,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -159,6 +162,7 @@ const createStream = legacyCreateStreamFactory({
 const updateStream = legacyUpdateStreamFactory({
   updateStream: updateStreamFactory({ db })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)

@@ -1,13 +1,7 @@
 import { expect } from 'chai'
-import { getStreamUsers, grantPermissionsStream } from '@/modules/core/services/streams'
-
 import { createObject } from '@/modules/core/services/objects'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import {
-  addOrUpdateStreamCollaborator,
-  isStreamCollaborator
-} from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getLimitedUserStreams,
@@ -25,9 +19,11 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  grantStreamPermissionsFactory,
+  legacyGetStreamUsersFactory,
   markBranchStreamUpdated,
   markCommitStreamUpdated,
-  revokeStreamPermissions,
+  revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
@@ -68,7 +64,7 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
@@ -84,11 +80,21 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
@@ -112,7 +118,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -155,6 +164,30 @@ const deleteStream = deleteStreamFactory({ db })
 const updateStream = legacyUpdateStreamFactory({
   updateStream: updateStreamFactory({ db })
 })
+
+const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({
+  authorizeResolver
+})
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {

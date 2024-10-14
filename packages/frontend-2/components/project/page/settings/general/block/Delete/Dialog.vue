@@ -79,7 +79,10 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
         projectNameInput.value === props.project.name &&
         props.project.role === Roles.Stream.Owner
       ) {
-        await deleteProject(props.project.id, { goHome: true })
+        await deleteProject(props.project.id, {
+          goHome: true,
+          workspaceSlug: props.project.workspace?.slug
+        })
         isOpen.value = false
         mp.track('Stream Action', { type: 'action', name: 'delete' })
       }

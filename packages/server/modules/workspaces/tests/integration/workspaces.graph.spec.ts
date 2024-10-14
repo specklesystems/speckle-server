@@ -49,8 +49,10 @@ import {
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const createProjectWithVersions =
   ({ apollo }: { apollo: TestApolloServer }) =>
@@ -325,16 +327,28 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.workspace.team.items[0].user.name).to.equal('John C Speckle')
       })
 
-      it('should respect role filters', async () => {
+      it('should respect role filters with one value', async () => {
         const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
           workspaceId: largeWorkspace.id,
           filter: {
-            role: 'workspace:member'
+            roles: ['workspace:member']
           }
         })
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace.team.items.length).to.equal(2)
+      })
+
+      it('should respect role filters with multiple values', async () => {
+        const res = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          filter: {
+            roles: ['workspace:admin', 'workspace:member']
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.items.length).to.equal(4)
       })
 
       it('should respect search limits', async () => {

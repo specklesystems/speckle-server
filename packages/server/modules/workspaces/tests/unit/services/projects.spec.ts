@@ -1,13 +1,15 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
+import { Stream } from '@/modules/core/domain/streams/types'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
+  queryAllWorkspaceProjectsFactory,
+  updateWorkspaceProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
-import { expect } from 'chai'
+import { assert, expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
 const getWorkspaceRoleToDefaultProjectRoleMapping = async () => ({
@@ -391,6 +393,35 @@ describe('Project management services', () => {
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
+    })
+  })
+  describe('updateWorkspaceProjectRoleFactory returns a function, that', () => {
+    it('should throw when attempting to promote a workspace guest to project owner', async () => {
+      const workspaceId = cryptoRandomString({ length: 9 })
+      const projectId = cryptoRandomString({ length: 9 })
+      const userId = cryptoRandomString({ length: 9 })
+
+      const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
+        getStream: async () => {
+          return { workspaceId } as Stream
+        },
+        getWorkspaceRoleForUser: async () => ({
+          workspaceId,
+          userId,
+          role: Roles.Workspace.Guest,
+          createdAt: new Date()
+        }),
+        updateStreamRoleAndNotify: async () => {
+          assert.fail()
+        }
+      })
+
+      await expectToThrow(() =>
+        updateWorkspaceProjectRole({
+          role: { userId, projectId, role: Roles.Stream.Owner },
+          updater: { userId: '', resourceAccessRules: [] }
+        })
+      )
     })
   })
 })

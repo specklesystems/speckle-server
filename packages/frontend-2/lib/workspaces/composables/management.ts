@@ -401,7 +401,7 @@ export function useCreateWorkspace() {
       })
 
       if (options?.navigateOnSuccess === true) {
-        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
@@ -467,11 +467,11 @@ export const useWorkspaceUpdateRole = () => {
   }
 }
 
-export const copyWorkspaceLink = async (id: string) => {
+export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
   const { triggerNotification } = useGlobalToast()
 
-  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+  const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
 
   await copy(url)
   triggerNotification({

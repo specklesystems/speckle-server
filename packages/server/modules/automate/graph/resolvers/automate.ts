@@ -55,7 +55,6 @@ import {
 import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
@@ -110,6 +109,7 @@ import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -136,6 +136,7 @@ const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
 const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
 const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {

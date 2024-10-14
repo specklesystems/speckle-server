@@ -1,15 +1,18 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import { getUserStreams } from '@/modules/core/repositories/streams'
 import {
   GetWorkspace,
+  GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   QueryAllWorkspaceProjects,
+  UpdateWorkspaceProjectRole,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import {
+  WorkspaceAdminError,
   WorkspaceInvalidProjectError,
+  WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
   WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
@@ -23,12 +26,16 @@ import { chunk } from 'lodash'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
+import {
+  GetStream,
+  LegacyGetStreams,
+  UpdateStreamRole
+} from '@/modules/core/domain/streams/operations'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
 }: {
-  // TODO: Core service factory functions
-  getStreams: typeof serviceGetStreams
+  getStreams: LegacyGetStreams
 }): QueryAllWorkspaceProjects =>
   async function* queryAllWorkspaceProjects({
     workspaceId
@@ -195,4 +202,43 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
       [Roles.Workspace.Member]: workspace.defaultProjectRole,
       [Roles.Workspace.Admin]: Roles.Stream.Owner
     }
+  }
+
+export const updateWorkspaceProjectRoleFactory =
+  ({
+    getStream,
+    getWorkspaceRoleForUser,
+    updateStreamRoleAndNotify
+  }: {
+    getStream: GetStream
+    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    updateStreamRoleAndNotify: UpdateStreamRole
+  }): UpdateWorkspaceProjectRole =>
+  async ({ role, updater }) => {
+    const { workspaceId } = (await getStream({ streamId: role.projectId })) ?? {}
+    if (!workspaceId) throw new WorkspaceInvalidProjectError()
+
+    const currentWorkspaceRole = await getWorkspaceRoleForUser({
+      workspaceId,
+      userId: role.userId
+    })
+
+    if (currentWorkspaceRole?.role === Roles.Workspace.Admin) {
+      // User is workspace admin and cannot have their project roles changed
+      throw new WorkspaceAdminError()
+    }
+
+    if (
+      currentWorkspaceRole?.role === Roles.Workspace.Guest &&
+      role.role === Roles.Stream.Owner
+    ) {
+      // Workspace guests cannot be project owners
+      throw new WorkspaceInvalidRoleError('Workspace guests cannot be project owners.')
+    }
+
+    return await updateStreamRoleAndNotify(
+      role,
+      updater.userId!,
+      updater.resourceAccessRules
+    )
   }

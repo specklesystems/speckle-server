@@ -6,7 +6,7 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
@@ -45,7 +45,7 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   createStreamFactory,
-  getOnboardingBaseStream,
+  getOnboardingBaseStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdated,
@@ -128,7 +128,10 @@ const crossServerSyncModule: SpeckleModule = {
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createStreamReturnRecord = createStreamReturnRecordFactory({
@@ -159,7 +162,7 @@ const crossServerSyncModule: SpeckleModule = {
       projectsEventsEmitter: ProjectsEmitter.emit
     })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
-      getOnboardingBaseStream,
+      getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db }),
       getFirstAdmin,
       downloadProject: downloadProjectFactory({
         downloadCommit: downloadCommitFactory({

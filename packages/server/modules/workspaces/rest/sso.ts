@@ -144,6 +144,7 @@ router.get(
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     let provider: OIDCProvider | null = null
+
     if (req.query.validate === 'true') {
       const workspace = await getWorkspaceBySlugFactory({ db })({
         workspaceSlug: req.params.workspaceSlug

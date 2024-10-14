@@ -41,7 +41,6 @@ import {
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
@@ -61,6 +60,7 @@ import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
@@ -72,7 +72,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({

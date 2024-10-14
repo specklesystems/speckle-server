@@ -6,14 +6,31 @@ import {
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
+  DiscoverableStreamsSortingInput,
   ProjectCreateInput,
   ProjectUpdateInput,
+  ProjectUpdateRoleInput,
+  QueryDiscoverableStreamsArgs,
   StreamCreateInput,
-  StreamUpdateInput
+  StreamRevokePermissionInput,
+  StreamUpdateInput,
+  StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+
+export type LegacyGetStreams = (params: {
+  cursor?: string | Date | null | undefined
+  limit: number
+  orderBy?: string | null | undefined
+  visibility?: string | null | undefined
+  searchQuery?: string | null | undefined
+  streamIdWhitelist?: string[] | null | undefined
+  workspaceIdWhitelist?: string[] | null | undefined
+  offset?: MaybeNullOrUndefined<number>
+  publicOnly?: MaybeNullOrUndefined<boolean>
+}) => Promise<{ streams: Stream[]; totalCount: number; cursorDate: Nullable<Date> }>
 
 export type GetStreams = (
   streamIds: string[],
@@ -48,6 +65,16 @@ export type GetStreamCollaborators = (
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
+export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
+  {
+    role: string
+    id: string
+    name: string
+    company: string
+    avatar: string
+  }[]
+>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateInput,
   options?: Partial<{
@@ -56,11 +83,71 @@ export type StoreStream = (
   }>
 ) => Promise<Stream>
 
+export type SetStreamFavorited = (params: {
+  streamId: string
+  userId: string
+  favorited?: boolean
+}) => Promise<void>
+
+export type CanUserFavoriteStream = (params: {
+  userId: string
+  streamId: string
+}) => Promise<boolean>
+
 export type DeleteStreamRecords = (streamId: string) => Promise<number>
+
+export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 
 export type UpdateStreamRecord = (
   update: StreamUpdateInput | ProjectUpdateInput
 ) => Promise<Nullable<Stream>>
+
+export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
+  sort: DiscoverableStreamsSortingInput
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
+}
+
+export type CountDiscoverableStreams = (
+  params: GetDiscoverableStreamsParams
+) => Promise<number>
+
+export type GetDiscoverableStreamsPage = (
+  params: GetDiscoverableStreamsParams
+) => Promise<Stream[]>
+
+export type GetFavoritedStreamsPage = (params: {
+  userId: string
+  cursor?: string | null
+  limit?: number
+  streamIdWhitelist?: Optional<string[]>
+}) => Promise<{
+  streams: Stream[]
+  cursor: Nullable<string>
+}>
+
+export type GetFavoritedStreamsCount = (
+  userId: string,
+  streamIdWhitelist?: Optional<string[]>
+) => Promise<number>
+
+export type RevokeStreamPermissions = (params: {
+  streamId: string
+  userId: string
+}) => Promise<Optional<Stream>>
+
+export type GrantStreamPermissions = (
+  params: {
+    streamId: string
+    userId: string
+    role: StreamRoles
+  },
+  options?: {
+    trackProjectUpdate?: boolean
+  }
+) => Promise<Optional<Stream>>
 
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -94,3 +181,74 @@ export type UpdateStream = (
 export type LegacyUpdateStream = (
   update: StreamUpdateInput
 ) => Promise<Nullable<string>>
+
+export type PermissionUpdateInput =
+  | StreamUpdatePermissionInput
+  | StreamRevokePermissionInput
+  | ProjectUpdateRoleInput
+
+export type UpdateStreamRole = (
+  update: PermissionUpdateInput,
+  updaterId: string,
+  updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<Stream | undefined>
+
+export type IsStreamCollaborator = (
+  userId: string,
+  streamId: string
+) => Promise<boolean>
+
+export type ValidateStreamAccess = (
+  userId: MaybeNullOrUndefined<string>,
+  streamId: string,
+  expectedRole?: string | undefined,
+  userResourceAccessLimits?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<boolean>
+
+export type AddOrUpdateStreamCollaborator = (
+  streamId: string,
+  userId: string,
+  role: string,
+  addedById: string,
+  adderResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
+  options?: Partial<{
+    fromInvite: boolean
+  }>
+) => Promise<Stream>
+
+export type RemoveStreamCollaborator = (
+  streamId: string,
+  userId: string,
+  removedById: string,
+  removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+) => Promise<Stream>
+
+export type CloneStream = (userId: string, sourceStreamId: string) => Promise<Stream>
+
+export type CreateOnboardingStream = (
+  targetUserId: string,
+  targetUserResourceAccessRules: ContextResourceAccessRules
+) => Promise<Stream>
+
+export type GetDiscoverableStreams = (
+  args: QueryDiscoverableStreamsArgs,
+  streamIdWhitelist?: Optional<string[]>
+) => Promise<{
+  cursor: Nullable<string>
+  totalCount: number
+  items: Stream[]
+}>
+
+export type GetFavoriteStreamsCollection = (params: {
+  userId: string
+  limit?: number | undefined
+  cursor?: string | null | undefined
+  streamIdWhitelist?: string[] | undefined
+}) => Promise<{ totalCount: number; cursor: Nullable<string>; items: Stream[] }>
+
+export type FavoriteStream = (params: {
+  userId: string
+  streamId: string
+  favorited?: boolean | undefined
+  userResourceAccessRules?: ContextResourceAccessRules
+}) => Promise<Stream>

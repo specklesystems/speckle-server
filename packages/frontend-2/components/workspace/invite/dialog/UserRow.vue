@@ -3,7 +3,7 @@
     class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
   >
     <div class="flex items-center space-x-2 flex-1 truncate">
-      <UserAvatar :user="user" />
+      <UserAvatar hide-tooltip :user="user" />
       <div
         v-if="
           user.workspaceDomainPolicyCompliant === false &&

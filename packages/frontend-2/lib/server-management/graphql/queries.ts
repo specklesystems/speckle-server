@@ -95,3 +95,23 @@ export const getInvitesQuery = graphql(`
     }
   }
 `)
+
+export const getUsersCountQuery = graphql(`
+  query UsersCount {
+    admin {
+      userList {
+        totalCount
+      }
+    }
+  }
+`)
+
+export const getInvitesCountQuery = graphql(`
+  query InvitesCount {
+    admin {
+      inviteList {
+        totalCount
+      }
+    }
+  }
+`)
