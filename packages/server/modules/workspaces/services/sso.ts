@@ -7,7 +7,8 @@ import {
   UpsertUserSsoSession,
   OIDCProviderRecord,
   AssociateSsoProviderWithWorkspace,
-  GetWorkspaceSsoProvider
+  GetWorkspaceSsoProvider,
+  getDefaultSsoSessionExpirationDate
 } from '@/modules/workspaces/domain/sso'
 import { BaseError } from '@/modules/shared/errors/base'
 import cryptoRandomString from 'crypto-random-string'
@@ -70,7 +71,7 @@ export const saveSsoProviderRegistrationFactory =
     getWorkspaceSsoProvider,
     storeProviderRecord,
     associateSsoProviderWithWorkspace,
-    storeUserSsoSession,
+    upsertUserSsoSession,
     createUserEmail,
     updateUserEmail,
     findEmailsByUserId
@@ -78,7 +79,7 @@ export const saveSsoProviderRegistrationFactory =
     getWorkspaceSsoProvider: GetWorkspaceSsoProvider
     storeProviderRecord: StoreProviderRecord
     associateSsoProviderWithWorkspace: AssociateSsoProviderWithWorkspace
-    storeUserSsoSession: UpsertUserSsoSession
+    upsertUserSsoSession: UpsertUserSsoSession
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
     findEmailsByUserId: FindEmailsByUserId
@@ -110,11 +111,15 @@ export const saveSsoProviderRegistrationFactory =
       await storeProviderRecord({ providerRecord })
       // associate provider with workspace
       await associateSsoProviderWithWorkspace({ workspaceId, providerId })
-      // create and associate userSso session (how long is the default validity?)
+      // create and associate userSso session
       // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
-      const lifespan = 6.048e8 // 1 week
-      await storeUserSsoSession({
-        userSsoSession: { createdAt: new Date(), userId, providerId, lifespan }
+      await upsertUserSsoSession({
+        userSsoSession: {
+          userId,
+          providerId,
+          createdAt: new Date(),
+          validUntil: getDefaultSsoSessionExpirationDate()
+        }
       })
 
       const currentUserEmails = await findEmailsByUserId({ userId })

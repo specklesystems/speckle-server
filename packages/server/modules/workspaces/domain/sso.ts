@@ -41,7 +41,7 @@ export type UserSsoSession = {
   userId: string
   providerId: string
   createdAt: Date
-  lifespan: number
+  validUntil: Date
 }
 
 export type UpsertUserSsoSession = (args: {
@@ -83,3 +83,10 @@ export type AssociateSsoProviderWithWorkspace = (args: {
   workspaceId: string
   providerId: string
 }) => Promise<void>
+
+// TODO: Is one week good?
+export const getDefaultSsoSessionExpirationDate = (): Date => {
+  const now = new Date()
+  now.setDate(now.getDate() + 7)
+  return now
+}

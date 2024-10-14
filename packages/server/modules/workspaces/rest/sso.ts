@@ -27,7 +27,7 @@ import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
 import { noop } from 'lodash'
-import { OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
+import { getDefaultSsoSessionExpirationDate, OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
 import {
   getWorkspaceBySlugFactory,
   getWorkspaceCollaboratorsFactory
@@ -241,7 +241,6 @@ router.get(
 // - tryGetWorkspaceInvite
 // - add new user to workspace with role
 // - return new provider id on create
-// - `user_sso_sessions` table `lifespan` => `validUntil`
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
@@ -344,7 +343,7 @@ router.get(
             db,
             encrypt: encryptor.encrypt
           }),
-          storeUserSsoSession: upsertUserSsoSessionFactory({ db: trx }),
+          upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx }),
           createUserEmail: createUserEmailFactory({ db: trx }),
           updateUserEmail: updateUserEmailFactory({ db: trx }),
           findEmailsByUserId: findEmailsByUserIdFactory({ db: trx })
@@ -465,16 +464,12 @@ router.get(
           throw new Error('Unhandled failure to find SSO provider')
         }
 
-        const validUntil = new Date()
-        validUntil.setDate(validUntil.getDate() + 7)
-
         await upsertUserSsoSessionFactory({ db })({
           userSsoSession: {
             userId: req.user.id,
             providerId,
             createdAt: new Date(),
-            // TODO: Use `validUntil`
-            lifespan: 100
+            validUntil: getDefaultSsoSessionExpirationDate()
           }
         })
 

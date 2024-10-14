@@ -94,5 +94,5 @@ export const upsertUserSsoSessionFactory =
         .userSsoSessions(db)
         .insert(userSsoSession)
         .onConflict(['userId', 'providerId'])
-        .merge(['createdAt', 'lifespan'])
+        .merge(['createdAt', 'validUntil'])
     }

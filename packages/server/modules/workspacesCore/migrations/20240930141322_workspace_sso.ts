@@ -23,7 +23,6 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete('cascade')
     table.primary(['userId', 'providerId'])
     table.timestamp('createdAt', { precision: 3, useTz: true }).notNullable()
-    // this should be removed, a valid until field is easier to work with
     table.bigint('lifespan').notNullable()
   })
   await knex.schema.createTable('workspace_sso_providers', (table) => {
