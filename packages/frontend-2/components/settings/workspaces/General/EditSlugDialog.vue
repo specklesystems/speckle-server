@@ -22,8 +22,10 @@
       label="Short ID"
       :help="`${baseUrl}${workspaceRoute(workspaceShortId)}`"
       color="foundation"
-      :rules="[isStringOfLength({ maxLength: 50, minLength: 3 }), isValidWorkspaceSlug]"
-      :custom-error-message="error?.graphQLErrors[0]?.message"
+      :rules="[isStringOfLength({ maxLength: 50, minLength: 3 })]"
+      :custom-error-message="
+        workspaceShortId !== originalSlug ? error?.graphQLErrors[0]?.message : undefined
+      "
       :loading="loading"
       show-label
       @update:model-value="updateDebouncedShortId"
@@ -36,10 +38,7 @@ import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import {
-  isStringOfLength,
-  isValidWorkspaceSlug
-} from '~~/lib/common/helpers/validation'
+import { isStringOfLength } from '~~/lib/common/helpers/validation'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useQuery } from '@vue/apollo-composable'
 import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
@@ -63,8 +62,12 @@ const emit = defineEmits<{
   (e: 'update:slug', newSlug: string): void
 }>()
 
+// Main ref that holds the current value of the slug input.
 const workspaceShortId = ref(props.workspace.slug)
+// Used to debounce API calls for slug validation.
 const debouncedWorkspaceShortId = ref(props.workspace.slug)
+// Leeps track of the initially generated slug to prevent unnecessary validations.
+const originalSlug = ref(props.workspace.slug)
 
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
@@ -94,7 +97,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Update',
     props: {
       color: 'primary',
-      disabled: workspaceShortId.value === props.workspace.slug
+      disabled: workspaceShortId.value === props.workspace.slug || error.value !== null
     },
     submit: true
   }
@@ -117,6 +120,7 @@ watch(
   (newValue) => {
     if (!newValue) {
       resetForm()
+      error.value = null
     }
   }
 )

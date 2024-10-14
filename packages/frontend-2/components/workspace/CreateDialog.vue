@@ -157,7 +157,7 @@ const updateShortId = debounce((newName: string) => {
     workspaceShortId.value = newSlug
     updateDebouncedShortId(newSlug)
   }
-}, 600)
+}, 300)
 
 const updateDebouncedShortId = debounce((newSlug: string) => {
   debouncedWorkspaceShortId.value = newSlug
