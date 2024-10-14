@@ -205,7 +205,7 @@ void main() {
 
     gl_FragColor = vec4( outgoingLight, diffuseColor.a );
     // #include <tonemapping_fragment> // COMMENTED OUT
-    #ifdef TONE_MAPPINGm
+    #ifdef TONE_MAPPING
 		#ifdef CUSTOM_TONEMAPPING
 			gl_FragColor.rgb = postProcess(gl_FragColor.rgb, toneMappingExposure, contrast, saturation);
 		#else

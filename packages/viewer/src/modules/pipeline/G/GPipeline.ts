@@ -52,8 +52,7 @@ export abstract class GPipeline {
     this.onBeforePipelineRender()
 
     this.speckleRenderer.renderer.setRenderTarget(null)
-    this.speckleRenderer.renderer.setClearColor(0xffffff)
-    this.speckleRenderer.renderer.setClearAlpha(0)
+    this.speckleRenderer.renderer.setClearColor(0xffffff, 0)
     this.speckleRenderer.renderer.clear(true, true, true)
 
     let renderReturn: boolean = false

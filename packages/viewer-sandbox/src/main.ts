@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   DefaultViewerParams,
   SelectionEvent,
@@ -43,7 +44,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
-  const sectionOutlines = viewer.createExtension(SectionOutlines)
+  viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
@@ -53,7 +54,6 @@ const createViewer = async (containerName: string, stream: string) => {
   cameraController // use it
   selection // use it
   sections // use it
-  sectionOutlines // use it
   measurements // use it
   filtering // use it
   explode // use it
@@ -68,7 +68,6 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (event) console.log(event.hits[0].node.model.id)
   })
 

@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ArcticViewPipeline,
+  DefaultLightConfiguration,
   EdgesPipeline,
   PenViewPipeline,
   SectionTool,
@@ -170,6 +171,7 @@ export default class Sandbox {
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       url
+      this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
