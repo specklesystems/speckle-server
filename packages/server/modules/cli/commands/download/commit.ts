@@ -70,7 +70,7 @@ const command: CommandModule<
   builder: {
     commitUrl: {
       describe:
-        'Commit URL (e.g. https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d or https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8)',
+        'Commit URL (e.g. https://app.speckle.systems/streams/f0532359ac/commits/98678e2a3d or https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8)',
       type: 'string'
     },
     targetStreamId: {
