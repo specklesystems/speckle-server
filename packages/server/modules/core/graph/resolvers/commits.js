@@ -67,9 +67,9 @@ const {
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
-  addCommitMovedActivity,
   addCommitCreatedActivityFactory,
-  addCommitUpdatedActivityFactory
+  addCommitUpdatedActivityFactory,
+  addCommitMovedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
@@ -144,7 +144,10 @@ const batchMoveCommits = batchMoveCommitsFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
-  addCommitMovedActivity
+  addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
