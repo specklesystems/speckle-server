@@ -66,7 +66,7 @@ const emit = defineEmits<{
 const workspaceShortId = ref(props.workspace.slug)
 // Used to debounce API calls for slug validation.
 const debouncedWorkspaceShortId = ref(props.workspace.slug)
-// Leeps track of the initially generated slug to prevent unnecessary validations.
+// Keeps track of the initially generated slug to prevent unnecessary validations.
 const originalSlug = ref(props.workspace.slug)
 
 const { error, loading } = useQuery(
