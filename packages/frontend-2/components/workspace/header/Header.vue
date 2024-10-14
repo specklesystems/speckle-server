@@ -83,6 +83,14 @@
           >
             Invite
           </FormButton>
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            class="hidden md:block"
+            color="subtle"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+          >
+            Settings
+          </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -194,12 +202,12 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
             : []),
           ...(!isWorkspaceGuest.value
             ? [{ title: 'Invite', id: ActionTypes.Invite }]
-            : [])
+            : []),
+          { title: 'Settings...', id: ActionTypes.Settings }
         ]
       : []),
     { title: 'Copy link', id: ActionTypes.CopyLink }
-  ],
-  [{ title: 'Settings...', id: ActionTypes.Settings }]
+  ]
 ])
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
