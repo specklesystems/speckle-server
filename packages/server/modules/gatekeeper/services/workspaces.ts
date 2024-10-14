@@ -1,8 +1,10 @@
 import {
   CheckoutSession,
   CreateCheckoutSession,
+  GetCheckoutSession,
   GetWorkspacePlan,
-  StoreCheckoutSession
+  SessionInput,
+  SaveCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanBillingIntervals,
@@ -17,12 +19,12 @@ export const startCheckoutSessionFactory =
     getWorkspacePlan,
     countRole,
     createCheckoutSession,
-    storeCheckoutSession
+    saveCheckoutSession
   }: {
     getWorkspacePlan: GetWorkspacePlan
     countRole: CountWorkspaceRoleWithOptionalProjectRole
     createCheckoutSession: CreateCheckoutSession
-    storeCheckoutSession: StoreCheckoutSession
+    saveCheckoutSession: SaveCheckoutSession
   }) =>
   async ({
     workspaceId,
@@ -72,6 +74,28 @@ export const startCheckoutSessionFactory =
       seatCount: adminCount + memberCount
     })
 
-    await storeCheckoutSession({ checkoutSession })
+    await saveCheckoutSession({ checkoutSession })
     return checkoutSession
+  }
+
+export const completeCheckoutSessionFactory =
+  ({ getCheckoutSession }: { getCheckoutSession: GetCheckoutSession }) =>
+  async ({ session }: { session: SessionInput }): Promise<void> => {
+    const checkoutSession = await getCheckoutSession({ sessionId: session.id })
+    if (!checkoutSession && session.paymentStatus === 'paid')
+      throw new Error('checkout session is not found this is a bo bo')
+    // idk what to do here, if there is no checkout session, it prob fine, could be a replay etc
+    // but the more schematically correct thing would be, to throw an error
+    if (!checkoutSession) return
+
+    // if statuses match, nothing to do
+    if (session.paymentStatus === checkoutSession.paymentStatus) return
+
+    // update checkout session, to have the input payment status
+    // prob in this case, we should not be allowing a to move a paid checkout session to paid
+
+    if (session.paymentStatus === 'paid') {
+      // move workspace to the plan, and payment status valid
+      // save the workspace subscription information in the DB
+    }
   }

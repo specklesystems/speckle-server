@@ -26,16 +26,16 @@ import { db } from '@/db/knex'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { createCheckoutSessionFactory } from '@/modules/gatekeeper/clients/stripe'
-import { CheckoutSession } from '@/modules/gatekeeper/domain/billing'
-import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  saveCheckoutSessionFactory
+} from '@/modules/gatekeeper/repositories/billing'
 
 const router = Router()
 
 export default router
 
 const stripe = new Stripe(getStripeApiKey(), { typescript: true })
-
-let checkoutSession: CheckoutSession | undefined
 
 const getWorkspacePlanPrice = ({
   workspacePlan
@@ -91,9 +91,7 @@ router.get(
       getWorkspacePlan: getWorkspacePlanFactory(),
       countRole,
       createCheckoutSession,
-      storeCheckoutSession: async (args: { checkoutSession: CheckoutSession }) => {
-        checkoutSession = args.checkoutSession
-      }
+      saveCheckoutSession: saveCheckoutSessionFactory()
     })({ workspacePlan, workspaceId, workspaceSlug, billingInterval: 'monthly' })
 
     req.res?.redirect(session.url)
@@ -152,25 +150,28 @@ router.post('/api/v1/billing/webhooks', async (req, res) => {
 
   switch (event.type) {
     case 'checkout.session.async_payment_failed':
-      // TODO: need to alert the user
+      // TODO: need to alert the user and delete the session ?
       break
     case 'checkout.session.async_payment_succeeded':
     case 'checkout.session.completed':
       const session = event.data.object
 
+      session.subscription
+
       if (session.payment_status !== 'unpaid') {
-        // IDK yet, but if the workspace is already on a paid plan, we made a bo bo.
+        // If the workspace is already on a paid plan, we made a bo bo.
         // existing subs should be updated via the api, not pushed through the checkout sess again
         // the start checkout endpoint should guard this!
         // get checkout session from the DB, if not found CONTACT SUPPORT!!!
         // if the session is already paid, means, we've already settled this checkout, and this is a webhook recall
         // set checkout state to paid
         // go ahead and provision the plan
+        // store customer id and subscription Id associated to the workspace plan
       }
 
-      if (checkoutSession?.id !== session.id) throw new Error('session mismatch')
     // move the workspace plan to the new plan
     case 'checkout.session.expired':
+    // delete the checkout session from the DB
     default:
       break
   }
