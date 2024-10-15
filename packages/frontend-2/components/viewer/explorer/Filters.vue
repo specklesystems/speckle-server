@@ -145,6 +145,9 @@ const relevantFilters = computed(() => {
       f.key.includes('midPoint.') ||
       f.key.includes('startPoint.') ||
       f.key.includes('startPoint.') ||
+      f.key.includes('.materialName') ||
+      f.key.includes('.materialClass') ||
+      f.key.includes('.materialCategory') ||
       f.key.includes('displayStyle') ||
       f.key.includes('displayValue') ||
       f.key.includes('displayMesh')
