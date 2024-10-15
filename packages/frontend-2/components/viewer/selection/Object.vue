@@ -22,7 +22,7 @@
           }`"
         />
         <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
-          {{ title || headerAndSubheader.header }}
+          {{ isNameValuePair }} // {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
           >
@@ -31,7 +31,8 @@
         </div>
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1 px-2 py-1">
+    <div v-if="unfold" class="space-y-1 px-0 py-1">
+      <!-- key value pair display -->
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
@@ -249,8 +250,13 @@ const ignoredProps = [
   'bbox'
 ]
 
+const isNameValuePair = computed(() => {
+  const keys = Object.keys(props.object)
+  return keys.includes('name') && keys.includes('value')
+})
+
 const keyValuePairs = computed(() => {
-  const kvps = [] as Record<string, unknown>[]
+  const kvps = [] as (Record<string, unknown> & { key: string })[]
 
   // handle revit paramters
   if (props.title === 'parameters') {
@@ -304,9 +310,9 @@ const categorisedValuePairs = computed(() => {
     primitives: keyValuePairs.value.filter(
       (item) => item.type !== 'object' && item.type !== 'array' && item.value !== null
     ),
-    objects: keyValuePairs.value.filter(
-      (item) => item.type === 'object' && item.value !== null
-    ),
+    objects: keyValuePairs.value
+      .filter((item) => item.type === 'object' && item.value !== null)
+      .sort((a, b) => a.key.toLowerCase().localeCompare(b.key.toLowerCase())),
     nonPrimitiveArrays: keyValuePairs.value.filter(
       (item) =>
         item.type === 'array' &&

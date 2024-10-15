@@ -115,6 +115,7 @@ const {
 } = useFilterUtilities()
 
 const revitPropertyRegex = /^parameters\./
+const revitPropertyRegexDui3000 = /^properties\./ // note this is partially valid for civil3d, or dim should test against it
 
 const showAllFilters = ref(false)
 
@@ -123,7 +124,7 @@ const props = defineProps<{
 }>()
 
 const isRevitProperty = (key: string): boolean => {
-  return revitPropertyRegex.test(key)
+  return revitPropertyRegex.test(key) || revitPropertyRegexDui3000.test(key)
 }
 
 const relevantFilters = computed(() => {
