@@ -2,13 +2,7 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const {
-  changeUserRole,
-  searchUsers,
-  deleteUser,
-  validatePasssword,
-  updateUserPassword
-} = require('../services/users')
+const { changeUserRole, searchUsers, deleteUser } = require('../services/users')
 const {
   createPersonalAccessToken,
   revokeToken,
@@ -89,7 +83,8 @@ const {
   countAdminUsersFactory,
   storeUserAclFactory,
   legacyGetUserByEmailFactory,
-  updateUserFactory
+  updateUserFactory,
+  getUserByEmailFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -109,7 +104,9 @@ const { sendEmail } = require('@/modules/emails/services/sending')
 const {
   createUserFactory,
   findOrCreateUserFactory,
-  updateUserAndNotifyFactory
+  updateUserAndNotifyFactory,
+  changePasswordFactory,
+  validateUserPasswordFactory
 } = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
@@ -223,6 +220,13 @@ const updateUser = updateUserAndNotifyFactory({
     saveActivity: saveActivityFactory({ db })
   })
 })
+const updateUserPassword = changePasswordFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db })
+})
+const validateUserPassword = validateUserPasswordFactory({
+  getUserByEmail: getUserByEmailFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -251,7 +255,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Validate password should ignore email casing', async () => {
       expect(
-        await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
+        await validateUserPassword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
       )
     })
 
@@ -441,7 +445,7 @@ describe('Actors & Tokens @user-services', () => {
 
       await updateUser(myTestActor.id, updatedActor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: myTestActor.email,
         password: 'failwhale'
       })
@@ -456,12 +460,12 @@ describe('Actors & Tokens @user-services', () => {
 
       await createUser(actor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: actor.email,
         password: 'super-test-200'
       })
       expect(match).to.equal(true)
-      const matchWrong = await validatePasssword({
+      const matchWrong = await validateUserPassword({
         email: actor.email,
         password: 'super-test-2000'
       })
@@ -476,7 +480,7 @@ describe('Actors & Tokens @user-services', () => {
       }) // https://mostsecure.pw
       await updateUserPassword({ id, newPassword: 'Hello Dogs and Cats' })
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: 'tester@mcbester.com',
         password: 'Hello Dogs and Cats'
       })

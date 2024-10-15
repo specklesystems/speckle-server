@@ -1,8 +1,12 @@
 import { db } from '@/db/knex'
 import { deleteExistingAuthTokensFactory } from '@/modules/auth/repositories'
-import { getUserByEmailFactory } from '@/modules/core/repositories/users'
+import {
+  getUserByEmailFactory,
+  getUserFactory,
+  updateUserFactory
+} from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { updateUserPassword } from '@/modules/core/services/users'
+import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
@@ -47,7 +51,10 @@ export default function (app: Express) {
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
         deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword,
+        updateUserPassword: changePasswordFactory({
+          getUser: getUserFactory({ db }),
+          updateUser: updateUserFactory({ db })
+        }),
         deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
       })
 

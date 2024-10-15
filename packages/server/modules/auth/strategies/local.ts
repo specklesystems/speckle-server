@@ -1,4 +1,3 @@
-import { validatePasssword } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   sendRateLimitResponse,
@@ -21,12 +20,13 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import {
   CreateValidatedUser,
-  LegacyGetUserByEmail
+  LegacyGetUserByEmail,
+  ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 
 const localStrategyBuilderFactory =
   (deps: {
-    validatePassword: typeof validatePasssword
+    validateUserPassword: ValidateUserPassword
     getUserByEmail: LegacyGetUserByEmail
     getServerInfo: typeof getServerInfo
     getRateLimitResult: typeof getRateLimitResult
@@ -56,7 +56,7 @@ const localStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       async (req, res, next) => {
         try {
-          const valid = await deps.validatePassword({
+          const valid = await deps.validateUserPassword({
             email: req.body.email,
             password: req.body.password
           })

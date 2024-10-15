@@ -14,7 +14,6 @@ import {
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { validatePasssword } from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -36,6 +35,7 @@ import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
   countAdminUsersFactory,
+  getUserByEmailFactory,
   getUserFactory,
   legacyGetUserByEmailFactory,
   legacyGetUserFactory,
@@ -44,7 +44,8 @@ import {
 } from '@/modules/core/repositories/users'
 import {
   createUserFactory,
-  findOrCreateUserFactory
+  findOrCreateUserFactory,
+  validateUserPasswordFactory
 } from '@/modules/core/services/users/management'
 import {
   createUserEmailFactory,
@@ -125,7 +126,9 @@ const setupStrategies = setupStrategiesFactory({
   googleStrategyBuilder: googleStrategyBuilderFactory({ ...commonBuilderDeps }),
   localStrategyBuilder: localStrategyBuilderFactory({
     ...commonBuilderDeps,
-    validatePassword: validatePasssword,
+    validateUserPassword: validateUserPasswordFactory({
+      getUserByEmail: getUserByEmailFactory({ db })
+    }),
     getRateLimitResult,
     createUser
   }),

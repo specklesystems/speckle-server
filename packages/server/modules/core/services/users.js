@@ -1,15 +1,10 @@
 'use strict'
-const bcrypt = require('bcrypt')
 const knex = require('@/db/knex')
 const {
   ServerAcl: ServerAclSchema,
   Users: UsersSchema,
   UserEmails
 } = require('@/modules/core/dbSchema')
-const {
-  validateUserPassword,
-  MINIMUM_PASSWORD_LENGTH
-} = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
@@ -17,14 +12,10 @@ const Acl = () => ServerAclSchema.knex()
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
-const {
-  UserInputError,
-  PasswordTooShortError
-} = require('@/modules/core/errors/userinput')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
 const { db } = require('@/db/knex')
 const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
-const { getUserByEmailFactory } = require('@/modules/core/repositories/users')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -41,7 +32,6 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
     }
   }
 }
-const getUserByEmail = getUserByEmailFactory({ db })
 
 module.exports = {
   async getUserRole(id) {
@@ -49,16 +39,6 @@ module.exports = {
       role: null
     }
     return role
-  },
-
-  /**
-   * @deprecated {Use changePassword()}
-   */
-  async updateUserPassword({ id, newPassword }) {
-    if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
-      throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
-    const passwordDigest = await bcrypt.hash(newPassword, 10)
-    await Users().where({ id }).update({ passwordDigest })
   },
 
   /**
@@ -94,18 +74,6 @@ module.exports = {
       users: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
     }
-  },
-
-  /**
-   * @deprecated {Use validateUserPassword()}
-   */
-  async validatePasssword({ email, password }) {
-    const user = await getUserByEmail(email, { skipClean: true })
-    if (!user) return false
-    return await validateUserPassword({
-      password,
-      user
-    })
   },
 
   /**

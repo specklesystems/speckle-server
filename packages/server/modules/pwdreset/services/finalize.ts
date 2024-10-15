@@ -1,6 +1,8 @@
 import { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
-import { GetUserByEmail } from '@/modules/core/domain/users/operations'
-import { updateUserPassword } from '@/modules/core/services/users'
+import {
+  ChangeUserPassword,
+  GetUserByEmail
+} from '@/modules/core/domain/users/operations'
 import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
 
@@ -34,7 +36,7 @@ type FinalizationState = Awaited<ReturnType<ReturnType<typeof initializeStateFac
 
 type FinalizeNewPasswordDeps = {
   deleteTokens: DeleteTokens
-  updateUserPassword: typeof updateUserPassword
+  updateUserPassword: ChangeUserPassword
   deleteExistingAuthTokens: DeleteExistingUserAuthTokens
 }
 
