@@ -38,10 +38,9 @@ import {
 import {
   createStreamFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
@@ -56,12 +55,15 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getUsers } from '@/modules/core/repositories/users'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -72,7 +74,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -90,7 +95,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -102,7 +107,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser: getUserFactory({ db })
       }),
       getUsers
     }),

@@ -5,18 +5,66 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const {
-  createUser,
-  getUsers,
-  changeUserRole
-} = require('@/modules/core/services/users')
+const { createUser, changeUserRole } = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
-const {
-  addOrUpdateStreamCollaborator,
-  removeStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
+const {
+  validateStreamAccessFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  addOrUpdateStreamCollaboratorFactory
+} = require('@/modules/core/services/streams/access')
+const { authorizeResolver } = require('@/modules/shared')
+const {
+  getStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUserFactory,
+  legacyGetPaginatedUsersFactory
+} = require('@/modules/core/repositories/users')
+
+const getUser = getUserFactory({ db })
+const getStream = getStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const getUsers = legacyGetPaginatedUsersFactory({ db })
 
 let app
 let server

@@ -74,11 +74,25 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { ForbiddenError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 enum InviteByTarget {
   Email = 'email',
@@ -88,6 +102,23 @@ enum InviteByTarget {
 type TestGraphQLOperations = ReturnType<typeof buildGraphqlOperations>
 
 const getStream = getStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+
+const getUser = getUserFactory({ db })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps

@@ -1,15 +1,19 @@
 import { describe } from 'mocha'
 import { ScheduledTasks } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
-import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import {
   scheduledCallbackWrapper,
-  scheduleExecution
+  scheduleExecutionFactory
 } from '@/modules/core/services/taskScheduler'
 import { expect } from 'chai'
 import { sleep } from '@/test/helpers'
 import cryptoRandomString from 'crypto-random-string'
+import { acquireTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import { db } from '@/db/knex'
+
+const acquireTaskLock = acquireTaskLockFactory({ db })
+const scheduleExecution = scheduleExecutionFactory({ acquireTaskLock })
 
 describe('Scheduled tasks @core', () => {
   describe('Task lock repository', () => {

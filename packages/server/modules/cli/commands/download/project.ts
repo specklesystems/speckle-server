@@ -6,7 +6,7 @@ import {
   createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   createBranchFactory,
@@ -16,7 +16,6 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
 import {
@@ -56,7 +55,6 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
@@ -71,6 +69,8 @@ import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
 const command: CommandModule<
   unknown,
@@ -106,6 +106,7 @@ const command: CommandModule<
   handler: async (argv) => {
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 
     const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
@@ -151,13 +152,18 @@ const command: CommandModule<
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
+    const getUser = getUserFactory({ db })
+    const getUsers = getUsersFactory({ db })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory(),
+          findUserByTarget: findUserByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
           collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
             getStream
@@ -169,7 +175,8 @@ const command: CommandModule<
             getEventBus().emit({
               eventName,
               payload
-            })
+            }),
+          getUser
         }),
         getUsers
       }),

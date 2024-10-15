@@ -1,20 +1,28 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   createStreamFactory,
-  getStreamFactory
+  getStreamFactory,
+  revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
 } from '@/modules/core/services/streams/management'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
@@ -23,6 +31,7 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -30,6 +39,8 @@ import { BasicTestUser } from '@/test/authHelper'
 import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash'
 
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
   publish
@@ -39,7 +50,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -51,7 +62,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser
       }),
       getUsers
     }),
@@ -59,6 +71,21 @@ const createStream = legacyCreateStreamFactory({
     createBranch: createBranchFactory({ db }),
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
   })
 })
 

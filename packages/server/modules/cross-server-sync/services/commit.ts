@@ -7,7 +7,6 @@ import { createObject } from '@/modules/core/services/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
 import {
@@ -34,6 +33,7 @@ import {
   GetStream,
   GetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -224,7 +224,7 @@ type GetLocalResourcesDeps = {
   getStream: GetStream
   getStreamBranchByName: GetStreamBranchByName
   getStreamCollaborators: GetStreamCollaborators
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =

@@ -29,7 +29,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item" />
+          <UserAvatar hide-tooltip :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <div
             v-if="
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -117,7 +117,6 @@ import {
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
@@ -171,7 +170,9 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
   () => ({
     filter: {
       search: search.value,
-      role: roleFilter.value
+      roles: roleFilter.value
+        ? [roleFilter.value]
+        : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     workspaceId: props.workspaceId
   }),
@@ -197,10 +198,12 @@ const members = computed(() => {
     search.value.length || roleFilter.value
       ? searchResult.value?.workspace?.team.items
       : props.workspace?.team.items
-  return (memberArray || []).map(({ user, ...rest }) => ({
-    ...user,
-    ...rest
-  }))
+  return (memberArray || [])
+    .map(({ user, ...rest }) => ({
+      ...user,
+      ...rest
+    }))
+    .filter((user) => user.role !== Roles.Workspace.Guest)
 })
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
@@ -219,7 +222,7 @@ const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
   // Allow role change if the active user is an admin
-  if (isWorkspaceAdmin.value) {
+  if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
     baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
   }
 

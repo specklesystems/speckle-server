@@ -12,10 +12,13 @@
     :button-id="buttonId"
   >
     <template #something-selected="{ value }">
-      <ul class="flex flex-wrap space-x-1.5 text-xs">
+      <ul class="flex flex-wrap gap-1.5">
         <li v-for="item in isArrayValue(value) ? value : [value]" :key="item[by]">
           <CommonBadge
             size="lg"
+            color-classes="border border-outline-2 bg-foundation-page"
+            dot-icon-color-classes="text-foreground"
+            rounded
             :clickable-icon="true"
             :icon-left="XMarkIcon"
             @click-icon.stop="deselectItem(item)"

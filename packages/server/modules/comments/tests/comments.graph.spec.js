@@ -4,7 +4,6 @@ const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { grantPermissionsStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
 const { createObject } = require('@/modules/core/services/objects')
@@ -49,15 +48,13 @@ const {
   createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   createStreamFactory,
-  updateStreamFactory
+  updateStreamFactory,
+  grantStreamPermissionsFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const {
-  addCommitCreatedActivity
-} = require('@/modules/activitystream/services/commitActivity')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -81,14 +78,20 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { getUsers } = require('@/modules/core/repositories/users')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   addStreamCreatedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
@@ -115,7 +118,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -133,7 +139,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -145,7 +151,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser
       }),
       getUsers
     }),
@@ -159,6 +166,7 @@ const createStream = legacyCreateStreamFactory({
 const updateStream = legacyUpdateStreamFactory({
   updateStream: updateStreamFactory({ db })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)

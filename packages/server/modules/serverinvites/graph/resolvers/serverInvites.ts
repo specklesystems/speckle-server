@@ -41,7 +41,6 @@ import {
   getUserPendingProjectInvitesFactory,
   useProjectInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -57,8 +56,11 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
-import { addStreamInviteDeclinedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamInviteDeclinedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -72,8 +74,34 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -91,7 +119,7 @@ const buildCollectAndValidateResourceTargets = () =>
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -101,7 +129,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser
   })
 
 export = {
@@ -351,9 +380,10 @@ export = {
         buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
           getStream
         }),
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
-        markInviteUpdated: markInviteUpdatedfactory({ db })
+        markInviteUpdated: markInviteUpdatedfactory({ db }),
+        getUser
       })
 
       await resendInviteEmail({ inviteId })

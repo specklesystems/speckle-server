@@ -113,10 +113,7 @@
                   />
                 </div>
               </label>
-              <div
-                class="overflow-auto simple-scrollbar"
-                :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
-              >
+              <div class="overflow-auto simple-scrollbar max-h-60">
                 <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                   <CommonLoadingBar :loading="true" />
                 </div>
@@ -150,9 +147,19 @@
                         })
                       "
                     >
-                      <span :class="['block truncate']">
+                      <span
+                        class="block px-2 py-1.5 rounded-md"
+                        :class="[
+                          selected ? 'bg-highlight-3' : '',
+                          !hideCheckmarks ? 'pr-8' : 'pr-2',
+                          !disabledItemPredicate?.(item) && !selected
+                            ? 'hover:bg-highlight-1'
+                            : ''
+                        ]"
+                      >
                         <slot
                           name="option"
+                          class="truncate"
                           :item="item"
                           :active="active"
                           :selected="selected"
@@ -160,16 +167,15 @@
                         >
                           {{ simpleDisplayText(item) }}
                         </slot>
-                      </span>
 
-                      <span
-                        v-if="!hideCheckmarks && selected"
-                        :class="[
-                          active ? 'text-primary' : 'text-foreground',
-                          'absolute top-0 bottom-0 right-0 flex items-center pr-4'
-                        ]"
-                      >
-                        <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                        <span
+                          v-if="!hideCheckmarks && selected"
+                          :class="[
+                            'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
+                          ]"
+                        >
+                          <CheckIcon class="h-4 w-4" aria-hidden="true" />
+                        </span>
                       </span>
                     </li>
                   </ListboxOption>
@@ -716,18 +722,14 @@ const triggerSearch = async () => {
 const debouncedSearch = debounce(triggerSearch, 1000)
 
 const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
-  const { active, disabled } = params || {}
-  const { hideCheckmarks } = props
+  const { disabled } = params || {}
 
-  const classParts = [
-    'relative transition select-none py-1.5 pl-3',
-    !hideCheckmarks ? 'pr-9' : ''
-  ]
+  const classParts = ['relative transition select-none py-1 px-2']
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
   } else {
-    classParts.push(active ? 'text-primary' : 'text-foreground', 'cursor-pointer')
+    classParts.push('text-foreground cursor-pointer')
   }
 
   return classParts.join(' ')

@@ -17,16 +17,28 @@ import {
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
-  addOrUpdateStreamCollaborator,
-  validateStreamAccess
-} from '@/modules/core/services/streams/streamAccessService'
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
+const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
   getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
@@ -53,6 +65,24 @@ const getPendingProjectRequests = getPendingProjectRequestsFactory({
 
 const getPendingStreamRequests = getPendingStreamRequestsFactory({
   getPendingProjectRequests
+})
+
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({
+  authorizeResolver
+})
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
 })
 
 const processPendingStreamRequest = processPendingStreamRequestFactory({

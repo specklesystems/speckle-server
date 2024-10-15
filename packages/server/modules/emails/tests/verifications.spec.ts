@@ -14,7 +14,6 @@ import {
 } from '@/test/graphql/users'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { Express } from 'express'
-import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
@@ -29,8 +28,10 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 const mailerMock = EmailSendingServiceMock
+const getUser = getUserFactory({ db })
 const getPendingToken = getPendingTokenFactory({ db })
 const deleteVerifications = deleteVerificationsFactory({ db })
 const requestEmailVerification = requestEmailVerificationFactory({

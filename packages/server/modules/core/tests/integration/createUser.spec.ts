@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { createUser, getUser, getUserById } from '@/modules/core/services/users'
+import { createUser, getUserById } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
 import { db } from '@/db/knex'
@@ -10,6 +10,9 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
+
+const getUser = legacyGetUserFactory({ db })
 
 describe('Users @core-users', () => {
   beforeEach(async () => {

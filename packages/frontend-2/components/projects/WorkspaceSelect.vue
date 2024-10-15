@@ -16,7 +16,7 @@
     :disabled-item-tooltip="disabledItemTooltip"
   >
     <template #nothing-selected>
-      {{ 'Select workspace' }}
+      {{ items && items.length > 0 ? 'Select workspace' : 'No workspaces' }}
     </template>
     <template #something-selected="{ value }">
       <div class="flex items-center gap-x-2">

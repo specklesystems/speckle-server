@@ -10,7 +10,6 @@ const {
 const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createUser } = require('../../core/services/users')
-const { grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
   createWebhookConfigFactory,
@@ -31,10 +30,10 @@ const {
 } = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { getUser, getUsers } = require('@/modules/core/repositories/users')
 const {
   getStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
 const {
   legacyCreateStreamFactory,
@@ -64,7 +63,10 @@ const {
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const { getUserFactory, getUsersFactory } = require('@/modules/core/repositories/users')
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
   publish
@@ -78,7 +80,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -90,7 +92,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser
       }),
       getUsers
     }),
@@ -100,6 +103,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })

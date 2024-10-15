@@ -16,7 +16,6 @@ import {
   MaybeNullOrUndefined,
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
-import { getUser } from '@/modules/core/repositories/users'
 import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
@@ -27,6 +26,7 @@ import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/logging/logging'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -189,7 +189,7 @@ export async function buildContext({
  * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
  */
 export const mixpanelTrackerHelperMiddlewareFactory =
-  (deps: { getUser: typeof getUser }): Handler =>
+  (deps: { getUser: GetUser }): Handler =>
   async (req: Request, _res: Response, next: NextFunction) => {
     const ctx = req.context
     const user = ctx.userId ? await deps.getUser(ctx.userId) : null

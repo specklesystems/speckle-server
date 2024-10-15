@@ -177,8 +177,8 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 
 const actionItems: LayoutMenuItem[][] = [
   [
-    { title: 'View Project...', id: ActionTypes.ViewProject },
-    { title: 'Edit Members...', id: ActionTypes.EditMembers },
+    { title: 'View project...', id: ActionTypes.ViewProject },
+    { title: 'Edit members...', id: ActionTypes.EditMembers },
     { title: 'Remove project...', id: ActionTypes.RemoveProject }
   ]
 ]
