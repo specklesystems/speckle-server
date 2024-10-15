@@ -24,6 +24,14 @@ export type GetUser = (
   params?: GetUserParams
 ) => Promise<Nullable<UserWithOptionalRole>>
 
+export type GetUserByEmail = (
+  email: string,
+  options?: Partial<{
+    skipClean: boolean
+    withRole: boolean
+  }>
+) => Promise<UserWithOptionalRole | null>
+
 export type StoreUser = (params: {
   user: Omit<NullableKeysToOptional<User>, 'suuid' | 'createdAt'>
 }) => Promise<User>

@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { deleteExistingAuthTokensFactory } from '@/modules/auth/repositories'
-import { getUserByEmail } from '@/modules/core/repositories/users'
+import { getUserByEmailFactory } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -16,6 +16,8 @@ import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { Express } from 'express'
 
 export default function (app: Express) {
+  const getUserByEmail = getUserByEmailFactory({ db })
+
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
     try {

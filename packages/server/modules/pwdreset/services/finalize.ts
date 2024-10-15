@@ -1,11 +1,11 @@
 import { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
-import { getUserByEmail } from '@/modules/core/repositories/users'
+import { GetUserByEmail } from '@/modules/core/domain/users/operations'
 import { updateUserPassword } from '@/modules/core/services/users'
 import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
 
 type InitializeStateDeps = {
-  getUserByEmail: typeof getUserByEmail
+  getUserByEmail: GetUserByEmail
   getPendingToken: GetPendingToken
 }
 

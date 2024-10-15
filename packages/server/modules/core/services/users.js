@@ -16,7 +16,6 @@ const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
@@ -26,6 +25,7 @@ const {
 const { Roles } = require('@speckle/shared')
 const { db } = require('@/db/knex')
 const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
+const { getUserByEmailFactory } = require('@/modules/core/repositories/users')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -42,6 +42,7 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
     }
   }
 }
+const getUserByEmail = getUserByEmailFactory({ db })
 
 module.exports = {
   // TODO: this should be moved to repository
