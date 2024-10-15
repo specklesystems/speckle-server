@@ -19,8 +19,8 @@ const Acl = () => ServerAclSchema.knex()
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
-  getUsersBaseQuery,
-  getUser
+  getUserFactory,
+  legacyGetUserFactory
 } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -75,6 +75,7 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
+const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -194,41 +195,11 @@ module.exports = {
   },
 
   /**
-   * @param {{userId: string}} param0
-   * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
-   *TODO: this should be moved to repository
+   * @deprecated Use getUser instead
    */
   async getUserById({ userId }) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: userId })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: userId })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
-  },
-
-  // TODO: deprecate
-  async getUser(id) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: id })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
+    const getUser = legacyGetUserFactory({ db })
+    return await getUser(userId)
   },
 
   // TODO: this should be moved to repository
@@ -361,53 +332,6 @@ module.exports = {
 
       return await Users().where({ id }).del()
     }
-  },
-
-  /**
-   * TODO: this should be moved to repositories
-   * Get all users or filter them with the specified searchQuery. This is meant for
-   * server admins, because it exposes the User object (& thus the email).
-   * @param {number} limit
-   * @param {number} offset
-   * @param {string | null} searchQuery
-   * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
-   */
-  async getUsers(limit = 10, offset = 0, searchQuery = null) {
-    // sanitize limit
-    const maxLimit = 200
-    if (limit > maxLimit) limit = maxLimit
-
-    const query = Users()
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .columns([
-        ...Object.values(
-          omit(UsersSchema.col, ['email', 'verified', 'passwordDigest'])
-        ),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-
-    return getUsersBaseQuery(query, { searchQuery })
-      .groupBy(UsersSchema.col.id)
-      .orderBy(UsersSchema.col.createdAt)
-      .limit(limit)
-      .offset(offset)
-  },
-
-  /**
-   * TODO: this should be moved to repositories
-   * @param {string|null} searchQuery
-   * @returns
-   */
-  async countUsers(searchQuery = null) {
-    const query = Users().leftJoin(
-      UserEmails.name,
-      UserEmails.col.userId,
-      UsersSchema.col.id
-    )
-
-    const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
-    return parseInt(userCount.count)
   },
 
   async changeUserRole({ userId, role, guestModeEnabled = false }) {
