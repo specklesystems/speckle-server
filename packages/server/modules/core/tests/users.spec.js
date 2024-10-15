@@ -2,7 +2,6 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { searchUsers } = require('../services/users')
 const {
   createPersonalAccessToken,
   revokeToken,
@@ -90,7 +89,8 @@ const {
   getUserByEmailFactory,
   isLastAdminUserFactory,
   deleteUserRecordFactory,
-  updateUserServerRoleFactory
+  updateUserServerRoleFactory,
+  searchUsersFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -249,6 +249,7 @@ const changeUserRole = changeUserRoleFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
+const searchUsers = searchUsersFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

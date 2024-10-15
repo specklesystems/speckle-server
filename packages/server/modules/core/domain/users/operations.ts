@@ -1,4 +1,8 @@
-import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import {
+  LimitedUser,
+  User,
+  UserWithOptionalRole
+} from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { ServerAclRecord } from '@/modules/core/helpers/types'
 import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
@@ -122,3 +126,14 @@ export type ValidateUserPassword = (params: {
 export type DeleteUser = (id: string) => Promise<boolean>
 
 export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
+
+export type SearchLimitedUsers = (
+  searchQuery: string,
+  limit?: number,
+  cursor?: string,
+  archived?: boolean,
+  emailOnly?: boolean
+) => Promise<{
+  users: LimitedUser[]
+  cursor: Nullable<string>
+}>
