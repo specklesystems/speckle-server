@@ -1,8 +1,4 @@
-import {
-  createUser,
-  validatePasssword,
-  getUserByEmail
-} from '@/modules/core/services/users'
+import { validatePasssword, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   sendRateLimitResponse,
@@ -23,6 +19,7 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -31,7 +28,7 @@ const localStrategyBuilderFactory =
     getServerInfo: typeof getServerInfo
     getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
-    createUser: typeof createUser
+    createUser: CreateValidatedUser
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
   }): AuthStrategyBuilder =>
