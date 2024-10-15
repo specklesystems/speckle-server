@@ -201,10 +201,10 @@ export default {
         filter.data = rawFilter
         const key = rawFilter.key
         // Handle revit params (a wee bit of FML moment)
+        // Note: parameters = dui2, properties = dui3
+        // TODOs: some not needed props still come through (e.g., material quantities)
         if (key.startsWith('parameters.') || key.startsWith('properties.')) {
           if (key.endsWith('.value')) {
-            console.log('pushing', key)
-            console.log('pushing', key)
             // filter.name = this.props[key.replace('.value', '.name')].allValues[0]
             const nameProp = this.propertyFilters.find(
               (f) => f.key === key.replace('.value', '.name')
