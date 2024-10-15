@@ -39,3 +39,4 @@ venv
 storybook-static
 .tshy
 .tshy-build
+.vscode
