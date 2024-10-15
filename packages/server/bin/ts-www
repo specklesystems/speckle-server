@@ -7,6 +7,10 @@
  */
 
 require('ts-node/register')
+
+const { initOpenTelemetry } = require('../dist/otel')
+initOpenTelemetry()
+
 const { logger } = require('../logging/logging')
 const { init, startHttp } = require('../app')
 

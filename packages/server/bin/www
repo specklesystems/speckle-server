@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict'
 
+const { initOpenTelemetry } = require('../dist/otel')
+initOpenTelemetry()
+
 const { logger } = require('../dist/logging/logging')
 const { init, startHttp } = require('../dist/app')
 
