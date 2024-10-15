@@ -10,7 +10,7 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getCommitsFactory } from '@/modules/core/repositories/commits'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -36,6 +36,7 @@ enum BatchActionType {
   Delete
 }
 
+const getUser = getUserFactory({ db })
 const createBranch = createBranchFactory({ db })
 const getCommits = getCommitsFactory({ db })
 const saveActivity = saveActivityFactory({ db })

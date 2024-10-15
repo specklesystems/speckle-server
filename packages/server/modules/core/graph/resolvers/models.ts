@@ -54,10 +54,11 @@ import {
 } from '@/modules/activitystream/services/branchActivity'
 import {
   getStreamFactory,
-  markBranchStreamUpdated
+  markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamObjects = getStreamObjectsFactory({ db })
 const getViewerResourceGroups = getViewerResourceGroupsFactory({

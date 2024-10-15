@@ -17,7 +17,6 @@ const {
   getPaginatedStreamBranches
 } = require('@/modules/core/services/branch/retrieval')
 
-const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
 const {
   getBranchByIdFactory,
@@ -33,16 +32,18 @@ const {
   addBranchDeletedActivity
 } = require('@/modules/activitystream/services/branchActivity')
 const {
-  markBranchStreamUpdated,
-  getStreamFactory
+  getStreamFactory,
+  markBranchStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
+const { legacyGetUserFactory } = require('@/modules/core/repositories/users')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getBranchById = getBranchByIdFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
@@ -64,6 +65,7 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   addBranchDeletedActivity,
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
+const getUser = legacyGetUserFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -93,8 +95,7 @@ module.exports = {
   },
   Branch: {
     async author(parent, args, context) {
-      if (parent.authorId && context.auth)
-        return await getUserById({ userId: parent.authorId })
+      if (parent.authorId && context.auth) return await getUser(parent.authorId)
       else return null
     }
   },

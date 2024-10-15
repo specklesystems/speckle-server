@@ -5,7 +5,7 @@ import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
-import { getUser, updateUser } from '@/modules/core/repositories/users'
+import { getUserFactory, updateUser } from '@/modules/core/repositories/users'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import { isNullOrUndefined } from '@speckle/shared'
 import bcrypt from 'bcrypt'
@@ -13,6 +13,7 @@ import bcrypt from 'bcrypt'
 export const MINIMUM_PASSWORD_LENGTH = 8
 
 export async function updateUserAndNotify(userId: string, update: UserUpdateInput) {
+  const getUser = getUserFactory({ db })
   const existingUser = await getUser(userId)
   if (!existingUser) {
     throw new UserUpdateError('Attempting to update a non-existant user')
@@ -71,6 +72,7 @@ export async function changePassword(
   input: { oldPassword: string; newPassword: string }
 ) {
   const { oldPassword, newPassword } = input
+  const getUser = getUserFactory({ db })
   const user = await getUser(userId, { skipClean: true })
   if (!user) {
     throw new UserUpdateError('Could not find the user with the specified id')

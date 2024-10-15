@@ -29,7 +29,7 @@ import {
   getStreamFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -38,6 +38,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { publish } from '@/modules/shared/utils/subscriptions'
 
+const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
   getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })

@@ -27,7 +27,11 @@ import {
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
 import { GetObject } from '@/modules/core/domain/objects/operations'
-import { GetCommitStream, GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  GetCommitStream,
+  GetStream,
+  MarkCommitStreamUpdated
+} from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -46,7 +50,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
-import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -88,7 +91,7 @@ export const createCommitByBranchIdFactory =
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     versionsEventEmitter: VersionsEventEmitter
     addCommitCreatedActivity: AddCommitCreatedActivity
@@ -259,7 +262,7 @@ export const updateCommitAndNotifyFactory =
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
     addCommitUpdatedActivity: AddCommitUpdatedActivity
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
   }): UpdateCommitAndNotify =>
   async (params: CommitUpdateInput | UpdateVersionInput, userId: string) => {
@@ -358,7 +361,7 @@ export const updateCommitAndNotifyFactory =
 export const deleteCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
     addCommitDeletedActivity: typeof addCommitDeletedActivity

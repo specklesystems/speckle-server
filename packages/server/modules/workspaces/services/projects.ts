@@ -1,5 +1,4 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getUserStreams } from '@/modules/core/repositories/streams'
 import {
   GetWorkspace,
   GetWorkspaceRoleForUser,
@@ -28,6 +27,7 @@ import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
 import {
   GetStream,
+  GetUserStreamsPage,
   LegacyGetStreams,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
@@ -82,7 +82,7 @@ type GetWorkspaceProjectsReturnValue = {
 }
 
 export const getWorkspaceProjectsFactory =
-  ({ getStreams }: { getStreams: typeof getUserStreams }) =>
+  ({ getStreams }: { getStreams: GetUserStreamsPage }) =>
   async (
     args: GetWorkspaceProjectsArgs,
     opts: GetWorkspaceProjectsOptions
