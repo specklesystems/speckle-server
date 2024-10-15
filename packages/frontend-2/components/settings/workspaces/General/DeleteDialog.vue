@@ -81,7 +81,14 @@ const workspaceNameInput = ref('')
 const onDelete = async () => {
   if (workspaceNameInput.value !== props.workspace.name) return
 
-  router.push(homeRoute)
+  router.push({
+    path: homeRoute,
+    query: {
+      showDialog: 'workspace-deleted',
+      workspaceId: props.workspace.id
+    }
+  })
+
   isOpen.value = false
 
   const cache = apollo.cache
