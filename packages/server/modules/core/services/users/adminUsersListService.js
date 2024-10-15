@@ -1,4 +1,8 @@
-const { countUsers, getUsers } = require('@/modules/core/services/users')
+const { db } = require('@/db/knex')
+const {
+  legacyGetPaginatedUsersCountFactory,
+  legacyGetPaginatedUsersFactory
+} = require('@/modules/core/repositories/users')
 const { resolveTarget } = require('@/modules/serverinvites/helpers/core')
 const { clamp } = require('lodash')
 
@@ -63,6 +67,8 @@ function sanitizeParams(params) {
  * @param {{ countServerInvites: import('@/modules/serverinvites/domain/operations').CountServerInvites}} param0
  */
 function getTotalCounts({ countServerInvites }) {
+  const countUsers = legacyGetPaginatedUsersCountFactory({ db })
+
   /**
    * Get total users & invites that we can find using these params
    * @param {PaginationParams} params
@@ -140,6 +146,8 @@ function mapInviteToListItem(invite) {
  * @param {{findServerInvites: import('@/modules/serverinvites/domain/operations').FindServerInvites}} param0
  */
 function retrieveItems({ findServerInvites }) {
+  const getUsers = legacyGetPaginatedUsersFactory({ db })
+
   /**
    * Retrieve all list items from DB and convert them to the target model
    * @param {PaginationParams} params

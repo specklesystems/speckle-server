@@ -1,5 +1,5 @@
+import { GetUserByEmail } from '@/modules/core/domain/users/operations'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
@@ -14,7 +14,7 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 const EMAIL_SUBJECT = 'Speckle Account Password Reset'
 
 type InitializeNewTokenDeps = {
-  getUserByEmail: typeof getUserByEmail
+  getUserByEmail: GetUserByEmail
   getPendingToken: GetPendingToken
   createToken: CreateToken
   getServerInfo: typeof getServerInfo

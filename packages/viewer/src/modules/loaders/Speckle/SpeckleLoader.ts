@@ -81,6 +81,7 @@ export class SpeckleLoader extends Loader {
     Logger.warn('Downloading object ', this._resource)
 
     const pause = new AsyncPause()
+
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)

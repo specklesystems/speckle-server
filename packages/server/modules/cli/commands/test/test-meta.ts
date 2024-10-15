@@ -3,6 +3,7 @@ import { cliLogger } from '@/logging/logging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { UserRecord, UsersMetaRecord } from '@/modules/core/helpers/types'
+import { db } from '@/db/knex'
 
 const command: CommandModule = {
   command: 'test-meta',
@@ -18,7 +19,7 @@ const command: CommandModule = {
       return
     }
 
-    const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+    const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users, db)
 
     // set value
     cliLogger.info(await meta.set(firstUserId, 'foo', false))

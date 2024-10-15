@@ -1,62 +1,20 @@
 'use strict'
-const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const {
   ServerAcl: ServerAclSchema,
   Users: UsersSchema,
   UserEmails
 } = require('@/modules/core/dbSchema')
-const {
-  validateUserPassword,
-  updateUserAndNotify,
-  MINIMUM_PASSWORD_LENGTH
-} = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const {
-  getUserByEmail,
-  getUsersBaseQuery,
-  getUser
-} = require('@/modules/core/repositories/users')
-const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
-const { pick, omit } = require('lodash')
+const { omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
-const {
-  UserInputError,
-  PasswordTooShortError
-} = require('@/modules/core/errors/userinput')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
-const {
-  createUserEmailFactory,
-  findPrimaryEmailForUserFactory,
-  findEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
 const { db } = require('@/db/knex')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
 const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
 
 const _changeUserRole = async ({ userId, role }) =>
@@ -75,202 +33,12 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-
 module.exports = {
-  /*
-    Users
-  */
-
-  /**
-   * @param {{}} user
-   * @param {{skipPropertyValidation: boolean } | undefined} options
-   * @returns {Promise<string>}
-   */
-  async createUser(user, options = undefined) {
-    // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
-    const { skipPropertyValidation = false } = options || {}
-
-    if (!user.email?.length) throw new UserInputError('E-mail address is required')
-
-    let expectedRole = null
-    if (user.role) {
-      const isValidRole = Object.values(Roles.Server).includes(user.role)
-      const isValidIfGuestModeEnabled =
-        user.role !== Roles.Server.Guest || (await getServerInfo()).guestModeEnabled
-      expectedRole = isValidRole && isValidIfGuestModeEnabled ? user.role : null
-    }
-    delete user.role
-
-    user = skipPropertyValidation
-      ? user
-      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'verified'])
-
-    const newId = crs({ length: 10 })
-    user.id = newId
-    user.email = user.email.toLowerCase()
-
-    if (!user.name) throw new UserInputError('User name is required')
-
-    if (user.avatar) {
-      user.avatar = sanitizeImageUrl(user.avatar)
-    }
-
-    if (user.password) {
-      if (user.password.length < MINIMUM_PASSWORD_LENGTH)
-        throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
-      user.passwordDigest = await bcrypt.hash(user.password, 10)
-    }
-    delete user.password
-
-    const userEmail = await findEmailFactory({ db })({
-      email: user.email
-    })
-    if (userEmail) throw new UserInputError('Email taken. Try logging in?')
-
-    const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
-    if (!newUser) throw new Error("Couldn't create user")
-
-    const userRole =
-      (await countAdminUsers()) === 0
-        ? Roles.Server.Admin
-        : expectedRole || Roles.Server.User
-
-    await Acl().insert({ userId: newId, role: userRole })
-
-    const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification
-    })
-
-    await validateAndCreateUserEmail({
-      userEmail: {
-        email: user.email,
-        userId: user.id,
-        verified: user.verified,
-        primary: true
-      }
-    })
-
-    await UsersEmitter.emit(UsersEvents.Created, { user: newUser })
-
-    return newUser.id
-  },
-
-  /**
-   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
-   * @returns {Promise<{
-   *  id: string,
-   *  email: string,
-   *  isNewUser?: boolean
-   * }>}
-   */
-  async findOrCreateUser({ user }) {
-    const userEmail = await findPrimaryEmailForUserFactory({ db })({
-      email: user.email
-    })
-    if (userEmail) return { id: userEmail.userId, email: userEmail.email }
-
-    user.password = crs({ length: 20 })
-    user.verified = true // because we trust the external identity provider, no?
-    return {
-      id: await module.exports.createUser(user),
-      email: user.email,
-      isNewUser: true
-    }
-  },
-
-  /**
-   * @param {{userId: string}} param0
-   * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
-   *TODO: this should be moved to repository
-   */
-  async getUserById({ userId }) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: userId })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: userId })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
-  },
-
-  // TODO: deprecate
-  async getUser(id) {
-    const user = await Users()
-      .where({ [UsersSchema.col.id]: id })
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (user) delete user.passwordDigest
-    return user
-  },
-
-  // TODO: this should be moved to repository
-  async getUserByEmail({ email }) {
-    const user = await Users()
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true })
-      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (!user) return null
-    delete user.passwordDigest
-    return user
-  },
-
   async getUserRole(id) {
     const { role } = (await Acl().where({ userId: id }).select('role').first()) || {
       role: null
     }
     return role
-  },
-
-  /**
-   * @deprecated {Use updateUserAndNotify() or repo method directly}
-   */
-  async updateUser(id, user) {
-    return await updateUserAndNotify(id, user)
-  },
-
-  /**
-   * @deprecated {Use changePassword()}
-   */
-  async updateUserPassword({ id, newPassword }) {
-    if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
-      throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
-    const passwordDigest = await bcrypt.hash(newPassword, 10)
-    await Users().where({ id }).update({ passwordDigest })
   },
 
   /**
@@ -306,18 +74,6 @@ module.exports = {
       users: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
     }
-  },
-
-  /**
-   * @deprecated {Use validateUserPassword()}
-   */
-  async validatePasssword({ email, password }) {
-    const user = await getUserByEmail(email, { skipClean: true })
-    if (!user) return false
-    return await validateUserPassword({
-      password,
-      user
-    })
   },
 
   /**
@@ -361,53 +117,6 @@ module.exports = {
 
       return await Users().where({ id }).del()
     }
-  },
-
-  /**
-   * TODO: this should be moved to repositories
-   * Get all users or filter them with the specified searchQuery. This is meant for
-   * server admins, because it exposes the User object (& thus the email).
-   * @param {number} limit
-   * @param {number} offset
-   * @param {string | null} searchQuery
-   * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
-   */
-  async getUsers(limit = 10, offset = 0, searchQuery = null) {
-    // sanitize limit
-    const maxLimit = 200
-    if (limit > maxLimit) limit = maxLimit
-
-    const query = Users()
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .columns([
-        ...Object.values(
-          omit(UsersSchema.col, ['email', 'verified', 'passwordDigest'])
-        ),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-
-    return getUsersBaseQuery(query, { searchQuery })
-      .groupBy(UsersSchema.col.id)
-      .orderBy(UsersSchema.col.createdAt)
-      .limit(limit)
-      .offset(offset)
-  },
-
-  /**
-   * TODO: this should be moved to repositories
-   * @param {string|null} searchQuery
-   * @returns
-   */
-  async countUsers(searchQuery = null) {
-    const query = Users().leftJoin(
-      UserEmails.name,
-      UserEmails.col.userId,
-      UsersSchema.col.id
-    )
-
-    const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
-    return parseInt(userCount.count)
   },
 
   async changeUserRole({ userId, role, guestModeEnabled = false }) {

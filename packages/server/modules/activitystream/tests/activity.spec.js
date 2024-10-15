@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const { createUser } = require('../../core/services/users')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createObject } = require('../../core/services/objects')
 
@@ -19,14 +18,46 @@ const {
   addOrUpdateStreamCollaboratorFactory
 } = require('@/modules/core/services/streams/access')
 const { authorizeResolver } = require('@/modules/shared')
-const { getUser } = require('@/modules/core/repositories/users')
 const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
 const {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 
+const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -42,6 +73,34 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     saveActivity,
     publish
   })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 let sendRequest

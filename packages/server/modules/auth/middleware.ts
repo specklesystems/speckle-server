@@ -14,7 +14,6 @@ import {
 import { getSessionSecret } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
-import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import {
   addToMailchimpAudience,
@@ -22,6 +21,7 @@ import {
 } from '@/modules/auth/services/mailchimp'
 import { authLogger, logger } from '@/logging/logging'
 import { ensureError } from '@speckle/shared'
+import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 
 export const sessionMiddlewareFactory = (): RequestHandler => {
   const RedisStore = ConnectRedis(ExpressSession)
@@ -72,7 +72,7 @@ export const moveAuthParamsToSessionMiddlewareFactory =
 export const finalizeAuthMiddlewareFactory =
   (deps: {
     createAuthorizationCode: CreateAuthorizationCode
-    getUserById: typeof getUserById
+    getUser: LegacyGetUser
   }): RequestHandler =>
   async (req, res) => {
     try {
@@ -109,7 +109,7 @@ export const finalizeAuthMiddlewareFactory =
 
         if (getMailchimpStatus()) {
           try {
-            const user = await deps.getUserById({ userId: req.user.id })
+            const user = await deps.getUser(req.user.id)
             if (!user)
               throw new Error(
                 'Could not register user for mailchimp lists - no db user record found.'

@@ -53,7 +53,6 @@ import {
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/core/index'
-import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -110,9 +109,11 @@ import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
+const getUser = getUserFactory({ db })
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })

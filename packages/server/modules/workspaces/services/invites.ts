@@ -9,7 +9,6 @@ import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -72,6 +71,7 @@ import {
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -381,7 +381,7 @@ function buildPendingWorkspaceCollaboratorModel(
 export const getUserPendingWorkspaceInviteFactory =
   (deps: {
     findInvite: FindInvite
-    getUser: typeof getUser
+    getUser: GetUser
     getWorkspaceBySlug: GetWorkspaceBySlug
   }) =>
   async (params: {
@@ -425,10 +425,7 @@ export const getUserPendingWorkspaceInviteFactory =
   }
 
 export const getUserPendingWorkspaceInvitesFactory =
-  (deps: {
-    getUserResourceInvites: QueryAllUserResourceInvites
-    getUser: typeof getUser
-  }) =>
+  (deps: { getUserResourceInvites: QueryAllUserResourceInvites; getUser: GetUser }) =>
   async (userId: string): Promise<PendingWorkspaceCollaboratorGraphQLReturn[]> => {
     if (!userId) return []
 
