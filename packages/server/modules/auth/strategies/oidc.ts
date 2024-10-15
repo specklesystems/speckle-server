@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { Issuer, Strategy } from 'openid-client'
-import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   getOidcDiscoveryUrl,
@@ -24,12 +23,16 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
 
 const oidcStrategyBuilderFactory =
   (deps: {
     getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
-    findOrCreateUser: typeof findOrCreateUser
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath

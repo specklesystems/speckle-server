@@ -1,8 +1,60 @@
+import { db } from '@/db/knex'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
-import { createUser } from '@/modules/core/services/users'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { kebabCase, omit } from 'lodash'
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
 
 export type BasicTestUser = {
   name: string

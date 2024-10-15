@@ -1,5 +1,4 @@
 require('../bootstrap')
-const { getUserByEmail } = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
 
 const { createManyObjects } = require('@/test/helpers')
@@ -42,7 +41,11 @@ const {
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
+const {
+  getUsersFactory,
+  getUserFactory,
+  legacyGetUserByEmailFactory
+} = require('@/modules/core/repositories/users')
 
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
@@ -78,6 +81,7 @@ const createStream = legacyCreateStreamFactory({
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
 const main = async () => {
   const testStream = {

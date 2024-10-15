@@ -3,7 +3,6 @@ import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
@@ -34,7 +33,14 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { createUserFactory } from '@/modules/core/services/users/management'
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -55,6 +61,17 @@ const createUserEmail = validateAndCreateUserEmailFactory({
     updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
   }),
   requestNewEmailVerification
+})
+
+const findEmail = findEmailFactory({ db })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: createUserEmail,
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 describe('Users (GraphQL)', () => {
@@ -147,7 +164,8 @@ describe('Users (GraphQL)', () => {
         const userId = await createUser({
           name: 'emails user',
           email: createRandomEmail(),
-          password: createRandomPassword()
+          password: createRandomPassword(),
+          verified: false
         })
         await createUserEmail({
           userEmail: {

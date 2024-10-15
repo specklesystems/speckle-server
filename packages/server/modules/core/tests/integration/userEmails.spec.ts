@@ -1,16 +1,18 @@
 import { before } from 'mocha'
-import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
-  getUserByEmail,
+  countAdminUsersFactory,
+  getUserByEmailFactory,
   getUserFactory,
-  legacyGetPaginatedUsersCount,
+  legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
+  legacyGetUserByEmailFactory,
   listUsers,
-  markUserAsVerified
+  markUserAsVerified,
+  storeUserAclFactory,
+  storeUserFactory
 } from '@/modules/core/repositories/users'
-import * as UsersService from '@/modules/core/services/users'
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
@@ -42,9 +44,11 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
-const countUsers = legacyGetPaginatedUsersCount({ db })
+const countUsers = legacyGetPaginatedUsersCountFactory({ db })
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -66,6 +70,19 @@ const createUserEmail = validateAndCreateUserEmailFactory({
   }),
   requestNewEmailVerification
 })
+
+const findEmail = findEmailFactory({ db })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: createUserEmail,
+  usersEventsEmitter: UsersEmitter.emit
+})
+const getUserByEmail = getUserByEmailFactory({ db })
+const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -473,22 +490,22 @@ describe('Core @user-emails', () => {
       expect(user?.verified).to.be
     })
 
-    it('with UsersService.getUserByEmail()', async () => {
-      const user = await UsersService.getUserByEmail({
+    it('with legacyGetUserByEmail()', async () => {
+      const user = await legacyGetUserByEmail({
         email: randomizeCase(randomCaseGuy.email)
       })
       expect(user).to.be.ok
       assertLowercaseEquality(user?.email, randomCaseGuy.email)
     })
 
-    it('with UsersService.getUsers()', async () => {
+    it('with legacyGetPaginatedUsers()', async () => {
       const users = await getUsers(10, 0, randomizeCase(randomCaseGuy.email))
       expect(users).to.be.ok
       expect(users).to.have.length(1)
       assertLowercaseEquality(users[0].email, randomCaseGuy.email)
     })
 
-    it('with UsersService.countUsers()', async () => {
+    it('with legacyGetPaginatedUsersCount()', async () => {
       const count = await countUsers(randomizeCase(randomCaseGuy.email))
       expect(count).to.eq(1)
     })

@@ -1,5 +1,5 @@
 import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import { UserRecord, UserWithRole } from '@/modules/core/helpers/types'
+import { ServerAclRecord, UserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -11,17 +11,24 @@ import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
+  CountAdminUsers,
   GetUser,
+  GetUserByEmail,
   GetUserParams,
   GetUsers,
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount,
-  LegacyGetUser
+  LegacyGetUser,
+  LegacyGetUserByEmail,
+  StoreUser,
+  StoreUserAcl,
+  UpdateUser
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
-  users: (db: Knex) => db<UserRecord>(Users.name)
+  users: (db: Knex) => db<UserRecord>(Users.name),
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name)
 }
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -150,31 +157,35 @@ export const getUserFactory =
 /**
  * Get user by e-mail address
  */
-export async function getUserByEmail(
-  email: string,
-  options?: Partial<{ skipClean: boolean; withRole: boolean }>
-) {
-  const q = Users.knex<UserWithOptionalRole[]>()
-    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-    .where({
-      [UserEmails.col.primary]: true
-    })
-    .whereRaw('lower("user_emails"."email") = lower(?)', [email])
-  const columns: (Knex.Raw<UserRecord> | string)[] = [
-    ...Object.values(omit(Users.col, ['email', 'verified'])),
-    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-  ]
-  if (options?.withRole) {
-    // Getting first role from grouped results
-    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
-    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+export const getUserByEmailFactory =
+  (deps: { db: Knex }): GetUserByEmail =>
+  async (
+    email: string,
+    options?: Partial<{ skipClean: boolean; withRole: boolean }>
+  ) => {
+    const q = tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({
+        [UserEmails.col.primary]: true
+      })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+    const columns: (Knex.Raw<UserRecord> | string)[] = [
+      ...Object.values(omit(Users.col, ['email', 'verified'])),
+      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+    ]
+    if (options?.withRole) {
+      // Getting first role from grouped results
+      columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
+      q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    }
+    q.columns(columns)
+    q.groupBy(Users.col.id)
+
+    const user = (await q.first()) as UserWithOptionalRole
+    return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
   }
-  q.columns(columns)
-  q.groupBy(Users.col.id)
-  const user = await q.first()
-  return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
-}
 
 /**
  * Mark a user as verified by e-mail address, and return true on success
@@ -224,29 +235,34 @@ const validateInputRecord = (input: Partial<UserRecord>) => {
   }
 }
 
-export async function updateUser(
-  userId: string,
-  update: Partial<UserRecord>,
-  options?: Partial<{
-    skipClean: boolean
-  }>
-) {
-  if (!options?.skipClean) {
-    update = cleanInputRecord(update)
+export const updateUserFactory =
+  (deps: { db: Knex }): UpdateUser =>
+  async (
+    userId: string,
+    update: Partial<UserRecord>,
+    options?: Partial<{
+      skipClean: boolean
+    }>
+  ) => {
+    if (!options?.skipClean) {
+      update = cleanInputRecord(update)
+    }
+    validateInputRecord(update)
+
+    const [newUser] = await tables
+      .users(deps.db)
+      .where(Users.col.id, userId)
+      .update(update, '*')
+
+    if (update.email) {
+      await updateUserEmailFactory(deps)({
+        query: { userId, primary: true },
+        update: { email: update.email }
+      })
+    }
+
+    return newUser as Nullable<UserRecord>
   }
-  validateInputRecord(update)
-
-  const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
-
-  if (update.email) {
-    await updateUserEmailFactory({ db })({
-      query: { userId, primary: true },
-      update: { email: update.email }
-    })
-  }
-
-  return newUser as Nullable<UserRecord>
-}
 
 export async function getFirstAdmin() {
   const q = Users.knex()
@@ -313,7 +329,7 @@ export const legacyGetPaginatedUsersFactory =
 /**
  * @deprecated Use countUsers instead
  */
-export const legacyGetPaginatedUsersCount =
+export const legacyGetPaginatedUsersCountFactory =
   (deps: { db: Knex }): LegacyGetPaginatedUsersCount =>
   async (searchQuery = null) => {
     const query = tables
@@ -322,4 +338,54 @@ export const legacyGetPaginatedUsersCount =
 
     const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
     return parseInt(userCount.count)
+  }
+
+/**
+ * @deprecated Use getUserByEmail instead
+ */
+export const legacyGetUserByEmailFactory =
+  (deps: { db: Knex }): LegacyGetUserByEmail =>
+  async ({ email }) => {
+    const user = await tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({ [UserEmails.col.primary]: true })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+      .columns<UserRecord>([
+        ...Object.values(omit(Users.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(Users.col.id)
+      .first()
+    if (!user) return null
+    delete user.passwordDigest
+    return user
+  }
+
+export const storeUserFactory =
+  (deps: { db: Knex }): StoreUser =>
+  async (params) => {
+    const { user } = params
+    const [newUser] = await tables.users(deps.db).insert(user, '*')
+    return newUser
+  }
+
+export const countAdminUsersFactory =
+  (deps: { db: Knex }): CountAdminUsers =>
+  async () => {
+    const [{ count }] = await tables
+      .serverAcl(deps.db)
+      .where({ role: Roles.Server.Admin })
+      .count()
+
+    return parseInt(count as string)
+  }
+
+export const storeUserAclFactory =
+  (deps: { db: Knex }): StoreUserAcl =>
+  async (params) => {
+    const { acl } = params
+    const [newAcl] = await tables.serverAcl(deps.db).insert(acl, '*')
+    return newAcl
   }

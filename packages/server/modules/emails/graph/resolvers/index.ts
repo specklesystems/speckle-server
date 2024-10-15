@@ -1,7 +1,10 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
-import { getUserByEmail, getUserFactory } from '@/modules/core/repositories/users'
+import {
+  getUserByEmailFactory,
+  getUserFactory
+} from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   deleteOldAndInsertNewVerificationFactory,
@@ -20,6 +23,7 @@ const requestEmailVerification = requestEmailVerificationFactory({
   sendEmail,
   renderEmail
 })
+const getUserByEmail = getUserByEmailFactory({ db })
 
 export = {
   User: {
