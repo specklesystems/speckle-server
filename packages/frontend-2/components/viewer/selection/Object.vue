@@ -22,7 +22,7 @@
           }`"
         />
         <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
-          {{ isNameValuePair }} // {{ title || headerAndSubheader.header }}
+          {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
           >
@@ -64,6 +64,9 @@
               >
                 {{ kvp.value === null ? 'null' : kvp.value }}
               </span>
+              <span v-if="kvp.units" class="truncate opacity-70">
+                {{ kvp.units }}
+              </span>
               <button
                 v-if="isCopyable(kvp)"
                 :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
@@ -84,7 +87,7 @@
         <ViewerSelectionObject
           :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
-          :unfold="false"
+          :unfold="autoUnfoldKeys.includes(kvp.key)"
         />
       </div>
       <div
@@ -157,6 +160,7 @@ const props = withDefaults(
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
+const autoUnfoldKeys = ['properties', 'Instance Parameters']
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
@@ -250,13 +254,8 @@ const ignoredProps = [
   'bbox'
 ]
 
-const isNameValuePair = computed(() => {
-  const keys = Object.keys(props.object)
-  return keys.includes('name') && keys.includes('value')
-})
-
 const keyValuePairs = computed(() => {
-  const kvps = [] as (Record<string, unknown> & { key: string })[]
+  const kvps = [] as (Record<string, unknown> & { key: string; value: unknown })[]
 
   // handle revit paramters
   if (props.title === 'parameters') {
@@ -279,6 +278,7 @@ const keyValuePairs = computed(() => {
   const objectKeys = Object.keys(props.object)
   for (const key of objectKeys) {
     if (ignoredProps.includes(key)) continue
+
     const type = Array.isArray(props.object[key]) ? 'array' : typeof props.object[key]
     let innerType = null
     let arrayLength = null
@@ -291,6 +291,21 @@ const keyValuePairs = computed(() => {
         arrayPreview = arr.slice(0, 3).join(', ')
         if (arr.length > 10) arrayPreview += ' ...' // in case truncate doesn't hit
       }
+    }
+
+    if (
+      props.object[key] &&
+      isNameValuePair(props.object[key] as Record<string, unknown>)
+    ) {
+      // note: handles name value pairs from dui3 -
+      const { value, units } = props.object[key] as { value: string; units?: string }
+      kvps.push({
+        key,
+        type: typeof value,
+        value: value as string,
+        units
+      })
+      continue
     }
     kvps.push({
       key,
@@ -305,6 +320,11 @@ const keyValuePairs = computed(() => {
   return kvps
 })
 
+const isNameValuePair = (obj: Record<string, unknown>) => {
+  const keys = Object.keys(obj)
+  return keys.includes('name') && keys.includes('value')
+}
+
 const categorisedValuePairs = computed(() => {
   return {
     primitives: keyValuePairs.value.filter(
@@ -312,6 +332,11 @@ const categorisedValuePairs = computed(() => {
     ),
     objects: keyValuePairs.value
       .filter((item) => item.type === 'object' && item.value !== null)
+      .filter((item) => {
+        const keys = Object.keys(item.value as unknown as Record<string, unknown>)
+        const nvp = keys.includes('name') && keys.includes('value')
+        return !nvp
+      }) // filters out name value pairs - note on new properties structure coming out of DUI3
       .sort((a, b) => a.key.toLowerCase().localeCompare(b.key.toLowerCase())),
     nonPrimitiveArrays: keyValuePairs.value.filter(
       (item) =>
