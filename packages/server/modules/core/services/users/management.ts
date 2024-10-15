@@ -1,20 +1,21 @@
-import { db } from '@/db/knex'
 import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
+  ChangeUserPassword,
   CountAdminUsers,
   CreateValidatedUser,
   FindOrCreateValidatedUser,
   GetUser,
+  GetUserByEmail,
   StoreUser,
   StoreUserAcl,
   UpdateUser,
-  UpdateUserAndNotify
+  UpdateUserAndNotify,
+  ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
-import { getUserFactory, updateUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import { isNullOrUndefined, NullableKeysToOptional, Roles } from '@speckle/shared'
@@ -29,6 +30,10 @@ import {
 import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
+
+const createPasswordDigest = async (newPassword: string) => {
+  return await bcrypt.hash(newPassword, 10)
+}
 
 export const updateUserAndNotifyFactory =
   (deps: {
@@ -70,56 +75,44 @@ export const updateUserAndNotifyFactory =
     return newUser
   }
 
-export async function validateUserPassword(params: {
-  user: UserRecord
-  password: string
-}) {
-  const { user, password } = params
-  if (!user.passwordDigest) {
-    throw new UserValidationError(
-      'Could not validate user credentials due to missing metadata'
+export const validateUserPasswordFactory =
+  (deps: { getUserByEmail: GetUserByEmail }): ValidateUserPassword =>
+  async (params) => {
+    const { email, password } = params
+    const user = await deps.getUserByEmail(email, { skipClean: true })
+    if (!user) return false
+
+    if (!user.passwordDigest) {
+      throw new UserValidationError(
+        'Could not validate user credentials due to missing metadata'
+      )
+    }
+
+    return await bcrypt.compare(password, user.passwordDigest)
+  }
+
+export const changePasswordFactory =
+  (deps: { getUser: GetUser; updateUser: UpdateUser }): ChangeUserPassword =>
+  async (params) => {
+    const { newPassword, id: userId } = params
+    const user = await deps.getUser(userId, { skipClean: true })
+    if (!user) {
+      throw new UserUpdateError('Could not find the user with the specified id')
+    }
+
+    if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {
+      throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
+    }
+
+    const passwordDigest = await createPasswordDigest(newPassword)
+    await deps.updateUser(
+      userId,
+      {
+        passwordDigest
+      },
+      { skipClean: true }
     )
   }
-
-  return await bcrypt.compare(password, user.passwordDigest)
-}
-
-export async function createPasswordDigest(newPassword: string) {
-  return await bcrypt.hash(newPassword, 10)
-}
-
-export async function changePassword(
-  userId: string,
-  input: { oldPassword: string; newPassword: string }
-) {
-  const { oldPassword, newPassword } = input
-  const getUser = getUserFactory({ db })
-  const user = await getUser(userId, { skipClean: true })
-  if (!user) {
-    throw new UserUpdateError('Could not find the user with the specified id')
-  }
-
-  const isOldPasswordValid = await validateUserPassword({
-    user,
-    password: oldPassword
-  })
-  if (!isOldPasswordValid) {
-    throw new UserUpdateError('Old password is incorrect')
-  }
-
-  if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {
-    throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
-  }
-
-  const passwordDigest = await createPasswordDigest(newPassword)
-  await updateUserFactory({ db })(
-    userId,
-    {
-      passwordDigest
-    },
-    { skipClean: true }
-  )
-}
 
 export const createUserFactory =
   (deps: {

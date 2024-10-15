@@ -97,3 +97,13 @@ export type UpdateUserAndNotify = (
   userId: string,
   update: UserUpdateInput
 ) => Promise<User>
+
+export type ChangeUserPassword = (params: {
+  id: string
+  newPassword: string
+}) => Promise<void>
+
+export type ValidateUserPassword = (params: {
+  email: string
+  password: string
+}) => Promise<boolean>
