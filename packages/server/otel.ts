@@ -1,4 +1,5 @@
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express'
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
@@ -7,22 +8,20 @@ import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino'
 import { AlwaysOnSampler, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node'
 import { Resource } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
-import * as opentelemetry from '@opentelemetry/sdk-node'
+import { registerInstrumentations } from '@opentelemetry/instrumentation'
+import opentelemetry from '@opentelemetry/api'
 
 const OTEL_NAME = 'speckle'
 
 export function initOpenTelemetry() {
-  const sdk = new opentelemetry.NodeSDK({
+  const provider = new NodeTracerProvider({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: OTEL_NAME
     }),
-    sampler: new AlwaysOnSampler(),
-    traceExporter: new OTLPTraceExporter({
-      // optional - default url is http://localhost:4318/v1/traces
-      url: '<your-otlp-endpoint>/v1/traces',
-      // optional - collection of custom headers to be sent with each request, empty by default
-      headers: {}
-    }),
+    sampler: new AlwaysOnSampler()
+  })
+  registerInstrumentations({
+    tracerProvider: provider,
     instrumentations: [
       // Express instrumentation expects HTTP layer to be instrumented
       new HttpInstrumentation(),
@@ -38,9 +37,21 @@ export function initOpenTelemetry() {
       new KnexInstrumentation({
         maxQueryLength: 100
       }),
-      new PinoInstrumentation()
-    ],
-    spanProcessor: new SimpleSpanProcessor(new OTLPTraceExporter({}))
+      new PinoInstrumentation({
+        disableLogSending: true
+      })
+    ]
   })
-  sdk.start()
+
+  const exporter = new OTLPTraceExporter({
+    url: 'https://seq-dev.speckle.systems/ingest/otlp/v1/traces',
+    headers: { 'X-Seq-ApiKey': 'y5YnBp12ZE1Czh4tzZWn' }
+  })
+
+  provider.addSpanProcessor(new SimpleSpanProcessor(exporter))
+
+  // Initialize the OpenTelemetry APIs to use the NodeTracerProvider bindings
+  provider.register()
+
+  opentelemetry.trace.getTracer(OTEL_NAME)
 }
