@@ -45,24 +45,6 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
 const getUserByEmail = getUserByEmailFactory({ db })
 
 module.exports = {
-  // TODO: this should be moved to repository
-  async getUserByEmail({ email }) {
-    const user = await Users()
-      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ [UserEmails.col.primary]: true })
-      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
-      .columns([
-        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
-        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-      ])
-      .groupBy(UsersSchema.col.id)
-      .first()
-    if (!user) return null
-    delete user.passwordDigest
-    return user
-  },
-
   async getUserRole(id) {
     const { role } = (await Acl().where({ userId: id }).select('role').first()) || {
       role: null

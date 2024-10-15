@@ -7,12 +7,12 @@ import {
   getUserFactory,
   legacyGetPaginatedUsersCount,
   legacyGetPaginatedUsersFactory,
+  legacyGetUserByEmailFactory,
   listUsers,
   markUserAsVerified,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import * as UsersService from '@/modules/core/services/users'
 import { db } from '@/db/knex'
 import {
   createRandomEmail,
@@ -82,6 +82,7 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getUserByEmail = getUserByEmailFactory({ db })
+const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -489,22 +490,22 @@ describe('Core @user-emails', () => {
       expect(user?.verified).to.be
     })
 
-    it('with UsersService.getUserByEmail()', async () => {
-      const user = await UsersService.getUserByEmail({
+    it('with legacyGetUserByEmail()', async () => {
+      const user = await legacyGetUserByEmail({
         email: randomizeCase(randomCaseGuy.email)
       })
       expect(user).to.be.ok
       assertLowercaseEquality(user?.email, randomCaseGuy.email)
     })
 
-    it('with UsersService.getUsers()', async () => {
+    it('with legacyGetPaginatedUsers()', async () => {
       const users = await getUsers(10, 0, randomizeCase(randomCaseGuy.email))
       expect(users).to.be.ok
       expect(users).to.have.length(1)
       assertLowercaseEquality(users[0].email, randomCaseGuy.email)
     })
 
-    it('with UsersService.countUsers()', async () => {
+    it('with legacyGetPaginatedUsersCount()', async () => {
       const count = await countUsers(randomizeCase(randomCaseGuy.email))
       expect(count).to.eq(1)
     })

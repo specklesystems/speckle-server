@@ -42,6 +42,10 @@ export type StoreUserAcl = (params: {
   acl: ServerAclRecord
 }) => Promise<ServerAclRecord>
 
+export type LegacyGetUserByEmail = (params: {
+  email: string
+}) => Promise<Nullable<Omit<User, 'passwordDigest'>>>
+
 export type LegacyGetUser = (id: string) => Promise<User>
 
 export type LegacyGetPaginatedUsers = (

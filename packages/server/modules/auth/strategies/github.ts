@@ -3,7 +3,6 @@
 import passport from 'passport'
 import type { VerifyCallback } from 'passport-oauth2'
 import { Strategy as GithubStrategy, type Profile } from 'passport-github2'
-import { getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   UserInputError,
@@ -28,13 +27,16 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import { FindOrCreateValidatedUser } from '@/modules/core/domain/users/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
 
 const githubStrategyBuilderFactory =
   (deps: {
     getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
+    getUserByEmail: LegacyGetUserByEmail
     findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration

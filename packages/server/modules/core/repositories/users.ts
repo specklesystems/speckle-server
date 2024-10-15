@@ -19,6 +19,7 @@ import {
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount,
   LegacyGetUser,
+  LegacyGetUserByEmail,
   StoreUser,
   StoreUserAcl
 } from '@/modules/core/domain/users/operations'
@@ -331,6 +332,29 @@ export const legacyGetPaginatedUsersCount =
 
     const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
     return parseInt(userCount.count)
+  }
+
+/**
+ * @deprecated Use getUserByEmail instead
+ */
+export const legacyGetUserByEmailFactory =
+  (deps: { db: Knex }): LegacyGetUserByEmail =>
+  async ({ email }) => {
+    const user = await tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({ [UserEmails.col.primary]: true })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+      .columns<UserRecord>([
+        ...Object.values(omit(Users.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(Users.col.id)
+      .first()
+    if (!user) return null
+    delete user.passwordDigest
+    return user
   }
 
 export const storeUserFactory =
