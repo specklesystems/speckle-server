@@ -1,24 +1,52 @@
 import {
+  TrialWorkspacePlans,
+  PaidWorkspacePlans,
+  UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  WorkspacePricingPlans
 } from '@/modules/gatekeeper/domain/workspacePricing'
 
-export type WorkspacePlanStatus =
-  | 'trial'
-  | 'valid'
+export type UnpaidWorkspacePlanStatuses = 'valid'
+
+export type PaidWorkspacePlanStatuses =
+  | UnpaidWorkspacePlanStatuses
   // | 'paymentNeeded' // unsure if this is needed
   | 'paymentFailed'
   | 'cancelled'
 
-export type WorkspacePlan = {
+export type TrialWorkspacePlanStatuses = 'trial'
+
+export type PaidWorkspacePlan = {
   workspaceId: string
-  name: WorkspacePlans
-  status: WorkspacePlanStatus
+  name: PaidWorkspacePlans
+  status: PaidWorkspacePlanStatuses
 }
+
+export type TrialWorkspacePlan = {
+  workspaceId: string
+  name: TrialWorkspacePlans
+  status: TrialWorkspacePlanStatuses
+}
+
+export type UnpaidWorkspacePlan = {
+  workspaceId: string
+  name: UnpaidWorkspacePlans
+  status: UnpaidWorkspacePlanStatuses
+}
+
+export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type UpsertTrialWorkspacePlan = (args: {
+  workspacePlan: TrialWorkspacePlan
+}) => Promise<void>
+
+export type UpsertPaidWorkspacePlan = (args: {
+  workspacePlan: PaidWorkspacePlan
+}) => Promise<void>
 
 export type UpsertWorkspacePlan = (args: {
   workspacePlan: WorkspacePlan
@@ -26,13 +54,15 @@ export type UpsertWorkspacePlan = (args: {
 
 export type SessionInput = {
   id: string
-  paymentStatus: 'paid' | 'unpaid'
 }
+
+export type SessionPaymentStatus = 'paid' | 'unpaid'
 
 export type CheckoutSession = SessionInput & {
   url: string
   workspaceId: string
-  workspacePlan: WorkspacePlans
+  workspacePlan: PaidWorkspacePlans
+  paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
 }
 
@@ -44,11 +74,38 @@ export type GetCheckoutSession = (args: {
   sessionId: string
 }) => Promise<CheckoutSession | null>
 
+export type UpdateCheckoutSessionStatus = (args: {
+  sessionId: string
+  paymentStatus: SessionPaymentStatus
+}) => Promise<void>
+
 export type CreateCheckoutSession = (args: {
   workspaceId: string
   workspaceSlug: string
   seatCount: number
   guestCount: number
-  workspacePlan: WorkspacePlans
+  workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
 }) => Promise<CheckoutSession>
+
+export type WorkspaceSubscription = {
+  workspaceId: string
+  createdAt: Date
+  billingInterval: WorkspacePlanBillingIntervals
+  subscriptionData: SubscriptionData
+}
+
+// this abstracts the stripe sub data
+export type SubscriptionData = {
+  subscriptionId: string
+  customerId: string
+  products: {
+    workspacePlan: WorkspacePricingPlans
+    priceId: string
+    quantity: number
+  }[]
+}
+
+export type SaveWorkspaceSubscription = (args: {
+  workspaceSubscription: WorkspaceSubscription
+}) => Promise<void>

@@ -47,24 +47,39 @@ export const workspacePricingPlanInformation = { features, limits }
 
 type WorkspaceLimits = Record<keyof typeof limits, number | null>
 
-type WorkspacePricingPlan = WorkspaceFeatures & WorkspaceLimits
+type WorkspacePlanFeaturesAndLimits = WorkspaceFeatures & WorkspaceLimits
 
 const baseFeatures = {
   domainBasedSecurityPolicies: true
 }
 
-export const workspacePlans = z.union([
-  z.literal('team'),
+export const trialWorkspacePlans = z.literal('team')
+
+export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
+
+export const paidWorkspacePlans = z.union([
+  trialWorkspacePlans,
   z.literal('pro'),
   z.literal('business')
-  // this will be usefull in the enterprise and self hoster deployments
-  // z.literal('unlimited')
 ])
+
+export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
+
+// these are not publicly exposed for general use on billing enabled servers
+export const unpaidWorkspacePlans = z.union([
+  z.literal('unlimited'),
+  z.literal('academia')
+])
+
+export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
+
+export const workspacePlans = z.union([paidWorkspacePlans, unpaidWorkspacePlans])
+
 // this includes the plans your workspace can be on
 export type WorkspacePlans = z.infer<typeof workspacePlans>
 
 // this includes the pricing plans a customer can sub to
-export type WorkspacePricingPlans = WorkspacePlans | 'guest'
+export type WorkspacePricingPlans = PaidWorkspacePlans | 'guest'
 
 export const workspacePlanBillingIntervals = z.union([
   z.literal('monthly'),
@@ -74,7 +89,7 @@ export type WorkspacePlanBillingIntervals = z.infer<
   typeof workspacePlanBillingIntervals
 >
 
-const team: WorkspacePricingPlan = {
+const team: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
@@ -82,7 +97,7 @@ const team: WorkspacePricingPlan = {
   uploadSize: 500
 }
 
-const pro: WorkspacePricingPlan = {
+const pro: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
@@ -90,7 +105,7 @@ const pro: WorkspacePricingPlan = {
   uploadSize: 1000
 }
 
-const business: WorkspacePricingPlan = {
+const business: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
@@ -98,22 +113,41 @@ const business: WorkspacePricingPlan = {
   uploadSize: 1000
 }
 
-// const unlimited: WorkspacePricingPlan = {
-//   ...baseFeatures,
-//   oidcSso: true,
-//   workspaceDataRegionSpecificity: true,
-//   automateMinutes: null,
-//   uploadSize: 1000
-// }
+const unlimited: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  oidcSso: true,
+  workspaceDataRegionSpecificity: true,
+  automateMinutes: null,
+  uploadSize: 1000
+}
 
-const workspacePricingPlans: Record<WorkspacePlans, WorkspacePricingPlan> = {
+const academia: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  oidcSso: true,
+  workspaceDataRegionSpecificity: false,
+  automateMinutes: null,
+  uploadSize: 100
+}
+
+const paidWorkspacePlanFeatures: Record<
+  PaidWorkspacePlans,
+  WorkspacePlanFeaturesAndLimits
+> = {
   team,
   pro,
   business
-  //unlimited
+  // unlimited
+}
+
+export const unpaidWorkspacePlanFeatures: Record<
+  UnpaidWorkspacePlans,
+  WorkspacePlanFeaturesAndLimits
+> = {
+  academia,
+  unlimited
 }
 
 export const pricingTable = {
   workspacePricingPlanInformation,
-  workspacePricingPlans
+  workspacePlanInformation: paidWorkspacePlanFeatures
 }
