@@ -2,7 +2,8 @@ const { CommitNotFoundError } = require('@/modules/core/errors/commit')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
-  CommitSubscriptions: CommitPubsubEvents
+  CommitSubscriptions: CommitPubsubEvents,
+  publish
 } = require('@/modules/shared/utils/subscriptions')
 const { authorizeResolver } = require('@/modules/shared')
 
@@ -53,10 +54,10 @@ const {
 } = require('@/modules/core/repositories/commits')
 const { db } = require('@/db/knex')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   getStreamsFactory,
-  getCommitStreamFactory
+  getCommitStreamFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const {
   markCommitBranchUpdatedFactory,
@@ -66,21 +67,23 @@ const {
 } = require('@/modules/core/repositories/branches')
 const {
   addCommitDeletedActivity,
-  addCommitCreatedActivity,
-  addCommitUpdatedActivity,
-  addCommitMovedActivity
+  addCommitMovedActivity,
+  addCommitCreatedActivityFactory,
+  addCommitUpdatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
 const {
   validateStreamAccessFactory
 } = require('@/modules/core/services/streams/access')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
 const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
 
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
@@ -102,7 +105,10 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -119,7 +125,10 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   getCommitBranch: getCommitBranchFactory({ db }),
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
-  addCommitUpdatedActivity,
+  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })

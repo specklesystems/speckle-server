@@ -1,10 +1,16 @@
 import cron from 'node-cron'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import { acquireTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import { db } from '@/db/knex'
 
 const scheduleWebhookCleanup = () => {
+  const scheduleExecution = scheduleExecutionFactory({
+    acquireTaskLock: acquireTaskLockFactory({ db })
+  })
+
   const cronExpression = '0 4 * * 1'
   return scheduleExecution(cronExpression, 'weeklyWebhookCleanup', async () => {
     activitiesLogger.info('Starting weekly webhooks cleanup')

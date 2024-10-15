@@ -105,3 +105,8 @@ export type PassportAuthenticateHandlerBuilder = (
   strategy: Strategy | string,
   options?: Optional<AuthenticateOptions>
 ) => Handler
+
+export type GetTokenAppInfo = (params: {
+  token: string
+  appId?: string
+}) => Promise<ServerAppRecord | undefined>

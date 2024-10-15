@@ -4,8 +4,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
   getProjectFactory,
-  getUserStreams,
-  getUserStreamsCount,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -13,9 +11,10 @@ import {
   deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamsFactory
+  legacyGetStreamsFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   deleteAllResourceInvitesFactory,
@@ -48,8 +47,6 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
-  WorkspaceAdminError,
-  WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
@@ -103,7 +100,8 @@ import {
   getWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
+  queryAllWorkspaceProjectsFactory,
+  updateWorkspaceProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -150,7 +148,10 @@ import {
 } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -171,7 +172,7 @@ const buildCollectAndValidateResourceTargets = () =>
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -181,12 +182,13 @@ const buildCreateAndSendServerOrProjectInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser
   })
 
 const buildCreateAndSendWorkspaceInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
@@ -197,7 +199,8 @@ const buildCreateAndSendWorkspaceInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser
   })
 const deleteStream = deleteStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
@@ -231,6 +234,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   }),
   removeStreamCollaborator
 })
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -587,12 +592,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getStream,
               getWorkspace: getWorkspaceFactory({ db })
             }),
-            findUserByTarget: findUserByTargetFactory(),
+            findUserByTarget: findUserByTargetFactory({ db }),
             findInvite: findInviteFactory({
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            markInviteUpdated: markInviteUpdatedfactory({ db })
+            markInviteUpdated: markInviteUpdatedfactory({ db }),
+            getUser
           })
 
           await resendInviteEmail({
@@ -730,29 +736,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceProjectMutations: {
         updateRole: async (_parent, args, context) => {
-          const { projectId, userId, role } = args.input
-
-          const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
-
-          if (!workspaceId) {
-            throw new WorkspaceInvalidProjectError()
-          }
-
-          const currentRole = await getWorkspaceRoleForUserFactory({ db })({
-            workspaceId,
-            userId
+          const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
+            getStream,
+            updateStreamRoleAndNotify,
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
           })
 
-          if (currentRole?.role === Roles.Workspace.Admin) {
-            // User is workspace admin and cannot have their project roles changed
-            throw new WorkspaceAdminError()
-          }
-
-          return await updateStreamRoleAndNotify(
-            { projectId, userId, role },
-            context.userId!,
-            context.resourceAccessRules
-          )
+          return await updateWorkspaceProjectRole({
+            role: args.input,
+            updater: {
+              userId: context.userId!,
+              resourceAccessRules: context.resourceAccessRules
+            }
+          })
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args

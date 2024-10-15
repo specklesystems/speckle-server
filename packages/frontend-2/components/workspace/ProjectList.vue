@@ -192,7 +192,8 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
     workspaceSlug: vars.workspaceSlug,
     search: vars.filter?.search || ''
   }),
-  resolveInitialResult: () => initialQueryResult.value?.workspaceBySlug.projects,
+  resolveInitialResult: () =>
+    initialQueryResult.value?.workspaceBySlug.projectListProject,
   resolveCurrentResult: (result) => result?.workspaceBySlug?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,

@@ -36,14 +36,14 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getUserById } from '@/modules/core/services/users'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 
 const router = Router()
 
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 const buildAuthRedirectUrl = (workspaceSlug: string): URL =>

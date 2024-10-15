@@ -7,7 +7,13 @@ import {
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
-import { getUserByEmail, getUsers, listUsers } from '@/modules/core/repositories/users'
+import {
+  getUserByEmail,
+  getUsersFactory,
+  listUsers
+} from '@/modules/core/repositories/users'
+
+const getUsers = getUsersFactory({ db })
 
 describe('Find users @core', () => {
   describe('getUsers', () => {

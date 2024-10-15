@@ -6,7 +6,7 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
@@ -48,10 +48,14 @@ import {
   getOnboardingBaseStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated,
-  markOnboardingBaseStream
+  markCommitStreamUpdatedFactory,
+  markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
-import { getFirstAdmin, getUser, getUsers } from '@/modules/core/repositories/users'
+import {
+  getFirstAdmin,
+  getUserFactory,
+  getUsersFactory
+} from '@/modules/core/repositories/users'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import {
@@ -82,6 +86,10 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    const getUser = getUserFactory({ db })
+    const getUsers = getUsersFactory({ db })
+    const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
@@ -128,13 +136,16 @@ const crossServerSyncModule: SpeckleModule = {
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory(),
+          findUserByTarget: findUserByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
           collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
             getStream
@@ -146,7 +157,8 @@ const crossServerSyncModule: SpeckleModule = {
             getEventBus().emit({
               eventName,
               payload
-            })
+            }),
+          getUser
         }),
         getUsers
       }),

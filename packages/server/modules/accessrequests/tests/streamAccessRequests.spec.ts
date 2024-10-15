@@ -35,7 +35,7 @@ import {
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -66,6 +66,7 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { expect } from 'chai'
 import { noop } from 'lodash'
 
+const getUser = getUserFactory({ db })
 const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestStreamAccess = requestStreamAccessFactory({
