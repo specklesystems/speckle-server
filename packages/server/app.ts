@@ -343,6 +343,8 @@ export async function buildApolloServer(options?: {
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
+  Buffer.poolSize = 128 * 1024 //need bigger than 8k
+  // some buffer pooling discussion: https://github.com/nodejs/node/issues/30611
   initOpenTelemetry()
 
   if (useNewFrontend()) {
