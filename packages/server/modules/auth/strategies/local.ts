@@ -1,4 +1,4 @@
-import { validatePasssword, getUserByEmail } from '@/modules/core/services/users'
+import { validatePasssword } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   sendRateLimitResponse,
@@ -19,12 +19,15 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
+import {
+  CreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
 
 const localStrategyBuilderFactory =
   (deps: {
     validatePassword: typeof validatePasssword
-    getUserByEmail: typeof getUserByEmail
+    getUserByEmail: LegacyGetUserByEmail
     getServerInfo: typeof getServerInfo
     getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite

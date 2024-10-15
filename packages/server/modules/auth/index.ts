@@ -14,7 +14,7 @@ import {
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { getUserByEmail, validatePasssword } from '@/modules/core/services/users'
+import { validatePasssword } from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -37,6 +37,7 @@ import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/servic
 import {
   countAdminUsersFactory,
   getUserFactory,
+  legacyGetUserByEmailFactory,
   legacyGetUserFactory,
   storeUserAclFactory,
   storeUserFactory
@@ -109,7 +110,7 @@ const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
 const commonBuilderDeps = {
   getServerInfo,
-  getUserByEmail,
+  getUserByEmail: legacyGetUserByEmailFactory({ db }),
   findOrCreateUser,
   validateServerInvite,
   finalizeInvitedServerRegistration,

@@ -4,7 +4,6 @@ const assert = require('assert')
 
 const {
   changeUserRole,
-  getUserByEmail,
   searchUsers,
   updateUser,
   deleteUser,
@@ -89,7 +88,8 @@ const {
   legacyGetUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  legacyGetUserByEmailFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -211,6 +211,7 @@ const findOrCreateUser = findOrCreateUserFactory({
   createUser,
   findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

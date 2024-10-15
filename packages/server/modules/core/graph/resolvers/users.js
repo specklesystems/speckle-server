@@ -1,5 +1,4 @@
 const {
-  getUserByEmail,
   getUserRole,
   deleteUser,
   searchUsers,
@@ -16,7 +15,8 @@ const {
 const { Roles, Scopes } = require('@speckle/shared')
 const {
   markOnboardingComplete,
-  legacyGetUserFactory
+  legacyGetUserFactory,
+  legacyGetUserByEmailFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -31,6 +31,7 @@ const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 
 const getUser = legacyGetUserFactory({ db })
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

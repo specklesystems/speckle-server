@@ -3,7 +3,6 @@ const chai = require('chai')
 const request = require('supertest')
 
 const { updateServerInfo, getServerInfo } = require('@/modules/core/services/generic')
-const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
@@ -50,7 +49,8 @@ const {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  legacyGetUserByEmailFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -138,6 +138,7 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
 const expect = chai.expect
 
