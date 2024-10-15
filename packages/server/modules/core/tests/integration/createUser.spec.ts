@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { createUser, getUserById } from '@/modules/core/services/users'
+import { createUser } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
 import { db } from '@/db/knex'
@@ -77,7 +77,7 @@ describe('Users @core-users', () => {
       password: createRandomPassword()
     })
 
-    const user = await getUserById({ userId })
+    const user = await getUser(userId)
     expect(user).to.be.ok
     expect(user!.email.toLowerCase()).to.eq(email.toLowerCase())
 
