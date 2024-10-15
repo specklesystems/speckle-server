@@ -4,7 +4,6 @@ const assert = require('assert')
 
 const {
   changeUserRole,
-  findOrCreateUser,
   getUserByEmail,
   searchUsers,
   updateUser,
@@ -95,7 +94,8 @@ const {
 const {
   findEmailFactory,
   createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
+  ensureNoPrimaryEmailForUserFactory,
+  findPrimaryEmailForUserFactory
 } = require('@/modules/core/repositories/userEmails')
 const {
   requestNewEmailVerificationFactory
@@ -106,7 +106,10 @@ const {
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  createUserFactory,
+  findOrCreateUserFactory
+} = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
 } = require('@/modules/core/services/userEmails')
@@ -203,6 +206,10 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 
 describe('Actors & Tokens @user-services', () => {

@@ -1,6 +1,5 @@
 'use strict'
 const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const {
   ServerAcl: ServerAclSchema,
@@ -10,21 +9,14 @@ const {
 const {
   validateUserPassword,
   updateUserAndNotify,
-  MINIMUM_PASSWORD_LENGTH,
-  createUserFactory
+  MINIMUM_PASSWORD_LENGTH
 } = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const {
-  getUserByEmail,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} = require('@/modules/core/repositories/users')
+const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
@@ -32,35 +24,8 @@ const {
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
-const {
-  findPrimaryEmailForUserFactory,
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
 const { db } = require('@/db/knex')
-
 const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -78,58 +43,7 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  usersEventsEmitter: UsersEmitter.emit
-})
-
 module.exports = {
-  /**
-   * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
-   * @returns {Promise<{
-   *  id: string,
-   *  email: string,
-   *  isNewUser?: boolean
-   * }>}
-   */
-  async findOrCreateUser({ user }) {
-    const userEmail = await findPrimaryEmailForUserFactory({ db })({
-      email: user.email
-    })
-    if (userEmail) return { id: userEmail.userId, email: userEmail.email }
-
-    user.password = crs({ length: 20 })
-    user.verified = true // because we trust the external identity provider, no?
-    return {
-      id: await createUser(user),
-      email: user.email,
-      isNewUser: true
-    }
-  },
-
   // TODO: this should be moved to repository
   async getUserByEmail({ email }) {
     const user = await Users()

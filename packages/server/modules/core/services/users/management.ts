@@ -4,6 +4,7 @@ import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services
 import {
   CountAdminUsers,
   CreateValidatedUser,
+  FindOrCreateValidatedUser,
   StoreUser,
   StoreUserAcl
 } from '@/modules/core/domain/users/operations'
@@ -20,6 +21,7 @@ import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
 import {
   FindEmail,
+  FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
@@ -207,4 +209,28 @@ export const createUserFactory =
     await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser })
 
     return newUser.id
+  }
+
+export const findOrCreateUserFactory =
+  (deps: {
+    findPrimaryEmailForUser: FindPrimaryEmailForUser
+    createUser: CreateValidatedUser
+  }): FindOrCreateValidatedUser =>
+  async (params) => {
+    const { user } = params
+
+    const userEmail = await deps.findPrimaryEmailForUser({
+      email: user.email
+    })
+    if (userEmail) return { id: userEmail.userId, email: userEmail.email }
+
+    return {
+      id: await deps.createUser({
+        ...user,
+        verified: true, // because we trust the external identity provider, no?
+        password: crs({ length: 20 })
+      }),
+      email: user.email,
+      isNewUser: true
+    }
   }
