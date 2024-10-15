@@ -5,7 +5,7 @@ import {
   countAdminUsersFactory,
   getUserByEmailFactory,
   getUserFactory,
-  legacyGetPaginatedUsersCount,
+  legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
   legacyGetUserByEmailFactory,
   listUsers,
@@ -48,7 +48,7 @@ import { createUserFactory } from '@/modules/core/services/users/management'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
-const countUsers = legacyGetPaginatedUsersCount({ db })
+const countUsers = legacyGetPaginatedUsersCountFactory({ db })
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({

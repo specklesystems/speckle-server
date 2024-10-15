@@ -323,7 +323,7 @@ export const legacyGetPaginatedUsersFactory =
 /**
  * @deprecated Use countUsers instead
  */
-export const legacyGetPaginatedUsersCount =
+export const legacyGetPaginatedUsersCountFactory =
   (deps: { db: Knex }): LegacyGetPaginatedUsersCount =>
   async (searchQuery = null) => {
     const query = tables
