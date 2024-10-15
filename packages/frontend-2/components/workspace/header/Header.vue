@@ -66,7 +66,7 @@
           </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <div v-tippy="'Manage users'">
+          <div v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'">
             <button
               class="block"
               @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"

@@ -24,13 +24,16 @@
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
-            <NuxtLink :to="canEdit ? projectCollaboratorsRoute(project.id) : undefined">
-              <UserAvatarGroup
-                :users="teamUsers"
-                :max-count="2"
-                class="max-w-[104px]"
-              />
-            </NuxtLink>
+            <div v-tippy="canEdit ? 'Manage collaborators' : 'View collaborators'">
+              <NuxtLink :to="projectCollaboratorsRoute(project.id)">
+                <UserAvatarGroup
+                  :users="teamUsers"
+                  :max-count="2"
+                  class="max-w-[104px]"
+                  hide-tooltips
+                />
+              </NuxtLink>
+            </div>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
