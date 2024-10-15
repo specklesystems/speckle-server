@@ -13,6 +13,7 @@ import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GColorPass } from '../GColorPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 import { GStencilPass } from '../GStencilPass.js'
+import { GOutputPass, InputType } from '../GOutputPass.js'
 
 export class PenViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -50,7 +51,6 @@ export class PenViewPipeline extends GProgressivePipeline {
     const taaPass = new GTAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
-    taaPass.outputToScreen = true
 
     const stencilPass = new GStencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
@@ -60,6 +60,12 @@ export class PenViewPipeline extends GProgressivePipeline {
     stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
     stencilSelectPass.outputTarget = null
+    stencilSelectPass.onBeforeRender = () => {
+      speckleRenderer.renderer.getContext().colorMask(false, false, false, false)
+    }
+    stencilSelectPass.onAfterRender = () => {
+      speckleRenderer.renderer.getContext().colorMask(true, true, true, true)
+    }
 
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
@@ -68,6 +74,11 @@ export class PenViewPipeline extends GProgressivePipeline {
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
     overlayPass.outputTarget = null
+
+    const outputPass = new GOutputPass()
+    outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
+    outputPass.setInputType(InputType.Passthrough)
+    outputPass.outputTarget = null
 
     this.dynamicStage.push(
       depthPassDynamic,
@@ -83,6 +94,7 @@ export class PenViewPipeline extends GProgressivePipeline {
       normalPass,
       edgesPass,
       taaPass,
+      outputPass,
       stencilPass,
       stencilSelectPass,
       stencilMaskPass,
@@ -90,7 +102,7 @@ export class PenViewPipeline extends GProgressivePipeline {
     )
 
     this.passthroughStage.push(
-      taaPass,
+      outputPass,
       stencilPass,
       stencilSelectPass,
       stencilMaskPass,

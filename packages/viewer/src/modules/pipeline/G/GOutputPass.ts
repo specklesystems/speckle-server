@@ -8,7 +8,8 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 export enum InputType {
   Color = 0,
   PackedDepth = 1,
-  Normals = 2
+  Normals = 2,
+  Passthrough = 3
 }
 
 export class GOutputPass extends BaseGPass {
@@ -26,7 +27,7 @@ export class GOutputPass extends BaseGPass {
       fragmentShader: speckleCopyOutputFrag,
       transparent: false
     })
-
+    this.materialCopy.depthWrite = false
     this.materialCopy.needsUpdate = true
     this.fsQuad = new FullScreenQuad(this.materialCopy)
   }
@@ -47,11 +48,6 @@ export class GOutputPass extends BaseGPass {
 
   public render(renderer: WebGLRenderer): boolean {
     renderer.setRenderTarget(this._outputTarget)
-
-    renderer.setClearColor(0xffffff)
-    renderer.setClearAlpha(0.0)
-    renderer.clear(true, true, true)
-
     this.fsQuad.render(renderer)
 
     return false

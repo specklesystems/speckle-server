@@ -52,6 +52,7 @@ export class GEdgePass extends BaseGPass {
         tBackground: { value: null }
       }
     })
+    this.edgesMaterial.depthWrite = false
 
     this.fsQuad = new FullScreenQuad(this.edgesMaterial)
   }
