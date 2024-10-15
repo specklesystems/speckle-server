@@ -47,6 +47,12 @@ module.exports = (app) => {
       streamId: req.params.streamId,
       objectId: req.params.objectId
     })
+    // https://knexjs.org/faq/recipes.html#manually-closing-streams
+    // https://github.com/knex/knex/issues/2324
+    req.on('close', () => {
+      dbStream.end.bind(dbStream)
+      dbStream.destroy.bind(dbStream)
+    })
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
 
