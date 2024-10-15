@@ -1,9 +1,5 @@
 import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import {
-  LimitedUserRecord,
-  UserRecord,
-  UserWithRole
-} from '@/modules/core/helpers/types'
+import { UserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -13,26 +9,17 @@ import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
+import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import {
+  GetUser,
+  GetUserParams,
+  GetUsers
+} from '@/modules/core/domain/users/operations'
+export type { UserWithOptionalRole, GetUserParams }
 
-export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
-  /**
-   * Available, if query joined this data from server_acl
-   * (this can be the server role or stream role depending on how and where this was retrieved)
-   */
-  role?: ServerRoles
+const tables = {
+  users: (db: Knex) => db<UserRecord>(Users.name)
 }
-
-export type GetUserParams = Partial<{
-  /**
-   * Join server_acl and get user role info
-   */
-  withRole: boolean
-
-  /**
-   * Skip record sanitization. ONLY use when you wish to work with a user's password digest
-   */
-  skipClean: boolean
-}>
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
   if (!user) return user
@@ -65,34 +52,36 @@ export const getUsersBaseQuery = (
 /**
  * Get users by ID
  */
-export async function getUsers(
-  userIds: string | string[],
-  params?: GetUserParams
-): Promise<UserWithOptionalRole[]> {
-  const { withRole, skipClean } = params || {}
-  userIds = isArray(userIds) ? userIds : [userIds]
+export const getUsersFactory =
+  (deps: { db: Knex }): GetUsers =>
+  async (
+    userIds: string | string[],
+    params?: GetUserParams
+  ): Promise<UserWithOptionalRole[]> => {
+    const { withRole, skipClean } = params || {}
+    userIds = isArray(userIds) ? userIds : [userIds]
 
-  const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
-  q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
-    [UserEmails.col.primary]: true
-  })
+    const q = tables.users(deps.db).whereIn(Users.col.id, userIds)
+    q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
+      [UserEmails.col.primary]: true
+    })
 
-  const columns: (Knex.Raw<UserRecord> | string)[] = [
-    ...Object.values(omit(Users.col, ['email', 'verified'])),
-    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-  ]
-  if (withRole) {
-    // Getting first role from grouped results
-    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
-    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    const columns: (Knex.Raw<UserRecord> | string)[] = [
+      ...Object.values(omit(Users.col, ['email', 'verified'])),
+      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+    ]
+    if (withRole) {
+      // Getting first role from grouped results
+      columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
+      q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    }
+
+    q.columns<UserWithOptionalRole[]>(columns)
+    q.groupBy(Users.col.id)
+
+    return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
   }
-
-  q.columns(columns)
-  q.groupBy(Users.col.id)
-
-  return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
-}
 
 type UserQuery = {
   query: string | null
@@ -149,11 +138,13 @@ export async function countUsers(args: UserQuery): Promise<number> {
 /**
  * Get user by ID
  */
-export async function getUser(userId: string, params?: GetUserParams) {
-  if (!userId) return null
-  const users = await getUsers([userId], params)
-  return users?.[0] || null
-}
+export const getUserFactory =
+  (deps: { db: Knex }): GetUser =>
+  async (userId: string, params?: GetUserParams) => {
+    if (!userId) return null
+    const users = await getUsersFactory(deps)([userId], params)
+    return users?.[0] || null
+  }
 
 /**
  * Get user by e-mail address

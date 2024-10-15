@@ -12,13 +12,11 @@ import { Webhook } from '@/modules/webhooks/domain/types'
 import { SetValuesNullable } from '@speckle/shared'
 import crs from 'crypto-random-string'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import {
-  getUser as getUserFn,
-  UserWithOptionalRole
-} from '@/modules/core/repositories/users'
 import { Knex } from 'knex'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const MAX_STREAM_WEBHOOKS = 100
 
@@ -110,7 +108,7 @@ export const dispatchStreamEventFactory =
     getServerInfo: typeof getServerInfoFn
     getStream: GetStream
     createWebhookEvent: CreateWebhookEvent
-    getUser: typeof getUserFn
+    getUser: GetUser
   }) =>
   async ({
     streamId,

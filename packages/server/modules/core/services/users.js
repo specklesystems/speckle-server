@@ -20,7 +20,7 @@ const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
   getUserByEmail,
   getUsersBaseQuery,
-  getUser
+  getUserFactory
 } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -75,6 +75,7 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
+const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,

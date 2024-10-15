@@ -1,5 +1,6 @@
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { GetUser, GetUsers } from '@/modules/core/domain/users/operations'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
@@ -9,7 +10,6 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -151,7 +151,7 @@ export const useProjectInviteAndNotifyFactory =
  * Invite users to be contributors for the specified project
  */
 export const inviteUsersToProjectFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite; getUsers: typeof getUsers }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getUsers: GetUsers }) =>
   async (
     inviterId: string,
     streamId: string,
@@ -207,10 +207,7 @@ function buildPendingStreamCollaboratorModel(
  * Get all pending invitations to projects that this user has
  */
 export const getUserPendingProjectInvitesFactory =
-  (deps: {
-    getUserResourceInvites: QueryAllUserResourceInvites
-    getUser: typeof getUser
-  }) =>
+  (deps: { getUserResourceInvites: QueryAllUserResourceInvites; getUser: GetUser }) =>
   async (userId: string): Promise<PendingStreamCollaboratorGraphQLReturn[]> => {
     if (!userId) return []
 
@@ -234,7 +231,7 @@ export const getUserPendingProjectInvitesFactory =
  * Either the user ID or invite ID must be set
  */
 export const getUserPendingProjectInviteFactory =
-  (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
+  (deps: { findInvite: FindInvite; getUser: GetUser }) =>
   async (
     projectId: string,
     userId: MaybeNullOrUndefined<string>,

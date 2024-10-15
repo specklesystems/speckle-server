@@ -13,7 +13,6 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { getUser } from '@/modules/core/repositories/users'
 import { createObject } from '@/modules/core/services/objects'
 import {
   getObjectFactory,
@@ -54,6 +53,7 @@ import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 const command: CommandModule<
   unknown,
@@ -149,6 +149,7 @@ const command: CommandModule<
       })
     })
 
+    const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,
