@@ -10,6 +10,11 @@ import { Resource } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import opentelemetry from '@opentelemetry/api'
+import {
+  getOtelHeaderValue,
+  getOtelTraceKey,
+  getOtelTracingUrl
+} from '@/modules/shared/helpers/envHelper'
 
 const OTEL_NAME = 'speckle'
 
@@ -42,10 +47,16 @@ export function initOpenTelemetry() {
       })
     ]
   })
+  const headers: Partial<Record<string, unknown>> = {}
+  const key = getOtelTraceKey()
+  const value = getOtelHeaderValue()
+  if (key && value) {
+    headers[key] = value
+  }
 
   const exporter = new OTLPTraceExporter({
-    url: 'https://seq-dev.speckle.systems/ingest/otlp/v1/traces',
-    headers: { 'X-Seq-ApiKey': 'y5YnBp12ZE1Czh4tzZWn' }
+    url: getOtelTracingUrl(),
+    headers
   })
 
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter))

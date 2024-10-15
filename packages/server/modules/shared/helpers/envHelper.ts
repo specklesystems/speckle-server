@@ -451,3 +451,17 @@ export function getS3BucketName() {
 export function createS3Bucket() {
   return getBooleanFromEnv('S3_CREATE_BUCKET')
 }
+
+export function getOtelTracingUrl() {
+  if (!process.env.OTEL_TRACE_URL) return 'http://localhost:4318'
+  return process.env.OTEL_TRACE_URL
+}
+
+export function getOtelTraceKey() {
+  if (!process.env.OTEL_TRACE_KEY) return 'X-Seq-ApiKey'
+  return process.env.OTEL_TRACE_KEY
+}
+
+export function getOtelHeaderValue() {
+  return process.env.OTEL_TRACE_VALUE
+}
