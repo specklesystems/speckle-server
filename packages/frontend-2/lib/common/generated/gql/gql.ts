@@ -163,10 +163,10 @@ const documents = {
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPagePaginationDocument,
     "\n  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {\n    userSearch(\n      query: $query\n      limit: 5\n      cursor: null\n      archived: false\n      emailOnly: $emailOnly\n    ) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query UserSearch(\n    $query: String!\n    $limit: Int\n    $cursor: String\n    $archived: Boolean\n    $workspaceId: String\n  ) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n        role\n        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n      }\n    }\n  }\n": types.UserSearchDocument,
-    "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
+    "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
-    "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
+    "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
     "\n  mutation DashboardJoinWorkspace($input: JoinWorkspaceInput!) {\n    workspaceMutations {\n      join(input: $input) {\n        ...WorkspaceInviteDiscoverableWorkspaceBanner_Workspace\n      }\n    }\n  }\n": types.DashboardJoinWorkspaceDocument,
     "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
     "\n  query DashboardProjectsPageWorkspaceQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n": types.DashboardProjectsPageWorkspaceQueryDocument,
@@ -957,7 +957,7 @@ export function graphql(source: "\n  query UserSearch(\n    $query: String!\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n"];
+export function graphql(source: "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -969,7 +969,7 @@ export function graphql(source: "\n  query ProjectModelsSelectorValues($projectI
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n"): (typeof documents)["\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n"];
+export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n"): (typeof documents)["\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
