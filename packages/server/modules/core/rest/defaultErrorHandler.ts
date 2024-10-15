@@ -55,9 +55,10 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
 
   const e = ensureError(err)
   // Add the error to the request context, this allows it to be logged by pino-http
+  if (!req.context) req.context = { auth: false }
   if (!req.context.err) req.context.err = e
   res.status(resolveStatusCode(e)).json({
     error: resolveErrorInfo(e)
   })
-  next()
+  next(err)
 }

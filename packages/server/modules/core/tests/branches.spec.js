@@ -8,26 +8,211 @@ const { sleep } = require('@/test/helpers')
 const expect = chai.expect
 
 const knex = require('@/db/knex')
-const { createUser } = require('../services/users')
-const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
-const {
-  createBranch,
-  updateBranch,
-  getBranchesByStreamId,
-  deleteBranchById
-} = require('../services/branches')
-const { createCommitByBranchName } = require('../services/commits')
+const { getBranchesByStreamId } = require('../services/branches')
 
-const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
+const {
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
+} = require('@/modules/core/services/branch/management')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory,
+  updateBranchFactory,
+  deleteBranchByIdFactory,
+  markCommitBranchUpdatedFactory
 } = require('@/modules/core/repositories/branches')
+const {
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStreamFactory,
+  createStreamFactory,
+  markBranchStreamUpdatedFactory,
+  markCommitStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 
+const db = knex
 const Commits = () => knex('commits')
+
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
+const getStream = getStreamFactory({ db: knex })
 const getBranchById = getBranchByIdFactory({ db: knex })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
+const createBranch = createBranchFactory({ db: knex })
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById: getBranchByIdFactory({ db: knex }),
+  updateBranch: updateBranchFactory({ db: knex }),
+  addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db: knex }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db: knex })
+})
+
+const getObject = getObjectFactory({ db: knex })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -57,11 +242,13 @@ describe('Branches @core-branches', () => {
   const branch = { name: 'dim/dev' }
 
   it('Should create a branch', async () => {
-    branch.id = await createBranch({
-      ...branch,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    branch.id = (
+      await createBranch({
+        ...branch,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
     expect(branch.id).to.be.not.null
     expect(branch.id).to.be.a.string
   })
@@ -91,24 +278,28 @@ describe('Branches @core-branches', () => {
     }
 
     try {
-      await updateBranch({
-        id: branch.id,
-        name: '/super/part/two',
-        streamId: stream.id,
-        userId: user.id
-      })
+      await updateBranchAndNotify(
+        {
+          id: branch.id,
+          name: '/super/part/two',
+          streamId: stream.id
+        },
+        user.id
+      )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
       expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
-      await updateBranch({
-        id: branch.id,
-        name: '#super#part#three',
-        streamId: stream.id,
-        userId: user.id
-      })
+      await updateBranchAndNotify(
+        {
+          id: branch.id,
+          name: '#super#part#three',
+          streamId: stream.id
+        },
+        user.id
+      )
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
       expect(err.message).to.contain('Branch names cannot start with')
@@ -127,11 +318,13 @@ describe('Branches @core-branches', () => {
   })
 
   it('Branch names should be case insensitive (always lowercase)', async () => {
-    const id = await createBranch({
-      name: 'CaseSensitive',
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const id = (
+      await createBranch({
+        name: 'CaseSensitive',
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
     const b = await getStreamBranchByName(stream.id, 'casesensitive')
     expect(b.name).to.equal('casesensitive')
@@ -143,7 +336,7 @@ describe('Branches @core-branches', () => {
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
-    await deleteBranchById({ id, streamId: stream.id, userId: user.id })
+    await deleteBranchAndNotify({ id, streamId: stream.id }, user.id)
   })
 
   it('Should get a branch', async () => {
@@ -153,12 +346,14 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should update a branch', async () => {
-    await updateBranch({
-      id: branch.id,
-      description: 'lorem ipsum',
-      streamId: stream.id,
-      userId: user.id
-    })
+    await updateBranchAndNotify(
+      {
+        id: branch.id,
+        description: 'lorem ipsum',
+        streamId: stream.id
+      },
+      user.id
+    )
 
     const b1 = await getBranchById(branch.id)
     expect(b1.description).to.equal('lorem ipsum')
@@ -184,7 +379,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should delete a branch', async () => {
-    await deleteBranchById({ id: branch.id, streamId: stream.id, userId: user.id })
+    await deleteBranchAndNotify({ id: branch.id, streamId: stream.id }, user.id)
     const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items).to.have.lengthOf(4)
   })
@@ -192,13 +387,15 @@ describe('Branches @core-branches', () => {
   it('Deleting a branch should delete the commit', async () => {
     const branchName = 'pasta'
 
-    const branchId = await createBranch({
-      name: branchName,
-      streamId: stream.id,
-      authorId: user.id
-    })
+    const branchId = (
+      await createBranch({
+        name: branchName,
+        streamId: stream.id,
+        authorId: user.id
+      })
+    ).id
 
-    const tempCommit = await createCommitByBranchName({
+    const { id: tempCommitId } = await createCommitByBranchName({
       streamId: stream.id,
       branchName,
       message: 'temp commit',
@@ -208,14 +405,14 @@ describe('Branches @core-branches', () => {
     })
     await deleteBranchAndNotify({ id: branchId, streamId: stream.id }, user.id)
 
-    const commit = await Commits().where({ id: tempCommit }).first()
+    const commit = await Commits().where({ id: tempCommitId }).first()
     expect(commit).to.be.undefined
   })
 
   it('Should NOT delete the main branch', async () => {
     const b = await getStreamBranchByName(stream.id, 'main')
     try {
-      await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
+      await deleteBranchAndNotify({ id: b.id, streamId: stream.id }, user.id)
       assert.fail()
     } catch {
       // pass

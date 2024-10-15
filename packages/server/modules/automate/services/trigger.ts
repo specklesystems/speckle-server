@@ -10,7 +10,6 @@ import {
   LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -25,7 +24,6 @@ import {
   type TriggeredAutomationFunctionRun
 } from '@/modules/automate/clients/executionEngine'
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
@@ -48,6 +46,8 @@ import {
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
 import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
+import { GetCommit } from '@/modules/core/domain/commits/operations'
+import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -216,6 +216,7 @@ export type TriggerAutomationRevisionRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   automateRunsEmitter: AutomateRunsEventsEmitter
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
+  getCommit: GetCommit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -235,7 +236,8 @@ export const triggerAutomationRevisionRunFactory =
       createAppToken,
       upsertAutomationRun,
       automateRunsEmitter,
-      getFullAutomationRevisionMetadata
+      getFullAutomationRevisionMetadata,
+      getCommit
     } = deps
     const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
@@ -328,7 +330,7 @@ export const triggerAutomationRevisionRunFactory =
 export const ensureRunConditionsFactory =
   (deps: {
     revisionGetter: GetFullAutomationRevisionMetadata
-    versionGetter: typeof getCommit
+    versionGetter: GetCommit
     automationTokenGetter: GetAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
@@ -465,7 +467,7 @@ export type ManuallyTriggerAutomationDeps = {
   getAutomation: GetAutomation
   getBranchLatestCommits: GetBranchLatestCommits
   triggerFunction: TriggerAutomationRevisionRun
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
 }
 
 export const manuallyTriggerAutomationFactory =
@@ -540,7 +542,7 @@ export type CreateTestAutomationRunDeps = {
   getLatestAutomationRevision: GetLatestAutomationRevision
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   upsertAutomationRun: UpsertAutomationRun
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps

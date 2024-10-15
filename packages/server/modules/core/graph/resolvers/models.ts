@@ -1,9 +1,9 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  createBranchAndNotify,
-  deleteBranchAndNotify,
-  updateBranchAndNotify
+  createBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory,
+  updateBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
 import {
   getPaginatedProjectModelsFactory,
@@ -15,7 +15,7 @@ import { last } from 'lodash'
 
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
-  getPaginatedBranchCommits,
+  getPaginatedBranchCommitsFactory,
   getPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
 import {
@@ -23,29 +23,50 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
+  createBranchFactory,
+  deleteBranchByIdFactory,
+  getBranchByIdFactory,
   getBranchLatestCommitsFactory,
-  getModelTreeItems,
+  getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
   getModelTreeItemsFilteredTotalCountFactory,
+  getModelTreeItemsTotalCountFactory,
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
-  getStreamBranchesByNameFactory
+  getStreamBranchByNameFactory,
+  getStreamBranchesByNameFactory,
+  updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommits,
-  getSpecificBranchCommits
+  getAllBranchCommitsFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
+import {
+  addBranchCreatedActivity,
+  addBranchDeletedActivity,
+  addBranchUpdatedActivity
+} from '@/modules/activitystream/services/branchActivity'
+import {
+  getStreamFactory,
+  markBranchStreamUpdatedFactory
+} from '@/modules/core/repositories/streams'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreamObjects = getStreamObjectsFactory({ db })
 const getViewerResourceGroups = getViewerResourceGroupsFactory({
   getStreamObjects,
   getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
   getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-  getSpecificBranchCommits,
-  getAllBranchCommits
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getAllBranchCommits: getAllBranchCommitsFactory({ db })
 })
 
 const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
@@ -54,11 +75,38 @@ const getPaginatedProjectModels = getPaginatedProjectModelsFactory({
     db
   })
 })
+const getModelTreeItems = getModelTreeItemsFactory({ db })
 const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
   getModelTreeItemsFiltered: getModelTreeItemsFilteredFactory({ db }),
   getModelTreeItemsFilteredTotalCount: getModelTreeItemsFilteredTotalCountFactory({
     db
-  })
+  }),
+  getModelTreeItems,
+  getModelTreeItemsTotalCount: getModelTreeItemsTotalCountFactory({ db })
+})
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
+})
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById: getBranchByIdFactory({ db }),
+  updateBranch: updateBranchFactory({ db }),
+  addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
+
+const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
 })
 
 export = {

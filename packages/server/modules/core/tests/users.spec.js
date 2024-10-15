@@ -2,44 +2,231 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const {
-  changeUserRole,
-  createUser,
-  findOrCreateUser,
-  getUser,
-  getUserByEmail,
-  searchUsers,
-  updateUser,
-  deleteUser,
-  validatePasssword,
-  updateUserPassword,
-  getUserById
-} = require('../services/users')
+const { changeUserRole, searchUsers, deleteUser } = require('../services/users')
 const {
   createPersonalAccessToken,
   revokeToken,
   validateToken,
   getUserTokens
 } = require('../services/tokens')
-const {
-  grantPermissionsStream,
-  createStream,
-  getStream
-} = require('../services/streams')
 
-const { createBranch, getBranchesByStreamId } = require('../services/branches')
+const { getBranchesByStreamId } = require('../services/branches')
 
-const {
-  createCommitByBranchName,
-  getCommitsByBranchName,
-  getCommitById,
-  getCommitsByStreamId
-} = require('../services/commits')
+const { getCommitsByBranchName, getCommitsByStreamId } = require('../services/commits')
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
+const {
+  createBranchFactory,
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory
+} = require('@/modules/core/repositories/branches')
+const { db } = require('@/db/knex')
+const {
+  getCommitFactory,
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  getStreamFactory,
+  createStreamFactory,
+  grantStreamPermissionsFactory,
+  markCommitStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const {
+  getUsersFactory,
+  getUserFactory,
+  legacyGetUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  legacyGetUserByEmailFactory,
+  updateUserFactory,
+  getUserByEmailFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const {
+  createUserFactory,
+  findOrCreateUserFactory,
+  updateUserAndNotifyFactory,
+  changePasswordFactory,
+  validateUserPasswordFactory
+} = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  addUserUpdatedActivityFactory
+} = require('@/modules/activitystream/services/userActivity')
+
+const getUser = legacyGetUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getStream = getStreamFactory({ db })
+const createBranch = createBranchFactory({ db })
+const getCommit = getCommitFactory({ db })
+
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser: getUserFactory({ db })
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+})
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const updateUser = updateUserAndNotifyFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db }),
+  addUserUpdatedActivity: addUserUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db })
+  })
+})
+const updateUserPassword = changePasswordFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db })
+})
+const validateUserPassword = validateUserPasswordFactory({
+  getUserByEmail: getUserByEmailFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -68,7 +255,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Validate password should ignore email casing', async () => {
       expect(
-        await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
+        await validateUserPassword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
       )
     })
 
@@ -83,7 +270,7 @@ describe('Actors & Tokens @user-services', () => {
       const { id } = await findOrCreateUser({ user: newUser })
       ballmerUserId = id
       expect(id).to.be.a('string')
-      const user = await getUserById({ userId: id })
+      const user = await getUser(id)
       expect(user.verified).to.equal(true)
     })
 
@@ -127,32 +314,38 @@ describe('Actors & Tokens @user-services', () => {
 
       // create a branch for ballmer on the multiowner stream
       const branch = { name: 'ballmer/dev' }
-      branch.id = await createBranch({
-        ...branch,
-        streamId: multiOwnerStream.id,
-        authorId: ballmerUserId
-      })
+      branch.id = (
+        await createBranch({
+          ...branch,
+          streamId: multiOwnerStream.id,
+          authorId: ballmerUserId
+        })
+      ).id
 
       const branchSecond = { name: 'steve/jobs' }
-      branchSecond.id = await createBranch({
-        ...branchSecond,
-        streamId: multiOwnerStream.id,
-        authorId: myTestActor.id
-      })
+      branchSecond.id = (
+        await createBranch({
+          ...branchSecond,
+          streamId: multiOwnerStream.id,
+          authorId: myTestActor.id
+        })
+      ).id
 
       // create an object and a commit around it on the multiowner stream
       const objId = await createObject({
         streamId: multiOwnerStream.id,
         object: { pie: 'in the sky' }
       })
-      const commitId = await createCommitByBranchName({
-        streamId: multiOwnerStream.id,
-        branchName: 'ballmer/dev',
-        message: 'breakfast commit',
-        sourceApplication: 'tests',
-        objectId: objId,
-        authorId: ballmerUserId
-      })
+      const commitId = (
+        await createCommitByBranchName({
+          streamId: multiOwnerStream.id,
+          branchName: 'ballmer/dev',
+          message: 'breakfast commit',
+          sourceApplication: 'tests',
+          objectId: objId,
+          authorId: ballmerUserId
+        })
+      ).id
 
       await deleteUser({ deleteAllUserInvites: async () => true })(ballmerUserId)
 
@@ -174,10 +367,7 @@ describe('Actors & Tokens @user-services', () => {
       })
       expect(branchCommits.commits.length).to.equal(1)
 
-      const commit = await getCommitById({
-        streamId: multiOwnerStream.id,
-        id: commitId
-      })
+      const commit = await getCommit(commitId, { streamId: multiOwnerStream.id })
       expect(commit).to.be.not.null
 
       const commitsByStreamId = await getCommitsByStreamId({
@@ -255,7 +445,7 @@ describe('Actors & Tokens @user-services', () => {
 
       await updateUser(myTestActor.id, updatedActor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: myTestActor.email,
         password: 'failwhale'
       })
@@ -270,12 +460,12 @@ describe('Actors & Tokens @user-services', () => {
 
       await createUser(actor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: actor.email,
         password: 'super-test-200'
       })
       expect(match).to.equal(true)
-      const matchWrong = await validatePasssword({
+      const matchWrong = await validateUserPassword({
         email: actor.email,
         password: 'super-test-2000'
       })
@@ -290,7 +480,7 @@ describe('Actors & Tokens @user-services', () => {
       }) // https://mostsecure.pw
       await updateUserPassword({ id, newPassword: 'Hello Dogs and Cats' })
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: 'tester@mcbester.com',
         password: 'Hello Dogs and Cats'
       })

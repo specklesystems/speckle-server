@@ -2,11 +2,14 @@ import { db } from '@/db/knex'
 import { GetComment } from '@/modules/comments/domain/operations'
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { getCommentFactory } from '@/modules/comments/repositories/comments'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
@@ -162,8 +165,8 @@ function buildEmailTemplateParams(
  */
 const mentionedInCommentHandlerFactory =
   (deps: {
-    getUser: typeof getUser
-    getStream: typeof getStream
+    getUser: GetUser
+    getStream: GetStream
     getComment: GetComment
     getServerInfo: typeof getServerInfo
     renderEmail: typeof renderEmail
@@ -219,8 +222,8 @@ const mentionedInCommentHandlerFactory =
  */
 const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
-    getUser,
-    getStream,
+    getUser: getUserFactory({ db }),
+    getStream: getStreamFactory({ db }),
     getComment: getCommentFactory({ db }),
     getServerInfo,
     renderEmail,

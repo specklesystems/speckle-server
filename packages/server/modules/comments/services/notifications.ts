@@ -8,7 +8,7 @@ import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
-import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
+import { AddStreamCommentMentionActivity } from '@/modules/activitystream/domain/operations'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -36,7 +36,7 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
 
 type SendNotificationsForUsersDeps = {
   publish: NotificationPublisher
-  addStreamCommentMentionActivity: typeof addStreamCommentMentionActivity
+  addStreamCommentMentionActivity: AddStreamCommentMentionActivity
 }
 
 const sendNotificationsForUsersFactory =

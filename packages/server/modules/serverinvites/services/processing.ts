@@ -45,15 +45,15 @@ import {
   FindEmail,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { getUser } from '@/modules/core/repositories/users'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { getServerInfo } from '@/modules/core/services/generic'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 /**
  * Convert the initial validation function to a finalization validation function so same logic can be reused
  */
 export const convertToFinalizationValidation = (params: {
-  getUser: typeof getUser
+  getUser: GetUser
   initialValidation: CollectAndValidateResourceTargets
   serverInfo: ServerInfo
 }): ValidateResourceInviteBeforeFinalization => {
@@ -196,7 +196,7 @@ type FinalizeResourceInviteFactoryDeps = {
   validateAndCreateUserEmail: ValidateAndCreateUserEmail
   collectAndValidateResourceTargets: CollectAndValidateResourceTargets
   getServerInfo: typeof getServerInfo
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 export const finalizeResourceInviteFactory =

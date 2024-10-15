@@ -21,10 +21,26 @@
 
 <script setup lang="ts">
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
+import {
+  getInvitesCountQuery,
+  getUsersCountQuery
+} from '~~/lib/server-management/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
+
+const { result: invitesResult } = useQuery(getInvitesCountQuery)
+const { result: usersResult } = useQuery(getUsersCountQuery)
 
 const tabItems = computed<LayoutPageTabItem[]>(() => [
-  { title: 'Members', id: 'members' },
-  { title: 'Pending invites', id: 'invites' }
+  {
+    title: 'Members',
+    id: 'members',
+    count: usersResult.value?.admin?.userList?.totalCount
+  },
+  {
+    title: 'Pending invites',
+    id: 'invites',
+    count: invitesResult.value?.admin?.inviteList?.totalCount
+  }
 ])
 
 const activeTab = ref(tabItems.value[0])

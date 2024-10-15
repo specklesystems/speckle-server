@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
-import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 
 import {
@@ -28,12 +27,16 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
 
 const azureAdStrategyBuilderFactory =
   (deps: {
     getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
-    findOrCreateUser: typeof findOrCreateUser
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath

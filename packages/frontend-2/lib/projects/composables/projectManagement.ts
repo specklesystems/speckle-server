@@ -28,9 +28,10 @@ import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  modifyObjectFields
+  modifyObjectFields,
+  modifyObjectField
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -47,6 +48,7 @@ import {
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useRouter } from 'vue-router'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -413,10 +415,14 @@ export function useDeleteProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const navigateHome = useNavigateToHome()
+  const router = useRouter()
 
-  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+  return async (
+    id: string,
+    options?: Partial<{ goHome: boolean; workspaceSlug?: string }>
+  ) => {
     if (!activeUser.value) return
-    const { goHome } = options || {}
+    const { goHome, workspaceSlug } = options || {}
 
     const result = await apollo
       .mutate({
@@ -434,7 +440,11 @@ export function useDeleteProject() {
       })
 
       if (goHome) {
-        navigateHome()
+        if (workspaceSlug) {
+          router.push(workspaceRoute(workspaceSlug))
+        } else {
+          navigateHome()
+        }
       }
 
       // evict project from cache
@@ -551,11 +561,33 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (projectId: string, workspaceId: string, workspaceName: string) => {
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
+    eventSource?: string
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
     const { data, errors } = await apollo
       .mutate({
         mutation: useMoveProjectToWorkspaceMutation,
-        variables: { projectId, workspaceId }
+        variables: { projectId, workspaceId },
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
+          if (!workspaceId) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', workspaceId),
+            'projects',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -568,7 +600,8 @@ export function useMoveProjectToWorkspace() {
       mixpanel.track('Project Moved To Workspace', {
         projectId,
         // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+        workspace_id: workspaceId,
+        source: eventSource
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)

@@ -31,8 +31,6 @@ import {
 import { setupRunFinishedTrackingFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getUserById } from '@/modules/core/services/users'
-import { getCommit } from '@/modules/core/repositories/commits'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
@@ -40,6 +38,8 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -86,7 +86,8 @@ const initializeEventListeners = () => {
     getAutomationToken: getAutomationTokenFactory({ db }),
     upsertAutomationRun: upsertAutomationRunFactory({ db }),
     getFullAutomationRevisionMetadata,
-    getBranchLatestCommits: getBranchLatestCommitsFactory({ db })
+    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
+    getCommit: getCommitFactory({ db })
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
     getAutomationRunFullTriggers,
@@ -100,8 +101,8 @@ const initializeEventListeners = () => {
     })
   const setupRunFinishedTrackingInvoke = setupRunFinishedTrackingFactory({
     getFullAutomationRevisionMetadata,
-    getUserById,
-    getCommit,
+    getUser: legacyGetUserFactory({ db }),
+    getCommit: getCommitFactory({ db }),
     getFullAutomationRunById: getFullAutomationRunByIdFactory({ db }),
     automateRunsEventListener: AutomateRunsEmitter.listen
   })

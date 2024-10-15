@@ -13,6 +13,7 @@ import {
   GetApp,
   GetAuthorizationCode,
   GetRefreshToken,
+  GetTokenAppInfo,
   RegisterDefaultApp,
   RevokeExistingAppCredentials,
   RevokeExistingAppCredentialsForUser,
@@ -292,36 +293,42 @@ export const createAppFactory =
     return { id, secret }
   }
 
-export const revokeExistingAppCredentialsFactory =
-  (deps: {
-    db: Knex
-  }): RevokeExistingAppCredentials & RevokeExistingAppCredentialsForUser =>
-  async (params) => {
-    const { appId } = params
-    const userId = 'userId' in params ? params.userId : undefined
+const revokeExistingAppCredentialsForMaybeUserFactory =
+  (deps: { db: Knex }) =>
+  async ({ appId, userId }: { appId: string; userId?: string }) => {
+    const maybeUserContext = userId ? { userId, appId } : { appId }
 
     await tables
       .authorizationCodes(deps.db)
-      .where({ appId, ...(userId ? { userId } : {}) })
+      .where({ ...maybeUserContext })
       .del()
     await tables
       .refreshTokens(deps.db)
-      .where({ appId, ...(userId ? { userId } : {}) })
+      .where({ ...maybeUserContext })
       .del()
 
-    const resApiTokenDelete = await tables
+    const q = tables
       .apiTokens(deps.db)
       .whereIn('id', (qb) => {
-        qb.select('tokenId').from('user_server_app_tokens').where({ appId })
+        qb.select('tokenId')
+          .from('user_server_app_tokens')
+          .where({ ...maybeUserContext })
       })
       .del()
 
+    const resApiTokenDelete = await q
     return resApiTokenDelete
   }
 
-export const revokeExistingAppCredentialsForUserFactory = (deps: {
-  db: Knex
-}): RevokeExistingAppCredentialsForUser => revokeExistingAppCredentialsFactory(deps)
+export const revokeExistingAppCredentialsForUserFactory =
+  ({ db }: { db: Knex }): RevokeExistingAppCredentialsForUser =>
+  async ({ appId, userId }) =>
+    await revokeExistingAppCredentialsForMaybeUserFactory({ db })({ appId, userId })
+
+export const revokeExistingAppCredentialsFactory =
+  ({ db }: { db: Knex }): RevokeExistingAppCredentials =>
+  async ({ appId }) =>
+    await revokeExistingAppCredentialsForMaybeUserFactory({ db })({ appId })
 
 export const updateAppFactory =
   (deps: { db: Knex }): UpdateApp =>
@@ -405,4 +412,32 @@ export const getRefreshTokenFactory =
   (deps: { db: Knex }): GetRefreshToken =>
   async ({ id }) => {
     return await tables.refreshTokens(deps.db).select('*').where({ id }).first()
+  }
+
+export const getTokenAppInfoFactory =
+  (deps: { db: Knex }): GetTokenAppInfo =>
+  async (params: { token: string; appId?: string }) => {
+    const { token, appId } = params
+    const tokenId = token.slice(0, 10)
+
+    const q = tables
+      .apiTokens(deps.db)
+      .select<ServerAppRecord[]>(ServerApps.cols)
+      .where({
+        [ApiTokens.col.id]: tokenId,
+        ...(appId
+          ? {
+              [UserServerAppTokens.col.appId]: appId
+            }
+          : {})
+      })
+      .innerJoin(
+        UserServerAppTokens.name,
+        ApiTokens.col.id,
+        UserServerAppTokens.col.tokenId
+      )
+      .innerJoin(ServerApps.name, ServerApps.col.id, UserServerAppTokens.col.appId)
+      .first()
+
+    return await q
   }

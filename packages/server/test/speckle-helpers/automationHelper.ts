@@ -15,7 +15,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
   getBranchesByIdsFactory,
-  getLatestStreamBranch
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 
 import {
@@ -40,12 +40,15 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
+const getLatestStreamBranch = getLatestStreamBranchFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })

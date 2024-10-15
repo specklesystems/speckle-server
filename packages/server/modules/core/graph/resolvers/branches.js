@@ -9,29 +9,63 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 
 const {
-  createBranchAndNotify,
-  updateBranchAndNotify,
-  deleteBranchAndNotify
+  createBranchAndNotifyFactory,
+  updateBranchAndNotifyFactory,
+  deleteBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
 } = require('@/modules/core/services/branch/retrieval')
 
-const { getUserById } = require('../../services/users')
 const { Roles } = require('@speckle/shared')
 const {
   getBranchByIdFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  createBranchFactory,
+  updateBranchFactory,
+  deleteBranchByIdFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
+const {
+  addBranchCreatedActivity,
+  addBranchUpdatedActivity,
+  addBranchDeletedActivity
+} = require('@/modules/activitystream/services/branchActivity')
+const {
+  getStreamFactory,
+  markBranchStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const { ModelsEmitter } = require('@/modules/core/events/modelsEmitter')
+const { legacyGetUserFactory } = require('@/modules/core/repositories/users')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
+const getStream = getStreamFactory({ db })
 const getBranchById = getBranchByIdFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+const createBranchAndNotify = createBranchAndNotifyFactory({
+  getStreamBranchByName,
+  createBranch: createBranchFactory({ db }),
+  addBranchCreatedActivity
+})
+const updateBranchAndNotify = updateBranchAndNotifyFactory({
+  getBranchById,
+  updateBranch: updateBranchFactory({ db }),
+  addBranchUpdatedActivity
+})
+const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+  getStream,
+  getBranchById: getBranchByIdFactory({ db }),
+  modelsEventsEmitter: ModelsEmitter.emit,
+  markBranchStreamUpdated,
+  addBranchDeletedActivity,
+  deleteBranchById: deleteBranchByIdFactory({ db })
+})
+const getUser = legacyGetUserFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -61,8 +95,7 @@ module.exports = {
   },
   Branch: {
     async author(parent, args, context) {
-      if (parent.authorId && context.auth)
-        return await getUserById({ userId: parent.authorId })
+      if (parent.authorId && context.auth) return await getUser(parent.authorId)
       else return null
     }
   },

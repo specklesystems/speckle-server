@@ -26,7 +26,6 @@ import {
   validateWorkspaceSlug
 } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -64,6 +63,7 @@ import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
+import { DeleteStreamRecords } from '@/modules/core/domain/streams/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -278,7 +278,7 @@ export const deleteWorkspaceFactory =
     deleteAllResourceInvites
   }: {
     deleteWorkspace: DeleteWorkspace
-    deleteProject: typeof deleteStream
+    deleteProject: DeleteStreamRecords
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
   }) =>
@@ -389,17 +389,8 @@ export const updateWorkspaceRoleFactory =
 
     // Return early if no work required
     const previousWorkspaceRole = workspaceRoles.find((acl) => acl.userId === userId)
-
     if (previousWorkspaceRole?.role === nextWorkspaceRole) {
       return
-    }
-
-    // Protect against removing last admin
-    if (
-      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      nextWorkspaceRole !== Roles.Workspace.Admin
-    ) {
-      throw new WorkspaceAdminRequiredError()
     }
 
     // prevent role downgrades (used during invite flow)
@@ -414,6 +405,14 @@ export const updateWorkspaceRoleFactory =
         )!.weight
         if (newRoleWeight < existingRoleWeight) return
       }
+    }
+
+    // Protect against removing last admin
+    if (
+      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
+      nextWorkspaceRole !== Roles.Workspace.Admin
+    ) {
+      throw new WorkspaceAdminRequiredError()
     }
 
     // ensure domain compliance

@@ -53,7 +53,7 @@ import { Automate } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
-  getLatestStreamBranch
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 import {
   buildAutomationCreate,
@@ -76,7 +76,9 @@ import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctio
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { createAppToken } from '@/modules/core/services/tokens'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -97,6 +99,8 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 const updateAutomationRevision = updateAutomationRevisionFactory({ db })
 const updateAutomationRun = updateAutomationRunFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getCommit = getCommitFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -148,7 +152,7 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
       ])
 
       const [projectModel, newAutomation] = await Promise.all([
-        getLatestStreamBranch(testUserStream.id),
+        getLatestStreamBranchFactory({ db })(testUserStream.id),
         createAutomation({
           userId: testUser.id,
           projectId: testUserStream.id,
@@ -322,7 +326,8 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
             getAutomationToken,
             upsertAutomationRun,
             getFullAutomationRevisionMetadata,
-            getBranchLatestCommits
+            getBranchLatestCommits,
+            getCommit
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -415,7 +420,8 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
           getAutomationToken,
           upsertAutomationRun,
           getFullAutomationRevisionMetadata,
-          getBranchLatestCommits
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -514,7 +520,8 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
           getAutomationToken,
           upsertAutomationRun,
           getFullAutomationRevisionMetadata,
-          getBranchLatestCommits
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -997,7 +1004,8 @@ const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
             getAutomationToken,
             upsertAutomationRun,
             getFullAutomationRevisionMetadata,
-            getBranchLatestCommits
+            getBranchLatestCommits,
+            getCommit
           }),
           validateStreamAccess,
           ...(overrides || {})

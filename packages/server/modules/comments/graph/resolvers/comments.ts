@@ -1,6 +1,5 @@
 import { pubsub } from '@/modules/shared/utils/subscriptions'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   streamResourceCheckFactory,
@@ -86,17 +85,19 @@ import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
-  getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
-  getSpecificBranchCommits
+  getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
+  getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
+const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
@@ -140,6 +141,7 @@ const archiveComment = archiveCommentFactory({
 })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
 
+const getStreamObjects = getStreamObjectsFactory({ db })
 const getCommentsResources = getCommentsResourcesFactory({ db })
 const getViewerResourcesFromLegacyIdentifiers =
   getViewerResourcesFromLegacyIdentifiersFactory({
@@ -148,7 +150,7 @@ const getViewerResourcesFromLegacyIdentifiers =
       getViewerResourcesFromLegacyIdentifiers: (...args) =>
         getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
     }),
-    getCommitsAndTheirBranchIds,
+    getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
     getStreamObjects
   })
 
@@ -178,8 +180,8 @@ const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
     getStreamObjects,
     getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
     getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-    getSpecificBranchCommits,
-    getAllBranchCommits
+    getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
+    getAllBranchCommits: getAllBranchCommitsFactory({ db })
   })
 })
 const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({

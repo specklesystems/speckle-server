@@ -1,7 +1,5 @@
 import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
-import { createUser } from '@/modules/core/services/users'
-import { createStream } from '@/modules/core/services/streams'
 import { times, clamp } from 'lodash'
 import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
@@ -11,11 +9,119 @@ import { expect } from 'chai'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import {
+  createStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  deleteServerOnlyInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
 const createInviteDirectly = createStreamInviteDirectly
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -43,7 +149,8 @@ describe('[Admin users list]', () => {
     name: 'Mr Server Admin Dude',
     email: 'adminuserguy@gmail.com',
     password: 'sn3aky-1337-b1m',
-    id: undefined as Optional<string>
+    id: undefined as Optional<string>,
+    verified: false
   }
 
   const USER_COUNT = 15
@@ -99,7 +206,8 @@ describe('[Admin users list]', () => {
           remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
         }`,
         email: `speckleuser${i}@gmail.com`,
-        password: 'sn3aky-1337-b1m'
+        password: 'sn3aky-1337-b1m',
+        verified: false
       })
       userIds.push(id)
       await wait(WAIT_TIMEOUT)

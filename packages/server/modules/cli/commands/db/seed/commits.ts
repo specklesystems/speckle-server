@@ -1,6 +1,7 @@
+import { db } from '@/db/knex'
 import { cliLogger } from '@/logging/logging'
-import { getStream } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
@@ -28,6 +29,9 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getUser = getUserFactory({ db })
+    const getStream = getStreamFactory({ db })
+
     const count = argv.count
     const streamId = argv.streamId
     const authorId = argv.authorId

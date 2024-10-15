@@ -29,13 +29,13 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="item.user" :user="item.user" />
+          <UserAvatar v-if="item.user" hide-tooltip :user="item.user" />
           <span class="truncate text-body-xs text-foreground">{{ item.title }}</span>
         </div>
       </template>
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item.invitedBy" />
+          <UserAvatar hide-tooltip :user="item.invitedBy" />
           <span class="truncate text-body-xs text-foreground">
             {{ item.invitedBy.name }}
           </span>

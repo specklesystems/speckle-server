@@ -11,7 +11,6 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { getStream } from '@/modules/core/repositories/streams'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
@@ -26,9 +25,13 @@ import {
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
+const getUser = getUserFactory({ db })
+const getStream = getStreamFactory({ db })
 const createAndSendInvite = createAndSendInviteFactory({
-  findUserByTarget: findUserByTargetFactory(),
+  findUserByTarget: findUserByTargetFactory({ db }),
   insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
   collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
     getStream
@@ -40,7 +43,8 @@ const createAndSendInvite = createAndSendInviteFactory({
     getEventBus().emit({
       eventName,
       payload
-    })
+    }),
+  getUser
 })
 
 export const createServerInviteDirectly = async (

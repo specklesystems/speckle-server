@@ -1,9 +1,24 @@
-import { ResourceType, StreamActionType } from '@/modules/activitystream/domain/types'
+import {
+  ActivitySummary,
+  ResourceType,
+  StreamActionType
+} from '@/modules/activitystream/domain/types'
 import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
+import {
+  CommitCreateInput,
+  CommitUpdateInput,
+  ProjectUpdateInput,
+  StreamUpdateInput,
+  UpdateVersionInput
+} from '@/modules/core/graph/generated/graphql'
+import {
+  CommitRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 
 export type GetActivity = (
   streamId: string,
@@ -135,3 +150,76 @@ export type GetUserActivity = ({
 }>
 
 export type SaveActivity = (args: Omit<StreamActivityRecord, 'time'>) => Promise<void>
+
+export type CreateActivitySummary = (args: {
+  userId: string
+  streamIds: string[]
+  start: Date
+  end: Date
+}) => Promise<ActivitySummary | null>
+
+export type AddStreamCommentMentionActivity = (params: {
+  streamId: string
+  mentionAuthorId: string
+  mentionTargetId: string
+  commentId: string
+  threadId: string
+}) => Promise<void>
+
+export type AddStreamInviteDeclinedActivity = (params: {
+  streamId: string
+  inviteTargetId: string
+  inviterId: string
+  stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamInviteSentOutActivity = (params: {
+  streamId: string
+  inviteTargetId: string | null
+  inviterId: string
+  inviteTargetEmail: string | null
+  stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamDeletedActivity = (params: {
+  streamId: string
+  deleterId: string
+}) => Promise<void>
+
+export type AddStreamUpdatedActivity = (params: {
+  streamId: string
+  updaterId: string
+  oldStream: StreamRecord
+  newStream: StreamRecord
+  update: ProjectUpdateInput | StreamUpdateInput
+}) => Promise<void>
+
+export type AddStreamAccessRequestedActivity = (params: {
+  streamId: string
+  requesterId: string
+}) => Promise<void>
+
+export type AddStreamAccessRequestDeclinedActivity = (params: {
+  streamId: string
+  requesterId: string
+  declinerId: string
+}) => Promise<void>
+
+export type AddCommitCreatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  input: CommitCreateInput
+  branchName: string
+  modelId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitUpdatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalCommit: CommitRecord
+  update: CommitUpdateInput | UpdateVersionInput
+  newCommit: CommitRecord
+}) => Promise<void>

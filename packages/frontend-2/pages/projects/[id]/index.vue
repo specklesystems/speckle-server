@@ -13,11 +13,6 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-              {{ project.modelCount.totalCount || 0 }} Model{{
-                project.modelCount.totalCount === 1 ? '' : 's'
-              }}
-            </CommonBadge>
             <CommonBadge
               v-if="project.role"
               rounded
@@ -29,14 +24,16 @@
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
-            <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-            <FormButton
-              v-if="canEdit"
-              color="outline"
-              :to="projectCollaboratorsRoute(project.id)"
-            >
-              Manage
-            </FormButton>
+            <div v-tippy="canEdit ? 'Manage collaborators' : 'View collaborators'">
+              <NuxtLink :to="projectCollaboratorsRoute(project.id)">
+                <UserAvatarGroup
+                  :users="teamUsers"
+                  :max-count="2"
+                  class="max-w-[104px]"
+                  hide-tooltips
+                />
+              </NuxtLink>
+            </div>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -64,6 +61,7 @@
       v-if="project"
       v-model:open="showMoveDialog"
       :project="project"
+      event-source="project-page"
     />
   </div>
 </template>

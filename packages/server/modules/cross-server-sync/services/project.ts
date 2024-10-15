@@ -1,5 +1,4 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
@@ -10,13 +9,16 @@ import {
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
+import { CreateStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -46,7 +48,7 @@ const projectMetadataQuery = gql`
 `
 
 type GetLocalResourcesDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =
@@ -113,7 +115,7 @@ const getProjectMetadata = async (params: {
 
 type EnsureBranchDeps = {
   getStreamBranchByName: GetStreamBranchByName
-  createBranchAndNotify: typeof createBranchAndNotify
+  createBranchAndNotify: CreateBranchAndNotify
 }
 
 const ensureBranchFactory =
@@ -191,7 +193,7 @@ const importVersionsFactory =
   }
 
 type DownloadProjectDeps = {
-  createStreamReturnRecord: typeof createStreamReturnRecord
+  createStreamReturnRecord: CreateStream
 } & GetLocalResourcesDeps &
   ImportVersionsDeps
 

@@ -1,12 +1,9 @@
 const {
-  getUser,
-  getUserByEmail,
   getUserRole,
   deleteUser,
   searchUsers,
   changeUserRole
 } = require('@/modules/core/services/users')
-const { updateUserAndNotify } = require('@/modules/core/services/users/management')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
@@ -15,7 +12,13 @@ const {
   getTotalCounts
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@speckle/shared')
-const { markOnboardingComplete } = require('@/modules/core/repositories/users')
+const {
+  markOnboardingComplete,
+  legacyGetUserFactory,
+  legacyGetUserByEmailFactory,
+  getUserFactory,
+  updateUserFactory
+} = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
@@ -27,6 +30,23 @@ const {
 const db = require('@/db/knex')
 const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const {
+  updateUserAndNotifyFactory
+} = require('@/modules/core/services/users/management')
+const {
+  addUserUpdatedActivityFactory
+} = require('@/modules/activitystream/services/userActivity')
+
+const getUser = legacyGetUserFactory({ db })
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
+
+const updateUserAndNotify = updateUserAndNotifyFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db }),
+  addUserUpdatedActivity: addUserUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db })
+  })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

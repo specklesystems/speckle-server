@@ -30,8 +30,8 @@ export const SettingMenuKeys = Object.freeze(<const>{
     Members: 'workspace/members',
     Projects: 'workspace/projects',
     Security: 'workspace/security',
-    Billing: 'workspac/billing',
-    Regions: 'workspac/regions'
+    Billing: 'workspace/billing',
+    Regions: 'workspace/regions'
   }
 })
 

@@ -1,6 +1,8 @@
 <template>
   <div v-if="hasLock">
-    <SingletonToastManager />
+    <ClientOnly>
+      <SingletonToastManager />
+    </ClientOnly>
     <SingletonAppErrorStateManager />
   </div>
   <div v-else />
