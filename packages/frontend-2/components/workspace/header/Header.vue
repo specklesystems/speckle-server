@@ -66,16 +66,18 @@
           </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <button
-            class="block"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
-          >
-            <UserAvatarGroup
-              :users="team.map((teamMember) => teamMember.user)"
-              :max-count="2"
-              class="max-w-[104px]"
-            />
-          </button>
+          <div v-tippy="'Manage users'">
+            <button
+              class="block"
+              @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+            >
+              <UserAvatarGroup
+                :users="team.map((teamMember) => teamMember.user)"
+                class="max-w-[104px]"
+                hide-tooltips
+              />
+            </button>
+          </div>
           <FormButton
             v-if="isWorkspaceAdmin"
             class="hidden md:block"
