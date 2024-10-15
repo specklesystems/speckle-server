@@ -55,7 +55,7 @@ export abstract class GPipeline {
 
     this.speckleRenderer.renderer.setRenderTarget(null)
     this.speckleRenderer.renderer.setClearColor(0xffffff, 0)
-    this.speckleRenderer.renderer.clear(true, true, true)
+    this.speckleRenderer.renderer.clear(true, true, false)
 
     let renderReturn: boolean = false
     let lastVisibility: ObjectVisibility

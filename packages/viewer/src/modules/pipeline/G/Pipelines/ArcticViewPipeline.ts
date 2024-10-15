@@ -6,6 +6,9 @@ import { ObjectLayers } from '../../../../IViewer.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GViewportPass } from '../GViewportPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { GColorPass } from '../GColorPass.js'
+import { GStencilPass } from '../GStencilPass.js'
+import { GStencilMaskPass } from '../GStencilMaskPass.js'
 
 export class ArcticViewPipeline extends GProgressivePipeline {
   protected accumulationFrameCount: number = 32
@@ -46,9 +49,48 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     blendPass.setTexture('tEdges', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
-    this.dynamicStage.push(viewportPass)
-    this.progressiveStage.push(depthPass, viewportPass, progressiveAOPass, blendPass)
-    this.passthroughStage.push(viewportPass, blendPass)
+    const stencilPass = new GStencilPass()
+    stencilPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const stencilSelectPass = new GColorPass()
+    stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilSelectPass.outputTarget = null
+
+    const stencilMaskPass = new GStencilMaskPass()
+    stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const overlayPass = new GColorPass()
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.outputTarget = null
+
+    this.dynamicStage.push(
+      stencilPass,
+      viewportPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      overlayPass
+    )
+    this.progressiveStage.push(
+      depthPass,
+      stencilPass,
+      viewportPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      progressiveAOPass,
+      blendPass,
+      overlayPass
+    )
+    this.passthroughStage.push(
+      stencilPass,
+      viewportPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      blendPass,
+      overlayPass
+    )
 
     this.passList = this.dynamicStage
   }

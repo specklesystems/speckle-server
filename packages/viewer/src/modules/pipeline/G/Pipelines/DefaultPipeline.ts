@@ -6,6 +6,8 @@ import { ObjectVisibility } from '../GPass.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { GStencilPass } from '../GStencilPass.js'
+import { GStencilMaskPass } from '../GStencilMaskPass.js'
 
 export class DefaultPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -54,22 +56,40 @@ export class DefaultPipeline extends GProgressivePipeline {
     blendPass.setTexture('tEdges', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
+    const stencilPass = new GStencilPass()
+    stencilPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const stencilMaskPass = new GStencilMaskPass()
+    stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
     overlayPass.outputTarget = null
 
-    this.dynamicStage.push(opaqueColorPass, transparentColorPass, overlayPass)
-    this.progressiveStage.push(
-      depthPass,
+    this.dynamicStage.push(
+      stencilPass,
       opaqueColorPass,
       transparentColorPass,
+      stencilMaskPass,
+      overlayPass
+    )
+    this.progressiveStage.push(
+      depthPass,
+      stencilPass,
+      opaqueColorPass,
+      transparentColorPass,
+      stencilMaskPass,
       progressiveAOPass,
       blendPass,
       overlayPass
     )
     this.passthroughStage.push(
+      stencilPass,
       opaqueColorPass,
       transparentColorPass,
+      stencilMaskPass,
       blendPass,
       overlayPass
     )

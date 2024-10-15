@@ -10,6 +10,9 @@ import { Assets } from '../../../Assets.js'
 import paperTex from '../../../../assets/paper.png'
 import Logger from '../../../utils/Logger.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { GColorPass } from '../GColorPass.js'
+import { GStencilMaskPass } from '../GStencilMaskPass.js'
+import { GStencilPass } from '../GStencilPass.js'
 
 export class PenViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -49,10 +52,52 @@ export class PenViewPipeline extends GProgressivePipeline {
     taaPass.accumulationFrames = this.accumulationFrameCount
     taaPass.outputToScreen = true
 
-    this.dynamicStage.push(depthPassDynamic, normalPassDynamic, edgesPassDynamic)
-    this.progressiveStage.push(depthPass, normalPass, edgesPass, taaPass)
+    const stencilPass = new GStencilPass()
+    stencilPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    this.passList = this.progressiveStage
+    const stencilSelectPass = new GColorPass()
+    stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilSelectPass.outputTarget = null
+
+    const stencilMaskPass = new GStencilMaskPass()
+    stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const overlayPass = new GColorPass()
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.outputTarget = null
+
+    this.dynamicStage.push(
+      depthPassDynamic,
+      normalPassDynamic,
+      edgesPassDynamic,
+      stencilPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      overlayPass
+    )
+    this.progressiveStage.push(
+      depthPass,
+      normalPass,
+      edgesPass,
+      taaPass,
+      stencilPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      overlayPass
+    )
+
+    this.passthroughStage.push(
+      taaPass,
+      stencilPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      overlayPass
+    )
+
+    this.passList = this.dynamicStage
 
     Assets.getTexture({
       id: 'paper',

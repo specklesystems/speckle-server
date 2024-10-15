@@ -7,6 +7,10 @@ import { GTAAPass } from '../GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 import { GMatcapPass } from '../GMatcapPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { GColorPass } from '../GColorPass.js'
+import { ObjectVisibility } from '../GPass.js'
+import { GStencilMaskPass } from '../GStencilMaskPass.js'
+import { GStencilPass } from '../GStencilPass.js'
 
 export class ShadedViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -59,27 +63,60 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     const blendPass = new GBlendPass()
     blendPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
     blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
-    blendPass.accumulationFrames = this.accumulationFrameCount
+    blendPass.accumulationFrames = 1200 //this.accumulationFrameCount
 
     const blendPassDynamic = new GBlendPass()
     blendPassDynamic.setTexture('tDiffuse', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
+    const stencilPass = new GStencilPass()
+    stencilPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const stencilSelectPass = new GColorPass()
+    stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilSelectPass.outputTarget = null
+
+    const stencilMaskPass = new GStencilMaskPass()
+    stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const overlayPass = new GColorPass()
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.outputTarget = null
+
     this.dynamicStage.push(
       depthPassDynamic,
       normalPassDynamic,
       edgesPassDynamic,
+      stencilPass,
       matcapPass,
-      blendPassDynamic
+      stencilSelectPass,
+      stencilMaskPass,
+      blendPassDynamic,
+      overlayPass
     )
     this.progressiveStage.push(
       depthPass,
       normalPass,
       edgesPass,
       taaPass,
+      stencilPass,
       matcapPass,
-      blendPass
+      stencilSelectPass,
+      stencilMaskPass,
+      blendPass,
+      overlayPass
+    )
+    this.passthroughStage.push(
+      stencilPass,
+      matcapPass,
+      stencilSelectPass,
+      stencilMaskPass,
+      blendPass,
+      overlayPass
     )
 
     this.passList = this.progressiveStage

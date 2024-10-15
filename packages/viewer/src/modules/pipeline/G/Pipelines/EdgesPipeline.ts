@@ -9,6 +9,8 @@ import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GTAAPass } from '../GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { GStencilMaskPass } from '../GStencilMaskPass.js'
+import { GStencilPass } from '../GStencilPass.js'
 
 export class EdgesPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -87,13 +89,28 @@ export class EdgesPipeline extends GProgressivePipeline {
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
+    const stencilPass = new GStencilPass()
+    stencilPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const stencilMaskPass = new GStencilMaskPass()
+    stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
+    stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
+    const overlayPass = new GColorPass()
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.outputTarget = null
+
     this.dynamicStage.push(
       depthPassDynamic,
       normalPassDynamic,
       edgesPassDynamic,
+      stencilPass,
       opaqueColorPass,
       transparentColorPass,
-      blendPassDynamic
+      stencilMaskPass,
+      blendPassDynamic,
+      overlayPass
     )
     this.progressiveStage.push(
       depthPass,
@@ -101,11 +118,21 @@ export class EdgesPipeline extends GProgressivePipeline {
       edgesPass,
       progressiveAOPass,
       taaPass,
+      stencilPass,
       opaqueColorPass,
       transparentColorPass,
-      blendPass
+      stencilMaskPass,
+      blendPass,
+      overlayPass
     )
-    this.passthroughStage.push(opaqueColorPass, transparentColorPass, blendPass)
+    this.passthroughStage.push(
+      stencilPass,
+      opaqueColorPass,
+      transparentColorPass,
+      stencilMaskPass,
+      blendPass,
+      overlayPass
+    )
 
     this.passList = this.dynamicStage
   }

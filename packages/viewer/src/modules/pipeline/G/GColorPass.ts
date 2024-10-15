@@ -41,9 +41,8 @@ export class GColorPass extends BaseGPass {
     renderer.setRenderTarget(this.outputTarget)
 
     if (this.clear) {
-      renderer.setClearColor(0x000000)
-      renderer.setClearAlpha(0.0)
-      renderer.clear(true, true, true)
+      renderer.setClearColor(0x000000, 0)
+      renderer.clear(true, false, false)
     }
 
     if (this.onBeforeRender) this.onBeforeRender()
