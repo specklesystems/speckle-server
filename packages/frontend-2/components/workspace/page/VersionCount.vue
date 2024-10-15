@@ -1,5 +1,5 @@
 <template>
-  <div class="w-40 flex flex-col items-center md:mx-4">
+  <div class="w-36 flex flex-col items-center md:mx-4">
     <CommonProgressBar
       class="mb-1"
       :current-value="versionsCount.current"
@@ -9,7 +9,7 @@
       <span class="font-medium">
         {{ versionsCount.current }}/{{ versionsCount.max }}
       </span>
-      model versions used
+      free model versions
     </div>
   </div>
 </template>
