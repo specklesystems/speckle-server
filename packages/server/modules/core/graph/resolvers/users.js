@@ -1,6 +1,5 @@
 const {
   getUserRole,
-  deleteUser,
   searchUsers,
   changeUserRole
 } = require('@/modules/core/services/users')
@@ -17,7 +16,9 @@ const {
   legacyGetUserFactory,
   legacyGetUserByEmailFactory,
   getUserFactory,
-  updateUserFactory
+  updateUserFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -31,11 +32,17 @@ const db = require('@/db/knex')
 const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const {
-  updateUserAndNotifyFactory
+  updateUserAndNotifyFactory,
+  deleteUserFactory
 } = require('@/modules/core/services/users/management')
 const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
+const {
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
+} = require('@/modules/core/repositories/streams')
+const { dbLogger } = require('@/logging/logging')
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -46,6 +53,15 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
   addUserUpdatedActivity: addUserUpdatedActivityFactory({
     saveActivity: saveActivityFactory({ db })
   })
+})
+
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
 })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
@@ -182,9 +198,7 @@ module.exports = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
-      })(user.id)
+      await deleteUser(user.id)
       return true
     },
 
@@ -201,9 +215,7 @@ module.exports = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
-      })(context.userId, args.user)
+      await deleteUser(context.userId, args.user)
 
       await saveActivityFactory({ db })({
         streamId: null,

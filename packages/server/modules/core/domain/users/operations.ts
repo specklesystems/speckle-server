@@ -45,7 +45,11 @@ export type UpdateUser = (
   }>
 ) => Promise<Nullable<User>>
 
+export type DeleteUserRecord = (userId: string) => Promise<boolean>
+
 export type CountAdminUsers = () => Promise<number>
+
+export type IsLastAdminUser = (userId: string) => Promise<boolean>
 
 export type StoreUserAcl = (params: {
   acl: ServerAclRecord
@@ -107,3 +111,5 @@ export type ValidateUserPassword = (params: {
   email: string
   password: string
 }) => Promise<boolean>
+
+export type DeleteUser = (id: string) => Promise<boolean>

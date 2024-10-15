@@ -3,9 +3,12 @@ import {
   ChangeUserPassword,
   CountAdminUsers,
   CreateValidatedUser,
+  DeleteUser,
+  DeleteUserRecord,
   FindOrCreateValidatedUser,
   GetUser,
   GetUserByEmail,
+  IsLastAdminUser,
   StoreUser,
   StoreUserAcl,
   UpdateUser,
@@ -28,6 +31,12 @@ import {
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
+import {
+  DeleteStreamRecord,
+  GetUserDeletableStreams
+} from '@/modules/core/domain/streams/operations'
+import { Logger } from '@/logging/logging'
+import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -231,4 +240,32 @@ export const findOrCreateUserFactory =
       email: user.email,
       isNewUser: true
     }
+  }
+
+export const deleteUserFactory =
+  (deps: {
+    deleteStream: DeleteStreamRecord
+    logger: Logger
+    isLastAdminUser: IsLastAdminUser
+    getUserDeletableStreams: GetUserDeletableStreams
+    deleteAllUserInvites: DeleteAllUserInvites
+    deleteUserRecord: DeleteUserRecord
+  }): DeleteUser =>
+  async (id) => {
+    deps.logger.info('Deleting user ' + id)
+    const isLastAdmin = await deps.isLastAdminUser(id)
+    if (isLastAdmin) {
+      throw new UserInputError('Cannot remove the last admin role from the server')
+    }
+
+    const streamIds = await deps.getUserDeletableStreams(id)
+    for (const id of streamIds) {
+      await deps.deleteStream(id)
+    }
+
+    // Delete all invites (they don't have a FK, so we need to do this manually)
+    // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
+    await deps.deleteAllUserInvites(id)
+
+    return await deps.deleteUserRecord(id)
   }

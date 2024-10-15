@@ -12,10 +12,12 @@ import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/em
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   CountAdminUsers,
+  DeleteUserRecord,
   GetUser,
   GetUserByEmail,
   GetUserParams,
   GetUsers,
+  IsLastAdminUser,
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount,
   LegacyGetUser,
@@ -380,6 +382,29 @@ export const countAdminUsersFactory =
       .count()
 
     return parseInt(count as string)
+  }
+
+export const isLastAdminUserFactory =
+  (deps: { db: Knex }): IsLastAdminUser =>
+  async (userId) => {
+    if ((await countAdminUsersFactory(deps)()) === 1) {
+      const currentAdmin = await tables
+        .serverAcl(deps.db)
+        .where({ role: Roles.Server.Admin })
+        .first()
+      if (currentAdmin && currentAdmin.userId === userId) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+export const deleteUserRecordFactory =
+  (deps: { db: Knex }): DeleteUserRecord =>
+  async (id) => {
+    const res = await tables.users(deps.db).where({ id }).del()
+    return !!res
   }
 
 export const storeUserAclFactory =

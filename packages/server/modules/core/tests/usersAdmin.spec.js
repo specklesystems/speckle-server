@@ -1,11 +1,7 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const {
-  deleteUser,
-  changeUserRole,
-  getUserRole
-} = require('@/modules/core/services/users')
+const { changeUserRole, getUserRole } = require('@/modules/core/services/users')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
@@ -15,7 +11,9 @@ const {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory
 } = require('@/modules/core/repositories/users')
 const { db } = require('@/db/knex')
 const {
@@ -32,7 +30,10 @@ const {
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  createUserFactory,
+  deleteUserFactory
+} = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
 } = require('@/modules/core/services/userEmails')
@@ -41,9 +42,15 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const {
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  deleteAllUserInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
+} = require('@/modules/core/repositories/streams')
+const { dbLogger } = require('@/logging/logging')
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -74,6 +81,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
 })
 
 describe('User admin @user-services', () => {
@@ -111,7 +126,7 @@ describe('User admin @user-services', () => {
 
     expect(await countUsers()).to.equal(2)
 
-    await deleteUser({ deleteAllUserInvites: async () => true })(actorId)
+    await deleteUser(actorId)
     expect(await countUsers()).to.equal(1)
   })
 
