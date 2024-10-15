@@ -3,8 +3,7 @@ const assert = require('assert')
 
 const {
   createUser,
-  getUsers,
-  countUsers,
+
   deleteUser,
   changeUserRole,
   getUserRole
@@ -12,6 +11,14 @@ const {
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
+const {
+  legacyGetPaginatedUsersFactory,
+  legacyGetPaginatedUsersCount
+} = require('@/modules/core/repositories/users')
+const { db } = require('@/db/knex')
+
+const getUsers = legacyGetPaginatedUsersFactory({ db })
+const countUsers = legacyGetPaginatedUsersCount({ db })
 
 describe('User admin @user-services', () => {
   const myTestActor = {
