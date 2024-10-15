@@ -989,6 +989,6 @@ Generate the secrets to which the service account should allow access for the Sp
   {{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.licenseTokenSecret.secretName ) }}
 {{- end }}
 {{- range $secretName := uniq $secretNames }}
-  - name: {{ $secretName }}
+- name: {{ $secretName }}
 {{- end }}
 {{- end }}
