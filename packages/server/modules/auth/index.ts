@@ -17,7 +17,6 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import {
   getUserByEmail,
   findOrCreateUser,
-  getUserById,
   validatePasssword,
   createUser
 } from '@/modules/core/services/users'
@@ -40,6 +39,7 @@ import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
 import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 
 const initializeDefaultApps = initializeDefaultAppsFactory({
   getAllScopes: getAllScopesFactory({ db }),
@@ -64,7 +64,6 @@ const commonBuilderDeps = {
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,
-  getUserById,
   passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory()
 }
 const setupStrategies = setupStrategiesFactory({
@@ -81,7 +80,7 @@ const setupStrategies = setupStrategiesFactory({
   }),
   oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 let authStrategies: AuthStrategyMetadata[]

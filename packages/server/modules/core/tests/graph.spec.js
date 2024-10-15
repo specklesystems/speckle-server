@@ -5,11 +5,7 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const {
-  createUser,
-  getUsers,
-  changeUserRole
-} = require('@/modules/core/services/users')
+const { createUser, changeUserRole } = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
@@ -33,8 +29,12 @@ const {
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { publish } = require('@/modules/shared/utils/subscriptions')
-const { getUser } = require('@/modules/core/repositories/users')
+const {
+  getUserFactory,
+  legacyGetPaginatedUsersFactory
+} = require('@/modules/core/repositories/users')
 
+const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -64,6 +64,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   })
 })
+const getUsers = legacyGetPaginatedUsersFactory({ db })
 
 let app
 let server

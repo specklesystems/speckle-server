@@ -32,7 +32,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { getUsers } = require('@/modules/core/repositories/users')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
@@ -40,7 +39,10 @@ const {
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
   publish
@@ -50,7 +52,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -62,7 +64,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser
       }),
       getUsers
     }),

@@ -4,11 +4,12 @@ import { ExtendedComment } from '@/modules/comments/domain/types'
 import { getCommentFactory } from '@/modules/comments/repositories/comments'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
@@ -164,7 +165,7 @@ function buildEmailTemplateParams(
  */
 const mentionedInCommentHandlerFactory =
   (deps: {
-    getUser: typeof getUser
+    getUser: GetUser
     getStream: GetStream
     getComment: GetComment
     getServerInfo: typeof getServerInfo
@@ -221,7 +222,7 @@ const mentionedInCommentHandlerFactory =
  */
 const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
-    getUser,
+    getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
     getComment: getCommentFactory({ db }),
     getServerInfo,
