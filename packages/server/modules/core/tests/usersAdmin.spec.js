@@ -1,7 +1,6 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { changeUserRole } = require('@/modules/core/services/users')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
@@ -14,7 +13,8 @@ const {
   storeUserAclFactory,
   isLastAdminUserFactory,
   deleteUserRecordFactory,
-  getUserRoleFactory
+  getUserRoleFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const { db } = require('@/db/knex')
 const {
@@ -33,7 +33,8 @@ const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
 const {
   createUserFactory,
-  deleteUserFactory
+  deleteUserFactory,
+  changeUserRoleFactory
 } = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
@@ -92,6 +93,13 @@ const deleteUser = deleteUserFactory({
   deleteUserRecord: deleteUserRecordFactory({ db })
 })
 const getUserRole = getUserRoleFactory({ db })
+const buildChangeUserRole = (guestModeEnabled = false) =>
+  changeUserRoleFactory({
+    getServerInfo: async () => ({ ...getServerInfo(), guestModeEnabled }),
+    isLastAdminUser: isLastAdminUserFactory({ db }),
+    updateUserServerRole: updateUserServerRoleFactory({ db })
+  })
+const changeUserRole = buildChangeUserRole()
 
 describe('User admin @user-services', () => {
   const myTestActor = {
@@ -197,10 +205,9 @@ describe('User admin @user-services', () => {
       newRole = await getUserRole(userId)
       expect(newRole).to.equal(Roles.Server.User)
 
-      await changeUserRole({
+      await buildChangeUserRole(true)({
         userId,
-        role: Roles.Server.Guest,
-        guestModeEnabled: true
+        role: Roles.Server.Guest
       })
       newRole = await getUserRole(userId)
       expect(newRole).to.equal(Roles.Server.Guest)

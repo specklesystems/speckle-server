@@ -36,7 +36,6 @@ import {
   GetUserStreamsQuery
 } from '@/test/graphql/generated/graphql'
 import { Get } from 'type-fest'
-import { changeUserRole } from '@/modules/core/services/users'
 import {
   createAuthedTestContext,
   createTestContext,
@@ -94,7 +93,14 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  getUserFactory,
+  getUsersFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
+} from '@/modules/core/repositories/users'
+import { changeUserRoleFactory } from '@/modules/core/services/users/management'
+import { getServerInfo } from '@/modules/core/services/generic'
 
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -372,10 +378,14 @@ describe('Streams @core-streams', () => {
 
       await createTestUsers([guestGuy])
 
+      const changeUserRole = changeUserRoleFactory({
+        getServerInfo: async () => ({ ...getServerInfo(), guestModeEnabled: true }),
+        isLastAdminUser: isLastAdminUserFactory({ db }),
+        updateUserServerRole: updateUserServerRoleFactory({ db })
+      })
       await changeUserRole({
         userId: guestGuy.id,
-        role: Roles.Server.Guest,
-        guestModeEnabled: true
+        role: Roles.Server.Guest
       })
 
       await addOrUpdateStreamCollaborator(

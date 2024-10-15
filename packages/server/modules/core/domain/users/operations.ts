@@ -55,6 +55,11 @@ export type StoreUserAcl = (params: {
   acl: ServerAclRecord
 }) => Promise<ServerAclRecord>
 
+export type UpdateUserServerRole = (params: {
+  userId: string
+  role: ServerRoles
+}) => Promise<boolean>
+
 export type LegacyGetUserByEmail = (params: {
   email: string
 }) => Promise<Nullable<Omit<User, 'passwordDigest'>>>
@@ -115,3 +120,5 @@ export type ValidateUserPassword = (params: {
 }) => Promise<boolean>
 
 export type DeleteUser = (id: string) => Promise<boolean>
+
+export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>

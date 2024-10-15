@@ -1,4 +1,4 @@
-const { searchUsers, changeUserRole } = require('@/modules/core/services/users')
+const { searchUsers } = require('@/modules/core/services/users')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
@@ -15,7 +15,8 @@ const {
   updateUserFactory,
   isLastAdminUserFactory,
   deleteUserRecordFactory,
-  getUserRoleFactory
+  getUserRoleFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -30,7 +31,8 @@ const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const {
   updateUserAndNotifyFactory,
-  deleteUserFactory
+  deleteUserFactory,
+  changeUserRoleFactory
 } = require('@/modules/core/services/users/management')
 const {
   addUserUpdatedActivityFactory
@@ -61,6 +63,11 @@ const deleteUser = deleteUserFactory({
   deleteUserRecord: deleteUserRecordFactory({ db })
 })
 const getUserRole = getUserRoleFactory({ db })
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -182,11 +189,9 @@ module.exports = {
     },
 
     async userRoleChange(_parent, args) {
-      const { guestModeEnabled } = await getServerInfo()
       await changeUserRole({
         role: args.userRoleInput.role,
-        userId: args.userRoleInput.id,
-        guestModeEnabled
+        userId: args.userRoleInput.id
       })
       return true
     },
