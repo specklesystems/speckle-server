@@ -13,7 +13,7 @@ import { db } from '@/db/knex'
 import { expect } from 'chai'
 import {
   countAdminUsersFactory,
-  getUserByEmail,
+  getUserByEmailFactory,
   getUserFactory,
   getUsersFactory,
   listUsers,
@@ -62,6 +62,7 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const getUserByEmail = getUserByEmailFactory({ db })
 
 describe('Find users @core', () => {
   describe('getUsers', () => {

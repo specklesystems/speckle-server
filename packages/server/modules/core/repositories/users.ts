@@ -13,6 +13,7 @@ import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   CountAdminUsers,
   GetUser,
+  GetUserByEmail,
   GetUserParams,
   GetUsers,
   LegacyGetPaginatedUsers,
@@ -154,31 +155,35 @@ export const getUserFactory =
 /**
  * Get user by e-mail address
  */
-export async function getUserByEmail(
-  email: string,
-  options?: Partial<{ skipClean: boolean; withRole: boolean }>
-) {
-  const q = Users.knex<UserWithOptionalRole[]>()
-    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-    .where({
-      [UserEmails.col.primary]: true
-    })
-    .whereRaw('lower("user_emails"."email") = lower(?)', [email])
-  const columns: (Knex.Raw<UserRecord> | string)[] = [
-    ...Object.values(omit(Users.col, ['email', 'verified'])),
-    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-  ]
-  if (options?.withRole) {
-    // Getting first role from grouped results
-    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
-    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+export const getUserByEmailFactory =
+  (deps: { db: Knex }): GetUserByEmail =>
+  async (
+    email: string,
+    options?: Partial<{ skipClean: boolean; withRole: boolean }>
+  ) => {
+    const q = tables
+      .users(deps.db)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({
+        [UserEmails.col.primary]: true
+      })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
+    const columns: (Knex.Raw<UserRecord> | string)[] = [
+      ...Object.values(omit(Users.col, ['email', 'verified'])),
+      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+    ]
+    if (options?.withRole) {
+      // Getting first role from grouped results
+      columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
+      q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    }
+    q.columns(columns)
+    q.groupBy(Users.col.id)
+
+    const user = (await q.first()) as UserWithOptionalRole
+    return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
   }
-  q.columns(columns)
-  q.groupBy(Users.col.id)
-  const user = await q.first()
-  return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
-}
 
 /**
  * Mark a user as verified by e-mail address, and return true on success

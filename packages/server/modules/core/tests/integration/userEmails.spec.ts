@@ -3,7 +3,7 @@ import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
   countAdminUsersFactory,
-  getUserByEmail,
+  getUserByEmailFactory,
   getUserFactory,
   legacyGetPaginatedUsersCount,
   legacyGetPaginatedUsersFactory,
@@ -81,6 +81,7 @@ const createUser = createUserFactory({
   validateAndCreateUserEmail: createUserEmail,
   usersEventsEmitter: UsersEmitter.emit
 })
+const getUserByEmail = getUserByEmailFactory({ db })
 
 describe('Core @user-emails', () => {
   before(async () => {
