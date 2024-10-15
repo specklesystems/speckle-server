@@ -11,8 +11,7 @@ const {
   updateUser,
   deleteUser,
   validatePasssword,
-  updateUserPassword,
-  getUserById
+  updateUserPassword
 } = require('../services/users')
 const {
   createPersonalAccessToken,
@@ -194,7 +193,7 @@ describe('Actors & Tokens @user-services', () => {
       const { id } = await findOrCreateUser({ user: newUser })
       ballmerUserId = id
       expect(id).to.be.a('string')
-      const user = await getUserById({ userId: id })
+      const user = await getUser(id)
       expect(user.verified).to.equal(true)
     })
 

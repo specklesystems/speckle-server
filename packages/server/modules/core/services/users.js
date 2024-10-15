@@ -17,11 +17,7 @@ const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const {
-  getUserByEmail,
-  getUserFactory,
-  legacyGetUserFactory
-} = require('@/modules/core/repositories/users')
+const { getUserByEmail, getUserFactory } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
@@ -192,14 +188,6 @@ module.exports = {
       email: user.email,
       isNewUser: true
     }
-  },
-
-  /**
-   * @deprecated Use getUser instead
-   */
-  async getUserById({ userId }) {
-    const getUser = legacyGetUserFactory({ db })
-    return await getUser(userId)
   },
 
   // TODO: this should be moved to repository

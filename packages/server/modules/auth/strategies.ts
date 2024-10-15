@@ -1,5 +1,4 @@
 import passport from 'passport'
-import { getUserById } from '@/modules/core/services/users'
 import type { Express } from 'express'
 import {
   AuthStrategyBuilder,
@@ -12,6 +11,7 @@ import {
   moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
+import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 
 const setupStrategiesFactory =
   (deps: {
@@ -21,7 +21,7 @@ const setupStrategiesFactory =
     localStrategyBuilder: AuthStrategyBuilder
     oidcStrategyBuilder: AuthStrategyBuilder
     createAuthorizationCode: CreateAuthorizationCode
-    getUserById: typeof getUserById
+    getUser: LegacyGetUser
   }) =>
   async (app: Express) => {
     passport.serializeUser((user, done) => done(null, user))
