@@ -81,11 +81,6 @@
               />
             </button>
           </div>
-          <UserAvatarGroup
-            v-else
-            :users="team.map((teamMember) => teamMember.user)"
-            class="max-w-[104px]"
-          />
           <FormButton
             v-if="isWorkspaceAdmin"
             class="hidden md:block"
