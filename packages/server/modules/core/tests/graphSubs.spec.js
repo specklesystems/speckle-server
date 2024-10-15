@@ -22,17 +22,18 @@ const {
   addOrUpdateStreamCollaboratorFactory
 } = require('@/modules/core/services/streams/access')
 const { authorizeResolver } = require('@/modules/shared')
-const { getUser } = require('@/modules/core/repositories/users')
 const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
 const {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const { getUserFactory } = require('@/modules/core/repositories/users')
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
+const getUser = getUserFactory({ db })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,

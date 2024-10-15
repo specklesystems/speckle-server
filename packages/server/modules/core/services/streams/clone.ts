@@ -5,7 +5,7 @@ import {
   UserRecord
 } from '@/modules/core/helpers/types'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { generateCommitId } from '@/modules/core/repositories/commits'
 import { chunk } from 'lodash'
 import { generateBranchId } from '@/modules/core/repositories/branches'
@@ -42,6 +42,7 @@ import {
   GetBatchedStreamBranches,
   InsertBranches
 } from '@/modules/core/domain/branches/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -79,7 +80,7 @@ const decrementingDateGenerator = () => {
 
 type PrepareStateDeps = {
   getStream: GetStream
-  getUser: typeof getUser
+  getUser: GetUser
   db: Knex
 }
 

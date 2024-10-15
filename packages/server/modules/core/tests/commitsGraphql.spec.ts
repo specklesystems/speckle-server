@@ -8,7 +8,7 @@ import {
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -24,6 +24,7 @@ import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 
+const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({

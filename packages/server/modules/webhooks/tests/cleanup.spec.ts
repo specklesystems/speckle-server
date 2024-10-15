@@ -11,7 +11,7 @@ import {
   createStreamFactory,
   getStreamFactory
 } from '@/modules/core/repositories/streams'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
@@ -38,6 +38,8 @@ const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
 const WebhooksConfig = () => knex(WEBHOOKS_CONFIG_TABLE)
 const randomId = () => crs({ length: 10 })
 
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
   publish
@@ -47,7 +49,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -59,7 +61,8 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser
       }),
       getUsers
     }),

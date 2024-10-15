@@ -41,7 +41,6 @@ import {
   getUserPendingProjectInvitesFactory,
   useProjectInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -83,10 +82,13 @@ import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
@@ -117,7 +119,7 @@ const buildCollectAndValidateResourceTargets = () =>
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -127,7 +129,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser
   })
 
 export = {
@@ -377,9 +380,10 @@ export = {
         buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
           getStream
         }),
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
-        markInviteUpdated: markInviteUpdatedfactory({ db })
+        markInviteUpdated: markInviteUpdatedfactory({ db }),
+        getUser
       })
 
       await resendInviteEmail({ inviteId })
