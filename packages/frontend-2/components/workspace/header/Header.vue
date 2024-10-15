@@ -66,7 +66,10 @@
           </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <div v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'">
+          <div
+            v-if="!isWorkspaceGuest"
+            v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'"
+          >
             <button
               class="block"
               @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
@@ -78,6 +81,11 @@
               />
             </button>
           </div>
+          <UserAvatarGroup
+            v-else
+            :users="team.map((teamMember) => teamMember.user)"
+            class="max-w-[104px]"
+          />
           <FormButton
             v-if="isWorkspaceAdmin"
             class="hidden md:block"
@@ -204,10 +212,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           { title: 'Settings', id: ActionTypes.Settings },
 
           ...(!isWorkspaceGuest.value
-            ? [{ title: 'Invite', id: ActionTypes.Invite }]
+            ? [{ title: 'Invite...', id: ActionTypes.Invite }]
             : []),
           ...(isWorkspaceAdmin.value
-            ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
+            ? [{ title: 'Move projects...', id: ActionTypes.MoveProjects }]
             : [])
         ]
       : [])
