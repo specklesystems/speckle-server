@@ -1,14 +1,16 @@
 import { before } from 'mocha'
-import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
+  countAdminUsersFactory,
   getUserByEmail,
   getUserFactory,
   legacyGetPaginatedUsersCount,
   legacyGetPaginatedUsersFactory,
   listUsers,
-  markUserAsVerified
+  markUserAsVerified,
+  storeUserAclFactory,
+  storeUserFactory
 } from '@/modules/core/repositories/users'
 import * as UsersService from '@/modules/core/services/users'
 import { db } from '@/db/knex'
@@ -42,6 +44,8 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCount({ db })
@@ -65,6 +69,17 @@ const createUserEmail = validateAndCreateUserEmailFactory({
     updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
   }),
   requestNewEmailVerification
+})
+
+const findEmail = findEmailFactory({ db })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: createUserEmail,
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 describe('Core @user-emails', () => {

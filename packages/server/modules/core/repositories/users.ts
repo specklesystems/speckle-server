@@ -1,5 +1,5 @@
 import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import { UserRecord, UserWithRole } from '@/modules/core/helpers/types'
+import { ServerAclRecord, UserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -11,17 +11,21 @@ import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
+  CountAdminUsers,
   GetUser,
   GetUserParams,
   GetUsers,
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount,
-  LegacyGetUser
+  LegacyGetUser,
+  StoreUser,
+  StoreUserAcl
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
-  users: (db: Knex) => db<UserRecord>(Users.name)
+  users: (db: Knex) => db<UserRecord>(Users.name),
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name)
 }
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -322,4 +326,31 @@ export const legacyGetPaginatedUsersCount =
 
     const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
     return parseInt(userCount.count)
+  }
+
+export const storeUserFactory =
+  (deps: { db: Knex }): StoreUser =>
+  async (params) => {
+    const { user } = params
+    const [newUser] = await tables.users(deps.db).insert(user, '*')
+    return newUser
+  }
+
+export const countAdminUsersFactory =
+  (deps: { db: Knex }): CountAdminUsers =>
+  async () => {
+    const [{ count }] = await tables
+      .serverAcl(deps.db)
+      .where({ role: Roles.Server.Admin })
+      .count()
+
+    return parseInt(count as string)
+  }
+
+export const storeUserAclFactory =
+  (deps: { db: Knex }): StoreUserAcl =>
+  async (params) => {
+    const { acl } = params
+    const [newAcl] = await tables.serverAcl(deps.db).insert(acl, '*')
+    return newAcl
   }

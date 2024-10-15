@@ -10,34 +10,49 @@ const {
 const {
   validateUserPassword,
   updateUserAndNotify,
-  MINIMUM_PASSWORD_LENGTH
+  MINIMUM_PASSWORD_LENGTH,
+  createUserFactory
 } = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const { getUserByEmail, getUserFactory } = require('@/modules/core/repositories/users')
-const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
-const { pick, omit } = require('lodash')
+const {
+  getUserByEmail,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const { omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 const {
-  createUserEmailFactory,
   findPrimaryEmailForUserFactory,
   findEmailFactory,
+  createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
 } = require('@/modules/core/repositories/userEmails')
+const { db } = require('@/db/knex')
+
+const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
 const {
   validateAndCreateUserEmailFactory
 } = require('@/modules/core/services/userEmails')
-const { db } = require('@/db/knex')
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
@@ -45,15 +60,7 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { deleteStreamFactory } = require('@/modules/core/repositories/streams')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -71,101 +78,119 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
-const getUser = getUserFactory({ db })
+const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
+  findEmail,
+  getUser: getUserFactory({ db }),
   getServerInfo,
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
   renderEmail,
   sendEmail
 })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
 
 module.exports = {
-  /*
-    Users
-  */
+  // /*
+  //   Users
+  // */
 
-  /**
-   * @param {{}} user
-   * @param {{skipPropertyValidation: boolean } | undefined} options
-   * @returns {Promise<string>}
-   */
-  async createUser(user, options = undefined) {
-    // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
-    const { skipPropertyValidation = false } = options || {}
+  // /**
+  //  * @param {{}} user
+  //  * @param {{skipPropertyValidation: boolean } | undefined} options
+  //  * @returns {Promise<string>}
+  //  */
+  // async createUser(user, options = undefined) {
+  //   // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
+  //   const { skipPropertyValidation = false } = options || {}
 
-    if (!user.email?.length) throw new UserInputError('E-mail address is required')
+  //   if (!user.email?.length) throw new UserInputError('E-mail address is required')
 
-    let expectedRole = null
-    if (user.role) {
-      const isValidRole = Object.values(Roles.Server).includes(user.role)
-      const isValidIfGuestModeEnabled =
-        user.role !== Roles.Server.Guest || (await getServerInfo()).guestModeEnabled
-      expectedRole = isValidRole && isValidIfGuestModeEnabled ? user.role : null
-    }
-    delete user.role
+  //   let expectedRole = null
+  //   if (user.role) {
+  //     const isValidRole = Object.values(Roles.Server).includes(user.role)
+  //     const isValidIfGuestModeEnabled =
+  //       user.role !== Roles.Server.Guest || (await getServerInfo()).guestModeEnabled
+  //     expectedRole = isValidRole && isValidIfGuestModeEnabled ? user.role : null
+  //   }
+  //   delete user.role
 
-    user = skipPropertyValidation
-      ? user
-      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'verified'])
+  //   user = skipPropertyValidation
+  //     ? user
+  //     : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'verified'])
 
-    const newId = crs({ length: 10 })
-    user.id = newId
-    user.email = user.email.toLowerCase()
+  //   const newId = crs({ length: 10 })
+  //   user.id = newId
+  //   user.email = user.email.toLowerCase()
 
-    if (!user.name) throw new UserInputError('User name is required')
+  //   if (!user.name) throw new UserInputError('User name is required')
 
-    if (user.avatar) {
-      user.avatar = sanitizeImageUrl(user.avatar)
-    }
+  //   if (user.avatar) {
+  //     user.avatar = sanitizeImageUrl(user.avatar)
+  //   }
 
-    if (user.password) {
-      if (user.password.length < MINIMUM_PASSWORD_LENGTH)
-        throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
-      user.passwordDigest = await bcrypt.hash(user.password, 10)
-    }
-    delete user.password
+  //   if (user.password) {
+  //     if (user.password.length < MINIMUM_PASSWORD_LENGTH)
+  //       throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
+  //     user.passwordDigest = await bcrypt.hash(user.password, 10)
+  //   }
+  //   delete user.password
 
-    const userEmail = await findEmailFactory({ db })({
-      email: user.email
-    })
-    if (userEmail) throw new UserInputError('Email taken. Try logging in?')
+  //   const userEmail = await findEmailFactory({ db })({
+  //     email: user.email
+  //   })
+  //   if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
-    const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
-    if (!newUser) throw new Error("Couldn't create user")
+  //   const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
+  //   if (!newUser) throw new Error("Couldn't create user")
 
-    const userRole =
-      (await countAdminUsers()) === 0
-        ? Roles.Server.Admin
-        : expectedRole || Roles.Server.User
+  //   const userRole =
+  //     (await countAdminUsers()) === 0
+  //       ? Roles.Server.Admin
+  //       : expectedRole || Roles.Server.User
 
-    await Acl().insert({ userId: newId, role: userRole })
+  //   await Acl().insert({ userId: newId, role: userRole })
 
-    const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification
-    })
+  //   const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+  //     createUserEmail: createUserEmailFactory({ db }),
+  //     ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  //     findEmail: findEmailFactory({ db }),
+  //     updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+  //       deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+  //       updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  //     }),
+  //     requestNewEmailVerification
+  //   })
 
-    await validateAndCreateUserEmail({
-      userEmail: {
-        email: user.email,
-        userId: user.id,
-        verified: user.verified,
-        primary: true
-      }
-    })
+  //   await validateAndCreateUserEmail({
+  //     userEmail: {
+  //       email: user.email,
+  //       userId: user.id,
+  //       verified: user.verified,
+  //       primary: true
+  //     }
+  //   })
 
-    await UsersEmitter.emit(UsersEvents.Created, { user: newUser })
+  //   await UsersEmitter.emit(UsersEvents.Created, { user: newUser })
 
-    return newUser.id
-  },
+  //   return newUser.id
+  // },
 
   /**
    * @param {{user: {email: string, name?: string, role?: import('@speckle/shared').ServerRoles, bio?: string, verified?: boolean}}} param0
@@ -184,7 +209,7 @@ module.exports = {
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?
     return {
-      id: await module.exports.createUser(user),
+      id: await createUser(user),
       email: user.email,
       isNewUser: true
     }

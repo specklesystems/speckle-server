@@ -1,5 +1,6 @@
 import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
-import { Nullable } from '@speckle/shared'
+import { ServerAclRecord } from '@/modules/core/helpers/types'
+import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
 
 export type GetUserParams = Partial<{
   /**
@@ -23,6 +24,16 @@ export type GetUser = (
   params?: GetUserParams
 ) => Promise<Nullable<UserWithOptionalRole>>
 
+export type StoreUser = (params: {
+  user: Omit<NullableKeysToOptional<User>, 'suuid' | 'createdAt'>
+}) => Promise<User>
+
+export type CountAdminUsers = () => Promise<number>
+
+export type StoreUserAcl = (params: {
+  acl: ServerAclRecord
+}) => Promise<ServerAclRecord>
+
 export type LegacyGetUser = (id: string) => Promise<User>
 
 export type LegacyGetPaginatedUsers = (
@@ -34,3 +45,15 @@ export type LegacyGetPaginatedUsers = (
 export type LegacyGetPaginatedUsersCount = (
   searchQuery?: string | null
 ) => Promise<number>
+
+export type CreateValidatedUser = (
+  user: NullableKeysToOptional<Pick<User, 'bio' | 'name' | 'company' | 'avatar'>> & {
+    email: string
+    verified?: boolean
+    password?: string
+    role?: ServerRoles
+  },
+  options?: Partial<{
+    skipPropertyValidation: boolean
+  }>
+) => Promise<string>

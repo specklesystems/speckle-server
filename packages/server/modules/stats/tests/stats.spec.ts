@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createObjects } from '@/modules/core/services/objects'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
@@ -49,8 +48,10 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteServerOnlyInvitesFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -60,7 +61,27 @@ import { addStreamCreatedActivityFactory } from '@/modules/activitystream/servic
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -117,6 +138,33 @@ const createStream = legacyCreateStreamFactory({
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
+})
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
