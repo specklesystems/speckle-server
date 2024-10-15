@@ -1,7 +1,7 @@
 import { knex, ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import {
   getUserByEmail,
-  getUser,
+  getUserFactory,
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
@@ -127,12 +127,12 @@ export const filterByResource = <Q extends Knex.QueryBuilder>(
  * Try to find a user using the target value
  */
 export const findUserByTargetFactory =
-  () =>
+  (deps: { db: Knex }) =>
   (target: string): Promise<UserWithOptionalRole | null> => {
     const { userEmail, userId } = resolveTarget(target)
     return userEmail
       ? getUserByEmail(userEmail, { withRole: true })
-      : getUser(userId!, { withRole: true })
+      : getUserFactory(deps)(userId!, { withRole: true })
   }
 
 /**

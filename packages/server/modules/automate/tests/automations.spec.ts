@@ -48,7 +48,6 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { getUser } from '@/modules/core/repositories/users'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   addStreamInviteAcceptedActivityFactory,
@@ -56,6 +55,7 @@ import {
 } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 /**
  * TODO: Extra test ideas
@@ -65,6 +65,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
+const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
