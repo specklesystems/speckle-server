@@ -31,13 +31,6 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
 }
 
 module.exports = {
-  async getUserRole(id) {
-    const { role } = (await Acl().where({ userId: id }).select('role').first()) || {
-      role: null
-    }
-    return role
-  },
-
   /**
    * User search available for normal server users. It's more limited because of the lower access level.
    */

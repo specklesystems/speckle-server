@@ -16,6 +16,7 @@ import {
   GetUser,
   GetUserByEmail,
   GetUserParams,
+  GetUserRole,
   GetUsers,
   IsLastAdminUser,
   LegacyGetPaginatedUsers,
@@ -413,4 +414,17 @@ export const storeUserAclFactory =
     const { acl } = params
     const [newAcl] = await tables.serverAcl(deps.db).insert(acl, '*')
     return newAcl
+  }
+
+export const getUserRoleFactory =
+  (deps: { db: Knex }): GetUserRole =>
+  async (id) => {
+    const { role } = (await tables
+      .serverAcl(deps.db)
+      .where({ userId: id })
+      .select('role')
+      .first()) || {
+      role: null
+    }
+    return role as Nullable<ServerRoles>
   }
