@@ -1,5 +1,4 @@
 const {
-  getUser,
   getUserByEmail,
   getUserRole,
   deleteUser,
@@ -15,7 +14,10 @@ const {
   getTotalCounts
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@speckle/shared')
-const { markOnboardingComplete } = require('@/modules/core/repositories/users')
+const {
+  markOnboardingComplete,
+  legacyGetUserFactory
+} = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
@@ -27,6 +29,8 @@ const {
 const db = require('@/db/knex')
 const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+
+const getUser = legacyGetUserFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

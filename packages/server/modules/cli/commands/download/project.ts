@@ -16,7 +16,6 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import { createObject } from '@/modules/core/services/objects'
 import {
@@ -71,6 +70,7 @@ import { addStreamCreatedActivityFactory } from '@/modules/activitystream/servic
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 
 const command: CommandModule<
   unknown,
@@ -158,10 +158,12 @@ const command: CommandModule<
       })
     })
 
+    const getUser = getUserFactory({ db })
+    const getUsers = getUsersFactory({ db })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory(),
+          findUserByTarget: findUserByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
           collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
             getStream
@@ -173,7 +175,8 @@ const command: CommandModule<
             getEventBus().emit({
               eventName,
               payload
-            })
+            }),
+          getUser
         }),
         getUsers
       }),

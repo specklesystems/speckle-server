@@ -3,9 +3,10 @@ import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
-  countUsers,
-  getUser,
   getUserByEmail,
+  getUserFactory,
+  legacyGetPaginatedUsersCount,
+  legacyGetPaginatedUsersFactory,
   listUsers,
   markUserAsVerified
 } from '@/modules/core/repositories/users'
@@ -42,6 +43,10 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 
+const getUsers = legacyGetPaginatedUsersFactory({ db })
+const countUsers = legacyGetPaginatedUsersCount({ db })
+
+const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -450,7 +455,7 @@ describe('Core @user-emails', () => {
     })
 
     it('with countUsers()', async () => {
-      const count = await countUsers({ query: randomizeCase(randomCaseGuy.email) })
+      const count = await countUsers(randomizeCase(randomCaseGuy.email))
       expect(count).to.eq(1)
     })
 
@@ -477,18 +482,14 @@ describe('Core @user-emails', () => {
     })
 
     it('with UsersService.getUsers()', async () => {
-      const users = await UsersService.getUsers(
-        10,
-        0,
-        randomizeCase(randomCaseGuy.email)
-      )
+      const users = await getUsers(10, 0, randomizeCase(randomCaseGuy.email))
       expect(users).to.be.ok
       expect(users).to.have.length(1)
       assertLowercaseEquality(users[0].email, randomCaseGuy.email)
     })
 
     it('with UsersService.countUsers()', async () => {
-      const count = await UsersService.countUsers(randomizeCase(randomCaseGuy.email))
+      const count = await countUsers(randomizeCase(randomCaseGuy.email))
       expect(count).to.eq(1)
     })
   })

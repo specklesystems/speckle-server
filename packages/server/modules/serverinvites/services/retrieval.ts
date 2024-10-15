@@ -1,16 +1,16 @@
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
-import { getUsers } from '@/modules/core/repositories/users'
 import { resolveTarget } from '@/modules/serverinvites/helpers/core'
 import { Nullable } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
 import { FindServerInvite } from '@/modules/serverinvites/domain/operations'
 import { GetInvitationTargetUsers } from '@/modules/serverinvites/services/operations'
+import { GetUsers } from '@/modules/core/domain/users/operations'
 
 /**
  * Get all registered invitation target users keyed by their ID
  */
 export const getInvitationTargetUsersFactory =
-  (deps: { getUsers: typeof getUsers }): GetInvitationTargetUsers =>
+  (deps: { getUsers: GetUsers }): GetInvitationTargetUsers =>
   async ({ invites }) => {
     const userIds = uniq(
       invites

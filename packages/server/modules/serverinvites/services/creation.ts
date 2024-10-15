@@ -8,7 +8,7 @@ import {
   buildUserTarget,
   ResolvedTargetData
 } from '@/modules/serverinvites/helpers/core'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   FindInvite,
   FindUserByTarget,
@@ -31,6 +31,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 const getFinalTargetData = (
   target: string,
@@ -88,13 +89,15 @@ export const createAndSendInviteFactory =
     insertInviteAndDeleteOld,
     collectAndValidateResourceTargets,
     buildInviteEmailContents,
-    emitEvent
+    emitEvent,
+    getUser
   }: {
     findUserByTarget: FindUserByTarget
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
     collectAndValidateResourceTargets: CollectAndValidateResourceTargets
     buildInviteEmailContents: BuildInviteEmailContents
     emitEvent: EventBusEmit
+    getUser: GetUser
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -190,12 +193,14 @@ export const resendInviteEmailFactory =
     buildInviteEmailContents,
     findUserByTarget,
     findInvite,
-    markInviteUpdated
+    markInviteUpdated,
+    getUser
   }: {
     buildInviteEmailContents: BuildInviteEmailContents
     findUserByTarget: FindUserByTarget
     findInvite: FindInvite
     markInviteUpdated: MarkInviteUpdated
+    getUser: GetUser
   }): ResendInviteEmail =>
   async (params) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })

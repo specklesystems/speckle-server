@@ -1,11 +1,12 @@
 import { db } from '@/db/knex'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
@@ -19,7 +20,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 
 type ValidateMessageDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
   getStream: GetStream
 }
 
@@ -130,7 +131,7 @@ const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
     getServerInfo,
     renderEmail,
     sendEmail,
-    getUser,
+    getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db })
   })
   return streamAccessRequestApprovedHandler(...args)

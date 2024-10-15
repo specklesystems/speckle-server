@@ -12,12 +12,12 @@ import {
   RevokeStreamPermissions,
   ValidateStreamAccess
 } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import {
   StreamAccessUpdateError,
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getUser } from '@/modules/core/repositories/users'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
@@ -142,7 +142,7 @@ export const removeStreamCollaboratorFactory =
 export const addOrUpdateStreamCollaboratorFactory =
   (deps: {
     validateStreamAccess: ValidateStreamAccess
-    getUser: typeof getUser
+    getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
     addStreamInviteAcceptedActivity: ReturnType<
       typeof addStreamInviteAcceptedActivityFactory
