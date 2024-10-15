@@ -14,11 +14,7 @@ import {
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
 import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  getUserByEmail,
-  findOrCreateUser,
-  validatePasssword
-} from '@/modules/core/services/users'
+import { getUserByEmail, validatePasssword } from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -45,11 +41,15 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { createUserFactory } from '@/modules/core/services/users/management'
+import {
+  createUserFactory,
+  findOrCreateUserFactory
+} from '@/modules/core/services/users/management'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
+  findEmailFactory,
+  findPrimaryEmailForUserFactory
 } from '@/modules/core/repositories/userEmails'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -84,6 +84,11 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 
 const initializeDefaultApps = initializeDefaultAppsFactory({

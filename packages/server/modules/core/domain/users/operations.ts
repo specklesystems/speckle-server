@@ -57,3 +57,17 @@ export type CreateValidatedUser = (
     skipPropertyValidation: boolean
   }>
 ) => Promise<string>
+
+export type FindOrCreateValidatedUser = (params: {
+  user: {
+    email: string
+    name: string
+    role?: ServerRoles
+    bio?: string
+    verified?: boolean
+  }
+}) => Promise<{
+  id: string
+  email: string
+  isNewUser?: boolean
+}>
