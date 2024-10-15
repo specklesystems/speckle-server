@@ -17,9 +17,9 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import {
   getUserByEmail,
   findOrCreateUser,
-  getUserById,
   validatePasssword,
-  createUser
+  createUser,
+  getUserById
 } from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,

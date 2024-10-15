@@ -6,7 +6,6 @@ const {
   changeUserRole,
   createUser,
   findOrCreateUser,
-  getUser,
   getUserByEmail,
   searchUsers,
   updateUser,
@@ -85,8 +84,13 @@ const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   addCommitCreatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
-const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
+const {
+  getUsersFactory,
+  getUserFactory,
+  legacyGetUserFactory
+} = require('@/modules/core/repositories/users')
 
+const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })

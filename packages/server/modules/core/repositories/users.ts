@@ -13,7 +13,8 @@ import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   GetUser,
   GetUserParams,
-  GetUsers
+  GetUsers,
+  LegacyGetUser
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
 
@@ -255,3 +256,25 @@ export async function getFirstAdmin() {
 
   return await q.first()
 }
+
+/**
+ * @deprecated Use getUser instead
+ */
+export const legacyGetUserFactory =
+  (deps: { db: Knex }): LegacyGetUser =>
+  async (id) => {
+    const user = await tables
+      .users(deps.db)
+      .where({ [Users.col.id]: id })
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
+      .columns<UserRecord>([
+        ...Object.values(omit(Users.col, [Users.col.email, Users.col.verified])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(Users.col.id)
+      .first()
+    if (user) delete user.passwordDigest
+    return user!
+  }
