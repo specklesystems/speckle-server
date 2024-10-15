@@ -7,7 +7,7 @@ import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino'
 import { AlwaysOnSampler, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node'
 import { Resource } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
-import opentelemetry from '@opentelemetry/sdk-node'
+import * as opentelemetry from '@opentelemetry/sdk-node'
 
 const OTEL_NAME = 'speckle'
 
