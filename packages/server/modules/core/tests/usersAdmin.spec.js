@@ -11,7 +11,7 @@ const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
 const {
   legacyGetPaginatedUsersFactory,
-  legacyGetPaginatedUsersCount,
+  legacyGetPaginatedUsersCountFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
@@ -46,7 +46,7 @@ const {
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
-const countUsers = legacyGetPaginatedUsersCount({ db })
+const countUsers = legacyGetPaginatedUsersCountFactory({ db })
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({

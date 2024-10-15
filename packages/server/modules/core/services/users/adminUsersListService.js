@@ -1,6 +1,6 @@
 const { db } = require('@/db/knex')
 const {
-  legacyGetPaginatedUsersCount,
+  legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory
 } = require('@/modules/core/repositories/users')
 const { resolveTarget } = require('@/modules/serverinvites/helpers/core')
@@ -67,7 +67,7 @@ function sanitizeParams(params) {
  * @param {{ countServerInvites: import('@/modules/serverinvites/domain/operations').CountServerInvites}} param0
  */
 function getTotalCounts({ countServerInvites }) {
-  const countUsers = legacyGetPaginatedUsersCount({ db })
+  const countUsers = legacyGetPaginatedUsersCountFactory({ db })
 
   /**
    * Get total users & invites that we can find using these params
