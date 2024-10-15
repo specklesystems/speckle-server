@@ -1,4 +1,5 @@
 import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { ServerAclRecord } from '@/modules/core/helpers/types'
 import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
 
@@ -35,6 +36,14 @@ export type GetUserByEmail = (
 export type StoreUser = (params: {
   user: Omit<NullableKeysToOptional<User>, 'suuid' | 'createdAt'>
 }) => Promise<User>
+
+export type UpdateUser = (
+  userId: string,
+  update: Partial<User>,
+  options?: Partial<{
+    skipClean: boolean
+  }>
+) => Promise<Nullable<User>>
 
 export type CountAdminUsers = () => Promise<number>
 
@@ -83,3 +92,8 @@ export type FindOrCreateValidatedUser = (params: {
   email: string
   isNewUser?: boolean
 }>
+
+export type UpdateUserAndNotify = (
+  userId: string,
+  update: UserUpdateInput
+) => Promise<User>

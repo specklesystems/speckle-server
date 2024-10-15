@@ -5,7 +5,6 @@ const assert = require('assert')
 const {
   changeUserRole,
   searchUsers,
-  updateUser,
   deleteUser,
   validatePasssword,
   updateUserPassword
@@ -89,7 +88,8 @@ const {
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory,
-  legacyGetUserByEmailFactory
+  legacyGetUserByEmailFactory,
+  updateUserFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -108,7 +108,8 @@ const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
 const {
   createUserFactory,
-  findOrCreateUserFactory
+  findOrCreateUserFactory,
+  updateUserAndNotifyFactory
 } = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
@@ -117,6 +118,9 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  addUserUpdatedActivityFactory
+} = require('@/modules/activitystream/services/userActivity')
 
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -212,6 +216,13 @@ const findOrCreateUser = findOrCreateUserFactory({
   findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const updateUser = updateUserAndNotifyFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db }),
+  addUserUpdatedActivity: addUserUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db })
+  })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
