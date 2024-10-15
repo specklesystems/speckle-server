@@ -66,7 +66,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
 const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
-const { handleSubmit } = useForm<{ name: string; slug: string }>()
+const { handleSubmit, resetForm } = useForm<{ name: string; slug: string }>()
 
 const workspaceName = ref('')
 const workspaceShortId = ref('')
@@ -142,8 +142,6 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
 
 const reset = () => {
   defaultLogoIndex.value = generateDefaultLogoIndex()
-  workspaceName.value = ''
-  workspaceShortId.value = ''
   debouncedWorkspaceShortId.value = ''
   workspaceLogo.value = null
   editAvatarMode.value = false
@@ -157,7 +155,7 @@ const updateShortId = debounce((newName: string) => {
     workspaceShortId.value = newSlug
     updateDebouncedShortId(newSlug)
   }
-}, 300)
+}, 600)
 
 const updateDebouncedShortId = debounce((newSlug: string) => {
   debouncedWorkspaceShortId.value = newSlug
@@ -169,9 +167,11 @@ const onSlugChange = (newSlug: string) => {
   updateDebouncedShortId(newSlug)
 }
 
+// Seperate resets to avoid a temporary invalid state on submission
 watch(isOpen, (newVal) => {
   if (!newVal) {
     reset()
+    resetForm()
   }
 })
 </script>
