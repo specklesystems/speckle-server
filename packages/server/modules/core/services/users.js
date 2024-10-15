@@ -8,7 +8,6 @@ const {
 } = require('@/modules/core/dbSchema')
 const {
   validateUserPassword,
-  updateUserAndNotify,
   MINIMUM_PASSWORD_LENGTH
 } = require('@/modules/core/services/users/management')
 
@@ -50,13 +49,6 @@ module.exports = {
       role: null
     }
     return role
-  },
-
-  /**
-   * @deprecated {Use updateUserAndNotify() or repo method directly}
-   */
-  async updateUser(id, user) {
-    return await updateUserAndNotify(id, user)
   },
 
   /**

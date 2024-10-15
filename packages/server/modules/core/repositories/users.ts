@@ -21,7 +21,8 @@ import {
   LegacyGetUser,
   LegacyGetUserByEmail,
   StoreUser,
-  StoreUserAcl
+  StoreUserAcl,
+  UpdateUser
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
 
@@ -234,29 +235,34 @@ const validateInputRecord = (input: Partial<UserRecord>) => {
   }
 }
 
-export async function updateUser(
-  userId: string,
-  update: Partial<UserRecord>,
-  options?: Partial<{
-    skipClean: boolean
-  }>
-) {
-  if (!options?.skipClean) {
-    update = cleanInputRecord(update)
+export const updateUserFactory =
+  (deps: { db: Knex }): UpdateUser =>
+  async (
+    userId: string,
+    update: Partial<UserRecord>,
+    options?: Partial<{
+      skipClean: boolean
+    }>
+  ) => {
+    if (!options?.skipClean) {
+      update = cleanInputRecord(update)
+    }
+    validateInputRecord(update)
+
+    const [newUser] = await tables
+      .users(deps.db)
+      .where(Users.col.id, userId)
+      .update(update, '*')
+
+    if (update.email) {
+      await updateUserEmailFactory(deps)({
+        query: { userId, primary: true },
+        update: { email: update.email }
+      })
+    }
+
+    return newUser as Nullable<UserRecord>
   }
-  validateInputRecord(update)
-
-  const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
-
-  if (update.email) {
-    await updateUserEmailFactory({ db })({
-      query: { userId, primary: true },
-      update: { email: update.email }
-    })
-  }
-
-  return newUser as Nullable<UserRecord>
-}
 
 export async function getFirstAdmin() {
   const q = Users.knex()

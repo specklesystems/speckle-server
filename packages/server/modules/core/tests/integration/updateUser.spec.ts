@@ -13,7 +13,7 @@ import {
   legacyGetUserFactory,
   storeUserAclFactory,
   storeUserFactory,
-  updateUser
+  updateUserFactory
 } from '@/modules/core/repositories/users'
 import { expectToThrow } from '@/test/assertionHelper'
 import {
@@ -65,6 +65,7 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const updateUser = updateUserFactory({ db })
 
 describe('Users @core-users', () => {
   beforeEach(async () => {

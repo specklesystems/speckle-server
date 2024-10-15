@@ -1,18 +1,20 @@
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
   CountAdminUsers,
   CreateValidatedUser,
   FindOrCreateValidatedUser,
+  GetUser,
   StoreUser,
-  StoreUserAcl
+  StoreUserAcl,
+  UpdateUser,
+  UpdateUserAndNotify
 } from '@/modules/core/domain/users/operations'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
-import { getUserFactory, updateUser } from '@/modules/core/repositories/users'
+import { getUserFactory, updateUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import { isNullOrUndefined, NullableKeysToOptional, Roles } from '@speckle/shared'
@@ -28,42 +30,45 @@ import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmit
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
-export async function updateUserAndNotify(userId: string, update: UserUpdateInput) {
-  const getUser = getUserFactory({ db })
-  const existingUser = await getUser(userId)
-  if (!existingUser) {
-    throw new UserUpdateError('Attempting to update a non-existant user')
-  }
-
-  const filteredUpdate: Partial<UserRecord> = {}
-  for (const entry of Object.entries(update)) {
-    const key = entry[0] as keyof typeof update
-    let val = entry[1]
-
-    if (key === 'avatar') {
-      val = sanitizeImageUrl(val)
+export const updateUserAndNotifyFactory =
+  (deps: {
+    getUser: GetUser
+    updateUser: UpdateUser
+    addUserUpdatedActivity: ReturnType<typeof addUserUpdatedActivityFactory>
+  }): UpdateUserAndNotify =>
+  async (userId: string, update: UserUpdateInput) => {
+    const existingUser = await deps.getUser(userId)
+    if (!existingUser) {
+      throw new UserUpdateError('Attempting to update a non-existant user')
     }
 
-    if (!isNullOrUndefined(val)) {
-      filteredUpdate[key] = val
+    const filteredUpdate: Partial<UserRecord> = {}
+    for (const entry of Object.entries(update)) {
+      const key = entry[0] as keyof typeof update
+      let val = entry[1]
+
+      if (key === 'avatar') {
+        val = sanitizeImageUrl(val)
+      }
+
+      if (!isNullOrUndefined(val)) {
+        filteredUpdate[key] = val
+      }
     }
+
+    const newUser = await deps.updateUser(userId, filteredUpdate)
+    if (!newUser) {
+      throw new UserUpdateError("Couldn't update user")
+    }
+
+    await deps.addUserUpdatedActivity({
+      oldUser: existingUser,
+      update,
+      updaterId: userId
+    })
+
+    return newUser
   }
-
-  const newUser = await updateUser(userId, filteredUpdate)
-  if (!newUser) {
-    throw new UserUpdateError("Couldn't update user")
-  }
-
-  await addUserUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db })
-  })({
-    oldUser: existingUser,
-    update,
-    updaterId: userId
-  })
-
-  return newUser
-}
 
 export async function validateUserPassword(params: {
   user: UserRecord
@@ -107,7 +112,7 @@ export async function changePassword(
   }
 
   const passwordDigest = await createPasswordDigest(newPassword)
-  await updateUser(
+  await updateUserFactory({ db })(
     userId,
     {
       passwordDigest
