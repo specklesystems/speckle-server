@@ -13,8 +13,6 @@ import {
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
   AddCommitDeletedActivity,
@@ -214,22 +212,21 @@ export const addCommitDeletedActivityFactory =
     ])
   }
 
-export async function addCommitReceivedActivity(params: {
-  input: CommitReceivedInput
-  userId: string
-}) {
-  const { input, userId } = params
+export const addCommitReceivedActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async (params: { input: CommitReceivedInput; userId: string }) => {
+    const { input, userId } = params
 
-  await saveActivityFactory({ db })({
-    streamId: input.streamId,
-    resourceType: ResourceTypes.Commit,
-    resourceId: input.commitId,
-    actionType: ActionTypes.Commit.Receive,
-    userId,
-    info: {
-      sourceApplication: input.sourceApplication,
-      message: input.message
-    },
-    message: `Commit ${input.commitId} was received by user ${userId}`
-  })
-}
+    await saveActivity({
+      streamId: input.streamId,
+      resourceType: ResourceTypes.Commit,
+      resourceId: input.commitId,
+      actionType: ActionTypes.Commit.Receive,
+      userId,
+      info: {
+        sourceApplication: input.sourceApplication,
+        message: input.message
+      },
+      message: `Commit ${input.commitId} was received by user ${userId}`
+    })
+  }

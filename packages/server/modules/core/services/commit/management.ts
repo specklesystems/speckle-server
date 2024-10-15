@@ -4,7 +4,8 @@ import {
   AddCommitDeletedActivity,
   AddCommitUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
-import { addCommitReceivedActivity } from '@/modules/activitystream/services/commitActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addCommitReceivedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   GetBranchById,
   GetStreamBranchByName,
@@ -76,10 +77,12 @@ export async function markCommitReceivedAndNotify(params: {
     )
   }
 
-  await addCommitReceivedActivity({
-    input: oldInput,
-    userId
-  })
+  await addCommitReceivedActivityFactory({ saveActivity: saveActivityFactory({ db }) })(
+    {
+      input: oldInput,
+      userId
+    }
+  )
 }
 
 export const createCommitByBranchIdFactory =
