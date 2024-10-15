@@ -5,8 +5,6 @@ import { DepthType, GDepthPass } from '../GDepthPass.js'
 import { ObjectVisibility } from '../GPass.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GBlendPass } from '../GBlendPass.js'
-import { GOutputPass, InputType } from '../GOutputPass.js'
-import { GTAAPass } from '../GTAAPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 
 export class DefaultPipeline extends GProgressivePipeline {
@@ -17,6 +15,7 @@ export class DefaultPipeline extends GProgressivePipeline {
     depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
+    depthPass.setJitter(true)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -55,52 +54,26 @@ export class DefaultPipeline extends GProgressivePipeline {
     blendPass.setTexture('tEdges', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
-    const jitterOpaquePass = new GColorPass()
-    jitterOpaquePass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.STREAM_CONTENT,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
-    ])
-    jitterOpaquePass.setVisibility(ObjectVisibility.OPAQUE)
-    jitterOpaquePass.setJitter(true)
-    jitterOpaquePass.clear = true
+    const overlayPass = new GColorPass()
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.outputTarget = null
 
-    const jitterTransparentPass = new GColorPass()
-    jitterTransparentPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.STREAM_CONTENT,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
-      ObjectLayers.SHADOWCATCHER
-    ])
-    jitterTransparentPass.setVisibility(ObjectVisibility.TRANSPARENT)
-    jitterTransparentPass.setJitter(true)
-    jitterTransparentPass.outputTarget = jitterOpaquePass.outputTarget
-
-    const taaPass = new GTAAPass()
-    taaPass.inputTexture = jitterTransparentPass.outputTarget?.texture
-    taaPass.accumulationFrames = this.accumulationFrameCount
-
-    const outputPass = new GOutputPass()
-    outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
-    outputPass.setInputType(InputType.Color)
-
-    this.dynamicStage.push(opaqueColorPass, transparentColorPass)
+    this.dynamicStage.push(opaqueColorPass, transparentColorPass, overlayPass)
     this.progressiveStage.push(
       depthPass,
       opaqueColorPass,
       transparentColorPass,
       progressiveAOPass,
-      blendPass
+      blendPass,
+      overlayPass
+    )
+    this.passthroughStage.push(
+      opaqueColorPass,
+      transparentColorPass,
+      blendPass,
+      overlayPass
     )
 
-    this.passList = this.progressiveStage
+    this.passList = this.dynamicStage
   }
 }

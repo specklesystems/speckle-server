@@ -7,6 +7,8 @@ export abstract class GProgressivePipeline extends GPipeline {
   protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []
   protected progressiveStage: Array<GPass> = []
+  protected passthroughStage: Array<GPass> = []
+  protected accumulating = false
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {
     this.passList.forEach((pass: GPass) => {
@@ -15,10 +17,17 @@ export abstract class GProgressivePipeline extends GPipeline {
         pass.frameIndex = this.accumulationFrameIndex
       }
     })
+    if (!this.accumulating) return
+
     this.accumulationFrameIndex++
 
     if (this.accumulationFrameIndex === this.accumulationFrameCount)
       this.onAccumulationComplete()
+  }
+
+  public reset() {
+    this.accumulationFrameIndex = 0
+    this.onStationaryBegin()
   }
 
   public resize(width: number, height: number) {
@@ -29,14 +38,17 @@ export abstract class GProgressivePipeline extends GPipeline {
 
   public onStationaryBegin() {
     this.accumulationFrameIndex = 0
+    this.accumulating = true
     this.passList = this.progressiveStage
   }
 
   public onStationaryEnd() {
+    this.accumulating = false
     this.passList = this.dynamicStage
   }
 
   public onAccumulationComplete() {
-    console.warn('Accumulation Complete')
+    this.accumulating = false
+    this.passList = this.passthroughStage
   }
 }

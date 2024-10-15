@@ -105,7 +105,8 @@ export class EdgesPipeline extends GProgressivePipeline {
       transparentColorPass,
       blendPass
     )
+    this.passthroughStage.push(opaqueColorPass, transparentColorPass, blendPass)
 
-    this.passList = this.progressiveStage
+    this.passList = this.dynamicStage
   }
 }

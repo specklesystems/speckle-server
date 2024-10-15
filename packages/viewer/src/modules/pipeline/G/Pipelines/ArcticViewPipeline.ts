@@ -8,6 +8,8 @@ import { GViewportPass } from '../GViewportPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 
 export class ArcticViewPipeline extends GProgressivePipeline {
+  protected accumulationFrameCount: number = 32
+
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
@@ -46,7 +48,8 @@ export class ArcticViewPipeline extends GProgressivePipeline {
 
     this.dynamicStage.push(viewportPass)
     this.progressiveStage.push(depthPass, viewportPass, progressiveAOPass, blendPass)
+    this.passthroughStage.push(viewportPass, blendPass)
 
-    this.passList = this.progressiveStage
+    this.passList = this.dynamicStage
   }
 }

@@ -5,6 +5,7 @@
 import {
   ArcticViewPipeline,
   DefaultLightConfiguration,
+  DefaultPipeline,
   EdgesPipeline,
   PenViewPipeline,
   SectionTool,
@@ -518,29 +519,35 @@ export default class Sandbox {
         label: 'Pipeline',
         options: {
           DEFAULT: 0,
-          SHADED: 1,
-          PEN: 2,
-          ARCTIC: 3
+          EDGED: 1,
+          SHADED: 2,
+          PEN: 3,
+          ARCTIC: 4
         }
       })
       .on('change', (value) => {
         switch (value.value) {
           case 0:
-            this.viewer.getRenderer().pipeline = new EdgesPipeline(
+            this.viewer.getRenderer().pipeline = new DefaultPipeline(
               this.viewer.getRenderer()
             )
             break
           case 1:
-            this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
+            this.viewer.getRenderer().pipeline = new EdgesPipeline(
               this.viewer.getRenderer()
             )
             break
           case 2:
-            this.viewer.getRenderer().pipeline = new PenViewPipeline(
+            this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
               this.viewer.getRenderer()
             )
             break
           case 3:
+            this.viewer.getRenderer().pipeline = new PenViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 4:
             this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
               this.viewer.getRenderer()
             )

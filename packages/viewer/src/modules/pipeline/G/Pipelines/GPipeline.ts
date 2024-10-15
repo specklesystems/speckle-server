@@ -5,7 +5,7 @@ import { BatchUpdateRange } from '../../../batching/Batch.js'
 
 export abstract class GPipeline {
   protected speckleRenderer: SpeckleRenderer
-  protected passList: Array<GPass> = []
+  public passList: Array<GPass> = []
 
   protected drawingSize: Vector2 = new Vector2()
   protected frameProjection: Matrix4 = new Matrix4()
@@ -31,6 +31,8 @@ export abstract class GPipeline {
   public update(camera: PerspectiveCamera | OrthographicCamera): void {
     this.passList.forEach((pass: GPass) => pass.enabled && pass.update?.(camera))
   }
+
+  public reset() {}
 
   public render(): boolean {
     this.speckleRenderer.renderer.getDrawingBufferSize(this.drawingSize)
