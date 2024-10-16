@@ -88,10 +88,6 @@ const feedback = ref('')
 const onDelete = async () => {
   if (workspaceNameInput.value !== props.workspace.name) return
 
-  router.push(homeRoute)
-
-  isOpen.value = false
-
   const cache = apollo.cache
   const result = await deleteWorkspace({
     workspaceId: props.workspace.id
@@ -128,18 +124,24 @@ const onDelete = async () => {
       feedback: feedback.value
     })
 
-    await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
-      userId: activeUser.value?.id ?? '',
-      feedback: feedback.value
-        ? `Action: Workspace Deleted(${props.workspace.name}) - ${feedback.value}`
-        : `Action: Workspace Deleted(${props.workspace.name}) - No feedback provided`
-    })
+    // Only send zapier-discord webhook if not in dev environment
+    if (!import.meta.dev) {
+      await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+        userId: activeUser.value?.id ?? '',
+        feedback: feedback.value
+          ? `Action: Workspace Deleted(${props.workspace.name}) - ${feedback.value}`
+          : `Action: Workspace Deleted(${props.workspace.name}) - No feedback provided`
+      })
+    }
 
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace deleted',
       description: `The ${props.workspace.name} workspace has been deleted`
     })
+
+    router.push(homeRoute)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
