@@ -129,7 +129,7 @@ const onDelete = async () => {
       await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
         userId: activeUser.value?.id ?? '',
         feedback: feedback.value
-          ? `Action: Workspace Deleted(${props.workspace.name}) - ${feedback.value}`
+          ? `Action: Workspace Deleted(${props.workspace.name}) Feedback: ${feedback.value}`
           : `Action: Workspace Deleted(${props.workspace.name}) - No feedback provided`
       })
     }
