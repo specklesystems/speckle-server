@@ -175,3 +175,28 @@ export type AdminUserList = (args: AdminUserListArgs) => Promise<{
   items: UserWithRole[]
   cursor: string | null
 }>
+
+export type LegacyAdminUsersPaginationParams = {
+  limit: number
+  offset: number
+  query: string | null
+}
+
+export type LegacyAdminUsersListItem = {
+  registeredUser: Nullable<User>
+  invitedUser: Nullable<{
+    id: string
+    email: string
+    invitedById: string
+  }>
+  id: string
+}
+
+type LegacyAdminUsersListCollection = {
+  totalCount: number
+  items: Array<LegacyAdminUsersListItem>
+}
+
+export type LegacyGetAdminUsersListCollection = (
+  params: LegacyAdminUsersPaginationParams
+) => Promise<LegacyAdminUsersListCollection>
