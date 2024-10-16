@@ -1,8 +1,6 @@
 import { db } from '@/db/knex'
-import {
-  addCommitDeletedActivity,
-  addCommitMovedActivity
-} from '@/modules/activitystream/services/commitActivity'
+import { AddCommitMovedActivity } from '@/modules/activitystream/domain/operations'
+import { addCommitDeletedActivity } from '@/modules/activitystream/services/commitActivity'
 import {
   GetStreamBranchByName,
   StoreBranch
@@ -161,7 +159,7 @@ export const batchMoveCommitsFactory =
     deps: ValidateCommitsMoveDeps & {
       createBranch: StoreBranch
       moveCommitsToBranch: MoveCommitsToBranch
-      addCommitMovedActivity: typeof addCommitMovedActivity
+      addCommitMovedActivity: AddCommitMovedActivity
     }
   ): ValidateAndBatchMoveCommits =>
   async (params: CommitsMoveInput | MoveVersionsInput, userId: string) => {
