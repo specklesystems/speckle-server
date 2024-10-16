@@ -14,7 +14,6 @@
       v-model="workspaceNameInput"
       name="workspaceNameConfirm"
       label="To confirm deletion, type the workspace name below."
-      size="lg"
       placeholder="Type the workspace name here..."
       full-width
       show-label
