@@ -6,8 +6,8 @@ const expect = chai.expect
 
 const {
   createPersonalAccessToken,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory
 } = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { Scopes } = require('@speckle/shared')
@@ -54,11 +54,25 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory
+} = require('@/modules/core/repositories/tokens')
 
 let sendRequest
 let server
 let app
 
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   getAuthorizationCode: getAuthorizationCodeFactory({ db }),

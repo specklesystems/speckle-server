@@ -1,10 +1,19 @@
-import { TokenScopeRecord } from '@/modules/auth/helpers/types'
+import {
+  TokenScopeRecord,
+  UserServerAppTokenRecord
+} from '@/modules/auth/helpers/types'
 import { ApiTokenRecord } from '@/modules/auth/repositories'
-import { ApiTokens, TokenResourceAccess, TokenScopes } from '@/modules/core/dbSchema'
+import {
+  ApiTokens,
+  TokenResourceAccess,
+  TokenScopes,
+  UserServerAppTokens
+} from '@/modules/core/dbSchema'
 import {
   StoreApiToken,
   StoreTokenResourceAccessDefinitions,
-  StoreTokenScopes
+  StoreTokenScopes,
+  StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { Knex } from 'knex'
@@ -13,7 +22,9 @@ const tables = {
   apiTokens: (db: Knex) => db<ApiTokenRecord>(ApiTokens.name),
   tokenScopes: (db: Knex) => db<TokenScopeRecord>(TokenScopes.name),
   tokenResourceAccess: (db: Knex) =>
-    db<TokenResourceAccessRecord>(TokenResourceAccess.name)
+    db<TokenResourceAccessRecord>(TokenResourceAccess.name),
+  userServerAppTokens: (db: Knex) =>
+    db<UserServerAppTokenRecord>(UserServerAppTokens.name)
 }
 
 export const storeApiTokenFactory =
@@ -33,4 +44,11 @@ export const storeTokenResourceAccessDefinitionsFactory =
   (deps: { db: Knex }): StoreTokenResourceAccessDefinitions =>
   async (defs) => {
     await tables.tokenResourceAccess(deps.db).insert(defs)
+  }
+
+export const storeUserServerAppTokenFactory =
+  (deps: { db: Knex }): StoreUserServerAppToken =>
+  async (token) => {
+    const [newToken] = await tables.userServerAppTokens(deps.db).insert(token, '*')
+    return newToken
   }

@@ -6,7 +6,6 @@ import {
   ApiTokens,
   PersonalApiTokens,
   TokenScopes,
-  UserServerAppTokens,
   TokenResourceAccess
 } from '@/modules/core/dbSchema'
 import {
@@ -17,10 +16,12 @@ import { Optional, ServerRoles, ServerScope } from '@speckle/shared'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import {
+  CreateAndStoreAppToken,
   CreateAndStoreUserToken,
   StoreApiToken,
   StoreTokenResourceAccessDefinitions,
-  StoreTokenScopes
+  StoreTokenScopes,
+  StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
 import {
   storeApiTokenFactory,
@@ -43,12 +44,14 @@ export async function createBareToken() {
   return { tokenId, tokenString, tokenHash, lastChars }
 }
 
+type CreateTokenDeps = {
+  storeApiToken: StoreApiToken
+  storeTokenScopes: StoreTokenScopes
+  storeTokenResourceAccessDefinitions: StoreTokenResourceAccessDefinitions
+}
+
 export const createTokenFactory =
-  (deps: {
-    storeApiToken: StoreApiToken
-    storeTokenScopes: StoreTokenScopes
-    storeTokenResourceAccessDefinitions: StoreTokenResourceAccessDefinitions
-  }): CreateAndStoreUserToken =>
+  (deps: CreateTokenDeps): CreateAndStoreUserToken =>
   async ({ userId, name, scopes, lifespan, limitResources }) => {
     const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
@@ -89,17 +92,21 @@ const createToken = createTokenFactory({
   })
 })
 
-export async function createAppToken(
-  params: Parameters<CreateAndStoreUserToken>[0] & { appId: string }
-) {
-  const token = await createToken(params)
-  await UserServerAppTokens.knex().insert({
-    tokenId: token.token.slice(0, 10),
-    userId: params.userId,
-    appId: params.appId
-  })
-  return token.token
-}
+export const createAppTokenFactory =
+  (
+    deps: CreateTokenDeps & {
+      storeUserServerAppToken: StoreUserServerAppToken
+    }
+  ): CreateAndStoreAppToken =>
+  async (params) => {
+    const token = await createTokenFactory(deps)(params)
+    await deps.storeUserServerAppToken({
+      tokenId: token.token.slice(0, 10),
+      userId: params.userId,
+      appId: params.appId
+    })
+    return token.token
+  }
 
 // Creates a personal access token for a user with a set of given scopes.
 export async function createPersonalAccessToken(

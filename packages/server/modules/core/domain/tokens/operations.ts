@@ -1,7 +1,8 @@
 import {
   ApiToken,
   TokenResourceAccessDefinition,
-  TokenScope
+  TokenScope,
+  UserServerAppToken
 } from '@/modules/core/domain/tokens/types'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 import { NullableKeysToOptional, ServerScope } from '@speckle/shared'
@@ -20,6 +21,10 @@ export type StoreTokenResourceAccessDefinitions = (
   defs: TokenResourceAccessDefinition[]
 ) => Promise<void>
 
+export type StoreUserServerAppToken = (
+  token: UserServerAppToken
+) => Promise<UserServerAppToken>
+
 export type CreateAndStoreUserToken = (params: {
   userId: string
   name: string
@@ -27,3 +32,9 @@ export type CreateAndStoreUserToken = (params: {
   lifespan?: number | bigint
   limitResources?: TokenResourceIdentifierInput[] | null
 }) => Promise<{ id: string; token: string }>
+
+export type CreateAndStoreAppToken = (
+  params: Parameters<CreateAndStoreUserToken>[0] & {
+    appId: string
+  }
+) => Promise<string>

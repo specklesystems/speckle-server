@@ -3,8 +3,8 @@ const expect = require('chai').expect
 
 const {
   validateToken,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory
 } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
 
@@ -62,6 +62,12 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory
+} = require('@/modules/core/repositories/tokens')
 
 const db = knex
 const getApp = getAppFactory({ db: knex })
@@ -75,6 +81,14 @@ const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserF
 })
 const createAuthorizationCode = createAuthorizationCodeFactory({ db: knex })
 
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 const createRefreshToken = createRefreshTokenFactory({ db: knex })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   getAuthorizationCode: getAuthorizationCodeFactory({ db: knex }),
