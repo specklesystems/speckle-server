@@ -81,6 +81,8 @@ import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
 import LineBatch from './modules/batching/LineBatch.js'
 import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
+import { RenderTree } from './modules/tree/RenderTree.js'
+import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
 
 export {
   Viewer,
@@ -92,6 +94,7 @@ export {
   BatchObject,
   InstancedBatchObject,
   WorldTree,
+  RenderTree,
   VisualDiffMode,
   MeasurementType,
   Units,
@@ -106,6 +109,7 @@ export {
   ExplodeExtension,
   DiffExtension,
   Loader,
+  SpeckleConverter,
   GeometryConverter,
   SpeckleLoader,
   ObjLoader,
