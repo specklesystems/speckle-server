@@ -1,15 +1,16 @@
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { createPersonalAccessTokenFactory } = require('../../services/tokens')
-const { canCreatePAT } = require('@/modules/core/helpers/token')
-const { db } = require('@/db/knex')
-const {
+import { ForbiddenError } from '@/modules/shared/errors'
+import { canCreatePAT, isValidScope } from '@/modules/core/helpers/token'
+import { db } from '@/db/knex'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory,
   getUserPersonalAccessTokensFactory,
   revokeUserTokenByIdFactory
-} = require('@/modules/core/repositories/tokens')
+} from '@/modules/core/repositories/tokens'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -22,11 +23,10 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 const getUserTokens = getUserPersonalAccessTokensFactory({ db })
 const revokeToken = revokeUserTokenByIdFactory({ db })
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 const resolvers = {
   Query: {},
   User: {
-    async apiTokens(parent, args, context) {
+    async apiTokens(parent, _args, context) {
       // TODO!
       if (parent.id !== context.userId)
         throw new ForbiddenError('You can only view your own tokens')
@@ -36,7 +36,7 @@ const resolvers = {
     }
   },
   Mutation: {
-    async apiTokenCreate(parent, args, context) {
+    async apiTokenCreate(_parent, args, context) {
       canCreatePAT({
         scopes: {
           user: context.scopes || [],
@@ -45,20 +45,20 @@ const resolvers = {
       })
 
       return await createPersonalAccessToken(
-        context.userId,
+        context.userId!,
         args.token.name,
-        args.token.scopes,
-        args.token.lifespan
+        args.token.scopes.filter(isValidScope),
+        args.token.lifespan || undefined
       )
     },
-    async apiTokenRevoke(parent, args, context) {
+    async apiTokenRevoke(_parent, args, context) {
       let id = null
       if (args.token.toLowerCase().includes('bearer')) id = args.token.split(' ')[1]
       else id = args.token
-      await revokeToken(id, context.userId) // let's not revoke other people's tokens
+      await revokeToken(id, context.userId!) // let's not revoke other people's tokens
       return true
     }
   }
-}
+} as Resolvers
 
-module.exports = resolvers
+export = resolvers
