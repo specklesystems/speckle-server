@@ -836,5 +836,4 @@ export function useViewerPostSetup() {
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
   setupDebugMode()
-  // TODO: add here the use receive tracking
 }
