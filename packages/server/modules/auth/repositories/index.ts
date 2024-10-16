@@ -43,7 +43,7 @@ export type ApiTokenRecord = {
   revoked: boolean
   lifespan: number | bigint
   createdAt: string
-  lastUsed: string
+  lastUsed: Date
 }
 
 const tables = {

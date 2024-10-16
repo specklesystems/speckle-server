@@ -12,6 +12,9 @@ import {
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
 import {
+  GetApiTokenById,
+  GetTokenResourceAccessDefinitionsById,
+  GetTokenScopesById,
   GetUserPersonalAccessTokens,
   RevokeTokenById,
   RevokeUserTokenById,
@@ -19,7 +22,8 @@ import {
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
-  StoreUserServerAppToken
+  StoreUserServerAppToken,
+  UpdateApiToken
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
@@ -136,4 +140,32 @@ export const revokeUserTokenByIdFactory =
       .del()
     if (delCount === 0) throw new UserInputError('Did not revoke token')
     return true
+  }
+
+export const getApiTokenByIdFactory =
+  (deps: { db: Knex }): GetApiTokenById =>
+  async (tokenId) => {
+    return tables.apiTokens(deps.db).where({ id: tokenId }).first()
+  }
+
+export const getTokenScopesByIdFactory =
+  (deps: { db: Knex }): GetTokenScopesById =>
+  async (tokenId: string) => {
+    return tables.tokenScopes(deps.db).where({ tokenId })
+  }
+
+export const getTokenResourceAccessDefinitionsByIdFactory =
+  (deps: { db: Knex }): GetTokenResourceAccessDefinitionsById =>
+  async (tokenId: string) => {
+    return tables.tokenResourceAccess(deps.db).where({ tokenId })
+  }
+
+export const updateApiTokenFactory =
+  (deps: { db: Knex }): UpdateApiToken =>
+  async (tokenId, token) => {
+    const [updatedToken] = await tables
+      .apiTokens(deps.db)
+      .where({ id: tokenId })
+      .update(token, '*')
+    return updatedToken
   }

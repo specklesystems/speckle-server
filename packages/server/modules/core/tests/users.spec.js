@@ -3,8 +3,8 @@ const expect = require('chai').expect
 const assert = require('assert')
 
 const {
-  validateToken,
-  createPersonalAccessTokenFactory
+  createPersonalAccessTokenFactory,
+  validateTokenFactory
 } = require('../services/tokens')
 
 const { getBranchesByStreamId } = require('../services/branches')
@@ -88,7 +88,8 @@ const {
   isLastAdminUserFactory,
   deleteUserRecordFactory,
   updateUserServerRoleFactory,
-  searchUsersFactory
+  searchUsersFactory,
+  getUserRoleFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -131,8 +132,13 @@ const {
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory,
   getUserPersonalAccessTokensFactory,
-  revokeUserTokenByIdFactory
+  revokeUserTokenByIdFactory,
+  getApiTokenByIdFactory,
+  getTokenScopesByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  updateApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
+const { getTokenAppInfoFactory } = require('@/modules/auth/repositories/apps')
 
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -266,6 +272,17 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 })
 const getUserTokens = getUserPersonalAccessTokensFactory({ db })
 const revokeToken = revokeUserTokenByIdFactory({ db })
+const validateToken = validateTokenFactory({
+  revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+  getApiTokenById: getApiTokenByIdFactory({ db }),
+  getTokenAppInfo: getTokenAppInfoFactory({ db }),
+  getTokenScopesById: getTokenScopesByIdFactory({ db }),
+  getUserRole: getUserRoleFactory({ db }),
+  getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory({
+    db
+  }),
+  updateApiToken: updateApiTokenFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
