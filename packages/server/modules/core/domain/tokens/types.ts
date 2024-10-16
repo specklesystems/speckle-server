@@ -1,3 +1,7 @@
+import { TokenScopeRecord } from '@/modules/auth/helpers/types'
+import { ApiTokenRecord } from '@/modules/auth/repositories'
+import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+
 export const TokenResourceIdentifierType = {
   Project: 'project',
   Workspace: 'workspace'
@@ -8,3 +12,9 @@ export type TokenResourceIdentifierType =
 
 // TODO: these should be moved to domain
 export type TokenResourceIdentifier = { id: string; type: TokenResourceIdentifierType }
+
+export type ApiToken = ApiTokenRecord
+
+export type TokenScope = TokenScopeRecord
+
+export type TokenResourceAccessDefinition = TokenResourceAccessRecord
