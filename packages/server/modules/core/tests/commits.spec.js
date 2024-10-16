@@ -49,8 +49,8 @@ const {
   markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const {
-  addCommitDeletedActivity,
-  addCommitUpdatedActivityFactory
+  addCommitUpdatedActivityFactory,
+  addCommitDeletedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
@@ -130,7 +130,10 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const getObject = getObjectFactory({ db })

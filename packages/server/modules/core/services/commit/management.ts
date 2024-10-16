@@ -1,12 +1,10 @@
 import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
+  AddCommitDeletedActivity,
   AddCommitUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
-import {
-  addCommitDeletedActivity,
-  addCommitReceivedActivity
-} from '@/modules/activitystream/services/commitActivity'
+import { addCommitReceivedActivity } from '@/modules/activitystream/services/commitActivity'
 import {
   GetBranchById,
   GetStreamBranchByName,
@@ -364,7 +362,7 @@ export const deleteCommitAndNotifyFactory =
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
-    addCommitDeletedActivity: typeof addCommitDeletedActivity
+    addCommitDeletedActivity: AddCommitDeletedActivity
   }): DeleteCommitAndNotify =>
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)
