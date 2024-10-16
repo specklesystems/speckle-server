@@ -9,7 +9,7 @@ import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
  * toasts anywhere and anytime
  */
 const useGlobalToastState = () =>
-  useSynchronizedCookie<Optional<ToastNotification>>('global-toast-state')
+  useSynchronizedCookie<Optional<ToastNotification[]>>('global-toast-state')
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)
@@ -17,17 +17,28 @@ const useGlobalToastState = () =>
 export function useGlobalToastManager() {
   const stateNotification = useGlobalToastState()
 
-  const currentNotification = ref(stateNotification.value)
+  const currentNotification = ref<ToastNotification[]>(
+    Array.isArray(stateNotification.value) ? stateNotification.value : []
+  )
   const readOnlyNotification = computed(() => currentNotification.value)
 
-  const dismiss = () => {
-    currentNotification.value = undefined
-    stateNotification.value = undefined
+  const dismissNotification = (index: number) => {
+    currentNotification.value.splice(index, 1)
+    if (currentNotification.value.length === 0) {
+      stateNotification.value = undefined
+    } else {
+      stateNotification.value = currentNotification.value
+    }
   }
 
-  const { start, stop } = useTimeoutFn(() => {
-    dismiss()
-  }, 4000)
+  const createTimeout = (index: number) => {
+    const { stop } = useTimeoutFn(() => {
+      dismissNotification(index)
+    }, 4000)
+    return stop
+  }
+
+  const timeouts = ref<(() => void)[]>([])
 
   watch(
     stateNotification,
@@ -38,21 +49,28 @@ export function useGlobalToastManager() {
         return
       }
 
-      // First dismiss old notification, then set a new one on next tick
-      // this is so that the old one actually disappears from the screen for the user,
-      // instead of just having its contents replaced
-      dismiss()
+      // Add new notification
+      currentNotification.value = newVal
 
-      nextTick(() => {
-        currentNotification.value = newVal
-
-        // (re-)init timeout
-        stop()
-        if (newVal.autoClose !== false) start()
-      })
+      // Create timeout for the new notification
+      const index = currentNotification.value.length - 1
+      const lastNotification = newVal[index]
+      if (lastNotification && lastNotification.autoClose !== false) {
+        const stopTimeout = createTimeout(index)
+        timeouts.value.push(stopTimeout)
+      }
     },
     { deep: true, immediate: true }
   )
+
+  // Function to dismiss a specific notification
+  const dismiss = (index: number) => {
+    if (timeouts.value[index]) {
+      timeouts.value[index]() // Stop the timeout
+    }
+    dismissNotification(index)
+    timeouts.value.splice(index, 1) // Remove the timeout from the array
+  }
 
   return { currentNotification: readOnlyNotification, dismiss }
 }
@@ -68,7 +86,9 @@ export function useGlobalToast() {
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
-    stateNotification.value = notification
+    stateNotification.value
+      ? stateNotification.value.push(notification)
+      : (stateNotification.value = [notification])
 
     if (import.meta.server) {
       logger.info('Queued SSR toast notification', notification)

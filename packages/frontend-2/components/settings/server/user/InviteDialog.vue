@@ -156,6 +156,8 @@ const onSubmit = handleSubmit(() => {
     hasProject: inviteItems.value.some((item) => !!item.projectId),
     to: 'email'
   })
+
+  isOpen.value = false
 })
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -219,17 +221,4 @@ const updateField = ({
     [field]: val
   }
 }
-
-watch(isOpen, (newVal, oldVal) => {
-  if (newVal && !oldVal) {
-    // inviteItems.value = [
-    //   {
-    //     email: '',
-    //     serverRole: null,
-    //     projectId: undefined,
-    //     id: uuidv4()
-    //   }
-    // ]
-  }
-})
 </script>

@@ -1,6 +1,6 @@
 import { useTimeoutFn, createGlobalState } from '@vueuse/core'
-import type { Nullable } from '@speckle/shared'
-import { computed, nextTick, watch } from 'vue'
+import type { Optional } from '@speckle/shared'
+import { computed, watch } from 'vue'
 import { ref } from 'vue'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
@@ -9,7 +9,7 @@ import type { ToastNotification } from '~~/src/helpers/global/toast'
  */
 
 const useGlobalToastState = createGlobalState(() =>
-  ref(null as Nullable<ToastNotification>)
+  ref(undefined as Optional<ToastNotification[]>)
 )
 
 /**
@@ -18,37 +18,52 @@ const useGlobalToastState = createGlobalState(() =>
 export function useGlobalToastManager() {
   const stateNotification = useGlobalToastState()
 
-  const currentNotification = ref(stateNotification.value)
+  const currentNotification = ref<ToastNotification[]>(
+    Array.isArray(stateNotification.value) ? stateNotification.value : []
+  )
   const readOnlyNotification = computed(() => currentNotification.value)
 
-  const { start, stop } = useTimeoutFn(() => {
-    dismiss()
-  }, 4000)
+  const dismissNotification = (index: number) => {
+    currentNotification.value.splice(index, 1)
+    if (currentNotification.value.length === 0) {
+      stateNotification.value = undefined
+    } else {
+      stateNotification.value = currentNotification.value
+    }
+  }
+
+  const createTimeout = (index: number) => {
+    const { stop } = useTimeoutFn(() => {
+      dismissNotification(index)
+    }, 4000)
+    return stop
+  }
+
+  const timeouts = ref<(() => void)[]>([])
 
   watch(
     stateNotification,
-    async (newVal) => {
+    (newVal) => {
       if (!newVal) return
 
-      // First dismiss old notification, then set a new one on next tick
-      // this is so that the old one actually disappears from the screen for the user,
-      // instead of just having its contents replaced
-      dismiss()
-
-      await nextTick(() => {
-        currentNotification.value = newVal
-
-        // (re-)init timeout
-        stop()
-        if (newVal.autoClose !== false) start()
-      })
+      // Create timeout for the new notification
+      const index = currentNotification.value.length - 1
+      const lastNotification = newVal[index]
+      if (lastNotification && lastNotification.autoClose !== false) {
+        const stopTimeout = createTimeout(index)
+        timeouts.value.push(stopTimeout)
+      }
     },
-    { deep: true }
+    { deep: true, immediate: true }
   )
 
-  const dismiss = () => {
-    currentNotification.value = null
-    stateNotification.value = null
+  // Function to dismiss a specific notification
+  const dismiss = (index: number) => {
+    if (timeouts.value[index]) {
+      timeouts.value[index]() // Stop the timeout
+    }
+    dismissNotification(index)
+    timeouts.value.splice(index, 1) // Remove the timeout from the array
   }
 
   return { currentNotification: readOnlyNotification, dismiss }
@@ -64,7 +79,9 @@ export function useGlobalToast() {
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
-    stateNotification.value = notification
+    stateNotification.value
+      ? stateNotification.value.push(notification)
+      : (stateNotification.value = [notification])
   }
 
   return { triggerNotification }
