@@ -1,4 +1,3 @@
-const { searchUsers } = require('@/modules/core/services/users')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
@@ -16,7 +15,8 @@ const {
   isLastAdminUserFactory,
   deleteUserRecordFactory,
   getUserRoleFactory,
-  updateUserServerRoleFactory
+  updateUserServerRoleFactory,
+  searchUsersFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -68,6 +68,7 @@ const changeUserRole = changeUserRoleFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
+const searchUsers = searchUsersFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
