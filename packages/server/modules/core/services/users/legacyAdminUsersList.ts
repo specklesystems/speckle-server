@@ -131,6 +131,7 @@ const retrieveItemsFactory =
 
 /**
  * Resolve admin users list data using the specified filter params
+ * @deprecated Use individual getTotalStreamCount/adminProjectList, getTotalUserCount/adminUserList, getTotalInviteCount/adminInviteList operations
  */
 export const getAdminUsersListCollectionFactory =
   (deps: GetTotalCountsDeps & RetrieveItemsDeps): LegacyGetAdminUsersListCollection =>
