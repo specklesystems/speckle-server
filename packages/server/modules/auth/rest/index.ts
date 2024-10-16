@@ -1,7 +1,6 @@
 import cors from 'cors'
 import {
   validateToken,
-  revokeTokenById,
   createBareToken,
   createAppTokenFactory
 } from '@/modules/core/services/tokens'
@@ -25,6 +24,7 @@ import {
 } from '@/modules/auth/services/serverApps'
 import { Express } from 'express'
 import {
+  revokeTokenByIdFactory,
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory,
@@ -167,6 +167,7 @@ export default function (app: Express) {
   app.post('/auth/logout', async (req, res) => {
     try {
       const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+      const revokeTokenById = revokeTokenByIdFactory({ db })
 
       const token = req.body.token
       const refreshToken = req.body.refreshToken

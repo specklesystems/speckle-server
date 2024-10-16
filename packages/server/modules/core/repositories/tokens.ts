@@ -13,6 +13,7 @@ import {
 } from '@/modules/core/dbSchema'
 import {
   GetUserPersonalAccessTokens,
+  RevokeTokenById,
   StoreApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
@@ -109,4 +110,16 @@ export const getUserPersonalAccessTokensFactory =
       lastUsed: Date
       scopes: ServerScope[]
     }[]
+  }
+
+export const revokeTokenByIdFactory =
+  (deps: { db: Knex }): RevokeTokenById =>
+  async (tokenId: string) => {
+    const delCount = await tables
+      .apiTokens(deps.db)
+      .where({ id: tokenId.slice(0, 10) })
+      .del()
+
+    if (delCount === 0) throw new Error('Token revokation failed')
+    return true
   }
