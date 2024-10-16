@@ -66,10 +66,10 @@ const {
   createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  addCommitDeletedActivity,
-  addCommitMovedActivity,
   addCommitCreatedActivityFactory,
-  addCommitUpdatedActivityFactory
+  addCommitUpdatedActivityFactory,
+  addCommitMovedActivityFactory,
+  addCommitDeletedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
@@ -92,7 +92,10 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const getObject = getObjectFactory({ db })
@@ -145,7 +148,10 @@ const batchMoveCommits = batchMoveCommitsFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
-  addCommitMovedActivity
+  addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 

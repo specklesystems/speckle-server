@@ -3,7 +3,7 @@ import {
   GetOnboardingBaseStream,
   MarkOnboardingBaseStream
 } from '@/modules/core/domain/streams/operations'
-import { getFirstAdmin } from '@/modules/core/repositories/users'
+import { GetFirstAdmin } from '@/modules/core/domain/users/operations'
 import {
   DownloadProject,
   EnsureOnboardingProject,
@@ -39,7 +39,7 @@ export const getOnboardingBaseProjectFactory =
 export const ensureOnboardingProjectFactory =
   (deps: {
     getOnboardingBaseStream: GetOnboardingBaseStream
-    getFirstAdmin: typeof getFirstAdmin
+    getFirstAdmin: GetFirstAdmin
     downloadProject: DownloadProject
     markOnboardingBaseStream: MarkOnboardingBaseStream
   }): EnsureOnboardingProject =>

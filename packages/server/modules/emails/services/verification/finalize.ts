@@ -1,10 +1,10 @@
 import { Optional } from '@speckle/shared'
-import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import {
   DeleteVerifications,
   GetPendingToken
 } from '@/modules/emails/domain/operations'
+import { MarkUserAsVerified } from '@/modules/core/domain/users/operations'
 
 type InitializeStateDeps = {
   getPendingToken: GetPendingToken
@@ -27,7 +27,7 @@ const initializeState =
 type FinalizationState = Awaited<ReturnType<ReturnType<typeof initializeState>>>
 
 type FinalizeVerificationDeps = {
-  markUserAsVerified: typeof markUserAsVerified
+  markUserAsVerified: MarkUserAsVerified
   deleteVerifications: DeleteVerifications
 }
 
