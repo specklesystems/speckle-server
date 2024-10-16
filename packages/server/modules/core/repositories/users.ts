@@ -25,6 +25,7 @@ import {
   LegacyGetUser,
   LegacyGetUserByEmail,
   ListPaginatedUsersPage,
+  MarkUserAsVerified,
   SearchLimitedUsers,
   StoreUser,
   StoreUserAcl,
@@ -194,21 +195,24 @@ export const getUserByEmailFactory =
 /**
  * Mark a user as verified by e-mail address, and return true on success
  */
-export async function markUserAsVerified(email: string) {
-  const UserCols = Users.with({ withoutTablePrefix: true }).col
+export const markUserAsVerifiedFactory =
+  (deps: { db: Knex }): MarkUserAsVerified =>
+  async (email: string) => {
+    const UserCols = Users.with({ withoutTablePrefix: true }).col
 
-  const usersUpdate = await Users.knex()
-    .whereRaw('lower(email) = lower(?)', [email])
-    .update({
-      [UserCols.verified]: true
-    })
+    const usersUpdate = await tables
+      .users(deps.db)
+      .whereRaw('lower(email) = lower(?)', [email])
+      .update({
+        [UserCols.verified]: true
+      })
 
-  const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
-    updateUserEmail: updateUserEmailFactory({ db })
-  })({ email: email.toLowerCase().trim() })
+    const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
+      updateUserEmail: updateUserEmailFactory({ db: deps.db })
+    })({ email: email.toLowerCase().trim() })
 
-  return !!(usersUpdate || userEmailsUpdate)
-}
+    return !!(usersUpdate || userEmailsUpdate)
+  }
 
 export async function markOnboardingComplete(userId: string) {
   if (!userId) return false

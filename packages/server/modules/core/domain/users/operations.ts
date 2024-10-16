@@ -78,6 +78,8 @@ export type UpdateUserServerRole = (params: {
   role: ServerRoles
 }) => Promise<boolean>
 
+export type MarkUserAsVerified = (email: string) => Promise<boolean>
+
 export type LegacyGetUserByEmail = (params: {
   email: string
 }) => Promise<Nullable<Omit<User, 'passwordDigest'>>>
