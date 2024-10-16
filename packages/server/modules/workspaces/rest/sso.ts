@@ -83,6 +83,50 @@ const buildErrorUrl = ({
 }
 
 router.get(
+  '/api/v1/workspaces/:workspaceSlug/sso',
+  validateRequest({
+    params: z.object({
+      workspaceSlug: z.string().min(1)
+    })
+  }),
+  async (req) => {
+    const { workspaceSlug } = req.params
+
+    const workspace = await getWorkspaceBySlugFactory({ db })({
+      workspaceSlug
+    })
+
+    if (!workspace) {
+      throw new Error()
+    }
+
+    const { encryptedProviderData } = await db('workspace_sso_providers')
+      .select('*')
+      .where('workspaceId', workspace.id)
+      .join('sso_providers', 'id', 'providerId')
+      .first()
+
+    if (!encryptedProviderData) {
+      throw new Error()
+    }
+
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const decryptor = await buildDecryptor(encryptionKeyPair)
+    const providerJson = await decryptor.decrypt(encryptedProviderData)
+    const { providerName } = JSON.parse(providerJson)
+
+    const limitedWorkspace = {
+      name: workspace.name,
+      logo: workspace.logo,
+      defaultLogoIndex: workspace.defaultLogoIndex,
+      ssoProviderName: providerName
+    }
+
+    req.res?.json(limitedWorkspace)
+  }
+)
+
+router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
   validateRequest({
