@@ -2,7 +2,6 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { changeUserRole, searchUsers, deleteUser } = require('../services/users')
 const {
   createPersonalAccessToken,
   revokeToken,
@@ -39,7 +38,9 @@ const {
   getStreamFactory,
   createStreamFactory,
   grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory
+  markCommitStreamUpdatedFactory,
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const { getObjectFactory } = require('@/modules/core/repositories/objects')
@@ -57,7 +58,8 @@ const {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  deleteAllUserInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
   collectAndValidateCoreTargetsFactory
@@ -84,7 +86,11 @@ const {
   storeUserAclFactory,
   legacyGetUserByEmailFactory,
   updateUserFactory,
-  getUserByEmailFactory
+  getUserByEmailFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory,
+  updateUserServerRoleFactory,
+  searchUsersFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -106,7 +112,9 @@ const {
   findOrCreateUserFactory,
   updateUserAndNotifyFactory,
   changePasswordFactory,
-  validateUserPasswordFactory
+  validateUserPasswordFactory,
+  deleteUserFactory,
+  changeUserRoleFactory
 } = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
@@ -118,6 +126,7 @@ const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
+const { dbLogger } = require('@/logging/logging')
 
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -227,6 +236,20 @@ const updateUserPassword = changePasswordFactory({
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })
 })
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
+})
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
+const searchUsers = searchUsersFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -347,7 +370,7 @@ describe('Actors & Tokens @user-services', () => {
         })
       ).id
 
-      await deleteUser({ deleteAllUserInvites: async () => true })(ballmerUserId)
+      await deleteUser(ballmerUserId)
 
       if ((await getStream({ streamId: soloOwnerStream.id })) !== undefined) {
         assert.fail('user stream not deleted')
@@ -381,7 +404,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Should not delete the last admin user', async () => {
       try {
-        await deleteUser({ deleteAllUserInvites: async () => true })(myTestActor.id)
+        await deleteUser(myTestActor.id)
         assert.fail('boom')
       } catch (err) {
         expect(err.message).to.equal(

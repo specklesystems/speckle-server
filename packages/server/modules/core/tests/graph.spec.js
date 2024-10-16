@@ -5,7 +5,6 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const { changeUserRole } = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
@@ -34,7 +33,9 @@ const {
   legacyGetPaginatedUsersFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -50,7 +51,10 @@ const {
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  createUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
 } = require('@/modules/core/services/userEmails')
@@ -126,6 +130,12 @@ const createUser = createUserFactory({
 let app
 let server
 let sendRequest
+
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
 
 describe('GraphQL API Core @core-api', () => {
   const userA = {

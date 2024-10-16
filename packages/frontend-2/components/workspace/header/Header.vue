@@ -66,15 +66,21 @@
           </button>
         </div>
         <div class="flex items-center gap-x-3">
-          <button
-            class="block"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          <div
+            v-if="!isWorkspaceGuest"
+            v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'"
           >
-            <UserAvatarGroup
-              :users="team.map((teamMember) => teamMember.user)"
-              class="max-w-[104px]"
-            />
-          </button>
+            <button
+              class="block"
+              @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+            >
+              <UserAvatarGroup
+                :users="team.map((teamMember) => teamMember.user)"
+                class="max-w-[104px]"
+                hide-tooltips
+              />
+            </button>
+          </div>
           <FormButton
             v-if="isWorkspaceAdmin"
             class="hidden md:block"
@@ -83,11 +89,20 @@
           >
             Invite
           </FormButton>
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            class="hidden md:block"
+            color="outline"
+            @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+          >
+            Settings
+          </FormButton>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
             :menu-position="HorizontalDirection.Left"
             :menu-id="menuId"
+            class="md:hidden"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
@@ -189,17 +204,17 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     ...(isMobile.value
       ? [
-          ...(isWorkspaceAdmin.value
-            ? [{ title: 'Move projects', id: ActionTypes.MoveProjects }]
-            : []),
+          { title: 'Settings', id: ActionTypes.Settings },
+
           ...(!isWorkspaceGuest.value
-            ? [{ title: 'Invite', id: ActionTypes.Invite }]
+            ? [{ title: 'Invite...', id: ActionTypes.Invite }]
+            : []),
+          ...(isWorkspaceAdmin.value
+            ? [{ title: 'Move projects...', id: ActionTypes.MoveProjects }]
             : [])
         ]
-      : []),
-    { title: 'Copy link', id: ActionTypes.CopyLink }
-  ],
-  [{ title: 'Settings...', id: ActionTypes.Settings }]
+      : [])
+  ]
 ])
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {

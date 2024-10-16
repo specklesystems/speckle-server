@@ -12,18 +12,24 @@ import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/em
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   CountAdminUsers,
+  DeleteUserRecord,
   GetUser,
   GetUserByEmail,
   GetUserParams,
+  GetUserRole,
   GetUsers,
+  IsLastAdminUser,
   LegacyGetPaginatedUsers,
   LegacyGetPaginatedUsersCount,
   LegacyGetUser,
   LegacyGetUserByEmail,
+  SearchLimitedUsers,
   StoreUser,
   StoreUserAcl,
-  UpdateUser
+  UpdateUser,
+  UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
+import { LIMITED_USER_FIELDS } from '@/modules/core/helpers/userHelper'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
@@ -382,10 +388,92 @@ export const countAdminUsersFactory =
     return parseInt(count as string)
   }
 
+export const isLastAdminUserFactory =
+  (deps: { db: Knex }): IsLastAdminUser =>
+  async (userId) => {
+    if ((await countAdminUsersFactory(deps)()) === 1) {
+      const currentAdmin = await tables
+        .serverAcl(deps.db)
+        .where({ role: Roles.Server.Admin })
+        .first()
+      if (currentAdmin && currentAdmin.userId === userId) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+export const deleteUserRecordFactory =
+  (deps: { db: Knex }): DeleteUserRecord =>
+  async (id) => {
+    const res = await tables.users(deps.db).where({ id }).del()
+    return !!res
+  }
+
 export const storeUserAclFactory =
   (deps: { db: Knex }): StoreUserAcl =>
   async (params) => {
     const { acl } = params
     const [newAcl] = await tables.serverAcl(deps.db).insert(acl, '*')
     return newAcl
+  }
+
+export const updateUserServerRoleFactory =
+  (deps: { db: Knex }): UpdateUserServerRole =>
+  async (params) => {
+    const { userId, role } = params
+    const res = await tables.serverAcl(deps.db).where({ userId }).update({ role })
+    return !!res
+  }
+
+export const getUserRoleFactory =
+  (deps: { db: Knex }): GetUserRole =>
+  async (id) => {
+    const { role } = (await tables
+      .serverAcl(deps.db)
+      .where({ userId: id })
+      .select('role')
+      .first()) || {
+      role: null
+    }
+    return role as Nullable<ServerRoles>
+  }
+
+/**
+ * User search available for normal server users. It's more limited because of the lower access level.
+ */
+export const searchUsersFactory =
+  (deps: { db: Knex }): SearchLimitedUsers =>
+  async (searchQuery, limit, cursor, archived = false, emailOnly = false) => {
+    const prefixedLimitedUserFields = LIMITED_USER_FIELDS.map(
+      (field) => `users.${field}`
+    )
+    const query = tables
+      .users(deps.db)
+      .join('server_acl', 'users.id', 'server_acl.userId')
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .columns([
+        ...Object.values(omit(Users.col, ['email', 'verified'])).filter((col) =>
+          prefixedLimitedUserFields.includes(col)
+        ),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(Users.col.id)
+      .where((queryBuilder) => {
+        queryBuilder.where({ [UserEmails.col.email]: searchQuery }) //match full email or partial name
+        if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        if (!archived) queryBuilder.andWhere('role', '!=', Roles.Server.ArchivedUser)
+      })
+
+    if (cursor) query.andWhere('users.createdAt', '<', cursor)
+
+    const defaultLimit = 25
+    query.orderBy('users.createdAt', 'desc').limit(limit || defaultLimit)
+
+    const rows = await query
+    return {
+      users: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    }
   }

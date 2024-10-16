@@ -1,4 +1,8 @@
-import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import {
+  LimitedUser,
+  User,
+  UserWithOptionalRole
+} from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { ServerAclRecord } from '@/modules/core/helpers/types'
 import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
@@ -45,11 +49,20 @@ export type UpdateUser = (
   }>
 ) => Promise<Nullable<User>>
 
+export type DeleteUserRecord = (userId: string) => Promise<boolean>
+
 export type CountAdminUsers = () => Promise<number>
+
+export type IsLastAdminUser = (userId: string) => Promise<boolean>
 
 export type StoreUserAcl = (params: {
   acl: ServerAclRecord
 }) => Promise<ServerAclRecord>
+
+export type UpdateUserServerRole = (params: {
+  userId: string
+  role: ServerRoles
+}) => Promise<boolean>
 
 export type LegacyGetUserByEmail = (params: {
   email: string
@@ -66,6 +79,8 @@ export type LegacyGetPaginatedUsers = (
 export type LegacyGetPaginatedUsersCount = (
   searchQuery?: string | null
 ) => Promise<number>
+
+export type GetUserRole = (id: string) => Promise<Nullable<ServerRoles>>
 
 export type CreateValidatedUser = (
   user: NullableKeysToOptional<Pick<User, 'bio' | 'name' | 'company' | 'avatar'>> & {
@@ -107,3 +122,18 @@ export type ValidateUserPassword = (params: {
   email: string
   password: string
 }) => Promise<boolean>
+
+export type DeleteUser = (id: string) => Promise<boolean>
+
+export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
+
+export type SearchLimitedUsers = (
+  searchQuery: string,
+  limit?: number,
+  cursor?: string,
+  archived?: boolean,
+  emailOnly?: boolean
+) => Promise<{
+  users: LimitedUser[]
+  cursor: Nullable<string>
+}>

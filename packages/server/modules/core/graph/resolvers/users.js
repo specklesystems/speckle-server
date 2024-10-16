@@ -1,9 +1,3 @@
-const {
-  getUserRole,
-  deleteUser,
-  searchUsers,
-  changeUserRole
-} = require('@/modules/core/services/users')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
@@ -17,7 +11,12 @@ const {
   legacyGetUserFactory,
   legacyGetUserByEmailFactory,
   getUserFactory,
-  updateUserFactory
+  updateUserFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory,
+  getUserRoleFactory,
+  updateUserServerRoleFactory,
+  searchUsersFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -31,11 +30,18 @@ const db = require('@/db/knex')
 const { BadRequestError } = require('@/modules/shared/errors')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const {
-  updateUserAndNotifyFactory
+  updateUserAndNotifyFactory,
+  deleteUserFactory,
+  changeUserRoleFactory
 } = require('@/modules/core/services/users/management')
 const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
+const {
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
+} = require('@/modules/core/repositories/streams')
+const { dbLogger } = require('@/logging/logging')
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -47,6 +53,22 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
     saveActivity: saveActivityFactory({ db })
   })
 })
+
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
+})
+const getUserRole = getUserRoleFactory({ db })
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
+const searchUsers = searchUsersFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -168,11 +190,9 @@ module.exports = {
     },
 
     async userRoleChange(_parent, args) {
-      const { guestModeEnabled } = await getServerInfo()
       await changeUserRole({
         role: args.userRoleInput.role,
-        userId: args.userRoleInput.id,
-        guestModeEnabled
+        userId: args.userRoleInput.id
       })
       return true
     },
@@ -182,9 +202,7 @@ module.exports = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
-      })(user.id)
+      await deleteUser(user.id)
       return true
     },
 
@@ -201,9 +219,7 @@ module.exports = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
-      })(context.userId, args.user)
+      await deleteUser(context.userId, args.user)
 
       await saveActivityFactory({ db })({
         streamId: null,

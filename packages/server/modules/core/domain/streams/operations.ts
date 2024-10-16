@@ -66,6 +66,8 @@ export type GetStreamCollaborators = (
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
+export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+
 export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
   {
     role: string
@@ -95,7 +97,7 @@ export type CanUserFavoriteStream = (params: {
   streamId: string
 }) => Promise<boolean>
 
-export type DeleteStreamRecords = (streamId: string) => Promise<number>
+export type DeleteStreamRecord = (streamId: string) => Promise<number>
 
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 

@@ -223,3 +223,20 @@ export type AddCommitUpdatedActivity = (params: {
   update: CommitUpdateInput | UpdateVersionInput
   newCommit: CommitRecord
 }) => Promise<void>
+
+export type AddCommitMovedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalBranchId: string
+  newBranchId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitDeletedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  commit: CommitRecord
+  branchId: string
+}) => Promise<void>
