@@ -3,7 +3,6 @@ const expect = require('chai').expect
 const assert = require('assert')
 
 const {
-  revokeToken,
   validateToken,
   createPersonalAccessTokenFactory
 } = require('../services/tokens')
@@ -131,7 +130,8 @@ const {
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory,
-  getUserPersonalAccessTokensFactory
+  getUserPersonalAccessTokensFactory,
+  revokeUserTokenByIdFactory
 } = require('@/modules/core/repositories/tokens')
 
 const getUser = legacyGetUserFactory({ db })
@@ -265,6 +265,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const getUserTokens = getUserPersonalAccessTokensFactory({ db })
+const revokeToken = revokeUserTokenByIdFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
