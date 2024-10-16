@@ -12,6 +12,7 @@ import {
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
 import {
+  GetUserPersonalAccessTokens,
   StoreApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
@@ -19,6 +20,7 @@ import {
   StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import { ServerScope } from '@speckle/shared'
 import { Knex } from 'knex'
 
 const tables = {
@@ -62,4 +64,49 @@ export const storePersonalApiTokenFactory =
   async (token) => {
     const [newToken] = await tables.personalApiTokens(deps.db).insert(token, '*')
     return newToken
+  }
+
+export const getUserPersonalAccessTokensFactory =
+  (deps: { db: Knex }): GetUserPersonalAccessTokens =>
+  async (userId) => {
+    const { rows } = await deps.db.raw(
+      `
+      SELECT
+        t.id,
+        t.name,
+        t."lastChars",
+        t."createdAt",
+        t.lifespan,
+        t."name",
+        t."lastUsed",
+        ts.scopes
+      FROM
+        api_tokens t
+        JOIN (
+          SELECT
+            ARRAY_AGG(token_scopes. "scopeName") AS "scopes",
+            token_scopes. "tokenId" AS id
+          FROM
+            token_scopes
+            JOIN api_tokens ON "api_tokens"."id" = "token_scopes"."tokenId"
+          GROUP BY
+            token_scopes. "tokenId" ) ts USING (id)
+      WHERE
+        t.id IN(
+          SELECT
+            "tokenId" FROM personal_api_tokens
+          WHERE
+            "userId" = ? )
+    `,
+      [userId]
+    )
+    return rows as {
+      id: string
+      name: string | null
+      lastChars: string | null
+      createdAt: Date
+      lifespan: number
+      lastUsed: Date
+      scopes: ServerScope[]
+    }[]
   }

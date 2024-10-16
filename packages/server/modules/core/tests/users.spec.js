@@ -5,7 +5,6 @@ const assert = require('assert')
 const {
   revokeToken,
   validateToken,
-  getUserTokens,
   createPersonalAccessTokenFactory
 } = require('../services/tokens')
 
@@ -131,7 +130,8 @@ const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
-  storePersonalApiTokenFactory
+  storePersonalApiTokenFactory,
+  getUserPersonalAccessTokensFactory
 } = require('@/modules/core/repositories/tokens')
 
 const getUser = legacyGetUserFactory({ db })
@@ -264,6 +264,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   }),
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
+const getUserTokens = getUserPersonalAccessTokensFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
