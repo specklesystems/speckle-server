@@ -9,7 +9,7 @@ import {
   legacyGetPaginatedUsersFactory,
   legacyGetUserByEmailFactory,
   listUsersFactory,
-  markUserAsVerified,
+  markUserAsVerifiedFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
@@ -84,6 +84,7 @@ const createUser = createUserFactory({
 const getUserByEmail = getUserByEmailFactory({ db })
 const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
 const listUsers = listUsersFactory({ db })
+const markUserAsVerified = markUserAsVerifiedFactory({ db })
 
 describe('Core @user-emails', () => {
   before(async () => {
