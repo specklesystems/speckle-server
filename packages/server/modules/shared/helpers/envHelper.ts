@@ -48,7 +48,14 @@ export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
 }
 
 export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
-  return ['1', 'true'].includes(process.env[envVarKey] || aDefault.toString())
+  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+}
+
+export function getStringFromEnv(envVarKey: string): string {
+  if (!process.env[envVarKey]) {
+    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
+  }
+  return process.env[envVarKey]
 }
 
 /**
@@ -63,97 +70,47 @@ export function enableNewFrontendMessaging() {
 }
 
 export function getRedisUrl() {
-  if (!process.env.REDIS_URL) {
-    throw new MisconfiguredEnvironmentError('REDIS_URL env var not configured')
-  }
-
-  return process.env.REDIS_URL
+  return getStringFromEnv('REDIS_URL')
 }
 
 export function getOidcDiscoveryUrl() {
-  if (!process.env.OIDC_DISCOVERY_URL) {
-    throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
-  }
-
-  return process.env.OIDC_DISCOVERY_URL
+  return getStringFromEnv('OIDC_DISCOVERY_URL')
 }
 
 export function getOidcClientId() {
-  if (!process.env.OIDC_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_ID env var not configured')
-  }
-
-  return process.env.OIDC_CLIENT_ID
+  return getStringFromEnv('OIDC_CLIENT_ID')
 }
 
 export function getOidcClientSecret() {
-  if (!process.env.OIDC_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_SECRET env var not configured')
-  }
-
-  return process.env.OIDC_CLIENT_SECRET
+  return getStringFromEnv('OIDC_CLIENT_SECRET')
 }
 
 export function getOidcName() {
-  if (!process.env.OIDC_NAME) {
-    throw new MisconfiguredEnvironmentError('OIDC_NAME env var not configured')
-  }
-
-  return process.env.OIDC_NAME
+  return getStringFromEnv('OIDC_NAME')
 }
 
 export function getGoogleClientId() {
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('GOOGLE_CLIENT_ID env var not configured')
-  }
-
-  return process.env.GOOGLE_CLIENT_ID
+  return getStringFromEnv('GOOGLE_CLIENT_ID')
 }
 
 export function getGoogleClientSecret() {
-  if (!process.env.GOOGLE_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError(
-      'GOOGLE_CLIENT_SECRET env var not configured'
-    )
-  }
-
-  return process.env.GOOGLE_CLIENT_SECRET
+  return getStringFromEnv('GOOGLE_CLIENT_SECRET')
 }
 
 export function getGithubClientId() {
-  if (!process.env.GITHUB_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('GITHUB_CLIENT_ID env var not configured')
-  }
-
-  return process.env.GITHUB_CLIENT_ID
+  return getStringFromEnv('GITHUB_CLIENT_ID')
 }
 
 export function getGithubClientSecret() {
-  if (!process.env.GITHUB_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError(
-      'GITHUB_CLIENT_SECRET env var not configured'
-    )
-  }
-
-  return process.env.GITHUB_CLIENT_SECRET
+  return getStringFromEnv('GITHUB_CLIENT_SECRET')
 }
 
 export function getAzureAdIdentityMetadata() {
-  if (!process.env.AZURE_AD_IDENTITY_METADATA) {
-    throw new MisconfiguredEnvironmentError(
-      'AZURE_AD_IDENTITY_METADATA env var not configured'
-    )
-  }
-
-  return process.env.AZURE_AD_IDENTITY_METADATA
+  return getStringFromEnv('AZURE_AD_IDENTITY_METADATA')
 }
 
 export function getAzureAdClientId() {
-  if (!process.env.AZURE_AD_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('AZURE_AD_CLIENT_ID env var not configured')
-  }
-
-  return process.env.AZURE_AD_CLIENT_ID
+  return getStringFromEnv('AZURE_AD_CLIENT_ID')
 }
 
 export function getAzureAdIssuer() {
@@ -165,7 +122,7 @@ export function getAzureAdClientSecret() {
 }
 
 export function getMailchimpStatus() {
-  return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
+  return getBooleanFromEnv('MAILCHIMP_ENABLED', false)
 }
 
 export function getMailchimpConfig() {
@@ -353,12 +310,7 @@ export function getOnboardingStreamCacheBustNumber() {
 }
 
 export function getEmailFromAddress() {
-  if (!process.env.EMAIL_FROM) {
-    throw new MisconfiguredEnvironmentError(
-      'Email From environment variable (EMAIL_FROM) is not configured'
-    )
-  }
-  return process.env.EMAIL_FROM
+  return getStringFromEnv('EMAIL_FROM')
 }
 
 export function getMaximumProjectModelsPerPage() {
@@ -371,25 +323,19 @@ export function delayGraphqlResponsesBy() {
 }
 
 export function getAutomateEncryptionKeysPath() {
-  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
-    throw new MisconfiguredEnvironmentError(
-      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
-    )
-  }
-
-  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+  return getStringFromEnv('AUTOMATE_ENCRYPTION_KEYS_PATH')
 }
 
 export function getGendoAIKey() {
-  return process.env.GENDOAI_KEY
+  return getStringFromEnv('GENDOAI_KEY')
 }
 
 export function getGendoAIResponseKey() {
-  return process.env.GENDOAI_KEY_RESPONSE
+  return getStringFromEnv('GENDOAI_KEY_RESPONSE')
 }
 
 export function getGendoAIAPIEndpoint() {
-  return process.env.GENDOAI_API_ENDPOINT
+  return getStringFromEnv('GENDOAI_API_ENDPOINT')
 }
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
@@ -415,27 +361,15 @@ export function maximumObjectUploadFileSizeMb() {
 }
 
 export function getS3AccessKey() {
-  if (!process.env.S3_ACCESS_KEY)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable S3_ACCESS_KEY is missing'
-    )
-  return process.env.S3_ACCESS_KEY
+  return getStringFromEnv('S3_ACCESS_KEY')
 }
 
 export function getS3SecretKey() {
-  if (!process.env.S3_SECRET_KEY)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable S3_SECRET_KEY is missing'
-    )
-  return process.env.S3_SECRET_KEY
+  return getStringFromEnv('S3_SECRET_KEY')
 }
 
 export function getS3Endpoint() {
-  if (!process.env.S3_ENDPOINT)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable S3_ENDPOINT is missing'
-    )
-  return process.env.S3_ENDPOINT
+  return getStringFromEnv('S3_ENDPOINT')
 }
 
 export function getS3Region(aDefault: string = 'us-east-1') {
@@ -443,9 +377,7 @@ export function getS3Region(aDefault: string = 'us-east-1') {
 }
 
 export function getS3BucketName() {
-  if (!process.env.S3_BUCKET)
-    throw new MisconfiguredEnvironmentError('Environment variable S3_BUCKET is missing')
-  return process.env.S3_BUCKET
+  return getStringFromEnv('S3_BUCKET')
 }
 
 export function createS3Bucket() {
@@ -453,47 +385,9 @@ export function createS3Bucket() {
 }
 
 export function getStripeApiKey(): string {
-  if (!process.env.STRIPE_API_KEY)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable STRIPE_API_KEY is missing'
-    )
-  return process.env.STRIPE_API_KEY
+  return getStringFromEnv('STRIPE_API_KEY')
 }
 
 export function getStripeEndpointSigningKey(): string {
-  if (!process.env.STRIPE_ENDPOINT_SIGNING_KEY)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable STRIPE_ENDPOINT_SIGNING_KEY is missing'
-    )
-  return process.env.STRIPE_ENDPOINT_SIGNING_KEY
-}
-
-export function getWorkspaceGuestSeatStripePriceId(): string {
-  if (!process.env.WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID is missing'
-    )
-  return process.env.WORKSPACE_GUEST_SEAT_STRIPE_PRICE_ID
-}
-export function getWorkspaceTeamSeatStripePriceId(): string {
-  if (!process.env.WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID is missing'
-    )
-  return process.env.WORKSPACE_TEAM_SEAT_STRIPE_PRICE_ID
-}
-
-export function getWorkspaceProSeatStripePriceId(): string {
-  if (!process.env.WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID is missing'
-    )
-  return process.env.WORKSPACE_PRO_SEAT_STRIPE_PRICE_ID
-}
-export function getWorkspaceBusinessSeatStripePriceId(): string {
-  if (!process.env.WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID)
-    throw new MisconfiguredEnvironmentError(
-      'Environment variable WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID is missing'
-    )
-  return process.env.WORKSPACE_BUSINESS_SEAT_STRIPE_PRICE_ID
+  return getStringFromEnv('STRIPE_ENDPOINT_SIGNING_KEY')
 }
