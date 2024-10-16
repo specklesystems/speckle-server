@@ -1,6 +1,6 @@
 <template>
   <Teleport to="#toast-portal">
-    <GlobalToastRenderer v-model:notifications="notifications" />
+    <GlobalToastRenderer v-model:notifications="notifications" @dismiss="dismiss" />
   </Teleport>
 </template>
 
@@ -8,13 +8,13 @@
 import { useGlobalToastManager } from '~~/lib/common/composables/toast'
 import { GlobalToastRenderer } from '@speckle/ui-components'
 
-const { currentNotification, dismiss } = useGlobalToastManager()
+const { currentNotifications, dismissAll, dismiss } = useGlobalToastManager()
 
 const notifications = computed({
-  get: () => currentNotification.value,
+  get: () => currentNotifications.value,
   set: (newVal) => {
     if (!newVal) {
-      dismiss(0)
+      dismissAll()
     }
   }
 })

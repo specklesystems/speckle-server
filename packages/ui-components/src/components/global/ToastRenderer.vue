@@ -71,7 +71,7 @@
               <button
                 type="button"
                 class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                @click="emit('update:notification', null)"
+                @click="(e: MouseEvent) => onCtaClick(notification, e)"
               >
                 <span class="sr-only">Close</span>
                 <XMarkIcon class="h-5 w-5" aria-hidden="true" />
@@ -97,10 +97,19 @@ import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 const emit = defineEmits<{
-  (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
+  (e: 'dismiss', val: ToastNotification): void
 }>()
 
 defineProps<{
   notifications: MaybeNullOrUndefined<ToastNotification[]>
 }>()
+
+const dismiss = (notification: ToastNotification) => {
+  emit('dismiss', notification)
+}
+
+const onCtaClick = (notification: ToastNotification, e: MouseEvent) => {
+  notification.cta?.onClick?.(e)
+  dismiss(notification)
+}
 </script>
