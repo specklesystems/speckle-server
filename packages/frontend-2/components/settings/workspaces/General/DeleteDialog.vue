@@ -5,30 +5,32 @@
     max-width="sm"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
-      Are you sure you want to
-      <span class="font-medium">permanently delete</span>
-      the selected workspace?
-    </p>
-    <div
-      class="rounded border bg-foundation-2 border-outline-3 text-body-2xs text-foreground font-medium py-3 px-4 my-4"
-    >
-      {{ workspace.name }}
-    </div>
-    <p class="text-body-xs text-foreground">
-      This action
-      <span class="font-medium">cannot</span>
-      be undone. To confirm deletion, type the workspace name below.
+    <p class="text-body-xs text-foreground mb-2">
+      Are you sure you want to permanently delete
+      <span class="font-medium">{{ workspace.name }}?</span>
+      This action cannot be undone.
     </p>
     <FormTextInput
       v-model="workspaceNameInput"
       name="workspaceNameConfirm"
-      label="Workspace name"
+      label="To confirm deletion, type the workspace name below."
       size="lg"
       placeholder="Type the workspace name here..."
       full-width
+      show-label
       hide-error-message
-      class="text-sm mt-2"
+      class="text-sm mb-4"
+      color="foundation"
+    />
+    <FormTextArea
+      v-model="feedback"
+      name="reasonForDeletion"
+      label="Why did you delete this workspace?"
+      placeholder="We want to improve so we're curious about your honest feedback"
+      show-label
+      show-optional
+      full-width
+      class="text-sm mb-2"
       color="foundation"
     />
   </LayoutDialog>
@@ -55,6 +57,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute } from '~/lib/common/helpers/route'
+import { useZapier } from '~/lib/core/composables/zapier'
+import { useForm } from 'vee-validate'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -75,8 +79,11 @@ const { activeUser } = useActiveUser()
 const router = useRouter()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
+const { sendWebhook } = useZapier()
+const { resetForm } = useForm<{ feedback: string }>()
 
 const workspaceNameInput = ref('')
+const feedback = ref('')
 
 const onDelete = async () => {
   if (workspaceNameInput.value !== props.workspace.name) return
@@ -121,15 +128,21 @@ const onDelete = async () => {
       )
     }
 
+    mixpanel.track('Workspace Deleted', {
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspace.id,
+      feedback: feedback.value
+    })
+
+    await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+      userId: activeUser.value?.id ?? '',
+      feedback: feedback.value
+    })
+
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace deleted',
       description: `The ${props.workspace.name} workspace has been deleted`
-    })
-
-    mixpanel.track('Workspace Deleted', {
-      // eslint-disable-next-line camelcase
-      workspace_id: props.workspace.id
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
@@ -147,7 +160,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
-      workspaceNameInput.value = ''
     }
   },
   {
@@ -161,6 +173,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 watch(isOpen, () => {
-  workspaceNameInput.value = ''
+  resetForm()
 })
 </script>

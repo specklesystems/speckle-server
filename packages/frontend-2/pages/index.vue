@@ -66,11 +66,6 @@
     </div>
 
     <ProjectsAddDialog v-model:open="openNewProject" />
-
-    <SettingsWorkspacesGeneralDeletionReasonDialog
-      v-model:open="showWorkspaceDeletionReasonDialog"
-      :workspace-id="deletedWorkspaceId"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -105,7 +100,6 @@ definePageMeta({
 const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const route = useRoute()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
 const { result: workspacesResult } = useQuery(
   dashboardProjectsPageWorkspacesQuery,
@@ -122,8 +116,6 @@ const { isGuest } = useActiveUser()
 const router = useRouter()
 
 const openNewProject = ref(false)
-const showWorkspaceDeletionReasonDialog = ref(false)
-const deletedWorkspaceId = ref('')
 
 const ghostContentApi = new GhostContentAPI({
   url: 'https://v1.speckle.systems',
@@ -213,18 +205,4 @@ const onDownloadManager = (extension: ManagerExtension) => {
 }
 
 const promoBanners = ref<PromoBanner[]>()
-
-onMounted(() => {
-  if (route.query.showDialog === 'workspace-deleted') {
-    showWorkspaceDeletionReasonDialog.value = true
-    deletedWorkspaceId.value = route.query.workspaceId as string
-
-    // Remove both query parameters
-    const newQuery = { ...route.query }
-    delete newQuery.showDialog
-    delete newQuery.workspaceId
-
-    router.replace({ query: newQuery })
-  }
-})
 </script>
