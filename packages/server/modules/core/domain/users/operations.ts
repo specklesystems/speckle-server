@@ -4,7 +4,7 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { ServerAclRecord } from '@/modules/core/helpers/types'
+import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
 
 export type GetUserParams = Partial<{
@@ -54,6 +54,20 @@ export type DeleteUserRecord = (userId: string) => Promise<boolean>
 export type CountAdminUsers = () => Promise<number>
 
 export type IsLastAdminUser = (userId: string) => Promise<boolean>
+
+type UserQuery = {
+  query: string | null
+  role?: ServerRoles | null
+}
+
+export type ListPaginatedUsersPage = (
+  params: {
+    limit: number
+    cursor?: Date | null
+  } & UserQuery
+) => Promise<UserWithRole[]>
+
+export type CountUsers = (params: UserQuery) => Promise<number>
 
 export type StoreUserAcl = (params: {
   acl: ServerAclRecord
@@ -136,4 +150,17 @@ export type SearchLimitedUsers = (
 ) => Promise<{
   users: LimitedUser[]
   cursor: Nullable<string>
+}>
+
+type AdminUserListArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+  role: ServerRoles | null
+}
+
+export type AdminUserList = (args: AdminUserListArgs) => Promise<{
+  totalCount: number
+  items: UserWithRole[]
+  cursor: string | null
 }>
