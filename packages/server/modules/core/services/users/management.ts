@@ -1,6 +1,7 @@
 import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
   ChangeUserPassword,
+  ChangeUserRole,
   CountAdminUsers,
   CreateValidatedUser,
   DeleteUser,
@@ -13,6 +14,7 @@ import {
   StoreUserAcl,
   UpdateUser,
   UpdateUserAndNotify,
+  UpdateUserServerRole,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
@@ -21,7 +23,12 @@ import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
-import { isNullOrUndefined, NullableKeysToOptional, Roles } from '@speckle/shared'
+import {
+  isNullOrUndefined,
+  NullableKeysToOptional,
+  Roles,
+  ServerRoles
+} from '@speckle/shared'
 import { pick } from 'lodash'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
@@ -268,4 +275,28 @@ export const deleteUserFactory =
     await deps.deleteAllUserInvites(id)
 
     return await deps.deleteUserRecord(id)
+  }
+
+export const changeUserRoleFactory =
+  (deps: {
+    getServerInfo: typeof getServerInfo
+    isLastAdminUser: IsLastAdminUser
+    updateUserServerRole: UpdateUserServerRole
+  }): ChangeUserRole =>
+  async ({ userId, role }) => {
+    const guestModeEnabled = (await deps.getServerInfo()).guestModeEnabled
+    if (!(Object.values(Roles.Server) as string[]).includes(role))
+      throw new UserInputError(`Invalid role specified: ${role}`)
+
+    if (!guestModeEnabled && role === Roles.Server.Guest)
+      throw new UserInputError('Guest role is not enabled')
+
+    if (role !== Roles.Server.Admin) {
+      const isLastAdmin = await deps.isLastAdminUser(userId)
+      if (isLastAdmin) {
+        throw new UserInputError('Cannot remove the last admin role from the server')
+      }
+    }
+
+    await deps.updateUserServerRole({ userId, role: role as ServerRoles })
   }

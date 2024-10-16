@@ -2,7 +2,7 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { changeUserRole, searchUsers } = require('../services/users')
+const { searchUsers } = require('../services/users')
 const {
   createPersonalAccessToken,
   revokeToken,
@@ -89,7 +89,8 @@ const {
   updateUserFactory,
   getUserByEmailFactory,
   isLastAdminUserFactory,
-  deleteUserRecordFactory
+  deleteUserRecordFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -112,7 +113,8 @@ const {
   updateUserAndNotifyFactory,
   changePasswordFactory,
   validateUserPasswordFactory,
-  deleteUserFactory
+  deleteUserFactory,
+  changeUserRoleFactory
 } = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
@@ -234,7 +236,6 @@ const updateUserPassword = changePasswordFactory({
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })
 })
-
 const deleteUser = deleteUserFactory({
   deleteStream: deleteStreamFactory({ db }),
   logger: dbLogger,
@@ -242,6 +243,11 @@ const deleteUser = deleteUserFactory({
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db })
+})
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 
 describe('Actors & Tokens @user-services', () => {

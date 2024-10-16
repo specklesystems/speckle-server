@@ -25,7 +25,8 @@ import {
   LegacyGetUserByEmail,
   StoreUser,
   StoreUserAcl,
-  UpdateUser
+  UpdateUser,
+  UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 export type { UserWithOptionalRole, GetUserParams }
 
@@ -414,6 +415,14 @@ export const storeUserAclFactory =
     const { acl } = params
     const [newAcl] = await tables.serverAcl(deps.db).insert(acl, '*')
     return newAcl
+  }
+
+export const updateUserServerRoleFactory =
+  (deps: { db: Knex }): UpdateUserServerRole =>
+  async (params) => {
+    const { userId, role } = params
+    const res = await tables.serverAcl(deps.db).where({ userId }).update({ role })
+    return !!res
   }
 
 export const getUserRoleFactory =
