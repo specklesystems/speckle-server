@@ -20,7 +20,6 @@ import { AssetType } from '../../../IViewer.js'
 
 export class GMatcapPass extends BaseGPass {
   private matcapMaterial: SpeckleMatcapMaterial
-  public clear = false
 
   get displayName(): string {
     return 'GEOMETRY-MATCAP'
@@ -76,11 +75,12 @@ export class GMatcapPass extends BaseGPass {
 
     renderer.setRenderTarget(this.outputTarget)
 
-    if (this.clear) {
-      renderer.setClearColor(0x000000)
-      renderer.setClearAlpha(0.0)
-      renderer.clear()
-    }
+    this.clear(renderer)
+    // if (this.clear) {
+    //   renderer.setClearColor(0x000000)
+    //   renderer.setClearAlpha(0.0)
+    //   renderer.clear()
+    // }
 
     this.applyLayers(camera)
 

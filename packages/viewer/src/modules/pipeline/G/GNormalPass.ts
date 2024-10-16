@@ -58,9 +58,10 @@ export class GNormalsPass extends BaseGPass {
 
     renderer.setRenderTarget(this.outputTarget)
 
-    renderer.setClearColor(0x000000)
-    renderer.setClearAlpha(1.0)
-    renderer.clear()
+    this.clear(renderer)
+    // renderer.setClearColor(0x000000)
+    // renderer.setClearAlpha(1.0)
+    // renderer.clear()
 
     this.applyLayers(camera)
 

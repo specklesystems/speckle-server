@@ -34,6 +34,8 @@ export abstract class GPipeline {
 
   public reset() {}
 
+  public renderRequest() {}
+
   public render(): boolean {
     this.speckleRenderer.renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return false
@@ -55,7 +57,7 @@ export abstract class GPipeline {
 
     this.speckleRenderer.renderer.setRenderTarget(null)
     this.speckleRenderer.renderer.setClearColor(0xffffff, 0)
-    this.speckleRenderer.renderer.clear(true, true, false)
+    this.speckleRenderer.renderer.clear(true, true, true)
 
     let renderReturn: boolean = false
     let lastVisibility: ObjectVisibility

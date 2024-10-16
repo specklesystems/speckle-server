@@ -86,6 +86,7 @@ import { DefaultPipeline } from './modules/pipeline/G/Pipelines/DefaultPipeline.
 import { EdgesPipeline } from './modules/pipeline/G/Pipelines/EdgesPipeline.js'
 import { PenViewPipeline } from './modules/pipeline/G/Pipelines/PenViewPipeline.js'
 import { ShadedViewPipeline } from './modules/pipeline/G/Pipelines/ShadedViewPipeline.js'
+import { TAAPipeline } from './modules/pipeline/G/Pipelines/TAAPipeline.js'
 
 export {
   Viewer,
@@ -138,7 +139,8 @@ export {
   EdgesPipeline,
   ShadedViewPipeline,
   PenViewPipeline,
-  ArcticViewPipeline
+  ArcticViewPipeline,
+  TAAPipeline
 }
 
 export type {

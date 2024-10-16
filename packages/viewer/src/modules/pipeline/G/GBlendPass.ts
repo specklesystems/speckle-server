@@ -71,9 +71,6 @@ export class GBlendPass extends ProgressiveGPass {
     renderer.setRenderTarget(this._outputTarget)
     this.fsQuad.render(renderer)
 
-    if (this._frameIndex >= this._accumulationFrames) {
-      return false
-    }
-    return true
+    return super.render(renderer)
   }
 }

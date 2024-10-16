@@ -57,7 +57,7 @@ export class GStencilPass extends BaseGPass {
 
     this.applyLayers(camera)
 
-    renderer.clear(false, false, true)
+    this.clear(renderer)
     renderer.render(scene, camera)
 
     if (this.onAfterRender) this.onAfterRender()

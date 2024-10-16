@@ -2,7 +2,7 @@ import { ObjectLayers } from '../../../../index.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GColorPass } from '../GColorPass.js'
 import { DepthType, GDepthPass } from '../GDepthPass.js'
-import { ObjectVisibility } from '../GPass.js'
+import { ClearFlags, ObjectVisibility } from '../GPass.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
@@ -18,6 +18,8 @@ export class DefaultPipeline extends GProgressivePipeline {
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
+    depthPass.setClearColor(0x000000, 1)
+    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -50,6 +52,7 @@ export class DefaultPipeline extends GProgressivePipeline {
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
+    progressiveAOPass.setClearColor(0xffffff, 1)
 
     const blendPass = new GBlendPass()
     blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
@@ -63,6 +66,7 @@ export class DefaultPipeline extends GProgressivePipeline {
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])

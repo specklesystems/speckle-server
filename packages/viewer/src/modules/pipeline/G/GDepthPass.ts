@@ -92,11 +92,12 @@ export class GDepthPass extends BaseGPass {
 
     renderer.setRenderTarget(this.outputTarget)
 
-    renderer.setClearColor(0x000000)
-    renderer.setClearAlpha(1.0)
-    renderer.clear()
-
     this.applyLayers(camera)
+
+    this.clear(renderer)
+    // renderer.setClearColor(0x000000)
+    // renderer.setClearAlpha(1.0)
+    // renderer.clear()
     renderer.render(scene, camera)
 
     if (this.onAfterRender) this.onAfterRender()

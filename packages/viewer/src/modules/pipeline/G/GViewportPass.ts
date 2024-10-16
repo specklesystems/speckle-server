@@ -15,10 +15,9 @@ import SpeckleViewportMaterial from '../../materials/SpeckleViewportMaterial.js'
 
 export class GViewportPass extends BaseGPass {
   public viewportMaterial: SpeckleViewportMaterial
-  public clear = false
 
   get displayName(): string {
-    return 'GEOMETRY-MATCAP'
+    return 'GEOMETRY-VIEWPORT'
   }
 
   get overrideMaterial(): Material {
@@ -60,14 +59,8 @@ export class GViewportPass extends BaseGPass {
 
     renderer.setRenderTarget(this.outputTarget)
 
-    if (this.clear) {
-      renderer.setClearColor(0x000000)
-      renderer.setClearAlpha(0.0)
-      renderer.clear()
-    }
-
     this.applyLayers(camera)
-
+    this.clear(renderer)
     renderer.render(scene, camera)
 
     if (this.onAfterRender) this.onAfterRender()

@@ -20,7 +20,6 @@ import { Assets } from '../../../index.js'
 import SpeckleMesh from '../../objects/SpeckleMesh.js'
 
 export class GBasitPass extends BaseGPass {
-  public clear = false
   protected tree: WorldTree
   protected speckleRenderer: SpeckleRenderer
   protected materialMap: {
@@ -144,20 +143,17 @@ export class GBasitPass extends BaseGPass {
   ): boolean {
     if (!camera || !scene) return false
 
-    this.applyLayers(camera)
-
     this.applyColorIndices()
     this.overrideMaterials()
 
+    if (this.onBeforeRender) this.onBeforeRender()
+
+    this.applyLayers(camera)
+
     renderer.setRenderTarget(this.outputTarget)
 
-    if (this.clear) {
-      renderer.setClearColor(0x000000)
-      renderer.setClearAlpha(0.0)
-      renderer.clear(true, true, true)
-    }
+    this.clear(renderer)
 
-    if (this.onBeforeRender) this.onBeforeRender()
     renderer.render(scene, camera)
     if (this.onAfterRender) this.onAfterRender()
 

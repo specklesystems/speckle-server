@@ -189,18 +189,13 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
     renderer.setRenderTarget(this._outputTarget)
     if (this.frameIndex === 0) {
-      renderer.setClearColor(0xffffff)
-      renderer.setClearAlpha(1)
-      renderer.clear(true)
+      this.clear(renderer)
     }
 
     this.fsQuad.material = this.accumulateMaterial
     this.fsQuad.render(renderer)
 
-    if (this._frameIndex >= this._accumulationFrames) {
-      return false
-    }
-    return true
+    return super.render(renderer)
   }
 
   public setSize(width: number, height: number) {

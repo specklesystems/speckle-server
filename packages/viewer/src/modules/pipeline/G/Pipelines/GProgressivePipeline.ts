@@ -17,12 +17,16 @@ export abstract class GProgressivePipeline extends GPipeline {
         pass.frameIndex = this.accumulationFrameIndex
       }
     })
-    if (!this.accumulating) return
+  }
 
-    this.accumulationFrameIndex++
+  public render(): boolean {
+    const ret = super.render()
 
-    if (this.accumulationFrameIndex === this.accumulationFrameCount)
-      this.onAccumulationComplete()
+    if (this.accumulating) {
+      if (++this.accumulationFrameIndex === this.accumulationFrameCount)
+        this.onAccumulationComplete()
+    }
+    return ret
   }
 
   public reset() {

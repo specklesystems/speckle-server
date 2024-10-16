@@ -8,7 +8,7 @@ import { ObjectLayers } from '../../../../IViewer.js'
 import { GMatcapPass } from '../GMatcapPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GColorPass } from '../GColorPass.js'
-import { ObjectVisibility } from '../GPass.js'
+import { ClearFlags, ObjectVisibility } from '../GPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 import { GStencilPass } from '../GStencilPass.js'
 
@@ -19,22 +19,26 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     const depthPass = new GDepthPass()
     depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
+    depthPass.setClearColor(0x000000, 1)
+    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const normalPass = new GNormalsPass()
     normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // normalPass.setVisibility(ObjectVisibility.OPAQUE)
     normalPass.setJitter(true)
+    normalPass.setClearColor(0x000000, 1)
+    normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const depthPassDynamic = new GDepthPass()
     depthPassDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
+    depthPassDynamic.setClearColor(0x000000, 1)
+    depthPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const normalPassDynamic = new GNormalsPass()
     normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    // normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
+    normalPassDynamic.setClearColor(0x000000, 1)
+    normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const matcapPass = new GMatcapPass()
     matcapPass.setLayers([
@@ -63,7 +67,7 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     const blendPass = new GBlendPass()
     blendPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
     blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
-    blendPass.accumulationFrames = 1200 //this.accumulationFrameCount
+    blendPass.accumulationFrames = this.accumulationFrameCount
 
     const blendPassDynamic = new GBlendPass()
     blendPassDynamic.setTexture('tDiffuse', edgesPassDynamic.outputTarget?.texture)
@@ -82,6 +86,7 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])

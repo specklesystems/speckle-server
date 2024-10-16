@@ -17,6 +17,12 @@ export enum ObjectVisibility {
   STENCIL = 'stencil'
 }
 
+export enum ClearFlags {
+  COLOR = 0x00000100,
+  DEPTH = 0x00000400,
+  STENCIL = 0x00004000
+}
+
 export interface PassOptions {}
 
 export interface GPass {
@@ -29,6 +35,9 @@ export interface GPass {
   get visibility(): ObjectVisibility | null
   get overrideMaterial(): Material | null
   get jitter(): boolean
+  get clearColor(): number | undefined
+  get clearAlpha(): number | undefined
+  get clearFlags(): number | undefined
 
   setSize?(width: number, height: number): void
   onBeforeRender?: () => void
@@ -39,6 +48,8 @@ export interface GPass {
     camera?: PerspectiveCamera | OrthographicCamera | null,
     scene?: Scene
   ): boolean
+  setClearColor(color: number, alpha: number): void
+  setClearFlags(flags: number): void
   setClippingPlanes?(planes: Plane[]): void
   setLayers?(layers: ObjectLayers[]): void
   setVisibility?(objectVisibility: ObjectVisibility): void
@@ -52,6 +63,9 @@ export abstract class BaseGPass implements GPass {
   protected _objectVisibility: ObjectVisibility | null = null
   protected _jitter: boolean = false
   protected _options: PassOptions = {}
+  protected _clearColor: number | undefined = undefined
+  protected _clearAlpha: number | undefined = undefined
+  protected _clearFlags: number | undefined = undefined
 
   protected _outputTarget: WebGLRenderTarget | null = null
 
@@ -97,6 +111,27 @@ export abstract class BaseGPass implements GPass {
     return this._jitter
   }
 
+  get clearColor(): number | undefined {
+    return this._clearColor
+  }
+
+  get clearAlpha(): number | undefined {
+    return this._clearAlpha
+  }
+
+  get clearFlags(): number | undefined {
+    return this._clearFlags
+  }
+
+  public setClearColor(color: number, alpha: number) {
+    this._clearColor = color
+    this._clearAlpha = alpha
+  }
+
+  public setClearFlags(flags: number) {
+    this._clearFlags = flags
+  }
+
   public setLayers(layers: ObjectLayers[]) {
     this.layers = layers
     this._enabledLayers = layers.slice()
@@ -131,6 +166,18 @@ export abstract class BaseGPass implements GPass {
     })
   }
 
+  protected clear(renderer: WebGLRenderer) {
+    if (this._clearColor !== undefined)
+      renderer.setClearColor(this._clearColor, this._clearAlpha || 0)
+    if (this._clearColor !== undefined || this._clearFlags !== undefined)
+      renderer.clear(
+        this._clearColor !== undefined ||
+          (this._clearFlags !== undefined && !!(this._clearFlags & ClearFlags.COLOR)),
+        this._clearFlags !== undefined && !!(this._clearFlags & ClearFlags.DEPTH),
+        this._clearFlags !== undefined && !!(this._clearFlags & ClearFlags.STENCIL)
+      )
+  }
+
   abstract render(
     renderer: WebGLRenderer,
     camera?: PerspectiveCamera | OrthographicCamera | null,
@@ -158,5 +205,20 @@ export abstract class ProgressiveGPass extends BaseGPass {
   }
   set accumulationFrames(value: number) {
     this._accumulationFrames = value
+  }
+
+  public render(
+    renderer: WebGLRenderer,
+    camera?: PerspectiveCamera | OrthographicCamera | null,
+    scene?: Scene
+  ): boolean {
+    /** Thank you eslint */
+    renderer
+    camera
+    scene
+    if (this._frameIndex >= this._accumulationFrames - 1) {
+      return false
+    }
+    return true
   }
 }

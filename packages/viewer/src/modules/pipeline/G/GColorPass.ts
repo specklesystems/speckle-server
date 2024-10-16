@@ -9,7 +9,6 @@ import {
 import { BaseGPass } from './GPass.js'
 
 export class GColorPass extends BaseGPass {
-  public clear = false
   public constructor() {
     super()
 
@@ -36,16 +35,18 @@ export class GColorPass extends BaseGPass {
   ): boolean {
     if (!camera || !scene) return false
 
+    if (this.onBeforeRender) this.onBeforeRender()
+
     this.applyLayers(camera)
 
     renderer.setRenderTarget(this.outputTarget)
 
-    if (this.clear) {
-      renderer.setClearColor(0x000000, 0)
-      renderer.clear(true, false, false)
-    }
+    this.clear(renderer)
+    // if (this.clear) {
+    //   renderer.setClearColor(0x000000, 0)
+    //   renderer.clear(true, false, false)
+    // }
 
-    if (this.onBeforeRender) this.onBeforeRender()
     renderer.render(scene, camera)
     if (this.onAfterRender) this.onAfterRender()
 

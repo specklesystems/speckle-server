@@ -85,13 +85,10 @@ export class GEdgePass extends BaseGPass {
   }
 
   public render(renderer: WebGLRenderer): boolean {
+    if (this.onBeforeRender) this.onBeforeRender()
+
     renderer.setRenderTarget(this._outputTarget)
 
-    renderer.setClearColor(0x000000)
-    renderer.setClearAlpha(0.0)
-    renderer.clear()
-
-    if (this.onBeforeRender) this.onBeforeRender()
     this.fsQuad.render(renderer)
     if (this.onAfterRender) this.onAfterRender()
     return false

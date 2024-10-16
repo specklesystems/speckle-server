@@ -11,6 +11,7 @@ import {
   SectionTool,
   ShadedViewPipeline,
   SpeckleStandardMaterial,
+  TAAPipeline,
   TreeNode
 } from '@speckle/viewer'
 import {
@@ -522,7 +523,8 @@ export default class Sandbox {
           EDGED: 1,
           SHADED: 2,
           PEN: 3,
-          ARCTIC: 4
+          ARCTIC: 4,
+          TAA: 5
         }
       })
       .on('change', (value) => {
@@ -549,6 +551,11 @@ export default class Sandbox {
             break
           case 4:
             this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 5:
+            this.viewer.getRenderer().pipeline = new TAAPipeline(
               this.viewer.getRenderer()
             )
             break

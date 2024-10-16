@@ -3,6 +3,7 @@ import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GColorPass } from '../GColorPass.js'
 import { GPipeline } from './GPipeline.js'
 import { GBasitPass } from '../GBasitPass.js'
+import { ClearFlags } from '../GPass.js'
 
 export class BasitPipeline extends GPipeline {
   constructor(speckleRenderer: SpeckleRenderer, tree: WorldTree) {
@@ -10,6 +11,8 @@ export class BasitPipeline extends GPipeline {
 
     const basitPass = new GBasitPass(tree, speckleRenderer)
     basitPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    basitPass.setClearColor(0x000000, 0)
+    basitPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH | ClearFlags.STENCIL)
     basitPass.outputTarget = null
 
     const transparentColorPass = new GColorPass()
