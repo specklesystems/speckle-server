@@ -3,7 +3,7 @@
     <template #header>Invite to server</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-5 text-foreground mb-4">
-        <div v-for="(item, index) in fields" :key="item.id" class="flex gap-x-3">
+        <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
           <div class="flex flex-col gap-y-3 flex-1">
             <hr v-if="index !== 0" class="border-outline-3" />
             <div class="flex flex-row gap-x-3">
@@ -70,7 +70,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { MaybeNullOrUndefined, Optional, ServerRoles } from '@speckle/shared'
+import type { MaybeNullOrUndefined, ServerRoles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMutationLoading } from '@vue/apollo-composable'
@@ -81,14 +81,12 @@ import { useInviteUserToProject } from '~~/lib/projects/composables/projectManag
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { isRequired, isEmail } from '~~/lib/common/helpers/validation'
-import { v4 as uuidv4 } from 'uuid'
 import { useForm, useFieldArray } from 'vee-validate'
 
 type InviteItem = {
   email: string
   serverRole: MaybeNullOrUndefined<ServerRoles>
-  projectId?: Optional<FormSelectProjects_ProjectFragment>
-  id: string
+  projectId: MaybeNullOrUndefined<FormSelectProjects_ProjectFragment>
 }
 
 enum InputFields {
@@ -103,8 +101,7 @@ const { handleSubmit } = useForm({
       {
         email: '',
         serverRole: null,
-        projectId: undefined,
-        id: uuidv4()
+        projectId: null
       }
     ]
   }
@@ -120,8 +117,7 @@ const inviteItems = ref<InviteItem[]>([
   {
     email: '',
     serverRole: null,
-    projectId: undefined,
-    id: uuidv4()
+    projectId: null
   }
 ])
 
@@ -182,8 +178,7 @@ const addInviteItem = () => {
   addInvite({
     email: '',
     serverRole: null,
-    projectId: undefined,
-    id: uuidv4()
+    projectId: null
   })
 }
 
