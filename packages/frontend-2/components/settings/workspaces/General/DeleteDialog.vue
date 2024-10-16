@@ -88,13 +88,7 @@ const feedback = ref('')
 const onDelete = async () => {
   if (workspaceNameInput.value !== props.workspace.name) return
 
-  router.push({
-    path: homeRoute,
-    query: {
-      showDialog: 'workspace-deleted',
-      workspaceId: props.workspace.id
-    }
-  })
+  router.push(homeRoute)
 
   isOpen.value = false
 
