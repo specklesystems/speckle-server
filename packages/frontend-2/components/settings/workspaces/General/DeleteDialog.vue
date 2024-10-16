@@ -18,7 +18,7 @@
       full-width
       show-label
       hide-error-message
-      class="text-sm mb-4"
+      class="text-sm mb-2"
       color="foundation"
     />
     <FormTextArea
