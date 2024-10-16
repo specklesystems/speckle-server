@@ -1,6 +1,6 @@
-import { useTimeoutFn } from '@vueuse/core'
 import type { Optional } from '@speckle/shared'
 import type { ToastNotification } from '@speckle/ui-components'
+import { useTimeoutFn } from '@vueuse/core'
 import { ToastNotificationType } from '@speckle/ui-components'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { v4 as uuidv4 } from 'uuid'

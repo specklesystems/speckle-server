@@ -23,9 +23,8 @@ export default {
     notifications: {
       description: 'ToastNotification array, nullable'
     },
-    'update:notifications': {
-      description:
-        "Notification prop update event. Enables two-way binding through 'v-model:notifications'"
+    dismiss: {
+      description: 'Dismiss event for a notification'
     }
   }
 } as Meta
@@ -50,7 +49,7 @@ export const Default: StoryType = {
   parameters: {
     docs: {
       source: {
-        code: '<GlobalToastRenderer v-model:notifications="notifications"/>'
+        code: '<GlobalToastRenderer v-model:notifications="notifications" />'
       }
     }
   },
@@ -98,7 +97,7 @@ export const NoCtaOrDescription: StoryObj = {
     template: `
       <div>
         <FormButton @click="onClick">Trigger Title Only</FormButton>
-        <ToastRenderer v-model:notifications="notifications"/>
+        <ToastRenderer v-model:notifications="notifications" />
       </div>
     `
   }),
@@ -109,8 +108,8 @@ export const NoCtaOrDescription: StoryObj = {
       },
       source: {
         code: `
-<FormButton @click="onClick">Trigger Title Only</FormButton>
-<ToastRenderer v-model:notifications="notifications"/>
+          <FormButton @click="onClick">Trigger Title Only</FormButton>
+          <ToastRenderer v-model:notifications="notifications" />
         `
       }
     }
