@@ -61,7 +61,7 @@
                   color="subtle"
                   :to="notification.cta.url"
                   size="sm"
-                  @click="(e: MouseEvent) => notification?.cta?.onClick?.(e)"
+                  @click="(e: MouseEvent) => onCtaClick(notification, e)"
                 >
                   {{ notification.cta.title }}
                 </FormButton>
@@ -71,7 +71,7 @@
               <button
                 type="button"
                 class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                @click="(e: MouseEvent) => onCtaClick(notification, e)"
+                @click="dismiss(notification)"
               >
                 <span class="sr-only">Close</span>
                 <XMarkIcon class="h-5 w-5" aria-hidden="true" />
