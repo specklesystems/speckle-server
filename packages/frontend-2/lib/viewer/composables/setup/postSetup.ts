@@ -52,6 +52,7 @@ import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -151,6 +152,33 @@ function useViewerObjectAutoLoading() {
 
   onBeforeUnmount(async () => {
     await viewer.unloadAll()
+  })
+}
+
+function useViewerReceiveTracking() {
+  // Here we make the viewer pretend it's a connector and send out receive events.
+  // Note, this is important for us to track to be able to get a picture of how much data is consumed
+  // in our viewer.
+  const {
+    resources: {
+      response: { modelsAndVersionIds }
+    }
+  } = useInjectedViewerState()
+  const mixpanel = useMixpanel()
+  const { userId } = useActiveUser()
+  const receivedVersions = new Set<string>()
+  watch(modelsAndVersionIds, (newVal) => {
+    for (const { model, versionId } of newVal) {
+      if (receivedVersions.has(versionId)) {
+        continue
+      }
+      receivedVersions.add(versionId)
+      mixpanel.track('Receive', {
+        hostApp: 'viewer',
+        sourceHostApp: model.loadedVersion.items[0].sourceApplication,
+        isMultiplayer: model.loadedVersion.items[0].authorUser?.id !== userId.value
+      })
+    }
   })
 }
 
@@ -791,6 +819,7 @@ function useDisableZoomOnEmbed() {
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerReceiveTracking()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()
   useViewerSubscriptionEventTracker()
@@ -805,4 +834,5 @@ export function useViewerPostSetup() {
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
   setupDebugMode()
+  // TODO: add here the use receive tracking
 }
