@@ -155,10 +155,12 @@ function useViewerObjectAutoLoading() {
   })
 }
 
+/**
+ * Here we make the viewer pretend it's a connector and send out receive events. Note, this is important for us to track to be able to get a picture of how much data is consumed
+ * in our viewer.
+ */
 function useViewerReceiveTracking() {
-  // Here we make the viewer pretend it's a connector and send out receive events.
-  // Note, this is important for us to track to be able to get a picture of how much data is consumed
-  // in our viewer.
+  //
   const {
     resources: {
       response: { modelsAndVersionIds }
