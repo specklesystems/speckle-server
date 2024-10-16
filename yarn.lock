@@ -16359,7 +16359,6 @@ __metadata:
     type-fest: "npm:^4.24.0"
     typescript: "npm:^4.8.3"
     ua-parser-js: "npm:^1.0.38"
-    uuidv4: "npm:^6.2.13"
     vee-validate: "npm:^4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
     vue-tippy: "npm:^6.0.0"
@@ -20402,13 +20401,6 @@ __metadata:
   version: 3.0.2
   resolution: "@types/unist@npm:3.0.2"
   checksum: 10/3d04d0be69316e5f14599a0d993a208606c12818cf631fd399243d1dc7a9bd8a3917d6066baa6abc290814afbd744621484756803c80cba892c39cd4b4a85616
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:8.3.4":
-  version: 8.3.4
-  resolution: "@types/uuid@npm:8.3.4"
-  checksum: 10/6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
   languageName: node
   linkType: hard
 
@@ -51318,16 +51310,6 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10/9d0b6adb72b736e36f2b1b53da0d559125ba3e39d913b6072f6f033e0c87835b414f0836b45bcfaf2bdf698f92297fea1c3cc19b0b258bc182c9c43cc0fab9f2
-  languageName: node
-  linkType: hard
-
-"uuidv4@npm:^6.2.13":
-  version: 6.2.13
-  resolution: "uuidv4@npm:6.2.13"
-  dependencies:
-    "@types/uuid": "npm:8.3.4"
-    uuid: "npm:8.3.2"
-  checksum: 10/f2eab0c2030273426792703c97e0c72f2a1f20c7f2e1f2539b26cfbd06d229d91598bec62d76bc40a02e20b4d57d7fb6894f09e6a9fd397d6e48ca1f9c26d865
   languageName: node
   linkType: hard
 
