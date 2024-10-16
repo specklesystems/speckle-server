@@ -183,7 +183,8 @@ async function fetchTutorials() {
       id: post.id,
       readingTime: post.reading_time,
       publishedAt: post.published_at,
-      url: post.url,
+      // Temporary replacement until we swap to WebFlow API
+      url: post.url?.replace('https://v1.speckle.systems', 'https://speckle.systems'),
       title: post.title,
       featureImage: getResizedGhostImage({ url: post.feature_image, width: 600 })
     }))
