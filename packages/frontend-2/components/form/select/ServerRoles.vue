@@ -14,6 +14,7 @@
     :fully-control-value="fullyControlValue"
     :label-id="labelId"
     :button-id="buttonId"
+    :disabled="disabled"
     mount-menu-on-body
   >
     <template #nothing-selected>
@@ -75,7 +76,8 @@ const props = defineProps({
   allowAdmin: Boolean,
   allowArchived: Boolean,
   fullyControlValue: Boolean,
-  showLabel: Boolean
+  showLabel: Boolean,
+  disabled: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
