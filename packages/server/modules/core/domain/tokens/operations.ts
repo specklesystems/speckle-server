@@ -1,5 +1,6 @@
 import {
   ApiToken,
+  PersonalApiToken,
   TokenResourceAccessDefinition,
   TokenScope,
   UserServerAppToken
@@ -25,6 +26,10 @@ export type StoreUserServerAppToken = (
   token: UserServerAppToken
 ) => Promise<UserServerAppToken>
 
+export type StorePersonalApiToken = (
+  token: PersonalApiToken
+) => Promise<PersonalApiToken>
+
 export type CreateAndStoreUserToken = (params: {
   userId: string
   name: string
@@ -37,4 +42,11 @@ export type CreateAndStoreAppToken = (
   params: Parameters<CreateAndStoreUserToken>[0] & {
     appId: string
   }
+) => Promise<string>
+
+export type CreateAndStorePersonalAccessToken = (
+  userId: string,
+  name: string,
+  scopes: ServerScope[],
+  lifespan?: number | bigint
 ) => Promise<string>

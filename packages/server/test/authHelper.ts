@@ -3,6 +3,12 @@ import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
@@ -14,7 +20,7 @@ import {
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -55,6 +61,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 export type BasicTestUser = {

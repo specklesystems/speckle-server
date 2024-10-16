@@ -1,4 +1,5 @@
 import {
+  PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
@@ -23,3 +24,5 @@ export type TokenScope = TokenScopeRecord
 export type TokenResourceAccessDefinition = TokenResourceAccessRecord
 
 export type UserServerAppToken = UserServerAppTokenRecord
+
+export type PersonalApiToken = PersonalApiTokenRecord

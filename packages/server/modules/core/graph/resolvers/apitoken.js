@@ -1,10 +1,26 @@
 const { ForbiddenError } = require('@/modules/shared/errors')
 const {
-  createPersonalAccessToken,
   revokeToken,
-  getUserTokens
+  getUserTokens,
+  createPersonalAccessTokenFactory
 } = require('../../services/tokens')
 const { canCreatePAT } = require('@/modules/core/helpers/token')
+const { db } = require('@/db/knex')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 const resolvers = {

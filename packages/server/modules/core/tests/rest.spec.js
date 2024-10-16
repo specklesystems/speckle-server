@@ -8,7 +8,6 @@ const crypto = require('crypto')
 const { beforeEachContext } = require('@/test/hooks')
 const { createManyObjects } = require('@/test/helpers')
 
-const { createPersonalAccessToken } = require('../services/tokens')
 const { Scopes } = require('@speckle/shared')
 const {
   getStreamFactory,
@@ -74,6 +73,13 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeTokenScopesFactory,
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
 
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -136,6 +142,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 describe('Upload/Download Routes @api-rest', () => {
