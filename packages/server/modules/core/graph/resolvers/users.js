@@ -7,7 +7,6 @@ const {
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@speckle/shared')
 const {
-  markOnboardingComplete,
   legacyGetUserFactory,
   legacyGetUserByEmailFactory,
   getUserFactory,
@@ -16,7 +15,8 @@ const {
   deleteUserRecordFactory,
   getUserRoleFactory,
   updateUserServerRoleFactory,
-  searchUsersFactory
+  searchUsersFactory,
+  markOnboardingCompleteFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -69,6 +69,7 @@ const changeUserRole = changeUserRoleFactory({
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 const searchUsers = searchUsersFactory({ db })
+const markOnboardingComplete = markOnboardingCompleteFactory({ db })
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {

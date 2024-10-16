@@ -7,13 +7,13 @@ import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   CountAdminUsers,
   CountUsers,
   DeleteUserRecord,
+  GetFirstAdmin,
   GetUser,
   GetUserByEmail,
   GetUserParams,
@@ -25,6 +25,7 @@ import {
   LegacyGetUser,
   LegacyGetUserByEmail,
   ListPaginatedUsersPage,
+  MarkOnboardingComplete,
   MarkUserAsVerified,
   SearchLimitedUsers,
   StoreUser,
@@ -214,14 +215,16 @@ export const markUserAsVerifiedFactory =
     return !!(usersUpdate || userEmailsUpdate)
   }
 
-export async function markOnboardingComplete(userId: string) {
-  if (!userId) return false
+export const markOnboardingCompleteFactory =
+  (deps: { db: Knex }): MarkOnboardingComplete =>
+  async (userId: string) => {
+    if (!userId) return false
 
-  const meta = metaHelpers(Users, db)
-  const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
+    const meta = metaHelpers(Users, deps.db)
+    const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
 
-  return !!newMeta.value
-}
+    return !!newMeta.value
+  }
 
 const cleanInputRecord = (
   update: Partial<UserRecord & { password?: string }>
@@ -272,14 +275,17 @@ export const updateUserFactory =
     return newUser as Nullable<UserRecord>
   }
 
-export async function getFirstAdmin() {
-  const q = Users.knex()
-    .select<UserRecord[]>(Users.cols)
-    .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    .where(ServerAcl.col.role, Roles.Server.Admin)
+export const getFirstAdminFactory =
+  (deps: { db: Knex }): GetFirstAdmin =>
+  async () => {
+    const q = tables
+      .users(deps.db)
+      .select<UserRecord[]>(Users.cols)
+      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .where(ServerAcl.col.role, Roles.Server.Admin)
 
-  return await q.first()
-}
+    return await q.first()
+  }
 
 /**
  * @deprecated Use getUser instead

@@ -5,7 +5,12 @@ import {
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
-import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
+import {
+  Nullable,
+  NullableKeysToOptional,
+  Optional,
+  ServerRoles
+} from '@speckle/shared'
 
 export type GetUserParams = Partial<{
   /**
@@ -79,6 +84,10 @@ export type UpdateUserServerRole = (params: {
 }) => Promise<boolean>
 
 export type MarkUserAsVerified = (email: string) => Promise<boolean>
+
+export type MarkOnboardingComplete = (userId: string) => Promise<boolean>
+
+export type GetFirstAdmin = () => Promise<Optional<User>>
 
 export type LegacyGetUserByEmail = (params: {
   email: string
