@@ -1,10 +1,6 @@
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
-const {
-  getAdminUsersListCollection,
-  getTotalCounts
-} = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@speckle/shared')
 const {
   legacyGetUserFactory,
@@ -16,7 +12,9 @@ const {
   getUserRoleFactory,
   updateUserServerRoleFactory,
   searchUsersFactory,
-  markOnboardingCompleteFactory
+  markOnboardingCompleteFactory,
+  legacyGetPaginatedUsersCountFactory,
+  legacyGetPaginatedUsersFactory
 } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
@@ -42,6 +40,9 @@ const {
   getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { dbLogger } = require('@/logging/logging')
+const {
+  getAdminUsersListCollectionFactory
+} = require('@/modules/core/services/users/legacyAdminUsersList')
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -70,6 +71,12 @@ const changeUserRole = changeUserRoleFactory({
 })
 const searchUsers = searchUsersFactory({ db })
 const markOnboardingComplete = markOnboardingCompleteFactory({ db })
+const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
+  countUsers: legacyGetPaginatedUsersCountFactory({ db }),
+  countServerInvites: countServerInvitesFactory({ db }),
+  findServerInvites: findServerInvitesFactory({ db }),
+  getUsers: legacyGetPaginatedUsersFactory({ db })
+})
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -109,12 +116,7 @@ module.exports = {
     },
 
     async adminUsers(_parent, args) {
-      return await getAdminUsersListCollection({
-        findServerInvites: findServerInvitesFactory({ db }),
-        getTotalCounts: getTotalCounts({
-          countServerInvites: countServerInvitesFactory({ db })
-        })
-      })(args)
+      return await getAdminUsersListCollection(args)
     },
 
     async userSearch(parent, args, context) {
