@@ -8,7 +8,7 @@ import {
   legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
   legacyGetUserByEmailFactory,
-  listUsers,
+  listUsersFactory,
   markUserAsVerified,
   storeUserAclFactory,
   storeUserFactory
@@ -83,6 +83,7 @@ const createUser = createUserFactory({
 })
 const getUserByEmail = getUserByEmailFactory({ db })
 const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
+const listUsers = listUsersFactory({ db })
 
 describe('Core @user-emails', () => {
   before(async () => {

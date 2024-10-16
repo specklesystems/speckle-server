@@ -12,6 +12,7 @@ import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/em
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
   CountAdminUsers,
+  CountUsers,
   DeleteUserRecord,
   GetUser,
   GetUserByEmail,
@@ -23,6 +24,7 @@ import {
   LegacyGetPaginatedUsersCount,
   LegacyGetUser,
   LegacyGetUserByEmail,
+  ListPaginatedUsersPage,
   SearchLimitedUsers,
   StoreUser,
   StoreUserAcl,
@@ -97,57 +99,53 @@ export const getUsersFactory =
     return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
   }
 
-type UserQuery = {
-  query: string | null
-  role?: ServerRoles | null
-}
-
 /**
  * List users
  */
-export async function listUsers({
-  limit,
-  cursor,
-  query,
-  role
-}: {
-  limit: number
-  cursor?: Date | null
-} & UserQuery): Promise<UserWithRole[]> {
-  const sanitizedLimit = clamp(limit, 1, 200)
+export const listUsersFactory =
+  (deps: { db: Knex }): ListPaginatedUsersPage =>
+  async ({ limit, cursor, query, role }) => {
+    const sanitizedLimit = clamp(limit, 1, 200)
 
-  const userCols = omit(Users.col, ['email', 'verified'])
-  const q = Users.knex<UserWithRole[]>()
-    .orderBy(Users.col.createdAt, 'desc')
-    .limit(sanitizedLimit)
-    .columns([
-      ...Object.values(userCols),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`),
-      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
-      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
-    ])
-    .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-    .where({ [UserEmails.col.primary]: true })
-    .groupBy(Users.col.id)
-  if (cursor) q.where(Users.col.createdAt, '<', cursor)
-  const users: UserWithRole[] = await getUsersBaseQuery(q, { searchQuery: query, role })
-  return users.map((u) => sanitizeUserRecord(u))
-}
+    const userCols = omit(Users.col, ['email', 'verified'])
+    const q = tables
+      .users(deps.db)
+      .orderBy(Users.col.createdAt, 'desc')
+      .limit(sanitizedLimit)
+      .columns([
+        ...Object.values(userCols),
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("server_acl"."role"))[1] as role`),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .where({ [UserEmails.col.primary]: true })
+      .groupBy(Users.col.id)
+    if (cursor) q.where(Users.col.createdAt, '<', cursor)
+    const users: UserWithRole[] = await getUsersBaseQuery(q, {
+      searchQuery: query,
+      role
+    })
+    return users.map((u) => sanitizeUserRecord(u))
+  }
 
-export async function countUsers(args: UserQuery): Promise<number> {
-  const q = Users.knex()
-    .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-    .countDistinct(Users.col.id)
+export const countUsersFactory =
+  (deps: { db: Knex }): CountUsers =>
+  async (args) => {
+    const q = tables
+      .users(deps.db)
+      .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+      .countDistinct(Users.col.id)
 
-  const result = await getUsersBaseQuery(q, {
-    searchQuery: args.query,
-    role: args.role
-  })
-  return parseInt(result[0]['count'])
-}
+    const result = await getUsersBaseQuery(q, {
+      searchQuery: args.query,
+      role: args.role
+    })
+    return parseInt(result[0]['count'])
+  }
 
 /**
  * Get user by ID

@@ -16,7 +16,7 @@ import {
   getUserByEmailFactory,
   getUserFactory,
   getUsersFactory,
-  listUsers,
+  listUsersFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
@@ -63,6 +63,7 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getUserByEmail = getUserByEmailFactory({ db })
+const listUsers = listUsersFactory({ db })
 
 describe('Find users @core', () => {
   describe('getUsers', () => {
