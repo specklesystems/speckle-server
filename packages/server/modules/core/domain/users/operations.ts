@@ -71,6 +71,8 @@ export type LegacyGetPaginatedUsersCount = (
   searchQuery?: string | null
 ) => Promise<number>
 
+export type GetUserRole = (id: string) => Promise<Nullable<ServerRoles>>
+
 export type CreateValidatedUser = (
   user: NullableKeysToOptional<Pick<User, 'bio' | 'name' | 'company' | 'avatar'>> & {
     email: string

@@ -1,7 +1,7 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const { changeUserRole, getUserRole } = require('@/modules/core/services/users')
+const { changeUserRole } = require('@/modules/core/services/users')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
@@ -13,7 +13,8 @@ const {
   countAdminUsersFactory,
   storeUserAclFactory,
   isLastAdminUserFactory,
-  deleteUserRecordFactory
+  deleteUserRecordFactory,
+  getUserRoleFactory
 } = require('@/modules/core/repositories/users')
 const { db } = require('@/db/knex')
 const {
@@ -90,6 +91,7 @@ const deleteUser = deleteUserFactory({
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
   deleteUserRecord: deleteUserRecordFactory({ db })
 })
+const getUserRole = getUserRoleFactory({ db })
 
 describe('User admin @user-services', () => {
   const myTestActor = {
