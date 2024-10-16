@@ -3,7 +3,7 @@
     <template #header>Invite to server</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-5 text-foreground mb-4">
-        <div v-for="(item, index) in inviteItems" :key="item.id" class="flex gap-x-3">
+        <div v-for="(item, index) in fields" :key="item.id" class="flex gap-x-3">
           <div class="flex flex-col gap-y-3 flex-1">
             <hr v-if="index !== 0" class="border-outline-3" />
             <div class="flex flex-row gap-x-3">
@@ -14,6 +14,7 @@
                   label="E-mail"
                   show-label
                   placeholder="Enter an email to invite"
+                  :rules="[isRequired, isEmail]"
                   :disabled="anyMutationsLoading"
                   @input="
                     (e) =>
@@ -49,7 +50,7 @@
               v-if="inviteItems.length > 1"
               class="top-10 absolute right-0"
               :class="{ 'top-7': index === 0 }"
-              @click="removeInviteItem(index)"
+              @click="removeInvite(index)"
             >
               <TrashIcon class="h-4 w-4 text-foreground-2" />
             </CommonTextLink>
@@ -73,14 +74,15 @@ import type { MaybeNullOrUndefined, Optional, ServerRoles } from '@speckle/share
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { useForm } from 'vee-validate'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { isRequired, isEmail } from '~~/lib/common/helpers/validation'
 import { v4 as uuidv4 } from 'uuid'
+import { useForm, useFieldArray } from 'vee-validate'
 
 type InviteItem = {
   email: string
@@ -95,7 +97,19 @@ enum InputFields {
   Project = 'project'
 }
 
-const { handleSubmit } = useForm<{ emailsString: string }>()
+const { handleSubmit } = useForm({
+  initialValues: {
+    invites: [
+      {
+        email: '',
+        serverRole: null,
+        projectId: undefined,
+        id: uuidv4()
+      }
+    ]
+  }
+})
+const { remove: removeInvite, push: addInvite, fields } = useFieldArray('invites')
 const { mutate: inviteUserToServer } = useInviteUserToServer()
 const inviteUserToProject = useInviteUserToProject()
 const anyMutationsLoading = useMutationLoading()
@@ -163,16 +177,12 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const addInviteItem = () => {
-  inviteItems.value.push({
+  addInvite({
     email: '',
     serverRole: null,
     projectId: undefined,
     id: uuidv4()
   })
-}
-
-const removeInviteItem = (index: number) => {
-  inviteItems.value.splice(index, 1)
 }
 
 const onUpdateRole = (val: ServerRoles | ServerRoles[] | undefined, index: number) => {
@@ -212,14 +222,14 @@ const updateField = ({
 
 watch(isOpen, (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    inviteItems.value = [
-      {
-        email: '',
-        serverRole: null,
-        projectId: undefined,
-        id: uuidv4()
-      }
-    ]
+    // inviteItems.value = [
+    //   {
+    //     email: '',
+    //     serverRole: null,
+    //     projectId: undefined,
+    //     id: uuidv4()
+    //   }
+    // ]
   }
 })
 </script>
