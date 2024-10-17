@@ -1,9 +1,8 @@
+import { InsertableSpeckleObject } from '@/modules/core/domain/objects/types'
 import { BaseError } from '@/modules/shared/errors'
 import { Options } from 'verror'
 
-type InsertionObject = {
-  data: string
-}
+type InsertionObject = InsertableSpeckleObject
 
 export class ArgumentError extends BaseError {
   static defaultMessage = 'Invalid argument value provided'

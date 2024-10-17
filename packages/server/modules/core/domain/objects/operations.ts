@@ -35,6 +35,10 @@ export type StoreSingleObjectIfNotFound = (
   object: SpeckleObject | InsertableSpeckleObject
 ) => Promise<void>
 
+export type StoreObjectsIfNotFound = (
+  objects: Array<SpeckleObject | InsertableSpeckleObject>
+) => Promise<void>
+
 export type StoreClosuresIfNotFound = (
   closures: SpeckleObjectClosureEntry[]
 ) => Promise<void>
@@ -44,3 +48,9 @@ export type CreateObject = (params: {
   object: RawSpeckleObject
   logger?: Logger
 }) => Promise<string>
+
+export type CreateObjectsBatched = (params: {
+  streamId: string
+  objects: RawSpeckleObject[]
+  logger?: Logger
+}) => Promise<boolean>
