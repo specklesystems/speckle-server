@@ -46,6 +46,7 @@ import {
 } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 export type BasicTestWorkspace = {
   /**
@@ -208,6 +209,7 @@ export const createWorkspaceInviteDirectly = async (
   args: CreateWorkspaceInviteMutationVariables,
   inviterId: string
 ) => {
+  const getServerInfo = getServerInfoFactory({ db })
   const getStream = getStreamFactory({ db })
   const getUser = getUserFactory({ db })
   const createAndSendInvite = createAndSendInviteFactory({
@@ -228,7 +230,8 @@ export const createWorkspaceInviteDirectly = async (
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 
   const createInvite = createWorkspaceInviteFactory({

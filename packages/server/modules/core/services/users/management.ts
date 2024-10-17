@@ -21,7 +21,6 @@ import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user
 import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import {
   isNullOrUndefined,
@@ -44,6 +43,7 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { Logger } from '@/logging/logging'
 import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -132,7 +132,7 @@ export const changePasswordFactory =
 
 export const createUserFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     findEmail: FindEmail
     storeUser: StoreUser
     countAdminUsers: CountAdminUsers
@@ -279,7 +279,7 @@ export const deleteUserFactory =
 
 export const changeUserRoleFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     isLastAdminUser: IsLastAdminUser
     updateUserServerRole: UpdateUserServerRole
   }): ChangeUserRole =>

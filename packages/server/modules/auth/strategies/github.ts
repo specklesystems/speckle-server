@@ -3,7 +3,6 @@
 import passport from 'passport'
 import type { VerifyCallback } from 'passport-oauth2'
 import { Strategy as GithubStrategy, type Profile } from 'passport-github2'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -32,10 +31,11 @@ import {
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const githubStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
     findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite

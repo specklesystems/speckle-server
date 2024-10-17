@@ -8,6 +8,7 @@ import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamFactory,
@@ -39,6 +40,7 @@ import { BasicTestUser } from '@/test/authHelper'
 import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -63,7 +65,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

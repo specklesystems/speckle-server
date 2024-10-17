@@ -2,9 +2,9 @@
 import { db } from '@/db/knex'
 import { moduleLogger } from '@/logging/logging'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import * as SendingService from '@/modules/emails/services/sending'
@@ -35,7 +35,7 @@ const emailsModule: SpeckleModule = {
           userEmitterListener: UsersEmitter.listen,
           requestEmailVerification: requestEmailVerificationFactory({
             getUser,
-            getServerInfo,
+            getServerInfo: getServerInfoFactory({ db }),
             deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
               { db }
             ),

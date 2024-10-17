@@ -2,7 +2,6 @@
 const { validateScopes } = require('@/modules/shared')
 const {
   updateServerInfo,
-  getServerInfo,
   getPublicScopes,
   getPublicRoles
 } = require('../../services/generic')
@@ -12,6 +11,10 @@ const {
   speckleAutomateUrl,
   enableNewFrontendMessaging
 } = require('@/modules/shared/helpers/envHelper')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { db } = require('@/db/knex')
+
+const getServerInfo = getServerInfoFactory({ db })
 
 module.exports = {
   Query: {

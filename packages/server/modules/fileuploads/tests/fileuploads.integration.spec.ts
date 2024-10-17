@@ -47,7 +47,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createUserFactory } from '@/modules/core/services/users/management'
@@ -61,7 +60,9 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -86,7 +87,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

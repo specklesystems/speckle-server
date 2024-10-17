@@ -71,6 +71,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const command: CommandModule<
   unknown,
@@ -158,6 +159,7 @@ const command: CommandModule<
       })
     })
 
+    const getServerInfo = getServerInfoFactory({ db })
     const getUser = getUserFactory({ db })
     const getUsers = getUsersFactory({ db })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
@@ -176,7 +178,8 @@ const command: CommandModule<
               eventName,
               payload
             }),
-          getUser
+          getUser,
+          getServerInfo
         }),
         getUsers
       }),

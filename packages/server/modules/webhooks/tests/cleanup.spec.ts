@@ -8,6 +8,7 @@ import {
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamFactory
@@ -24,7 +25,6 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
@@ -59,6 +59,7 @@ const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
 const WebhooksConfig = () => knex(WEBHOOKS_CONFIG_TABLE)
 const randomId = () => crs({ length: 10 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -83,7 +84,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
