@@ -74,6 +74,14 @@ export type GetCheckoutSession = (args: {
   sessionId: string
 }) => Promise<CheckoutSession | null>
 
+export type DeleteCheckoutSession = (args: {
+  checkoutSessionId: string
+}) => Promise<void>
+
+export type GetWorkspaceCheckoutSession = (args: {
+  workspaceId: string
+}) => Promise<CheckoutSession | null>
+
 export type UpdateCheckoutSessionStatus = (args: {
   sessionId: string
   paymentStatus: SessionPaymentStatus
@@ -91,6 +99,7 @@ export type CreateCheckoutSession = (args: {
 export type WorkspaceSubscription = {
   workspaceId: string
   createdAt: Date
+  currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
 }
@@ -100,7 +109,9 @@ export type SubscriptionData = {
   subscriptionId: string
   customerId: string
   products: {
-    workspacePlan: WorkspacePricingPlans
+    // we're going to use the productId to match with our
+    productId: string
+    subscriptionItemId: string
     priceId: string
     quantity: number
   }[]
@@ -108,4 +119,18 @@ export type SubscriptionData = {
 
 export type SaveWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
+}) => Promise<void>
+
+export type GetSubscriptionData = (args: {
+  subscriptionId: string
+}) => Promise<SubscriptionData>
+
+export type GetWorkspacePlanPrice = (args: {
+  workspacePlan: WorkspacePricingPlans
+  billingInterval: WorkspacePlanBillingIntervals
+}) => string
+
+export type ReconcileWorkspaceSubscription = (args: {
+  workspaceSubscription: WorkspaceSubscription
+  applyProrotation: boolean
 }) => Promise<void>

@@ -136,7 +136,6 @@ const paidWorkspacePlanFeatures: Record<
   team,
   pro,
   business
-  // unlimited
 }
 
 export const unpaidWorkspacePlanFeatures: Record<
