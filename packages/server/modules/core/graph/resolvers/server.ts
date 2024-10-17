@@ -1,31 +1,30 @@
-'use strict'
-const { validateScopes } = require('@/modules/shared')
-const { Roles, Scopes, RoleInfo } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const {
+import { validateScopes } from '@/modules/shared'
+import { Roles, Scopes, RoleInfo, removeNullOrUndefinedKeys } from '@speckle/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import {
   speckleAutomateUrl,
   enableNewFrontendMessaging
-} = require('@/modules/shared/helpers/envHelper')
-const {
+} from '@/modules/shared/helpers/envHelper'
+import {
   getServerInfoFactory,
   updateServerInfoFactory,
   getPublicRolesFactory,
   getPublicScopesFactory
-} = require('@/modules/core/repositories/server')
-const { db } = require('@/db/knex')
+} from '@/modules/core/repositories/server'
+import { db } from '@/db/knex'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 const getServerInfo = getServerInfoFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })
 
-module.exports = {
+export = {
   Query: {
     async serverInfo() {
       return await getServerInfo()
     }
   },
-
   ServerInfo: {
     async roles() {
       return await getPublicRoles()
@@ -41,7 +40,7 @@ module.exports = {
         .filter((role) => guestModeEnabled || role !== Roles.Server.Guest)
         .map((r) => ({
           id: r,
-          title: RoleInfo.Server[r]
+          title: RoleInfo.Server[r].title
         }))
     },
     automateUrl() {
@@ -53,12 +52,13 @@ module.exports = {
   },
 
   Mutation: {
-    async serverInfoUpdate(parent, args, context) {
+    async serverInfoUpdate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
-      await updateServerInfo(args.info)
+      const update = removeNullOrUndefinedKeys(args.info)
+      await updateServerInfo(update)
       return true
     }
   }
-}
+} as Resolvers
