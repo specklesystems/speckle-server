@@ -1,6 +1,6 @@
 import { Optional } from '@speckle/shared'
-import { Objects } from '@/modules/core/dbSchema'
-import { ObjectRecord } from '@/modules/core/helpers/types'
+import { buildTableHelper, Objects } from '@/modules/core/dbSchema'
+import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -10,11 +10,22 @@ import {
   GetBatchedStreamObjects,
   GetObject,
   GetStreamObjects,
-  StoreObjects
+  StoreClosuresIfNotFound,
+  StoreObjects,
+  StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
 
+const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
+  'parent',
+  'child',
+  'minDepth',
+  'streamId'
+])
+
 const tables = {
-  objects: (db: Knex) => db<ObjectRecord>(Objects.name)
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
+  objectChildrenClosure: (db: Knex) =>
+    db<ObjectChildrenClosureRecord>(ObjectChildrenClosure.name)
 }
 
 export const getStreamObjectsFactory =
@@ -58,4 +69,20 @@ export const insertObjectsFactory =
     const q = tables.objects(deps.db).insert(objects)
     if (options?.trx) q.transacting(options.trx)
     return await q
+  }
+
+export const storeSingleObjectIfNotFoundFactory =
+  (deps: { db: Knex }): StoreSingleObjectIfNotFound =>
+  async (insertionObject) => {
+    await tables.objects(deps.db).insert(insertionObject).onConflict().ignore()
+  }
+
+export const storeClosuresIfNotFoundFactory =
+  (deps: { db: Knex }): StoreClosuresIfNotFound =>
+  async (closuresBatch) => {
+    await tables
+      .objectChildrenClosure(deps.db)
+      .insert(closuresBatch)
+      .onConflict()
+      .ignore()
   }

@@ -7,7 +7,6 @@ const {
   validateTokenFactory
 } = require('../services/tokens')
 
-const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
@@ -41,7 +40,11 @@ const {
   getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -145,6 +148,7 @@ const {
 const {
   getPaginatedStreamBranchesFactory
 } = require('@/modules/core/services/branch/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -299,6 +303,10 @@ const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
 const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
   getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
   getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 describe('Actors & Tokens @user-services', () => {
