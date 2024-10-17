@@ -1,29 +1,28 @@
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import knex, { db } from '@/db/knex'
-import {
-  ServerAcl,
-  ApiTokens,
-  TokenScopes,
-  TokenResourceAccess
-} from '@/modules/core/dbSchema'
 import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { Optional, ServerRoles, ServerScope } from '@speckle/shared'
-import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
+import { Optional, ServerScope } from '@speckle/shared'
 import {
   CreateAndStoreAppToken,
   CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
+  GetApiTokenById,
+  GetTokenResourceAccessDefinitionsById,
+  GetTokenScopesById,
+  RevokeUserTokenById,
   StoreApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
-  StoreUserServerAppToken
+  StoreUserServerAppToken,
+  UpdateApiToken,
+  ValidateToken
 } from '@/modules/core/domain/tokens/operations'
-import { revokeUserTokenByIdFactory } from '@/modules/core/repositories/tokens'
+import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
+import { GetUserRole } from '@/modules/core/domain/users/operations'
 
 /*
   Tokens
@@ -124,53 +123,50 @@ export const createPersonalAccessTokenFactory =
     return token
   }
 
-export async function validateToken(
-  tokenString: string
-): Promise<TokenValidationResult> {
-  const revokeToken = revokeUserTokenByIdFactory({ db })
+export const validateTokenFactory =
+  (deps: {
+    revokeUserTokenById: RevokeUserTokenById
+    getApiTokenById: GetApiTokenById
+    getTokenAppInfo: GetTokenAppInfo
+    getTokenScopesById: GetTokenScopesById
+    getUserRole: GetUserRole
+    getTokenResourceAccessDefinitionsById: GetTokenResourceAccessDefinitionsById
+    updateApiToken: UpdateApiToken
+  }): ValidateToken =>
+  async (tokenString: string): Promise<TokenValidationResult> => {
+    const tokenId = tokenString.slice(0, 10)
+    const tokenContent = tokenString.slice(10, 42)
 
-  const tokenId = tokenString.slice(0, 10)
-  const tokenContent = tokenString.slice(10, 42)
+    const token = await deps.getApiTokenById(tokenId)
 
-  const token = await ApiTokens.knex().where({ id: tokenId }).select('*').first()
-
-  if (!token) {
-    return { valid: false }
-  }
-
-  const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
-  if (timeDiff > token.lifespan) {
-    await revokeToken(tokenId, token.owner)
-    return { valid: false }
-  }
-
-  const getTokenAppInfo = getTokenAppInfoFactory({ db })
-  const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
-
-  if (valid) {
-    const [scopes, acl, app, resourceAccessRules] = await Promise.all([
-      TokenScopes.knex()
-        .select<{ scopeName: string }[]>('scopeName')
-        .where({ tokenId }),
-      ServerAcl.knex()
-        .select<{ role: ServerRoles }[]>('role')
-        .where({ userId: token.owner })
-        .first(),
-      getTokenAppInfo({ token: tokenString }),
-      TokenResourceAccess.knex<TokenResourceAccessRecord[]>().where({
-        [TokenResourceAccess.col.tokenId]: tokenId
-      }),
-      ApiTokens.knex().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
-    ])
-    const role = acl!.role
-
-    return {
-      valid: true,
-      userId: token.owner,
-      role,
-      scopes: scopes.map((s) => s.scopeName),
-      appId: app?.id || null,
-      resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
+    if (!token) {
+      return { valid: false }
     }
-  } else return { valid: false }
-}
+
+    const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
+    if (timeDiff > token.lifespan) {
+      await deps.revokeUserTokenById(tokenId, token.owner)
+      return { valid: false }
+    }
+
+    const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
+
+    if (valid) {
+      const [scopes, role, app, resourceAccessRules] = await Promise.all([
+        deps.getTokenScopesById(tokenId),
+        deps.getUserRole(token.owner),
+        deps.getTokenAppInfo({ token: tokenString }),
+        deps.getTokenResourceAccessDefinitionsById(tokenId),
+        deps.updateApiToken(tokenId, { lastUsed: new Date() })
+      ])
+
+      return {
+        valid: true,
+        userId: token.owner,
+        role: role!,
+        scopes: scopes.map((s) => s.scopeName),
+        appId: app?.id || null,
+        resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
+      }
+    } else return { valid: false }
+  }

@@ -2,9 +2,9 @@
 const expect = require('chai').expect
 
 const {
-  validateToken,
   createBareToken,
-  createAppTokenFactory
+  createAppTokenFactory,
+  validateTokenFactory
 } = require(`@/modules/core/services/tokens`)
 const { beforeEachContext } = require(`@/test/hooks`)
 
@@ -24,7 +24,8 @@ const {
   deleteAuthorizationCodeFactory,
   createRefreshTokenFactory,
   getRefreshTokenFactory,
-  revokeRefreshTokenFactory
+  revokeRefreshTokenFactory,
+  getTokenAppInfoFactory
 } = require('@/modules/auth/repositories/apps')
 const {
   createAppTokenFromAccessCodeFactory,
@@ -42,7 +43,8 @@ const {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  getUserRoleFactory
 } = require('@/modules/core/repositories/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
@@ -66,7 +68,12 @@ const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
-  storeUserServerAppTokenFactory
+  storeUserServerAppTokenFactory,
+  revokeUserTokenByIdFactory,
+  getApiTokenByIdFactory,
+  getTokenScopesByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  updateApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 
 const db = knex
@@ -134,6 +141,17 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const validateToken = validateTokenFactory({
+  revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+  getApiTokenById: getApiTokenByIdFactory({ db }),
+  getTokenAppInfo: getTokenAppInfoFactory({ db }),
+  getTokenScopesById: getTokenScopesByIdFactory({ db }),
+  getUserRole: getUserRoleFactory({ db }),
+  getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory({
+    db
+  }),
+  updateApiToken: updateApiTokenFactory({ db })
 })
 
 describe('Services @apps-services', () => {
