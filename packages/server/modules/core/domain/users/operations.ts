@@ -4,8 +4,13 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { ServerAclRecord } from '@/modules/core/helpers/types'
-import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
+import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
+import {
+  Nullable,
+  NullableKeysToOptional,
+  Optional,
+  ServerRoles
+} from '@speckle/shared'
 
 export type GetUserParams = Partial<{
   /**
@@ -55,6 +60,20 @@ export type CountAdminUsers = () => Promise<number>
 
 export type IsLastAdminUser = (userId: string) => Promise<boolean>
 
+type UserQuery = {
+  query: string | null
+  role?: ServerRoles | null
+}
+
+export type ListPaginatedUsersPage = (
+  params: {
+    limit: number
+    cursor?: Date | null
+  } & UserQuery
+) => Promise<UserWithRole[]>
+
+export type CountUsers = (params: UserQuery) => Promise<number>
+
 export type StoreUserAcl = (params: {
   acl: ServerAclRecord
 }) => Promise<ServerAclRecord>
@@ -63,6 +82,12 @@ export type UpdateUserServerRole = (params: {
   userId: string
   role: ServerRoles
 }) => Promise<boolean>
+
+export type MarkUserAsVerified = (email: string) => Promise<boolean>
+
+export type MarkOnboardingComplete = (userId: string) => Promise<boolean>
+
+export type GetFirstAdmin = () => Promise<Optional<User>>
 
 export type LegacyGetUserByEmail = (params: {
   email: string
@@ -137,3 +162,41 @@ export type SearchLimitedUsers = (
   users: LimitedUser[]
   cursor: Nullable<string>
 }>
+
+type AdminUserListArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+  role: ServerRoles | null
+}
+
+export type AdminUserList = (args: AdminUserListArgs) => Promise<{
+  totalCount: number
+  items: UserWithRole[]
+  cursor: string | null
+}>
+
+export type LegacyAdminUsersPaginationParams = {
+  limit: number
+  offset: number
+  query: string | null
+}
+
+export type LegacyAdminUsersListItem = {
+  registeredUser: Nullable<User>
+  invitedUser: Nullable<{
+    id: string
+    email: string
+    invitedById: string
+  }>
+  id: string
+}
+
+type LegacyAdminUsersListCollection = {
+  totalCount: number
+  items: Array<LegacyAdminUsersListItem>
+}
+
+export type LegacyGetAdminUsersListCollection = (
+  params: LegacyAdminUsersPaginationParams
+) => Promise<LegacyAdminUsersListCollection>

@@ -1,8 +1,12 @@
 import db from '@/db/knex'
+import {
+  AdminUserList,
+  CountUsers,
+  ListPaginatedUsersPage
+} from '@/modules/core/domain/users/operations'
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
-import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   countServerInvitesFactory,
@@ -34,37 +38,42 @@ type AdminUserListArgs = CollectionQueryArgs & {
   role: ServerRoles | null
 }
 
-export class CursorParsingError extends BaseError {
+class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
   static code = 'INVALID_CURSOR_VALUE'
   static statusCode = 400
 }
 
-export const parseCursorToDate = (cursor: string): Date => {
+const parseCursorToDate = (cursor: string): Date => {
   const timestamp = Date.parse(Buffer.from(cursor, 'base64').toString('utf-8'))
   if (isNaN(timestamp)) throw new CursorParsingError()
   return new Date(timestamp)
 }
 
-export const convertDateToCursor = (date: Date): string =>
+const convertDateToCursor = (date: Date): string =>
   Buffer.from(date.toISOString()).toString('base64')
 
-export const adminUserList = async (
-  args: AdminUserListArgs
-): Promise<Collection<UserRecord>> => {
-  const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
-  const [items, totalCount] = await Promise.all([
-    listUsers({
-      role: args.role,
-      cursor: parsedCursor,
-      limit: args.limit,
-      query: args.query ?? null
-    }),
-    countUsers(args)
-  ])
-  const cursor = items.length ? convertDateToCursor(items.slice(-1)[0].createdAt) : null
-  return { totalCount, items, cursor }
-}
+export const adminUserListFactory =
+  (deps: {
+    listUsers: ListPaginatedUsersPage
+    countUsers: CountUsers
+  }): AdminUserList =>
+  async (args: AdminUserListArgs) => {
+    const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+    const [items, totalCount] = await Promise.all([
+      deps.listUsers({
+        role: args.role,
+        cursor: parsedCursor,
+        limit: args.limit,
+        query: args.query ?? null
+      }),
+      deps.countUsers(args)
+    ])
+    const cursor = items.length
+      ? convertDateToCursor(items.slice(-1)[0].createdAt)
+      : null
+    return { totalCount, items, cursor }
+  }
 
 type AdminProjectListArgs = HasCursor & {
   query: string | null

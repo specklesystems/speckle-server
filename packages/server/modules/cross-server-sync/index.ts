@@ -52,7 +52,7 @@ import {
   markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
-  getFirstAdmin,
+  getFirstAdminFactory,
   getUserFactory,
   getUsersFactory
 } from '@/modules/core/repositories/users'
@@ -172,7 +172,7 @@ const crossServerSyncModule: SpeckleModule = {
     })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db }),
-      getFirstAdmin,
+      getFirstAdmin: getFirstAdminFactory({ db }),
       downloadProject: downloadProjectFactory({
         downloadCommit: downloadCommitFactory({
           getStream,
