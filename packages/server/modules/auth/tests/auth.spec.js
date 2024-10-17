@@ -2,7 +2,6 @@ const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
 
-const { updateServerInfo } = require('@/modules/core/services/generic')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
@@ -73,7 +72,10 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  updateServerInfoFactory
+} = require('@/modules/core/repositories/server')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -142,6 +144,7 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const updateServerInfo = updateServerInfoFactory({ db })
 
 const expect = chai.expect
 
