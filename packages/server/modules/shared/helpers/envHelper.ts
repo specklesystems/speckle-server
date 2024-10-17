@@ -52,10 +52,11 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
 }
 
 export function getStringFromEnv(envVarKey: string): string {
-  if (!process.env[envVarKey]) {
+  const envVar = process.env[envVarKey]
+  if (!envVar) {
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
-  return process.env[envVarKey]
+  return envVar
 }
 
 /**
