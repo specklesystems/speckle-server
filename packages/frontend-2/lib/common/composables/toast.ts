@@ -34,6 +34,8 @@ export function useGlobalToastManager() {
     const index = currentNotifications.value.findIndex((n) => n.id === id)
     if (index !== -1) {
       currentNotifications.value.splice(index, 1)
+      // Clean up timeout
+      timeouts.value = timeouts.value.filter((t) => t.id !== id)
     }
   }
 
@@ -76,7 +78,6 @@ export function useGlobalToastManager() {
     const targetTimeout = timeouts.value.find((t) => t.id === notification.id)
     if (targetTimeout) {
       targetTimeout.stop()
-      timeouts.value = timeouts.value.filter((t) => t.id !== notification.id)
     }
     removeNotification(notification.id as string)
   }
