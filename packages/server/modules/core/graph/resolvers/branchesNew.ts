@@ -4,7 +4,6 @@ import {
   updateBranchAndNotifyFactory,
   deleteBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
-import { getPaginatedStreamBranches } from '@/modules/core/services/branch/retrieval'
 
 import { Roles } from '@speckle/shared'
 import {
@@ -12,7 +11,9 @@ import {
   getStreamBranchByNameFactory,
   createBranchFactory,
   updateBranchFactory,
-  deleteBranchByIdFactory
+  deleteBranchByIdFactory,
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
@@ -27,6 +28,7 @@ import {
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -51,6 +53,10 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 const getUser = legacyGetUserFactory({ db })
+const getPaginatedStreamBranches = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
 
 export = {
   Query: {},
