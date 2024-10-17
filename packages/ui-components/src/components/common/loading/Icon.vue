@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<{ loading?: boolean; size?: Size }>(), {
 
 const iconClasses = computed(() => {
   const classParts: string[] = ['']
+  classParts.push(props.loading ? 'opacity-100' : 'opacity-0')
 
   switch (props.size) {
     case 'base':
