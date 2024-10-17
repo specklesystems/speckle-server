@@ -5,6 +5,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
 } from '@/modules/gatekeeper/domain/workspacePricing'
+import { z } from 'zod'
 
 export type UnpaidWorkspacePlanStatuses = 'valid'
 
@@ -104,18 +105,22 @@ export type WorkspaceSubscription = {
   subscriptionData: SubscriptionData
 }
 
+export const subscriptionData = z.object({
+  subscriptionId: z.string().min(1),
+  customerId: z.string().min(1),
+  products: z
+    .object({
+      // we're going to use the productId to match with our
+      productId: z.string(),
+      subscriptionItemId: z.string(),
+      priceId: z.string(),
+      quantity: z.number()
+    })
+    .array()
+})
+
 // this abstracts the stripe sub data
-export type SubscriptionData = {
-  subscriptionId: string
-  customerId: string
-  products: {
-    // we're going to use the productId to match with our
-    productId: string
-    subscriptionItemId: string
-    priceId: string
-    quantity: number
-  }[]
-}
+export type SubscriptionData = z.infer<typeof subscriptionData>
 
 export type SaveWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
