@@ -3,9 +3,16 @@ import {
   GetCheckoutSession,
   GetWorkspacePlan,
   SaveCheckoutSession,
+  UpdateCheckoutSessionStatus,
   UpsertWorkspacePlan,
-  WorkspacePlan
+  SaveWorkspaceSubscription,
+  WorkspaceSubscription,
+  WorkspacePlan,
+  UpsertPaidWorkspacePlan,
+  DeleteCheckoutSession,
+  GetWorkspaceCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
+import { CheckoutSessionNotFoundError } from '@/modules/gatekeeper/errors/billing'
 
 export const getWorkspacePlanFactory =
   (): GetWorkspacePlan =>
@@ -18,7 +25,7 @@ export const getWorkspacePlanFactory =
 
 const workspacePlans: WorkspacePlan[] = []
 
-export const upsertWorkspacePlanFactory =
+const upsertWorkspacePlanFactory =
   (): UpsertWorkspacePlan =>
   ({ workspacePlan }) => {
     const maybePlan = workspacePlans.find(
@@ -35,6 +42,11 @@ export const upsertWorkspacePlanFactory =
     })
   }
 
+// this is a typed rebrand of the generic workspace plan upsert
+// this way TS guards the payment plan type validity
+export const upsertPaidWorkspacePlanFactory = (): UpsertPaidWorkspacePlan =>
+  upsertWorkspacePlanFactory()
+
 const checkoutSessions: CheckoutSession[] = []
 
 export const saveCheckoutSessionFactory =
@@ -46,10 +58,48 @@ export const saveCheckoutSessionFactory =
     })
   }
 
+export const deleteCheckoutSessionFactory = (): DeleteCheckoutSession => () => {
+  return new Promise((resolve) => {
+    resolve()
+  })
+}
+
 export const getCheckoutSessionFactory =
   (): GetCheckoutSession =>
   ({ sessionId }) => {
     return new Promise((resolve) => {
       resolve(checkoutSessions.find((session) => session.id === sessionId) || null)
+    })
+  }
+
+export const getWorkspaceCheckoutSessionFactory =
+  (): GetWorkspaceCheckoutSession =>
+  ({ workspaceId }) => {
+    return new Promise((resolve) => {
+      resolve(
+        checkoutSessions.find((session) => session.workspaceId === workspaceId) || null
+      )
+    })
+  }
+
+export const updateCheckoutSessionStatusFactory =
+  (): UpdateCheckoutSessionStatus =>
+  ({ sessionId, paymentStatus }) => {
+    const session = checkoutSessions.find((session) => session.id === sessionId)
+    if (!session) throw new CheckoutSessionNotFoundError()
+    session.paymentStatus = paymentStatus
+    return new Promise((resolve) => {
+      resolve()
+    })
+  }
+
+const workspaceSubscriptions: WorkspaceSubscription[] = []
+
+export const saveWorkspaceSubscriptionFactory =
+  (): SaveWorkspaceSubscription =>
+  ({ workspaceSubscription }) => {
+    workspaceSubscriptions.push(workspaceSubscription)
+    return new Promise((resolve) => {
+      resolve()
     })
   }
