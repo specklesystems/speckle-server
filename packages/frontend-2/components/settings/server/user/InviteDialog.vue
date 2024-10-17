@@ -31,6 +31,7 @@
                 :allow-guest="isGuestMode"
                 :allow-admin="isAdmin"
                 :name="`role-${index}`"
+                :rules="[isRequired]"
                 mount-menu-on-body
                 @update:model-value="(e) => onUpdateRole(e, index)"
               />
@@ -87,7 +88,7 @@ import { useForm, useFieldArray } from 'vee-validate'
 type InviteItem = {
   email: string
   serverRole: MaybeNullOrUndefined<ServerRoles>
-  projectId: MaybeNullOrUndefined<FormSelectProjects_ProjectFragment>
+  projectId: MaybeNullOrUndefined<string>
 }
 
 enum InputFields {
@@ -131,7 +132,7 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(() => {
   inviteItems.value.forEach(async (invite: InviteItem) => {
     invite.projectId
-      ? await inviteUserToProject(invite.projectId.id, [
+      ? await inviteUserToProject(invite.projectId, [
           {
             email: invite.email,
             serverRole: invite.serverRole
