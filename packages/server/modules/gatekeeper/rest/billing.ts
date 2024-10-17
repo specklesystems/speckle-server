@@ -23,7 +23,7 @@ import { db } from '@/db/knex'
 import {
   completeCheckoutSessionFactory,
   startCheckoutSessionFactory
-} from '@/modules/gatekeeper/services/workspaces'
+} from '@/modules/gatekeeper/services/checkout'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import {
   createCheckoutSessionFactory,
