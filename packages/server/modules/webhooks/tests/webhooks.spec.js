@@ -162,7 +162,7 @@ const createUser = createUserFactory({
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
-  let server, sendRequest, app
+  let server, sendRequest
 
   const userOne = {
     name: 'User',
@@ -186,8 +186,19 @@ describe('Webhooks @webhooks', () => {
   }
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const {
+      app,
+      server: tmpServer,
+      graphqlServer,
+      readinessCheck
+    } = await beforeEachContext()
+    server = tmpServer
+    ;({ sendRequest } = await initializeTestServer({
+      server,
+      app,
+      graphqlServer,
+      readinessCheck
+    }))
 
     userOne.id = await createUser(userOne)
     streamOne.ownerId = userOne.id

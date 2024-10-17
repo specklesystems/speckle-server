@@ -46,12 +46,8 @@ exports.truncateTables = async (tableNames) => {
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
-/**
- * @param {import('http').Server} server
- * @param {import('express').Express} app
- */
-const initializeTestServer = async (server, app) => {
-  await startHttp(server, app, 0)
+const initializeTestServer = async ({ server, app, graphqlServer, readinessCheck }) => {
+  await startHttp({ server, app, graphqlServer, readinessCheck, customPortOverride: 0 })
 
   await once(app, 'appStarted')
   const port = server.address().port
@@ -77,6 +73,7 @@ const initializeTestServer = async (server, app) => {
   }
 }
 
+let graphqlServer = undefined
 exports.mochaHooks = {
   beforeAll: async () => {
     logger.info('running before all')
@@ -84,18 +81,19 @@ exports.mochaHooks = {
     await exports.truncateTables()
     await knex.migrate.rollback()
     await knex.migrate.latest()
-    await init()
+    const initValues = await init()
+    graphqlServer = initValues.graphqlServer
   },
   afterAll: async () => {
     logger.info('running after all')
     await unlock()
-    await shutdown()
+    await shutdown({ graphqlServer })
   }
 }
 
 exports.buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  const { app, graphqlServer, server, readinessCheck } = await init()
+  return { app, graphqlServer, server, readinessCheck }
 }
 
 exports.beforeEachContext = async () => {
