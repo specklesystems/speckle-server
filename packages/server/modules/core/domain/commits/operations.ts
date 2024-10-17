@@ -4,7 +4,8 @@ import {
   CommitWithStreamBranchMetadata,
   Commit,
   CommitBranch,
-  CommitWithStreamId
+  CommitWithStreamId,
+  LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
 import {
   CommitsMoveInput,
@@ -232,3 +233,24 @@ export type GetObjectCommitsWithStreamIds = (
     streamIds?: string[]
   }
 ) => Promise<CommitWithStreamId[]>
+
+export type LegacyGetPaginatedUserCommitsPage = (params: {
+  userId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  publicOnly?: MaybeNullOrUndefined<boolean>
+  streamIdWhitelist?: MaybeNullOrUndefined<string[]>
+}) => Promise<{
+  commits: LegacyUserCommit[]
+  cursor: Nullable<string>
+}>
+
+export type LegacyGetPaginatedUserCommitsTotalCount = ({
+  userId,
+  publicOnly,
+  streamIdWhitelist
+}: {
+  userId: string
+  publicOnly?: MaybeNullOrUndefined<boolean>
+  streamIdWhitelist?: MaybeNullOrUndefined<string[]>
+}) => Promise<number>

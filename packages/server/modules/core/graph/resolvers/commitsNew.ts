@@ -2,11 +2,7 @@ import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 
-import {
-  getCommitsByUserId,
-  getCommitsByStreamId,
-  getCommitsTotalCountByUserId
-} from '@/modules/core/services/commits'
+import { getCommitsByStreamId } from '@/modules/core/services/commits'
 import {
   getPaginatedStreamCommits,
   getPaginatedBranchCommitsFactory
@@ -45,7 +41,9 @@ import {
   getPaginatedBranchCommitsItemsFactory,
   getBranchCommitsTotalCountFactory,
   getCommitsFactory,
-  moveCommitsToBranchFactory
+  moveCommitsToBranchFactory,
+  legacyGetPaginatedUserCommitsPage,
+  legacyGetPaginatedUserCommitsTotalCount
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
@@ -71,6 +69,7 @@ import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
@@ -143,6 +142,13 @@ const batchMoveCommits = batchMoveCommitsFactory({
   })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
+const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
+
+const getAuthorId = (commit: CommitGraphQLReturn) => {
+  if ('author' in commit) return commit.author
+  return commit.authorId
+}
 
 const getUserCommits = async (
   publicOnly: boolean,
@@ -204,22 +210,20 @@ export = {
      * remap it to 'authorId'
      */
     async authorId(parent) {
-      return parent.authorId || parent.author
+      return getAuthorId(parent)
     },
     async authorName(parent, _args, ctx) {
-      const { authorId, authorName, author } = parent
-      if (authorName) return authorName
+      if ('authorName' in parent) return parent.authorName
 
-      const finalAuthorId = authorId || author
+      const finalAuthorId = getAuthorId(parent)
       if (!finalAuthorId) return null
       const authorEntity = await ctx.loaders.users.getUser.load(finalAuthorId)
       return authorEntity?.name || null
     },
     async authorAvatar(parent, _args, ctx) {
-      const { authorId, authorAvatar, author } = parent
-      if (authorAvatar) return authorAvatar
+      if ('authorAvatar' in parent) return parent.authorAvatar
 
-      const finalAuthorId = authorId || author
+      const finalAuthorId = getAuthorId(parent)
       if (!finalAuthorId) return null
 
       const authorEntity = await ctx.loaders.users.getUser.load(finalAuthorId)
@@ -288,7 +292,7 @@ export = {
     }
   },
   Mutation: {
-    async commitCreate(parent, args, context) {
+    async commitCreate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -322,7 +326,7 @@ export = {
       return true
     },
 
-    async commitReceive(parent, args, context) {
+    async commitReceive(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.input.streamId,
