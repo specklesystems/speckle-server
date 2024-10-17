@@ -1,4 +1,9 @@
-import { CreateCheckoutSession } from '@/modules/gatekeeper/domain/billing'
+/* eslint-disable camelcase */
+import {
+  CreateCheckoutSession,
+  GetSubscriptionData,
+  WorkspaceSubscription
+} from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
@@ -48,11 +53,11 @@ export const createCheckoutSessionFactory =
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      // eslint-disable-next-line camelcase
+
       line_items: costLineItems,
-      // eslint-disable-next-line camelcase
+
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      // eslint-disable-next-line camelcase
+
       cancel_url: `${resultUrl.toString()}&payment_status=cancelled&session_id={CHECKOUT_SESSION_ID}`
     })
 
@@ -65,4 +70,79 @@ export const createCheckoutSessionFactory =
       workspaceId,
       paymentStatus: 'unpaid'
     }
+  }
+
+export const getSubscriptionDataFactory =
+  ({
+    stripe
+  }: // getWorkspacePlanPrice
+  {
+    stripe: Stripe
+    // getWorkspacePlanPrice: GetWorkspacePlanPrice
+  }): GetSubscriptionData =>
+  async ({ subscriptionId }) => {
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
+
+    return {
+      customerId:
+        typeof stripeSubscription.customer === 'string'
+          ? stripeSubscription.customer
+          : stripeSubscription.customer.id,
+      subscriptionId,
+      products: stripeSubscription.items.data.map((subscriptionItem) => {
+        const productId =
+          typeof subscriptionItem.price.product === 'string'
+            ? subscriptionItem.price.product
+            : subscriptionItem.price.product.id
+        const quantity = subscriptionItem.quantity
+        if (!quantity)
+          throw new Error(
+            'invalid subscription, we do not support products without quantities'
+          )
+        return {
+          priceId: subscriptionItem.price.id,
+          productId,
+          quantity,
+          subscriptionItemId: subscriptionItem.id
+        }
+      })
+    }
+  }
+
+// this should be a reconcile subscriptions, we keep an accurate state in the DB
+// on each change, we're reconciling that state to stripe
+export const reconcileWorkspaceSubscriptionFactory =
+  ({ stripe }: { stripe: Stripe }) =>
+  async ({
+    workspaceSubscription,
+    applyProrotation
+  }: {
+    workspaceSubscription: WorkspaceSubscription
+    applyProrotation: boolean
+  }) => {
+    const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
+      subscriptionId: workspaceSubscription.subscriptionData.subscriptionId
+    })
+    const items: Stripe.SubscriptionUpdateParams.Item[] = []
+    for (const product of workspaceSubscription.subscriptionData.products) {
+      const existingProduct = existingSubscriptionState.products.find(
+        (p) => p.productId === product.productId
+      )
+      // we're adding a new product to the sub
+      if (!existingProduct) {
+        items.push({ quantity: product.quantity, price: product.priceId })
+        // we're moving a product to a new price for ie upgrading to a yearly plan
+      } else if (existingProduct.priceId !== product.priceId) {
+        items.push({ quantity: product.quantity, price: product.priceId })
+        items.push({ id: product.subscriptionItemId, deleted: true })
+      } else {
+        items.push({ quantity: product.quantity, id: product.subscriptionItemId })
+      }
+    }
+    // workspaceSubscription.subscriptionData.products.
+    // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
+    await stripe.subscriptions.update(
+      workspaceSubscription.subscriptionData.subscriptionId,
+      { items, proration_behavior: applyProrotation ? 'create_prorations' : 'none' }
+    )
   }
