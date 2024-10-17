@@ -6,14 +6,17 @@ import {
 import { BadRequestError } from '@/modules/shared/errors'
 import {
   GetBranchCommitsTotalCount,
+  GetBranchCommitsTotalCountByName,
   GetPaginatedBranchCommits,
   GetPaginatedBranchCommitsItems,
+  GetPaginatedBranchCommitsItemsByName,
   GetSpecificBranchCommits,
   GetStreamCommitCount,
   LegacyGetPaginatedStreamCommits,
   LegacyGetPaginatedStreamCommitsPage,
   PaginatedBranchCommitsParams
 } from '@/modules/core/domain/commits/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 
 export const legacyGetPaginatedStreamCommits =
   (deps: {
@@ -96,4 +99,31 @@ export const getPaginatedBranchCommitsFactory =
       cursor: newCursor,
       items: newItems
     }
+  }
+
+export const getBranchCommitsTotalCountByNameFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    getBranchCommitsTotalCount: GetBranchCommitsTotalCount
+  }): GetBranchCommitsTotalCountByName =>
+  async ({ streamId, branchName }) => {
+    branchName = branchName.toLowerCase()
+    const myBranch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    return deps.getBranchCommitsTotalCount({ branchId: myBranch.id })
+  }
+
+export const getPaginatedBranchCommitsItemsByNameFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    getPaginatedBranchCommitsItems: GetPaginatedBranchCommitsItems
+  }): GetPaginatedBranchCommitsItemsByName =>
+  async ({ streamId, branchName, limit, cursor }) => {
+    branchName = branchName.toLowerCase()
+    const myBranch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+
+    return deps.getPaginatedBranchCommitsItems({ branchId: myBranch.id, limit, cursor })
   }
