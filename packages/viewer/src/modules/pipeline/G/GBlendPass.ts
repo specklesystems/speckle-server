@@ -4,33 +4,52 @@ import {
   DstAlphaFactor,
   DstColorFactor,
   NoBlending,
-  OrthographicCamera,
-  PerspectiveCamera,
   ShaderMaterial,
   Texture,
   WebGLRenderer,
   ZeroFactor
 } from 'three'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
-import { ProgressiveGPass } from './GPass.js'
+import { PassOptions, ProgressiveGPass } from './GPass.js'
 import { speckleApplyAoVert } from '../../materials/shaders/speckle-apply-ao-vert.js'
 import { speckleApplyAoFrag } from '../../materials/shaders/speckle-apply-ao-frag.js'
+
+export interface BlendPassOptions extends PassOptions {
+  blendAO?: boolean
+  blendEdges?: boolean
+}
+
+export const DefaultBlendPassOptions: Required<BlendPassOptions> = {
+  blendAO: true,
+  blendEdges: false
+}
 
 export class GBlendPass extends ProgressiveGPass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
 
+  public _options: Required<BlendPassOptions> = Object.assign(
+    {},
+    DefaultBlendPassOptions
+  )
+
+  public set options(value: BlendPassOptions) {
+    super.options = value
+    this.materialCopy.defines['BLEND_AO'] = +this._options.blendAO
+    this.materialCopy.defines['BLEND_EDGES'] = +this._options.blendEdges
+    this.materialCopy.needsUpdate = true
+  }
+
   constructor() {
     super()
     this.materialCopy = new ShaderMaterial({
       defines: {
-        ACCUMULATE: 0,
-        PASSTHROUGH: 1
+        BLEND_AO: +this._options.blendAO,
+        BLEND_EDGES: +this._options.blendEdges
       },
       uniforms: {
-        tDiffuse: { value: null },
-        tEdges: { value: null },
-        frameIndex: { value: 0 }
+        tAo: { value: null },
+        tEdges: { value: null }
       },
       vertexShader: speckleApplyAoVert,
       fragmentShader: speckleApplyAoFrag,
@@ -58,13 +77,6 @@ export class GBlendPass extends ProgressiveGPass {
 
   get displayName(): string {
     return 'BLEND'
-  }
-
-  public update(camera: PerspectiveCamera | OrthographicCamera) {
-    camera
-    this.materialCopy.defines['NUM_FRAMES'] = this.accumulationFrames
-    this.materialCopy.uniforms['frameIndex'].value = this.frameIndex
-    this.materialCopy.needsUpdate = true
   }
 
   public render(renderer: WebGLRenderer): boolean {

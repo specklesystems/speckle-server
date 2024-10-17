@@ -1,5 +1,4 @@
 import {
-  HalfFloatType,
   LinearFilter,
   Matrix4,
   OrthographicCamera,
@@ -12,19 +11,50 @@ import {
 } from 'three'
 
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
-import { BaseGPass } from './GPass.js'
+import { BaseGPass, PassOptions } from './GPass.js'
 import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges-generator-frag.js'
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
+
+export interface EdgePassOptions extends PassOptions {
+  depthMultiplier?: number
+  depthBias?: number
+  normalMultiplier?: number
+  normalBias?: number
+  outlineThickness?: number
+  outlineDensity?: number
+  backgroundTexture?: Texture | null
+  backgroundTextureIntensity: number
+}
+
+export const DefaultEdgePassOptions: Required<EdgePassOptions> = {
+  depthMultiplier: 1,
+  depthBias: 0.001,
+  normalMultiplier: 1,
+  normalBias: 15,
+  outlineThickness: 1,
+  outlineDensity: 0.75,
+  backgroundTexture: null,
+  backgroundTextureIntensity: 0
+}
 
 export class GEdgePass extends BaseGPass {
   public edgesMaterial: ShaderMaterial
   private fsQuad: FullScreenQuad
 
+  public _options: Required<EdgePassOptions> = Object.assign({}, DefaultEdgePassOptions)
+
+  public set options(value: EdgePassOptions) {
+    super.options = value
+    this.setBackground(
+      this._options.backgroundTexture,
+      this._options.backgroundTextureIntensity
+    )
+  }
+
   public constructor() {
     super()
 
     this._outputTarget = new WebGLRenderTarget(256, 256, {
-      type: HalfFloatType,
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })
@@ -37,19 +67,20 @@ export class GEdgePass extends BaseGPass {
         tNormal: { value: null },
         size: { value: new Vector2(512, 512) },
 
-        uDepthMultiplier: { value: 1 },
-        uDepthBias: { value: 0.001 },
-        uNormalMultiplier: { value: 1 },
-        uNormalBias: { value: 15 },
-        uOutlineThickness: { value: 1 },
-        uOutlineDensity: { value: 0.75 },
+        uDepthMultiplier: { value: this._options.depthMultiplier },
+        uDepthBias: { value: this._options.depthBias },
+        uNormalMultiplier: { value: this._options.normalMultiplier },
+        uNormalBias: { value: this._options.normalBias },
+        uOutlineThickness: { value: this._options.outlineThickness },
+        uOutlineDensity: { value: this._options.outlineDensity },
 
         cameraNear: { value: 1 },
         cameraFar: { value: 100 },
         cameraProjectionMatrix: { value: new Matrix4() },
         cameraInverseProjectionMatrix: { value: new Matrix4() },
 
-        tBackground: { value: null }
+        tBackground: { value: null },
+        tBackgroundIntensity: { value: this._options.backgroundTextureIntensity }
       }
     })
     this.edgesMaterial.depthWrite = false
@@ -62,13 +93,14 @@ export class GEdgePass extends BaseGPass {
     this.edgesMaterial.needsUpdate = true
   }
 
-  public setBackground(texture: Texture) {
+  protected setBackground(texture: Texture | null, intensity: number) {
     if (!texture) {
-      delete this.edgesMaterial.defines['PAPER_BACKGROUND']
-    } else this.edgesMaterial.defines['PAPER_BACKGROUND'] = ''
-
-    this.edgesMaterial.uniforms.tBackground.value = texture
-    this.edgesMaterial.needsUpdate = true
+      delete this.edgesMaterial.defines['TEXTURE_BACKGROUND']
+    } else {
+      this.edgesMaterial.defines['TEXTURE_BACKGROUND'] = ''
+      this.setTexture('tBackground', texture)
+      this.edgesMaterial.uniforms.tBackgroundIntensity.value = intensity
+    }
   }
 
   public get displayName(): string {

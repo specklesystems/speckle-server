@@ -1,5 +1,5 @@
 import { ShaderMaterial, Texture, UniformsUtils, WebGLRenderer } from 'three'
-import { BaseGPass } from './GPass.js'
+import { BaseGPass, PassOptions } from './GPass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import { speckleCopyOutputVert } from '../../materials/shaders/speckle-copy-output-vert.js'
 import { speckleCopyOutputFrag } from '../../materials/shaders/speckle-copy-output-frag.js'
@@ -12,15 +12,33 @@ export enum InputType {
   Passthrough = 3
 }
 
+export interface OutputPassOptions extends PassOptions {
+  inputType?: InputType
+}
+
+export const DefaultOutputPassOptions: Required<OutputPassOptions> = {
+  inputType: InputType.Passthrough
+}
+
 export class GOutputPass extends BaseGPass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
+
+  public _options: Required<OutputPassOptions> = Object.assign(
+    {},
+    DefaultOutputPassOptions
+  )
+
+  public set options(value: OutputPassOptions) {
+    super.options = value
+    this.setInputType(this._options.inputType)
+  }
 
   constructor() {
     super()
     this.materialCopy = new ShaderMaterial({
       defines: {
-        INPUT_TYPE: 0
+        INPUT_TYPE: this._options.inputType
       },
       uniforms: UniformsUtils.clone(CopyShader.uniforms),
       vertexShader: speckleCopyOutputVert,
@@ -32,7 +50,7 @@ export class GOutputPass extends BaseGPass {
     this.fsQuad = new FullScreenQuad(this.materialCopy)
   }
 
-  public setInputType(type: InputType) {
+  protected setInputType(type: InputType) {
     this.materialCopy.defines['INPUT_TYPE'] = type
     this.materialCopy.needsUpdate = true
   }

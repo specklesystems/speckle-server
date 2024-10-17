@@ -1,7 +1,7 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GColorPass } from '../GColorPass.js'
-import { GDepthPass, DepthType } from '../GDepthPass.js'
+import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { ClearFlags, ObjectVisibility } from '../GPass.js'
@@ -17,7 +17,6 @@ export class EdgesPipeline extends GProgressivePipeline {
     super(speckleRenderer)
 
     const depthPass = new GDepthPass()
-    depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
@@ -32,7 +31,6 @@ export class EdgesPipeline extends GProgressivePipeline {
     normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const depthPassDynamic = new GDepthPass()
-    depthPassDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassDynamic.setClearColor(0x000000, 1)
@@ -89,12 +87,13 @@ export class EdgesPipeline extends GProgressivePipeline {
     taaPass.accumulationFrames = this.accumulationFrameCount
 
     const blendPass = new GBlendPass()
-    blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
+    blendPass.options = { blendAO: true, blendEdges: true }
+    blendPass.setTexture('tAo', progressiveAOPass.outputTarget?.texture)
     blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
     const blendPassDynamic = new GBlendPass()
-    blendPassDynamic.setTexture('tDiffuse', edgesPassDynamic.outputTarget?.texture)
+    blendPassDynamic.options = { blendAO: false, blendEdges: true }
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 

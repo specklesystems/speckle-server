@@ -11,15 +11,32 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import { BaseGPass } from './GPass.js'
+import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleMatcapMaterial from '../../materials/SpeckleMatcapMaterial.js'
 import { Assets } from '../../Assets.js'
 import Logger from '../..//utils/Logger.js'
 import defaultMatcap from '../../../assets/matcap.png'
-import { AssetType } from '../../../IViewer.js'
+import { Asset, AssetType } from '../../../IViewer.js'
+
+export interface MatcapPassOptions extends PassOptions {
+  matcapTexture?: Asset | null
+}
+
+export const DefaultMatcapPassOptions: Required<MatcapPassOptions> = {
+  matcapTexture: {
+    id: 'defaultMatcap',
+    src: defaultMatcap,
+    type: AssetType.TEXTURE_8BPP
+  }
+}
 
 export class GMatcapPass extends BaseGPass {
   private matcapMaterial: SpeckleMatcapMaterial
+
+  public _options: Required<MatcapPassOptions> = Object.assign(
+    {},
+    DefaultMatcapPassOptions
+  )
 
   get displayName(): string {
     return 'GEOMETRY-MATCAP'
@@ -27,6 +44,11 @@ export class GMatcapPass extends BaseGPass {
 
   get overrideMaterial(): Material {
     return this.matcapMaterial
+  }
+
+  public set options(value: MatcapPassOptions) {
+    super.options = value
+    this.setMatcapTexture(this._options.matcapTexture)
   }
 
   constructor() {
@@ -47,13 +69,17 @@ export class GMatcapPass extends BaseGPass {
     this.matcapMaterial.blending = NoBlending
     this.matcapMaterial.side = DoubleSide
     this.matcapMaterial.toneMapped = false
-    Assets.getTexture({
-      id: 'defaultMatcap',
-      src: defaultMatcap,
-      type: AssetType.TEXTURE_8BPP
-    })
+
+    this.setMatcapTexture(this._options.matcapTexture)
+  }
+
+  protected setMatcapTexture(asset: Asset | null) {
+    if (!asset) return
+
+    Assets.getTexture(asset)
       .then((value: Texture) => {
         this.matcapMaterial.matcap = value
+        this.matcapMaterial.needsUpdate = true
       })
       .catch((reason) => {
         Logger.error(`Matcap texture failed to load ${reason}`)

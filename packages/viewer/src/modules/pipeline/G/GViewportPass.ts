@@ -10,11 +10,24 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import { BaseGPass } from './GPass.js'
+import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleViewportMaterial from '../../materials/SpeckleViewportMaterial.js'
 
+export interface ViewportPassOptions extends PassOptions {
+  falloff?: number
+}
+
+export const DefaultViewportPassOptions: Required<ViewportPassOptions> = {
+  falloff: 3
+}
+
 export class GViewportPass extends BaseGPass {
-  public viewportMaterial: SpeckleViewportMaterial
+  protected viewportMaterial: SpeckleViewportMaterial
+
+  public _options: Required<ViewportPassOptions> = Object.assign(
+    {},
+    DefaultViewportPassOptions
+  )
 
   get displayName(): string {
     return 'GEOMETRY-VIEWPORT'
@@ -22,6 +35,11 @@ export class GViewportPass extends BaseGPass {
 
   get overrideMaterial(): Material {
     return this.viewportMaterial
+  }
+
+  public set options(value: ViewportPassOptions) {
+    super.options = value
+    this.viewportMaterial.falloff = this._options.falloff
   }
 
   constructor() {
@@ -42,6 +60,7 @@ export class GViewportPass extends BaseGPass {
     this.viewportMaterial.blending = NoBlending
     this.viewportMaterial.side = DoubleSide
     this.viewportMaterial.toneMapped = false
+    this.viewportMaterial.falloff = this._options.falloff
   }
 
   public setClippingPlanes(planes: Plane[]) {

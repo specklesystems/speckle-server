@@ -11,7 +11,7 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import { BaseGPass } from './GPass.js'
+import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
 
 export enum DepthType {
@@ -19,8 +19,21 @@ export enum DepthType {
   LINEAR_DEPTH
 }
 
+export interface DepthPassOptions extends PassOptions {
+  depthType?: DepthType
+}
+
+export const DefaultDepthPassOptions: Required<DepthPassOptions> = {
+  depthType: DepthType.LINEAR_DEPTH
+}
+
 export class GDepthPass extends BaseGPass {
   private depthMaterial: SpeckleDepthMaterial
+
+  public _options: Required<DepthPassOptions> = Object.assign(
+    {},
+    DefaultDepthPassOptions
+  )
 
   get displayName(): string {
     return 'DEPTH'
@@ -30,12 +43,14 @@ export class GDepthPass extends BaseGPass {
     return this.depthMaterial
   }
 
-  public set depthType(value: DepthType) {
+  public set options(value: DepthPassOptions) {
+    super.options = value
+    this.depthType = this._options.depthType
+  }
+
+  protected set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
       if (this.depthMaterial.defines) {
-        /** Catering to typescript
-         *  SpeckleDepthMaterial always has it's 'defines' defined
-         */
         this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
       } else {
         if (this.depthMaterial.defines) {
@@ -66,9 +81,9 @@ export class GDepthPass extends BaseGPass {
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
-
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide
+    this.depthType = this._options.depthType
   }
 
   public setClippingPlanes(planes: Plane[]) {
@@ -95,9 +110,7 @@ export class GDepthPass extends BaseGPass {
     this.applyLayers(camera)
 
     this.clear(renderer)
-    // renderer.setClearColor(0x000000)
-    // renderer.setClearAlpha(1.0)
-    // renderer.clear()
+
     renderer.render(scene, camera)
 
     if (this.onAfterRender) this.onAfterRender()

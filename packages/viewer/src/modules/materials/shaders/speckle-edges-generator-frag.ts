@@ -487,7 +487,11 @@ float cannyEdgeDetection(
   return edge;
 }
 
-uniform sampler2D tBackground;
+#ifdef TEXTURE_BACKGROUND
+  uniform sampler2D tBackground;
+  uniform float tBackgroundIntensity;
+#endif
+
 
 void main() {
 	// Silhouette-edge value
@@ -503,11 +507,16 @@ void main() {
   float maxOutline = saturate(max(depthEdge, normalEdge));
 	float sobelOutline = 1. - maxOutline * uOutlineDensity;
 	// float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
+
   vec4 background = vec4(1.);
-  #ifdef PAPER_BACKGROUND
+  float backgroundIntensity = 1.;
+
+  #ifdef TEXTURE_BACKGROUND
     background = texture2D(tBackground, vUv);
+    backgroundIntensity = tBackgroundIntensity;
   #endif
-  vec3 color = mix(vec3(sobelOutline), background.rgb * 0.25 + 0.75, 1. - maxOutline);
+  
+  vec3 color = mix(vec3(sobelOutline), background.rgb * backgroundIntensity + (1. - backgroundIntensity), 1. - maxOutline);
 	gl_FragColor = vec4(color, 1.);
 
 }`

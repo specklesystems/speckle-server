@@ -1,6 +1,6 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GBlendPass } from '../GBlendPass.js'
-import { GDepthPass, DepthType } from '../GDepthPass.js'
+import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { GTAAPass } from '../GTAAPass.js'
@@ -17,7 +17,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     super(speckleRenderer)
 
     const depthPass = new GDepthPass()
-    depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setJitter(true)
     depthPass.setClearColor(0x000000, 1)
@@ -30,7 +29,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const depthPassDynamic = new GDepthPass()
-    depthPassDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassDynamic.setClearColor(0x000000, 1)
     depthPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
@@ -65,12 +63,12 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     taaPass.accumulationFrames = this.accumulationFrameCount
 
     const blendPass = new GBlendPass()
-    blendPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
+    blendPass.options = { blendAO: false, blendEdges: true }
     blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
     const blendPassDynamic = new GBlendPass()
-    blendPassDynamic.setTexture('tDiffuse', edgesPassDynamic.outputTarget?.texture)
+    blendPassDynamic.options = { blendAO: false, blendEdges: true }
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
@@ -124,6 +122,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       overlayPass
     )
 
-    this.passList = this.progressiveStage
+    this.passList = this.dynamicStage
   }
 }

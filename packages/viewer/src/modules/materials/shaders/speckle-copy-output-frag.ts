@@ -19,13 +19,11 @@ export const speckleCopyOutputFrag = `
         vec4 inSample = texture2D( tDiffuse, vUv );
         vec3 outSample = inSample.rgb;
         #if INPUT_TYPE == 0
-        /** 
-            Un-premultiply alpha
-         */
-        inSample.rgb /= inSample.a;
-        outSample = LinearTosRGB( inSample ).rgb;
-        
-            
+            /** 
+                Un-premultiply alpha
+            */
+            inSample.rgb /= inSample.a;
+            outSample = LinearTosRGB( inSample ).rgb;
         #elif INPUT_TYPE == 1
             outSample.rgb = vec3(unpackRGBAToDepth(inSample));
         #elif INPUT_TYPE == 2

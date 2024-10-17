@@ -39,7 +39,7 @@ export interface ProgressiveAOPassOptions extends PassOptions {
   bias?: number
 }
 
-export const DefaultProgressiveAOPassOptions: ProgressiveAOPassOptions = {
+export const DefaultProgressiveAOPassOptions: Required<ProgressiveAOPassOptions> = {
   intensity: 1,
   kernelRadius: 30, // Screen space
   bias: 0.01,
@@ -52,7 +52,7 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
   private _generationBuffer: WebGLRenderTarget
 
-  public _options: ProgressiveAOPassOptions = Object.assign(
+  public _options: Required<ProgressiveAOPassOptions> = Object.assign(
     {},
     DefaultProgressiveAOPassOptions
   )
@@ -63,7 +63,6 @@ export class GProgressiveAOPass extends ProgressiveGPass {
   private noiseTextures: Array<Texture> = []
 
   public setTexture(uName: string, texture: Texture | undefined) {
-    this.generationMaterial.uniforms[uName].value = texture
     this.generationMaterial.uniforms[uName].value = texture
     this.generationMaterial.needsUpdate = true
   }

@@ -1,6 +1,6 @@
 import { RepeatWrapping, Texture } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GDepthPass, DepthType } from '../GDepthPass.js'
+import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { ClearFlags, ObjectVisibility } from '../GPass.js'
@@ -13,14 +13,13 @@ import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GColorPass } from '../GColorPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 import { GStencilPass } from '../GStencilPass.js'
-import { GOutputPass, InputType } from '../GOutputPass.js'
+import { GOutputPass } from '../GOutputPass.js'
 
 export class PenViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
     const depthPass = new GDepthPass()
-    depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
@@ -35,7 +34,6 @@ export class PenViewPipeline extends GProgressivePipeline {
     normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const depthPassDynamic = new GDepthPass()
-    depthPassDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassDynamic.setClearColor(0x000000, 1)
@@ -86,7 +84,6 @@ export class PenViewPipeline extends GProgressivePipeline {
 
     const outputPass = new GOutputPass()
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
-    outputPass.setInputType(InputType.Passthrough)
     outputPass.outputTarget = null
 
     this.dynamicStage.push(
@@ -128,8 +125,12 @@ export class PenViewPipeline extends GProgressivePipeline {
       .then((value: Texture) => {
         value.wrapS = RepeatWrapping
         value.wrapT = RepeatWrapping
-        edgesPass.setBackground(value)
-        edgesPassDynamic.setBackground(value)
+        const options = {
+          backgroundTexture: value,
+          backgroundTextureIntensity: 0.25
+        }
+        edgesPass.options = options
+        edgesPassDynamic.options = options
         this.accumulationFrameIndex = 0
       })
       .catch((reason) => {

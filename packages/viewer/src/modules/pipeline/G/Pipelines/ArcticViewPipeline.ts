@@ -1,6 +1,6 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GBlendPass } from '../GBlendPass.js'
-import { GDepthPass, DepthType } from '../GDepthPass.js'
+import { GDepthPass } from '../GDepthPass.js'
 import { ClearFlags, ObjectVisibility } from '../GPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
 import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
@@ -11,13 +11,12 @@ import { GStencilPass } from '../GStencilPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 
 export class ArcticViewPipeline extends GProgressivePipeline {
-  protected accumulationFrameCount: number = 32
+  protected accumulationFrameCount: number = 16
 
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
     const depthPass = new GDepthPass()
-    depthPass.depthType = DepthType.LINEAR_DEPTH
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
     depthPass.setJitter(true)
@@ -35,7 +34,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
     viewportPass.setVisibility(ObjectVisibility.DEPTH)
-    viewportPass.viewportMaterial.falloff = 3
     viewportPass.outputTarget = null
 
     const progressiveAOPass = new GProgressiveAOPass()
@@ -48,8 +46,8 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     progressiveAOPass.setClearColor(0xffffff, 1)
 
     const blendPass = new GBlendPass()
-    blendPass.setTexture('tDiffuse', progressiveAOPass.outputTarget?.texture)
-    blendPass.setTexture('tEdges', progressiveAOPass.outputTarget?.texture)
+    blendPass.options = { blendAO: true, blendEdges: false }
+    blendPass.setTexture('tAo', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
     const stencilPass = new GStencilPass()
