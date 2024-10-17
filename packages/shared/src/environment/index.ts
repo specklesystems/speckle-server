@@ -13,7 +13,7 @@ function parseFeatureFlags() {
     // Enables the gendo ai integration
     FF_GENDOAI_MODULE_ENABLED: {
       schema: z.boolean(),
-      defaults: { production: false, _: true }
+      defaults: { production: false, _: false }
     },
     // Enables the workspaces module
     FF_WORKSPACES_MODULE_ENABLED: {
