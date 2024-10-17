@@ -7,8 +7,6 @@ const {
   validateTokenFactory
 } = require('../services/tokens')
 
-const { getBranchesByStreamId } = require('../services/branches')
-
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
@@ -17,7 +15,9 @@ const {
   createBranchFactory,
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
@@ -142,6 +142,9 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   getPaginatedBranchCommitsItemsByNameFactory
 } = require('@/modules/core/services/commit/retrieval')
+const {
+  getPaginatedStreamBranchesFactory
+} = require('@/modules/core/services/branch/retrieval')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -293,6 +296,10 @@ const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
 })
+const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -424,7 +431,7 @@ describe('Actors & Tokens @user-services', () => {
         assert.fail('shared stream deleted')
       }
 
-      const branches = await getBranchesByStreamId({ streamId: multiOwnerStream.id })
+      const branches = await getBranchesByStreamId(multiOwnerStream.id)
       expect(branches.items.length).to.equal(3)
 
       const branchCommits = await getCommitsByBranchName({
