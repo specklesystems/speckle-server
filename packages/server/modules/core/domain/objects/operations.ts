@@ -1,5 +1,6 @@
 import { Logger } from '@/logging/logging'
 import {
+  InsertableSpeckleObject,
   RawSpeckleObject,
   SpeckleObject,
   SpeckleObjectClosureEntry
@@ -30,7 +31,9 @@ export type StoreObjects = (
   }>
 ) => Promise<number[]>
 
-export type StoreSingleObjectIfNotFound = (object: SpeckleObject) => Promise<void>
+export type StoreSingleObjectIfNotFound = (
+  object: SpeckleObject | InsertableSpeckleObject
+) => Promise<void>
 
 export type StoreClosuresIfNotFound = (
   closures: SpeckleObjectClosureEntry[]

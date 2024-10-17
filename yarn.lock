@@ -16724,7 +16724,7 @@ __metadata:
     supertest: "npm:^4.0.2"
     ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.0.0"
-    type-fest: "npm:^2.19.0"
+    type-fest: "npm:^4.26.1"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
     ua-parser-js: "npm:^1.0.38"
@@ -50005,6 +50005,13 @@ __metadata:
   version: 4.24.0
   resolution: "type-fest@npm:4.24.0"
   checksum: 10/60efd6ec71f5113ef0a0fcabe61fc722bb2520ea082bc23e4b4dfb44204234dc691560a5e837f939160d7c18b410ed8fae32ddb752d57bed009248e0f61dce6b
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.26.1":
+  version: 4.26.1
+  resolution: "type-fest@npm:4.26.1"
+  checksum: 10/b82676194f80af228cb852e320d2ea8381c89d667d2e4d9f2bdfc8f254bccc039c7741a90c53617a4de0c9fdca8265ed18eb0888cd628f391c5c381c33a9f94b
   languageName: node
   linkType: hard
 
