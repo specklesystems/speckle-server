@@ -1,5 +1,8 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import {
+  GetServerInfo,
+  UpdateServerInfo
+} from '@/modules/core/domain/server/operations'
 import { ServerInfo } from '@/modules/core/domain/server/types'
 import { ServerConfigRecord } from '@/modules/core/helpers/types'
 import {
@@ -55,4 +58,44 @@ export const getServerInfoFactory =
     }
 
     return serverInfo
+  }
+
+export const updateServerInfoFactory =
+  (deps: { db: Knex }): UpdateServerInfo =>
+  async ({
+    name,
+    company,
+    description,
+    adminContact,
+    termsOfService,
+    inviteOnly,
+    guestModeEnabled
+  }) => {
+    const serverInfo = await tables.serverConfig(deps.db).select('*').first()
+    if (!serverInfo) {
+      await tables.serverConfig(deps.db).insert(
+        {
+          name,
+          company,
+          description,
+          adminContact,
+          termsOfService,
+          inviteOnly,
+          guestModeEnabled,
+          completed: true
+        },
+        '*'
+      )
+    } else {
+      await tables.serverConfig(deps.db).where({ id: 0 }).update({
+        name,
+        company,
+        description,
+        adminContact,
+        termsOfService,
+        inviteOnly,
+        guestModeEnabled,
+        completed: true
+      })
+    }
   }
