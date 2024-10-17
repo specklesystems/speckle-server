@@ -1,6 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
+import { MeasurementsExtension, SectionTool } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
@@ -48,14 +48,27 @@ export function useSectionBoxUtilities() {
   }
 
   const toggleSectionBoxVisibility = () => {
+    const sectionTool = instance.getExtension(SectionTool)
     if (!isSectionBoxVisible.value) {
       sectionBoxOn()
-      instance.setSectionBoxVisibility(true)
+      sectionTool.visible = true
       isSectionBoxVisible.value = true
     } else {
-      instance.setSectionBoxVisibility(false)
+      sectionTool.visible = false
       isSectionBoxVisible.value = false
     }
+    instance.requestRender()
+
+    /** We should really develop LegacyViewer any further */
+    // if (!isSectionBoxVisible.value) {
+    //   sectionBoxOn()
+    //   instance.setSectionBoxVisibility(true)
+    //   isSectionBoxVisible.value = true
+    // } else {
+    //   instance.setSectionBoxVisibility(false)
+    //   isSectionBoxVisible.value = false
+    // }
+    // instance.requestRender()
   }
 
   return {

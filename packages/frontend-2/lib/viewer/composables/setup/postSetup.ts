@@ -1,5 +1,10 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode, CameraController } from '@speckle/viewer'
+import {
+  ViewerEvent,
+  VisualDiffMode,
+  CameraController,
+  UpdateFlags
+} from '@speckle/viewer'
 import type {
   PropertyInfo,
   StringPropertyInfo,
@@ -309,7 +314,7 @@ function useViewerSectionBoxIntegration() {
 
       if (oldVal && !newVal) {
         instance.sectionBoxOff()
-        instance.requestRender()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
 
@@ -319,7 +324,7 @@ function useViewerSectionBoxIntegration() {
           max: newVal.max
         })
         instance.sectionBoxOn()
-        instance.requestRender()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
       }
     },
     { immediate: true, deep: true, flush: 'sync' }

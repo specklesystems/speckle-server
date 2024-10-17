@@ -180,9 +180,10 @@ export class LegacyViewer extends Viewer {
     this.sections.enabled = true
   }
 
-  public setSectionBoxVisibility(visible: boolean) {
-    this.sections.visible = visible
-  }
+  /** We shouldn't develope LegacyViewer any further. We need to move away from it */
+  // public setSectionBoxVisibility(visible: boolean) {
+  //   this.sections.visible = visible
+  // }
 
   /** FILTERING */
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
