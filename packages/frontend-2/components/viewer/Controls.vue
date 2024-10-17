@@ -456,7 +456,7 @@ const handleKeyboardAction = (action: ViewerKeyboardActions) => {
       trackAndtoggleProjection()
       break
     case ViewerKeyboardActions.ToggleSectionBox:
-      toggleSectionBox()
+      toggleSectionBoxVisibility()
       break
     case ViewerKeyboardActions.ZoomExtentsOrSelection:
       trackAndzoomExtentsOrSelection()
