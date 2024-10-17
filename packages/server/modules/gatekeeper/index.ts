@@ -18,7 +18,11 @@ const gatekeeperModule: SpeckleModule = {
         'The gatekeeper module needs a valid license to run, contact Speckle to get one.'
       )
 
-    if (isInitial && FF_BILLING_INTEGRATION_ENABLED) app.use(billingRouter)
+    if (isInitial) {
+      if (FF_BILLING_INTEGRATION_ENABLED) app.use(billingRouter)
+      // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
+      // TODO: create a cron job, that removes unused seats from the subscription at the beginning of each workspace plan's billing cycle
+    }
   }
 }
 export = gatekeeperModule
