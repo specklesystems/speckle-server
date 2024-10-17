@@ -1,6 +1,5 @@
 'use strict'
 const { validateScopes } = require('@/modules/shared')
-const { getPublicScopes, getPublicRoles } = require('../../services/generic')
 const { Roles, Scopes, RoleInfo } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 const {
@@ -9,12 +8,16 @@ const {
 } = require('@/modules/shared/helpers/envHelper')
 const {
   getServerInfoFactory,
-  updateServerInfoFactory
+  updateServerInfoFactory,
+  getPublicRolesFactory,
+  getPublicScopesFactory
 } = require('@/modules/core/repositories/server')
 const { db } = require('@/db/knex')
 
 const getServerInfo = getServerInfoFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
+const getPublicRoles = getPublicRolesFactory({ db })
+const getPublicScopes = getPublicScopesFactory({ db })
 
 module.exports = {
   Query: {
