@@ -46,7 +46,6 @@ const {
   storeUserAclFactory,
   getUserRoleFactory
 } = require('@/modules/core/repositories/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -75,6 +74,7 @@ const {
   getTokenResourceAccessDefinitionsByIdFactory,
   updateApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const db = knex
 const getApp = getAppFactory({ db: knex })
@@ -115,6 +115,7 @@ const refreshAppToken = refreshAppTokenFactory({
   createBareToken
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

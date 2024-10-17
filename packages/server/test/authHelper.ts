@@ -2,6 +2,7 @@ import { db } from '@/db/knex'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   storeApiTokenFactory,
   storePersonalApiTokenFactory,
@@ -19,7 +20,6 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
@@ -35,6 +35,7 @@ import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvite
 import { ServerScope } from '@speckle/shared'
 import { kebabCase, omit } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

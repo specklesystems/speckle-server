@@ -44,7 +44,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -72,6 +71,7 @@ const {
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -105,6 +105,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

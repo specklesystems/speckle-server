@@ -1,6 +1,6 @@
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { GetUserByEmail } from '@/modules/core/domain/users/operations'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
   renderEmail
@@ -17,7 +17,7 @@ type InitializeNewTokenDeps = {
   getUserByEmail: GetUserByEmail
   getPendingToken: GetPendingToken
   createToken: CreateToken
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
 }
 
 /**
