@@ -7,8 +7,7 @@ const { createObject } = require('../services/objects')
 
 const {
   getCommitsTotalCountByBranchName,
-  getCommitsByBranchName,
-  getCommitsByStreamId
+  getCommitsByBranchName
 } = require('../services/commits')
 const {
   createBranchAndNotifyFactory
@@ -34,7 +33,8 @@ const {
   switchCommitBranchFactory,
   updateCommitFactory,
   getStreamCommitCountFactory,
-  legacyGetPaginatedUserCommitsPage
+  legacyGetPaginatedUserCommitsPage,
+  legacyGetPaginatedStreamCommitsPageFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -237,6 +237,7 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
 
 describe('Commits @core-commits', () => {
   const user = {

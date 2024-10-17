@@ -9,7 +9,7 @@ const {
 
 const { getBranchesByStreamId } = require('../services/branches')
 
-const { getCommitsByBranchName, getCommitsByStreamId } = require('../services/commits')
+const { getCommitsByBranchName } = require('../services/commits')
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
@@ -26,7 +26,8 @@ const {
   getCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  legacyGetPaginatedStreamCommitsPageFactory
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchIdFactory,
@@ -285,6 +286,7 @@ const validateToken = validateTokenFactory({
   }),
   updateApiToken: updateApiTokenFactory({ db })
 })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

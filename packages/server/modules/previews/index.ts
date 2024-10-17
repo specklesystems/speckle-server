@@ -1,10 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
-import {
-  getCommitsByStreamId,
-  getCommitsByBranchName
-} from '@/modules/core/services/commits'
+import { getCommitsByBranchName } from '@/modules/core/services/commits'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
 import { moduleLogger } from '@/logging/logging'
@@ -26,7 +23,8 @@ import {
 import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getCommitFactory,
-  getObjectCommitsWithStreamIdsFactory
+  getObjectCommitsWithStreamIdsFactory,
+  legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -43,6 +41,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     moduleLogger.info('📸 Init object preview module')
   }
 
+  const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
   const getStream = getStreamFactory({ db })
   const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
     getObject,
