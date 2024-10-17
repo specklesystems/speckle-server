@@ -2505,6 +2505,7 @@ export type Query = {
    * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
+  workspacePricingPlans: Scalars['JSONObject']['output'];
 };
 
 

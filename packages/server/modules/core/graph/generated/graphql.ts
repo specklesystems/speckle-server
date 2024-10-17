@@ -2520,6 +2520,7 @@ export type Query = {
    * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
+  workspacePricingPlans: Scalars['JSONObject']['output'];
 };
 
 
@@ -5702,6 +5703,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
   workspaceBySlug?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceBySlugArgs, 'slug'>>;
   workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, Partial<QueryWorkspaceInviteArgs>>;
+  workspacePricingPlans?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {

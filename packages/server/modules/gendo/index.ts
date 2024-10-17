@@ -1,15 +1,20 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/logging/logging'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { getGendoAIResponseKey } from '@/modules/shared/helpers/envHelper'
+import {
+  getGendoAIResponseKey,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
 import { updateGendoAIRenderRequest } from '@/modules/gendo/services'
 
-const responseToken = getGendoAIResponseKey()
+const { FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
 
 export = {
   async init(app) {
+    if (!FF_GENDOAI_MODULE_ENABLED) return
     moduleLogger.info('🪞 Init Gendo AI render module')
 
+    const responseToken = getGendoAIResponseKey()
     // Gendo api calls back in here with the result.
     app.options('/api/thirdparty/gendo', corsMiddleware())
     app.post('/api/thirdparty/gendo', corsMiddleware(), async (req, res) => {
