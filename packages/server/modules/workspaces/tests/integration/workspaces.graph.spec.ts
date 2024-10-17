@@ -48,10 +48,18 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
+import {
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
+} from '@/modules/core/repositories/branches'
 
+const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const createProjectWithVersions =
@@ -74,11 +82,7 @@ const createProjectWithVersions =
 
     const {
       items: [model1]
-    } = await getBranchesByStreamId({
-      streamId: project1Id,
-      limit: 1,
-      cursor: null
-    })
+    } = await getBranchesByStreamId(project1Id, { limit: 1, cursor: null })
     expect(model1).to.exist
 
     const resObj1 = await apollo.execute(CreateObjectDocument, {
