@@ -30,6 +30,18 @@ export type StorePersonalApiToken = (
   token: PersonalApiToken
 ) => Promise<PersonalApiToken>
 
+export type GetUserPersonalAccessTokens = (userId: string) => Promise<
+  {
+    id: string
+    name: string | null
+    lastChars: string | null
+    createdAt: Date
+    lifespan: number
+    lastUsed: Date
+    scopes: ServerScope[]
+  }[]
+>
+
 export type CreateAndStoreUserToken = (params: {
   userId: string
   name: string
