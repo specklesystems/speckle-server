@@ -14,6 +14,7 @@ import {
   StoreObjects,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
+import { SpeckleObject } from '@/modules/core/domain/objects/types'
 
 const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
   'parent',
@@ -74,7 +75,14 @@ export const insertObjectsFactory =
 export const storeSingleObjectIfNotFoundFactory =
   (deps: { db: Knex }): StoreSingleObjectIfNotFound =>
   async (insertionObject) => {
-    await tables.objects(deps.db).insert(insertionObject).onConflict().ignore()
+    await tables
+      .objects(deps.db)
+      .insert(
+        // knex is bothered by string being inserted into jsonb, which is actually fine
+        insertionObject as SpeckleObject
+      )
+      .onConflict()
+      .ignore()
   }
 
 export const storeClosuresIfNotFoundFactory =

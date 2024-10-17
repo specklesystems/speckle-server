@@ -1,5 +1,8 @@
 import crypto from 'crypto'
-import { RawSpeckleObject, SpeckleObject } from '@/modules/core/domain/objects/types'
+import {
+  InsertableSpeckleObject,
+  RawSpeckleObject
+} from '@/modules/core/domain/objects/types'
 import { getMaximumObjectSizeMB } from '@/modules/shared/helpers/envHelper'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
@@ -19,7 +22,7 @@ export const prepInsertionObject = (
   streamId: string,
   obj: RawSpeckleObject
 ): Omit<
-  SpeckleObject,
+  InsertableSpeckleObject,
   'totalChildrenCount' | 'totalChildrenCountByDepth' | 'createdAt'
 > => {
   const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
@@ -38,8 +41,7 @@ export const prepInsertionObject = (
   }
 
   return {
-    // Not sure why we stringify it, cause knex will do that, but leaving it as is for now
-    data: stringifiedObj as unknown as Record<string, unknown>,
+    data: stringifiedObj,
     streamId,
     id: obj.id,
     // YEAH, this has been broken forever...
@@ -79,14 +81,10 @@ export const createObjectFactory =
       }
     }
 
-    const finalInsertionObject: SpeckleObject = {
+    const finalInsertionObject: InsertableSpeckleObject = {
       ...insertionObject,
       totalChildrenCount: closures.length,
-      // Not sure why we stringify it, cause knex will do that, but leaving it as is for now
-      totalChildrenCountByDepth: JSON.stringify(
-        totalChildrenCountByDepth
-      ) as unknown as Record<string, unknown>,
-      createdAt: new Date()
+      totalChildrenCountByDepth: JSON.stringify(totalChildrenCountByDepth)
     }
 
     await deps.storeSingleObjectIfNotFoundFactory(finalInsertionObject)
