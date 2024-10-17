@@ -1,16 +1,19 @@
 import {
+  PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
 import { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
+  PersonalApiTokens,
   TokenResourceAccess,
   TokenScopes,
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
 import {
   StoreApiToken,
+  StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
   StoreUserServerAppToken
@@ -24,7 +27,8 @@ const tables = {
   tokenResourceAccess: (db: Knex) =>
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
   userServerAppTokens: (db: Knex) =>
-    db<UserServerAppTokenRecord>(UserServerAppTokens.name)
+    db<UserServerAppTokenRecord>(UserServerAppTokens.name),
+  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
 }
 
 export const storeApiTokenFactory =
@@ -50,5 +54,12 @@ export const storeUserServerAppTokenFactory =
   (deps: { db: Knex }): StoreUserServerAppToken =>
   async (token) => {
     const [newToken] = await tables.userServerAppTokens(deps.db).insert(token, '*')
+    return newToken
+  }
+
+export const storePersonalApiTokenFactory =
+  (deps: { db: Knex }): StorePersonalApiToken =>
+  async (token) => {
+    const [newToken] = await tables.personalApiTokens(deps.db).insert(token, '*')
     return newToken
   }

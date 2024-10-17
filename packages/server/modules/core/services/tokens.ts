@@ -4,7 +4,6 @@ import knex, { db } from '@/db/knex'
 import {
   ServerAcl,
   ApiTokens,
-  PersonalApiTokens,
   TokenScopes,
   TokenResourceAccess
 } from '@/modules/core/dbSchema'
@@ -17,17 +16,14 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import {
   CreateAndStoreAppToken,
+  CreateAndStorePersonalAccessToken,
   CreateAndStoreUserToken,
   StoreApiToken,
+  StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
   StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
-import {
-  storeApiTokenFactory,
-  storeTokenResourceAccessDefinitionsFactory,
-  storeTokenScopesFactory
-} from '@/modules/core/repositories/tokens'
 
 /*
   Tokens
@@ -84,14 +80,6 @@ export const createTokenFactory =
     return { id: tokenId, token: tokenId + tokenString }
   }
 
-const createToken = createTokenFactory({
-  storeApiToken: storeApiTokenFactory({ db }),
-  storeTokenScopes: storeTokenScopesFactory({ db }),
-  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
-    db
-  })
-})
-
 export const createAppTokenFactory =
   (
     deps: CreateTokenDeps & {
@@ -108,25 +96,33 @@ export const createAppTokenFactory =
     return token.token
   }
 
-// Creates a personal access token for a user with a set of given scopes.
-export async function createPersonalAccessToken(
-  userId: string,
-  name: string,
-  scopes: ServerScope[],
-  lifespan?: number | bigint
-) {
-  const { id, token } = await createToken({
-    userId,
-    name,
-    scopes,
-    lifespan
-  })
+/**
+ * Creates a personal access token for a user with a set of given scopes.
+ */
+export const createPersonalAccessTokenFactory =
+  (
+    deps: CreateTokenDeps & {
+      storePersonalApiToken: StorePersonalApiToken
+    }
+  ): CreateAndStorePersonalAccessToken =>
+  async (
+    userId: string,
+    name: string,
+    scopes: ServerScope[],
+    lifespan?: number | bigint
+  ) => {
+    const { id, token } = await createTokenFactory(deps)({
+      userId,
+      name,
+      scopes,
+      lifespan
+    })
 
-  // Store the relationship
-  await PersonalApiTokens.knex().insert({ userId, tokenId: id })
+    // Store the relationship
+    await deps.storePersonalApiToken({ userId, tokenId: id })
 
-  return token
-}
+    return token
+  }
 
 export async function validateToken(
   tokenString: string

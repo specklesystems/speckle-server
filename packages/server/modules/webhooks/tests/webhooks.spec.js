@@ -8,7 +8,6 @@ const {
   truncateTables
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
   createWebhookConfigFactory,
@@ -92,6 +91,13 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
 
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -158,6 +164,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 describe('Webhooks @webhooks', () => {

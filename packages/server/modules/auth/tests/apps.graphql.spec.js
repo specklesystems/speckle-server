@@ -5,9 +5,9 @@ const chai = require('chai')
 const expect = chai.expect
 
 const {
-  createPersonalAccessToken,
   createBareToken,
-  createAppTokenFactory
+  createAppTokenFactory,
+  createPersonalAccessTokenFactory
 } = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { Scopes } = require('@speckle/shared')
@@ -58,7 +58,8 @@ const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
-  storeUserServerAppTokenFactory
+  storeUserServerAppTokenFactory,
+  storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 
 let sendRequest
@@ -109,6 +110,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 describe('GraphQL @apps-api', () => {

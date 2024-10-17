@@ -3,10 +3,10 @@ const expect = require('chai').expect
 const assert = require('assert')
 
 const {
-  createPersonalAccessToken,
   revokeToken,
   validateToken,
-  getUserTokens
+  getUserTokens,
+  createPersonalAccessTokenFactory
 } = require('../services/tokens')
 
 const { getBranchesByStreamId } = require('../services/branches')
@@ -127,6 +127,12 @@ const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
 const { dbLogger } = require('@/logging/logging')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
 
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -250,6 +256,14 @@ const changeUserRole = changeUserRoleFactory({
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 const searchUsers = searchUsersFactory({ db })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
