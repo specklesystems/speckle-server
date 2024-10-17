@@ -3,24 +3,33 @@ import {
   CreateCheckoutSession,
   GetCheckoutSession,
   GetWorkspacePlan,
-  SessionInput,
-  SaveCheckoutSession
+  SaveCheckoutSession,
+  UpdateCheckoutSessionStatus,
+  SaveWorkspaceSubscription,
+  UpsertPaidWorkspacePlan,
+  GetSubscriptionData,
+  GetWorkspaceCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals
 } from '@/modules/gatekeeper/domain/workspacePricing'
-import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
+import {
+  WorkspaceAlreadyPaidError,
+  WorkspaceCheckoutSessionInProgressError
+} from '@/modules/gatekeeper/errors/billing'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import { Roles, throwUncoveredError } from '@speckle/shared'
 
 export const startCheckoutSessionFactory =
   ({
+    getWorkspaceCheckoutSession,
     getWorkspacePlan,
     countRole,
     createCheckoutSession,
     saveCheckoutSession
   }: {
+    getWorkspaceCheckoutSession: GetWorkspaceCheckoutSession
     getWorkspacePlan: GetWorkspacePlan
     countRole: CountWorkspaceRoleWithOptionalProjectRole
     createCheckoutSession: CreateCheckoutSession
@@ -34,7 +43,7 @@ export const startCheckoutSessionFactory =
   }: {
     workspaceId: string
     workspaceSlug: string
-    workspacePlan: WorkspacePlans
+    workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
   }): Promise<CheckoutSession> => {
     // get workspace plan, if we're already on a paid plan, do not allow checkout
@@ -55,9 +64,14 @@ export const startCheckoutSessionFactory =
           // lets go ahead and pay
           break
         default:
-          throwUncoveredError(existingWorkspacePlan.status)
+          throwUncoveredError(existingWorkspacePlan)
       }
     }
+
+    // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
+    const workspaceCheckoutSession = await getWorkspaceCheckoutSession({ workspaceId })
+    if (workspaceCheckoutSession) throw new WorkspaceCheckoutSessionInProgressError()
+
     const [adminCount, memberCount, guestCount] = await Promise.all([
       countRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
       countRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
@@ -79,23 +93,78 @@ export const startCheckoutSessionFactory =
   }
 
 export const completeCheckoutSessionFactory =
-  ({ getCheckoutSession }: { getCheckoutSession: GetCheckoutSession }) =>
-  async ({ session }: { session: SessionInput }): Promise<void> => {
-    const checkoutSession = await getCheckoutSession({ sessionId: session.id })
-    if (!checkoutSession && session.paymentStatus === 'paid')
+  ({
+    getCheckoutSession,
+    updateCheckoutSessionStatus,
+    saveWorkspaceSubscription,
+    upsertPaidWorkspacePlan,
+    getSubscriptionData
+  }: {
+    getCheckoutSession: GetCheckoutSession
+    updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
+    saveWorkspaceSubscription: SaveWorkspaceSubscription
+    upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
+    getSubscriptionData: GetSubscriptionData
+  }) =>
+  /**
+   * Complete a paid checkout session
+   */
+  async ({
+    sessionId,
+    subscriptionId
+  }: {
+    sessionId: string
+    subscriptionId: string
+  }): Promise<void> => {
+    const checkoutSession = await getCheckoutSession({ sessionId })
+    if (!checkoutSession)
       throw new Error('checkout session is not found this is a bo bo')
-    // idk what to do here, if there is no checkout session, it prob fine, could be a replay etc
-    // but the more schematically correct thing would be, to throw an error
-    if (!checkoutSession) return
 
-    // if statuses match, nothing to do
-    if (session.paymentStatus === checkoutSession.paymentStatus) return
-
-    // update checkout session, to have the input payment status
-    // prob in this case, we should not be allowing a to move a paid checkout session to paid
-
-    if (session.paymentStatus === 'paid') {
-      // move workspace to the plan, and payment status valid
-      // save the workspace subscription information in the DB
+    switch (checkoutSession.paymentStatus) {
+      case 'paid':
+        // if the session is already paid, we do not need to provision anything
+        return
+      case 'unpaid':
+        break
+      default:
+        throwUncoveredError(checkoutSession.paymentStatus)
     }
+    // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
+
+    await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
+    // a plan determines the workspace feature set
+    await upsertPaidWorkspacePlan({
+      workspacePlan: {
+        workspaceId: checkoutSession.workspaceId,
+        name: checkoutSession.workspacePlan,
+        status: 'valid'
+      }
+    })
+    const subscriptionData = await getSubscriptionData({
+      subscriptionId
+    })
+    const currentBillingCycleEnd = new Date()
+    switch (checkoutSession.billingInterval) {
+      case 'monthly':
+        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 1)
+        break
+      case 'yearly':
+        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 12)
+        break
+
+      default:
+        throwUncoveredError(checkoutSession.billingInterval)
+    }
+
+    const workspaceSubscription = {
+      createdAt: new Date(),
+      currentBillingCycleEnd,
+      workspaceId: checkoutSession.workspaceId,
+      billingInterval: checkoutSession.billingInterval,
+      subscriptionData
+    }
+
+    await saveWorkspaceSubscription({
+      workspaceSubscription
+    })
   }
