@@ -2,8 +2,7 @@ import {
   LimitedUser,
   StreamRole,
   ServerRole,
-  ModelsTreeItem,
-  Commit
+  ModelsTreeItem
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
@@ -32,12 +31,13 @@ export type StreamGraphQLReturn = StreamRecord & {
   role?: string | null
 }
 
-export type CommitGraphQLReturn = Commit & {
+export type CommitGraphQLReturn = CommitRecord & {
   /**
-   * Commit DB schema actually has this as the author ID column, so we return it
-   * for field resolvers to be able to resolve extra things about the author (like name/avatar)
+   * Added by legacy queries
    */
-  author: Nullable<string>
+  authorId?: Nullable<string>
+  authorName?: Nullable<string>
+  authorAvatar?: Nullable<string>
 }
 
 export type BranchGraphQLReturn = BranchRecord
