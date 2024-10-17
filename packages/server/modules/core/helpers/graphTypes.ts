@@ -40,6 +40,8 @@ export type CommitGraphQLReturn = Commit & {
   author: Nullable<string>
 }
 
+export type BranchGraphQLReturn = BranchRecord
+
 export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
