@@ -1,10 +1,14 @@
-import { buildTableHelper } from '@/modules/core/dbSchema'
+import { ScopeRecord } from '@/modules/auth/helpers/types'
+import { buildTableHelper, Scopes, UserRoles } from '@/modules/core/dbSchema'
 import {
+  GetPublicRoles,
+  GetPublicScopes,
   GetServerInfo,
   UpdateServerInfo
 } from '@/modules/core/domain/server/operations'
 import { ServerInfo } from '@/modules/core/domain/server/types'
 import { ServerConfigRecord } from '@/modules/core/helpers/types'
+import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import {
   getFileSizeLimitMB,
   getMaximumObjectSizeMB,
@@ -29,7 +33,9 @@ const ServerConfig = buildTableHelper('server_config', [
 ])
 
 const tables = {
-  serverConfig: (db: Knex) => db<ServerConfigRecord>(ServerConfig.name)
+  serverConfig: (db: Knex) => db<ServerConfigRecord>(ServerConfig.name),
+  userRoles: (db: Knex) => db<UserRole>(UserRoles.name),
+  scopes: (db: Knex) => db<ScopeRecord>(Scopes.name)
 }
 
 export const getServerInfoFactory =
@@ -98,4 +104,16 @@ export const updateServerInfoFactory =
         completed: true
       })
     }
+  }
+
+export const getPublicRolesFactory =
+  (deps: { db: Knex }): GetPublicRoles =>
+  async () => {
+    return await tables.userRoles(deps.db).select('*').where({ public: true })
+  }
+
+export const getPublicScopesFactory =
+  (deps: { db: Knex }): GetPublicScopes =>
+  async () => {
+    return await tables.scopes(deps.db).select('*').where({ public: true })
   }
