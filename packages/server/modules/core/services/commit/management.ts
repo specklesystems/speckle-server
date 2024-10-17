@@ -49,7 +49,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
-import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
 export async function markCommitReceivedAndNotify(params: {
@@ -97,19 +97,7 @@ export const createCommitByBranchIdFactory =
     versionsEventEmitter: VersionsEventEmitter
     addCommitCreatedActivity: AddCommitCreatedActivity
   }): CreateCommitByBranchId =>
-  async (
-    params: {
-      streamId: string
-      branchId: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       branchId,
@@ -193,19 +181,7 @@ export const createCommitByBranchNameFactory =
     getStreamBranchByName: GetStreamBranchByName
     getBranchById: GetBranchById
   }): CreateCommitByBranchName =>
-  async (
-    params: {
-      streamId: string
-      branchName: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       objectId,

@@ -6,6 +6,10 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 const { Roles } = require('@speckle/shared')
 
+/**
+ * TODO: Clean up and move to branchesNew.ts
+ */
+
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
