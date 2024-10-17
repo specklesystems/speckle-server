@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { canCreateAppToken } from '@/modules/core/helpers/token'
+import { canCreateAppToken, isValidScope } from '@/modules/core/helpers/token'
 import { createAppToken } from '@/modules/core/services/tokens'
 
 const getTokenAppInfo = getTokenAppInfoFactory({ db })
@@ -35,11 +35,13 @@ export = {
         }
       })
 
+      const scopes = args.token.scopes.filter(isValidScope)
       const token = await createAppToken({
         ...args.token,
         userId: ctx.userId!,
         appId,
-        lifespan: args.token.lifespan || undefined
+        lifespan: args.token.lifespan || undefined,
+        scopes
       })
       return token
     }

@@ -2,7 +2,6 @@ const { Buffer } = require('node:buffer')
 const request = require('supertest')
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
-const { createToken } = require('@/modules/core/services/tokens')
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
 const {
   getStreamFactory,
@@ -68,6 +67,12 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} = require('@/modules/core/repositories/tokens')
 
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -130,6 +135,13 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
 })
 
 describe('Blobs integration @blobstorage', () => {

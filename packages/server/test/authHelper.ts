@@ -26,6 +26,7 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { ServerScope } from '@speckle/shared'
 import { kebabCase, omit } from 'lodash'
 
 const findEmail = findEmailFactory({ db })
@@ -101,5 +102,9 @@ export async function createAuthTokenForUser(
   userId: string,
   scopes: string[] = AllScopes
 ): Promise<string> {
-  return await createPersonalAccessToken(userId, 'test-runner-token', scopes)
+  return await createPersonalAccessToken(
+    userId,
+    'test-runner-token',
+    scopes as ServerScope[]
+  )
 }

@@ -3,7 +3,6 @@ import { expect } from 'chai'
 
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
-import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -56,6 +55,12 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
 
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -118,6 +123,13 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
 })
 
 describe('FileUploads @fileuploads', () => {

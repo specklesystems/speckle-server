@@ -13,10 +13,20 @@ import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { Optional, ServerRoles } from '@speckle/shared'
-import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
+import { Optional, ServerRoles, ServerScope } from '@speckle/shared'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
+import {
+  CreateAndStoreUserToken,
+  StoreApiToken,
+  StoreTokenResourceAccessDefinitions,
+  StoreTokenScopes
+} from '@/modules/core/domain/tokens/operations'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
 
 /*
   Tokens
@@ -33,55 +43,54 @@ export async function createBareToken() {
   return { tokenId, tokenString, tokenHash, lastChars }
 }
 
-export async function createToken({
-  userId,
-  name,
-  scopes,
-  lifespan,
-  limitResources
-}: {
-  userId: string
-  name: string
-  scopes: string[]
-  lifespan?: number | bigint
-  /**
-   * Optionally limit the resources that the token can access
-   */
-  limitResources?: TokenResourceIdentifierInput[] | null
-}) {
-  const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
+export const createTokenFactory =
+  (deps: {
+    storeApiToken: StoreApiToken
+    storeTokenScopes: StoreTokenScopes
+    storeTokenResourceAccessDefinitions: StoreTokenResourceAccessDefinitions
+  }): CreateAndStoreUserToken =>
+  async ({ userId, name, scopes, lifespan, limitResources }) => {
+    const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
-  if (scopes.length === 0) throw new Error('No scopes provided')
+    if (scopes.length === 0) throw new Error('No scopes provided')
 
-  const token = {
-    id: tokenId,
-    tokenDigest: tokenHash,
-    lastChars,
-    owner: userId,
-    name,
-    lifespan
+    const token = {
+      id: tokenId,
+      tokenDigest: tokenHash,
+      lastChars,
+      owner: userId,
+      name,
+      lifespan
+    }
+    const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
+    const resourceAccessEntries: Optional<TokenResourceAccessRecord[]> =
+      limitResources?.map((resource) => ({
+        tokenId,
+        resourceId: resource.id,
+        resourceType: resource.type
+      }))
+
+    await deps.storeApiToken(token)
+    await Promise.all([
+      deps.storeTokenScopes(tokenScopes),
+      ...(resourceAccessEntries?.length
+        ? [deps.storeTokenResourceAccessDefinitions(resourceAccessEntries)]
+        : [])
+    ])
+
+    return { id: tokenId, token: tokenId + tokenString }
   }
-  const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
-  const resourceAccessEntries: Optional<TokenResourceAccessRecord[]> =
-    limitResources?.map((resource) => ({
-      tokenId,
-      resourceId: resource.id,
-      resourceType: resource.type
-    }))
 
-  await ApiTokens.knex().insert(token)
-  await Promise.all([
-    TokenScopes.knex().insert(tokenScopes),
-    ...(resourceAccessEntries?.length
-      ? [TokenResourceAccess.knex().insert(resourceAccessEntries)]
-      : [])
-  ])
-
-  return { id: tokenId, token: tokenId + tokenString }
-}
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
+})
 
 export async function createAppToken(
-  params: Parameters<typeof createToken>[0] & { appId: string }
+  params: Parameters<CreateAndStoreUserToken>[0] & { appId: string }
 ) {
   const token = await createToken(params)
   await UserServerAppTokens.knex().insert({
@@ -96,7 +105,7 @@ export async function createAppToken(
 export async function createPersonalAccessToken(
   userId: string,
   name: string,
-  scopes: string[],
+  scopes: ServerScope[],
   lifespan?: number | bigint
 ) {
   const { id, token } = await createToken({
