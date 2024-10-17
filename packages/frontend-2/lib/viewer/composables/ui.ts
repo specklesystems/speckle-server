@@ -23,9 +23,12 @@ export function useSectionBoxUtilities() {
   } = useInjectedViewerInterfaceState()
 
   const isSectionBoxEnabled = computed(() => !!sectionBox.value)
+  const isSectionBoxVisible = ref(false)
+
   const toggleSectionBox = () => {
     if (isSectionBoxEnabled.value) {
       sectionBox.value = null
+      isSectionBoxVisible.value = false
       return
     }
 
@@ -33,21 +36,36 @@ export function useSectionBoxUtilities() {
     const box = instance.getSectionBoxFromObjects(objectIds)
     sectionBox.value = box
   }
+
   const sectionBoxOn = () => {
     if (!isSectionBoxEnabled.value) {
       toggleSectionBox()
     }
   }
+
   const sectionBoxOff = () => {
     sectionBox.value = null
   }
 
+  const toggleSectionBoxVisibility = () => {
+    if (!isSectionBoxVisible.value) {
+      sectionBoxOn()
+      instance.setSectionBoxVisibility(true)
+      isSectionBoxVisible.value = true
+    } else {
+      instance.setSectionBoxVisibility(false)
+      isSectionBoxVisible.value = false
+    }
+  }
+
   return {
     isSectionBoxEnabled,
+    isSectionBoxVisible,
     toggleSectionBox,
     sectionBoxOn,
     sectionBoxOff,
-    sectionBox
+    sectionBox,
+    toggleSectionBoxVisibility
   }
 }
 

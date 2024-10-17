@@ -118,8 +118,8 @@
               v-tippy="isSmallerOrEqualSm ? undefined : sectionBoxShortcut"
               flat
               secondary
-              :active="isSectionBoxEnabled"
-              @click="toggleSectionBox()"
+              :active="isSectionBoxVisible"
+              @click="toggleSectionBoxVisibility()"
             >
               <ScissorsIcon class="h-4 w-4 md:h-5 md:w-5" />
             </ViewerControlsButtonToggle>
@@ -238,6 +238,9 @@
         </div>
       </div>
     </div>
+    <Portal v-if="isSectionBoxEnabled && isSectionBoxVisible" to="pocket-actions">
+      <FormButton @click="toggleSectionBox">Reset section box</FormButton>
+    </Portal>
   </div>
   <div v-else />
 </template>
@@ -268,7 +271,6 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
@@ -346,7 +348,12 @@ type ActiveControl =
   | 'gendo'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
-const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+const {
+  toggleSectionBox,
+  isSectionBoxEnabled,
+  isSectionBoxVisible,
+  toggleSectionBoxVisibility
+} = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { showNavbar, showControls } = useViewerTour()
@@ -491,14 +498,6 @@ const trackAndtoggleProjection = () => {
   })
 }
 
-watch(isSectionBoxEnabled, (val) => {
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'section-box',
-    status: val
-  })
-})
-
 const scrollControlsToBottom = () => {
   // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
   // if (scrollableControlsContainer.value)
@@ -515,10 +514,6 @@ onMounted(() => {
   activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
 })
 
-watch(isSmallerOrEqualSm, (newVal) => {
-  activeControl.value = newVal ? 'none' : 'models'
-})
-
 onKeyStroke('Escape', () => {
   const isActiveMeasurement = getActiveMeasurement()
 
@@ -530,5 +525,25 @@ onKeyStroke('Escape', () => {
     }
     activeControl.value = 'none'
   }
+})
+
+watch(isSmallerOrEqualSm, (newVal) => {
+  activeControl.value = newVal ? 'none' : 'models'
+})
+
+watch(isSectionBoxEnabled, (val) => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box',
+    status: val
+  })
+})
+
+watch(isSectionBoxVisible, (val) => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box-visibility',
+    status: val
+  })
 })
 </script>
