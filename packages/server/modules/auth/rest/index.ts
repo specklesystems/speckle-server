@@ -1,10 +1,9 @@
-'use strict'
 import cors from 'cors'
 import {
   validateToken,
   revokeTokenById,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
@@ -25,6 +24,12 @@ import {
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
 import { Express } from 'express'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -92,6 +97,16 @@ export default function (app: Express) {
     try {
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })
+      const createAppToken = createAppTokenFactory({
+        storeApiToken: storeApiTokenFactory({ db }),
+        storeTokenScopes: storeTokenScopesFactory({ db }),
+        storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory(
+          {
+            db
+          }
+        ),
+        storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+      })
       const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
         getAuthorizationCode: getAuthorizationCodeFactory({ db }),
         deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),

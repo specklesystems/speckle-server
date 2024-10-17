@@ -2,9 +2,23 @@ import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { canCreateAppToken, isValidScope } from '@/modules/core/helpers/token'
-import { createAppToken } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
 
 const getTokenAppInfo = getTokenAppInfoFactory({ db })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 export = {
   Query: {
