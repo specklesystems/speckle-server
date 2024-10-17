@@ -30,6 +30,7 @@
                 :disabled="anyMutationsLoading"
                 :allow-guest="isGuestMode"
                 :allow-admin="isAdmin"
+                :name="`role-${index}`"
                 mount-menu-on-body
                 @update:model-value="(e) => onUpdateRole(e, index)"
               />
