@@ -9,8 +9,6 @@ const {
 
 const { getBranchesByStreamId } = require('../services/branches')
 
-const { getCommitsByBranchName } = require('../services/commits')
-
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
@@ -27,7 +25,8 @@ const {
   createCommitFactory,
   insertStreamCommitsFactory,
   insertBranchCommitsFactory,
-  legacyGetPaginatedStreamCommitsPageFactory
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchIdFactory,
@@ -140,6 +139,9 @@ const {
 } = require('@/modules/core/repositories/tokens')
 const { getTokenAppInfoFactory } = require('@/modules/auth/repositories/apps')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -287,6 +289,10 @@ const validateToken = validateTokenFactory({
   updateApiToken: updateApiTokenFactory({ db })
 })
 const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
