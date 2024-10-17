@@ -49,10 +49,7 @@ const iconClasses = computed(() => {
 })
 </script>
 
-<style scoped lang="scss">
-$offset: 187;
-$duration: 1.4s;
-
+<style scoped>
 @keyframes rotator {
   0% {
     transform: rotate(0deg);
@@ -64,26 +61,26 @@ $duration: 1.4s;
 
 @keyframes dash {
   0% {
-    stroke-dashoffset: $offset;
+    stroke-dashoffset: 187;
   }
   50% {
-    stroke-dashoffset: $offset/4;
+    stroke-dashoffset: 46.75;
     transform: rotate(135deg);
   }
   100% {
-    stroke-dashoffset: $offset;
+    stroke-dashoffset: 187;
     transform: rotate(450deg);
   }
 }
 
 .spinner {
-  animation: rotator $duration linear infinite;
+  animation: rotator 1.4s linear infinite;
 }
 
 .path {
-  stroke-dasharray: $offset;
+  stroke-dasharray: 187;
   stroke-dashoffset: 0;
   transform-origin: center;
-  animation: dash $duration ease-in-out infinite;
+  animation: dash 1.4s ease-in-out infinite;
 }
 </style>
