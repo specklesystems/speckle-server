@@ -171,10 +171,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
   if (isWorkspacesEnabled.value && !project.value?.workspace?.id) {
     items.push([
       {
-        title: 'Move...',
+        title: 'Move project...',
         id: ActionTypes.Move,
         disabled: !isOwner.value,
-        disabledTooltip: 'Only project owners can move projects into workspaces'
+        disabledTooltip: 'Only the project owner can move this project into a workspace'
       }
     ])
   }

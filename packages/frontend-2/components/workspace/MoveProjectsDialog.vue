@@ -29,7 +29,7 @@
         <span
           v-tippy="
             project.role !== Roles.Stream.Owner &&
-            'Only project owners can move projects'
+            'Only the project owner can move this project'
           "
         >
           <FormButton
@@ -44,7 +44,7 @@
       </div>
     </div>
     <p v-else class="py-4 text-body-xs text-foreground-2">
-      You don't have any projects that are moveable to this workspace
+      You don't have any projects that can be moved into this workspace
     </p>
 
     <ProjectsMoveToWorkspaceDialog

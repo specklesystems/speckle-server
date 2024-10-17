@@ -129,7 +129,7 @@ const invites = computed(() => result.value?.admin.inviteList.items || [])
 const actionItems: LayoutMenuItem[][] = [
   [
     { title: 'Resend invitation', id: 'resend-invite' },
-    { title: 'Delete invitation', id: 'delete-invite' }
+    { title: 'Delete invitation...', id: 'delete-invite' }
   ]
 ]
 
