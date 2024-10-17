@@ -179,12 +179,3 @@ export async function revokeToken(tokenId: string, userId: string) {
   if (delCount === 0) throw new UserInputError('Did not revoke token')
   return true
 }
-
-export async function revokeTokenById(tokenId: string) {
-  const delCount = await ApiTokens.knex()
-    .where({ id: tokenId.slice(0, 10) })
-    .del()
-
-  if (delCount === 0) throw new Error('Token revokation failed')
-  return true
-}
