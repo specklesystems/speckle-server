@@ -71,6 +71,7 @@ generates:
         ProjectRole: '@/modules/workspacesCore/helpers/graphTypes#ProjectRoleGraphQLReturn'
         ServerApp: '@/modules/auth/helpers/graphTypes#ServerAppGraphQLReturn'
         ServerAppListItem: '@/modules/auth/helpers/graphTypes#ServerAppListItemGraphQLReturn'
+        ServerInfo: '@/modules/core/helpers/graphTypes#ServerInfoGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

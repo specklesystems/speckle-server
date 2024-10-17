@@ -10,6 +10,7 @@ import {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
+  ServerInfo,
   StreamRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
@@ -118,3 +119,5 @@ export type StreamCollaboratorGraphQLReturn = {
   company?: MaybeNullOrUndefined<string>
   avatar?: MaybeNullOrUndefined<string>
 }
+
+export type ServerInfoGraphQLReturn = ServerInfo
