@@ -21,8 +21,11 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
-import { Optional } from '@speckle/shared'
-import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
+import { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import {
+  CommitWithStreamBranchMetadata,
+  LegacyUserCommit
+} from '@/modules/core/domain/commits/types'
 import {
   StoreCommit,
   DeleteCommit,
@@ -50,7 +53,9 @@ import {
   PaginatedBranchCommitsParams,
   GetPaginatedBranchCommitsItems,
   GetBranchCommitsTotalCount,
-  MoveCommitsToBranch
+  MoveCommitsToBranch,
+  LegacyGetPaginatedUserCommitsPage,
+  LegacyGetPaginatedUserCommitsTotalCount
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -531,4 +536,86 @@ export const getUserAuthoredCommitCountsFactory =
 
     const res = await q
     return mapValues(keyBy(res, 'author'), (r) => parseInt(r.count))
+  }
+
+const getCommitsByUserIdBaseFactory =
+  (deps: { db: Knex }) =>
+  ({
+    userId,
+    publicOnly,
+    streamIdWhitelist
+  }: {
+    userId: string
+    publicOnly?: MaybeNullOrUndefined<boolean>
+    streamIdWhitelist?: MaybeNullOrUndefined<string[]>
+  }) => {
+    publicOnly = publicOnly !== false
+
+    const query = tables
+      .commits(deps.db)
+      .columns([
+        { id: 'commits.id' },
+        'message',
+        'referencedObject',
+        'sourceApplication',
+        'totalChildrenCount',
+        'parents',
+        'commits.createdAt',
+        { branchName: 'branches.name' },
+        { streamId: 'stream_commits.streamId' },
+        { streamName: 'streams.name' },
+        { authorName: 'users.name' },
+        { authorId: 'users.id' },
+        { authorAvatar: 'users.avatar' }
+      ])
+      .select()
+      .join('stream_commits', 'commits.id', 'stream_commits.commitId')
+      .join('streams', 'stream_commits.streamId', 'streams.id')
+      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+      .join('branches', 'branches.id', 'branch_commits.branchId')
+      .leftJoin('users', 'commits.author', 'users.id')
+      .where('author', userId)
+
+    if (publicOnly) query.andWhere('streams.isPublic', true)
+    if (streamIdWhitelist?.length) query.whereIn('streams.streamId', streamIdWhitelist)
+
+    return query
+  }
+
+export const legacyGetPaginatedUserCommitsPage =
+  (deps: { db: Knex }): LegacyGetPaginatedUserCommitsPage =>
+  async ({ userId, limit, cursor, publicOnly, streamIdWhitelist }) => {
+    limit = limit || 25
+    publicOnly = publicOnly !== false
+
+    const query = getCommitsByUserIdBaseFactory(deps)({
+      userId,
+      publicOnly,
+      streamIdWhitelist
+    })
+
+    if (cursor) query.andWhere('commits.createdAt', '<', cursor)
+
+    query.orderBy('commits.createdAt', 'desc').limit(limit)
+
+    const rows = (await query) as LegacyUserCommit[]
+    return {
+      commits: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    }
+  }
+
+export const legacyGetPaginatedUserCommitsTotalCount =
+  (deps: { db: Knex }): LegacyGetPaginatedUserCommitsTotalCount =>
+  async ({ userId, publicOnly, streamIdWhitelist }) => {
+    const query = getCommitsByUserIdBaseFactory(deps)({
+      userId,
+      publicOnly,
+      streamIdWhitelist
+    })
+    query.clearSelect()
+    query.select(knex.raw('COUNT(*) as count'))
+
+    const [res] = (await query) as Array<{ count: string }>
+    return parseInt(res.count)
   }
