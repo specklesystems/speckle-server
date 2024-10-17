@@ -6,7 +6,7 @@
     :on-submit="onSubmit"
     max-width="md"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
       <p class="text-body-xs text-foreground font-medium">
         How can we improve Speckle? If you have a feature request, please also share how
         you would use it and why it's important to you
@@ -18,6 +18,13 @@
         label="Feedback"
         color="foundation"
       />
+      <p class="text-body-xs">
+        Need help? For support, head over to our
+        <FormButton to="https://speckle.community/" target="_blank" link text>
+          community forum
+        </FormButton>
+        where we can chat and solve problems together.
+      </p>
     </div>
   </LayoutDialog>
 </template>
