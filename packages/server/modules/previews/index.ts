@@ -1,7 +1,5 @@
 /* istanbul ignore file */
-'use strict'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
-import { getCommitsByBranchName } from '@/modules/core/services/commits'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
 import { moduleLogger } from '@/logging/logging'
@@ -24,10 +22,13 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getCommitFactory,
   getObjectCommitsWithStreamIdsFactory,
+  getPaginatedBranchCommitsItemsFactory,
   legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -58,6 +59,10 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     validateScopes,
     authorizeResolver,
     getStream
+  })
+  const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+    getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+    getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
   })
 
   app.options('/preview/:streamId/:angle?', cors())

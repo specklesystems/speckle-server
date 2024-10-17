@@ -219,6 +219,21 @@ export type GetPaginatedBranchCommits = (
   cursor: string | null
 }>
 
+export type GetBranchCommitsTotalCountByName = (params: {
+  streamId: string
+  branchName: string
+}) => Promise<number>
+
+export type GetPaginatedBranchCommitsItemsByName = (params: {
+  streamId: string
+  branchName: string
+  limit: number
+  cursor?: Nullable<string>
+}) => Promise<{
+  commits: Commit[]
+  cursor: string | null
+}>
+
 export type MoveCommitsToBranch = (
   commitIds: string[],
   branchId: string
