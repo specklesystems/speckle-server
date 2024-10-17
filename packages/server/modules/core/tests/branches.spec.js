@@ -8,7 +8,6 @@ const { sleep } = require('@/test/helpers')
 const expect = chai.expect
 
 const knex = require('@/db/knex')
-const { createObject } = require('../services/objects')
 
 const {
   updateBranchAndNotifyFactory,
@@ -45,7 +44,11 @@ const {
   insertBranchCommitsFactory
 } = require('@/modules/core/repositories/commits')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -110,6 +113,7 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   getPaginatedStreamBranchesFactory
 } = require('@/modules/core/services/branch/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
 const db = knex
 const Commits = () => knex('commits')
@@ -222,6 +226,10 @@ const createUser = createUserFactory({
 const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
   getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
   getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 describe('Branches @core-branches', () => {

@@ -17,10 +17,11 @@ import {
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { createObject } from '@/modules/core/services/objects'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
@@ -72,6 +73,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 
 const command: CommandModule<
   unknown,
@@ -192,6 +194,10 @@ const command: CommandModule<
       projectsEventsEmitter: ProjectsEmitter.emit
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const downloadProject = downloadProjectFactory({
