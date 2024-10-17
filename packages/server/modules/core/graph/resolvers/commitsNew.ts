@@ -2,10 +2,9 @@ import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 
-import { getCommitsByStreamId } from '@/modules/core/services/commits'
 import {
-  getPaginatedStreamCommits,
-  getPaginatedBranchCommitsFactory
+  getPaginatedBranchCommitsFactory,
+  legacyGetPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
 import {
   markCommitReceivedAndNotify,
@@ -43,7 +42,9 @@ import {
   getCommitsFactory,
   moveCommitsToBranchFactory,
   legacyGetPaginatedUserCommitsPage,
-  legacyGetPaginatedUserCommitsTotalCount
+  legacyGetPaginatedUserCommitsTotalCount,
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getStreamCommitCountFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
@@ -144,6 +145,11 @@ const batchMoveCommits = batchMoveCommitsFactory({
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getPaginatedStreamCommits = legacyGetPaginatedStreamCommits({
+  legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
+  getStreamCommitCount: getStreamCommitCountFactory({ db })
+})
 
 const getAuthorId = (commit: CommitGraphQLReturn) => {
   if ('author' in commit) return commit.author
@@ -247,9 +253,7 @@ export = {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
-          limit: 1,
-          cursor: undefined,
-          ignoreGlobalsBranch: undefined
+          limit: 1
         })
         if (commits.length !== 0) return commits[0]
         throw new CommitNotFoundError(
