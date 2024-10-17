@@ -37,7 +37,7 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
     name: string | null
     lastChars: string | null
     createdAt: Date
-    lifespan: number
+    lifespan: number | bigint
     lastUsed: Date
     scopes: ServerScope[]
   }[]
