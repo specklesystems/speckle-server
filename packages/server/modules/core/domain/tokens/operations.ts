@@ -44,6 +44,8 @@ export type GetUserPersonalAccessTokens = (userId: string) => Promise<
 
 export type RevokeTokenById = (tokenId: string) => Promise<boolean>
 
+export type RevokeUserTokenById = (tokenId: string, userId: string) => Promise<boolean>
+
 export type CreateAndStoreUserToken = (params: {
   userId: string
   name: string

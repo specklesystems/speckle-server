@@ -14,12 +14,14 @@ import {
 import {
   GetUserPersonalAccessTokens,
   RevokeTokenById,
+  RevokeUserTokenById,
   StoreApiToken,
   StorePersonalApiToken,
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
   StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
+import { UserInputError } from '@/modules/core/errors/userinput'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ServerScope } from '@speckle/shared'
 import { Knex } from 'knex'
@@ -121,5 +123,17 @@ export const revokeTokenByIdFactory =
       .del()
 
     if (delCount === 0) throw new Error('Token revokation failed')
+    return true
+  }
+
+export const revokeUserTokenByIdFactory =
+  (deps: { db: Knex }): RevokeUserTokenById =>
+  async (tokenId: string, userId: string) => {
+    tokenId = tokenId.slice(0, 10)
+    const delCount = await tables
+      .apiTokens(deps.db)
+      .where({ id: tokenId, owner: userId })
+      .del()
+    if (delCount === 0) throw new UserInputError('Did not revoke token')
     return true
   }

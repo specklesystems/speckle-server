@@ -12,7 +12,6 @@ import {
   TokenValidationResult
 } from '@/modules/core/helpers/types'
 import { Optional, ServerRoles, ServerScope } from '@speckle/shared'
-import { UserInputError } from '@/modules/core/errors/userinput'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import {
   CreateAndStoreAppToken,
@@ -24,6 +23,7 @@ import {
   StoreTokenScopes,
   StoreUserServerAppToken
 } from '@/modules/core/domain/tokens/operations'
+import { revokeUserTokenByIdFactory } from '@/modules/core/repositories/tokens'
 
 /*
   Tokens
@@ -127,6 +127,8 @@ export const createPersonalAccessTokenFactory =
 export async function validateToken(
   tokenString: string
 ): Promise<TokenValidationResult> {
+  const revokeToken = revokeUserTokenByIdFactory({ db })
+
   const tokenId = tokenString.slice(0, 10)
   const tokenContent = tokenString.slice(10, 42)
 
@@ -171,11 +173,4 @@ export async function validateToken(
       resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
     }
   } else return { valid: false }
-}
-
-export async function revokeToken(tokenId: string, userId: string) {
-  tokenId = tokenId.slice(0, 10)
-  const delCount = await ApiTokens.knex().where({ id: tokenId, owner: userId }).del()
-  if (delCount === 0) throw new UserInputError('Did not revoke token')
-  return true
 }
