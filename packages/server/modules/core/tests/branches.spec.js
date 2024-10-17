@@ -92,7 +92,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -106,6 +105,7 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const db = knex
 const Commits = () => knex('commits')
@@ -132,6 +132,7 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const getObject = getObjectFactory({ db: knex })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -175,7 +176,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

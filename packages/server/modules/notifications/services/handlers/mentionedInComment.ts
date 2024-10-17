@@ -2,15 +2,16 @@ import { db } from '@/db/knex'
 import { GetComment } from '@/modules/comments/domain/operations'
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { getCommentFactory } from '@/modules/comments/repositories/comments'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
   renderEmail
@@ -168,7 +169,7 @@ const mentionedInCommentHandlerFactory =
     getUser: GetUser
     getStream: GetStream
     getComment: GetComment
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
   }): NotificationHandler<MentionedInCommentMessage> =>
@@ -225,7 +226,7 @@ const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) 
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
     getComment: getCommentFactory({ db }),
-    getServerInfo,
+    getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail
   })

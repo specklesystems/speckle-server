@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createObjects } from '@/modules/core/services/objects'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
@@ -74,7 +73,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -82,7 +80,16 @@ import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
@@ -129,7 +136,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser: getUserFactory({ db })
+        getUser: getUserFactory({ db }),
+        getServerInfo
       }),
       getUsers
     }),
@@ -165,6 +173,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }

@@ -1,8 +1,8 @@
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
-const { validateScopes } = require(`@/modules/shared`)
-const zxcvbn = require('zxcvbn')
-const { Roles, Scopes } = require('@speckle/shared')
-const {
+import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { validateScopes } from '@/modules/shared'
+import zxcvbn from 'zxcvbn'
+import { Roles, Scopes } from '@speckle/shared'
+import {
   legacyGetUserFactory,
   legacyGetUserByEmailFactory,
   getUserFactory,
@@ -15,34 +15,31 @@ const {
   markOnboardingCompleteFactory,
   legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory
-} = require('@/modules/core/repositories/users')
-const { UsersMeta } = require('@/modules/core/dbSchema')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const {
+} from '@/modules/core/repositories/users'
+import { UsersMeta } from '@/modules/core/dbSchema'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import {
   deleteAllUserInvitesFactory,
   countServerInvitesFactory,
   findServerInvitesFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
-const { BadRequestError } = require('@/modules/shared/errors')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
+import { BadRequestError } from '@/modules/shared/errors'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
   updateUserAndNotifyFactory,
   deleteUserFactory,
   changeUserRoleFactory
-} = require('@/modules/core/services/users/management')
-const {
-  addUserUpdatedActivityFactory
-} = require('@/modules/activitystream/services/userActivity')
-const {
+} from '@/modules/core/services/users/management'
+import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
+import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
-} = require('@/modules/core/repositories/streams')
-const { dbLogger } = require('@/logging/logging')
-const {
-  getAdminUsersListCollectionFactory
-} = require('@/modules/core/services/users/legacyAdminUsersList')
+} from '@/modules/core/repositories/streams'
+import { dbLogger } from '@/logging/logging'
+import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -55,6 +52,7 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
   })
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const deleteUser = deleteUserFactory({
   deleteStream: deleteStreamFactory({ db }),
   logger: dbLogger,
@@ -78,8 +76,7 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
   getUsers: legacyGetPaginatedUsersFactory({ db })
 })
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export = {
   Query: {
     async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
@@ -112,14 +109,14 @@ module.exports = {
         throw new BadRequestError('You must provide an user id.')
       }
 
-      return await getUser(args.id || context.userId)
+      return await getUser((args.id || context.userId)!)
     },
 
     async adminUsers(_parent, args) {
       return await getAdminUsersListCollection(args)
     },
 
-    async userSearch(parent, args, context) {
+    async userSearch(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
       await validateScopes(context.scopes, Scopes.Users.Read)
@@ -135,7 +132,7 @@ module.exports = {
       const { cursor, users } = await searchUsers(
         args.query,
         args.limit,
-        args.cursor,
+        args.cursor || undefined,
         args.archived,
         args.emailOnly
       )
@@ -188,7 +185,7 @@ module.exports = {
   Mutation: {
     async userUpdate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
-      await updateUserAndNotify(context.userId, args.user)
+      await updateUserAndNotify(context.userId!, args.user)
       return true
     },
 
@@ -209,8 +206,8 @@ module.exports = {
       return true
     },
 
-    async userDelete(parent, args, context) {
-      const user = await getUser(context.userId)
+    async userDelete(_parent, args, context) {
+      const user = await getUser(context.userId!)
 
       if (args.userConfirmation.email !== user.email) {
         throw new BadRequestError('Malformed input: emails do not match.')
@@ -222,14 +219,14 @@ module.exports = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId, args.user)
+      await deleteUser(context.userId!)
 
       await saveActivityFactory({ db })({
         streamId: null,
         resourceType: 'user',
-        resourceId: context.userId,
+        resourceId: context.userId!,
         actionType: ActionTypes.User.Delete,
-        userId: context.userId,
+        userId: context.userId!,
         info: {},
         message: 'User deleted'
       })
@@ -244,8 +241,8 @@ module.exports = {
       return await markOnboardingComplete(ctx.userId || '')
     },
     async update(_parent, args, context) {
-      const newUser = await updateUserAndNotify(context.userId, args.user)
+      const newUser = await updateUserAndNotify(context.userId!, args.user)
       return newUser
     }
   }
-}
+} as Resolvers
