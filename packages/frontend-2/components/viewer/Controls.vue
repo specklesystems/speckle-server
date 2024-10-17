@@ -238,7 +238,7 @@
         </div>
       </div>
     </div>
-    <Portal v-if="isSectionBoxEnabled && isSectionBoxVisible" to="pocket-actions">
+    <Portal v-if="isSectionBoxEnabled" to="pocket-actions">
       <FormButton @click="toggleSectionBox">Reset section box</FormButton>
     </Portal>
   </div>
