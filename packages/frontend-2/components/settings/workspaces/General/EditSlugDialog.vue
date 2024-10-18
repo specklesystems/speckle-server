@@ -19,7 +19,7 @@
     <FormTextInput
       v-model:model-value="workspaceShortId"
       name="slug"
-      label="Short ID"
+      label="New short ID"
       :help="`${baseUrl}${workspaceRoute(workspaceShortId)}`"
       color="foundation"
       :rules="[isStringOfLength({ maxLength: 50, minLength: 3 })]"
