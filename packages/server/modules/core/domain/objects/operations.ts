@@ -6,7 +6,7 @@ import {
   SpeckleObjectClosureEntry
 } from '@/modules/core/domain/objects/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { Nullable, Optional } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 import type stream from 'node:stream'
 
@@ -53,6 +53,18 @@ export type GetObjectChildrenStream = (params: {
   streamId: string
   objectId: string
 }) => Promise<stream.PassThrough & AsyncIterable<{ dataText: string; id: string }>>
+
+export type GetObjectChildren = (params: {
+  streamId: string
+  objectId: string
+  limit?: MaybeNullOrUndefined<number | string>
+  depth?: MaybeNullOrUndefined<number | string>
+  select?: MaybeNullOrUndefined<string[]>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  objects: Omit<SpeckleObject, 'totalChildrenCountByDepth' | 'streamId'>[]
+  cursor: string | null
+}>
 
 export type CreateObject = (params: {
   streamId: string

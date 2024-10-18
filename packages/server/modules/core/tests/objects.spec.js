@@ -7,11 +7,7 @@ const { cloneDeep, times, random, padStart } = require('lodash')
 const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
-const {
-  getObjects,
-  getObjectChildren,
-  getObjectChildrenQuery
-} = require('../services/objects')
+const { getObjects, getObjectChildrenQuery } = require('../services/objects')
 const {
   getStreamFactory,
   createStreamFactory
@@ -86,7 +82,8 @@ const {
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory,
   getFormattedObjectFactory,
-  getObjectChildrenStreamFactory
+  getObjectChildrenStreamFactory,
+  getObjectChildrenFactory
 } = require('@/modules/core/repositories/objects')
 
 const sampleCommit = JSON.parse(`{
@@ -190,6 +187,7 @@ const createObjects = createObjectsFactory({
 })
 const getObject = getFormattedObjectFactory({ db })
 const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+const getObjectChildren = getObjectChildrenFactory({ db })
 
 describe('Objects @core-objects', () => {
   const userOne = {
