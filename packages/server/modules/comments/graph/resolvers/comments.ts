@@ -50,7 +50,7 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  addCommentArchivedActivity,
+  addCommentArchivedActivityFactory,
   addCommentCreatedActivityFactory,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
@@ -218,7 +218,11 @@ const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
   getComment,
   getStream,
   updateComment,
-  addCommentArchivedActivity
+  addCommentArchivedActivity: addCommentArchivedActivityFactory({
+    getViewerResourcesForComment,
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
   getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({ db }),
@@ -655,7 +659,11 @@ export = {
 
       const updatedComment = await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
 
-      await addCommentArchivedActivity({
+      await addCommentArchivedActivityFactory({
+        getViewerResourcesForComment,
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })({
         streamId: args.streamId,
         commentId: args.commentId,
         userId: context.userId!,
