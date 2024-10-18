@@ -18,7 +18,7 @@
         label="Feedback"
         color="foundation"
       />
-      <p class="text-body-xs">
+      <p class="text-body-xs !leading-4">
         Need help? For support, head over to our
         <FormButton to="https://speckle.community/" target="_blank" link text>
           community forum
