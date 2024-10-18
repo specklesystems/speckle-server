@@ -22,6 +22,7 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   emailId: string
@@ -31,6 +32,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
 const { triggerNotification } = useGlobalToast()
+const mixpanel = useMixpanel()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -58,6 +60,8 @@ const onDeleteEmail = async () => {
       type: ToastNotificationType.Success,
       title: `${props.email} deleted`
     })
+
+    mixpanel.track('Email Deleted')
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

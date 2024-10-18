@@ -42,6 +42,7 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsUserEmails_User on User {
@@ -58,6 +59,7 @@ const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { result: userEmailsResult } = useQuery(settingsUserEmailsQuery)
 const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
+const mixpanel = useMixpanel()
 
 const email = ref('')
 
@@ -81,6 +83,8 @@ const onAddEmailSubmit = handleSubmit(async () => {
       type: ToastNotificationType.Success,
       title: `${email.value} added`
     })
+
+    mixpanel.track('Email Added')
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
