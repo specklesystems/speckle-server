@@ -65,6 +65,7 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { initOpenTelemetry } from '@/otel'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -342,6 +343,10 @@ export async function buildApolloServer(options?: {
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
+  Buffer.poolSize = 128 * 1024 //need bigger than 8k
+  // some buffer pooling discussion: https://github.com/nodejs/node/issues/30611
+  initOpenTelemetry()
+
   if (useNewFrontend()) {
     startupLogger.info('🖼️  Serving for frontend-2...')
   }
