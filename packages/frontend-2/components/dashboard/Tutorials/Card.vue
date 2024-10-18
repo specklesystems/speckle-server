@@ -18,7 +18,7 @@
         <HeaderLogoBlock no-link minimal class="scale-150" />
       </div>
       <div class="p-5 pb-4">
-        <h3 v-if="tutorial.title" class="text-body-2xs text-foreground truncate">
+        <h3 class="text-body-2xs text-foreground truncate">
           {{ tutorial.title }}
         </h3>
         <p class="text-body-3xs text-foreground-2 mt-2">
