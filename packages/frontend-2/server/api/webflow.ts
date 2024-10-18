@@ -1,3 +1,4 @@
+import { ensureError } from '@speckle/shared'
 import type { TutorialItem } from '~/lib/dashboard/helpers/types'
 
 type WebflowApiResponse = {
@@ -22,6 +23,8 @@ const calculateReadTime = (content: string): number => {
   return Math.ceil(wordCount / wordsPerMinute)
 }
 
+// Filter to last 6 months' articles to prevent old,
+// recently edited posts from appearing at the top
 const getSixMonthsAgo = (): Date => {
   const date = new Date()
   date.setMonth(date.getMonth() - 6)
@@ -30,14 +33,9 @@ const getSixMonthsAgo = (): Date => {
 
 export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> => {
   const { webflowApiToken } = useRuntimeConfig()
-  const logger = useLogger()
 
-  const url = new URL(
-    `https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items`
-  )
-  url.searchParams.append('limit', '16')
-  url.searchParams.append('sortBy', 'lastPublished')
-  url.searchParams.append('sortOrder', 'desc')
+  const url =
+    'https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items?limit=16&sortBy=lastPublished&sortOrder=desc'
 
   try {
     const response = await fetch(url.toString(), {
@@ -48,9 +46,11 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
     })
 
     if (!response.ok) {
+      const errMsg = `Webflow API Error: ${response.status} ${response.statusText}`
       throw createError({
         statusCode: response.status,
-        statusMessage: response.statusText
+        fatal: true,
+        message: errMsg
       })
     }
 
@@ -78,11 +78,12 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
         })
       )
     }
-  } catch (error) {
-    logger.error('Error fetching tutorials:', error)
+  } catch (e) {
+    const errMsg = ensureError(e).message
     throw createError({
       statusCode: 500,
-      statusMessage: 'Error fetching tutorials'
+      fatal: true,
+      message: `Error fetching tutorials: ${errMsg}`
     })
   }
 })
