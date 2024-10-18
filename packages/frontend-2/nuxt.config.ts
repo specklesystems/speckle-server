@@ -47,6 +47,7 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     redisUrl: '',
+    webflowApiToken: '',
     public: {
       ...featureFlags,
       apiOrigin: 'UNDEFINED',
