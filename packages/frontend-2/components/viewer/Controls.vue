@@ -238,7 +238,7 @@
         </div>
       </div>
     </div>
-    <Portal v-if="isSectionBoxEnabled" to="pocket-actions">
+    <Portal v-if="isSectionBoxEnabled && isSectionBoxEdited" to="pocket-actions">
       <FormButton @click="toggleSectionBox">Reset section box</FormButton>
     </Portal>
   </div>
@@ -352,7 +352,8 @@ const {
   toggleSectionBox,
   isSectionBoxEnabled,
   isSectionBoxVisible,
-  toggleSectionBoxVisibility
+  toggleSectionBoxVisibility,
+  isSectionBoxEdited
 } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
