@@ -1,7 +1,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
+FROM node:18-bookworm-slim@sha256:2b1ad9885faa6627319d47b139708938d84e61f9fa218bd69649b59e06fc70f9 AS build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 WORKDIR /speckle-server
@@ -39,7 +39,7 @@ RUN yarn workspaces foreach -W run build
 
 # install only production dependencies
 # we need a clean environment, free of build dependencies
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS dependency-stage
+FROM node:18-bookworm-slim@sha256:2b1ad9885faa6627319d47b139708938d84e61f9fa218bd69649b59e06fc70f9 AS dependency-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -56,7 +56,7 @@ COPY packages/objectloader/package.json ./packages/objectloader/
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:911dcabc3e26de44d14f8db90a9f3611b505a0db8a6cbb0d32ecba40a80ae7f5 AS production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
