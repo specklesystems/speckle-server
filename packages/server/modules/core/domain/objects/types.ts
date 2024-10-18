@@ -7,6 +7,11 @@ export type SpeckleObjectClosureEntry = ObjectChildrenClosureRecord
 export type SpeckleObject = ObjectRecord
 
 /**
+ * TODO: The types are a bit too lax right now, we don't really want to allow missing id, speckle_type, __closure props, so we should revisit
+ * the code in the future and make the necessary changes to ensure that these props are always present
+ */
+
+/**
  * We preemptively serialize a couple of fields (usually knex does it)
  */
 export type InsertableSpeckleObject = NullableKeysToOptional<
