@@ -19,7 +19,7 @@ const logger = useLogger()
 
 const { data: tutorialData, error } = await useFetch<{
   items: TutorialItem[]
-}>('/api/tutorials', {
+}>('/api/webflow', {
   onResponseError({ response }) {
     logger.error('API Response Error:', response.status, response.statusText)
   }
