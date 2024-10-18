@@ -13,10 +13,11 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { createObject } from '@/modules/core/services/objects'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
@@ -54,6 +55,7 @@ import { addCommitCreatedActivityFactory } from '@/modules/activitystream/servic
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 
 const command: CommandModule<
   unknown,
@@ -149,6 +151,10 @@ const command: CommandModule<
       })
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
     const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({

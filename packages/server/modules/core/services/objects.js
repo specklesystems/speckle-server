@@ -1,68 +1,15 @@
-'use strict'
 const { performance } = require('perf_hooks')
-const crypto = require('crypto')
 const { set, get, chunk } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
-const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
-const { ObjectHandlingError } = require('@/modules/core/errors/object')
-const {
-  chunkInsertionObjectArray,
-  estimateStringMegabyteSize
-} = require('@/modules/core/utils/chunking')
+const { chunkInsertionObjectArray } = require('@/modules/core/utils/chunking')
+const { prepInsertionObject } = require('@/modules/core/services/objects/management')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
 
 module.exports = {
-  /**
-   * @param {{streamId, object, logger?}} params
-   * @returns {Promise<string>}
-   */
-  async createObject({ streamId, object, logger = servicesLogger }) {
-    const insertionObject = prepInsertionObject(streamId, object)
-
-    const closures = []
-    const totalChildrenCountByDepth = {}
-    if (object.__closure !== null) {
-      for (const prop in object.__closure) {
-        closures.push({
-          streamId,
-          parent: insertionObject.id,
-          child: prop,
-          minDepth: object.__closure[prop]
-        })
-
-        if (totalChildrenCountByDepth[object.__closure[prop].toString()])
-          totalChildrenCountByDepth[object.__closure[prop].toString()]++
-        else totalChildrenCountByDepth[object.__closure[prop].toString()] = 1
-      }
-    }
-
-    delete insertionObject.__tree
-    delete insertionObject.__closure
-
-    insertionObject.totalChildrenCount = closures.length
-    insertionObject.totalChildrenCountByDepth = JSON.stringify(
-      totalChildrenCountByDepth
-    )
-
-    await Objects().insert(insertionObject).onConflict().ignore()
-
-    if (closures.length > 0) {
-      const batchSize = 10000
-      while (closures.length > 0) {
-        const closuresBatch = closures.splice(0, batchSize) // splice so that we don't take up more memory
-        await Closures().insert(closuresBatch).onConflict().ignore()
-      }
-    }
-
-    logger.debug({ objectId: insertionObject.id }, 'Inserted object: {objectId}')
-
-    return insertionObject.id
-  },
-
   async createObjectsBatched({ streamId, objects, logger = servicesLogger }) {
     const closures = []
     const objsToInsert = []
@@ -680,34 +627,6 @@ module.exports = {
   // NOTE: Derive Object
   async updateObject() {
     throw new Error('Updating object is not implemented')
-  }
-}
-
-// Note: we're generating the hash here, rather than on the db side, as there are
-// limitations when doing upserts - ignored fields are not always returned, hence
-// we cannot provide a full response back including all object hashes.
-function prepInsertionObject(streamId, obj) {
-  const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
-
-  if (obj.hash) obj.id = obj.hash
-  else
-    obj.id =
-      obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
-
-  const stringifiedObj = JSON.stringify(obj)
-  const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
-  if (objectByteSize > MAX_OBJECT_SIZE_MB) {
-    throw new ObjectHandlingError(
-      `Object too large. Object ID: ${obj.id}. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`
-    )
-  }
-  return {
-    data: stringifiedObj, // stored in jsonb column
-    streamId,
-    id: obj.id,
-    // YEAH, this has been broken forever...
-    // speckleType: obj.speckleType
-    speckleType: obj.speckle_type
   }
 }
 

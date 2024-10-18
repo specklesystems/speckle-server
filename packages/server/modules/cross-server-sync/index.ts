@@ -41,7 +41,9 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -63,7 +65,7 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { createObject } from '@/modules/core/services/objects'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
@@ -144,6 +146,10 @@ const crossServerSyncModule: SpeckleModule = {
       })
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({
