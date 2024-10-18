@@ -14,6 +14,7 @@ import { servicesLogger } from '@/logging/logging'
 import {
   CreateObject,
   CreateObjectsBatched,
+  CreateObjectsBatchedAndNoClosures,
   StoreClosuresIfNotFound,
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
@@ -28,10 +29,7 @@ import { chunk } from 'lodash'
 export const prepInsertionObject = (
   streamId: string,
   obj: RawSpeckleObject
-): Omit<
-  InsertableSpeckleObject,
-  'totalChildrenCount' | 'totalChildrenCountByDepth' | 'createdAt'
-> => {
+): InsertableSpeckleObject => {
   const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
 
   if (obj.hash) obj.id = obj.hash
@@ -109,7 +107,7 @@ export const prepInsertionObjectBatch = (batch: InsertableSpeckleObject[]) => {
   batch.sort((a, b) => (a.id > b.id ? 1 : -1))
 }
 
-export const prepInsertionClosureBatch = (batch: SpeckleObjectClosureEntry[]) => {
+const prepInsertionClosureBatch = (batch: SpeckleObjectClosureEntry[]) => {
   batch.sort((a, b) =>
     a.parent > b.parent ? 1 : a.parent === b.parent ? (a.child > b.child ? 1 : -1) : -1
   )
@@ -185,4 +183,38 @@ export const createObjectsBatchedFactory =
       }
     }
     return true
+  }
+
+export const createObjectsBatchedAndNoClosuresFactory =
+  (deps: {
+    storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound
+  }): CreateObjectsBatchedAndNoClosures =>
+  async ({ streamId, objects, logger = servicesLogger }) => {
+    const objsToInsert: InsertableSpeckleObject[] = []
+    const ids: string[] = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = prepInsertionObject(streamId, obj)
+      objsToInsert.push(insertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
+      for (const batch of batches) {
+        prepInsertionObjectBatch(batch)
+        await deps.storeObjectsIfNotFoundFactory(batch)
+        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} objects.')
+      }
+    }
+
+    return ids
   }

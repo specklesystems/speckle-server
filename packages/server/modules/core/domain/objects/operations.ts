@@ -54,3 +54,9 @@ export type CreateObjectsBatched = (params: {
   objects: RawSpeckleObject[]
   logger?: Logger
 }) => Promise<boolean>
+
+export type CreateObjectsBatchedAndNoClosures = (params: {
+  streamId: string
+  objects: RawSpeckleObject[]
+  logger?: Logger
+}) => Promise<string[]>

@@ -6,13 +6,15 @@ import {
   getFeatureFlags,
   maximumObjectUploadFileSizeMb
 } from '@/modules/shared/helpers/envHelper'
-import { createObjectsBatchedAndNoClosures } from '@/modules/core/services/objects'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
 import { Logger } from 'pino'
 import { Router } from 'express'
-import { createObjectsBatchedFactory } from '@/modules/core/services/objects/management'
+import {
+  createObjectsBatchedAndNoClosuresFactory,
+  createObjectsBatchedFactory
+} from '@/modules/core/services/objects/management'
 import {
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
@@ -26,6 +28,9 @@ const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 const createObjectsBatched = createObjectsBatchedFactory({
   storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const createObjectsBatchedAndNoClosures = createObjectsBatchedAndNoClosuresFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 
 let objectInsertionService: (params: {
