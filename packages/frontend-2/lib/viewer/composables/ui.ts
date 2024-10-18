@@ -1,6 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
+import { MeasurementsExtension, SectionTool, SectionToolEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
@@ -23,9 +23,14 @@ export function useSectionBoxUtilities() {
   } = useInjectedViewerInterfaceState()
 
   const isSectionBoxEnabled = computed(() => !!sectionBox.value)
+  const isSectionBoxVisible = ref(false)
+  const isSectionBoxEdited = ref(false)
+
   const toggleSectionBox = () => {
     if (isSectionBoxEnabled.value) {
       sectionBox.value = null
+      isSectionBoxVisible.value = false
+      isSectionBoxEdited.value = false
       return
     }
 
@@ -33,21 +38,45 @@ export function useSectionBoxUtilities() {
     const box = instance.getSectionBoxFromObjects(objectIds)
     sectionBox.value = box
   }
+
   const sectionBoxOn = () => {
     if (!isSectionBoxEnabled.value) {
       toggleSectionBox()
     }
   }
+
   const sectionBoxOff = () => {
     sectionBox.value = null
+    isSectionBoxEdited.value = false
   }
+
+  const sectionTool = instance.getExtension(SectionTool)
+
+  const toggleSectionBoxVisibility = () => {
+    if (!isSectionBoxVisible.value) {
+      sectionBoxOn()
+      sectionTool.visible = true
+      isSectionBoxVisible.value = true
+    } else {
+      sectionTool.visible = false
+      isSectionBoxVisible.value = false
+    }
+    instance.requestRender()
+  }
+
+  sectionTool.on(SectionToolEvent.DragStart, () => {
+    isSectionBoxEdited.value = true
+  })
 
   return {
     isSectionBoxEnabled,
+    isSectionBoxVisible,
+    isSectionBoxEdited,
     toggleSectionBox,
     sectionBoxOn,
     sectionBoxOff,
-    sectionBox
+    sectionBox,
+    toggleSectionBoxVisibility
   }
 }
 
