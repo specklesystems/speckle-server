@@ -6,6 +6,7 @@ export type TutorialItem = {
   lastPublished: string
   featureImageUrl?: string
   url: string
+  readTime?: number
 }
 
 export type QuickStartItem = {

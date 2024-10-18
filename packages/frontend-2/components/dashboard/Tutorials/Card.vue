@@ -22,6 +22,10 @@
           <span v-tippy="updatedAt.full">
             {{ updatedAt.relative }}
           </span>
+          <template v-if="tutorial.readTime">
+            <span class="pl-1 pr-2">•</span>
+            {{ tutorial.readTime }}m read
+          </template>
         </p>
       </div>
     </div>

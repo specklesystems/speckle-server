@@ -10,8 +10,16 @@ type WebflowApiResponse = {
       'feature-image'?: {
         url: string
       }
+      html?: string
     }
   }>
+}
+
+const calculateReadTime = (content: string): number => {
+  const wordsPerMinute = 280
+  const wordCount = content.trim().split(/\s+/).length
+  const readTime = Math.ceil(wordCount / wordsPerMinute)
+  return readTime
 }
 
 export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> => {
@@ -49,7 +57,10 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
           title: item.fieldData.name,
           lastPublished: item.lastPublished,
           featureImageUrl: item.fieldData['feature-image']?.url,
-          url: `https://speckle.systems/blog/${item.fieldData.slug}`
+          url: `https://speckle.systems/blog/${item.fieldData.slug}`,
+          readTime: item.fieldData.html
+            ? calculateReadTime(item.fieldData.html)
+            : undefined
         })
       )
     }
