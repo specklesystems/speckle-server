@@ -23,7 +23,7 @@ const calculateReadTime = (content: string): number => {
   return Math.ceil(wordCount / wordsPerMinute)
 }
 
-// Filter to last 6 months' articles to prevent old,
+// Used to filter to last 6 months' articles to prevent old,
 // recently edited posts from appearing at the top
 const getSixMonthsAgo = (): Date => {
   const date = new Date()
@@ -38,7 +38,7 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
     'https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items?limit=16&sortBy=lastPublished&sortOrder=desc'
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${webflowApiToken}`,
         'accept-version': '2.0.0'
