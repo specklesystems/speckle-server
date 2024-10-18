@@ -40,6 +40,7 @@ import {
   upsertPaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { GetWorkspacePlanPrice } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 
 const router = Router()
 
@@ -178,10 +179,18 @@ router.post('/api/v1/billing/webhooks', async (req, res) => {
           })
         })
 
-        await completeCheckout({
-          sessionId: session.id,
-          subscriptionId
-        })
+        try {
+          await completeCheckout({
+            sessionId: session.id,
+            subscriptionId
+          })
+        } catch (err) {
+          if (err instanceof WorkspaceAlreadyPaidError) {
+            // ignore the request, this is prob a replay from stripe
+          } else {
+            throw err
+          }
+        }
       }
       break
 
