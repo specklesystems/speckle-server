@@ -3,10 +3,13 @@
     <div
       class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
-      <div
+      <NuxtImg
         v-if="tutorial.featureImageUrl"
-        :style="{ backgroundImage: `url(${tutorial.featureImageUrl})` }"
-        class="bg-foundation-page bg-cover bg-center w-full h-32"
+        :src="tutorial.featureImageUrl"
+        :alt="tutorial.title"
+        class="h-32 w-full object-cover"
+        width="400"
+        height="225"
       />
       <div
         v-else
