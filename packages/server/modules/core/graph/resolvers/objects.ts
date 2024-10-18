@@ -45,12 +45,13 @@ export = {
           cursor: args.cursor
         })
 
-        const objects: Array<
-          (typeof result)['objects'][number] & { streamId: string }
-        > = result.objects.map((x) => ({
-          ...x,
-          streamId: parent.streamId
-        }))
+        // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+        const objects = result.objects as Array<
+          (typeof result)['objects'][number] & {
+            streamId: string
+          }
+        >
+        objects.forEach((x) => (x.streamId = parent.streamId))
 
         return {
           totalCount: parent.totalChildrenCount || 0,
