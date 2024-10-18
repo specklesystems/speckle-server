@@ -1,5 +1,5 @@
 import { Optional } from '@speckle/shared'
-import { buildTableHelper, Objects } from '@/modules/core/dbSchema'
+import { buildTableHelper, knex, Objects } from '@/modules/core/dbSchema'
 import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
@@ -10,6 +10,7 @@ import {
   GetBatchedStreamObjects,
   GetFormattedObject,
   GetObject,
+  GetObjectChildrenStream,
   GetStreamObjects,
   StoreClosuresIfNotFound,
   StoreObjects,
@@ -127,4 +128,38 @@ export const storeClosuresIfNotFoundFactory =
       .insert(closuresBatch)
       .onConflict()
       .ignore()
+  }
+
+export const getObjectChildrenStreamFactory =
+  (deps: { db: Knex }): GetObjectChildrenStream =>
+  async ({ streamId, objectId }) => {
+    const q = deps.db.with(
+      'object_children_closure',
+      knex.raw(
+        `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+        [streamId, objectId]
+      )
+    )
+    q.select('id')
+    q.select(knex.raw('data::text as "dataText"'))
+    q.from('object_children_closure')
+
+    q.rightJoin('objects', function () {
+      this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
+        'objects.id',
+        '=',
+        'object_children_closure.child'
+      )
+    })
+      .where(
+        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [
+          streamId,
+          objectId
+        ])
+      )
+      .orderBy('objects.id')
+    return q.stream({ highWaterMark: 500 })
   }

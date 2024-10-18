@@ -10,8 +10,7 @@ const { getAnIdForThisOnePlease } = require('@/test/helpers')
 const {
   getObjects,
   getObjectChildren,
-  getObjectChildrenQuery,
-  getObjectChildrenStream
+  getObjectChildrenQuery
 } = require('../services/objects')
 const {
   getStreamFactory,
@@ -86,7 +85,8 @@ const {
   storeSingleObjectIfNotFoundFactory,
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory,
-  getFormattedObjectFactory
+  getFormattedObjectFactory,
+  getObjectChildrenStreamFactory
 } = require('@/modules/core/repositories/objects')
 
 const sampleCommit = JSON.parse(`{
@@ -189,6 +189,7 @@ const createObjects = createObjectsFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 const getObject = getFormattedObjectFactory({ db })
+const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
 
 describe('Objects @core-objects', () => {
   const userOne = {
