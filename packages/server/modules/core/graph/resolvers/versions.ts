@@ -11,7 +11,7 @@ import {
   batchDeleteCommits,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError } from '@/modules/core/errors/commit'
+import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchIdFactory,
   markCommitReceivedAndNotify,
@@ -106,9 +106,14 @@ const batchMoveCommits = batchMoveCommitsFactory({
 export = {
   Project: {
     async version(parent, args, ctx) {
-      return await ctx.loaders.streams.getStreamCommit
+      const version = await ctx.loaders.streams.getStreamCommit
         .forStream(parent.id)
         .load(args.id)
+      if (!version) {
+        throw new CommitNotFoundError('Version not found')
+      }
+
+      return version
     }
   },
   Version: {

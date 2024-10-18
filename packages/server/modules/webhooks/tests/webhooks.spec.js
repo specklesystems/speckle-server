@@ -27,7 +27,6 @@ const {
   dispatchStreamEventFactory
 } = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   getStreamFactory,
   createStreamFactory,
@@ -98,7 +97,9 @@ const {
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -127,7 +128,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

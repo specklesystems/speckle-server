@@ -17,7 +17,6 @@ import {
   legacyGetPaginatedUsersFactory
 } from '@/modules/core/repositories/users'
 import { UsersMeta } from '@/modules/core/dbSchema'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   deleteAllUserInvitesFactory,
@@ -40,6 +39,7 @@ import {
 import { dbLogger } from '@/logging/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -52,6 +52,7 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
   })
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const deleteUser = deleteUserFactory({
   deleteStream: deleteStreamFactory({ db }),
   logger: dbLogger,

@@ -42,7 +42,7 @@ export type ApiTokenRecord = {
   lastChars: Nullable<string>
   revoked: boolean
   lifespan: number | bigint
-  createdAt: string
+  createdAt: Date
   lastUsed: Date
 }
 

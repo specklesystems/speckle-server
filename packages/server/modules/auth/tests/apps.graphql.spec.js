@@ -36,7 +36,6 @@ const {
   countAdminUsersFactory,
   storeUserAclFactory
 } = require('@/modules/core/repositories/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -61,6 +60,7 @@ const {
   storeUserServerAppTokenFactory,
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 let sendRequest
 let server
@@ -84,6 +84,7 @@ const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   createBareToken
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

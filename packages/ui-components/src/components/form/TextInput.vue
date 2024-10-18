@@ -37,6 +37,13 @@
           aria-hidden="true"
         />
       </div>
+      <div
+        v-if="loading"
+        class="absolute top-0 h-full right-0 flex items-center pr-2 text-foreground-3"
+      >
+        <CommonLoadingIcon />
+      </div>
+
       <input
         :id="name"
         ref="inputElement"
@@ -115,6 +122,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import type { LabelPosition } from '~~/src/composables/form/input'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -256,9 +264,17 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  loading: {
+    type: Boolean,
+    default: false
+  },
   hideErrorMessage: {
     type: Boolean,
     default: false
+  },
+  customErrorMessage: {
+    type: String,
+    default: null
   },
   wrapperClasses: {
     type: String,

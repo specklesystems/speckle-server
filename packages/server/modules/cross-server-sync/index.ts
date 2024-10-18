@@ -45,6 +45,7 @@ import {
   getObjectFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getOnboardingBaseStreamFactory,
@@ -90,6 +91,7 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    const getServerInfo = getServerInfoFactory({ db })
     const getUser = getUserFactory({ db })
     const getUsers = getUsersFactory({ db })
     const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
@@ -177,7 +179,8 @@ const crossServerSyncModule: SpeckleModule = {
               eventName,
               payload
             }),
-          getUser
+          getUser,
+          getServerInfo
         }),
         getUsers
       }),
