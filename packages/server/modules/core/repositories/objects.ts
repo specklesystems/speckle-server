@@ -12,6 +12,7 @@ import {
   GetStreamObjects,
   StoreClosuresIfNotFound,
   StoreObjects,
+  StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
 import { SpeckleObject } from '@/modules/core/domain/objects/types'
@@ -80,6 +81,19 @@ export const storeSingleObjectIfNotFoundFactory =
       .insert(
         // knex is bothered by string being inserted into jsonb, which is actually fine
         insertionObject as SpeckleObject
+      )
+      .onConflict()
+      .ignore()
+  }
+
+export const storeObjectsIfNotFoundFactory =
+  (deps: { db: Knex }): StoreObjectsIfNotFound =>
+  async (batch) => {
+    await tables
+      .objects(deps.db)
+      .insert(
+        // knex is bothered by string being inserted into jsonb, which is actually fine
+        batch as SpeckleObject[]
       )
       .onConflict()
       .ignore()

@@ -1,84 +1,18 @@
 const { performance } = require('perf_hooks')
-const { set, get, chunk } = require('lodash')
+const { set, get } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
 const { chunkInsertionObjectArray } = require('@/modules/core/utils/chunking')
-const { prepInsertionObject } = require('@/modules/core/services/objects/management')
+const {
+  prepInsertionObject,
+  prepInsertionObjectBatch
+} = require('@/modules/core/services/objects/management')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
 
 module.exports = {
-  async createObjectsBatched({ streamId, objects, logger = servicesLogger }) {
-    const closures = []
-    const objsToInsert = []
-    const ids = []
-
-    // Prep objects up
-    objects.forEach((obj) => {
-      const insertionObject = prepInsertionObject(streamId, obj)
-      let totalChildrenCountGlobal = 0
-      const totalChildrenCountByDepth = {}
-
-      if (obj.__closure !== null) {
-        for (const prop in obj.__closure) {
-          closures.push({
-            streamId,
-            parent: insertionObject.id,
-            child: prop,
-            minDepth: obj.__closure[prop]
-          })
-          totalChildrenCountGlobal++
-          if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-            totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-          else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-        }
-      }
-
-      insertionObject.totalChildrenCount = totalChildrenCountGlobal
-      insertionObject.totalChildrenCountByDepth = JSON.stringify(
-        totalChildrenCountByDepth
-      )
-
-      delete insertionObject.__tree
-      delete insertionObject.__closure
-
-      objsToInsert.push(insertionObject)
-      ids.push(insertionObject.id)
-    })
-
-    const closureBatchSize = 1000
-    const objectsBatchSize = 500
-
-    // step 1: insert objects
-    if (objsToInsert.length > 0) {
-      // const batches = chunk(objsToInsert, objectsBatchSize)
-      const batches = chunkInsertionObjectArray({
-        objects: objsToInsert,
-        chunkLengthLimit: objectsBatchSize,
-        chunkSizeLimitMb: 2
-      })
-      for (const batch of batches) {
-        prepInsertionObjectBatch(batch)
-        await Objects().insert(batch).onConflict().ignore()
-        logger.info({ objectCount: batch.length }, 'Inserted {objectCount} objects')
-      }
-    }
-
-    // step 2: insert closures
-    if (closures.length > 0) {
-      const batches = chunk(closures, closureBatchSize)
-
-      for (const batch of batches) {
-        prepInsertionClosureBatch(batch)
-        await Closures().insert(batch).onConflict().ignore()
-        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} closures')
-      }
-    }
-    return true
-  },
-
   async createObjectsBatchedAndNoClosures({
     streamId,
     objects,
@@ -628,15 +562,4 @@ module.exports = {
   async updateObject() {
     throw new Error('Updating object is not implemented')
   }
-}
-
-// Batches need to be inserted ordered by id to avoid deadlocks
-function prepInsertionObjectBatch(batch) {
-  batch.sort((a, b) => (a.id > b.id ? 1 : -1))
-}
-
-function prepInsertionClosureBatch(batch) {
-  batch.sort((a, b) =>
-    a.parent > b.parent ? 1 : a.parent === b.parent ? (a.child > b.child ? 1 : -1) : -1
-  )
 }
