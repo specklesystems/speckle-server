@@ -1817,7 +1817,7 @@ export type Project = {
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
-  version?: Maybe<Version>;
+  version: Version;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -4749,7 +4749,7 @@ export type GendoAiRenderQueryVariables = Exact<{
 }>;
 
 
-export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version?: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'AvatarUser', name: string, avatar?: string | null, id: string } | null } } | null } };
+export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'AvatarUser', name: string, avatar?: string | null, id: string } | null } } } };
 
 export type GendoAiRendersQueryVariables = Exact<{
   versionId: Scalars['String']['input'];
@@ -4757,7 +4757,7 @@ export type GendoAiRendersQueryVariables = Exact<{
 }>;
 
 
-export type GendoAiRendersQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version?: { __typename?: 'Version', id: string, gendoAIRenders: { __typename?: 'GendoAIRenderCollection', totalCount: number, items: Array<{ __typename?: 'GendoAIRender', id: string, createdAt: string, updatedAt: string, status: string, gendoGenerationId?: string | null, prompt: string, camera?: {} | null } | null> } } | null } };
+export type GendoAiRendersQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRenders: { __typename?: 'GendoAIRenderCollection', totalCount: number, items: Array<{ __typename?: 'GendoAIRender', id: string, createdAt: string, updatedAt: string, status: string, gendoGenerationId?: string | null, prompt: string, camera?: {} | null } | null> } } } };
 
 export type ProjectVersionGendoAiRenderCreatedSubscriptionVariables = Exact<{
   id: Scalars['String']['input'];
@@ -5716,7 +5716,7 @@ export type LegacyViewerCommitRedirectMetadataQueryVariables = Exact<{
 }>;
 
 
-export type LegacyViewerCommitRedirectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', version?: { __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string } } | null } };
+export type LegacyViewerCommitRedirectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', version: { __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string } } } };
 
 export type LegacyViewerStreamRedirectMetadataQueryVariables = Exact<{
   streamId: Scalars['String']['input'];
