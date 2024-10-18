@@ -1,4 +1,8 @@
 import {
+  LegacyStreamCommit,
+  LegacyUserCommit
+} from '@/modules/core/domain/commits/types'
+import {
   LimitedUser,
   StreamRole,
   ServerRole,
@@ -13,7 +17,7 @@ import {
   StreamRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -31,14 +35,7 @@ export type StreamGraphQLReturn = StreamRecord & {
   role?: string | null
 }
 
-export type CommitGraphQLReturn = CommitRecord & {
-  /**
-   * Added by legacy queries
-   */
-  authorId?: Nullable<string>
-  authorName?: Nullable<string>
-  authorAvatar?: Nullable<string>
-}
+export type CommitGraphQLReturn = CommitRecord | LegacyStreamCommit | LegacyUserCommit
 
 export type BranchGraphQLReturn = BranchRecord
 
