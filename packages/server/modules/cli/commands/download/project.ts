@@ -29,23 +29,27 @@ import {
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
-  addCommentCreatedActivity,
+  addCommentCreatedActivityFactory,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
   getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { db } from '@/db/knex'
 import {
   getCommentFactory,
+  getCommentsResourcesFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -124,6 +128,16 @@ const command: CommandModule<
         getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
+    const getViewerResourcesFromLegacyIdentifiers =
+      getViewerResourcesFromLegacyIdentifiersFactory({
+        getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers: (...args) =>
+            getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+        }),
+        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+        getStreamObjects
+      })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
       getViewerResourceItemsUngrouped,
       validateInputAttachments,
@@ -131,7 +145,12 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentViewed,
       commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity
+      addCommentCreatedActivity: addCommentCreatedActivityFactory({
+        getViewerResourcesFromLegacyIdentifiers,
+        getViewerResourceItemsUngrouped,
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db }),

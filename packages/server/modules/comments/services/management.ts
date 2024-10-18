@@ -18,7 +18,6 @@ import {
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
 import {
   addCommentArchivedActivity,
-  addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import {
@@ -42,6 +41,7 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { AddCommentCreatedActivity } from '@/modules/activitystream/domain/operations'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -118,7 +118,7 @@ export const createCommentThreadAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
     commentsEventsEmit: CommentsEventsEmit
-    addCommentCreatedActivity: typeof addCommentCreatedActivity
+    addCommentCreatedActivity: AddCommentCreatedActivity
   }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
     const [resources] = await Promise.all([
