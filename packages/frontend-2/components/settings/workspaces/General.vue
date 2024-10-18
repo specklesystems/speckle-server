@@ -290,6 +290,8 @@ const updateWorkspaceSlug = async (newSlug: string) => {
       title: 'Workspace short ID updated'
     })
 
+    showEditSlugDialog.value = false
+
     slug.value = newSlug
 
     if (route.params.slug === oldSlug) {
