@@ -13,12 +13,20 @@ function parseFeatureFlags() {
     // Enables the gendo ai integration
     FF_GENDOAI_MODULE_ENABLED: {
       schema: z.boolean(),
-      defaults: { production: false, _: true }
+      defaults: { production: false, _: false }
     },
     // Enables the workspaces module
     FF_WORKSPACES_MODULE_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    FF_GATEKEEPER_MODULE_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
+    FF_BILLING_INTEGRATION_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     },
     // Enables using dynamic SSO on a per workspace basis
     FF_WORKSPACES_SSO_ENABLED: {
@@ -46,6 +54,8 @@ export function getFeatureFlags(): {
   FF_NO_CLOSURE_WRITES: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
+  FF_GATEKEEPER_MODULE_ENABLED: boolean
+  FF_BILLING_INTEGRATION_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags
