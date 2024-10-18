@@ -131,7 +131,7 @@ const mp = useMixpanel()
 
 const onSubmit = handleSubmit(() => {
   inviteItems.value.forEach(async (invite: InviteItem) => {
-    invite.projectId
+    const success = invite.projectId
       ? await inviteUserToProject(invite.projectId, [
           {
             email: invite.email,
@@ -144,15 +144,17 @@ const onSubmit = handleSubmit(() => {
             serverRole: invite.serverRole
           }
         ])
-  })
 
-  mp.track('Invite Action', {
-    type: 'server invite',
-    name: 'send',
-    multiple: inviteItems.value.length !== 1,
-    count: inviteItems.value.length,
-    hasProject: inviteItems.value.some((item) => !!item.projectId),
-    to: 'email'
+    if (success) {
+      const hasProject = !!invite.projectId
+
+      mp.track('Invite Action', {
+        type: hasProject ? 'project invite' : 'server invite',
+        name: 'send',
+        hasProject,
+        to: 'email'
+      })
+    }
   })
 
   isOpen.value = false
