@@ -15,6 +15,7 @@ import {
   WorkspacePlanBillingIntervals
 } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
+  CheckoutSessionNotFoundError,
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
@@ -49,6 +50,7 @@ export const startCheckoutSessionFactory =
     // get workspace plan, if we're already on a paid plan, do not allow checkout
     // paid plans should use a subscription modification
     const existingWorkspacePlan = await getWorkspacePlan({ workspaceId })
+    // it will technically not be possible to not have
     if (existingWorkspacePlan) {
       // maybe we can just ignore the plan not existing, cause we're putting it on a plan post checkout
       switch (existingWorkspacePlan.status) {
@@ -117,13 +119,12 @@ export const completeCheckoutSessionFactory =
     subscriptionId: string
   }): Promise<void> => {
     const checkoutSession = await getCheckoutSession({ sessionId })
-    if (!checkoutSession)
-      throw new Error('checkout session is not found this is a bo bo')
+    if (!checkoutSession) throw new CheckoutSessionNotFoundError()
 
     switch (checkoutSession.paymentStatus) {
       case 'paid':
         // if the session is already paid, we do not need to provision anything
-        return
+        throw new WorkspaceAlreadyPaidError()
       case 'unpaid':
         break
       default:
