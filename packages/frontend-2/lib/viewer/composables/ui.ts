@@ -58,17 +58,6 @@ export function useSectionBoxUtilities() {
       isSectionBoxVisible.value = false
     }
     instance.requestRender()
-
-    /** We should really develop LegacyViewer any further */
-    // if (!isSectionBoxVisible.value) {
-    //   sectionBoxOn()
-    //   instance.setSectionBoxVisibility(true)
-    //   isSectionBoxVisible.value = true
-    // } else {
-    //   instance.setSectionBoxVisibility(false)
-    //   isSectionBoxVisible.value = false
-    // }
-    // instance.requestRender()
   }
 
   return {
