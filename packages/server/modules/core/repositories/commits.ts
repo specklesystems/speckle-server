@@ -21,7 +21,7 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
-import { Nullable, Optional } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
 import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
 import {
   StoreCommit,
@@ -388,11 +388,7 @@ export const updateCommitFactory =
 
 export const createCommitFactory =
   (deps: { db: Knex }): StoreCommit =>
-  async (
-    params: Omit<CommitRecord, 'id' | 'createdAt'> & {
-      message?: Nullable<string>
-    }
-  ) => {
+  async (params) => {
     const [item] = await tables.commits(deps.db).insert(
       {
         ...params,
