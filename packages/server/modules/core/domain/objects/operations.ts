@@ -8,6 +8,7 @@ import {
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
+import type stream from 'node:stream'
 
 export type GetStreamObjects = (
   streamId: string,
@@ -47,6 +48,11 @@ export type StoreObjectsIfNotFound = (
 export type StoreClosuresIfNotFound = (
   closures: SpeckleObjectClosureEntry[]
 ) => Promise<void>
+
+export type GetObjectChildrenStream = (params: {
+  streamId: string
+  objectId: string
+}) => Promise<stream.PassThrough & AsyncIterable<{ dataText: string; id: string }>>
 
 export type CreateObject = (params: {
   streamId: string

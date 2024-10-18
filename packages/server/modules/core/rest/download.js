@@ -4,14 +4,17 @@ const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
 
-const { getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('@/logging/logging')
-const { getFormattedObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getFormattedObjectFactory,
+  getObjectChildrenStreamFactory
+} = require('@/modules/core/repositories/objects')
 const { db } = require('@/db/knex')
 
 const getObject = getFormattedObjectFactory({ db })
+const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
