@@ -1,34 +1,32 @@
 import { db } from '@/db/knex'
+import {
+  AddCommentCreatedActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
+import { CommentCreatedActivityInput } from '@/modules/activitystream/domain/types'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  GetViewerResourceItemsUngrouped,
+  GetViewerResourcesFromLegacyIdentifiers
+} from '@/modules/comments/domain/operations'
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
 import {
   CommentCreateInput,
-  CreateCommentInput,
   CreateCommentReplyInput,
   ProjectCommentsUpdatedMessageType,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import {
-  getBranchLatestCommitsFactory,
-  getStreamBranchesByNameFactory
-} from '@/modules/core/repositories/branches'
-import {
-  getAllBranchCommitsFactory,
-  getCommitsAndTheirBranchIdsFactory,
-  getSpecificBranchCommitsFactory
-} from '@/modules/core/repositories/commits'
+import { getCommitsAndTheirBranchIdsFactory } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { pubsub } from '@/modules/shared/utils/subscriptions'
+import { PublishSubscription, pubsub } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
   ProjectSubscriptions,
@@ -37,94 +35,77 @@ import {
 import { MutationCommentArchiveArgs } from '@/test/graphql/generated/graphql'
 import { has } from 'lodash'
 
-type CommentCreatedActivityInput =
-  | CommentCreateInput
-  | (CreateCommentInput & { resolvedResourceItems?: ViewerResourceItem[] })
-
 const isLegacyCommentCreateInput = (
   i: CommentCreatedActivityInput
 ): i is CommentCreateInput => has(i, 'streamId')
 
-export async function addCommentCreatedActivity(params: {
-  streamId: string
-  userId: string
-  input: CommentCreatedActivityInput
-  comment: CommentRecord
-}) {
-  const { streamId, userId, input, comment } = params
+export const addCommentCreatedActivityFactory =
+  ({
+    getViewerResourceItemsUngrouped,
+    getViewerResourcesFromLegacyIdentifiers,
+    saveActivity,
+    publish
+  }: {
+    getViewerResourceItemsUngrouped: GetViewerResourceItemsUngrouped
+    getViewerResourcesFromLegacyIdentifiers: GetViewerResourcesFromLegacyIdentifiers
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddCommentCreatedActivity =>
+  async (params) => {
+    const { streamId, userId, input, comment } = params
 
-  const getStreamObjects = getStreamObjectsFactory({ db })
-  const getViewerResourcesFromLegacyIdentifiers =
-    getViewerResourcesFromLegacyIdentifiersFactory({
-      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-        getCommentsResources: getCommentsResourcesFactory({ db }),
-        getViewerResourcesFromLegacyIdentifiers: (...args) =>
-          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    let resourceIds: string
+    let resourceItems: ViewerResourceItem[]
+    if (isLegacyCommentCreateInput(input)) {
+      resourceIds = input.resources.map((res) => res?.resourceId).join(',')
+
+      const validResources = input.resources.filter(
+        (r): r is NonNullable<typeof r> => !!r
+      )
+      resourceItems = await getViewerResourcesFromLegacyIdentifiers(
+        streamId,
+        validResources
+      )
+    } else {
+      resourceItems =
+        input.resolvedResourceItems ||
+        (await getViewerResourceItemsUngrouped({
+          projectId: streamId,
+          resourceIdString: input.resourceIdString
+        }))
+      resourceIds = resourceItems.map((i) => i.versionId || i.objectId).join(',')
+    }
+
+    await Promise.all([
+      saveActivity({
+        resourceId: comment.id,
+        streamId,
+        resourceType: ResourceTypes.Comment,
+        actionType: ActionTypes.Comment.Create,
+        userId,
+        info: { input },
+        message: `Comment added: ${comment.id} (${input})`
       }),
-      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
-      getStreamObjects
-    })
-  const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
-    getViewerResourceGroups: getViewerResourceGroupsFactory({
-      getStreamObjects,
-      getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
-      getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-      getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-      getAllBranchCommits: getAllBranchCommitsFactory({ db })
-    })
-  })
-
-  let resourceIds: string
-  let resourceItems: ViewerResourceItem[]
-  if (isLegacyCommentCreateInput(input)) {
-    resourceIds = input.resources.map((res) => res?.resourceId).join(',')
-
-    const validResources = input.resources.filter(
-      (r): r is NonNullable<typeof r> => !!r
-    )
-    resourceItems = await getViewerResourcesFromLegacyIdentifiers(
-      streamId,
-      validResources
-    )
-  } else {
-    resourceItems =
-      input.resolvedResourceItems ||
-      (await getViewerResourceItemsUngrouped({
+      // @deprecated unused in FE2
+      pubsub.publish(CommentSubscriptions.CommentActivity, {
+        commentActivity: {
+          type: 'comment-added',
+          comment
+        },
+        streamId,
+        resourceIds
+      }),
+      publish(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: comment.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment
+        },
         projectId: streamId,
-        resourceIdString: input.resourceIdString
-      }))
-    resourceIds = resourceItems.map((i) => i.versionId || i.objectId).join(',')
+        resourceItems
+      })
+    ])
   }
-
-  await Promise.all([
-    saveActivityFactory({ db })({
-      resourceId: comment.id,
-      streamId,
-      resourceType: ResourceTypes.Comment,
-      actionType: ActionTypes.Comment.Create,
-      userId,
-      info: { input },
-      message: `Comment added: ${comment.id} (${input})`
-    }),
-    pubsub.publish(CommentSubscriptions.CommentActivity, {
-      commentActivity: {
-        type: 'comment-added',
-        comment
-      },
-      streamId,
-      resourceIds
-    }),
-    publish(ProjectSubscriptions.ProjectCommentsUpdated, {
-      projectCommentsUpdated: {
-        id: comment.id,
-        type: ProjectCommentsUpdatedMessageType.Created,
-        comment
-      },
-      projectId: streamId,
-      resourceItems
-    })
-  ])
-}
 
 /**
  * Add comment archived/unarchived activity
