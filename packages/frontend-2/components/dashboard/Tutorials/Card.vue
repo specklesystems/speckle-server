@@ -8,7 +8,12 @@
         :style="{ backgroundImage: `url(${tutorial.featureImageUrl})` }"
         class="bg-foundation-page bg-cover bg-center w-full h-32"
       />
-      <div v-else class="bg-foundation-page w-full h-32"></div>
+      <div
+        v-else
+        class="bg-foundation-page w-full h-32 flex items-center justify-center"
+      >
+        <HeaderLogoBlock no-link minimal class="scale-150" />
+      </div>
       <div class="p-5 pb-4">
         <h3 v-if="tutorial.title" class="text-body-2xs text-foreground truncate">
           {{ tutorial.title }}
