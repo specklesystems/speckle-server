@@ -13,6 +13,7 @@ import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { servicesLogger } from '@/logging/logging'
 import {
   CreateObject,
+  CreateObjects,
   CreateObjectsBatched,
   CreateObjectsBatchedAndNoClosures,
   StoreClosuresIfNotFound,
@@ -26,7 +27,7 @@ import { chunk } from 'lodash'
  * limitations when doing upserts - ignored fields are not always returned, hence
  * we cannot provide a full response back including all object hashes.
  */
-export const prepInsertionObject = (
+const prepInsertionObject = (
   streamId: string,
   obj: RawSpeckleObject
 ): InsertableSpeckleObject => {
@@ -103,7 +104,7 @@ export const createObjectFactory =
   }
 
 //  Batches need to be inserted ordered by id to avoid deadlocks
-export const prepInsertionObjectBatch = (batch: InsertableSpeckleObject[]) => {
+const prepInsertionObjectBatch = (batch: InsertableSpeckleObject[]) => {
   batch.sort((a, b) => (a.id > b.id ? 1 : -1))
 }
 
@@ -215,6 +216,93 @@ export const createObjectsBatchedAndNoClosuresFactory =
         logger.info({ batchLength: batch.length }, 'Inserted {batchLength} objects.')
       }
     }
+
+    return ids
+  }
+
+export const createObjectsFactory =
+  (deps: {
+    storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound
+    storeClosuresIfNotFound: StoreClosuresIfNotFound
+  }): CreateObjects =>
+  async ({ streamId, objects, logger = servicesLogger }) => {
+    // TODO: Switch to knex batch inserting functionality
+    // see http://knexjs.org/#Utility-BatchInsert
+    const batches: RawSpeckleObject[][] = []
+    const maxBatchSize =
+      (process.env.MAX_BATCH_SIZE ? parseInt(process.env.MAX_BATCH_SIZE) : 0) || 250
+
+    objects = [...objects]
+    if (objects.length > maxBatchSize) {
+      while (objects.length > 0) batches.push(objects.splice(0, maxBatchSize))
+    } else {
+      batches.push(objects)
+    }
+
+    const ids: string[] = []
+
+    const insertBatch = async (batch: RawSpeckleObject[], index: number) => {
+      const closures: SpeckleObjectClosureEntry[] = []
+      const objsToInsert: InsertableSpeckleObject[] = []
+
+      const t0 = performance.now()
+
+      batch.forEach((obj) => {
+        if (!obj) return
+
+        const insertionObject = prepInsertionObject(streamId, obj)
+        const totalChildrenCountByDepth: Record<string, number> = {}
+        let totalChildrenCountGlobal = 0
+        if (obj.__closure !== null) {
+          for (const prop in obj.__closure) {
+            closures.push({
+              streamId,
+              parent: insertionObject.id,
+              child: prop,
+              minDepth: obj.__closure[prop]
+            })
+
+            totalChildrenCountGlobal++
+
+            if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
+              totalChildrenCountByDepth[obj.__closure[prop].toString()]++
+            else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
+          }
+        }
+
+        insertionObject.totalChildrenCount = totalChildrenCountGlobal
+        insertionObject.totalChildrenCountByDepth = JSON.stringify(
+          totalChildrenCountByDepth
+        )
+
+        objsToInsert.push(insertionObject)
+        ids.push(insertionObject.id)
+      })
+
+      if (objsToInsert.length > 0) {
+        await deps.storeObjectsIfNotFoundFactory(objsToInsert)
+      }
+
+      if (closures.length > 0) {
+        await deps.storeClosuresIfNotFound(closures)
+      }
+
+      const t1 = performance.now()
+
+      logger.info(
+        {
+          batchIndex: index + 1,
+          totalCountOfBatches: batches.length,
+          countStoredObjects: closures.length + objsToInsert.length,
+          elapsedTimeMs: t1 - t0
+        },
+        'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'
+      )
+    }
+
+    const promises = batches.map((batch, index) => insertBatch(batch, index))
+
+    await Promise.all(promises)
 
     return ids
   }

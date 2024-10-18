@@ -1,17 +1,25 @@
 import { authorizeResolver } from '@/modules/shared'
 
 import {
-  createObjects,
   getObjectChildren,
   getObjectChildrenQuery
 } from '@/modules/core/services/objects'
 
-import { Roles } from '@speckle/shared'
+import { isNonNullable, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
 
 const getObject = getObjectFactory({ db })
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
@@ -71,7 +79,7 @@ export = {
 
       const ids = await createObjects({
         streamId: args.objectInput.streamId,
-        objects: args.objectInput.objects
+        objects: args.objectInput.objects.filter(isNonNullable)
       })
       return ids
     }

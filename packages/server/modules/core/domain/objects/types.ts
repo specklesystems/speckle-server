@@ -11,7 +11,8 @@ export type SpeckleObject = ObjectRecord
  */
 export type InsertableSpeckleObject = NullableKeysToOptional<
   OverrideProperties<
-    SetOptional<SpeckleObject, 'createdAt'>,
+    // Both createdAt & speckleType have defaults upon insertion
+    SetOptional<SpeckleObject, 'createdAt' | 'speckleType'>,
     {
       data: string
       totalChildrenCountByDepth: Nullable<string>
@@ -20,9 +21,9 @@ export type InsertableSpeckleObject = NullableKeysToOptional<
 >
 
 export type RawSpeckleObject = Record<string, unknown> & {
-  id: string
-  speckle_type: string
-  totalChildrenCount: number
+  id?: string
+  speckle_type?: string
+  totalChildrenCount?: number
   hash?: string
-  __closure: Nullable<Record<string, number>>
+  __closure?: Nullable<Record<string, number>>
 }
