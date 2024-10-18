@@ -53,7 +53,7 @@
           </div>
         </section>
       </div>
-      <DashboardTutorialsWrapper />
+      <DashboardWebflowWrapper />
     </div>
 
     <ProjectsAddDialog v-model:open="openNewProject" />

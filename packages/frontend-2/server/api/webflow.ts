@@ -1,5 +1,5 @@
 import { ensureError } from '@speckle/shared'
-import type { TutorialItem } from '~/lib/dashboard/helpers/types'
+import type { WebflowItem } from '~/lib/dashboard/helpers/types'
 
 type WebflowApiResponse = {
   items: Array<{
@@ -31,7 +31,7 @@ const getSixMonthsAgo = (): Date => {
   return date
 }
 
-export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> => {
+export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> => {
   const { webflowApiToken } = useRuntimeConfig()
 
   const url =
@@ -65,7 +65,7 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
 
     return {
       items: filteredItems.map(
-        (item): TutorialItem => ({
+        (item): WebflowItem => ({
           id: item.id,
           title: item.fieldData.name,
           createdOn: item.createdOn,
@@ -83,7 +83,7 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
     throw createError({
       statusCode: 500,
       fatal: true,
-      message: `Error fetching tutorials: ${errMsg}`
+      message: `Error fetching webflow items: ${errMsg}`
     })
   }
 })

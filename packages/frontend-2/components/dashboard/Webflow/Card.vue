@@ -1,12 +1,12 @@
 <template>
-  <NuxtLink :to="tutorial.url" target="_blank">
+  <NuxtLink :to="webflowItem.url" target="_blank">
     <div
       class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
       <NuxtImg
-        v-if="tutorial.featureImageUrl"
-        :src="tutorial.featureImageUrl"
-        :alt="tutorial.title"
+        v-if="webflowItem.featureImageUrl"
+        :src="webflowItem.featureImageUrl"
+        :alt="webflowItem.title"
         class="h-32 w-full object-cover"
         width="400"
         height="225"
@@ -19,15 +19,15 @@
       </div>
       <div class="p-5 pb-4">
         <h3 class="text-body-2xs text-foreground truncate">
-          {{ tutorial.title }}
+          {{ webflowItem.title }}
         </h3>
         <p class="text-body-3xs text-foreground-2 mt-2">
           <span v-tippy="createdOn.full">
             {{ createdOn.relative }}
           </span>
-          <template v-if="tutorial.readTime">
+          <template v-if="webflowItem.readTime">
             <span class="pl-1 pr-2">•</span>
-            {{ tutorial.readTime }}m read
+            {{ webflowItem.readTime }}m read
           </template>
         </p>
       </div>
@@ -36,14 +36,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { TutorialItem } from '~/lib/dashboard/helpers/types'
+import type { WebflowItem } from '~/lib/dashboard/helpers/types'
 
 const props = defineProps<{
-  tutorial: TutorialItem
+  webflowItem: WebflowItem
 }>()
 
 const createdOn = computed(() => ({
-  full: formattedFullDate(props.tutorial.createdOn),
-  relative: formattedRelativeDate(props.tutorial.createdOn, { capitalize: true })
+  full: formattedFullDate(props.webflowItem.createdOn),
+  relative: formattedRelativeDate(props.webflowItem.createdOn, { capitalize: true })
 }))
 </script>
