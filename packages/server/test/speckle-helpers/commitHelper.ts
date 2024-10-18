@@ -1,7 +1,6 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getBranchByIdFactory,
@@ -90,7 +89,7 @@ export type BasicTestCommit = {
 export async function createTestObject(params: { projectId: string }) {
   return await createObject({
     streamId: params.projectId,
-    object: { foo: 'bar' } as unknown as RawSpeckleObject
+    object: { foo: 'bar' }
   })
 }
 
@@ -103,7 +102,7 @@ async function ensureObjects(commits: BasicTestCommit[]) {
     commitsWithoutObjects.map((c) =>
       createObject({
         streamId: c.streamId,
-        object: { foo: 'bar' } as unknown as RawSpeckleObject
+        object: { foo: 'bar' }
       }).then((oid) => (c.objectId = oid))
     )
   )

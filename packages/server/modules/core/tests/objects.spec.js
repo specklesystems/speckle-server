@@ -8,7 +8,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const {
-  createObjects,
   getObject,
   getObjects,
   getObjectChildren,
@@ -81,7 +80,8 @@ const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   createObjectFactory,
-  createObjectsBatchedFactory
+  createObjectsBatchedFactory,
+  createObjectsFactory
 } = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
@@ -181,6 +181,10 @@ const createObject = createObjectFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 const createObjectsBatched = createObjectsBatchedFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const createObjects = createObjectsFactory({
   storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })

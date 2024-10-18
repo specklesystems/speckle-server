@@ -105,7 +105,6 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -506,7 +505,7 @@ describe('Streams @core-streams', () => {
       const testObject = { foo: 'bar', baz: 'qux', id: '' }
       testObject.id = await createObject({
         streamId: updatableStream.id,
-        object: testObject as unknown as RawSpeckleObject
+        object: testObject
       })
 
       await createCommitByBranchName({

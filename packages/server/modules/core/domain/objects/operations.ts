@@ -49,14 +49,16 @@ export type CreateObject = (params: {
   logger?: Logger
 }) => Promise<string>
 
-export type CreateObjectsBatched = (params: {
+type CreateObjectsParams = {
   streamId: string
   objects: RawSpeckleObject[]
   logger?: Logger
-}) => Promise<boolean>
+}
 
-export type CreateObjectsBatchedAndNoClosures = (params: {
-  streamId: string
-  objects: RawSpeckleObject[]
-  logger?: Logger
-}) => Promise<string[]>
+export type CreateObjectsBatched = (params: CreateObjectsParams) => Promise<boolean>
+
+export type CreateObjectsBatchedAndNoClosures = (
+  params: CreateObjectsParams
+) => Promise<string[]>
+
+export type CreateObjects = (params: CreateObjectsParams) => Promise<string[]>
