@@ -4,6 +4,7 @@ type WebflowApiResponse = {
   items: Array<{
     id: string
     lastPublished: string
+    createdOn: string
     fieldData: {
       name: string
       slug: string
@@ -18,8 +19,13 @@ type WebflowApiResponse = {
 const calculateReadTime = (content: string): number => {
   const wordsPerMinute = 280
   const wordCount = content.trim().split(/\s+/).length
-  const readTime = Math.ceil(wordCount / wordsPerMinute)
-  return readTime
+  return Math.ceil(wordCount / wordsPerMinute)
+}
+
+const getSixMonthsAgo = (): Date => {
+  const date = new Date()
+  date.setMonth(date.getMonth() - 6)
+  return date
 }
 
 export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> => {
@@ -29,7 +35,7 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
   const url = new URL(
     `https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items`
   )
-  url.searchParams.append('limit', '8')
+  url.searchParams.append('limit', '16')
   url.searchParams.append('sortBy', 'lastPublished')
   url.searchParams.append('sortOrder', 'desc')
 
@@ -50,11 +56,19 @@ export default defineEventHandler(async (): Promise<{ items: TutorialItem[] }> =
 
     const data = (await response.json()) as WebflowApiResponse
 
+    const sixMonthsAgo = getSixMonthsAgo()
+
+    const filteredItems = data.items
+      .filter((item) => new Date(item.createdOn) > sixMonthsAgo)
+      .sort((a, b) => new Date(b.createdOn).getTime() - new Date(a.createdOn).getTime())
+      .slice(0, 8) // Take only the first 8 items after filtering and sorting
+
     return {
-      items: data.items.map(
+      items: filteredItems.map(
         (item): TutorialItem => ({
           id: item.id,
           title: item.fieldData.name,
+          createdOn: item.createdOn,
           lastPublished: item.lastPublished,
           featureImageUrl: item.fieldData['feature-image']?.url,
           url: `https://speckle.systems/blog/${item.fieldData.slug}`,

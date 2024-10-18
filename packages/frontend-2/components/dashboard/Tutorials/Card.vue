@@ -19,8 +19,8 @@
           {{ tutorial.title }}
         </h3>
         <p class="text-body-3xs text-foreground-2 mt-2">
-          <span v-tippy="updatedAt.full">
-            {{ updatedAt.relative }}
+          <span v-tippy="createdOn.full">
+            {{ createdOn.relative }}
           </span>
           <template v-if="tutorial.readTime">
             <span class="pl-1 pr-2">•</span>
@@ -39,8 +39,8 @@ const props = defineProps<{
   tutorial: TutorialItem
 }>()
 
-const updatedAt = computed(() => ({
-  full: formattedFullDate(props.tutorial.lastPublished),
-  relative: formattedRelativeDate(props.tutorial.lastPublished, { capitalize: true })
+const createdOn = computed(() => ({
+  full: formattedFullDate(props.tutorial.createdOn),
+  relative: formattedRelativeDate(props.tutorial.createdOn, { capitalize: true })
 }))
 </script>

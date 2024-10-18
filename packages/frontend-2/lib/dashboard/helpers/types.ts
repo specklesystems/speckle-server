@@ -3,6 +3,7 @@ import { type LayoutDialogButton } from '@speckle/ui-components'
 export type TutorialItem = {
   id: string
   title: string
+  createdOn: string
   lastPublished: string
   featureImageUrl?: string
   url: string
