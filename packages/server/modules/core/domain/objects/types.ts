@@ -11,10 +11,8 @@ export type SpeckleObject = ObjectRecord
  * the code in the future and make the necessary changes to ensure that these props are always present
  */
 
-/**
- * We preemptively serialize a couple of fields (usually knex does it)
- */
 export type InsertableSpeckleObject = NullableKeysToOptional<
+  // data & totalChildrenCountByDepth are inserted as strings, which differs from the original type (because of preemptive serialization)
   OverrideProperties<
     // Both createdAt & speckleType have defaults upon insertion
     SetOptional<SpeckleObject, 'createdAt' | 'speckleType'>,
