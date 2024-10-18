@@ -12,6 +12,7 @@ import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   CommitCreateInput,
   CommitUpdateInput,
+  MutationCommentArchiveArgs,
   ProjectUpdateInput,
   StreamUpdateInput,
   UpdateVersionInput
@@ -247,5 +248,13 @@ export type AddCommentCreatedActivity = (params: {
   streamId: string
   userId: string
   input: CommentCreatedActivityInput
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddCommentArchivedActivity = (params: {
+  streamId: string
+  commentId: string
+  userId: string
+  input: MutationCommentArchiveArgs
   comment: CommentRecord
 }) => Promise<void>
