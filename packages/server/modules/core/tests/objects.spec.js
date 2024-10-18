@@ -8,7 +8,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const {
-  getObject,
   getObjects,
   getObjectChildren,
   getObjectChildrenQuery,
@@ -86,7 +85,8 @@ const {
 const {
   storeSingleObjectIfNotFoundFactory,
   storeClosuresIfNotFoundFactory,
-  storeObjectsIfNotFoundFactory
+  storeObjectsIfNotFoundFactory,
+  getFormattedObjectFactory
 } = require('@/modules/core/repositories/objects')
 
 const sampleCommit = JSON.parse(`{
@@ -188,6 +188,7 @@ const createObjects = createObjectsFactory({
   storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
+const getObject = getFormattedObjectFactory({ db })
 
 describe('Objects @core-objects', () => {
   const userOne = {

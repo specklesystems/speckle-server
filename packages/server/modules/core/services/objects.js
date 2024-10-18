@@ -5,17 +5,6 @@ const knex = require(`@/db/knex`)
 const Objects = () => knex('objects')
 
 module.exports = {
-  /**
-   * @returns {Promise<Omit<import('@/modules/core/helpers/types').ObjectRecord, 'streamId'>>}
-   */
-  async getObject({ streamId, objectId }) {
-    const res = await Objects().where({ streamId, id: objectId }).select('*').first()
-    if (!res) return null
-    res.data.totalChildrenCount = res.totalChildrenCount // move this back
-    delete res.streamId // backwards compatibility
-    return res
-  },
-
   async getObjectChildrenStream({ streamId, objectId }) {
     const q = knex.with(
       'object_children_closure',
@@ -427,10 +416,5 @@ module.exports = {
       res[dbRes[i].id] = true
     }
     return res
-  },
-
-  // NOTE: Derive Object
-  async updateObject() {
-    throw new Error('Updating object is not implemented')
   }
 }

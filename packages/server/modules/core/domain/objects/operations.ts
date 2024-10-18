@@ -6,7 +6,7 @@ import {
   SpeckleObjectClosureEntry
 } from '@/modules/core/domain/objects/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { Optional } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type GetStreamObjects = (
@@ -18,6 +18,11 @@ export type GetObject = (
   objectId: string,
   streamId: string
 ) => Promise<Optional<SpeckleObject>>
+
+export type GetFormattedObject = (params: {
+  streamId: string
+  objectId: string
+}) => Promise<Nullable<Omit<SpeckleObject, 'streamId'>>>
 
 export type GetBatchedStreamObjects = (
   streamId: string,

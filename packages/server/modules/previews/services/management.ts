@@ -1,6 +1,6 @@
 import { logger } from '@/logging/logging'
+import { GetFormattedObject } from '@/modules/core/domain/objects/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import { getObject } from '@/modules/core/services/objects'
 import {
   CheckStreamPermissions,
   CreateObjectPreview,
@@ -19,7 +19,7 @@ const defaultAngle = '0'
 
 export const getObjectPreviewBufferOrFilepathFactory =
   (deps: {
-    getObject: typeof getObject
+    getObject: GetFormattedObject
     getObjectPreviewInfo: GetObjectPreviewInfo
     createObjectPreview: CreateObjectPreview
     getPreviewImage: GetPreviewImage

@@ -8,6 +8,7 @@ import {
 import { Knex } from 'knex'
 import {
   GetBatchedStreamObjects,
+  GetFormattedObject,
   GetObject,
   GetStreamObjects,
   StoreClosuresIfNotFound,
@@ -16,6 +17,7 @@ import {
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
 import { SpeckleObject } from '@/modules/core/domain/objects/types'
+import { SetOptional } from 'type-fest'
 
 const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
   'parent',
@@ -51,6 +53,24 @@ export const getObjectFactory =
       .where(Objects.col.id, objectId)
       .andWhere(Objects.col.streamId, streamId)
       .first()
+  }
+
+export const getFormattedObjectFactory =
+  (deps: { db: Knex }): GetFormattedObject =>
+  async ({ streamId, objectId }) => {
+    const res = await tables
+      .objects(deps.db)
+      .where({ streamId, id: objectId })
+      .select('*')
+      .first()
+    if (!res) return null
+
+    // TODO: Why tho? A lot if not most of places already just use getObjectFactory,
+    const finalRes: SetOptional<typeof res, 'streamId'> = res
+    if (finalRes.data) finalRes.data.totalChildrenCount = res.totalChildrenCount // move this back
+    delete finalRes.streamId // backwards compatibility
+
+    return finalRes
   }
 
 export const getBatchedStreamObjectsFactory =
