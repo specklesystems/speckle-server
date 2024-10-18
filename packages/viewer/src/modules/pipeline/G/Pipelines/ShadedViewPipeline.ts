@@ -48,7 +48,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
-    matcapPass.outputTarget = null
 
     const edgesPass = new GEdgePass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -79,7 +78,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     const stencilSelectPass = new GColorPass()
     stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
-    stencilSelectPass.outputTarget = null
 
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
@@ -88,7 +86,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    overlayPass.outputTarget = null
 
     this.dynamicStage.push(
       depthPassDynamic,

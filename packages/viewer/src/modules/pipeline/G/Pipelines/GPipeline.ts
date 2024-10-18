@@ -1,4 +1,12 @@
-import { Matrix4, OrthographicCamera, PerspectiveCamera, Plane, Vector2 } from 'three'
+import {
+  Matrix4,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Plane,
+  Vector2,
+  WebGLRenderTarget,
+  WebGLRenderTargetOptions
+} from 'three'
 import { GPass, ObjectVisibility } from '../GPass.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { BatchUpdateRange } from '../../../batching/Batch.js'
@@ -139,5 +147,21 @@ export abstract class GPipeline {
       ])
 
     return jitters
+  }
+
+  public static createRenderTarget(
+    options?: WebGLRenderTargetOptions,
+    width?: number,
+    height?: number
+  ): WebGLRenderTarget {
+    const renderTarget = new WebGLRenderTarget(width || 1, height || 1, options)
+    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
+     *  We're not really using a stencil buffer at all, we're just forcing
+     *  three.js to use a 24 bit depth render buffer
+     */
+    renderTarget.depthBuffer = true
+    renderTarget.stencilBuffer = true
+
+    return renderTarget
   }
 }

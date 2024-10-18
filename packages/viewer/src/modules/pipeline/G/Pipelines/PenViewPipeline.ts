@@ -65,7 +65,6 @@ export class PenViewPipeline extends GProgressivePipeline {
     const stencilSelectPass = new GColorPass()
     stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
-    stencilSelectPass.outputTarget = null
     stencilSelectPass.onBeforeRender = () => {
       speckleRenderer.renderer.getContext().colorMask(false, false, false, false)
     }
@@ -80,11 +79,9 @@ export class PenViewPipeline extends GProgressivePipeline {
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    overlayPass.outputTarget = null
 
     const outputPass = new GOutputPass()
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
-    outputPass.outputTarget = null
 
     this.dynamicStage.push(
       depthPassDynamic,

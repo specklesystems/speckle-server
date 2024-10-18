@@ -1,31 +1,9 @@
-import {
-  NearestFilter,
-  OrthographicCamera,
-  PerspectiveCamera,
-  Scene,
-  WebGLRenderer,
-  WebGLRenderTarget
-} from 'three'
+import { OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { BaseGPass } from './GPass.js'
 
 export class GColorPass extends BaseGPass {
-  public constructor() {
-    super()
-
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
-      minFilter: NearestFilter,
-      magFilter: NearestFilter
-    })
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this._outputTarget.depthBuffer = true
-    this._outputTarget.stencilBuffer = true
-  }
-
   public get displayName(): string {
-    return 'COLOR'
+    return 'GEOMETRY-COLOR'
   }
 
   public render(

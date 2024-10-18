@@ -11,6 +11,8 @@ import { ObjectLayers } from '../../../../IViewer.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GStencilPass } from '../GStencilPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
+import { GPipeline } from './GPipeline.js'
+import { LinearFilter } from 'three'
 
 export class TAAPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -41,7 +43,6 @@ export class TAAPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
-    opaqueColorPass.outputTarget = null
 
     const transparentColorPass = new GColorPass()
     transparentColorPass.setLayers([
@@ -55,7 +56,6 @@ export class TAAPipeline extends GProgressivePipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
-    transparentColorPass.outputTarget = null
 
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -67,6 +67,10 @@ export class TAAPipeline extends GProgressivePipeline {
     blendPass.setTexture('tAo', progressiveAOPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
+    const renderTarget = GPipeline.createRenderTarget({
+      minFilter: LinearFilter,
+      magFilter: LinearFilter
+    })
     const jitterOpaquePass = new GColorPass()
     jitterOpaquePass.setLayers([
       ObjectLayers.PROPS,
@@ -79,6 +83,7 @@ export class TAAPipeline extends GProgressivePipeline {
     ])
     jitterOpaquePass.setVisibility(ObjectVisibility.OPAQUE)
     jitterOpaquePass.setJitter(true)
+    jitterOpaquePass.outputTarget = renderTarget
 
     const jitterTransparentPass = new GColorPass()
     jitterTransparentPass.setLayers([
@@ -93,10 +98,10 @@ export class TAAPipeline extends GProgressivePipeline {
     ])
     jitterTransparentPass.setVisibility(ObjectVisibility.TRANSPARENT)
     jitterTransparentPass.setJitter(true)
-    jitterTransparentPass.outputTarget = jitterOpaquePass.outputTarget
+    jitterTransparentPass.outputTarget = renderTarget
 
     const taaPass = new GTAAPass()
-    taaPass.inputTexture = jitterTransparentPass.outputTarget?.texture
+    taaPass.inputTexture = renderTarget.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
 
     const outputPass = new GOutputPass()
@@ -121,17 +126,16 @@ export class TAAPipeline extends GProgressivePipeline {
     jitteredStencilPass.setClearFlags(
       ClearFlags.COLOR | ClearFlags.DEPTH | ClearFlags.STENCIL
     )
-    jitteredStencilPass.outputTarget = jitterOpaquePass.outputTarget
+    jitteredStencilPass.outputTarget = renderTarget
 
     const jitteredStencilMaskPass = new GStencilMaskPass()
     jitteredStencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     jitteredStencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     jitteredStencilMaskPass.setClearFlags(ClearFlags.DEPTH)
-    jitteredStencilMaskPass.outputTarget = jitterOpaquePass.outputTarget
+    jitteredStencilMaskPass.outputTarget = renderTarget
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    overlayPass.outputTarget = null
 
     this.dynamicStage.push(
       stencilPass,

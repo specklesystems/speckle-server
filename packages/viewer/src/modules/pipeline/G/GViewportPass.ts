@@ -1,13 +1,11 @@
 import {
   DoubleSide,
   Material,
-  NearestFilter,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
   Plane,
   Scene,
-  WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
@@ -44,17 +42,6 @@ export class GViewportPass extends BaseGPass {
 
   constructor() {
     super()
-
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
-      minFilter: NearestFilter,
-      magFilter: NearestFilter
-    })
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this._outputTarget.depthBuffer = true
-    this._outputTarget.stencilBuffer = true
 
     this.viewportMaterial = new SpeckleViewportMaterial({})
     this.viewportMaterial.blending = NoBlending

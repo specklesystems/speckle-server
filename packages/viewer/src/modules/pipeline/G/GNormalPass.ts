@@ -7,11 +7,11 @@ import {
   PerspectiveCamera,
   Plane,
   Scene,
-  WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
 import SpeckleNormalMaterial from '../../materials/SpeckleNormalMaterial.js'
 import { BaseGPass } from './GPass.js'
+import { GPipeline } from './Pipelines/GPipeline.js'
 
 export class GNormalsPass extends BaseGPass {
   private normalsMaterial: SpeckleNormalMaterial
@@ -27,16 +27,10 @@ export class GNormalsPass extends BaseGPass {
   constructor() {
     super()
 
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
+    this._outputTarget = GPipeline.createRenderTarget({
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this._outputTarget.depthBuffer = true
-    this._outputTarget.stencilBuffer = true
 
     this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
     this.normalsMaterial.blending = NoBlending

@@ -34,7 +34,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
     viewportPass.setVisibility(ObjectVisibility.DEPTH)
-    viewportPass.outputTarget = null
 
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -57,7 +56,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     const stencilSelectPass = new GColorPass()
     stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
-    stencilSelectPass.outputTarget = null
 
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
@@ -66,7 +64,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    overlayPass.outputTarget = null
 
     this.dynamicStage.push(
       stencilPass,

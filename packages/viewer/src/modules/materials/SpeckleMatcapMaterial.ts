@@ -52,6 +52,11 @@ class SpeckleMatcapMaterial extends ExtendedMatcapMaterial {
     return this
   }
 
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    ;(to as SpeckleMatcapMaterial).matcap = (from as SpeckleMatcapMaterial).matcap
+  }
+
   /** Called by three.js render loop */
   public onBeforeRender(
     _this: SpeckleWebGLRenderer,

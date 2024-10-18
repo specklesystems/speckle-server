@@ -1,12 +1,10 @@
 import {
   Color,
   DoubleSide,
-  NearestFilter,
   OrthographicCamera,
   PerspectiveCamera,
   Scene,
-  WebGLRenderer,
-  WebGLRenderTarget
+  WebGLRenderer
 } from 'three'
 import { BaseGPass } from './GPass.js'
 import { WorldTree } from '../../tree/WorldTree.js'
@@ -34,17 +32,6 @@ export class GBasitPass extends BaseGPass {
     super()
     this.tree = tree
     this.speckleRenderer = renderer
-
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
-      minFilter: NearestFilter,
-      magFilter: NearestFilter
-    })
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this._outputTarget.depthBuffer = true
-    this._outputTarget.stencilBuffer = true
   }
 
   public get displayName(): string {

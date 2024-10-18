@@ -32,7 +32,6 @@ export class DefaultPipeline extends GProgressivePipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
-    opaqueColorPass.outputTarget = null
 
     const transparentColorPass = new GColorPass()
     transparentColorPass.setLayers([
@@ -46,7 +45,6 @@ export class DefaultPipeline extends GProgressivePipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
-    transparentColorPass.outputTarget = null
 
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -69,7 +67,6 @@ export class DefaultPipeline extends GProgressivePipeline {
 
     const overlayPass = new GColorPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    overlayPass.outputTarget = null
 
     this.dynamicStage.push(
       stencilPass,

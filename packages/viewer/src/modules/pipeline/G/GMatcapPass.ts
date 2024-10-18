@@ -1,14 +1,12 @@
 import {
   DoubleSide,
   Material,
-  NearestFilter,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
   Plane,
   Scene,
   Texture,
-  WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
@@ -54,17 +52,6 @@ export class GMatcapPass extends BaseGPass {
   constructor() {
     super()
 
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
-      minFilter: NearestFilter,
-      magFilter: NearestFilter
-    })
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this._outputTarget.depthBuffer = true
-    this._outputTarget.stencilBuffer = true
-
     this.matcapMaterial = new SpeckleMatcapMaterial({})
     this.matcapMaterial.blending = NoBlending
     this.matcapMaterial.side = DoubleSide
@@ -80,6 +67,7 @@ export class GMatcapPass extends BaseGPass {
       .then((value: Texture) => {
         this.matcapMaterial.matcap = value
         this.matcapMaterial.needsUpdate = true
+        this.matcapMaterial.needsCopy = true
       })
       .catch((reason) => {
         Logger.error(`Matcap texture failed to load ${reason}`)

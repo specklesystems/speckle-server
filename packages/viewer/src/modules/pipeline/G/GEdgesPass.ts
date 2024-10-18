@@ -6,7 +6,6 @@ import {
   ShaderMaterial,
   Texture,
   Vector2,
-  WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
 
@@ -14,6 +13,7 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import { BaseGPass, PassOptions } from './GPass.js'
 import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges-generator-frag.js'
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
+import { GPipeline } from './Pipelines/GPipeline.js'
 
 export interface EdgePassOptions extends PassOptions {
   depthMultiplier?: number
@@ -54,7 +54,7 @@ export class GEdgePass extends BaseGPass {
   public constructor() {
     super()
 
-    this._outputTarget = new WebGLRenderTarget(256, 256, {
+    this._outputTarget = GPipeline.createRenderTarget({
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })
