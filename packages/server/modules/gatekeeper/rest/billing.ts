@@ -13,11 +13,12 @@ import {
 import {
   WorkspacePlanBillingIntervals,
   paidWorkspacePlans,
-  WorkspacePricingPlans
+  WorkspacePricingPlans,
+  workspacePlanBillingIntervals
 } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
 import {
@@ -41,6 +42,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { GetWorkspacePlanPrice } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
 const router = Router()
 
@@ -80,19 +82,20 @@ const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
 }) => workspacePlanPrices()[workspacePlan][billingInterval]
 
 router.get(
-  '/api/v1/billing/workspaces/:workspaceSlug/checkout-session/:workspacePlan',
+  '/api/v1/billing/workspaces/:workspaceId/checkout-session/:workspacePlan/:billingInterval',
   validateRequest({
     params: z.object({
-      workspaceSlug: z.string().min(1),
-      workspacePlan: paidWorkspacePlans
+      workspaceId: z.string().min(1),
+      workspacePlan: paidWorkspacePlans,
+      billingInterval: workspacePlanBillingIntervals
     })
   }),
   async (req) => {
-    const { workspaceSlug, workspacePlan } = req.params
-    const workspace = await getWorkspaceBySlugFactory({ db })({ workspaceSlug })
+    const { workspaceId, workspacePlan, billingInterval } = req.params
+    const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+
     if (!workspace) throw new WorkspaceNotFoundError()
 
-    const workspaceId = workspace.id
     await authorizeResolver(
       req.context.userId,
       workspaceId,
@@ -109,12 +112,12 @@ router.get(
     const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
 
     const session = await startCheckoutSessionFactory({
-      getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory(),
-      getWorkspacePlan: getWorkspacePlanFactory(),
+      getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
       countRole,
       createCheckoutSession,
-      saveCheckoutSession: saveCheckoutSessionFactory()
-    })({ workspacePlan, workspaceId, workspaceSlug, billingInterval: 'monthly' })
+      saveCheckoutSession: saveCheckoutSessionFactory({ db })
+    })({ workspacePlan, workspaceId, workspaceSlug: workspace.slug, billingInterval })
 
     req.res?.redirect(session.url)
   }
@@ -169,21 +172,27 @@ router.post('/api/v1/billing/webhooks', async (req, res) => {
             : session.subscription.id
 
         // this must use a transaction
+
+        const trx = await db.transaction()
+
         const completeCheckout = completeCheckoutSessionFactory({
-          getCheckoutSession: getCheckoutSessionFactory(),
-          updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory(),
-          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory(),
-          saveWorkspaceSubscription: saveWorkspaceSubscriptionFactory(),
+          getCheckoutSession: getCheckoutSessionFactory({ db: trx }),
+          updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({ db: trx }),
+          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db: trx }),
+          saveWorkspaceSubscription: saveWorkspaceSubscriptionFactory({ db: trx }),
           getSubscriptionData: getSubscriptionDataFactory({
             stripe
           })
         })
 
         try {
-          await completeCheckout({
-            sessionId: session.id,
-            subscriptionId
-          })
+          await withTransaction(
+            completeCheckout({
+              sessionId: session.id,
+              subscriptionId
+            }),
+            trx
+          )
         } catch (err) {
           if (err instanceof WorkspaceAlreadyPaidError) {
             // ignore the request, this is prob a replay from stripe
@@ -196,7 +205,9 @@ router.post('/api/v1/billing/webhooks', async (req, res) => {
 
     case 'checkout.session.expired':
       // delete the checkout session from the DB
-      await deleteCheckoutSessionFactory()({ checkoutSessionId: event.data.object.id })
+      await deleteCheckoutSessionFactory({ db })({
+        checkoutSessionId: event.data.object.id
+      })
       break
 
     default:

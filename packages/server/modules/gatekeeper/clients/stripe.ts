@@ -68,6 +68,8 @@ export const createCheckoutSessionFactory =
       billingInterval,
       workspacePlan,
       workspaceId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       paymentStatus: 'unpaid'
     }
   }

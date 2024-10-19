@@ -12,94 +12,90 @@ import {
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
-import { CheckoutSessionNotFoundError } from '@/modules/gatekeeper/errors/billing'
+import { Knex } from 'knex'
+
+const tables = {
+  workspacePlans: (db: Knex) => db<WorkspacePlan>('workspace_plans'),
+  workspaceCheckoutSessions: (db: Knex) =>
+    db<CheckoutSession>('workspace_checkout_sessions'),
+  workspaceSubscriptions: (db: Knex) =>
+    db<WorkspaceSubscription>('workspace_subscriptions')
+}
 
 export const getWorkspacePlanFactory =
-  (): GetWorkspacePlan =>
-  ({ workspaceId }) => {
-    const maybePlan = workspacePlans.find((plan) => plan.workspaceId === workspaceId)
-    return new Promise((resolve) => {
-      resolve(maybePlan || null)
-    })
+  ({ db }: { db: Knex }): GetWorkspacePlan =>
+  async ({ workspaceId }) => {
+    const workspacePlan = await tables
+      .workspacePlans(db)
+      .select()
+      .where({ workspaceId })
+      .first()
+    return workspacePlan ?? null
   }
 
-const workspacePlans: WorkspacePlan[] = []
-
 const upsertWorkspacePlanFactory =
-  (): UpsertWorkspacePlan =>
-  ({ workspacePlan }) => {
-    const maybePlan = workspacePlans.find(
-      (plan) => plan.workspaceId === workspacePlan.workspaceId
-    )
-    if (maybePlan) {
-      maybePlan.name = workspacePlan.name
-      maybePlan.status = workspacePlan.status
-    } else {
-      workspacePlans.push(workspacePlan)
-    }
-    return new Promise((resolve) => {
-      resolve()
-    })
+  ({ db }: { db: Knex }): UpsertWorkspacePlan =>
+  async ({ workspacePlan }) => {
+    await tables
+      .workspacePlans(db)
+      .insert(workspacePlan)
+      .onConflict('workspaceId')
+      .merge(['name', 'status'])
   }
 
 // this is a typed rebrand of the generic workspace plan upsert
 // this way TS guards the payment plan type validity
-export const upsertPaidWorkspacePlanFactory = (): UpsertPaidWorkspacePlan =>
-  upsertWorkspacePlanFactory()
-
-const checkoutSessions: CheckoutSession[] = []
+export const upsertPaidWorkspacePlanFactory = ({
+  db
+}: {
+  db: Knex
+}): UpsertPaidWorkspacePlan => upsertWorkspacePlanFactory({ db })
 
 export const saveCheckoutSessionFactory =
-  (): SaveCheckoutSession =>
-  ({ checkoutSession }) => {
-    checkoutSessions.push(checkoutSession)
-    return new Promise((resolve) => {
-      resolve()
-    })
+  ({ db }: { db: Knex }): SaveCheckoutSession =>
+  async ({ checkoutSession }) => {
+    await tables.workspaceCheckoutSessions(db).insert(checkoutSession)
   }
 
-export const deleteCheckoutSessionFactory = (): DeleteCheckoutSession => () => {
-  return new Promise((resolve) => {
-    resolve()
-  })
-}
+export const deleteCheckoutSessionFactory =
+  ({ db }: { db: Knex }): DeleteCheckoutSession =>
+  async ({ checkoutSessionId }) => {
+    await tables.workspaceCheckoutSessions(db).delete().where({ id: checkoutSessionId })
+  }
 
 export const getCheckoutSessionFactory =
-  (): GetCheckoutSession =>
-  ({ sessionId }) => {
-    return new Promise((resolve) => {
-      resolve(checkoutSessions.find((session) => session.id === sessionId) || null)
-    })
+  ({ db }: { db: Knex }): GetCheckoutSession =>
+  async ({ sessionId }) => {
+    const checkoutSession = await tables
+      .workspaceCheckoutSessions(db)
+      .select()
+      .where({ id: sessionId })
+      .first()
+    return checkoutSession || null
   }
 
 export const getWorkspaceCheckoutSessionFactory =
-  (): GetWorkspaceCheckoutSession =>
-  ({ workspaceId }) => {
-    return new Promise((resolve) => {
-      resolve(
-        checkoutSessions.find((session) => session.workspaceId === workspaceId) || null
-      )
-    })
+  ({ db }: { db: Knex }): GetWorkspaceCheckoutSession =>
+  async ({ workspaceId }) => {
+    const checkoutSession = await tables
+      .workspaceCheckoutSessions(db)
+      .select()
+      .where({ workspaceId })
+      .first()
+    return checkoutSession || null
   }
 
 export const updateCheckoutSessionStatusFactory =
-  (): UpdateCheckoutSessionStatus =>
-  ({ sessionId, paymentStatus }) => {
-    const session = checkoutSessions.find((session) => session.id === sessionId)
-    if (!session) throw new CheckoutSessionNotFoundError()
-    session.paymentStatus = paymentStatus
-    return new Promise((resolve) => {
-      resolve()
-    })
+  ({ db }: { db: Knex }): UpdateCheckoutSessionStatus =>
+  async ({ sessionId, paymentStatus }) => {
+    await tables
+      .workspaceCheckoutSessions(db)
+      .where({ id: sessionId })
+      .update({ paymentStatus, updatedAt: new Date() })
   }
 
-const workspaceSubscriptions: WorkspaceSubscription[] = []
-
 export const saveWorkspaceSubscriptionFactory =
-  (): SaveWorkspaceSubscription =>
-  ({ workspaceSubscription }) => {
-    workspaceSubscriptions.push(workspaceSubscription)
-    return new Promise((resolve) => {
-      resolve()
-    })
+  ({ db }: { db: Knex }): SaveWorkspaceSubscription =>
+  async ({ workspaceSubscription }) => {
+    await tables.workspaceSubscriptions(db).insert(workspaceSubscription)
   }

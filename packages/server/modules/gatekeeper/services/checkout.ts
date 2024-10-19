@@ -159,6 +159,7 @@ export const completeCheckoutSessionFactory =
 
     const workspaceSubscription = {
       createdAt: new Date(),
+      updatedAt: new Date(),
       currentBillingCycleEnd,
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,

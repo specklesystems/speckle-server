@@ -1,3 +1,4 @@
+import { moduleLogger } from '@/logging/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
@@ -17,6 +18,8 @@ const gatekeeperModule: SpeckleModule = {
       throw new Error(
         'The gatekeeper module needs a valid license to run, contact Speckle to get one.'
       )
+
+    moduleLogger.info('🗝️  Init gatekeeper module')
 
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited

@@ -17,20 +17,21 @@ export type PaidWorkspacePlanStatuses =
 
 export type TrialWorkspacePlanStatuses = 'trial'
 
-export type PaidWorkspacePlan = {
+type BaseWorkspacePlan = {
   workspaceId: string
+}
+
+export type PaidWorkspacePlan = BaseWorkspacePlan & {
   name: PaidWorkspacePlans
   status: PaidWorkspacePlanStatuses
 }
 
-export type TrialWorkspacePlan = {
-  workspaceId: string
+export type TrialWorkspacePlan = BaseWorkspacePlan & {
   name: TrialWorkspacePlans
   status: TrialWorkspacePlanStatuses
 }
 
-export type UnpaidWorkspacePlan = {
-  workspaceId: string
+export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
   name: UnpaidWorkspacePlans
   status: UnpaidWorkspacePlanStatuses
 }
@@ -65,6 +66,8 @@ export type CheckoutSession = SessionInput & {
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
+  createdAt: Date
+  updatedAt: Date
 }
 
 export type SaveCheckoutSession = (args: {
@@ -100,6 +103,7 @@ export type CreateCheckoutSession = (args: {
 export type WorkspaceSubscription = {
   workspaceId: string
   createdAt: Date
+  updatedAt: Date
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
