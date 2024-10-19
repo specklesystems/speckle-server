@@ -64,6 +64,11 @@
           "type": "boolean",
           "description": "High level flag fully toggles multiple emails",
           "default": false
+        },
+        "billingIntegrationEnabled": {
+          "type": "boolean",
+          "description": "High level flag that enables the billing integration",
+          "default": false
         }
       }
     },
