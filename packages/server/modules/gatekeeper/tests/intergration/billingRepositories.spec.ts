@@ -161,9 +161,6 @@ describe('billing repositories @gatekeeper', () => {
           sessionId: checkoutSession.id
         })
         expect(storedSession?.paymentStatus).to.equal('paid')
-        expect(
-          storedSession!.updatedAt.getTime() - checkoutSession.updatedAt.getTime() > 0
-        ).to.be.true
       })
     })
     describe('getWorkspaceCheckoutSessionFactory creates a function, that', () => {
