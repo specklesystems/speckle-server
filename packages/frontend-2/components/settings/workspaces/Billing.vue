@@ -58,7 +58,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col space-y-10">
+      <div v-if="isBillingIntegrationEnabled" class="flex flex-col space-y-10">
         <SettingsSectionHeader title="Start payment" class="pt-10" subheading />
         <div class="flex items-center">
           <div class="flex-1 flex-col pr-6 gap-y-1">
@@ -84,6 +84,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
+import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -105,6 +106,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const isYearlyPlan = ref(false)
 
 const checkoutUrl = (plan: string) =>
