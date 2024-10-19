@@ -81,6 +81,7 @@ const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
   billingInterval
 }) => workspacePlanPrices()[workspacePlan][billingInterval]
 
+// this prob needs to be turned into a GQL resolver for better frontend integration for errors
 router.get(
   '/api/v1/billing/workspaces/:workspaceId/checkout-session/:workspacePlan/:billingInterval',
   validateRequest({

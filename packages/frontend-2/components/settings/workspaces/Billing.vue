@@ -57,6 +57,25 @@
           </FormButton>
         </div>
       </div>
+
+      <div class="flex flex-col space-y-10">
+        <SettingsSectionHeader title="Start payment" class="pt-10" subheading />
+        <div class="flex items-center">
+          <div class="flex-1 flex-col pr-6 gap-y-1">
+            <p class="text-body-xs font-medium text-foreground">Billing cycle</p>
+            <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+              Choose an annual billing cycle for 20% off
+            </p>
+          </div>
+          <FormSwitch v-model="isYearlyPlan" :show-label="true" name="annual billing" />
+        </div>
+        <div class="text-lg">Add the pricing table here</div>
+        <div class="flex justify-between">
+          <FormButton @click="teamCheckout">Team plan</FormButton>
+          <FormButton @click="proCheckout">Pro plan</FormButton>
+          <FormButton @click="businessCheckout">Business plan</FormButton>
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -85,6 +104,23 @@ graphql(`
 const props = defineProps<{
   workspaceId: string
 }>()
+
+const isYearlyPlan = ref(false)
+
+const checkoutUrl = (plan: string) =>
+  `/api/v1/billing/workspaces/${
+    props.workspaceId
+  }/checkout-session/${plan}/${billingCycle()}`
+const billingCycle = () => (isYearlyPlan.value ? 'yearly' : 'monthly')
+const teamCheckout = () => {
+  window.location.href = checkoutUrl('team')
+}
+const proCheckout = () => {
+  window.location.href = checkoutUrl('pro')
+}
+const businessCheckout = () => {
+  window.location.href = checkoutUrl('business')
+}
 
 const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
   workspaceId: props.workspaceId
