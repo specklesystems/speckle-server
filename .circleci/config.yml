@@ -19,6 +19,7 @@ workflows:
       - test-server:
           context:
             - speckle-server-licensing
+            - stripe-integration
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
