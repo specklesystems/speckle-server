@@ -98,7 +98,9 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'unpaid',
             url: '',
             workspaceId,
-            workspacePlan: 'business'
+            workspacePlan: 'business',
+            createdAt: new Date(),
+            updatedAt: new Date()
           }),
           countRole: () => {
             expect.fail()
@@ -130,7 +132,9 @@ describe('checkout @gatekeeper', () => {
         workspacePlan,
         url: 'https://example.com',
         billingInterval,
-        paymentStatus: 'unpaid'
+        paymentStatus: 'unpaid',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
@@ -160,7 +164,9 @@ describe('checkout @gatekeeper', () => {
         workspacePlan,
         url: 'https://example.com',
         billingInterval,
-        paymentStatus: 'unpaid'
+        paymentStatus: 'unpaid',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
@@ -217,7 +223,9 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'paid',
             url: 'https://example.com',
             workspaceId: cryptoRandomString({ length: 10 }),
-            workspacePlan: 'business'
+            workspacePlan: 'business',
+            createdAt: new Date(),
+            updatedAt: new Date()
           }),
           updateCheckoutSessionStatus: async () => {
             expect.fail()
@@ -247,7 +255,9 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'unpaid',
             url: 'https://example.com',
             workspaceId,
-            workspacePlan: 'business'
+            workspacePlan: 'business',
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
 
           let storedWorkspacePlan: PaidWorkspacePlan | undefined = undefined
