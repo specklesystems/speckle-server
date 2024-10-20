@@ -10,7 +10,6 @@ import {
   LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import { createAppToken } from '@/modules/core/services/tokens'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
@@ -48,6 +47,7 @@ import {
 import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
+import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -212,7 +212,7 @@ const createAutomationRunDataFactory =
 export type TriggerAutomationRevisionRunDeps = {
   automateRunTrigger: typeof triggerAutomationRun
   getAutomationToken: GetAutomationToken
-  createAppToken: typeof createAppToken
+  createAppToken: CreateAndStoreAppToken
   upsertAutomationRun: UpsertAutomationRun
   automateRunsEmitter: AutomateRunsEventsEmitter
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata

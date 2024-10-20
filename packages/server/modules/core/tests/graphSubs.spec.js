@@ -7,7 +7,6 @@ const { execute } = require('@apollo/client/core')
 const { SubscriptionClient } = require('subscriptions-transport-ws')
 const ws = require('ws')
 
-const { createPersonalAccessToken } = require('../services/tokens')
 const { beforeEachContext } = require(`@/test/hooks`)
 
 const { sleep, noErrors } = require('@/test/helpers')
@@ -41,7 +40,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -59,6 +57,14 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -78,6 +84,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   })
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -104,6 +111,15 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 let addr

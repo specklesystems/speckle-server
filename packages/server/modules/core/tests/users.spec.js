@@ -3,10 +3,8 @@ const expect = require('chai').expect
 const assert = require('assert')
 
 const {
-  createPersonalAccessToken,
-  revokeToken,
-  validateToken,
-  getUserTokens
+  createPersonalAccessTokenFactory,
+  validateTokenFactory
 } = require('../services/tokens')
 
 const { getBranchesByStreamId } = require('../services/branches')
@@ -90,7 +88,8 @@ const {
   isLastAdminUserFactory,
   deleteUserRecordFactory,
   updateUserServerRoleFactory,
-  searchUsersFactory
+  searchUsersFactory,
+  getUserRoleFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -101,7 +100,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -127,7 +125,22 @@ const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
 const { dbLogger } = require('@/logging/logging')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory,
+  getUserPersonalAccessTokensFactory,
+  revokeUserTokenByIdFactory,
+  getApiTokenByIdFactory,
+  getTokenScopesByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  updateApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getTokenAppInfoFactory } = require('@/modules/auth/repositories/apps')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -178,7 +191,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser: getUserFactory({ db })
+        getUser: getUserFactory({ db }),
+        getServerInfo
       }),
       getUsers
     }),
@@ -250,6 +264,27 @@ const changeUserRole = changeUserRoleFactory({
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 const searchUsers = searchUsersFactory({ db })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const getUserTokens = getUserPersonalAccessTokensFactory({ db })
+const revokeToken = revokeUserTokenByIdFactory({ db })
+const validateToken = validateTokenFactory({
+  revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+  getApiTokenById: getApiTokenByIdFactory({ db }),
+  getTokenAppInfo: getTokenAppInfoFactory({ db }),
+  getTokenScopesById: getTokenScopesByIdFactory({ db }),
+  getUserRole: getUserRoleFactory({ db }),
+  getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory({
+    db
+  }),
+  updateApiToken: updateApiTokenFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

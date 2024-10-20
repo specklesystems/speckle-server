@@ -1,6 +1,4 @@
 require('../bootstrap')
-const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
-
 const { createManyObjects } = require('@/test/helpers')
 const { fetch } = require('undici')
 const { init } = require(`@/app`)
@@ -46,7 +44,16 @@ const {
   getUserFactory,
   legacyGetUserByEmailFactory
 } = require('@/modules/core/repositories/users')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -71,7 +78,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -82,6 +90,14 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 const main = async () => {
   const testStream = {

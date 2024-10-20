@@ -36,10 +36,16 @@ import db from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { createAppToken } from '@/modules/core/services/tokens'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -75,6 +81,14 @@ const initializeEventListeners = () => {
     db
   })
 
+  const createAppToken = createAppTokenFactory({
+    storeApiToken: storeApiTokenFactory({ db }),
+    storeTokenScopes: storeTokenScopesFactory({ db }),
+    storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+      db
+    }),
+    storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+  })
   const triggerFn = triggerAutomationRevisionRunFactory({
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,

@@ -2,6 +2,13 @@ import { db } from '@/db/knex'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -13,8 +20,7 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -26,8 +32,10 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { ServerScope } from '@speckle/shared'
 import { kebabCase, omit } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -54,6 +62,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 export type BasicTestUser = {
@@ -101,5 +117,9 @@ export async function createAuthTokenForUser(
   userId: string,
   scopes: string[] = AllScopes
 ): Promise<string> {
-  return await createPersonalAccessToken(userId, 'test-runner-token', scopes)
+  return await createPersonalAccessToken(
+    userId,
+    'test-runner-token',
+    scopes as ServerScope[]
+  )
 }

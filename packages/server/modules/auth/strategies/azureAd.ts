@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
-import { getServerInfo } from '@/modules/core/services/generic'
 
 import {
   UserInputError,
@@ -31,10 +30,11 @@ import {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const azureAdStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
     findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite

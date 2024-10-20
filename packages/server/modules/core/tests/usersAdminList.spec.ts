@@ -47,7 +47,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -55,10 +54,12 @@ import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -83,7 +84,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

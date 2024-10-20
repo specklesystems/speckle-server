@@ -8,8 +8,7 @@ const { createObject } = require('../services/objects')
 const {
   getCommitsTotalCountByBranchName,
   getCommitsByBranchName,
-  getCommitsByStreamId,
-  getCommitsByUserId
+  getCommitsByStreamId
 } = require('../services/commits')
 const {
   createBranchAndNotifyFactory
@@ -34,7 +33,8 @@ const {
   getCommitBranchFactory,
   switchCommitBranchFactory,
   updateCommitFactory,
-  getStreamCommitCountFactory
+  getStreamCommitCountFactory,
+  legacyGetPaginatedUserCommitsPage
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -98,7 +98,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -112,7 +111,9 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -196,7 +197,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -234,6 +236,7 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 
 describe('Commits @core-commits', () => {
   const user = {

@@ -41,11 +41,13 @@ import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -76,7 +78,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

@@ -3,7 +3,6 @@ import { expect } from 'chai'
 
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
-import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -48,7 +47,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createUserFactory } from '@/modules/core/services/users/management'
@@ -56,7 +54,15 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -81,7 +87,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -118,6 +125,13 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
 })
 
 describe('FileUploads @fileuploads', () => {

@@ -46,8 +46,8 @@ import {
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 /**
  * Convert the initial validation function to a finalization validation function so same logic can be reused
@@ -195,7 +195,7 @@ type FinalizeResourceInviteFactoryDeps = {
   findEmail: FindEmail
   validateAndCreateUserEmail: ValidateAndCreateUserEmail
   collectAndValidateResourceTargets: CollectAndValidateResourceTargets
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
   getUser: GetUser
 }
 

@@ -100,8 +100,9 @@ import {
   updateUserServerRoleFactory
 } from '@/modules/core/repositories/users'
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
-import { getServerInfo } from '@/modules/core/services/generic'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -161,7 +162,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
