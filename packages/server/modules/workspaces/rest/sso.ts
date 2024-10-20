@@ -89,8 +89,8 @@ router.get(
       workspaceSlug: z.string().min(1)
     })
   }),
-  async (req) => {
-    const { workspaceSlug } = req.params
+  async ({ params, res }) => {
+    const { workspaceSlug } = params
 
     const workspace = await getWorkspaceBySlugFactory({ db })({
       workspaceSlug
@@ -100,29 +100,22 @@ router.get(
       throw new Error()
     }
 
-    const { encryptedProviderData } = await db('workspace_sso_providers')
-      .select('*')
-      .where('workspaceId', workspace.id)
-      .join('sso_providers', 'id', 'providerId')
-      .first()
-
-    if (!encryptedProviderData) {
-      throw new Error()
-    }
-
     const encryptionKeyPair = await getEncryptionKeyPair()
-    const decryptor = await buildDecryptor(encryptionKeyPair)
-    const providerJson = await decryptor.decrypt(encryptedProviderData)
-    const { providerName } = JSON.parse(providerJson)
+    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
+
+    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
+      workspaceId: workspace.id
+    })
 
     const limitedWorkspace = {
       name: workspace.name,
       logo: workspace.logo,
       defaultLogoIndex: workspace.defaultLogoIndex,
-      ssoProviderName: providerName
+      ssoProviderName: providerData?.provider?.providerName
     }
 
-    req.res?.json(limitedWorkspace)
+    dispose()
+    res?.json(limitedWorkspace)
   }
 )
 
