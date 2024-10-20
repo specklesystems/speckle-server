@@ -45,9 +45,8 @@ export const getOIDCProviderFactory =
   async ({ validationToken }: { validationToken: string }) => {
     const encryptedProviderData = await redis.get(validationToken)
     if (!encryptedProviderData) return null
-    const provider = oidcProvider.parse(
-      JSON.parse(await decrypt(encryptedProviderData))
-    )
+    const providerDataString = await decrypt(encryptedProviderData)
+    const provider = oidcProvider.parse(JSON.parse(providerDataString))
     return provider
   }
 

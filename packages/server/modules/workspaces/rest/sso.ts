@@ -56,17 +56,15 @@ import {
 } from '@/modules/core/repositories/users'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
-  finalizeAuthMiddlewareFactory,
+  moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
-import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import {
   deleteServerOnlyInvitesFactory,
   findInviteFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
-import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -79,11 +77,12 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 
 const router = Router()
 
+const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
-const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
-  createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUser: legacyGetUserFactory({ db })
-})
+// const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
+//   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
+//   getUser: legacyGetUserFactory({ db })
+// })
 
 /**
  * Generate redirect url used for final step of OIDC flow
@@ -169,7 +168,7 @@ router.get(
     }
 
     const encryptionKeyPair = await getEncryptionKeyPair()
-    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
+    const { decrypt } = await buildDecryptor(encryptionKeyPair)
 
     const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
       workspaceId: workspace.id
@@ -182,7 +181,6 @@ router.get(
       ssoProviderName: providerData?.provider?.providerName
     }
 
-    dispose()
     res?.json(limitedWorkspace)
   }
 )
@@ -191,16 +189,16 @@ router.get(
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/auth',
   sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
   validateRequest({
     params: z.object({
       workspaceSlug: z.string().min(1)
-    }),
-    query: oidcProvider
+    })
   }),
   async ({ params, session, res }) => {
     const { workspaceSlug } = params
     const encryptionKeyPair = await getEncryptionKeyPair()
-    const decryptor = await buildDecryptor(encryptionKeyPair)
+    const { decrypt } = await buildDecryptor(encryptionKeyPair)
     try {
       const workspace = await getWorkspaceBySlugFactory({ db })({
         workspaceSlug
@@ -209,14 +207,13 @@ router.get(
 
       const providerMetadata = await getWorkspaceSsoProviderFactory({
         db,
-        decrypt: decryptor.decrypt
-      })({ workspaceId: params.workspaceSlug })
+        decrypt
+      })({ workspaceId: workspace.id })
       if (!providerMetadata)
         throw new Error('No SSO provider registered for the workspace')
 
       // Redirect to OIDC provider to continue auth flow
       const { provider } = providerMetadata
-      const encryptionKeyPair = await getEncryptionKeyPair()
       const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
       const codeVerifier = await startOIDCSsoProviderValidationFactory({
         getOIDCProviderAttributes,
@@ -237,6 +234,7 @@ router.get(
       session.codeVerifier = await encryptor.encrypt(codeVerifier)
       res?.redirect(authorizationUrl.toString())
     } catch (err) {
+      console.error(err)
       // if things fail, before sending you to the provider, we need to tell it to the user in a nice way
     }
   }
@@ -308,13 +306,14 @@ router.get(
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
   validateRequest({
     params: z.object({
       workspaceSlug: z.string().min(1)
     }),
-    query: z.object({ validate: z.string() })
+    query: z.object({ validate: z.string().optional() })
   }),
-  async (req, res, next) => {
+  async (req, res) => {
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     const workspaceSlug = req.params.workspaceSlug
@@ -325,24 +324,30 @@ router.get(
     let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
 
     // TODO: Billing check - verify workspace has SSO enabled
+    const workspace = await getWorkspaceBySlugFactory({ db })({
+      workspaceSlug: req.params.workspaceSlug
+    })
+    if (!workspace) throw new WorkspaceNotFoundError()
 
     try {
       // Initialize OIDC client based on provider for current request flow
       const encryptionKeyPair = await getEncryptionKeyPair()
       const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
-      const decryptor = await buildDecryptor(encryptionKeyPair)
+      const { decrypt: decryptCodeVerifier } = await buildDecryptor(encryptionKeyPair)
       const encryptedCodeVerifier = req.session.codeVerifier
 
       if (!encryptedCodeVerifier)
         throw new Error('cannot find verification token, restart the flow')
 
-      const codeVerifier = await decryptor.decrypt(encryptedCodeVerifier)
+      const codeVerifier = await decryptCodeVerifier(encryptedCodeVerifier)
 
       if (isValidationFlow) {
         // Get provider configuration from redis
+        const { decrypt: decryptOIDCProvider } = await buildDecryptor(encryptionKeyPair)
+
         provider = await getOIDCProviderFactory({
           redis: getGenericRedis(),
-          decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
+          decrypt: decryptOIDCProvider
         })({
           validationToken: codeVerifier
         })
@@ -350,10 +355,12 @@ router.get(
         if (!provider) throw new Error('validation request not found, please retry')
       } else {
         // Get stored provider configuration
+        const { decrypt: decryptSsoProvider } = await buildDecryptor(encryptionKeyPair)
+
         const providerMetadata = await getWorkspaceSsoProviderFactory({
           db,
-          decrypt: decryptor.decrypt
-        })({ workspaceId: workspaceSlug })
+          decrypt: decryptSsoProvider
+        })({ workspaceId: workspace.id })
 
         if (!providerMetadata?.provider) throw new Error('Could not find SSO provider')
 
@@ -374,12 +381,6 @@ router.get(
       if (!ssoProviderUserInfo || !ssoProviderUserInfo.email)
         throw new Error('This should never happen, we are asking for an email claim')
 
-      // Get information about the workspace we are signing in to
-      const workspace = await getWorkspaceBySlugFactory({ db })({
-        workspaceSlug: req.params.workspaceSlug
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
-
       if (isValidationFlow) {
         // OIDC configuration verification flow: the user is attempting to configure SSO for their workspace
 
@@ -394,11 +395,13 @@ router.get(
 
         // Write SSO configuration
         const trx = await db.transaction()
-        // TODO: Return new provider record and store id
+        const { decrypt: decryptExistingSsoProvider } = await buildDecryptor(
+          encryptionKeyPair
+        )
         const saveSsoProviderRegistration = saveSsoProviderRegistrationFactory({
           getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
             db: trx,
-            decrypt: decryptor.decrypt
+            decrypt: decryptExistingSsoProvider
           }),
           associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory({
             db: trx
@@ -586,9 +589,8 @@ router.get(
             `?settings=workspace/security&workspace=${workspaceSlug}`
           )
         }
-        req.authRedirectPath = redirectUrlFragments.join()
 
-        return next()
+        res.redirect(buildFinalizeUrl(workspaceSlug, false).toString())
       }
     } catch (err) {
       const warnMessage = isValidationFlow
@@ -603,8 +605,7 @@ router.get(
       })
       res.redirect(redirectUrl.toString())
     }
-  },
-  finalizeAuthMiddleware
+  }
 )
 
 export default router
