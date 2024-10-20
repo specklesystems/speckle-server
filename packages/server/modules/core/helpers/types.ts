@@ -88,6 +88,10 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
   migration?: { movedFrom?: string; movedTo?: string }
+  configuration: {
+    objectSizeLimitBytes: number
+    objectMultipartUploadSizeLimitBytes: number
+  }
 }
 
 export type CommitRecord = {

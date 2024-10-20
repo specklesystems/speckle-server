@@ -1,8 +1,7 @@
 import { db } from '@/db/knex'
-import {
-  addCommitDeletedActivity,
-  addCommitMovedActivity
-} from '@/modules/activitystream/services/commitActivity'
+import { AddCommitMovedActivity } from '@/modules/activitystream/domain/operations'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addCommitDeletedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   GetStreamBranchByName,
   StoreBranch
@@ -12,6 +11,7 @@ import {
   MoveCommitsToBranch,
   ValidateAndBatchMoveCommits
 } from '@/modules/core/domain/commits/operations'
+import { GetStreams } from '@/modules/core/domain/streams/operations'
 import {
   CommitInvalidAccessError,
   CommitBatchUpdateError
@@ -27,8 +27,9 @@ import {
   deleteCommitsFactory,
   getCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreams } from '@/modules/core/repositories/streams'
+import { getStreamsFactory } from '@/modules/core/repositories/streams'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { difference, groupBy, has, keyBy } from 'lodash'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
@@ -38,7 +39,7 @@ const isOldBatchInput = (i: CommitBatchInput): i is OldBatchInput => has(i, 'com
 
 type ValidateBatchBaseRulesDeps = {
   getCommits: GetCommits
-  getStreams: typeof getStreams
+  getStreams: GetStreams
 }
 
 /**
@@ -147,7 +148,7 @@ async function validateCommitsDelete(
 ) {
   const validateBatchBaseRules = validateBatchBaseRulesFactory({
     getCommits: getCommitsFactory({ db }),
-    getStreams
+    getStreams: getStreamsFactory({ db })
   })
   return await validateBatchBaseRules(params, userId)
 }
@@ -160,7 +161,7 @@ export const batchMoveCommitsFactory =
     deps: ValidateCommitsMoveDeps & {
       createBranch: StoreBranch
       moveCommitsToBranch: MoveCommitsToBranch
-      addCommitMovedActivity: typeof addCommitMovedActivity
+      addCommitMovedActivity: AddCommitMovedActivity
     }
   ): ValidateAndBatchMoveCommits =>
   async (params: CommitsMoveInput | MoveVersionsInput, userId: string) => {
@@ -217,7 +218,10 @@ export async function batchDeleteCommits(
     await deleteCommitsFactory({ db })(commitIds)
     await Promise.all(
       commitsWithStreams.map(({ commit, stream }) =>
-        addCommitDeletedActivity({
+        addCommitDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })({
           commitId: commit.id,
           streamId: stream.id,
           userId,

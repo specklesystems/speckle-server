@@ -38,7 +38,7 @@ import {
 import { truncateTables } from '@/test/hooks'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  grantStreamPermissions,
+  grantStreamPermissionsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { omit } from 'lodash'
@@ -58,6 +58,7 @@ const createUserEmail = createUserEmailFactory({ db })
 const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({

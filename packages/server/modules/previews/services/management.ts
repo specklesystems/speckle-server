@@ -1,5 +1,5 @@
 import { logger } from '@/logging/logging'
-import { getStream } from '@/modules/core/repositories/streams'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import { getObject } from '@/modules/core/services/objects'
 import {
   CheckStreamPermissions,
@@ -83,7 +83,7 @@ export const getObjectPreviewBufferOrFilepathFactory =
 export const sendObjectPreviewFactory =
   (deps: {
     getObjectPreviewBufferOrFilepath: GetObjectPreviewBufferOrFilepath
-    getStream: typeof getStream
+    getStream: GetStream
     makeOgImage: typeof makeOgImage
   }): SendObjectPreview =>
   async (req, res, streamId, objectId, angle) => {
@@ -136,9 +136,10 @@ export const checkStreamPermissionsFactory =
   (deps: {
     validateScopes: typeof validateScopes
     authorizeResolver: typeof authorizeResolver
+    getStream: GetStream
   }): CheckStreamPermissions =>
   async (req) => {
-    const stream = await getStream({
+    const stream = await deps.getStream({
       streamId: req.params.streamId,
       userId: req.context.userId
     })

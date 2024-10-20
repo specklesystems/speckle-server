@@ -32,7 +32,7 @@ import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
@@ -64,7 +64,7 @@ import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -393,7 +393,8 @@ export async function init() {
       next()
     }
   )
-  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser }))
+  if (enableMixpanel())
+    app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)

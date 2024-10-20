@@ -1,6 +1,5 @@
 import { pubsub } from '@/modules/shared/utils/subscriptions'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   streamResourceCheckFactory,
@@ -96,7 +95,9 @@ import {
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 
+const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })

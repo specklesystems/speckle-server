@@ -1821,7 +1821,7 @@ export type Project = {
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
-  version?: Maybe<Version>;
+  version: Version;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -4181,8 +4181,8 @@ export type WorkspaceRoleUpdateInput = {
 };
 
 export type WorkspaceTeamFilter = {
-  /** Limit team members to provided role */
-  role?: InputMaybe<Scalars['String']['input']>;
+  /** Limit team members to provided role(s) */
+  roles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Search for team members by name or email */
   search?: InputMaybe<Scalars['String']['input']>;
 };

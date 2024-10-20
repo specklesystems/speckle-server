@@ -26,7 +26,16 @@
           </div>
         </section>
         <section>
-          <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+            <FormButton
+              color="outline"
+              size="sm"
+              @click.stop="router.push(projectsRoute)"
+            >
+              View all
+            </FormButton>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
             <template v-if="hasProjects">
               <DashboardProjectCard
@@ -69,7 +78,12 @@ import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import GhostContentAPI from '@tryghost/content-api'
-import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/route'
+import {
+  docsPageUrl,
+  forumPageUrl,
+  homeRoute,
+  projectsRoute
+} from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -99,6 +113,7 @@ const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, 
   server: false
 })
 const { isGuest } = useActiveUser()
+const router = useRouter()
 
 const openNewProject = ref(false)
 
@@ -168,7 +183,8 @@ async function fetchTutorials() {
       id: post.id,
       readingTime: post.reading_time,
       publishedAt: post.published_at,
-      url: post.url,
+      // Temporary replacement until we swap to WebFlow API
+      url: post.url?.replace('https://v1.speckle.systems', 'https://speckle.systems'),
       title: post.title,
       featureImage: getResizedGhostImage({ url: post.feature_image, width: 600 })
     }))

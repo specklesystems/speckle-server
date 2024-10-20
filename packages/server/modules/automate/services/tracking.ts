@@ -17,7 +17,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
-import { getUserById } from '@/modules/core/services/users'
+import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
 
@@ -37,7 +37,7 @@ export type AutomateTrackingDeps = {
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   getFullAutomationRunById: GetFullAutomationRunById
   getCommit: GetCommit
-  getUserById: typeof getUserById
+  getUser: LegacyGetUser
 }
 
 const onAutomationRunStatusUpdatedFactory =
@@ -103,7 +103,7 @@ const getUserEmailFromAutomationRunFactory =
         if (!version) throw new Error("Version doesn't exist any more")
         const userId = version.author
         if (userId) {
-          const user = await deps.getUserById({ userId })
+          const user = await deps.getUser(userId)
           if (user) userEmail = user.email
         }
 

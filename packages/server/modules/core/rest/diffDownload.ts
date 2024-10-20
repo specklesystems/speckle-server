@@ -72,21 +72,18 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
-
-        const speckleObjStreamCloseHandler = () => {
-          // https://knexjs.org/faq/recipes.html#manually-closing-streams
+        // https://knexjs.org/faq/recipes.html#manually-closing-streams
+        // https://github.com/knex/knex/issues/2324
+        req.on('close', () => {
           dbStream.end.bind(dbStream)
-        }
-
-        speckleObjStream.once('close', speckleObjStreamCloseHandler)
+          dbStream.destroy.bind(dbStream)
+        })
 
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
         })
-
-        speckleObjStream.removeListener('close', speckleObjStreamCloseHandler)
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)

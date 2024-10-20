@@ -18,8 +18,6 @@ import {
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-
-import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { ModelsEmitter, ModelsEventsEmitter } from '@/modules/core/events/modelsEmitter'
@@ -33,6 +31,10 @@ import {
   UpdateBranch,
   UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
+import {
+  GetStream,
+  MarkBranchStreamUpdated
+} from '@/modules/core/domain/streams/operations'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -109,10 +111,10 @@ export const updateBranchAndNotifyFactory =
 
 export const deleteBranchAndNotifyFactory =
   (deps: {
-    getStream: typeof getStream
+    getStream: GetStream
     getBranchById: GetBranchById
     modelsEventsEmitter: ModelsEventsEmitter
-    markBranchStreamUpdated: typeof markBranchStreamUpdated
+    markBranchStreamUpdated: MarkBranchStreamUpdated
     addBranchDeletedActivity: typeof addBranchDeletedActivity
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>

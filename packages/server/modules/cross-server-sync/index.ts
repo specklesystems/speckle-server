@@ -1,11 +1,13 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
@@ -20,6 +22,7 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   createBranchFactory,
@@ -40,14 +43,20 @@ import {
   getObjectFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
-  getOnboardingBaseStream,
-  getStream,
-  getStreamCollaborators,
-  markCommitStreamUpdated,
-  markOnboardingBaseStream
+  createStreamFactory,
+  getOnboardingBaseStreamFactory,
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
+  markCommitStreamUpdatedFactory,
+  markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
-import { getFirstAdmin, getUser } from '@/modules/core/repositories/users'
+import {
+  getFirstAdminFactory,
+  getUserFactory,
+  getUsersFactory
+} from '@/modules/core/repositories/users'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import {
@@ -55,11 +64,21 @@ import {
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { createObject } from '@/modules/core/services/objects'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
+import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -68,6 +87,12 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    const getServerInfo = getServerInfoFactory({ db })
+    const getUser = getUserFactory({ db })
+    const getUsers = getUsersFactory({ db })
+    const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+    const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
     const markCommentViewed = markCommentViewedFactory({ db })
@@ -113,17 +138,49 @@ const crossServerSyncModule: SpeckleModule = {
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity
+      addCommitCreatedActivity: addCommitCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
+    const createStreamReturnRecord = createStreamReturnRecordFactory({
+      inviteUsersToProject: inviteUsersToProjectFactory({
+        createAndSendInvite: createAndSendInviteFactory({
+          findUserByTarget: findUserByTargetFactory({ db }),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+            getStream
+          }),
+          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+            getStream
+          }),
+          emitEvent: ({ eventName, payload }) =>
+            getEventBus().emit({
+              eventName,
+              payload
+            }),
+          getUser,
+          getServerInfo
+        }),
+        getUsers
+      }),
+      createStream: createStreamFactory({ db }),
+      createBranch: createBranchFactory({ db }),
+      addStreamCreatedActivity: addStreamCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      }),
+      projectsEventsEmitter: ProjectsEmitter.emit
+    })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
-      getOnboardingBaseStream,
-      getFirstAdmin,
+      getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db }),
+      getFirstAdmin: getFirstAdminFactory({ db }),
       downloadProject: downloadProjectFactory({
         downloadCommit: downloadCommitFactory({
           getStream,
           getStreamBranchByName,
-          getStreamCollaborators,
+          getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
           getUser,
           createCommitByBranchId,
           createObject,

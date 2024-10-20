@@ -7,7 +7,18 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  CommitCreateInput,
+  CommitUpdateInput,
+  ProjectUpdateInput,
+  StreamUpdateInput,
+  UpdateVersionInput
+} from '@/modules/core/graph/generated/graphql'
+import {
+  CommitRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 
 export type GetActivity = (
   streamId: string,
@@ -168,4 +179,64 @@ export type AddStreamInviteSentOutActivity = (params: {
   inviterId: string
   inviteTargetEmail: string | null
   stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamDeletedActivity = (params: {
+  streamId: string
+  deleterId: string
+}) => Promise<void>
+
+export type AddStreamUpdatedActivity = (params: {
+  streamId: string
+  updaterId: string
+  oldStream: StreamRecord
+  newStream: StreamRecord
+  update: ProjectUpdateInput | StreamUpdateInput
+}) => Promise<void>
+
+export type AddStreamAccessRequestedActivity = (params: {
+  streamId: string
+  requesterId: string
+}) => Promise<void>
+
+export type AddStreamAccessRequestDeclinedActivity = (params: {
+  streamId: string
+  requesterId: string
+  declinerId: string
+}) => Promise<void>
+
+export type AddCommitCreatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  input: CommitCreateInput
+  branchName: string
+  modelId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitUpdatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalCommit: CommitRecord
+  update: CommitUpdateInput | UpdateVersionInput
+  newCommit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitMovedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalBranchId: string
+  newBranchId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitDeletedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  commit: CommitRecord
+  branchId: string
 }) => Promise<void>

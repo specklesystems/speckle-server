@@ -7,10 +7,10 @@ import { WorldTree } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 
 export class ObjLoader extends Loader {
-  private baseLoader: OBJLoader
-  private converter: ObjConverter
-  private tree: WorldTree
-  private isFinished: boolean = false
+  protected baseLoader: OBJLoader
+  protected converter: ObjConverter
+  protected tree: WorldTree
+  protected isFinished: boolean = false
 
   public get resource(): string {
     return this._resource

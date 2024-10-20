@@ -418,9 +418,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -477,10 +474,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -576,10 +569,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -607,10 +596,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -654,10 +639,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -699,10 +680,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -731,10 +708,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -786,10 +759,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -813,7 +782,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: *docker-node-image
-    resource_class: small
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -823,9 +792,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -1094,9 +1060,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1167,9 +1130,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1209,9 +1169,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache

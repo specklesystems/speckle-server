@@ -33,7 +33,7 @@
 
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
+          <UserAvatar v-if="isInvite(item)" hide-tooltip :user="item.invitedBy" />
           <span class="truncate">
             {{ isInvite(item) ? item.invitedBy.name : '' }}
           </span>
@@ -129,7 +129,7 @@ const invites = computed(() => result.value?.admin.inviteList.items || [])
 const actionItems: LayoutMenuItem[][] = [
   [
     { title: 'Resend invitation', id: 'resend-invite' },
-    { title: 'Delete invitation', id: 'delete-invite' }
+    { title: 'Delete invitation...', id: 'delete-invite' }
   ]
 ]
 

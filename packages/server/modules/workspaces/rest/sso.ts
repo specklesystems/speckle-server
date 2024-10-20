@@ -36,14 +36,14 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getUserById } from '@/modules/core/services/users'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 
 const router = Router()
 
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 const buildAuthRedirectUrl = (workspaceSlug: string): URL =>
@@ -144,6 +144,7 @@ router.get(
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     let provider: OIDCProvider | null = null
+
     if (req.query.validate === 'true') {
       const workspace = await getWorkspaceBySlugFactory({ db })({
         workspaceSlug: req.params.workspaceSlug

@@ -6,7 +6,6 @@ import {
   sendActivityNotificationsFactory
 } from '@/modules/activitystream/services/summary'
 import { expect } from 'chai'
-import { createStream, deleteStream, getStream } from '@/modules/core/services/streams'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
@@ -19,16 +18,78 @@ import {
   saveActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
+import {
+  createStreamFactory,
+  deleteStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,
-  getActivity: getActivityFactory({ db })
+  getActivity: getActivityFactory({ db }),
+  getUser
 })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const deleteStream = deleteStreamFactory({ db })
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {
@@ -110,7 +171,7 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
-      await deleteStream({ streamId })
+      await deleteStream(streamId)
       const summary = await createActivitySummary({
         userId: userA.id,
         streamIds: [streamId],

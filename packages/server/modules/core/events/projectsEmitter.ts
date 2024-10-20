@@ -17,3 +17,5 @@ const { emit, listen } = initializeModuleEventEmitter<ProjectEventsPayloads>({
 })
 
 export const ProjectsEmitter = { emit, listen, events: ProjectEvents }
+export type ProjectsEventsEmitter = (typeof ProjectsEmitter)['emit']
+export type ProjectsEventsListener = (typeof ProjectsEmitter)['listen']
