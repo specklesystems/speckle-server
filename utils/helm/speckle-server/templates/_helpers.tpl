@@ -580,6 +580,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MULTIPLE_EMAILS_MODULE_ENABLED
   value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
 
+- name: FF_BILLING_INTEGRATION_ENABLED
+  value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}

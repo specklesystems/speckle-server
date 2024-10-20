@@ -57,7 +57,8 @@ const getEnabledModuleNames = () => {
   const {
     FF_AUTOMATE_MODULE_ENABLED,
     FF_GENDOAI_MODULE_ENABLED,
-    FF_WORKSPACES_MODULE_ENABLED
+    FF_WORKSPACES_MODULE_ENABLED,
+    FF_GATEKEEPER_MODULE_ENABLED
   } = getFeatureFlags()
   const moduleNames = [
     'accessrequests',
@@ -82,6 +83,7 @@ const getEnabledModuleNames = () => {
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
   if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
+  if (FF_GATEKEEPER_MODULE_ENABLED) moduleNames.push('gatekeeper')
   return moduleNames
 }
 

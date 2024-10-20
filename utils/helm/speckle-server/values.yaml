@@ -47,6 +47,8 @@ featureFlags:
   workspaceSsoEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
+  ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
+  billingIntegrationEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

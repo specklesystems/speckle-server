@@ -123,6 +123,8 @@ spec:
             value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
             value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_BILLING_INTEGRATION_ENABLED
+            value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
