@@ -1,10 +1,11 @@
 import { db } from '@/db/knex'
 import {
-  addCommitCreatedActivity,
-  addCommitDeletedActivity,
-  addCommitReceivedActivity,
-  addCommitUpdatedActivity
-} from '@/modules/activitystream/services/commitActivity'
+  AddCommitCreatedActivity,
+  AddCommitDeletedActivity,
+  AddCommitUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addCommitReceivedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   GetBranchById,
   GetStreamBranchByName,
@@ -25,7 +26,11 @@ import {
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
 import { GetObject } from '@/modules/core/domain/objects/operations'
-import { GetCommitStream, GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  GetCommitStream,
+  GetStream,
+  MarkCommitStreamUpdated
+} from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
   CommitDeleteError,
@@ -44,8 +49,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
-import { markCommitStreamUpdated } from '@/modules/core/repositories/streams'
-import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
 export async function markCommitReceivedAndNotify(params: {
@@ -73,10 +77,12 @@ export async function markCommitReceivedAndNotify(params: {
     )
   }
 
-  await addCommitReceivedActivity({
-    input: oldInput,
-    userId
-  })
+  await addCommitReceivedActivityFactory({ saveActivity: saveActivityFactory({ db }) })(
+    {
+      input: oldInput,
+      userId
+    }
+  )
 }
 
 export const createCommitByBranchIdFactory =
@@ -86,24 +92,12 @@ export const createCommitByBranchIdFactory =
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     versionsEventEmitter: VersionsEventEmitter
-    addCommitCreatedActivity: typeof addCommitCreatedActivity
+    addCommitCreatedActivity: AddCommitCreatedActivity
   }): CreateCommitByBranchId =>
-  async (
-    params: {
-      streamId: string
-      branchId: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       branchId,
@@ -187,19 +181,7 @@ export const createCommitByBranchNameFactory =
     getStreamBranchByName: GetStreamBranchByName
     getBranchById: GetBranchById
   }): CreateCommitByBranchName =>
-  async (
-    params: {
-      streamId: string
-      branchName: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       objectId,
@@ -256,8 +238,8 @@ export const updateCommitAndNotifyFactory =
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
-    addCommitUpdatedActivity: typeof addCommitUpdatedActivity
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    addCommitUpdatedActivity: AddCommitUpdatedActivity
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
   }): UpdateCommitAndNotify =>
   async (params: CommitUpdateInput | UpdateVersionInput, userId: string) => {
@@ -356,10 +338,10 @@ export const updateCommitAndNotifyFactory =
 export const deleteCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
-    markCommitStreamUpdated: typeof markCommitStreamUpdated
+    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
-    addCommitDeletedActivity: typeof addCommitDeletedActivity
+    addCommitDeletedActivity: AddCommitDeletedActivity
   }): DeleteCommitAndNotify =>
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)

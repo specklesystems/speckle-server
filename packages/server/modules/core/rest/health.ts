@@ -1,5 +1,4 @@
 import * as express from 'express'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import {
   getRedisUrl,
@@ -10,6 +9,7 @@ import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
 import type { Knex } from 'knex'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 type FreeConnectionsCalculator = {
   mean: () => number
@@ -159,6 +159,8 @@ type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 type DBCheck = () => Promise<CheckResponse>
 
 const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
+  const getServerInfo = getServerInfoFactory({ db })
+
   try {
     await getServerInfo()
   } catch (err) {

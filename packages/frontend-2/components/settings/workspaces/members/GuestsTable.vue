@@ -25,7 +25,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item.user" />
+          <UserAvatar hide-tooltip :user="item.user" />
           <span class="truncate text-body-xs text-foreground">
             {{ item.user.name }}
           </span>
@@ -163,7 +163,8 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
     filter: {
-      search: search.value
+      search: search.value,
+      roles: [Roles.Workspace.Guest]
     },
     workspaceId: props.workspaceId
   }),

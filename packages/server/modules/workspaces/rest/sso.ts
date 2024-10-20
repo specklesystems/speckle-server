@@ -42,27 +42,47 @@ import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import {
   createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
   findEmailFactory,
   findEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { createUser, getUser, getUserById } from '@/modules/core/services/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   finalizeAuthMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 
 const router = Router()
 
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 /**
@@ -129,6 +149,45 @@ const buildErrorUrl = ({
   return url
 }
 
+/** GET Public information about the workspace, including SSO provider metadata */
+router.get(
+  '/api/v1/workspaces/:workspaceSlug/sso',
+  validateRequest({
+    params: z.object({
+      workspaceSlug: z.string().min(1)
+    })
+  }),
+  async ({ params, res }) => {
+    const { workspaceSlug } = params
+
+    const workspace = await getWorkspaceBySlugFactory({ db })({
+      workspaceSlug
+    })
+
+    if (!workspace) {
+      throw new Error()
+    }
+
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
+
+    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
+      workspaceId: workspace.id
+    })
+
+    const limitedWorkspace = {
+      name: workspace.name,
+      logo: workspace.logo,
+      defaultLogoIndex: workspace.defaultLogoIndex,
+      ssoProviderName: providerData?.provider?.providerName
+    }
+
+    dispose()
+    res?.json(limitedWorkspace)
+  }
+)
+
+/** Begin SSO sign-in or sign-up flow */
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/auth',
   sessionMiddleware,
@@ -183,6 +242,7 @@ router.get(
   }
 )
 
+/** Begin SSO configuration flow */
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
@@ -244,6 +304,7 @@ router.get(
   }
 )
 
+/** Finalize SSO flow for all paths */
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
@@ -373,7 +434,7 @@ router.get(
           email: ssoProviderUserInfo.email
         })
         const existingSpeckleUser: Pick<UserRecord, 'id' | 'email'> | null =
-          await getUser(userEmail?.userId)
+          await getUserFactory({ db })(userEmail?.userId ?? '')
 
         // TODO: Validate link between SSO user email and Speckle user
         // Link occurs when an already signed-in user signs in with SSO
@@ -403,6 +464,10 @@ router.get(
             // Create Speckle user
             const { name, email, email_verified } = ssoProviderUserInfo
 
+            if (!name) {
+              throw new Error('SSO provider user requires a name')
+            }
+
             if (!email_verified) {
               throw new Error('Cannot sign in with unverified email')
             }
@@ -412,7 +477,32 @@ router.get(
               email,
               verified: true
             }
-            const newSpeckleUserId = await createUser(newSpeckleUser)
+            const newSpeckleUserId = await createUserFactory({
+              getServerInfo: getServerInfoFactory({ db }),
+              findEmail: findEmailFactory({ db }),
+              storeUser: storeUserFactory({ db }),
+              countAdminUsers: countAdminUsersFactory({ db }),
+              storeUserAcl: storeUserAclFactory({ db }),
+              validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+                createUserEmail: createUserEmailFactory({ db }),
+                ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+                findEmail: findEmailFactory({ db }),
+                updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                  deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                  updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+                }),
+                requestNewEmailVerification: requestNewEmailVerificationFactory({
+                  findEmail: findEmailFactory({ db }),
+                  getUser: getUserFactory({ db }),
+                  getServerInfo: getServerInfoFactory({ db }),
+                  deleteOldAndInsertNewVerification:
+                    deleteOldAndInsertNewVerificationFactory({ db }),
+                  sendEmail,
+                  renderEmail
+                })
+              }),
+              usersEventsEmitter: UsersEmitter.emit
+            })(newSpeckleUser)
 
             // Add user to workspace with role specified in invite
             const { role: workspaceRole } = invite.resource

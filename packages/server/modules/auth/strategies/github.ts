@@ -3,8 +3,6 @@
 import passport from 'passport'
 import type { VerifyCallback } from 'passport-oauth2'
 import { Strategy as GithubStrategy, type Profile } from 'passport-github2'
-import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   UserInputError,
   UnverifiedEmailSSOLoginError
@@ -28,12 +26,18 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
+import crs from 'crypto-random-string'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const githubStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
-    findOrCreateUser: typeof findOrCreateUser
+    getServerInfo: GetServerInfo
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -86,7 +90,7 @@ const githubStrategyBuilderFactory =
             throw new Error('No email provided by Github')
           }
 
-          const name = profile.displayName || profile.username
+          const name = profile.displayName || profile.username || crs({ length: 10 })
           const bio = get(profile, '_json.bio') || undefined
 
           const user = { email, name, bio }

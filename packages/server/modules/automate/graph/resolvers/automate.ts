@@ -53,7 +53,6 @@ import {
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/core/index'
-import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -107,12 +106,20 @@ import {
 import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { createAppToken } from '@/modules/core/services/tokens'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
+const getUser = getUserFactory({ db })
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
@@ -137,6 +144,14 @@ const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
 const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {

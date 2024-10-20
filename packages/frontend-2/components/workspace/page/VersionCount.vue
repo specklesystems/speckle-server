@@ -9,7 +9,7 @@
       <span class="font-medium">
         {{ versionsCount.current }}/{{ versionsCount.max }}
       </span>
-      model versions used
+      free model versions
     </div>
   </div>
 </template>

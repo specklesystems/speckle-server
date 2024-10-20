@@ -1,12 +1,14 @@
 import { db } from '@/db/knex'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   EmailTemplateParams,
   renderEmail
@@ -19,7 +21,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 
 type ValidateMessageDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
   getStream: GetStream
 }
 
@@ -100,7 +102,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
 const streamAccessRequestApprovedHandlerFactory =
   (
     deps: {
-      getServerInfo: typeof getServerInfo
+      getServerInfo: GetServerInfo
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
     } & ValidateMessageDeps
@@ -127,10 +129,10 @@ const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
   ...args
 ) => {
   const streamAccessRequestApprovedHandler = streamAccessRequestApprovedHandlerFactory({
-    getServerInfo,
+    getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail,
-    getUser,
+    getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db })
   })
   return streamAccessRequestApprovedHandler(...args)

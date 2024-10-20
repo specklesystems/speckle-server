@@ -1,4 +1,3 @@
-import { getServerInfo as getServerInfoFn } from '@/modules/core/services/generic'
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
   CountWebhooksByStreamId,
@@ -12,13 +11,12 @@ import { Webhook } from '@/modules/webhooks/domain/types'
 import { SetValuesNullable } from '@speckle/shared'
 import crs from 'crypto-random-string'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import {
-  getUser as getUserFn,
-  UserWithOptionalRole
-} from '@/modules/core/repositories/users'
 import { Knex } from 'knex'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const MAX_STREAM_WEBHOOKS = 100
 
@@ -107,10 +105,10 @@ export const dispatchStreamEventFactory =
     getUser
   }: {
     db: Knex // TODO: this should not be injected here
-    getServerInfo: typeof getServerInfoFn
+    getServerInfo: GetServerInfo
     getStream: GetStream
     createWebhookEvent: CreateWebhookEvent
-    getUser: typeof getUserFn
+    getUser: GetUser
   }) =>
   async ({
     streamId,

@@ -26,6 +26,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     autoFocus?: boolean
     showClear?: boolean
     useLabelInErrors?: boolean
+    customErrorMessage?: string
     hideErrorMessage?: boolean
     color?: InputColor
     labelPosition?: LabelPosition
@@ -41,11 +42,15 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 }) {
   const { props, inputEl, emit, options } = params
 
-  const { value, errorMessage: error } = useField<V>(props.name, props.rules, {
-    validateOnMount: unref(props.validateOnMount),
-    validateOnValueUpdate: unref(props.validateOnValueUpdate),
-    initialValue: unref(props.modelValue) || undefined
-  })
+  const { value, errorMessage: veeErrorMessage } = useField<V>(
+    props.name,
+    props.rules,
+    {
+      validateOnMount: unref(props.validateOnMount),
+      validateOnValueUpdate: unref(props.validateOnValueUpdate),
+      initialValue: unref(props.modelValue) || undefined
+    }
+  )
 
   const labelClasses = computed(() => {
     const classParts = [
@@ -76,7 +81,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
       coreInputClasses.value
     ]
 
-    if (error.value) {
+    if (hasError.value) {
       classParts.push('!border-danger')
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
@@ -99,11 +104,18 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   const internalHelpTipId = ref(nanoid())
 
   const title = computed(() => unref(props.label) || unref(props.name))
+
   const errorMessage = computed(() => {
-    const base = error.value
+    if (unref(props.customErrorMessage)) {
+      return unref(props.customErrorMessage)
+    }
+
+    const base = veeErrorMessage.value
     if (!base || !unref(props.useLabelInErrors)) return base
     return base.replace('Value', title.value)
   })
+
+  const hasError = computed(() => !!errorMessage.value)
 
   const hideHelpTip = computed(
     () => errorMessage.value && unref(props.hideErrorMessage)
@@ -115,7 +127,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   )
   const helpTipClasses = computed((): string => {
     const classParts = ['text-body-2xs break-words']
-    classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
+    classParts.push(hasError.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })
   const shouldShowClear = computed(() => {
@@ -154,7 +166,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     clear,
     focus,
     labelClasses,
-    shouldShowClear
+    shouldShowClear,
+    hasError
   }
 }
 

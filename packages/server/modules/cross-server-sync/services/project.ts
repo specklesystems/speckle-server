@@ -1,5 +1,4 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
@@ -19,6 +18,7 @@ import {
   GetStreamBranchByName
 } from '@/modules/core/domain/branches/operations'
 import { CreateStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -48,7 +48,7 @@ const projectMetadataQuery = gql`
 `
 
 type GetLocalResourcesDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =

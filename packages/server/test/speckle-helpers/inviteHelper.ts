@@ -26,10 +26,14 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const createAndSendInvite = createAndSendInviteFactory({
-  findUserByTarget: findUserByTargetFactory(),
+  findUserByTarget: findUserByTargetFactory({ db }),
   insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
   collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
     getStream
@@ -41,7 +45,9 @@ const createAndSendInvite = createAndSendInviteFactory({
     getEventBus().emit({
       eventName,
       payload
-    })
+    }),
+  getUser,
+  getServerInfo
 })
 
 export const createServerInviteDirectly = async (

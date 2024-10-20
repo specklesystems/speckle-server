@@ -74,7 +74,7 @@ export default class Batcher {
         await pause.wait(50)
       }
 
-      let instancedNodes = worldTree.findId(g)
+      let instancedNodes = worldTree.findId(g, renderTree.subtreeId)
       if (!instancedNodes) {
         continue
       }
@@ -99,7 +99,7 @@ export default class Batcher {
     }
     for (const v in instancedBatches) {
       for (let k = 0; k < instancedBatches[v].length; k++) {
-        const nodes = worldTree.findId(instancedBatches[v][k])
+        const nodes = worldTree.findId(instancedBatches[v][k], renderTree.subtreeId)
         if (!nodes) continue
         /** Make sure entire instance set is instanced */
         let instanced = true

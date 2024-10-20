@@ -2,7 +2,6 @@ import {
   AccessRequestType,
   getPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   NewStreamAccessRequestMessage,
   NotificationHandler
@@ -18,15 +17,18 @@ import {
   EmailTemplateParams,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { db } from '@/db/knex'
 import { GetPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
-  getUser: typeof getUser
+  getUser: GetUser
   getStream: GetStream
 }
 
@@ -122,7 +124,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
 const newStreamAccessRequestHandlerFactory =
   (
     deps: {
-      getServerInfo: typeof getServerInfo
+      getServerInfo: GetServerInfo
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
     } & ValidateMessageDeps
@@ -147,10 +149,10 @@ const newStreamAccessRequestHandlerFactory =
 
 const handler: NotificationHandler<NewStreamAccessRequestMessage> = (...args) => {
   const newStreamAccessRequestHandler = newStreamAccessRequestHandlerFactory({
-    getServerInfo,
+    getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail,
-    getUser,
+    getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
     getPendingAccessRequest: getPendingAccessRequestFactory({ db })
   })

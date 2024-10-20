@@ -5,7 +5,6 @@ import {
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/services/users'
 import {
   ContextResourceAccessRules,
   isNewResourceAllowed
@@ -18,13 +17,14 @@ import {
   UpdateStreamRecord
 } from '@/modules/core/domain/streams/operations'
 import { GetOnboardingBaseProject } from '@/modules/cross-server-sync/domain/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 export const createOnboardingStreamFactory =
   (deps: {
     getOnboardingBaseProject: GetOnboardingBaseProject
     cloneStream: CloneStream
     createStreamReturnRecord: CreateStream
-    getUser: typeof getUser
+    getUser: GetUser
     updateStream: UpdateStreamRecord
   }): CreateOnboardingStream =>
   async (
@@ -69,7 +69,7 @@ export const createOnboardingStreamFactory =
 
     logger.info('Updating onboarding stream title')
     const user = await deps.getUser(targetUserId)
-    const name = user.name.split(' ')[0]
+    const name = user!.name.split(' ')[0]
     await deps.updateStream({
       id: newStream.id,
       name: `${name}'s First Project`,

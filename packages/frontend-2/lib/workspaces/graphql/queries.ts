@@ -18,9 +18,10 @@ export const workspacePageQuery = graphql(`
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
       id
+      ...MoveProjectsDialog_Workspace
       ...WorkspaceHeader_Workspace
       ...WorkspaceMixpanelUpdateGroup_Workspace
-      projects(filter: $filter, cursor: $cursor, limit: 10) {
+      projectListProject: projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
     }
@@ -69,5 +70,11 @@ export const moveProjectsDialogQuery = graphql(`
     activeUser {
       ...MoveProjectsDialog_User
     }
+  }
+`)
+
+export const validateWorkspaceSlugQuery = graphql(`
+  query ValidateWorkspaceSlug($slug: String!) {
+    validateWorkspaceSlug(slug: $slug)
   }
 `)

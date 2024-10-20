@@ -32,7 +32,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="isUser(item)" :user="item" />
+          <UserAvatar v-if="isUser(item)" hide-tooltip :user="item" />
           <span class="truncate">
             {{ isUser(item) ? item.name : '' }}
           </span>
@@ -161,11 +161,11 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const actionItems: LayoutMenuItem[][] = [
   [
     {
-      title: 'Change role',
+      title: 'Change role...',
       id: ActionTypes.ChangeRole
     },
     {
-      title: 'Remove user',
+      title: 'Remove user...',
       id: ActionTypes.RemoveUser
     }
   ]

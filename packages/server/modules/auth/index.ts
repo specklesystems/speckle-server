@@ -13,14 +13,6 @@ import {
 } from '@/modules/auth/repositories/apps'
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  getUserByEmail,
-  findOrCreateUser,
-  getUserById,
-  validatePasssword,
-  createUser
-} from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -40,6 +32,66 @@ import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
 import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
+import {
+  countAdminUsersFactory,
+  getUserByEmailFactory,
+  getUserFactory,
+  legacyGetUserByEmailFactory,
+  legacyGetUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserFactory,
+  findOrCreateUserFactory,
+  validateUserPasswordFactory
+} from '@/modules/core/services/users/management'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory,
+  findPrimaryEmailForUserFactory
+} from '@/modules/core/repositories/userEmails'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo: getServerInfoFactory({ db }),
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+})
 
 const initializeDefaultApps = initializeDefaultAppsFactory({
   getAllScopes: getAllScopesFactory({ db }),
@@ -58,13 +110,12 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
 const commonBuilderDeps = {
-  getServerInfo,
-  getUserByEmail,
+  getServerInfo: getServerInfoFactory({ db }),
+  getUserByEmail: legacyGetUserByEmailFactory({ db }),
   findOrCreateUser,
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,
-  getUserById,
   passportAuthenticateHandlerBuilder: passportAuthenticateHandlerBuilderFactory()
 }
 const setupStrategies = setupStrategiesFactory({
@@ -75,13 +126,15 @@ const setupStrategies = setupStrategiesFactory({
   googleStrategyBuilder: googleStrategyBuilderFactory({ ...commonBuilderDeps }),
   localStrategyBuilder: localStrategyBuilderFactory({
     ...commonBuilderDeps,
-    validatePassword: validatePasssword,
+    validateUserPassword: validateUserPasswordFactory({
+      getUserByEmail: getUserByEmailFactory({ db })
+    }),
     getRateLimitResult,
     createUser
   }),
   oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 let authStrategies: AuthStrategyMetadata[]
