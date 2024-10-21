@@ -3,21 +3,6 @@ const knex = require(`@/db/knex`)
 const Objects = () => knex('objects')
 
 module.exports = {
-  async getObjects(streamId, objectIds) {
-    const res = await Objects()
-      .whereIn('id', objectIds)
-      .andWhere('streamId', streamId)
-      .select(
-        'id',
-        'speckleType',
-        'totalChildrenCount',
-        'totalChildrenCountByDepth',
-        'createdAt',
-        'data'
-      )
-    return res
-  },
-
   async getObjectsStream({ streamId, objectIds }) {
     const res = Objects()
       .whereIn('id', objectIds)
