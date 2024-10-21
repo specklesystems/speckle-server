@@ -3,6 +3,11 @@ import {
   ResourceTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
+import { ViewerResourceItem } from '@/modules/comments/domain/types'
+import {
+  CommentCreateInput,
+  CreateCommentInput
+} from '@/modules/core/graph/generated/graphql'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 
 export type StreamActionType =
@@ -19,3 +24,7 @@ export type ActivitySummary = {
   user: UserRecord
   streamActivities: StreamActivitySummary[]
 }
+
+export type CommentCreatedActivityInput =
+  | CommentCreateInput
+  | (CreateCommentInput & { resolvedResourceItems?: ViewerResourceItem[] })

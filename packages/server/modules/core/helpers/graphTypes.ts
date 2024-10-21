@@ -62,7 +62,10 @@ export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'childr
   projectId: string
 }
 
-export type ObjectGraphQLReturn = ObjectRecord
+export type ObjectGraphQLReturn = Omit<
+  ObjectRecord,
+  'createdAt' | 'totalChildrenCountByDepth'
+>
 
 /**
  * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.

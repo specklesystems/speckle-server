@@ -47,6 +47,8 @@ featureFlags:
   workspaceSsoEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
+  ## @param featureFlags.gatekeeperModuleEnabled High level flag that enables the gatekeeper module
+  gatekeeperModuleEnabled: false
   ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
   billingIntegrationEnabled: false
 
@@ -470,6 +472,57 @@ server:
     ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
     ##
     secretKey: ''
+
+  ## @extra server.billing Values to enable billing integration on the server
+  billing:
+    ## @param server.billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    secretName: ''
+
+    stripeApiKey:
+      ## @param server.billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
+      secretKey: 'stripeApiKey'
+    stripeEndpointSigningKey:
+      ## @param server.billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
+      secretKey: 'stripeEndpointSigningKey'
+    workspaceGuestSeatStripeProductId:
+      ## @param server.billing.workspaceGuestSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.
+      secretKey: 'workspaceGuestSeatStripeProductId'
+    workspaceMonthlyGuestSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyGuestSeatStripePriceId'
+    workspaceYearlyGuestSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyGuestSeatStripePriceId'
+
+    workspaceTeamSeatStripeProductId:
+      ## @param server.billing.workspaceTeamSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.
+      secretKey: 'workspaceTeamSeatStripeProductId'
+    workspaceMonthlyTeamSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyTeamSeatStripePriceId'
+    workspaceYearlyTeamSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyTeamSeatStripePriceId'
+
+    workspaceProSeatStripeProductId:
+      ## @param server.billing.workspaceProSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.
+      secretKey: 'workspaceProSeatStripeProductId'
+    workspaceMonthlyProSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyProSeatStripePriceId'
+    workspaceYearlyProSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyProSeatStripePriceId'
+
+    workspaceBusinessSeatStripeProductId:
+      ## @param server.billing.workspaceBusinessSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.
+      secretKey: 'workspaceBusinessSeatStripeProductId'
+    workspaceMonthlyBusinessSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyBusinessSeatStripePriceId'
+    workspaceYearlyBusinessSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyBusinessSeatStripePriceId'
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets

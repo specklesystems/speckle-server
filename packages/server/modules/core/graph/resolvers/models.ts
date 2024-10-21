@@ -16,7 +16,7 @@ import { last } from 'lodash'
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommitsFactory,
-  getPaginatedStreamCommits
+  legacyGetPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
@@ -44,7 +44,9 @@ import {
   getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory,
-  getSpecificBranchCommitsFactory
+  getSpecificBranchCommitsFactory,
+  getStreamCommitCountFactory,
+  legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
@@ -107,6 +109,12 @@ const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
   getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
   getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+const getPaginatedStreamCommits = legacyGetPaginatedStreamCommits({
+  legacyGetPaginatedStreamCommitsPage: legacyGetPaginatedStreamCommitsPageFactory({
+    db
+  }),
+  getStreamCommitCount: getStreamCommitCountFactory({ db })
 })
 
 export = {

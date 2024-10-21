@@ -16,11 +16,7 @@ import {
   CommentRecord
 } from '@/modules/comments/helpers/types'
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
-import {
-  addCommentArchivedActivity,
-  addCommentCreatedActivity,
-  addReplyAddedActivity
-} from '@/modules/activitystream/services/commentActivity'
+import { addReplyAddedActivity } from '@/modules/activitystream/services/commentActivity'
 import {
   formatSerializedViewerState,
   inputToDataStruct
@@ -42,6 +38,10 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  AddCommentArchivedActivity,
+  AddCommentCreatedActivity
+} from '@/modules/activitystream/domain/operations'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -118,7 +118,7 @@ export const createCommentThreadAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
     commentsEventsEmit: CommentsEventsEmit
-    addCommentCreatedActivity: typeof addCommentCreatedActivity
+    addCommentCreatedActivity: AddCommentCreatedActivity
   }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
     const [resources] = await Promise.all([
@@ -291,7 +291,7 @@ export const archiveCommentAndNotifyFactory =
     getComment: GetComment
     getStream: GetStream
     updateComment: UpdateComment
-    addCommentArchivedActivity: typeof addCommentArchivedActivity
+    addCommentArchivedActivity: AddCommentArchivedActivity
   }): ArchiveCommentAndNotify =>
   async (commentId: string, userId: string, archived = true) => {
     const comment = await deps.getComment({ id: commentId, userId })
