@@ -25,4 +25,5 @@ export type ToastNotification = {
    * Defaults to true
    */
   autoClose?: boolean
+  id?: string
 }

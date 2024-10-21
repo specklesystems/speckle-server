@@ -55,13 +55,19 @@ export function useInviteUserToServer() {
       if (res?.data?.serverInviteBatchCreate) {
         triggerNotification({
           type: ToastNotificationType.Success,
-          title: `Server invite${finalInput.length > 1 ? 's' : ''} sent`
+          title:
+            finalInput.length > 1
+              ? 'Server invites sent'
+              : `Server invite sent to ${finalInput[0].email}`
         })
       } else {
         const errMsg = getFirstErrorMessage(res?.errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
-          title: `Couldn't send invite${finalInput.length > 1 ? 's' : ''}`,
+          title:
+            finalInput.length > 1
+              ? "Couldn't send invites"
+              : `Couldn't send invite to ${finalInput[0].email}`,
           description: errMsg
         })
       }
