@@ -19,6 +19,9 @@ import {
 const OTEL_NAME = 'speckle'
 
 export function initOpenTelemetry() {
+  if (!getOtelTracingUrl()) {
+    return
+  }
   const provider = new NodeTracerProvider({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: OTEL_NAME
@@ -47,6 +50,7 @@ export function initOpenTelemetry() {
       })
     ]
   })
+
   const headers: Partial<Record<string, unknown>> = {}
   const key = getOtelTraceKey()
   const value = getOtelHeaderValue()

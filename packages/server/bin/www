@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 'use strict'
 
-//need to initialize before everything else
-//knex is a singleton controlled by module so can't wait til app init
-const { initOpenTelemetry } = require('../dist/otel')
-initOpenTelemetry()
-
 const { logger } = require('../dist/logging/logging')
 const { init, startHttp } = require('../dist/app')
 

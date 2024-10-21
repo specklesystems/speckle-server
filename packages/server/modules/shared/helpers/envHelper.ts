@@ -394,15 +394,13 @@ export function getStripeEndpointSigningKey(): string {
 }
 
 export function getOtelTracingUrl() {
-  if (!process.env.OTEL_TRACE_URL) return 'http://localhost:4318'
-  return process.env.OTEL_TRACE_URL
+  return getStringFromEnv('OTEL_TRACE_URL')
 }
 
 export function getOtelTraceKey() {
-  if (!process.env.OTEL_TRACE_KEY) return 'X-Seq-ApiKey'
-  return process.env.OTEL_TRACE_KEY
+  return getStringFromEnv('OTEL_TRACE_KEY')
 }
 
 export function getOtelHeaderValue() {
-  return process.env.OTEL_TRACE_VALUE
+  return getStringFromEnv('OTEL_TRACE_VALUE')
 }
