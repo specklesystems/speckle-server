@@ -32,7 +32,8 @@ const createTestWorkspaceWithDomains = (
     discoverabilityEnabled: false,
     domainBasedMembershipProtectionEnabled: false,
     defaultProjectRole: Roles.Stream.Contributor,
-    defaultLogoIndex: 0
+    defaultLogoIndex: 0,
+    deleteAfter: null
   }
   if (arg) assign(workspace, arg)
   return workspace

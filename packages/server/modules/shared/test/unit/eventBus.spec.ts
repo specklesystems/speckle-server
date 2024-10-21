@@ -17,7 +17,8 @@ const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
     createdAt: new Date(),
     defaultProjectRole: Roles.Stream.Contributor,
     domainBasedMembershipProtectionEnabled: false,
-    discoverabilityEnabled: false
+    discoverabilityEnabled: false,
+    deleteAfter: null
   }
 }
 

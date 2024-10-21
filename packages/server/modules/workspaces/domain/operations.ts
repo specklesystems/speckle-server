@@ -23,7 +23,7 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 /** Workspace */
 
 type UpsertWorkspaceArgs = {
-  workspace: Omit<Workspace, 'domains'>
+  workspace: Omit<Workspace, 'domains' | 'deleteAfter'>
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
