@@ -5,38 +5,6 @@ const knex = require(`@/db/knex`)
 const Objects = () => knex('objects')
 
 module.exports = {
-  async getObjectChildrenStream({ streamId, objectId }) {
-    const q = knex.with(
-      'object_children_closure',
-      knex.raw(
-        `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
-        FROM objects
-        JOIN jsonb_each_text(objects.data->'__closure') d ON true
-        where objects.id = ?`,
-        [streamId, objectId]
-      )
-    )
-    q.select('id')
-    q.select(knex.raw('data::text as "dataText"'))
-    q.from('object_children_closure')
-
-    q.rightJoin('objects', function () {
-      this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
-        'objects.id',
-        '=',
-        'object_children_closure.child'
-      )
-    })
-      .where(
-        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [
-          streamId,
-          objectId
-        ])
-      )
-      .orderBy('objects.id')
-    return q.stream({ highWaterMark: 500 })
-  },
-
   /**
    * @returns {Promise<{objects: import('@/modules/core/helpers/types').ObjectRecord[], cursor: string | null}>}
    */
