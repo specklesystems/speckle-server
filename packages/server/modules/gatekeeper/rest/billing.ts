@@ -44,12 +44,6 @@ import { GetWorkspacePlanPrice } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
-const router = Router()
-
-export default router
-
-const stripe = new Stripe(getStripeApiKey(), { typescript: true })
-
 const workspacePlanPrices = (): Record<
   WorkspacePricingPlans,
   Record<WorkspacePlanBillingIntervals, string> & { productId: string }
@@ -81,144 +75,153 @@ const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
   billingInterval
 }) => workspacePlanPrices()[workspacePlan][billingInterval]
 
-// this prob needs to be turned into a GQL resolver for better frontend integration for errors
-router.get(
-  '/api/v1/billing/workspaces/:workspaceId/checkout-session/:workspacePlan/:billingInterval',
-  validateRequest({
-    params: z.object({
-      workspaceId: z.string().min(1),
-      workspacePlan: paidWorkspacePlans,
-      billingInterval: workspacePlanBillingIntervals
-    })
-  }),
-  async (req) => {
-    const { workspaceId, workspacePlan, billingInterval } = req.params
-    const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+export const getBillingRouter = (): Router => {
+  const router = Router()
 
-    if (!workspace) throw new WorkspaceNotFoundError()
+  const stripe = new Stripe(getStripeApiKey(), { typescript: true })
 
-    await authorizeResolver(
-      req.context.userId,
-      workspaceId,
-      Roles.Workspace.Admin,
-      req.context.resourceAccessRules
-    )
+  // this prob needs to be turned into a GQL resolver for better frontend integration for errors
+  router.get(
+    '/api/v1/billing/workspaces/:workspaceId/checkout-session/:workspacePlan/:billingInterval',
+    validateRequest({
+      params: z.object({
+        workspaceId: z.string().min(1),
+        workspacePlan: paidWorkspacePlans,
+        billingInterval: workspacePlanBillingIntervals
+      })
+    }),
+    async (req) => {
+      const { workspaceId, workspacePlan, billingInterval } = req.params
+      const workspace = await getWorkspaceFactory({ db })({ workspaceId })
 
-    const createCheckoutSession = createCheckoutSessionFactory({
-      stripe,
-      frontendOrigin: getFrontendOrigin(),
-      getWorkspacePlanPrice
-    })
+      if (!workspace) throw new WorkspaceNotFoundError()
 
-    const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+      await authorizeResolver(
+        req.context.userId,
+        workspaceId,
+        Roles.Workspace.Admin,
+        req.context.resourceAccessRules
+      )
 
-    const session = await startCheckoutSessionFactory({
-      getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-      getWorkspacePlan: getWorkspacePlanFactory({ db }),
-      countRole,
-      createCheckoutSession,
-      saveCheckoutSession: saveCheckoutSessionFactory({ db })
-    })({ workspacePlan, workspaceId, workspaceSlug: workspace.slug, billingInterval })
+      const createCheckoutSession = createCheckoutSessionFactory({
+        stripe,
+        frontendOrigin: getFrontendOrigin(),
+        getWorkspacePlanPrice
+      })
 
-    req.res?.redirect(session.url)
-  }
-)
+      const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
 
-router.post('/api/v1/billing/webhooks', async (req, res) => {
-  const endpointSecret = getStripeEndpointSigningKey()
-  const sig = req.headers['stripe-signature']
-  if (!sig) {
-    res.status(400).send('Missing payload signature')
-    return
-  }
+      const session = await startCheckoutSessionFactory({
+        getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+        getWorkspacePlan: getWorkspacePlanFactory({ db }),
+        countRole,
+        createCheckoutSession,
+        saveCheckoutSession: saveCheckoutSessionFactory({ db })
+      })({ workspacePlan, workspaceId, workspaceSlug: workspace.slug, billingInterval })
 
-  let event: Stripe.Event
+      req.res?.redirect(session.url)
+    }
+  )
 
-  try {
-    event = stripe.webhooks.constructEvent(
-      // yes, the express json middleware auto parses the payload and stri need it in a string
-      req.body,
-      sig,
-      endpointSecret
-    )
-  } catch (err) {
-    res.status(400).send(`Webhook Error: ${ensureError(err).message}`)
-    return
-  }
+  router.post('/api/v1/billing/webhooks', async (req, res) => {
+    const endpointSecret = getStripeEndpointSigningKey()
+    const sig = req.headers['stripe-signature']
+    if (!sig) {
+      res.status(400).send('Missing payload signature')
+      return
+    }
 
-  switch (event.type) {
-    case 'checkout.session.async_payment_failed':
-      // TODO: need to alert the user and delete the session ?
-      break
-    case 'checkout.session.async_payment_succeeded':
-    case 'checkout.session.completed':
-      const session = event.data.object
+    let event: Stripe.Event
 
-      if (!session.subscription)
-        return res.status(400).send('We only support subscription type checkouts')
+    try {
+      event = stripe.webhooks.constructEvent(
+        // yes, the express json middleware auto parses the payload and stri need it in a string
+        req.body,
+        sig,
+        endpointSecret
+      )
+    } catch (err) {
+      res.status(400).send(`Webhook Error: ${ensureError(err).message}`)
+      return
+    }
 
-      if (session.payment_status === 'paid') {
-        // If the workspace is already on a paid plan, we made a bo bo.
-        // existing subs should be updated via the api, not pushed through the checkout sess again
-        // the start checkout endpoint should guard this!
-        // get checkout session from the DB, if not found CONTACT SUPPORT!!!
-        // if the session is already paid, means, we've already settled this checkout, and this is a webhook recall
-        // set checkout state to paid
-        // go ahead and provision the plan
-        // store customer id and subscription Id associated to the workspace plan
+    switch (event.type) {
+      case 'checkout.session.async_payment_failed':
+        // TODO: need to alert the user and delete the session ?
+        break
+      case 'checkout.session.async_payment_succeeded':
+      case 'checkout.session.completed':
+        const session = event.data.object
 
-        const subscriptionId =
-          typeof session.subscription === 'string'
-            ? session.subscription
-            : session.subscription.id
+        if (!session.subscription)
+          return res.status(400).send('We only support subscription type checkouts')
 
-        // this must use a transaction
+        if (session.payment_status === 'paid') {
+          // If the workspace is already on a paid plan, we made a bo bo.
+          // existing subs should be updated via the api, not pushed through the checkout sess again
+          // the start checkout endpoint should guard this!
+          // get checkout session from the DB, if not found CONTACT SUPPORT!!!
+          // if the session is already paid, means, we've already settled this checkout, and this is a webhook recall
+          // set checkout state to paid
+          // go ahead and provision the plan
+          // store customer id and subscription Id associated to the workspace plan
 
-        const trx = await db.transaction()
+          const subscriptionId =
+            typeof session.subscription === 'string'
+              ? session.subscription
+              : session.subscription.id
 
-        const completeCheckout = completeCheckoutSessionFactory({
-          getCheckoutSession: getCheckoutSessionFactory({ db: trx }),
-          updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({ db: trx }),
-          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db: trx }),
-          saveWorkspaceSubscription: saveWorkspaceSubscriptionFactory({ db: trx }),
-          getSubscriptionData: getSubscriptionDataFactory({
-            stripe
-          })
-        })
+          // this must use a transaction
 
-        try {
-          await withTransaction(
-            completeCheckout({
-              sessionId: session.id,
-              subscriptionId
+          const trx = await db.transaction()
+
+          const completeCheckout = completeCheckoutSessionFactory({
+            getCheckoutSession: getCheckoutSessionFactory({ db: trx }),
+            updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({
+              db: trx
             }),
-            trx
-          )
-        } catch (err) {
-          if (err instanceof WorkspaceAlreadyPaidError) {
-            // ignore the request, this is prob a replay from stripe
-          } else {
-            throw err
+            upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db: trx }),
+            saveWorkspaceSubscription: saveWorkspaceSubscriptionFactory({ db: trx }),
+            getSubscriptionData: getSubscriptionDataFactory({
+              stripe
+            })
+          })
+
+          try {
+            await withTransaction(
+              completeCheckout({
+                sessionId: session.id,
+                subscriptionId
+              }),
+              trx
+            )
+          } catch (err) {
+            if (err instanceof WorkspaceAlreadyPaidError) {
+              // ignore the request, this is prob a replay from stripe
+            } else {
+              throw err
+            }
           }
         }
-      }
-      break
+        break
 
-    case 'checkout.session.expired':
-      // delete the checkout session from the DB
-      await deleteCheckoutSessionFactory({ db })({
-        checkoutSessionId: event.data.object.id
-      })
-      break
+      case 'checkout.session.expired':
+        // delete the checkout session from the DB
+        await deleteCheckoutSessionFactory({ db })({
+          checkoutSessionId: event.data.object.id
+        })
+        break
 
-    default:
-      break
-  }
+      default:
+        break
+    }
 
-  res.status(200).send('ok')
-})
+    res.status(200).send('ok')
+  })
 
-// prob needed when the checkout is cancelled
-router.delete(
-  '/api/v1/billing/workspaces/:workspaceSlug/checkout-session/:workspacePlan'
-)
+  // prob needed when the checkout is cancelled
+  router.delete(
+    '/api/v1/billing/workspaces/:workspaceSlug/checkout-session/:workspacePlan'
+  )
+  return router
+}

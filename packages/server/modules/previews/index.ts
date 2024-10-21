@@ -12,7 +12,6 @@ import {
   sendObjectPreviewFactory,
   checkStreamPermissionsFactory
 } from '@/modules/previews/services/management'
-import { getObject } from '@/modules/core/services/objects'
 import {
   getObjectPreviewInfoFactory,
   createObjectPreviewFactory,
@@ -29,6 +28,7 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -45,7 +45,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
   const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
   const getStream = getStreamFactory({ db })
   const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-    getObject,
+    getObject: getFormattedObjectFactory({ db }),
     getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
     createObjectPreview: createObjectPreviewFactory({ db }),
     getPreviewImage: getPreviewImageFactory({ db })

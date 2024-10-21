@@ -586,6 +586,94 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_BILLING_INTEGRATION_ENABLED
   value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
 
+
+{{- if .Values.featureFlags.billingIntegrationEnabled }}
+- name: STRIPE_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.stripeApiKey.secretKey }}
+
+- name: STRIPE_ENDPOINT_SIGNING_KEY
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.stripeEndpointSigningKey.secretKey }}
+
+- name: WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceGuestSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceTeamSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceProSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyProSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceYearlyProSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceBusinessSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      
+      key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
+{{- end }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
