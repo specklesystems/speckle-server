@@ -54,18 +54,22 @@ export const getOIDCProviderFactory =
 export const getWorkspaceSsoProviderFactory =
   ({ db, decrypt }: { db: Knex; decrypt: Crypt }): GetWorkspaceSsoProvider =>
   async ({ workspaceId }) => {
-    const maybeProvider = await db<WorkspaceSsoProvider & StoredSsoProvider>(
-      'workspace_sso_providers'
-    )
+    const maybeProvider = await tables
+      .workspaceSsoProviders(db)
+      .select('*')
       .where({ workspaceId })
+      .join<StoredSsoProvider>('sso_providers', 'id', 'providerId')
       .first()
     if (!maybeProvider) return null
-    const decryptedProviderData = await decrypt(maybeProvider.encryptedProviderData)
+
+    const providerDataString = await decrypt(maybeProvider.encryptedProviderData)
+    const providerData = JSON.parse(providerDataString)
+
     switch (maybeProvider.providerType) {
       case 'oidc':
         return {
-          ...omit(maybeProvider),
-          provider: oidcProvider.parse(decryptedProviderData)
+          ...omit(maybeProvider, ['encryptedProviderData']),
+          provider: oidcProvider.parse(providerData)
         }
       default:
         // this is an internal error
