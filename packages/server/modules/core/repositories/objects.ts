@@ -259,11 +259,10 @@ export const getObjectChildrenQueryFactory =
   (deps: { db: Knex }): GetObjectChildrenQuery =>
   async (params) => {
     const { streamId, objectId, select, query } = params
-    let { limit, depth, orderBy } = params
 
-    limit = toNumber(limit || 0) || 50
-    depth = toNumber(depth || 0) || 1000
-    orderBy = orderBy || { field: 'id', direction: 'asc' }
+    const limit = toNumber(params.limit || 0) || 50
+    const depth = toNumber(params.depth || 0) || 1000
+    const orderBy = params.orderBy || { field: 'id', direction: 'asc' }
 
     // Cursors received by this service should be base64 encoded. They are generated on first entry query by this service; They should never be client-side generated.
     const cursor: Optional<{
