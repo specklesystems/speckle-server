@@ -68,7 +68,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             countRole,
             createCheckoutSession,
-            saveCheckoutSession: saveCheckoutSessionFactory({ db })
+            saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+            deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
           })({
             workspacePlan,
             workspaceId,

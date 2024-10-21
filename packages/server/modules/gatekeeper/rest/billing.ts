@@ -80,7 +80,8 @@ export const getBillingRouter = (): Router => {
         getWorkspacePlan: getWorkspacePlanFactory({ db }),
         countRole,
         createCheckoutSession,
-        saveCheckoutSession: saveCheckoutSessionFactory({ db })
+        saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+        deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
       })({ workspacePlan, workspaceId, workspaceSlug: workspace.slug, billingInterval })
 
       req.res?.redirect(session.url)
