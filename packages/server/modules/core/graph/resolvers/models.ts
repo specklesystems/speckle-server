@@ -20,7 +20,8 @@ import {
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
-  ProjectSubscriptions
+  ProjectSubscriptions,
+  publish
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
@@ -50,7 +51,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivity,
+  addBranchCreatedActivityFactory,
   addBranchDeletedActivity,
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
@@ -59,6 +60,7 @@ import {
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -89,7 +91,10 @@ const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
 const createBranchAndNotify = createBranchAndNotifyFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
