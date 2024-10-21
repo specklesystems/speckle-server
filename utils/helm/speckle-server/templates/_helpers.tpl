@@ -660,17 +660,18 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceBusinessSeatStripeProductId.secretKey }}
 
-- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyBusinessStripePriceId.secretKey }}
+      
+      key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
 {{- if .Values.featureFlags.automateModuleEnabled }}
