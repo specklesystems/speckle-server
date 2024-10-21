@@ -41,9 +41,9 @@ export type ApiTokenRecord = {
   name: Nullable<string>
   lastChars: Nullable<string>
   revoked: boolean
-  lifespan: number
-  createdAt: string
-  lastUsed: string
+  lifespan: number | bigint
+  createdAt: Date
+  lastUsed: Date
 }
 
 const tables = {

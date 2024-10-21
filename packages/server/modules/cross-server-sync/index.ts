@@ -41,8 +41,11 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getOnboardingBaseStreamFactory,
@@ -52,7 +55,7 @@ import {
   markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
-  getFirstAdmin,
+  getFirstAdminFactory,
   getUserFactory,
   getUsersFactory
 } from '@/modules/core/repositories/users'
@@ -62,7 +65,7 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { createObject } from '@/modules/core/services/objects'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
@@ -86,6 +89,7 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    const getServerInfo = getServerInfoFactory({ db })
     const getUser = getUserFactory({ db })
     const getUsers = getUsersFactory({ db })
     const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
@@ -142,6 +146,10 @@ const crossServerSyncModule: SpeckleModule = {
       })
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({
@@ -158,7 +166,8 @@ const crossServerSyncModule: SpeckleModule = {
               eventName,
               payload
             }),
-          getUser
+          getUser,
+          getServerInfo
         }),
         getUsers
       }),
@@ -172,7 +181,7 @@ const crossServerSyncModule: SpeckleModule = {
     })
     const ensureOnboardingProject = ensureOnboardingProjectFactory({
       getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db }),
-      getFirstAdmin,
+      getFirstAdmin: getFirstAdminFactory({ db }),
       downloadProject: downloadProjectFactory({
         downloadCommit: downloadCommitFactory({
           getStream,

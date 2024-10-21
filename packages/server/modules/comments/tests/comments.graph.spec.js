@@ -4,9 +4,7 @@ const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
-const { createObject } = require('@/modules/core/services/objects')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
@@ -55,7 +53,11 @@ const {
   markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory,
@@ -69,7 +71,9 @@ const {
 } = require('@/modules/serverinvites/services/creation')
 const {
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
   collectAndValidateCoreTargetsFactory
@@ -87,8 +91,38 @@ const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   addCommitCreatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
-const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  createUserEmailFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -152,7 +186,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -167,6 +202,38 @@ const updateStream = legacyUpdateStreamFactory({
   updateStream: updateStreamFactory({ db })
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)

@@ -1,4 +1,10 @@
-import { SpeckleObject } from '@/modules/core/domain/objects/types'
+import { Logger } from '@/logging/logging'
+import {
+  InsertableSpeckleObject,
+  RawSpeckleObject,
+  SpeckleObject,
+  SpeckleObjectClosureEntry
+} from '@/modules/core/domain/objects/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
@@ -24,3 +30,17 @@ export type StoreObjects = (
     trx: Knex.Transaction
   }>
 ) => Promise<number[]>
+
+export type StoreSingleObjectIfNotFound = (
+  object: SpeckleObject | InsertableSpeckleObject
+) => Promise<void>
+
+export type StoreClosuresIfNotFound = (
+  closures: SpeckleObjectClosureEntry[]
+) => Promise<void>
+
+export type CreateObject = (params: {
+  streamId: string
+  object: RawSpeckleObject
+  logger?: Logger
+}) => Promise<string>

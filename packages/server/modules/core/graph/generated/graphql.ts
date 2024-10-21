@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn, ServerInfoGraphQLReturn, BranchGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn, ProjectAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -1836,7 +1836,7 @@ export type Project = {
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
-  version?: Maybe<Version>;
+  version: Version;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -2520,6 +2520,7 @@ export type Query = {
    * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
+  workspacePricingPlans: Scalars['JSONObject']['output'];
 };
 
 
@@ -4339,7 +4340,7 @@ export type ResolversTypes = {
   BlobMetadata: ResolverTypeWrapper<BlobStorageItem>;
   BlobMetadataCollection: ResolverTypeWrapper<Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['BlobMetadata']>> }>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
-  Branch: ResolverTypeWrapper<Omit<Branch, 'activity' | 'author' | 'commits'> & { activity?: Maybe<ResolversTypes['ActivityCollection']>, author?: Maybe<ResolversTypes['User']>, commits?: Maybe<ResolversTypes['CommitCollection']> }>;
+  Branch: ResolverTypeWrapper<BranchGraphQLReturn>;
   BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Branch']>> }>;
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
@@ -4461,7 +4462,7 @@ export type ResolversTypes = {
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItemGraphQLReturn>;
   ServerAutomateInfo: ResolverTypeWrapper<ServerAutomateInfo>;
   ServerConfiguration: ResolverTypeWrapper<ServerConfiguration>;
-  ServerInfo: ResolverTypeWrapper<Omit<ServerInfo, 'workspaces'> & { workspaces: ResolversTypes['ServerWorkspacesInfo'] }>;
+  ServerInfo: ResolverTypeWrapper<ServerInfoGraphQLReturn>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
@@ -4599,7 +4600,7 @@ export type ResolversParentTypes = {
   BlobMetadata: BlobStorageItem;
   BlobMetadataCollection: Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['BlobMetadata']>> };
   Boolean: Scalars['Boolean']['output'];
-  Branch: Omit<Branch, 'activity' | 'author' | 'commits'> & { activity?: Maybe<ResolversParentTypes['ActivityCollection']>, author?: Maybe<ResolversParentTypes['User']>, commits?: Maybe<ResolversParentTypes['CommitCollection']> };
+  Branch: BranchGraphQLReturn;
   BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Branch']>> };
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
@@ -4708,7 +4709,7 @@ export type ResolversParentTypes = {
   ServerAppListItem: ServerAppListItemGraphQLReturn;
   ServerAutomateInfo: ServerAutomateInfo;
   ServerConfiguration: ServerConfiguration;
-  ServerInfo: Omit<ServerInfo, 'workspaces'> & { workspaces: ResolversParentTypes['ServerWorkspacesInfo'] };
+  ServerInfo: ServerInfoGraphQLReturn;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
@@ -5508,7 +5509,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ProjectVersionArgs, 'id'>>;
+  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ProjectVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
@@ -5702,6 +5703,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
   workspaceBySlug?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceBySlugArgs, 'slug'>>;
   workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, Partial<QueryWorkspaceInviteArgs>>;
+  workspacePricingPlans?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {

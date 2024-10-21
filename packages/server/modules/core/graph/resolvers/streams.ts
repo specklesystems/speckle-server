@@ -87,7 +87,9 @@ import {
   getFavoriteStreamsCollectionFactory
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
@@ -112,7 +114,8 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
           eventName,
           payload
         }),
-      getUser
+      getUser,
+      getServerInfo
     }),
     getUsers
   }),

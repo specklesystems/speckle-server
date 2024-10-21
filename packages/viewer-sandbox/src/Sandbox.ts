@@ -1357,11 +1357,11 @@ export default class Sandbox {
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
     const objUrls = await UrlHelper.getResourceUrls(url, authToken)
-    for (const url of objUrls) {
+    for (const objUrl of objUrls) {
       console.log(`Loading ${url}`)
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
-        url,
+        objUrl,
         authToken,
         true,
         undefined
@@ -1377,7 +1377,7 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      await this.viewer.loadObject(loader, true)
+      void this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

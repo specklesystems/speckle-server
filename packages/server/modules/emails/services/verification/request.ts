@@ -6,7 +6,6 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
 import {
   EmailTemplateParams,
@@ -20,13 +19,14 @@ import {
   RequestNewEmailVerification
 } from '@/modules/emails/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
 type CreateNewVerificationDeps = {
   getUser: GetUser
   findPrimaryEmailForUser: FindPrimaryEmailForUser
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 
@@ -70,7 +70,7 @@ type VerificationRequestContext = {
 type CreateNewEmailVerificationFactoryDeps = {
   findEmail: FindEmail
   getUser: GetUser
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 

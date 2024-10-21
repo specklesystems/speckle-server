@@ -17125,11 +17125,12 @@ __metadata:
     sanitize-html: "npm:^2.7.1"
     sharp: "npm:^0.32.6"
     string-pixel-width: "npm:^1.10.0"
+    stripe: "npm:^17.1.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     supertest: "npm:^4.0.2"
     ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.0.0"
-    type-fest: "npm:^2.19.0"
+    type-fest: "npm:^4.26.1"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
     ua-parser-js: "npm:^1.0.38"
@@ -20255,6 +20256,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10/c38e47b190fa0a8bdfde24b036dddcf9401551f2fb170a90ff33625c7d6f218907e81c74e0fa6e394804a32623c24c60c50e249badc951007830f0d02c48ee0f
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:>=8.1.0":
+  version: 22.7.5
+  resolution: "@types/node@npm:22.7.5"
+  dependencies:
+    undici-types: "npm:~6.19.2"
+  checksum: 10/e8ba102f8c1aa7623787d625389be68d64e54fcbb76d41f6c2c64e8cf4c9f4a2370e7ef5e5f1732f3c57529d3d26afdcb2edc0101c5e413a79081449825c57ac
   languageName: node
   linkType: hard
 
@@ -45321,7 +45331,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:6.13.0":
+"qs@npm:6.13.0, qs@npm:^6.11.0":
   version: 6.13.0
   resolution: "qs@npm:6.13.0"
   dependencies:
@@ -48830,6 +48840,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stripe@npm:^17.1.0":
+  version: 17.1.0
+  resolution: "stripe@npm:17.1.0"
+  dependencies:
+    "@types/node": "npm:>=8.1.0"
+    qs: "npm:^6.11.0"
+  checksum: 10/ac0e989bfe881bde9fa42f58daee9f953489a2ed8bdef29f601fa80b7d6269928696667355329db2b63fc43c89cedf751316c1756a7e8794a4a016311a58a03b
+  languageName: node
+  linkType: hard
+
 "strnum@npm:^1.0.5":
   version: 1.0.5
   resolution: "strnum@npm:1.0.5"
@@ -50493,6 +50513,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"type-fest@npm:^4.26.1":
+  version: 4.26.1
+  resolution: "type-fest@npm:4.26.1"
+  checksum: 10/b82676194f80af228cb852e320d2ea8381c89d667d2e4d9f2bdfc8f254bccc039c7741a90c53617a4de0c9fdca8265ed18eb0888cd628f391c5c381c33a9f94b
+  languageName: node
+  linkType: hard
+
 "type-is@npm:^1.6.16, type-is@npm:^1.6.18, type-is@npm:~1.6.18":
   version: 1.6.18
   resolution: "type-is@npm:1.6.18"
@@ -50742,6 +50769,13 @@ __metadata:
   version: 5.26.5
   resolution: "undici-types@npm:5.26.5"
   checksum: 10/0097779d94bc0fd26f0418b3a05472410408877279141ded2bd449167be1aed7ea5b76f756562cb3586a07f251b90799bab22d9019ceba49c037c76445f7cddd
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.19.2":
+  version: 6.19.8
+  resolution: "undici-types@npm:6.19.8"
+  checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70
   languageName: node
   linkType: hard
 

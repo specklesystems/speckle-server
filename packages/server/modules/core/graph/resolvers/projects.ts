@@ -39,6 +39,7 @@ import {
   insertCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   getStreamCollaboratorsFactory,
@@ -91,6 +92,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })
@@ -112,7 +114,8 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
           eventName,
           payload
         }),
-      getUser
+      getUser,
+      getServerInfo
     }),
     getUsers
   }),

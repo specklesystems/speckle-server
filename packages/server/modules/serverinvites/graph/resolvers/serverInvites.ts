@@ -67,7 +67,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -83,6 +82,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -102,6 +102,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   })
 })
+const getServerInfo = getServerInfoFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -130,7 +131,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 
 export = {
@@ -383,7 +385,8 @@ export = {
         findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
         markInviteUpdated: markInviteUpdatedfactory({ db }),
-        getUser
+        getUser,
+        getServerInfo
       })
 
       await resendInviteEmail({ inviteId })

@@ -3,8 +3,6 @@ import { expect } from 'chai'
 
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
-import { createUser } from '@/modules/core/services/users'
-import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -23,8 +21,10 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteServerOnlyInvitesFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -34,8 +34,35 @@ import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -60,7 +87,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -68,6 +96,41 @@ const createStream = legacyCreateStreamFactory({
     createBranch: createBranchFactory({ db }),
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
   })
 })
 

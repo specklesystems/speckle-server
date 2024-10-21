@@ -129,7 +129,6 @@ import {
   deleteWorkspaceDomainFactory,
   isUserWorkspaceDomainPolicyCompliantFactory
 } from '@/modules/workspaces/services/domains'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -149,7 +148,9 @@ import {
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -183,7 +184,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 
 const buildCreateAndSendWorkspaceInvite = () =>
@@ -200,7 +202,8 @@ const buildCreateAndSendWorkspaceInvite = () =>
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 const deleteStream = deleteStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
@@ -598,7 +601,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               filterQuery: workspaceInviteValidityFilter
             }),
             markInviteUpdated: markInviteUpdatedfactory({ db }),
-            getUser
+            getUser,
+            getServerInfo
           })
 
           await resendInviteEmail({

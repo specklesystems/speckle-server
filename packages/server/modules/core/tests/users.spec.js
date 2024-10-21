@@ -3,28 +3,10 @@ const expect = require('chai').expect
 const assert = require('assert')
 
 const {
-  changeUserRole,
-  createUser,
-  findOrCreateUser,
-  getUserByEmail,
-  searchUsers,
-  updateUser,
-  deleteUser,
-  validatePasssword,
-  updateUserPassword
-} = require('../services/users')
-const {
-  createPersonalAccessToken,
-  revokeToken,
-  validateToken,
-  getUserTokens
+  createPersonalAccessTokenFactory,
+  validateTokenFactory
 } = require('../services/tokens')
 
-const { getBranchesByStreamId } = require('../services/branches')
-
-const { getCommitsByBranchName, getCommitsByStreamId } = require('../services/commits')
-
-const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
@@ -32,14 +14,18 @@ const {
   createBranchFactory,
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
   getCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchIdFactory,
@@ -49,10 +35,16 @@ const {
   getStreamFactory,
   createStreamFactory,
   grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory
+  markCommitStreamUpdatedFactory,
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -65,7 +57,10 @@ const {
 } = require('@/modules/serverinvites/services/creation')
 const {
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory,
+  deleteAllUserInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
   collectAndValidateCoreTargetsFactory
@@ -86,9 +81,76 @@ const {
 const {
   getUsersFactory,
   getUserFactory,
-  legacyGetUserFactory
+  legacyGetUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  legacyGetUserByEmailFactory,
+  updateUserFactory,
+  getUserByEmailFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory,
+  updateUserServerRoleFactory,
+  searchUsersFactory,
+  getUserRoleFactory
 } = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const {
+  createUserFactory,
+  findOrCreateUserFactory,
+  updateUserAndNotifyFactory,
+  changePasswordFactory,
+  validateUserPasswordFactory,
+  deleteUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  addUserUpdatedActivityFactory
+} = require('@/modules/activitystream/services/userActivity')
+const { dbLogger } = require('@/logging/logging')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory,
+  getUserPersonalAccessTokensFactory,
+  revokeUserTokenByIdFactory,
+  getApiTokenByIdFactory,
+  getTokenScopesByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  updateApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getTokenAppInfoFactory } = require('@/modules/auth/repositories/apps')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
+const {
+  getPaginatedStreamBranchesFactory
+} = require('@/modules/core/services/branch/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
@@ -139,7 +201,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser: getUserFactory({ db })
+        getUser: getUserFactory({ db }),
+        getServerInfo
       }),
       getUsers
     }),
@@ -150,6 +213,101 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+})
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const updateUser = updateUserAndNotifyFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db }),
+  addUserUpdatedActivity: addUserUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db })
+  })
+})
+const updateUserPassword = changePasswordFactory({
+  getUser: getUserFactory({ db }),
+  updateUser: updateUserFactory({ db })
+})
+const validateUserPassword = validateUserPasswordFactory({
+  getUserByEmail: getUserByEmailFactory({ db })
+})
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
+})
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
+const searchUsers = searchUsersFactory({ db })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const getUserTokens = getUserPersonalAccessTokensFactory({ db })
+const revokeToken = revokeUserTokenByIdFactory({ db })
+const validateToken = validateTokenFactory({
+  revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+  getApiTokenById: getApiTokenByIdFactory({ db }),
+  getTokenAppInfo: getTokenAppInfoFactory({ db }),
+  getTokenScopesById: getTokenScopesByIdFactory({ db }),
+  getUserRole: getUserRoleFactory({ db }),
+  getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory({
+    db
+  }),
+  updateApiToken: updateApiTokenFactory({ db })
+})
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
+const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -178,7 +336,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Validate password should ignore email casing', async () => {
       expect(
-        await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
+        await validateUserPassword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
       )
     })
 
@@ -270,7 +428,7 @@ describe('Actors & Tokens @user-services', () => {
         })
       ).id
 
-      await deleteUser({ deleteAllUserInvites: async () => true })(ballmerUserId)
+      await deleteUser(ballmerUserId)
 
       if ((await getStream({ streamId: soloOwnerStream.id })) !== undefined) {
         assert.fail('user stream not deleted')
@@ -281,7 +439,7 @@ describe('Actors & Tokens @user-services', () => {
         assert.fail('shared stream deleted')
       }
 
-      const branches = await getBranchesByStreamId({ streamId: multiOwnerStream.id })
+      const branches = await getBranchesByStreamId(multiOwnerStream.id)
       expect(branches.items.length).to.equal(3)
 
       const branchCommits = await getCommitsByBranchName({
@@ -304,7 +462,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Should not delete the last admin user', async () => {
       try {
-        await deleteUser({ deleteAllUserInvites: async () => true })(myTestActor.id)
+        await deleteUser(myTestActor.id)
         assert.fail('boom')
       } catch (err) {
         expect(err.message).to.equal(
@@ -368,7 +526,7 @@ describe('Actors & Tokens @user-services', () => {
 
       await updateUser(myTestActor.id, updatedActor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: myTestActor.email,
         password: 'failwhale'
       })
@@ -383,12 +541,12 @@ describe('Actors & Tokens @user-services', () => {
 
       await createUser(actor)
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: actor.email,
         password: 'super-test-200'
       })
       expect(match).to.equal(true)
-      const matchWrong = await validatePasssword({
+      const matchWrong = await validateUserPassword({
         email: actor.email,
         password: 'super-test-2000'
       })
@@ -403,7 +561,7 @@ describe('Actors & Tokens @user-services', () => {
       }) // https://mostsecure.pw
       await updateUserPassword({ id, newPassword: 'Hello Dogs and Cats' })
 
-      const match = await validatePasssword({
+      const match = await validateUserPassword({
         email: 'tester@mcbester.com',
         password: 'Hello Dogs and Cats'
       })
