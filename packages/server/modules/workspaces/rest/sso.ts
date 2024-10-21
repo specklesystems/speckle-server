@@ -18,7 +18,8 @@ import {
   associateSsoProviderWithWorkspaceFactory,
   storeProviderRecordFactory,
   storeUserSsoSessionFactory,
-  getWorkspaceSsoProviderFactory
+  getWorkspaceSsoProviderFactory,
+  revokeUserSsoSessionsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
@@ -118,6 +119,18 @@ router.get(
     res?.json(limitedWorkspace)
   }
 )
+
+router.post('/api/v1/auth/logout', async ({ context, res }) => {
+  const { userId } = context
+
+  if (!userId) {
+    return res?.status(200).send()
+  }
+
+  await revokeUserSsoSessionsFactory({ db })({ userId })
+
+  return res?.status(200).send()
+})
 
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',

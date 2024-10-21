@@ -190,6 +190,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
+  const isSsoEnabled = useIsWorkspacesSsoEnabled()
 
   /**
    * Invite token, if any
@@ -396,6 +397,17 @@ export const useAuthManager = (
       forceFullReload: boolean
     }>
   ) => {
+    if (isSsoEnabled.value) {
+      await fetch(new URL('/api/v1/auth/logout', apiOrigin).toString(), {
+        method: 'POST',
+        headers: authToken.value
+          ? {
+              Authorization: authToken.value
+            }
+          : undefined
+      })
+    }
+
     await saveNewToken(undefined, { skipRedirect: true })
 
     if (!options?.skipToast) {

@@ -7,7 +7,8 @@ import {
   AssociateSsoProviderWithWorkspace,
   StoreUserSsoSession,
   UserSsoSession,
-  GetWorkspaceSsoProvider
+  GetWorkspaceSsoProvider,
+  RevokeUserSsoSessions
 } from '@/modules/workspaces/domain/sso'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
@@ -96,4 +97,10 @@ export const storeUserSsoSessionFactory =
   ({ db }: { db: Knex }): StoreUserSsoSession =>
   async ({ userSsoSession }) => {
     await tables.userSsoSessions(db).insert(userSsoSession)
+  }
+
+export const revokeUserSsoSessionsFactory =
+  ({ db }: { db: Knex }): RevokeUserSsoSessions =>
+  async ({ userId }) => {
+    await tables.userSsoSessions(db).where({ userId }).delete()
   }

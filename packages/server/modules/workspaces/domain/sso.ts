@@ -48,6 +48,8 @@ export type StoreUserSsoSession = (args: {
   userSsoSession: UserSsoSession
 }) => Promise<void>
 
+export type RevokeUserSsoSessions = (args: { userId: string }) => Promise<void>
+
 export const oidcProviderValidationRequest = z.object({
   token: z.string(),
   provider: oidcProvider
