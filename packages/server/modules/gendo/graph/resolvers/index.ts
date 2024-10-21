@@ -3,7 +3,8 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
 import {
   getGendoAIAPIEndpoint,
-  getGendoAIKey
+  getGendoAIKey,
+  getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import {
   createGendoAIRenderRequest,
@@ -60,7 +61,7 @@ export = {
 
       const endpoint = getGendoAIAPIEndpoint() as string
       const bearer = getGendoAIKey() as string
-      const webhookUrl = `${process.env.CANONICAL_URL}/api/thirdparty/gendo`
+      const webhookUrl = `${getServerOrigin()}/api/thirdparty/gendo`
 
       // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
       const gendoRequestBody = {
