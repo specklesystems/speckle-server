@@ -1,11 +1,9 @@
 import { authorizeResolver } from '@/modules/shared'
-
-import { getObjectChildrenQuery } from '@/modules/core/services/objects'
-
 import { isNonNullable, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getObjectChildrenFactory,
+  getObjectChildrenQueryFactory,
   getObjectFactory,
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
@@ -19,6 +17,8 @@ const createObjects = createObjectsFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 const getObjectChildren = getObjectChildrenFactory({ db })
+const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db })
+type GetObjectChildrenQueryParams = Parameters<typeof getObjectChildrenQuery>[0]
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
@@ -66,13 +66,27 @@ export = {
         objectId: parent.id,
         limit: args.limit,
         depth: args.depth,
-        select: args.select,
-        query: args.query,
-        orderBy: args.orderBy,
+        select: args.select?.filter(isNonNullable),
+        // TODO: Theoretically users can feed in invalid structures here
+        query: args.query?.filter(
+          isNonNullable
+        ) as GetObjectChildrenQueryParams['query'],
+        orderBy: (args.orderBy || undefined) as GetObjectChildrenQueryParams['orderBy'],
         cursor: args.cursor
       })
-      result.objects.forEach((x) => (x.streamId = parent.streamId))
-      return result
+
+      // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+      const objects = result.objects as Array<
+        (typeof result)['objects'][number] & {
+          streamId: string
+        }
+      >
+      objects.forEach((x) => (x.streamId = parent.streamId))
+
+      return {
+        ...result,
+        objects
+      }
     }
   },
   Mutation: {
