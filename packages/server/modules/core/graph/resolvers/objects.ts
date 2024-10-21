@@ -1,13 +1,11 @@
 import { authorizeResolver } from '@/modules/shared'
 
-import {
-  getObjectChildren,
-  getObjectChildrenQuery
-} from '@/modules/core/services/objects'
+import { getObjectChildrenQuery } from '@/modules/core/services/objects'
 
 import { isNonNullable, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
+  getObjectChildrenFactory,
   getObjectFactory,
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
@@ -20,6 +18,7 @@ const createObjects = createObjectsFactory({
   storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
+const getObjectChildren = getObjectChildrenFactory({ db })
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
@@ -42,14 +41,22 @@ export = {
           objectId: parent.id,
           limit: args.limit,
           depth: args.depth,
-          select: args.select,
+          select: args.select?.filter(isNonNullable),
           cursor: args.cursor
         })
-        result.objects.forEach((x) => (x.streamId = parent.streamId))
+
+        // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+        const objects = result.objects as Array<
+          (typeof result)['objects'][number] & {
+            streamId: string
+          }
+        >
+        objects.forEach((x) => (x.streamId = parent.streamId))
+
         return {
           totalCount: parent.totalChildrenCount || 0,
           cursor: result.cursor,
-          objects: result.objects
+          objects
         }
       }
 
