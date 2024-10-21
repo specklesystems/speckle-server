@@ -169,9 +169,9 @@ watch(searchText, () => {
   emit('search-text-update', searchText.value)
 })
 
+// TODO: this function is never triggered!! remove or evaluate
 const selectAccount = (account: DUIAccount) => {
   selectedAccountId.value = account.accountInfo.id
-
   void trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
 }
 

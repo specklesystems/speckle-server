@@ -39,7 +39,7 @@ const accountTestQuery = gql`
 
 export const useAccountStore = defineStore('accountStore', () => {
   const app = useNuxtApp()
-  const { $accountBinding } = app
+  const { $accountBinding, $configBinding } = app
 
   const hostAppStore = useHostAppStore()
 
@@ -59,6 +59,16 @@ export const useAccountStore = defineStore('accountStore', () => {
   const activeAccount = computed(() => {
     return userSelectedAccount.value || defaultAccount.value
   })
+
+  const setUserSelectedAccount = (acc: DUIAccount) => {
+    userSelectedAccount.value = acc
+    try {
+      // NOTE: for the safe merge!
+      $configBinding.setUserSelectedAccountId(acc.accountInfo.id) // not need to await, fire and forget?
+    } catch (error) {
+      console.warn(error)
+    }
+  }
 
   const testAccounts = async () => {
     isLoading.value = true
@@ -224,6 +234,20 @@ export const useAccountStore = defineStore('accountStore', () => {
     void testAccounts()
   })
 
+  const init = async () => {
+    await refreshAccounts()
+    try {
+      const accountsConfig = await $configBinding.getUserSelectedAccountId()
+      userSelectedAccount.value = accounts.value.find(
+        (a) => a.accountInfo.id === accountsConfig.userSelectedAccountId
+      ) as DUIAccount
+    } catch (error) {
+      console.warn(error)
+    }
+  }
+
+  init()
+
   app.vueApp.provide(ApolloClients, apolloClients)
   return {
     isLoading,
@@ -231,6 +255,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     defaultAccount,
     activeAccount,
     userSelectedAccount,
+    setUserSelectedAccount,
     accountByServerUrl,
     isAccountExistsById,
     isAccountExistsByServer,

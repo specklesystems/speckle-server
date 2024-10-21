@@ -15071,6 +15071,7 @@ __metadata:
     "@nuxtjs/tailwindcss": "npm:^6.7.0"
     "@parcel/watcher": "npm:^2.4.1"
     "@pinia/nuxt": "npm:^0.4.11"
+    "@speckle/objectsender": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
@@ -15397,7 +15398,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectsender@workspace:packages/objectsender":
+"@speckle/objectsender@workspace:^, @speckle/objectsender@workspace:packages/objectsender":
   version: 0.0.0-use.local
   resolution: "@speckle/objectsender@workspace:packages/objectsender"
   dependencies:

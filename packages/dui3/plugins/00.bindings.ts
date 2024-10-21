@@ -1,7 +1,6 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
-import { ServerBridge } from '~/lib/bridge/server'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
@@ -104,11 +103,6 @@ const tryHoistBinding = async <T>(name: string) => {
   let bridge: GenericBridge | SketchupBridge | null = null
   let tempBridge: GenericBridge | SketchupBridge | null = null
 
-  if (globalThis.CefSharp) {
-    await globalThis.CefSharp.BindObjectAsync(name)
-    tempBridge = new GenericBridge(globalThis[name] as unknown as IRawBridge)
-  }
-
   if (globalThis.chrome && globalThis.chrome.webview && !tempBridge) {
     tempBridge = new GenericBridge(globalThis.chrome.webview.hostObjects[name])
   }
@@ -117,9 +111,14 @@ const tryHoistBinding = async <T>(name: string) => {
     tempBridge = new SketchupBridge(name)
   }
 
-  if (globalThis.DG && !tempBridge) {
-    await globalThis.DG.LoadObject(name)
-    tempBridge = new ServerBridge(globalThis[name] as unknown as IRawBridge)
+  if (globalThis.CefSharp && globalThis.DG && !tempBridge) {
+    await globalThis.CefSharp.BindObjectAsync(name)
+    tempBridge = new GenericBridge(globalThis[name] as unknown as IRawBridge, true)
+  }
+
+  if (globalThis.CefSharp && !tempBridge) {
+    await globalThis.CefSharp.BindObjectAsync(name)
+    tempBridge = new GenericBridge(globalThis[name] as unknown as IRawBridge)
   }
 
   const res = await tempBridge?.create()

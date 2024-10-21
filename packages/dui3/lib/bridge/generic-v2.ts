@@ -1,3 +1,4 @@
+import { ServerBridge } from '~/lib/bridge/server'
 import { BaseBridge } from '~/lib/bridge/base'
 import type { IRawBridge } from '~/lib/bridge/definitions'
 
@@ -6,6 +7,7 @@ import type { IRawBridge } from '~/lib/bridge/definitions'
  */
 export class GenericBridge extends BaseBridge {
   private bridge: IRawBridge
+  private serverBridge: ServerBridge | undefined
   private requests = {} as Record<
     string,
     {
@@ -19,9 +21,12 @@ export class GenericBridge extends BaseBridge {
   // An example is the send or receive operations: they can take fucking long :D
   private TIMEOUT_MS = 1000 * 60 // 60 sec
 
-  constructor(object: IRawBridge) {
+  constructor(object: IRawBridge, isServerBridge: boolean = false) {
     super()
     this.bridge = object
+    if (isServerBridge) {
+      this.serverBridge = new ServerBridge(this.runMethod, this.emitter)
+    }
   }
 
   public async create(): Promise<boolean> {
@@ -53,7 +58,17 @@ export class GenericBridge extends BaseBridge {
     const request = this.requests[requestId]
     try {
       const parsedData = data ? (JSON.parse(data) as Record<string, unknown>) : null
-      this.emitter.emit(eventName, parsedData)
+
+      if (parsedData === null) {
+        throw new Error(`Data is not parsed successfuly on ${eventName}`)
+      }
+
+      if (this.serverBridge) {
+        this.serverBridge.emit(eventName, parsedData)
+      } else {
+        this.emitter.emit(eventName, parsedData)
+      }
+
       request.resolve(parsedData)
     } catch (e) {
       console.error(e)
