@@ -82,17 +82,6 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 }
 
 describe('Workspace repositories', () => {
-  const testServerAdmin: BasicTestUser = {
-    id: '',
-    name: 'John A Speckle',
-    email: 'john@example.speckle',
-    role: Roles.Server.Admin
-  }
-
-  before(async () => {
-    await createTestUsers([testServerAdmin])
-  })
-
   describe('getWorkspaceFactory creates a function, that', () => {
     it('returns null if the workspace is not found', async () => {
       const workspace = await getWorkspace({
@@ -101,12 +90,19 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     it('returns null if workspace is marked as deleted', async () => {
+      const testServerAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
       const testWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
         slug: cryptoRandomString({ length: 10 }),
         name: 'Test Workspace'
       }
+      await createTestUsers([testServerAdmin])
       await createTestWorkspace(testWorkspace, testServerAdmin)
       await deleteWorkspace({ workspaceId: testWorkspace.id })
 
@@ -126,12 +122,19 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     it('returns the workspace if it exists', async () => {
+      const testServerAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
       const testWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
         slug: cryptoRandomString({ length: 10 }),
         name: 'Test Workspace'
       }
+      await createTestUsers([testServerAdmin])
       await createTestWorkspace(testWorkspace, testServerAdmin)
 
       const workspace = await getWorkspaceBySlug({
@@ -141,12 +144,19 @@ describe('Workspace repositories', () => {
       expect(workspace?.id).to.be.equal(testWorkspace.id)
     })
     it('returns null if the workspace is marked as deleted', async () => {
+      const testServerAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
       const testWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
         slug: cryptoRandomString({ length: 10 }),
         name: 'Test Workspace'
       }
+      await createTestUsers([testServerAdmin])
       await createTestWorkspace(testWorkspace, testServerAdmin)
       await deleteWorkspace({ workspaceId: testWorkspace.id })
 
