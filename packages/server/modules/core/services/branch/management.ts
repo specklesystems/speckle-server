@@ -1,6 +1,5 @@
 import { Roles, isNullOrUndefined } from '@speckle/shared'
 import {
-  addBranchCreatedActivity,
   addBranchDeletedActivity,
   addBranchUpdatedActivity
 } from '@/modules/activitystream/services/branchActivity'
@@ -35,6 +34,7 @@ import {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
+import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -44,7 +44,7 @@ export const createBranchAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     createBranch: StoreBranch
-    addBranchCreatedActivity: typeof addBranchCreatedActivity
+    addBranchCreatedActivity: AddBranchCreatedActivity
   }): CreateBranchAndNotify =>
   async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId

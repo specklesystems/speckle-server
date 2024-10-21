@@ -19,6 +19,7 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import {
+  BranchRecord,
   CommitRecord,
   StreamAclRecord,
   StreamRecord
@@ -265,4 +266,8 @@ export type AddReplyAddedActivity = (params: {
   input: ReplyCreatedActivityInput
   reply: CommentRecord
   userId: string
+}) => Promise<void>
+
+export type AddBranchCreatedActivity = (params: {
+  branch: BranchRecord
 }) => Promise<void>

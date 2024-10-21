@@ -15,9 +15,6 @@ const {
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
-  addBranchCreatedActivity
-} = require('@/modules/activitystream/services/branchActivity')
-const {
   getCommitFactory,
   deleteCommitFactory,
   createCommitFactory,
@@ -117,6 +114,9 @@ const {
   getPaginatedBranchCommitsItemsByNameFactory
 } = require('@/modules/core/services/commit/retrieval')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  addBranchCreatedActivityFactory
+} = require('@/modules/activitystream/services/branchActivity')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -128,7 +128,10 @@ const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({

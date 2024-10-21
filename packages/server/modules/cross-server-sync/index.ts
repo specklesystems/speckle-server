@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import {
   addCommentCreatedActivityFactory,
   addReplyAddedActivityFactory
@@ -227,7 +227,10 @@ const crossServerSyncModule: SpeckleModule = {
         createBranchAndNotify: createBranchAndNotifyFactory({
           createBranch: createBranchFactory({ db }),
           getStreamBranchByName,
-          addBranchCreatedActivity
+          addBranchCreatedActivity: addBranchCreatedActivityFactory({
+            saveActivity: saveActivityFactory({ db }),
+            publish
+          })
         })
       }),
       markOnboardingBaseStream
