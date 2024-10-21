@@ -152,7 +152,9 @@ const crossServerSyncModule: SpeckleModule = {
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db }),
           getViewerResourcesFromLegacyIdentifiers
-        })
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
       })
     })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })

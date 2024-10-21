@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import {
   AddCommentArchivedActivity,
   AddCommentCreatedActivity,
@@ -10,7 +9,6 @@ import {
   ReplyCreatedActivityInput
 } from '@/modules/activitystream/domain/types'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   GetViewerResourceItemsUngrouped,
   GetViewerResourcesForComment,
@@ -25,8 +23,7 @@ import {
 import { PublishSubscription, pubsub } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
@@ -157,9 +154,13 @@ const isLegacyReplyCreateInput = (
 
 export const addReplyAddedActivityFactory =
   ({
-    getViewerResourcesForComment
+    getViewerResourcesForComment,
+    saveActivity,
+    publish
   }: {
     getViewerResourcesForComment: GetViewerResourcesForComment
+    publish: PublishSubscription
+    saveActivity: SaveActivity
   }): AddReplyAddedActivity =>
   async (params) => {
     const { streamId, input, reply, userId } = params
@@ -168,7 +169,7 @@ export const addReplyAddedActivityFactory =
       ? input.parentComment
       : input.threadId
     await Promise.all([
-      saveActivityFactory({ db })({
+      saveActivity({
         streamId,
         resourceType: ResourceTypes.Comment,
         resourceId: parentCommentId,
@@ -177,6 +178,7 @@ export const addReplyAddedActivityFactory =
         info: { input },
         message: `Comment reply #${reply.id} created`
       }),
+      // @deprecated
       pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
         commentThreadActivity: {
           type: 'reply-added',

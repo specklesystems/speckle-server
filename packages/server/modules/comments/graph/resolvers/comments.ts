@@ -210,7 +210,9 @@ const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
     getViewerResourcesForComment: getViewerResourcesForCommentFactory({
       getCommentsResources: getCommentsResourcesFactory({ db }),
       getViewerResourcesFromLegacyIdentifiers
-    })
+    }),
+    saveActivity: saveActivityFactory({ db }),
+    publish
   })
 })
 const editCommentAndNotify = editCommentAndNotifyFactory({
@@ -704,7 +706,9 @@ export = {
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db }),
           getViewerResourcesFromLegacyIdentifiers
-        })
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
       })({
         streamId: args.input.streamId,
         input: args.input,

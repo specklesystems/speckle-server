@@ -157,7 +157,9 @@ const command: CommandModule<
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db }),
           getViewerResourcesFromLegacyIdentifiers
-        })
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
       })
     })
 
