@@ -110,7 +110,6 @@ const workspaceWithRoleBaseQuery = ({
         // Getting first role from grouped results
         knex.raw(`(array_agg("workspace_acl"."role"))[1] as role`)
       ])
-      .whereNull(Workspaces.col.deleteAfter)
       .leftJoin(DbWorkspaceAcl.name, function () {
         this.on(DbWorkspaceAcl.col.workspaceId, Workspaces.col.id).andOnVal(
           DbWorkspaceAcl.col.userId,
@@ -119,6 +118,7 @@ const workspaceWithRoleBaseQuery = ({
       })
       .groupBy(Workspaces.col.id)
   }
+  q.whereNull(Workspaces.col.deleteAfter)
   return q
 }
 

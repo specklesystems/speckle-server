@@ -836,9 +836,9 @@ describe('Workspaces GQL CRUD', () => {
         const memberApollo: TestApolloServer = (apollo = await testApolloServer({
           context: createTestContext({
             auth: true,
-            userId: testAdminUser.id,
+            userId: testMemberUser.id,
             token: '',
-            role: testAdminUser.role,
+            role: testMemberUser.role,
             scopes: AllScopes
           })
         }))
