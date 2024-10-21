@@ -7,11 +7,6 @@ const {
   validateTokenFactory
 } = require('../services/tokens')
 
-const { getBranchesByStreamId } = require('../services/branches')
-
-const { getCommitsByBranchName, getCommitsByStreamId } = require('../services/commits')
-
-const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
 const { createRandomEmail } = require('../helpers/testHelpers')
@@ -19,14 +14,18 @@ const {
   createBranchFactory,
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory
+  getStreamBranchByNameFactory,
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
   getCommitFactory,
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   createCommitByBranchIdFactory,
@@ -41,7 +40,11 @@ const {
   getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -139,6 +142,13 @@ const {
 } = require('@/modules/core/repositories/tokens')
 const { getTokenAppInfoFactory } = require('@/modules/auth/repositories/apps')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
+const {
+  getPaginatedStreamBranchesFactory
+} = require('@/modules/core/services/branch/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -285,6 +295,19 @@ const validateToken = validateTokenFactory({
   }),
   updateApiToken: updateApiTokenFactory({ db })
 })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
+const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -416,7 +439,7 @@ describe('Actors & Tokens @user-services', () => {
         assert.fail('shared stream deleted')
       }
 
-      const branches = await getBranchesByStreamId({ streamId: multiOwnerStream.id })
+      const branches = await getBranchesByStreamId(multiOwnerStream.id)
       expect(branches.items.length).to.equal(3)
 
       const branchCommits = await getCommitsByBranchName({

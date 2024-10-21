@@ -3,38 +3,44 @@ import {
   ModelVersionsFilter,
   StreamCommitsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
-import { getCommitsByStreamId } from '@/modules/core/services/commits'
 import { BadRequestError } from '@/modules/shared/errors'
-import { db } from '@/db/knex'
 import {
   GetBranchCommitsTotalCount,
+  GetBranchCommitsTotalCountByName,
   GetPaginatedBranchCommits,
   GetPaginatedBranchCommitsItems,
+  GetPaginatedBranchCommitsItemsByName,
   GetSpecificBranchCommits,
+  GetStreamCommitCount,
+  LegacyGetPaginatedStreamCommits,
+  LegacyGetPaginatedStreamCommitsPage,
   PaginatedBranchCommitsParams
 } from '@/modules/core/domain/commits/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 
-export async function getPaginatedStreamCommits(
-  streamId: string,
-  params: StreamCommitsArgs
-) {
-  if (params.limit && params.limit > 100)
-    throw new BadRequestError(
-      'Cannot return more than 100 items, please use pagination.'
-    )
-  const { commits: items, cursor } = await getCommitsByStreamId({
-    streamId,
-    limit: params.limit,
-    cursor: params.cursor,
-    ignoreGlobalsBranch: true
-  })
-  const totalCount = await getStreamCommitCountFactory({ db })(streamId, {
-    ignoreGlobalsBranch: true
-  })
+export const legacyGetPaginatedStreamCommits =
+  (deps: {
+    legacyGetPaginatedStreamCommitsPage: LegacyGetPaginatedStreamCommitsPage
+    getStreamCommitCount: GetStreamCommitCount
+  }): LegacyGetPaginatedStreamCommits =>
+  async (streamId: string, params: StreamCommitsArgs) => {
+    if (params.limit && params.limit > 100)
+      throw new BadRequestError(
+        'Cannot return more than 100 items, please use pagination.'
+      )
 
-  return { items, cursor, totalCount }
-}
+    const { commits: items, cursor } = await deps.legacyGetPaginatedStreamCommitsPage({
+      streamId,
+      limit: params.limit,
+      cursor: params.cursor,
+      ignoreGlobalsBranch: true
+    })
+    const totalCount = await deps.getStreamCommitCount(streamId, {
+      ignoreGlobalsBranch: true
+    })
+
+    return { items, cursor, totalCount }
+  }
 
 export const getPaginatedBranchCommitsFactory =
   (deps: {
@@ -93,4 +99,31 @@ export const getPaginatedBranchCommitsFactory =
       cursor: newCursor,
       items: newItems
     }
+  }
+
+export const getBranchCommitsTotalCountByNameFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    getBranchCommitsTotalCount: GetBranchCommitsTotalCount
+  }): GetBranchCommitsTotalCountByName =>
+  async ({ streamId, branchName }) => {
+    branchName = branchName.toLowerCase()
+    const myBranch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+    return deps.getBranchCommitsTotalCount({ branchId: myBranch.id })
+  }
+
+export const getPaginatedBranchCommitsItemsByNameFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    getPaginatedBranchCommitsItems: GetPaginatedBranchCommitsItems
+  }): GetPaginatedBranchCommitsItemsByName =>
+  async ({ streamId, branchName, limit, cursor }) => {
+    branchName = branchName.toLowerCase()
+    const myBranch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
+
+    return deps.getPaginatedBranchCommitsItems({ branchId: myBranch.id, limit, cursor })
   }

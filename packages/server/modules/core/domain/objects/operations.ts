@@ -1,7 +1,14 @@
-import { SpeckleObject } from '@/modules/core/domain/objects/types'
+import { Logger } from '@/logging/logging'
+import {
+  InsertableSpeckleObject,
+  RawSpeckleObject,
+  SpeckleObject,
+  SpeckleObjectClosureEntry
+} from '@/modules/core/domain/objects/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { Optional } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
+import type stream from 'node:stream'
 
 export type GetStreamObjects = (
   streamId: string,
@@ -12,6 +19,11 @@ export type GetObject = (
   objectId: string,
   streamId: string
 ) => Promise<Optional<SpeckleObject>>
+
+export type GetFormattedObject = (params: {
+  streamId: string
+  objectId: string
+}) => Promise<Nullable<Omit<SpeckleObject, 'streamId'>>>
 
 export type GetBatchedStreamObjects = (
   streamId: string,
@@ -24,3 +36,52 @@ export type StoreObjects = (
     trx: Knex.Transaction
   }>
 ) => Promise<number[]>
+
+export type StoreSingleObjectIfNotFound = (
+  object: SpeckleObject | InsertableSpeckleObject
+) => Promise<void>
+
+export type StoreObjectsIfNotFound = (
+  objects: Array<SpeckleObject | InsertableSpeckleObject>
+) => Promise<void>
+
+export type StoreClosuresIfNotFound = (
+  closures: SpeckleObjectClosureEntry[]
+) => Promise<void>
+
+export type GetObjectChildrenStream = (params: {
+  streamId: string
+  objectId: string
+}) => Promise<stream.PassThrough & AsyncIterable<{ dataText: string; id: string }>>
+
+export type GetObjectChildren = (params: {
+  streamId: string
+  objectId: string
+  limit?: MaybeNullOrUndefined<number | string>
+  depth?: MaybeNullOrUndefined<number | string>
+  select?: MaybeNullOrUndefined<string[]>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  objects: Omit<SpeckleObject, 'totalChildrenCountByDepth' | 'streamId'>[]
+  cursor: string | null
+}>
+
+export type CreateObject = (params: {
+  streamId: string
+  object: RawSpeckleObject
+  logger?: Logger
+}) => Promise<string>
+
+type CreateObjectsParams = {
+  streamId: string
+  objects: RawSpeckleObject[]
+  logger?: Logger
+}
+
+export type CreateObjectsBatched = (params: CreateObjectsParams) => Promise<boolean>
+
+export type CreateObjectsBatchedAndNoClosures = (
+  params: CreateObjectsParams
+) => Promise<string[]>
+
+export type CreateObjects = (params: CreateObjectsParams) => Promise<string[]>

@@ -3,7 +3,7 @@ import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
-  addCommentCreatedActivity,
+  addCommentCreatedActivityFactory,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
@@ -12,6 +12,7 @@ import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   getCommentFactory,
+  getCommentsResourcesFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -35,13 +36,16 @@ import {
 import {
   createCommitFactory,
   getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -61,9 +65,11 @@ import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/man
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import {
   getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { createObject } from '@/modules/core/services/objects'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
@@ -110,6 +116,16 @@ const crossServerSyncModule: SpeckleModule = {
         getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
+    const getViewerResourcesFromLegacyIdentifiers =
+      getViewerResourcesFromLegacyIdentifiersFactory({
+        getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers: (...args) =>
+            getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+        }),
+        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+        getStreamObjects
+      })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
       getViewerResourceItemsUngrouped,
       validateInputAttachments,
@@ -117,7 +133,12 @@ const crossServerSyncModule: SpeckleModule = {
       insertCommentLinks,
       markCommentViewed,
       commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity
+      addCommentCreatedActivity: addCommentCreatedActivityFactory({
+        getViewerResourcesFromLegacyIdentifiers,
+        getViewerResourceItemsUngrouped,
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db }),
@@ -144,6 +165,10 @@ const crossServerSyncModule: SpeckleModule = {
       })
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
     const createStreamReturnRecord = createStreamReturnRecordFactory({
       inviteUsersToProject: inviteUsersToProjectFactory({
         createAndSendInvite: createAndSendInviteFactory({

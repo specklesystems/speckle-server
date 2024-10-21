@@ -64,6 +64,16 @@
           "type": "boolean",
           "description": "High level flag fully toggles multiple emails",
           "default": false
+        },
+        "gatekeeperModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that enables the gatekeeper module",
+          "default": false
+        },
+        "billingIntegrationEnabled": {
+          "type": "boolean",
+          "description": "High level flag that enables the billing integration",
+          "default": false
         }
       }
     },
