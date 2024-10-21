@@ -41,13 +41,15 @@ import {
   isTestEnv,
   useNewFrontend,
   isApolloMonitoringEnabled,
-  enableMixpanel
+  enableMixpanel,
+  getPort,
+  getBindAddress
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
-import { get, has, isString, toNumber } from 'lodash'
+import { get, has, isString } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
@@ -462,8 +464,8 @@ export async function startHttp(
   app: Express,
   customPortOverride?: number
 ) {
-  let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
-  let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
+  let bindAddress = getBindAddress() // defaults to 127.0.0.1
+  let port = getPort() // defaults to 3000
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   if (shouldUseFrontendProxy()) {
@@ -476,7 +478,7 @@ export async function startHttp(
 
   // Production mode
   else {
-    bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
+    bindAddress = getBindAddress('0.0.0.0')
   }
 
   monitorActiveConnections(server)
