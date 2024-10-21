@@ -670,7 +670,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyBusinessStripePriceId.secretKey }}
+      
+      key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
 {{- if .Values.featureFlags.automateModuleEnabled }}
