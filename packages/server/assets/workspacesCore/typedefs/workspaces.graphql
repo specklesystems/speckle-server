@@ -323,9 +323,10 @@ type Workspace {
   discoverabilityEnabled: Boolean!
 }
 
-type DiscoverableWorkspace {
+type LimitedWorkspace {
   id: ID!
   name: String!
+  slug: String!
   description: String
   logo: String
   defaultLogoIndex: Int!
@@ -417,7 +418,7 @@ extend type User {
   """
   Get discoverable workspaces with verified domains that match the active user's
   """
-  discoverableWorkspaces: [DiscoverableWorkspace!]!
+  discoverableWorkspaces: [LimitedWorkspace!]!
 
   """
   Get the workspaces for the user
