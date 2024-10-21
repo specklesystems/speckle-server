@@ -55,13 +55,13 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   finalizeAuthMiddlewareFactory,
   moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import {
+  deleteInviteFactory,
   deleteServerOnlyInvitesFactory,
   findInviteFactory,
   updateAllInviteTargetsFactory
@@ -106,7 +106,7 @@ const buildAuthRedirectUrl = (
 /**
  * Generate default final redirect url if request is successful
  */
-const buildFinalizeUrl = (workspaceSlug: string, isValidationFlow: boolean): URL => {
+const buildFinalizeUrl = (workspaceSlug: string): URL => {
   const urlFragments = [`workspaces/${workspaceSlug}/authn`]
 
   return new URL(urlFragments.join(''), getFrontendOrigin())
@@ -304,7 +304,7 @@ router.get(
       session.destroy(noop)
       const url = buildErrorUrl({
         err,
-        url: buildFinalizeUrl(params.workspaceSlug, true),
+        url: buildFinalizeUrl(params.workspaceSlug),
         searchParams: query,
         isValidationFlow: true
       })
@@ -332,7 +332,7 @@ router.get(
 
     let provider: OIDCProvider | null = null
     let providerId: string | null = null
-    let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
+    let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug)
 
     // TODO: Billing check - verify workspace has SSO enabled
     const workspace = await getWorkspaceBySlugFactory({ db })({
@@ -444,7 +444,7 @@ router.get(
         )
 
         // Build final redirect url
-        redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
+        redirectUrl = buildFinalizeUrl(req.params.workspaceSlug)
         redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
 
         req.authRedirectPath = redirectUrl.toString()
@@ -458,7 +458,9 @@ router.get(
         const userEmail = await findEmailFactory({ db })({
           email: ssoProviderUserInfo.email
         })
-        const existingSpeckleUser = await getUserFactory({ db })(userEmail?.userId ?? '')
+        const existingSpeckleUser = await getUserFactory({ db })(
+          userEmail?.userId ?? ''
+        )
 
         // TODO: Validate link between SSO user email and Speckle user
         // Link occurs when an already signed-in user signs in with SSO
@@ -540,6 +542,9 @@ router.get(
               createdAt: new Date()
             })
 
+            // Delete invite (implicitly used during sign up flow)
+            await deleteInviteFactory({ db })(invite.id)
+
             // Assert sign in
             req.user = {
               id: newSpeckleUserId,
@@ -617,7 +622,7 @@ router.get(
           )
         }
 
-        req.authRedirectPath = buildFinalizeUrl(workspaceSlug, false).toString()
+        req.authRedirectPath = buildFinalizeUrl(workspaceSlug).toString()
         return next()
       }
     } catch (err) {
