@@ -6,10 +6,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { createObject } = require('../services/objects')
 
 const {
-  getCommitsTotalCountByBranchName,
-  getCommitsByBranchName
-} = require('../services/commits')
-const {
   createBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
 const cryptoRandomString = require('crypto-random-string')
@@ -34,7 +30,9 @@ const {
   updateCommitFactory,
   getStreamCommitCountFactory,
   legacyGetPaginatedUserCommitsPage,
-  legacyGetPaginatedStreamCommitsPageFactory
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -112,6 +110,10 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getBranchCommitsTotalCountByNameFactory,
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -238,6 +240,14 @@ const createUser = createUserFactory({
 })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsTotalCountByBranchName = getBranchCommitsTotalCountByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
 
 describe('Commits @core-commits', () => {
   const user = {
