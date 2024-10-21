@@ -31,7 +31,7 @@ import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/man
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
-  addReplyAddedActivity
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
@@ -44,6 +44,7 @@ import {
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
@@ -162,7 +163,14 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({

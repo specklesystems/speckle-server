@@ -6,7 +6,9 @@ import {
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import {
   CommentCreateInput,
-  CreateCommentInput
+  CreateCommentInput,
+  CreateCommentReplyInput,
+  ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 
@@ -28,3 +30,5 @@ export type ActivitySummary = {
 export type CommentCreatedActivityInput =
   | CommentCreateInput
   | (CreateCommentInput & { resolvedResourceItems?: ViewerResourceItem[] })
+
+export type ReplyCreatedActivityInput = ReplyCreateInput | CreateCommentReplyInput
