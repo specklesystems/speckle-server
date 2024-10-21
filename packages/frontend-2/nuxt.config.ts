@@ -33,6 +33,7 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/devtools',
+    '@nuxt/image',
     '@nuxtjs/tailwindcss',
     [
       '~/lib/core/nuxt-modules/apollo/module.ts',
@@ -47,6 +48,7 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     redisUrl: '',
+    webflowApiToken: '',
     public: {
       ...featureFlags,
       apiOrigin: 'UNDEFINED',
