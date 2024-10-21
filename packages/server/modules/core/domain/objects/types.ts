@@ -1,5 +1,5 @@
 import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import { Nullable, NullableKeysToOptional } from '@speckle/shared'
 import { OverrideProperties, SetOptional } from 'type-fest'
 
 export type SpeckleObjectClosureEntry = ObjectChildrenClosureRecord
@@ -9,12 +9,14 @@ export type SpeckleObject = ObjectRecord
 /**
  * We preemptively serialize a couple of fields (usually knex does it)
  */
-export type InsertableSpeckleObject = OverrideProperties<
-  SetOptional<SpeckleObject, 'createdAt'>,
-  {
-    data: string
-    totalChildrenCountByDepth: string
-  }
+export type InsertableSpeckleObject = NullableKeysToOptional<
+  OverrideProperties<
+    SetOptional<SpeckleObject, 'createdAt'>,
+    {
+      data: string
+      totalChildrenCountByDepth: Nullable<string>
+    }
+  >
 >
 
 export type RawSpeckleObject = Record<string, unknown> & {

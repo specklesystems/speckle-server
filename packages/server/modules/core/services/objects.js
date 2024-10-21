@@ -3,51 +3,12 @@ const { set, get } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
-const { chunkInsertionObjectArray } = require('@/modules/core/utils/chunking')
-const {
-  prepInsertionObject,
-  prepInsertionObjectBatch
-} = require('@/modules/core/services/objects/management')
+const { prepInsertionObject } = require('@/modules/core/services/objects/management')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
 
 module.exports = {
-  async createObjectsBatchedAndNoClosures({
-    streamId,
-    objects,
-    logger = servicesLogger
-  }) {
-    const objsToInsert = []
-    const ids = []
-
-    // Prep objects up
-    objects.forEach((obj) => {
-      const insertionObject = prepInsertionObject(streamId, obj)
-      delete insertionObject.__closure
-      objsToInsert.push(insertionObject)
-      ids.push(insertionObject.id)
-    })
-
-    const objectsBatchSize = 500
-
-    // step 1: insert objects
-    if (objsToInsert.length > 0) {
-      const batches = chunkInsertionObjectArray({
-        objects: objsToInsert,
-        chunkLengthLimit: objectsBatchSize,
-        chunkSizeLimitMb: 2
-      })
-      for (const batch of batches) {
-        prepInsertionObjectBatch(batch)
-        await Objects().insert(batch).onConflict().ignore()
-        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} objects.')
-      }
-    }
-
-    return ids
-  },
-
   /**
    * @returns {Promise<string[]>}
    */
