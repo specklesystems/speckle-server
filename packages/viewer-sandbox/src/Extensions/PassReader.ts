@@ -89,14 +89,10 @@ export class PassReader extends Extension {
     return buffer
   }
 
-  public static toBase64(
-    buffer: Uint8ClampedArray,
-    width: number,
-    height: number
-  ): string {
+  public static toBase64(buffer: Uint8ClampedArray, width: number, height: number) {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-    if (!ctx) return ''
+    if (!ctx) return
     canvas.width = width
     canvas.height = height
 

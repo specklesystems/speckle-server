@@ -13,7 +13,7 @@ import { BatchUpdateRange } from '../../../batching/Batch.js'
 
 export abstract class GPipeline {
   protected speckleRenderer: SpeckleRenderer
-  public passList: Array<GPass> = []
+  protected passList: Array<GPass> = []
 
   protected drawingSize: Vector2 = new Vector2()
   protected frameProjection: Matrix4 = new Matrix4()
@@ -30,6 +30,12 @@ export abstract class GPipeline {
 
   public addPass(pass: GPass) {
     this.passList.push(pass)
+  }
+
+  public getPass(name: string): GPass[] {
+    return this.passList.filter((pass: GPass) => {
+      return pass.displayName === name
+    })
   }
 
   public setClippingPlanes(planes: Plane[]): void {

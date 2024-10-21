@@ -50,6 +50,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
+import { DepthReader, PassReader } from './Extensions/PassReader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -494,6 +495,10 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
+      // const [data, width, height] = await this.viewer
+      //   .getExtension(PassReader)
+      //   .read('DEPTH')
+      // console.log(PassReader.toBase64(PassReader.decodeDepth(data), width, height))
     })
 
     const rotate = this.tabs.pages[0].addButton({

@@ -10,6 +10,20 @@ export abstract class GProgressivePipeline extends GPipeline {
   protected passthroughStage: Array<GPass> = []
   protected accumulating = false
 
+  public getPass(name: string): GPass[] {
+    return [
+      ...this.dynamicStage.filter((pass: GPass) => {
+        return pass.displayName === name
+      }),
+      ...this.progressiveStage.filter((pass: GPass) => {
+        return pass.displayName === name
+      }),
+      ...this.passthroughStage.filter((pass: GPass) => {
+        return pass.displayName === name
+      })
+    ]
+  }
+
   public update(camera: PerspectiveCamera | OrthographicCamera): void {
     this.passList.forEach((pass: GPass) => {
       pass.enabled && pass.update?.(camera)
