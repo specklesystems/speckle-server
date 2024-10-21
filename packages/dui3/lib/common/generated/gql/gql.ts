@@ -19,6 +19,8 @@ const documents = {
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
     "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
+    "\n  fragment AutomateFunctionItem on AutomateFunction {\n    name\n    isFeatured\n    id\n    creator {\n      name\n    }\n    releases {\n      items {\n        inputSchema\n      }\n    }\n  }\n": types.AutomateFunctionItemFragmentDoc,
+    "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.CreateAutomationDocument,
     "\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n": types.WorkspaceListQueryDocument,
     "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
     "\n  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.ProjectListQueryDocument,
@@ -29,6 +31,7 @@ const documents = {
     "\n  query ProjectAddByUrlQueryWithVersion(\n    $projectId: String!\n    $modelId: String!\n    $versionId: String!\n  ) {\n    project(id: $projectId) {\n      ...ProjectListProjectItem\n      model(id: $modelId) {\n        ...ModelListModelItem\n        version(id: $versionId) {\n          ...VersionListItem\n        }\n      }\n    }\n  }\n": types.ProjectAddByUrlQueryWithVersionDocument,
     "\n  query ProjectAddByUrlQueryWithoutVersion($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      ...ProjectListProjectItem\n      model(id: $modelId) {\n        ...ModelListModelItem\n      }\n    }\n  }\n": types.ProjectAddByUrlQueryWithoutVersionDocument,
     "\n  query ProjectDetails($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      name\n      team {\n        user {\n          avatar\n          id\n          name\n        }\n      }\n      visibility\n    }\n  }\n": types.ProjectDetailsDocument,
+    "\n  query AutomateFunctions {\n    automateFunctions {\n      items {\n        ...AutomateFunctionItem\n      }\n    }\n  }\n": types.AutomateFunctionsDocument,
     "\n  query ModelDetails($modelId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      model(id: $modelId) {\n        id\n        displayName\n        name\n        versions {\n          totalCount\n        }\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.ModelDetailsDocument,
     "\n  query VersionDetails($projectId: String!, $versionId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      model(id: $modelId) {\n        id\n        name\n        versions(limit: 1) {\n          items {\n            id\n            createdAt\n            sourceApplication\n            authorUser {\n              id\n            }\n          }\n        }\n        version(id: $versionId) {\n          id\n          referencedObject\n          message\n          sourceApplication\n          createdAt\n          previewUrl\n        }\n      }\n    }\n  }\n": types.VersionDetailsDocument,
     "\n  subscription OnProjectVersionsUpdate($projectId: String!) {\n    projectVersionsUpdated(id: $projectId) {\n      id\n      type\n      version {\n        id\n        createdAt\n        message\n        sourceApplication\n        authorUser {\n          id\n          name\n          avatar\n        }\n        model {\n          id\n          name\n          displayName\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
@@ -79,6 +82,14 @@ export function graphql(source: "\n  fragment WorkspaceListWorkspaceItem on Work
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment AutomateFunctionItem on AutomateFunction {\n    name\n    isFeatured\n    id\n    creator {\n      name\n    }\n    releases {\n      items {\n        inputSchema\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionItem on AutomateFunction {\n    name\n    isFeatured\n    id\n    creator {\n      name\n    }\n    releases {\n      items {\n        inputSchema\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -116,6 +127,10 @@ export function graphql(source: "\n  query ProjectAddByUrlQueryWithoutVersion($p
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectDetails($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      name\n      team {\n        user {\n          avatar\n          id\n          name\n        }\n      }\n      visibility\n    }\n  }\n"): (typeof documents)["\n  query ProjectDetails($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      name\n      team {\n        user {\n          avatar\n          id\n          name\n        }\n      }\n      visibility\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AutomateFunctions {\n    automateFunctions {\n      items {\n        ...AutomateFunctionItem\n      }\n    }\n  }\n"): (typeof documents)["\n  query AutomateFunctions {\n    automateFunctions {\n      items {\n        ...AutomateFunctionItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

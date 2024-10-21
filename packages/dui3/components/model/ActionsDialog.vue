@@ -12,6 +12,17 @@
       fullscreen="none"
     >
       <div class="-mx-1">
+        <AutomateCreateDialog
+          :project-id="props.modelCard.projectId"
+          :model-id="props.modelCard.modelId"
+        >
+          <template #activator="{ toggle }">
+            <button class="action action-normal" @click="toggle()">
+              <div class="truncate max-[275px]:text-xs">Create Automation</div>
+              <div><BoltIcon class="w-5 h-5" /></div>
+            </button>
+          </template>
+        </AutomateCreateDialog>
         <SendSettingsDialog
           v-if="hasSettings"
           :model-card-id="props.modelCard.modelCardId"
@@ -53,7 +64,8 @@ import {
   Cog6ToothIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  ArchiveBoxXMarkIcon
+  ArchiveBoxXMarkIcon,
+  BoltIcon
 } from '@heroicons/vue/24/outline'
 import type { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'

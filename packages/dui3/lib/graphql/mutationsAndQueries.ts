@@ -58,6 +58,35 @@ export const workspaceListFragment = graphql(`
   }
 `)
 
+export const automateFunctionsListFragment = graphql(`
+  fragment AutomateFunctionItem on AutomateFunction {
+    name
+    isFeatured
+    id
+    creator {
+      name
+    }
+    releases {
+      items {
+        inputSchema
+      }
+    }
+  }
+`)
+
+export const createAutomationMutation = graphql(`
+  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        create(input: $input) {
+          id
+          name
+        }
+      }
+    }
+  }
+`)
+
 export const workspacesListQuery = graphql(`
   query WorkspaceListQuery(
     $limit: Int!
@@ -224,6 +253,34 @@ export const projectDetailsQuery = graphql(`
         }
       }
       visibility
+    }
+  }
+`)
+
+export const projectDetailsWithAutomateQuery = graphql(`
+  query ProjectDetails($projectId: String!) {
+    project(id: $projectId) {
+      id
+      role
+      name
+      team {
+        user {
+          avatar
+          id
+          name
+        }
+      }
+      visibility
+    }
+  }
+`)
+
+export const automateFunctionsQuery = graphql(`
+  query AutomateFunctions {
+    automateFunctions {
+      items {
+        ...AutomateFunctionItem
+      }
     }
   }
 `)
