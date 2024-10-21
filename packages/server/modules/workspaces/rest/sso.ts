@@ -109,10 +109,6 @@ const buildAuthRedirectUrl = (
 const buildFinalizeUrl = (workspaceSlug: string, isValidationFlow: boolean): URL => {
   const urlFragments = [`workspaces/${workspaceSlug}/authn`]
 
-  if (isValidationFlow) {
-    urlFragments.push('?settings=server/general')
-  }
-
   return new URL(urlFragments.join(''), getFrontendOrigin())
 }
 
@@ -258,6 +254,7 @@ router.get(
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
+  moveAuthParamsToSessionMiddleware,
   validateRequest({
     params: z.object({
       workspaceSlug: z.string().min(1)
@@ -390,6 +387,9 @@ router.get(
         { code_verifier: codeVerifier }
       )
 
+      // Get user associated with current session
+      const currentSessionUser = await getUserFactory({ db })(req.context.userId ?? '')
+
       // Get user profile from SSO provider
       const ssoProviderUserInfo = await client.userinfo<{ email: string }>(tokenSet)
       if (!ssoProviderUserInfo || !ssoProviderUserInfo.email)
@@ -399,13 +399,17 @@ router.get(
         // OIDC configuration verification flow: the user is attempting to configure SSO for their workspace
 
         // Only workspace admins may configure SSO
+        if (!currentSessionUser) {
+          throw new Error('Must be signed in to configure SSO')
+        }
+
         await authorizeResolver(
           req.context.userId,
           workspace.id,
           Roles.Workspace.Admin,
           req.context.resourceAccessRules
         )
-        const userId = req.context.userId!
+        const userId = currentSessionUser.id
 
         // Write SSO configuration
         const trx = await db.transaction()
@@ -443,17 +447,18 @@ router.get(
         redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
         redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
 
-        return res.redirect(redirectUrl.toString())
+        req.authRedirectPath = redirectUrl.toString()
+        req.user = { id: currentSessionUser.id, email: currentSessionUser.email }
+
+        return next()
       } else {
         // OIDC auth flow: SSO is already configured and we are attempting to log in or sign up
-        const currentSessionUser = req.user
 
         // Get Speckle user by email from SSO provider
         const userEmail = await findEmailFactory({ db })({
           email: ssoProviderUserInfo.email
         })
-        const existingSpeckleUser: Pick<UserRecord, 'id' | 'email'> | null =
-          await getUserFactory({ db })(userEmail?.userId ?? '')
+        const existingSpeckleUser = await getUserFactory({ db })(userEmail?.userId ?? '')
 
         // TODO: Validate link between SSO user email and Speckle user
         // Link occurs when an already signed-in user signs in with SSO
@@ -553,7 +558,9 @@ router.get(
             // Sign in flow with SSO:
             // User is already signed in, but no Speckle user is associated with the SSO user
             // Add SSO email to user
+
             // Continue to sign in
+            req.user = { id: currentSessionUser.id, email: currentSessionUser.email }
           } else {
             // Sign in flow with SSO:
             // User is already signed in, and there is already a Speckle user associated with the SSO user
@@ -563,6 +570,9 @@ router.get(
                 'SSO user already associated with another Speckle account'
               )
             }
+
+            // Continue to sign in
+            req.user = { id: existingSpeckleUser.id, email: existingSpeckleUser.email }
           }
         }
 
