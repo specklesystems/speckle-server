@@ -1,6 +1,7 @@
 import {
   LimitedUser,
   User,
+  UserSignUpContext,
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
@@ -113,6 +114,10 @@ export type CreateValidatedUser = (
     verified?: boolean
     password?: string
     role?: ServerRoles
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   },
   options?: Partial<{
     skipPropertyValidation: boolean
@@ -126,6 +131,10 @@ export type FindOrCreateValidatedUser = (params: {
     role?: ServerRoles
     bio?: string
     verified?: boolean
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   }
 }) => Promise<{
   id: string
