@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
-import { createObjects } from '@/modules/core/services/objects'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
@@ -39,7 +38,11 @@ import {
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
@@ -88,6 +91,7 @@ import {
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -181,6 +185,10 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
     db
   }),
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }

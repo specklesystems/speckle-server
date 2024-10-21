@@ -1,100 +1,10 @@
-const { performance } = require('perf_hooks')
 const { set, get } = require('lodash')
 
 const knex = require(`@/db/knex`)
-const { servicesLogger } = require('@/logging/logging')
-const { prepInsertionObject } = require('@/modules/core/services/objects/management')
 
 const Objects = () => knex('objects')
-const Closures = () => knex('object_children_closure')
 
 module.exports = {
-  /**
-   * @returns {Promise<string[]>}
-   */
-  async createObjects({ streamId, objects, logger = servicesLogger }) {
-    // TODO: Switch to knex batch inserting functionality
-    // see http://knexjs.org/#Utility-BatchInsert
-    const batches = []
-    const maxBatchSize = process.env.MAX_BATCH_SIZE || 250
-    objects = [...objects]
-    if (objects.length > maxBatchSize) {
-      while (objects.length > 0) batches.push(objects.splice(0, maxBatchSize))
-    } else {
-      batches.push(objects)
-    }
-
-    const ids = []
-
-    const insertBatch = async (batch, index) => {
-      const closures = []
-      const objsToInsert = []
-
-      const t0 = performance.now()
-
-      batch.forEach((obj) => {
-        if (!obj) return
-
-        const insertionObject = prepInsertionObject(streamId, obj)
-        const totalChildrenCountByDepth = {}
-        let totalChildrenCountGlobal = 0
-        if (obj.__closure !== null) {
-          for (const prop in obj.__closure) {
-            closures.push({
-              streamId,
-              parent: insertionObject.id,
-              child: prop,
-              minDepth: obj.__closure[prop]
-            })
-
-            totalChildrenCountGlobal++
-
-            if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-              totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-            else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-          }
-        }
-
-        insertionObject.totalChildrenCount = totalChildrenCountGlobal
-        insertionObject.totalChildrenCountByDepth = JSON.stringify(
-          totalChildrenCountByDepth
-        )
-
-        delete insertionObject.__tree
-        delete insertionObject.__closure
-
-        objsToInsert.push(insertionObject)
-        ids.push(insertionObject.id)
-      })
-
-      if (objsToInsert.length > 0) {
-        await Objects().insert(objsToInsert).onConflict().ignore()
-      }
-
-      if (closures.length > 0) {
-        await Closures().insert(closures).onConflict().ignore()
-      }
-
-      const t1 = performance.now()
-
-      logger.info(
-        {
-          batchIndex: index + 1,
-          totalCountOfBatches: batches.length,
-          countStoredObjects: closures.length + objsToInsert.length,
-          elapsedTimeMs: t1 - t0
-        },
-        'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'
-      )
-    }
-
-    const promises = batches.map((batch, index) => insertBatch(batch, index))
-
-    await Promise.all(promises)
-
-    return ids
-  },
-
   /**
    * @returns {Promise<Omit<import('@/modules/core/helpers/types').ObjectRecord, 'streamId'>>}
    */
