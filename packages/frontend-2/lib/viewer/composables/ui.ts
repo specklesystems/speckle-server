@@ -22,43 +22,47 @@ export function useSectionBoxUtilities() {
     filters: { selectedObjects }
   } = useInjectedViewerInterfaceState()
 
-  const sectionTool = instance.getExtension(SectionTool)
-
   const isSectionBoxEnabled = computed(() => !!sectionBox.value)
-  const isSectionBoxVisible = computed(() => !!sectionBox.value && sectionTool.visible)
+  const isSectionBoxVisible = ref(false)
   const isSectionBoxEdited = ref(false)
 
-  const updateSectionBoxState = (isVisible: boolean) => {
-    if (isVisible) {
-      if (!sectionBox.value) {
-        const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-        const box = instance.getSectionBoxFromObjects(objectIds)
-        sectionBox.value = box
-      }
-      sectionTool.visible = true
-    } else {
-      sectionTool.visible = false
-      if (sectionBox.value) {
-        sectionBox.value = null
-      }
+  const toggleSectionBox = () => {
+    if (isSectionBoxEnabled.value) {
+      sectionBox.value = null
+      isSectionBoxVisible.value = false
+      isSectionBoxEdited.value = false
+      return
     }
-    instance.requestRender()
+
+    const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
+    const box = instance.getSectionBoxFromObjects(objectIds)
+    sectionBox.value = box
   }
 
   const sectionBoxOn = () => {
-    updateSectionBoxState(true)
+    if (!isSectionBoxEnabled.value) {
+      toggleSectionBox()
+    }
   }
 
   const sectionBoxOff = () => {
+    sectionBox.value = null
     isSectionBoxEdited.value = false
-    updateSectionBoxState(false)
   }
 
-  const toggleSectionBox = () => {
-    updateSectionBoxState(!isSectionBoxVisible.value)
-  }
+  const sectionTool = instance.getExtension(SectionTool)
 
-  const toggleSectionBoxVisibility = toggleSectionBox
+  const toggleSectionBoxVisibility = () => {
+    if (!isSectionBoxVisible.value) {
+      sectionBoxOn()
+      sectionTool.visible = true
+      isSectionBoxVisible.value = true
+    } else {
+      sectionTool.visible = false
+      isSectionBoxVisible.value = false
+    }
+    instance.requestRender()
+  }
 
   sectionTool.on(SectionToolEvent.DragStart, () => {
     isSectionBoxEdited.value = true
@@ -69,11 +73,10 @@ export function useSectionBoxUtilities() {
     isSectionBoxVisible,
     isSectionBoxEdited,
     toggleSectionBox,
-    toggleSectionBoxVisibility,
-    updateSectionBoxState,
     sectionBoxOn,
     sectionBoxOff,
-    sectionBox
+    sectionBox,
+    toggleSectionBoxVisibility
   }
 }
 
