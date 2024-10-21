@@ -22,8 +22,13 @@ uniform float opacity;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-varying float dotValue;
-uniform float falloff;
+uniform float minIntensity;
+varying vec3 vViewPosition;
+
+#ifdef MATCAP_TEXTURE
+	uniform sampler2D tMatcap;
+#endif
+
 void main() {
 	#include <clipping_planes_fragment>
 	vec4 diffuseColor = vec4( diffuse, opacity );
@@ -55,9 +60,21 @@ void main() {
 	#ifdef USE_TRANSMISSION
 		diffuseColor.a *= transmissionAlpha + 0.1;
 	#endif
-    float d = max((gl_FrontFacing ? dotValue : -dotValue), 0.075);
-	vec3 color = mix(outgoingLight, outgoingLight * d, pow(d, falloff));
-	gl_FragColor = vec4( color * diffuseColor.a, 1. );
+
+	vec3 normal = normalize( vNormal );
+	vec3 viewDir = normalize( vViewPosition );
+    vec3 x = normalize( vec3( viewDir.z, 0.0, - viewDir.x ) );
+    vec3 y = cross( viewDir, x );
+    vec2 uv = vec2( dot( x, normal ), dot( y, normal ) ) * 0.495 + 0.5;
+
+	vec3 color = vec3(1.0);
+	#ifdef MATCAP_TEXTURE
+		color = texture2D(tMatcap, uv).rgb;
+	#else
+		color = vec3( mix( minIntensity, 1., uv.y ) );
+	#endif
+
+	gl_FragColor = vec4( color.rgb * diffuseColor.a, 1. );
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>

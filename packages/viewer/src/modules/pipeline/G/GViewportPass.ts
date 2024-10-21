@@ -6,17 +6,23 @@ import {
   PerspectiveCamera,
   Plane,
   Scene,
+  Texture,
   WebGLRenderer
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleViewportMaterial from '../../materials/SpeckleViewportMaterial.js'
+import { Asset } from '../../../IViewer.js'
+import { Assets } from '../../Assets.js'
+import Logger from '../../utils/Logger.js'
 
 export interface ViewportPassOptions extends PassOptions {
-  falloff?: number
+  minIntensity?: number
+  matcapTexture?: Asset | null
 }
 
 export const DefaultViewportPassOptions: Required<ViewportPassOptions> = {
-  falloff: 3
+  minIntensity: 0.1,
+  matcapTexture: null
 }
 
 export class GViewportPass extends BaseGPass {
@@ -37,7 +43,8 @@ export class GViewportPass extends BaseGPass {
 
   public set options(value: ViewportPassOptions) {
     super.options = value
-    this.viewportMaterial.falloff = this._options.falloff
+    this.viewportMaterial.minIntensity = this._options.minIntensity
+    this.setMatcapTexture(this._options.matcapTexture)
   }
 
   constructor() {
@@ -47,11 +54,25 @@ export class GViewportPass extends BaseGPass {
     this.viewportMaterial.blending = NoBlending
     this.viewportMaterial.side = DoubleSide
     this.viewportMaterial.toneMapped = false
-    this.viewportMaterial.falloff = this._options.falloff
+    this.viewportMaterial.minIntensity = this._options.minIntensity
+    this.setMatcapTexture(this._options.matcapTexture)
   }
 
   public setClippingPlanes(planes: Plane[]) {
     this.viewportMaterial.clippingPlanes = planes
+  }
+
+  protected setMatcapTexture(asset: Asset | null) {
+    if (!asset) return
+
+    Assets.getTexture(asset)
+      .then((value: Texture) => {
+        this.viewportMaterial.matcapTexture = value
+        this.viewportMaterial.needsCopy = true
+      })
+      .catch((reason) => {
+        Logger.error(`Matcap texture failed to load ${reason}`)
+      })
   }
 
   public render(

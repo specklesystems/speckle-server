@@ -4,13 +4,14 @@ import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { GTAAPass } from '../GTAAPass.js'
-import { ObjectLayers } from '../../../../IViewer.js'
-import { GMatcapPass } from '../GMatcapPass.js'
+import { AssetType, ObjectLayers } from '../../../../IViewer.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GColorPass } from '../GColorPass.js'
 import { ClearFlags, ObjectVisibility } from '../GPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 import { GStencilPass } from '../GStencilPass.js'
+import { GViewportPass } from '../GViewportPass.js'
+import defaultMatcap from '../../../../assets/matcap.png'
 
 export class ShadedViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -38,8 +39,8 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     normalPassDynamic.setClearColor(0x000000, 1)
     normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const matcapPass = new GMatcapPass()
-    matcapPass.setLayers([
+    const viewportPass = new GViewportPass()
+    viewportPass.setLayers([
       ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
@@ -48,6 +49,13 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
+    viewportPass.options = {
+      matcapTexture: {
+        id: 'defaultMatcap',
+        src: defaultMatcap,
+        type: AssetType.TEXTURE_8BPP
+      }
+    }
 
     const edgesPass = new GEdgePass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
@@ -92,7 +100,7 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       normalPassDynamic,
       edgesPassDynamic,
       stencilPass,
-      matcapPass,
+      viewportPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPassDynamic,
@@ -104,7 +112,7 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       edgesPass,
       taaPass,
       stencilPass,
-      matcapPass,
+      viewportPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPass,
@@ -112,7 +120,7 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     )
     this.passthroughStage.push(
       stencilPass,
-      matcapPass,
+      viewportPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPass,

@@ -34,6 +34,7 @@ export class ArcticViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
     viewportPass.setVisibility(ObjectVisibility.DEPTH)
+    viewportPass.options = { minIntensity: 0.75 }
 
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)

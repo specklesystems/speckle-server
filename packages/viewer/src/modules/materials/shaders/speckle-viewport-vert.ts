@@ -23,6 +23,8 @@ export const speckleViewportVert = /* glsl */ `
         uniform mat4 uTransforms[OBJ_COUNT];
     #endif
 #endif
+varying vec3 vNormal;
+varying vec3 vViewPosition;
 
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>
@@ -186,9 +188,8 @@ void main() {
     
     mvPosition = modelViewMatrix * mvPosition;
 
-    vec3 vN = normalize( transformedNormal );
-    vec3 dir = vec3(0., 0., 1.);
-    dotValue = dot(dir, vN);
+    vNormal = normalize( transformedNormal );
+    vViewPosition = -mvPosition.xyz;
 
     #if defined(BILLBOARD)
         float div = 1.;
