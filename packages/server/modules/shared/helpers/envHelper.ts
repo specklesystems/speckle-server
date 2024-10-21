@@ -392,3 +392,15 @@ export function getStripeApiKey(): string {
 export function getStripeEndpointSigningKey(): string {
   return getStringFromEnv('STRIPE_ENDPOINT_SIGNING_KEY')
 }
+
+export function getOtelTracingUrl() {
+  return getStringFromEnv('OTEL_TRACE_URL')
+}
+
+export function getOtelTraceKey() {
+  return getStringFromEnv('OTEL_TRACE_KEY')
+}
+
+export function getOtelHeaderValue() {
+  return getStringFromEnv('OTEL_TRACE_VALUE')
+}

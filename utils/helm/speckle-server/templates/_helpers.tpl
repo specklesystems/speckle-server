@@ -1048,4 +1048,16 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: RATELIMIT_BURST_GET_AUTH
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
 {{- end }}
+{{- if .Values.openTelemetry.tracing.url }}
+- name: OTEL_TRACE_URL
+  value: {{ .Values.openTelemetry.tracing.url | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.key }}
+- name: OTEL_TRACE_KEY
+  value: {{ .Values.openTelemetry.tracing.key | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.value }}
+- name: OTEL_TRACE_VALUE
+  value: {{ .Values.openTelemetry.tracing.value | quote }}
+{{- end }}
 {{- end }}

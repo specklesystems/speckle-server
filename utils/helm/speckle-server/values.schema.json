@@ -498,6 +498,31 @@
         }
       }
     },
+    "openTelemetry": {
+      "type": "object",
+      "properties": {
+        "tracing": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Required. The URL to which the opentelemetry traces will be exported.",
+              "default": ""
+            },
+            "key": {
+              "type": "string",
+              "description": "Required. The key to be used when exporting opentelemetry traces.",
+              "default": ""
+            },
+            "value": {
+              "type": "string",
+              "description": "Required. The value to be used when exporting opentelemetry traces.",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {
