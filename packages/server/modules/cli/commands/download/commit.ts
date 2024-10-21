@@ -26,6 +26,7 @@ import {
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
@@ -49,7 +50,7 @@ import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
-  addReplyAddedActivity
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
@@ -152,7 +153,12 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        })
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
