@@ -1,28 +1,30 @@
 <template>
   <div>
-    <FormButton link external :to="authUrl">Continue with SSO</FormButton>
+    <FormButton :disabled="!challenge" link @click="handleContinue">
+      Continue with SSO
+    </FormButton>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
+import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
 definePageMeta({
+  layout: 'login-or-register',
   middleware: ['requires-workspaces-enabled']
 })
 
-const apiOrigin = useApiOrigin()
-const { challenge } = useLoginOrRegisterUtils()
 const route = useRoute()
-const workspaceSlug = computed(() => route.params.slug as string)
+const { challenge } = useLoginOrRegisterUtils()
 
-const authUrl = computed(() => {
-  return new URL(
-    `/api/v1/workspaces/${workspaceSlug.value}/sso/auth?challenge=${challenge}`,
-    apiOrigin
-  ).toString()
-})
+const { signInOrSignUpWithSso } = useAuthManager()
+
+const handleContinue = () => {
+  signInOrSignUpWithSso({
+    challenge: challenge.value,
+    workspaceSlug: route.params.slug.toString()
+  })
+}
 
 // onMounted(() => {
 //   fetch(new URL(`/api/v1/workspaces/${workspaceSlug.value}/sso`, apiOrigin))

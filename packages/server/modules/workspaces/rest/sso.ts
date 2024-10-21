@@ -51,11 +51,13 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   countAdminUsersFactory,
   getUserFactory,
+  legacyGetUserFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
+  finalizeAuthMiddlewareFactory,
   moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
@@ -74,15 +76,16 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 
 const router = Router()
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
-// const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
-//   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-//   getUser: legacyGetUserFactory({ db })
-// })
+const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
+  createAuthorizationCode: createAuthorizationCodeFactory({ db }),
+  getUser: legacyGetUserFactory({ db })
+})
 
 /**
  * Generate redirect url used for final step of OIDC flow
@@ -104,7 +107,7 @@ const buildAuthRedirectUrl = (
  * Generate default final redirect url if request is successful
  */
 const buildFinalizeUrl = (workspaceSlug: string, isValidationFlow: boolean): URL => {
-  const urlFragments = [`workspaces/${workspaceSlug}/`]
+  const urlFragments = [`workspaces/${workspaceSlug}/authn`]
 
   if (isValidationFlow) {
     urlFragments.push('?settings=server/general')
@@ -231,6 +234,17 @@ router.get(
         redirectUrl,
         codeVerifier
       })
+
+      // await new Promise<void>((resolve) => {
+      //   sessionStore.get(sessionID, (_err, session) => {
+      //     sessionStore.set(sessionID, {
+      //       ...session,
+      //       challenge: query.challenge!.toString()
+      //     } as any)
+      //     resolve()
+      //   })
+      // })
+
       session.codeVerifier = await encryptor.encrypt(codeVerifier)
       res?.redirect(authorizationUrl.toString())
     } catch (err) {
@@ -306,14 +320,14 @@ router.get(
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
-  moveAuthParamsToSessionMiddleware,
+  // moveAuthParamsToSessionMiddleware,
   validateRequest({
     params: z.object({
       workspaceSlug: z.string().min(1)
     }),
     query: z.object({ validate: z.string().optional() })
   }),
-  async (req, res) => {
+  async (req, res, next) => {
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     const workspaceSlug = req.params.workspaceSlug
@@ -428,6 +442,8 @@ router.get(
         // Build final redirect url
         redirectUrl = buildFinalizeUrl(req.params.workspaceSlug, isValidationFlow)
         redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
+
+        return res.redirect(redirectUrl.toString())
       } else {
         // OIDC auth flow: SSO is already configured and we are attempting to log in or sign up
         const currentSessionUser = req.user
@@ -536,6 +552,7 @@ router.get(
           if (!existingSpeckleUser) {
             // Sign in flow with SSO:
             // User is already signed in, but no Speckle user is associated with the SSO user
+            // Add SSO email to user
             // Continue to sign in
           } else {
             // Sign in flow with SSO:
@@ -590,7 +607,8 @@ router.get(
           )
         }
 
-        res.redirect(buildFinalizeUrl(workspaceSlug, false).toString())
+        req.authRedirectPath = buildFinalizeUrl(workspaceSlug, false).toString()
+        return next()
       }
     } catch (err) {
       const warnMessage = isValidationFlow
@@ -605,7 +623,8 @@ router.get(
       })
       res.redirect(redirectUrl.toString())
     }
-  }
+  },
+  finalizeAuthMiddleware
 )
 
 export default router
