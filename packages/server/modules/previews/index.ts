@@ -1,10 +1,5 @@
 /* istanbul ignore file */
-'use strict'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
-import {
-  getCommitsByStreamId,
-  getCommitsByBranchName
-} from '@/modules/core/services/commits'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
 import { moduleLogger } from '@/logging/logging'
@@ -17,7 +12,6 @@ import {
   sendObjectPreviewFactory,
   checkStreamPermissionsFactory
 } from '@/modules/previews/services/management'
-import { getObject } from '@/modules/core/services/objects'
 import {
   getObjectPreviewInfoFactory,
   createObjectPreviewFactory,
@@ -26,10 +20,15 @@ import {
 import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getCommitFactory,
-  getObjectCommitsWithStreamIdsFactory
+  getObjectCommitsWithStreamIdsFactory,
+  getPaginatedBranchCommitsItemsFactory,
+  legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -43,9 +42,10 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     moduleLogger.info('📸 Init object preview module')
   }
 
+  const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
   const getStream = getStreamFactory({ db })
   const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-    getObject,
+    getObject: getFormattedObjectFactory({ db }),
     getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
     createObjectPreview: createObjectPreviewFactory({ db }),
     getPreviewImage: getPreviewImageFactory({ db })
@@ -59,6 +59,10 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     validateScopes,
     authorizeResolver,
     getStream
+  })
+  const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+    getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+    getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
   })
 
   app.options('/preview/:streamId/:angle?', cors())

@@ -1,5 +1,6 @@
 import {
   ActivitySummary,
+  CommentCreatedActivityInput,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
@@ -7,9 +8,11 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   CommitCreateInput,
   CommitUpdateInput,
+  MutationCommentArchiveArgs,
   ProjectUpdateInput,
   StreamUpdateInput,
   UpdateVersionInput
@@ -239,4 +242,19 @@ export type AddCommitDeletedActivity = (params: {
   userId: string
   commit: CommitRecord
   branchId: string
+}) => Promise<void>
+
+export type AddCommentCreatedActivity = (params: {
+  streamId: string
+  userId: string
+  input: CommentCreatedActivityInput
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddCommentArchivedActivity = (params: {
+  streamId: string
+  commentId: string
+  userId: string
+  input: MutationCommentArchiveArgs
+  comment: CommentRecord
 }) => Promise<void>

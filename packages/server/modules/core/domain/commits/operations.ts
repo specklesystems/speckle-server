@@ -5,13 +5,15 @@ import {
   Commit,
   CommitBranch,
   CommitWithStreamId,
-  LegacyUserCommit
+  LegacyUserCommit,
+  LegacyStreamCommit
 } from '@/modules/core/domain/commits/types'
 import {
   CommitsMoveInput,
   CommitUpdateInput,
   ModelVersionsFilter,
   MoveVersionsInput,
+  StreamCommitsArgs,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
@@ -217,6 +219,21 @@ export type GetPaginatedBranchCommits = (
   cursor: string | null
 }>
 
+export type GetBranchCommitsTotalCountByName = (params: {
+  streamId: string
+  branchName: string
+}) => Promise<number>
+
+export type GetPaginatedBranchCommitsItemsByName = (params: {
+  streamId: string
+  branchName: string
+  limit: number
+  cursor?: Nullable<string>
+}) => Promise<{
+  commits: Commit[]
+  cursor: string | null
+}>
+
 export type MoveCommitsToBranch = (
   commitIds: string[],
   branchId: string
@@ -254,3 +271,22 @@ export type LegacyGetPaginatedUserCommitsTotalCount = ({
   publicOnly?: MaybeNullOrUndefined<boolean>
   streamIdWhitelist?: MaybeNullOrUndefined<string[]>
 }) => Promise<number>
+
+export type LegacyGetPaginatedStreamCommitsPage = (params: {
+  streamId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  ignoreGlobalsBranch?: MaybeNullOrUndefined<boolean>
+}) => Promise<{
+  commits: LegacyStreamCommit[]
+  cursor: Nullable<string>
+}>
+
+export type LegacyGetPaginatedStreamCommits = (
+  streamId: string,
+  params: StreamCommitsArgs
+) => Promise<{
+  items: LegacyStreamCommit[]
+  cursor: Nullable<string>
+  totalCount: number
+}>
