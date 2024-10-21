@@ -19,9 +19,14 @@ import {
 const OTEL_NAME = 'speckle'
 
 export function initOpenTelemetry() {
-  if (!getOtelTracingUrl()) {
-    return
+  let otelTracingUrl: string | null = null
+  try {
+    otelTracingUrl = getOtelTracingUrl()
+    if (!otelTracingUrl) return // no tracing url, no tracing
+  } catch {
+    return // no tracing url, no tracing
   }
+
   const provider = new NodeTracerProvider({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: OTEL_NAME
@@ -59,7 +64,7 @@ export function initOpenTelemetry() {
   }
 
   const exporter = new OTLPTraceExporter({
-    url: getOtelTracingUrl(),
+    url: otelTracingUrl,
     headers
   })
 

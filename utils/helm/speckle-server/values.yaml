@@ -386,6 +386,23 @@ redis:
         ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
         serviceSelector: {}
 
+## @section openTelemetry
+## @descriptionStart
+## Defines parameters related to opentelemetry exporting of metrics.
+## @descriptionEnd
+##
+openTelemetry:
+  tracing:
+    ## @param openTelemetry.tracing.url Required. The URL to which the opentelemetry traces will be exported.
+    ##
+    url: ''
+    ## @param openTelemetry.tracing.key Required. The key to be used when exporting opentelemetry traces.
+    ##
+    key: ''
+    ## @param openTelemetry.tracing.value Required. The value to be used when exporting opentelemetry traces.
+    ##
+    value: ''
+
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
