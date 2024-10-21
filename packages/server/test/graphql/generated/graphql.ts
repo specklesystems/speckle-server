@@ -427,6 +427,11 @@ export type BasicGitRepositoryMetadata = {
   url: Scalars['String']['output'];
 };
 
+export enum BillingInterval {
+  Monthly = 'monthly',
+  Yearly = 'yearly'
+}
+
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
   createdAt: Scalars['DateTime']['output'];
@@ -502,6 +507,23 @@ export type BranchUpdateInput = {
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
+};
+
+export type CheckoutSession = {
+  __typename?: 'CheckoutSession';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  paymentStatus: SessionPaymentStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
+export type CheckoutSessionInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
 };
 
 export type Comment = {
@@ -1705,6 +1727,12 @@ export type ObjectCreateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export enum PaidWorkspacePlans {
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team'
+}
+
 export type PasswordStrengthCheckFeedback = {
   __typename?: 'PasswordStrengthCheckFeedback';
   suggestions: Array<Scalars['String']['output']>;
@@ -2848,6 +2876,11 @@ export type ServerWorkspacesInfo = {
   workspacesEnabled: Scalars['Boolean']['output'];
 };
 
+export enum SessionPaymentStatus {
+  Paid = 'paid',
+  Unpaid = 'unpaid'
+}
+
 export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
@@ -3935,6 +3968,16 @@ export type WorkspaceBilling = {
   versionsCount: WorkspaceVersionsCount;
 };
 
+export type WorkspaceBillingMutations = {
+  __typename?: 'WorkspaceBillingMutations';
+  createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
+  input: CheckoutSessionInput;
+};
+
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
@@ -4076,6 +4119,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
+  billing: WorkspaceBillingMutations;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;

@@ -428,6 +428,11 @@ export type BasicGitRepositoryMetadata = {
   url: Scalars['String']['output'];
 };
 
+export enum BillingInterval {
+  Monthly = 'monthly',
+  Yearly = 'yearly'
+}
+
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
   createdAt: Scalars['DateTime']['output'];
@@ -503,6 +508,23 @@ export type BranchUpdateInput = {
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
+};
+
+export type CheckoutSession = {
+  __typename?: 'CheckoutSession';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  paymentStatus: SessionPaymentStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
+export type CheckoutSessionInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
 };
 
 export type Comment = {
@@ -1701,6 +1723,12 @@ export type ObjectCreateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export enum PaidWorkspacePlans {
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team'
+}
+
 export type PasswordStrengthCheckFeedback = {
   __typename?: 'PasswordStrengthCheckFeedback';
   suggestions: Array<Scalars['String']['output']>;
@@ -2844,6 +2872,11 @@ export type ServerWorkspacesInfo = {
   workspacesEnabled: Scalars['Boolean']['output'];
 };
 
+export enum SessionPaymentStatus {
+  Paid = 'paid',
+  Unpaid = 'unpaid'
+}
+
 export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
@@ -3931,6 +3964,16 @@ export type WorkspaceBilling = {
   versionsCount: WorkspaceVersionsCount;
 };
 
+export type WorkspaceBillingMutations = {
+  __typename?: 'WorkspaceBillingMutations';
+  createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
+  input: CheckoutSessionInput;
+};
+
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
@@ -4072,6 +4115,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
+  billing: WorkspaceBillingMutations;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
@@ -6134,6 +6178,7 @@ export type AllObjectTypes = {
   BlobMetadataCollection: BlobMetadataCollection,
   Branch: Branch,
   BranchCollection: BranchCollection,
+  CheckoutSession: CheckoutSession,
   Comment: Comment,
   CommentActivityMessage: CommentActivityMessage,
   CommentCollection: CommentCollection,
@@ -6228,6 +6273,7 @@ export type AllObjectTypes = {
   WebhookEventCollection: WebhookEventCollection,
   Workspace: Workspace,
   WorkspaceBilling: WorkspaceBilling,
+  WorkspaceBillingMutations: WorkspaceBillingMutations,
   WorkspaceCollaborator: WorkspaceCollaborator,
   WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollection,
   WorkspaceCollection: WorkspaceCollection,
@@ -6454,6 +6500,15 @@ export type BranchCollectionFieldArgs = {
   cursor: {},
   items: {},
   totalCount: {},
+}
+export type CheckoutSessionFieldArgs = {
+  billingInterval: {},
+  createdAt: {},
+  id: {},
+  paymentStatus: {},
+  updatedAt: {},
+  url: {},
+  workspacePlan: {},
 }
 export type CommentFieldArgs = {
   archived: {},
@@ -7311,6 +7366,9 @@ export type WorkspaceBillingFieldArgs = {
   cost: {},
   versionsCount: {},
 }
+export type WorkspaceBillingMutationsFieldArgs = {
+  createCheckoutSession: WorkspaceBillingMutationsCreateCheckoutSessionArgs,
+}
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
   projectRoles: {},
@@ -7357,6 +7415,7 @@ export type WorkspaceInviteMutationsFieldArgs = {
 }
 export type WorkspaceMutationsFieldArgs = {
   addDomain: WorkspaceMutationsAddDomainArgs,
+  billing: {},
   create: WorkspaceMutationsCreateArgs,
   delete: WorkspaceMutationsDeleteArgs,
   deleteDomain: WorkspaceMutationsDeleteDomainArgs,
@@ -7407,6 +7466,7 @@ export type AllObjectFieldArgTypes = {
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,
   Branch: BranchFieldArgs,
   BranchCollection: BranchCollectionFieldArgs,
+  CheckoutSession: CheckoutSessionFieldArgs,
   Comment: CommentFieldArgs,
   CommentActivityMessage: CommentActivityMessageFieldArgs,
   CommentCollection: CommentCollectionFieldArgs,
@@ -7501,6 +7561,7 @@ export type AllObjectFieldArgTypes = {
   WebhookEventCollection: WebhookEventCollectionFieldArgs,
   Workspace: WorkspaceFieldArgs,
   WorkspaceBilling: WorkspaceBillingFieldArgs,
+  WorkspaceBillingMutations: WorkspaceBillingMutationsFieldArgs,
   WorkspaceCollaborator: WorkspaceCollaboratorFieldArgs,
   WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollectionFieldArgs,
   WorkspaceCollection: WorkspaceCollectionFieldArgs,

@@ -3,9 +3,17 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import billingRouter from '@/modules/gatekeeper/rest/billing'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
+import { db } from '@/db/knex'
+import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
+
+const initScopes = async () => {
+  const registerFunc = registerOrUpdateScopeFactory({ db })
+  await Promise.all(gatekeeperScopes.map((scope) => registerFunc({ scope })))
+}
 
 const gatekeeperModule: SpeckleModule = {
   async init(app, isInitial) {
@@ -24,6 +32,7 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
+        await initScopes()
         app.use(billingRouter)
 
         const isLicenseValid = await validateModuleLicense({

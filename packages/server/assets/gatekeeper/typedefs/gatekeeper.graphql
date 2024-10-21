@@ -1,3 +1,44 @@
 extend type Query {
   workspacePricingPlans: JSONObject!
 }
+
+extend type WorkspaceMutations {
+  billing: WorkspaceBillingMutations!
+}
+
+enum PaidWorkspacePlans {
+  team
+  pro
+  business
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+enum SessionPaymentStatus {
+  paid
+  unpaid
+}
+
+input CheckoutSessionInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+}
+
+type CheckoutSession {
+  id: ID!
+  url: String!
+  workspacePlan: PaidWorkspacePlans!
+  paymentStatus: SessionPaymentStatus!
+  billingInterval: BillingInterval!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type WorkspaceBillingMutations {
+  createCheckoutSession(input: CheckoutSessionInput!): CheckoutSession!
+    @hasScope(scope: "workspace:billing")
+}
