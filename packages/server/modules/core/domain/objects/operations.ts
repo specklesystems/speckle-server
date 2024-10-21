@@ -85,6 +85,11 @@ export type GetObjectChildren = (params: {
   cursor: string | null
 }>
 
+export type HasObjects = (params: {
+  streamId: string
+  objectIds: string[]
+}) => Promise<{ [objectId: string]: boolean }>
+
 export type GetObjectChildrenQuery = (params: {
   streamId: string
   objectId: string

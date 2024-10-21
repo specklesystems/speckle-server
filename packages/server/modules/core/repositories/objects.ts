@@ -15,6 +15,7 @@ import {
   GetObjectChildrenStream,
   GetObjectsStream,
   GetStreamObjects,
+  HasObjects,
   StoreClosuresIfNotFound,
   StoreObjects,
   StoreObjectsIfNotFound,
@@ -182,6 +183,27 @@ export const getObjectsStreamFactory =
         )
       )
     return res.stream({ highWaterMark: 500 })
+  }
+
+export const hasObjectsFactory =
+  (deps: { db: Knex }): HasObjects =>
+  async ({ streamId, objectIds }) => {
+    const dbRes = await tables
+      .objects(deps.db)
+      .whereIn('id', objectIds)
+      .andWhere('streamId', streamId)
+      .select('id')
+
+    const res: Record<string, boolean> = {}
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
+    for (const i in objectIds) {
+      res[objectIds[i]] = false
+    }
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
+    for (const i in dbRes) {
+      res[dbRes[i].id] = true
+    }
+    return res
   }
 
 export const getObjectChildrenFactory =
