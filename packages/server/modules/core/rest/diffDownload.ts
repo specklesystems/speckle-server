@@ -3,10 +3,13 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { getObjectsStream } from '@/modules/core/services/objects'
 import { pipeline, PassThrough } from 'stream'
+import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
 
 export default (app: Application) => {
+  const getObjectsStream = getObjectsStreamFactory({ db })
+
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {

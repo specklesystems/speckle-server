@@ -13,6 +13,7 @@ import {
   GetObjectChildren,
   GetObjectChildrenQuery,
   GetObjectChildrenStream,
+  GetObjectsStream,
   GetStreamObjects,
   StoreClosuresIfNotFound,
   StoreObjects,
@@ -165,6 +166,22 @@ export const getObjectChildrenStreamFactory =
       )
       .orderBy('objects.id')
     return q.stream({ highWaterMark: 500 })
+  }
+
+export const getObjectsStreamFactory =
+  (deps: { db: Knex }): GetObjectsStream =>
+  async ({ streamId, objectIds }) => {
+    const res = tables
+      .objects(deps.db)
+      .whereIn('id', objectIds)
+      .andWhere('streamId', streamId)
+      .orderBy('id')
+      .select(
+        knex.raw(
+          '"id", "speckleType", "totalChildrenCount", "totalChildrenCountByDepth", "createdAt", data::text as "dataText"'
+        )
+      )
+    return res.stream({ highWaterMark: 500 })
   }
 
 export const getObjectChildrenFactory =
