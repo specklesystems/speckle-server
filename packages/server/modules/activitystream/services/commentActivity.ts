@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import {
+  AddCommentArchivedActivity,
   AddCommentCreatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
@@ -8,6 +9,7 @@ import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/typ
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   GetViewerResourceItemsUngrouped,
+  GetViewerResourcesForComment,
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
@@ -32,7 +34,6 @@ import {
   ProjectSubscriptions,
   publish
 } from '@/modules/shared/utils/subscriptions'
-import { MutationCommentArchiveArgs } from '@/test/graphql/generated/graphql'
 import { has } from 'lodash'
 
 const isLegacyCommentCreateInput = (
@@ -110,64 +111,51 @@ export const addCommentCreatedActivityFactory =
 /**
  * Add comment archived/unarchived activity
  */
-export async function addCommentArchivedActivity(params: {
-  streamId: string
-  commentId: string
-  userId: string
-  input: MutationCommentArchiveArgs
-  comment: CommentRecord
-}) {
-  const { streamId, commentId, userId, input, comment } = params
-  const isArchiving = !!input.archived
+export const addCommentArchivedActivityFactory =
+  ({
+    getViewerResourcesForComment,
+    saveActivity,
+    publish
+  }: {
+    getViewerResourcesForComment: GetViewerResourcesForComment
+    publish: PublishSubscription
+    saveActivity: SaveActivity
+  }): AddCommentArchivedActivity =>
+  async (params) => {
+    const { streamId, commentId, userId, input, comment } = params
+    const isArchiving = !!input.archived
 
-  const getStreamObjects = getStreamObjectsFactory({ db })
-  const getCommentsResources = getCommentsResourcesFactory({ db })
-  const getViewerResourcesFromLegacyIdentifiers =
-    getViewerResourcesFromLegacyIdentifiersFactory({
-      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-        getCommentsResources: getCommentsResourcesFactory({ db }),
-        getViewerResourcesFromLegacyIdentifiers: (...args) =>
-          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Comment,
+        resourceId: commentId,
+        actionType: ActionTypes.Comment.Archive,
+        userId,
+        info: { input },
+        message: `Comment #${commentId} archived`
       }),
-      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
-      getStreamObjects
-    })
-
-  const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
-    getCommentsResources,
-    getViewerResourcesFromLegacyIdentifiers
-  })
-
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Comment,
-      resourceId: commentId,
-      actionType: ActionTypes.Comment.Archive,
-      userId,
-      info: { input },
-      message: `Comment #${commentId} archived`
-    }),
-    pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
-      commentThreadActivity: {
-        type: isArchiving ? 'comment-archived' : 'comment-added'
-      },
-      streamId: input.streamId,
-      commentId: input.commentId
-    }),
-    publish(ProjectSubscriptions.ProjectCommentsUpdated, {
-      projectCommentsUpdated: {
-        id: commentId,
-        type: isArchiving
-          ? ProjectCommentsUpdatedMessageType.Archived
-          : ProjectCommentsUpdatedMessageType.Created,
-        comment: isArchiving ? null : comment
-      },
-      projectId: streamId,
-      resourceItems: await getViewerResourcesForComment(streamId, comment.id)
-    })
-  ])
-}
+      // @deprecated not used in FE2
+      pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: isArchiving ? 'comment-archived' : 'comment-added'
+        },
+        streamId: input.streamId,
+        commentId: input.commentId
+      }),
+      publish(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: commentId,
+          type: isArchiving
+            ? ProjectCommentsUpdatedMessageType.Archived
+            : ProjectCommentsUpdatedMessageType.Created,
+          comment: isArchiving ? null : comment
+        },
+        projectId: streamId,
+        resourceItems: await getViewerResourcesForComment(streamId, comment.id)
+      })
+    ])
+  }
 
 type ReplyCreatedActivityInput = ReplyCreateInput | CreateCommentReplyInput
 
