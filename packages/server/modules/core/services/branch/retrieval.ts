@@ -4,7 +4,6 @@ import {
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import { last } from 'lodash'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
@@ -17,26 +16,33 @@ import {
   GetModelTreeItemsTotalCount,
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
-  GetProjectTopLevelModelsTree
+  GetPaginatedStreamBranches,
+  GetPaginatedStreamBranchesPage,
+  GetProjectTopLevelModelsTree,
+  GetStreamBranchCount
 } from '@/modules/core/domain/branches/operations'
 
-export async function getPaginatedStreamBranches(
-  streamId: string,
-  params: StreamBranchesArgs
-) {
-  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
-  if (params.limit && params.limit > maxProjectModelsPerPage)
-    throw new BadRequestError(
-      `Cannot return more than ${maxProjectModelsPerPage} items, please use pagination.`
-    )
-  const { items, cursor, totalCount } = await getBranchesByStreamId({
-    streamId,
-    limit: params.limit,
-    cursor: params.cursor
-  })
+export const getPaginatedStreamBranchesFactory =
+  (deps: {
+    getPaginatedStreamBranchesPage: GetPaginatedStreamBranchesPage
+    getStreamBranchCount: GetStreamBranchCount
+  }): GetPaginatedStreamBranches =>
+  async (streamId: string, params?: StreamBranchesArgs) => {
+    const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+    if (params?.limit && params.limit > maxProjectModelsPerPage)
+      throw new BadRequestError(
+        `Cannot return more than ${maxProjectModelsPerPage} items, please use pagination.`
+      )
 
-  return { totalCount, cursor, items }
-}
+    const { items, cursor } = await deps.getPaginatedStreamBranchesPage({
+      streamId,
+      limit: params?.limit,
+      cursor: params?.cursor
+    })
+    const totalCount = await deps.getStreamBranchCount(streamId)
+
+    return { totalCount, cursor, items }
+  }
 
 export const getPaginatedProjectModelsFactory =
   (deps: {

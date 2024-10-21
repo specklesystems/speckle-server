@@ -35,6 +35,7 @@ import {
   GetModelTreeItemsTotalCount,
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
+  GetPaginatedStreamBranchesPage,
   GetStreamBranchByName,
   GetStreamBranchCount,
   GetStreamBranchCounts,
@@ -194,6 +195,22 @@ export const getStreamBranchCountFactory =
   ) => {
     const [res] = await getStreamBranchCountsFactory(deps)([streamId], options)
     return res?.count || 0
+  }
+
+export const getPaginatedStreamBranchesPageFactory =
+  (deps: { db: Knex }): GetPaginatedStreamBranchesPage =>
+  async ({ streamId, limit, cursor }) => {
+    limit = limit || 25
+    const query = tables.branches(deps.db).select('*').where({ streamId })
+
+    if (cursor) query.andWhere('createdAt', '>', cursor)
+    query.orderBy('createdAt').limit(limit)
+
+    const rows = await query
+    return {
+      items: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+    }
   }
 
 export const getBranchCommitCountsFactory =
