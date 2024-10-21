@@ -3,7 +3,7 @@ extend type Query {
 }
 
 extend type WorkspaceMutations {
-  billing: WorkspaceBillingMutations!
+  billing: WorkspaceBillingMutations! @hasScope(scope: "workspace:billing")
 }
 
 enum PaidWorkspacePlans {
@@ -38,7 +38,12 @@ type CheckoutSession {
   updatedAt: DateTime!
 }
 
+input CancelCheckoutSessionInput {
+  sessionId: ID!
+  workspaceId: ID!
+}
+
 type WorkspaceBillingMutations {
   createCheckoutSession(input: CheckoutSessionInput!): CheckoutSession!
-    @hasScope(scope: "workspace:billing")
+  cancelCheckoutSession(input: CancelCheckoutSessionInput!): Boolean!
 }

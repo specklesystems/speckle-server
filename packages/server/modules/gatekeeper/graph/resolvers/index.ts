@@ -13,6 +13,7 @@ import { createCheckoutSessionFactory } from '@/modules/gatekeeper/clients/strip
 import { getWorkspacePlanPrice, stripe } from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
+  deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
   saveCheckoutSessionFactory
@@ -29,6 +30,18 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       WorkspaceMutations: () => ({}),
       WorkspaceBillingMutations: {
+        cancelCheckoutSession: async (parent, args, ctx) => {
+          const { workspaceId, sessionId } = args.input
+
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+          await deleteCheckoutSessionFactory({ db })({ checkoutSessionId: sessionId })
+          return true
+        },
         createCheckoutSession: async (parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })

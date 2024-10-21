@@ -509,6 +509,11 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type CancelCheckoutSessionInput = {
+  sessionId: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type CheckoutSession = {
   __typename?: 'CheckoutSession';
   billingInterval: BillingInterval;
@@ -3970,7 +3975,13 @@ export type WorkspaceBilling = {
 
 export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
+  cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
+  input: CancelCheckoutSessionInput;
 };
 
 

@@ -525,6 +525,11 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type CancelCheckoutSessionInput = {
+  sessionId: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type CheckoutSession = {
   __typename?: 'CheckoutSession';
   billingInterval: BillingInterval;
@@ -3986,7 +3991,13 @@ export type WorkspaceBilling = {
 
 export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
+  cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
+  input: CancelCheckoutSessionInput;
 };
 
 
@@ -4391,6 +4402,7 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: ResolverTypeWrapper<CheckoutSession>;
   CheckoutSessionInput: CheckoutSessionInput;
   Comment: ResolverTypeWrapper<CommentGraphQLReturn>;
@@ -4656,6 +4668,7 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: CheckoutSession;
   CheckoutSessionInput: CheckoutSessionInput;
   Comment: CommentGraphQLReturn;
@@ -6233,6 +6246,7 @@ export type WorkspaceBillingResolvers<ContextType = GraphQLContext, ParentType e
 };
 
 export type WorkspaceBillingMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceBillingMutations'] = ResolversParentTypes['WorkspaceBillingMutations']> = {
+  cancelCheckoutSession?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceBillingMutationsCancelCheckoutSessionArgs, 'input'>>;
   createCheckoutSession?: Resolver<ResolversTypes['CheckoutSession'], ParentType, ContextType, RequireFields<WorkspaceBillingMutationsCreateCheckoutSessionArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
