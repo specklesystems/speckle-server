@@ -6,24 +6,34 @@ import {
   getFeatureFlags,
   maximumObjectUploadFileSizeMb
 } from '@/modules/shared/helpers/envHelper'
-import {
-  createObjectsBatched,
-  createObjectsBatchedAndNoClosures
-} from '@/modules/core/services/objects'
+import { createObjectsBatchedAndNoClosures } from '@/modules/core/services/objects'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
 import { Logger } from 'pino'
 import { Router } from 'express'
+import { createObjectsBatchedFactory } from '@/modules/core/services/objects/management'
+import {
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 
+const createObjectsBatched = createObjectsBatchedFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+
 let objectInsertionService: (params: {
   streamId: string
-  objects: unknown[]
+  objects: RawSpeckleObject[]
   logger?: Logger
 }) => Promise<boolean | string[]> = createObjectsBatched
+
 if (FF_NO_CLOSURE_WRITES) {
   objectInsertionService = createObjectsBatchedAndNoClosures
 }

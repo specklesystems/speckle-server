@@ -9,7 +9,6 @@ const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const {
   createObjects,
-  createObjectsBatched,
   getObject,
   getObjects,
   getObjectChildren,
@@ -80,10 +79,14 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  createObjectFactory,
+  createObjectsBatchedFactory
+} = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
 
 const sampleCommit = JSON.parse(`{
@@ -175,6 +178,10 @@ const createUser = createUserFactory({
 })
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const createObjectsBatched = createObjectsBatchedFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 

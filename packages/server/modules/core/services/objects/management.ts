@@ -1,17 +1,24 @@
 import crypto from 'crypto'
 import {
   InsertableSpeckleObject,
-  RawSpeckleObject
+  RawSpeckleObject,
+  SpeckleObjectClosureEntry
 } from '@/modules/core/domain/objects/types'
 import { getMaximumObjectSizeMB } from '@/modules/shared/helpers/envHelper'
-import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
+import {
+  chunkInsertionObjectArray,
+  estimateStringMegabyteSize
+} from '@/modules/core/utils/chunking'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { servicesLogger } from '@/logging/logging'
 import {
   CreateObject,
+  CreateObjectsBatched,
   StoreClosuresIfNotFound,
+  StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
+import { chunk } from 'lodash'
 
 /**
  * Note: we're generating the hash here, rather than on the db side, as there are
@@ -58,12 +65,7 @@ export const createObjectFactory =
   async ({ streamId, object, logger = servicesLogger }) => {
     const insertionObject = prepInsertionObject(streamId, object)
 
-    const closures: Array<{
-      streamId: string
-      parent: string
-      child: string
-      minDepth: number
-    }> = []
+    const closures: Array<SpeckleObjectClosureEntry> = []
     const totalChildrenCountByDepth: Record<string, number> = {}
 
     if (object.__closure !== null) {
@@ -100,4 +102,87 @@ export const createObjectFactory =
     logger.debug({ objectId: insertionObject.id }, 'Inserted object: {objectId}')
 
     return insertionObject.id
+  }
+
+//  Batches need to be inserted ordered by id to avoid deadlocks
+export const prepInsertionObjectBatch = (batch: InsertableSpeckleObject[]) => {
+  batch.sort((a, b) => (a.id > b.id ? 1 : -1))
+}
+
+export const prepInsertionClosureBatch = (batch: SpeckleObjectClosureEntry[]) => {
+  batch.sort((a, b) =>
+    a.parent > b.parent ? 1 : a.parent === b.parent ? (a.child > b.child ? 1 : -1) : -1
+  )
+}
+
+export const createObjectsBatchedFactory =
+  (deps: {
+    storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound
+    storeClosuresIfNotFound: StoreClosuresIfNotFound
+  }): CreateObjectsBatched =>
+  async ({ streamId, objects, logger = servicesLogger }) => {
+    const closures: SpeckleObjectClosureEntry[] = []
+    const objsToInsert: InsertableSpeckleObject[] = []
+    const ids: string[] = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = prepInsertionObject(streamId, obj)
+      let totalChildrenCountGlobal = 0
+      const totalChildrenCountByDepth: Record<string, number> = {}
+
+      if (obj.__closure !== null) {
+        for (const prop in obj.__closure) {
+          closures.push({
+            streamId,
+            parent: insertionObject.id,
+            child: prop,
+            minDepth: obj.__closure[prop]
+          })
+          totalChildrenCountGlobal++
+          if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
+            totalChildrenCountByDepth[obj.__closure[prop].toString()]++
+          else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
+        }
+      }
+
+      const finalInsertionObject: InsertableSpeckleObject = {
+        ...insertionObject,
+        totalChildrenCount: totalChildrenCountGlobal,
+        totalChildrenCountByDepth: JSON.stringify(totalChildrenCountByDepth)
+      }
+
+      objsToInsert.push(finalInsertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const closureBatchSize = 1000
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      // const batches = chunk(objsToInsert, objectsBatchSize)
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
+      for (const batch of batches) {
+        prepInsertionObjectBatch(batch)
+        await deps.storeObjectsIfNotFoundFactory(batch)
+        logger.info({ objectCount: batch.length }, 'Inserted {objectCount} objects')
+      }
+    }
+
+    // step 2: insert closures
+    if (closures.length > 0) {
+      const batches = chunk(closures, closureBatchSize)
+
+      for (const batch of batches) {
+        prepInsertionClosureBatch(batch)
+        await deps.storeClosuresIfNotFound(batch)
+        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} closures')
+      }
+    }
+    return true
   }
