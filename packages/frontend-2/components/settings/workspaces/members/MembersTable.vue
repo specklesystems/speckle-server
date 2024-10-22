@@ -83,7 +83,7 @@
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
-      :current-role="userToModify?.role"
+      :current-role="currentUserRole"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
@@ -215,6 +215,14 @@ const hasNoResults = computed(
     (search.value.length || roleFilter.value) &&
     searchResult.value?.workspace.team.items.length === 0
 )
+
+const currentUserRole = computed<WorkspaceRoles | undefined>(() => {
+  if (userToModify.value?.role && isWorkspaceRole(userToModify.value.role)) {
+    return userToModify.value.role
+  }
+  return undefined
+})
+
 const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
