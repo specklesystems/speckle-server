@@ -419,6 +419,7 @@ export function useCreateWorkspace() {
 export const useWorkspaceUpdateRole = () => {
   const { mutate } = useMutation(workspaceUpdateRoleMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   return async (input: WorkspaceRoleUpdateInput) => {
     const result = await mutate(
@@ -456,6 +457,19 @@ export const useWorkspaceUpdateRole = () => {
           ? 'The user role has been updated'
           : 'The user has been removed from the workspace'
       })
+
+      if (input.role) {
+        mixpanel.track('Workspace User Role Updated', {
+          newRole: input.role,
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      } else {
+        mixpanel.track('Workspace User Removed', {
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({

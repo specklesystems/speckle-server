@@ -82,8 +82,6 @@
     </LayoutTable>
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
-      :name="userToModify?.name ?? ''"
-      :is-workspace-admin="isWorkspaceAdmin"
       :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
       @update-role="onUpdateRole"
     />
@@ -117,7 +115,6 @@ import {
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
 type UserItem = (typeof members)['value'][0]
@@ -182,7 +179,6 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 )
 
 const updateUserRole = useWorkspaceUpdateRole()
-const mixpanel = useMixpanel()
 const { activeUser } = useActiveUser()
 
 const showChangeUserRoleDialog = ref(false)
@@ -262,12 +258,6 @@ const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
     role: newRoleValue,
     workspaceId: props.workspaceId
   })
-
-  mixpanel.track('Workspace User Role Updated', {
-    newRole: newRoleValue,
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
-  })
 }
 
 const onRemoveUser = async () => {
@@ -277,11 +267,6 @@ const onRemoveUser = async () => {
     userId: userToModify.value.id,
     role: null,
     workspaceId: props.workspaceId
-  })
-
-  mixpanel.track('Workspace User Removed', {
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
   })
 }
 

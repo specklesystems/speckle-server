@@ -87,8 +87,6 @@
 
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
-      :name="userToModify?.user.name ?? ''"
-      :is-workspace-admin="isWorkspaceAdmin"
       :workspace-domain-policy-compliant="
         userToModify?.user.workspaceDomainPolicyCompliant
       "
@@ -107,7 +105,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -169,7 +166,6 @@ const userToModify = computed(
   () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
 )
 
-const mixpanel = useMixpanel()
 const updateUserRole = useWorkspaceUpdateRole()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
@@ -241,11 +237,6 @@ const onRemoveUser = async () => {
     role: null,
     workspaceId: props.workspaceId
   })
-
-  mixpanel.track('Workspace User Removed', {
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
-  })
 }
 
 const toggleMenu = (itemId: string) => {
@@ -259,12 +250,6 @@ const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
     userId: userToModify.value.id,
     role: newRoleValue,
     workspaceId: props.workspaceId
-  })
-
-  mixpanel.track('Workspace User Role Updated', {
-    newRole: newRoleValue,
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
   })
 }
 </script>
