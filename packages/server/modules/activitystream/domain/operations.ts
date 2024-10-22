@@ -11,14 +11,17 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
+  BranchUpdateInput,
   CommitCreateInput,
   CommitUpdateInput,
   MutationCommentArchiveArgs,
   ProjectUpdateInput,
   StreamUpdateInput,
+  UpdateModelInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import {
+  BranchRecord,
   CommitRecord,
   StreamAclRecord,
   StreamRecord
@@ -265,4 +268,15 @@ export type AddReplyAddedActivity = (params: {
   input: ReplyCreatedActivityInput
   reply: CommentRecord
   userId: string
+}) => Promise<void>
+
+export type AddBranchCreatedActivity = (params: {
+  branch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchUpdatedActivity = (params: {
+  update: BranchUpdateInput | UpdateModelInput
+  userId: string
+  oldBranch: BranchRecord
+  newBranch: BranchRecord
 }) => Promise<void>

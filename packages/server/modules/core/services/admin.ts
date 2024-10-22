@@ -1,41 +1,26 @@
 import db from '@/db/knex'
 import {
+  AdminGetInviteList,
   AdminUserList,
   CountUsers,
   ListPaginatedUsersPage
 } from '@/modules/core/domain/users/operations'
-import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  countServerInvitesFactory,
-  queryServerInvitesFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+  CountServerInvites,
+  QueryServerInvites
+} from '@/modules/serverinvites/domain/operations'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
-import { ServerRoles } from '@speckle/shared'
 
 type HasCursor = {
   cursor: string | null
 }
 
-type HasQuery = {
-  query: string | null
-}
-
 type Collection<T> = HasCursor & {
   items: T[]
   totalCount: number
-}
-
-type HasLimit = {
-  limit: number
-}
-
-type CollectionQueryArgs = HasCursor & HasQuery & HasLimit
-
-type AdminUserListArgs = CollectionQueryArgs & {
-  role: ServerRoles | null
 }
 
 class CursorParsingError extends BaseError {
@@ -58,7 +43,7 @@ export const adminUserListFactory =
     listUsers: ListPaginatedUsersPage
     countUsers: CountUsers
   }): AdminUserList =>
-  async (args: AdminUserListArgs) => {
+  async (args) => {
     const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
     const [items, totalCount] = await Promise.all([
       deps.listUsers({
@@ -82,31 +67,33 @@ type AdminProjectListArgs = HasCursor & {
   limit: number
 }
 
-export const adminInviteList = async (
-  args: CollectionQueryArgs
-): Promise<Collection<ServerInviteGraphQLReturnType>> => {
-  const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
-  // TODO: injection
-  const [totalCount, inviteItems] = await Promise.all([
-    countServerInvitesFactory({ db })(args.query),
-    queryServerInvitesFactory({ db })(args.query, args.limit, parsedCursor)
-  ])
-  const items = inviteItems.map((invite: ServerInviteRecord) => {
+export const adminInviteListFactory =
+  (deps: {
+    countServerInvites: CountServerInvites
+    queryServerInvites: QueryServerInvites
+  }): AdminGetInviteList =>
+  async (args) => {
+    const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+    const [totalCount, inviteItems] = await Promise.all([
+      deps.countServerInvites(args.query),
+      deps.queryServerInvites(args.query, args.limit, parsedCursor)
+    ])
+    const items = inviteItems.map((invite: ServerInviteRecord) => {
+      return {
+        id: invite.id,
+        invitedById: invite.inviterId,
+        email: invite.target
+      }
+    })
+    const cursor = inviteItems.length
+      ? convertDateToCursor(inviteItems.slice(-1)[0].createdAt)
+      : null
     return {
-      id: invite.id,
-      invitedById: invite.inviterId,
-      email: invite.target
+      totalCount,
+      items,
+      cursor
     }
-  })
-  const cursor = inviteItems.length
-    ? convertDateToCursor(inviteItems.slice(-1)[0].createdAt)
-    : null
-  return {
-    totalCount,
-    items,
-    cursor
   }
-}
 
 export const adminProjectList = async (
   args: AdminProjectListArgs & { streamIdWhitelist?: string[] }
