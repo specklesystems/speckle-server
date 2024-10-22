@@ -20,7 +20,7 @@ import {
   getRateLimitResult
 } from '@/modules/core/services/ratelimiter'
 import {
-  batchDeleteCommits,
+  batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
@@ -44,7 +44,8 @@ import {
   legacyGetPaginatedUserCommitsPage,
   legacyGetPaginatedUserCommitsTotalCount,
   legacyGetPaginatedStreamCommitsPageFactory,
-  getStreamCommitCountFactory
+  getStreamCommitCountFactory,
+  deleteCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
@@ -149,6 +150,15 @@ const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
 const getPaginatedStreamCommits = legacyGetPaginatedStreamCommits({
   legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
   getStreamCommitCount: getStreamCommitCountFactory({ db })
+})
+const batchDeleteCommits = batchDeleteCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  deleteCommits: deleteCommitsFactory({ db }),
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const getAuthorId = (commit: CommitGraphQLReturn) => {

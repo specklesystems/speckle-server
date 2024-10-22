@@ -8,7 +8,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  batchDeleteCommits,
+  batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
 import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
@@ -24,6 +24,7 @@ import {
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
   createCommitFactory,
+  deleteCommitsFactory,
   getCommitBranchFactory,
   getCommitFactory,
   getCommitsFactory,
@@ -49,6 +50,7 @@ import {
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
+  addCommitDeletedActivityFactory,
   addCommitMovedActivityFactory,
   addCommitUpdatedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
@@ -98,6 +100,15 @@ const batchMoveCommits = batchMoveCommitsFactory({
   createBranch: createBranchFactory({ db }),
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
   addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+const batchDeleteCommits = batchDeleteCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  deleteCommits: deleteCommitsFactory({ db }),
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
   })
