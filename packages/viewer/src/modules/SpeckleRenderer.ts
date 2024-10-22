@@ -1256,7 +1256,7 @@ export default class SpeckleRenderer {
   }
 
   public enableLayers(layers: ObjectLayers[], value: boolean) {
-    this._pipeline.passList.forEach((pass: GPass) => {
+    this._pipeline.passes.forEach((pass: GPass) => {
       if (!(pass instanceof BaseGPass)) return
       layers.forEach((layer: ObjectLayers) => {
         pass.enableLayer(layer, value)

@@ -7,6 +7,7 @@ import {
   DefaultLightConfiguration,
   DefaultPipeline,
   EdgesPipeline,
+  MRTEdgesPipeline,
   PenViewPipeline,
   SectionTool,
   ShadedViewPipeline,
@@ -540,7 +541,7 @@ export default class Sandbox {
             )
             break
           case 1:
-            this.viewer.getRenderer().pipeline = new EdgesPipeline(
+            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
               this.viewer.getRenderer()
             )
             break

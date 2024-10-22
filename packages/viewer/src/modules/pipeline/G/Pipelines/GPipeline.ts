@@ -26,6 +26,9 @@ export abstract class GPipeline {
     this.speckleRenderer = renderer
   }
 
+  public get passes(): Array<GPass> {
+    return this.passList
+  }
   public onBeforePipelineRender(): void {}
   public onAfterPipelineRender(): void {}
 

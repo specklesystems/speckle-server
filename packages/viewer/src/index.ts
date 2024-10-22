@@ -88,6 +88,7 @@ import { PenViewPipeline } from './modules/pipeline/G/Pipelines/PenViewPipeline.
 import { ShadedViewPipeline } from './modules/pipeline/G/Pipelines/ShadedViewPipeline.js'
 import { TAAPipeline } from './modules/pipeline/G/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
+import { MRTEdgesPipeline } from './modules/pipeline/G/Pipelines/MRTEdgesPipeline.js'
 
 export {
   Viewer,
@@ -142,6 +143,7 @@ export {
   PenViewPipeline,
   ArcticViewPipeline,
   TAAPipeline,
+  MRTEdgesPipeline,
   SpeckleRenderer
 }
 

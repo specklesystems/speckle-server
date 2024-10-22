@@ -13,9 +13,9 @@ import {
   WebGLRenderer
 } from 'three'
 import { BaseGPass } from './GPass.js'
-import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
 import { GPipeline } from './Pipelines/GPipeline.js'
 import { DefaultDepthPassOptions, DepthPassOptions, DepthType } from './GDepthPass.js'
+import SpeckleDepthNormalMaterial from '../../materials/SpeckleDepthNormalMaterial.js'
 
 export interface DepthNormalPassOptions extends DepthPassOptions {}
 
@@ -24,7 +24,7 @@ export const DefaultDepthNormalPassOptions: Required<DepthNormalPassOptions> = {
 }
 
 export class GDepthNormalPass extends BaseGPass {
-  private depthMaterial: SpeckleDepthMaterial
+  private depthNormalMaterial: SpeckleDepthNormalMaterial
   private mrt: WebGLMultipleRenderTargets
 
   public _options: Required<DepthNormalPassOptions> = Object.assign(
@@ -37,7 +37,7 @@ export class GDepthNormalPass extends BaseGPass {
   }
 
   get overrideMaterial(): Material {
-    return this.depthMaterial
+    return this.depthNormalMaterial
   }
 
   get depthTexture(): Texture {
@@ -55,14 +55,14 @@ export class GDepthNormalPass extends BaseGPass {
 
   protected set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
-      if (this.depthMaterial.defines) {
-        this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
+      if (this.depthNormalMaterial.defines) {
+        this.depthNormalMaterial.defines['LINEAR_DEPTH'] = ' '
       } else {
-        if (this.depthMaterial.defines) {
-          delete this.depthMaterial.defines['LINEAR_DEPTH']
+        if (this.depthNormalMaterial.defines) {
+          delete this.depthNormalMaterial.defines['LINEAR_DEPTH']
         }
       }
-    this.depthMaterial.needsUpdate = true
+    this.depthNormalMaterial.needsUpdate = true
   }
 
   constructor() {
@@ -73,25 +73,25 @@ export class GDepthNormalPass extends BaseGPass {
       magFilter: NearestFilter
     })
 
-    this.depthMaterial = new SpeckleDepthMaterial(
+    this.depthNormalMaterial = new SpeckleDepthNormalMaterial(
       {
         depthPacking: RGBADepthPacking
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
-    this.depthMaterial.blending = NoBlending
-    this.depthMaterial.side = DoubleSide
+    this.depthNormalMaterial.blending = NoBlending
+    this.depthNormalMaterial.side = DoubleSide
     this.depthType = this._options.depthType
   }
 
   public setClippingPlanes(planes: Plane[]) {
-    this.depthMaterial.clippingPlanes = planes
+    this.depthNormalMaterial.clippingPlanes = planes
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera) {
-    this.depthMaterial.userData.near.value = camera.near
-    this.depthMaterial.userData.far.value = camera.far
-    this.depthMaterial.needsUpdate = true
+    this.depthNormalMaterial.userData.near.value = camera.near
+    this.depthNormalMaterial.userData.far.value = camera.far
+    this.depthNormalMaterial.needsUpdate = true
   }
 
   public render(
@@ -103,7 +103,7 @@ export class GDepthNormalPass extends BaseGPass {
 
     if (this.onBeforeRender) this.onBeforeRender()
 
-    renderer.setRenderTarget(this.outputTarget)
+    renderer.setRenderTarget(this.mrt)
 
     this.applyLayers(camera)
 
@@ -114,5 +114,9 @@ export class GDepthNormalPass extends BaseGPass {
     if (this.onAfterRender) this.onAfterRender()
 
     return false
+  }
+
+  public setSize(width: number, height: number): void {
+    this.mrt.setSize(width, height)
   }
 }

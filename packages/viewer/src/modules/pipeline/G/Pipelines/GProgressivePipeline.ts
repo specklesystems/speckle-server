@@ -10,6 +10,10 @@ export abstract class GProgressivePipeline extends GPipeline {
   protected passthroughStage: Array<GPass> = []
   protected accumulating = false
 
+  public get passes(): Array<GPass> {
+    return [...this.dynamicStage, ...this.progressiveStage, ...this.passthroughStage]
+  }
+
   public getPass(name: string): GPass[] {
     return [
       ...this.dynamicStage.filter((pass: GPass) => {
