@@ -1,6 +1,7 @@
 import {
   ActivitySummary,
   CommentCreatedActivityInput,
+  ReplyCreatedActivityInput,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
@@ -257,4 +258,11 @@ export type AddCommentArchivedActivity = (params: {
   userId: string
   input: MutationCommentArchiveArgs
   comment: CommentRecord
+}) => Promise<void>
+
+export type AddReplyAddedActivity = (params: {
+  streamId: string
+  input: ReplyCreatedActivityInput
+  reply: CommentRecord
+  userId: string
 }) => Promise<void>
