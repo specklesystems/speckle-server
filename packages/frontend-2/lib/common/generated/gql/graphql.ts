@@ -1043,13 +1043,20 @@ export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
+  /** Index of fallback workspace logo to use */
   defaultLogoIndex: Scalars['Int']['output'];
+  /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
+  /** Workspace id */
   id: Scalars['ID']['output'];
+  /** Optional base64 encoded workspace logo image */
   logo?: Maybe<Scalars['String']['output']>;
+  /** Workspace name */
   name: Scalars['String']['output'];
+  /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
 };
 
