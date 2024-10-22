@@ -17,6 +17,7 @@ const initScopes = async () => {
 
 const gatekeeperModule: SpeckleModule = {
   async init(app, isInitial) {
+    await initScopes()
     if (!FF_GATEKEEPER_MODULE_ENABLED) return
 
     const isLicenseValid = await validateModuleLicense({
@@ -32,7 +33,6 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
-        await initScopes()
         app.use(getBillingRouter())
 
         const isLicenseValid = await validateModuleLicense({
