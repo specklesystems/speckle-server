@@ -11,6 +11,7 @@ import {
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
+import { Readable } from 'stream'
 
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob: upsertBlobFactory({ db }),
@@ -38,7 +39,7 @@ export async function createGendoAIRenderRequest(
       blobId,
       fileName: `gendo_base_image_${blobId}.png`,
       fileType: 'png',
-      fileStream: baseImageBuffer
+      fileStream: Readable.from(baseImageBuffer)
     }
   )
 
@@ -77,7 +78,7 @@ export async function updateGendoAIRenderRequest(
         blobId,
         fileName: `gendo_speckle_render_${blobId}.png`,
         fileType: 'png',
-        fileStream: responseImageBuffer
+        fileStream: Readable.from(responseImageBuffer)
       }
     )
 
