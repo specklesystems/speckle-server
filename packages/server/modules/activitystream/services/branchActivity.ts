@@ -1,86 +1,102 @@
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   pubsub,
-  BranchSubscriptions as BranchPubsubEvents
+  BranchSubscriptions as BranchPubsubEvents,
+  PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import {
   BranchDeleteInput,
-  BranchUpdateInput,
   DeleteModelInput,
-  ProjectModelsUpdatedMessageType,
-  UpdateModelInput
+  ProjectModelsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
+import {
+  AddBranchCreatedActivity,
+  AddBranchUpdatedActivity,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 
 /**
  * Save "branch created" activity
  */
-export async function addBranchCreatedActivity(params: { branch: BranchRecord }) {
-  const { branch } = params
+export const addBranchCreatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddBranchCreatedActivity =>
+  async (params) => {
+    const { branch } = params
 
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId: branch.streamId,
-      resourceType: ResourceTypes.Branch,
-      resourceId: branch.id,
-      actionType: ActionTypes.Branch.Create,
-      userId: branch.authorId,
-      info: { branch },
-      message: `Branch created: ${branch.name} (${branch.id})`
-    }),
-    pubsub.publish(BranchPubsubEvents.BranchCreated, {
-      branchCreated: { ...branch },
-      streamId: branch.streamId
-    }),
-    publish(ProjectSubscriptions.ProjectModelsUpdated, {
-      projectId: branch.streamId,
-      projectModelsUpdated: {
-        id: branch.id,
-        type: ProjectModelsUpdatedMessageType.Created,
-        model: branch
-      }
-    })
-  ])
-}
+    await Promise.all([
+      saveActivity({
+        streamId: branch.streamId,
+        resourceType: ResourceTypes.Branch,
+        resourceId: branch.id,
+        actionType: ActionTypes.Branch.Create,
+        userId: branch.authorId,
+        info: { branch },
+        message: `Branch created: ${branch.name} (${branch.id})`
+      }),
+      // @deprecated
+      pubsub.publish(BranchPubsubEvents.BranchCreated, {
+        branchCreated: { ...branch },
+        streamId: branch.streamId
+      }),
+      publish(ProjectSubscriptions.ProjectModelsUpdated, {
+        projectId: branch.streamId,
+        projectModelsUpdated: {
+          id: branch.id,
+          type: ProjectModelsUpdatedMessageType.Created,
+          model: branch
+        }
+      })
+    ])
+  }
 
-export async function addBranchUpdatedActivity(params: {
-  update: BranchUpdateInput | UpdateModelInput
-  userId: string
-  oldBranch: BranchRecord
-  newBranch: BranchRecord
-}) {
-  const { update, userId, oldBranch, newBranch } = params
+export const addBranchUpdatedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddBranchUpdatedActivity =>
+  async (params) => {
+    const { update, userId, oldBranch, newBranch } = params
 
-  const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Branch,
-      resourceId: update.id,
-      actionType: ActionTypes.Branch.Update,
-      userId,
-      info: { old: oldBranch, new: update },
-      message: `Branch metadata changed for branch ${update.id}`
-    }),
-    pubsub.publish(BranchPubsubEvents.BranchUpdated, {
-      branchUpdated: { ...update },
-      streamId,
-      branchId: update.id
-    }),
-    publish(ProjectSubscriptions.ProjectModelsUpdated, {
-      projectId: streamId,
-      projectModelsUpdated: {
-        model: newBranch,
-        id: newBranch.id,
-        type: ProjectModelsUpdatedMessageType.Updated
-      }
-    })
-  ])
-}
+    const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Branch,
+        resourceId: update.id,
+        actionType: ActionTypes.Branch.Update,
+        userId,
+        info: { old: oldBranch, new: update },
+        message: `Branch metadata changed for branch ${update.id}`
+      }),
+      // @deprecated
+      pubsub.publish(BranchPubsubEvents.BranchUpdated, {
+        branchUpdated: { ...update },
+        streamId,
+        branchId: update.id
+      }),
+      publish(ProjectSubscriptions.ProjectModelsUpdated, {
+        projectId: streamId,
+        projectModelsUpdated: {
+          model: newBranch,
+          id: newBranch.id,
+          type: ProjectModelsUpdatedMessageType.Updated
+        }
+      })
+    ])
+  }
 
 export async function addBranchDeletedActivity(params: {
   input: BranchDeleteInput | DeleteModelInput
