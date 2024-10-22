@@ -17,9 +17,9 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
-  addBranchUpdatedActivity,
   addBranchDeletedActivity,
-  addBranchCreatedActivityFactory
+  addBranchCreatedActivityFactory,
+  addBranchUpdatedActivityFactory
 } from '@/modules/activitystream/services/branchActivity'
 import {
   getStreamFactory,
@@ -47,7 +47,10 @@ const createBranchAndNotify = createBranchAndNotifyFactory({
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById,
   updateBranch: updateBranchFactory({ db }),
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
