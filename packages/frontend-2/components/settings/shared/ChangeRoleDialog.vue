@@ -6,8 +6,8 @@
         v-model="newRole"
         label="New role"
         fully-control-value
-        :hide-items="hideItems"
         :disabled-items="disabledItems"
+        :current-role="currentRole"
         show-label
         show-description
       />
@@ -45,7 +45,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   workspaceDomainPolicyCompliant?: boolean | null
-  hideItems?: WorkspaceRoles[]
+  currentRole?: WorkspaceRoles
 }>()
 
 const open = defineModel<boolean>('open', { required: true })

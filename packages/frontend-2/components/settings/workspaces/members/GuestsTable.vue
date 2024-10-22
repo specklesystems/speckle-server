@@ -90,7 +90,7 @@
       :workspace-domain-policy-compliant="
         userToModify?.user.workspaceDomainPolicyCompliant
       "
-      :hide-items="[Roles.Workspace.Guest]"
+      :current-role="Roles.Workspace.Guest"
       @update-role="onUpdateRole"
     />
   </div>

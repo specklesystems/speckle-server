@@ -83,6 +83,7 @@
     <SettingsSharedChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
+      :current-role="userToModify?.role"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
