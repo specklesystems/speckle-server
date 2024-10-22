@@ -20,6 +20,7 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+import type express from 'express'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -360,4 +361,12 @@ export type AdminGetProjectList = (args: {
   cursor: null | string
   items: Stream[]
   totalCount: number
+}>
+
+export type ValidatePermissionsReadStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
 }>
