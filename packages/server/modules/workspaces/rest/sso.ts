@@ -16,7 +16,7 @@ import {
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   storeOIDCProviderValidationRequestFactory,
-  getOIDCProviderFactory,
+  getOIDCProviderValidationRequestFactory,
   associateSsoProviderWithWorkspaceFactory,
   storeProviderRecordFactory,
   upsertUserSsoSessionFactory,
@@ -27,11 +27,8 @@ import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
 import { noop } from 'lodash'
-import {
-  getDefaultSsoSessionExpirationDate,
-  OIDCProvider,
-  oidcProvider
-} from '@/modules/workspaces/domain/sso'
+import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
+import { OIDCProvider } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
   getWorkspaceCollaboratorsFactory,
@@ -77,6 +74,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 
 const router = Router()
 
@@ -354,7 +352,6 @@ router.get(
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
   sessionMiddleware,
-  // moveAuthParamsToSessionMiddleware,
   validateRequest({
     params: z.object({
       workspaceSlug: z.string().min(1)
@@ -393,7 +390,7 @@ router.get(
         // Get provider configuration from redis
         const { decrypt: decryptOIDCProvider } = await buildDecryptor(encryptionKeyPair)
 
-        provider = await getOIDCProviderFactory({
+        provider = await getOIDCProviderValidationRequestFactory({
           redis: getGenericRedis(),
           decrypt: decryptOIDCProvider
         })({

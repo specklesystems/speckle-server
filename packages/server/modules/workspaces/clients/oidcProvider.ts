@@ -1,6 +1,9 @@
 /* eslint-disable camelcase */
 import { BaseError } from '@/modules/shared/errors'
-import { OIDCProvider, OIDCProviderAttributes } from '@/modules/workspaces/domain/sso'
+import {
+  OIDCProvider,
+  OIDCProviderAttributes
+} from '@/modules/workspaces/domain/sso/types'
 import { generators, Issuer, type Client } from 'openid-client'
 
 export const getProviderAuthorizationUrl = async ({

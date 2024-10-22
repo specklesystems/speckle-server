@@ -1,30 +1,32 @@
+import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
-  oidcProvider,
+  AssociateSsoProviderWithWorkspace,
   GetOIDCProviderData,
+  GetWorkspaceSsoProvider,
   StoreOIDCProviderValidationRequest,
   StoreProviderRecord,
+  UpsertUserSsoSession
+} from '@/modules/workspaces/domain/sso/operations'
+import {
   ProviderRecord,
-  AssociateSsoProviderWithWorkspace,
-  UpsertUserSsoSession,
-  UserSsoSession,
-  GetWorkspaceSsoProvider
-} from '@/modules/workspaces/domain/sso'
+  UserSsoSessionRecord
+} from '@/modules/workspaces/domain/sso/types'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
 
 type Crypt = (input: string) => Promise<string>
 
-type StoredSsoProvider = Omit<ProviderRecord, 'provider'> & {
+type SsoProviderRecord = Omit<ProviderRecord, 'provider'> & {
   encryptedProviderData: string
 }
-type WorkspaceSsoProvider = { workspaceId: string; providerId: string }
+type WorkspaceSsoProviderRecord = { workspaceId: string; providerId: string }
 
 const tables = {
-  ssoProviders: (db: Knex) => db<StoredSsoProvider>('sso_providers'),
-  userSsoSessions: (db: Knex) => db<UserSsoSession>('user_sso_sessions'),
+  ssoProviders: (db: Knex) => db<SsoProviderRecord>('sso_providers'),
+  userSsoSessions: (db: Knex) => db<UserSsoSessionRecord>('user_sso_sessions'),
   workspaceSsoProviders: (db: Knex) =>
-    db<WorkspaceSsoProvider>('workspace_sso_providers')
+    db<WorkspaceSsoProviderRecord>('workspace_sso_providers')
 }
 
 export const storeOIDCProviderValidationRequestFactory =
@@ -40,7 +42,7 @@ export const storeOIDCProviderValidationRequestFactory =
     await redis.set(token, providerData)
   }
 
-export const getOIDCProviderFactory =
+export const getOIDCProviderValidationRequestFactory =
   ({ redis, decrypt }: { redis: Redis; decrypt: Crypt }): GetOIDCProviderData =>
   async ({ validationToken }: { validationToken: string }) => {
     const encryptedProviderData = await redis.get(validationToken)
@@ -57,7 +59,7 @@ export const getWorkspaceSsoProviderFactory =
       .workspaceSsoProviders(db)
       .select('*')
       .where({ workspaceId })
-      .join<StoredSsoProvider>('sso_providers', 'id', 'providerId')
+      .join<SsoProviderRecord>('sso_providers', 'id', 'providerId')
       .first()
     if (!maybeProvider) return null
 

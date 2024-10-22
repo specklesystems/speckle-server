@@ -1,15 +1,16 @@
 import {
   GetOIDCProviderAttributes,
-  OIDCProviderAttributes,
-  OIDCProvider,
   StoreOIDCProviderValidationRequest,
   StoreProviderRecord,
   UpsertUserSsoSession,
-  OIDCProviderRecord,
   AssociateSsoProviderWithWorkspace,
-  GetWorkspaceSsoProvider,
-  getDefaultSsoSessionExpirationDate
-} from '@/modules/workspaces/domain/sso'
+  GetWorkspaceSsoProvider
+} from '@/modules/workspaces/domain/sso/operations'
+import {
+  OIDCProvider,
+  OIDCProviderRecord,
+  OIDCProviderAttributes
+} from '@/modules/workspaces/domain/sso/types'
 import { BaseError } from '@/modules/shared/errors/base'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -17,6 +18,7 @@ import {
   FindEmailsByUserId,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 
 export class MissingOIDCProviderGrantType extends BaseError {
   static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
