@@ -54,6 +54,25 @@ export type GetObjectChildrenStream = (params: {
   objectId: string
 }) => Promise<stream.PassThrough & AsyncIterable<{ dataText: string; id: string }>>
 
+export type GetObjectsStream = (params: {
+  streamId: string
+  objectIds: string[]
+}) => Promise<
+  stream.PassThrough &
+    AsyncIterable<
+      {
+        dataText: string
+      } & Pick<
+        SpeckleObject,
+        | 'id'
+        | 'speckleType'
+        | 'totalChildrenCount'
+        | 'totalChildrenCountByDepth'
+        | 'createdAt'
+      >
+    >
+>
+
 export type GetObjectChildren = (params: {
   streamId: string
   objectId: string
