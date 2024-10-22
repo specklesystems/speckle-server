@@ -4,6 +4,7 @@ import {
   PerspectiveCamera,
   Plane,
   Vector2,
+  WebGLMultipleRenderTargets,
   WebGLRenderTarget,
   WebGLRenderTargetOptions
 } from 'three'
@@ -167,6 +168,22 @@ export abstract class GPipeline {
      */
     renderTarget.depthBuffer = true
     renderTarget.stencilBuffer = true
+
+    return renderTarget
+  }
+
+  public static createMultipleRenderTarget(
+    count: number,
+    options?: WebGLRenderTargetOptions,
+    width?: number,
+    height?: number
+  ): WebGLMultipleRenderTargets {
+    const renderTarget = new WebGLMultipleRenderTargets(
+      width || 1,
+      height || 1,
+      count,
+      options
+    )
 
     return renderTarget
   }
