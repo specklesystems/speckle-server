@@ -218,6 +218,14 @@ export function getServerOrigin() {
   }
 }
 
+export function getBindAddress(aDefault: string = '127.0.0.1') {
+  return process.env.BIND_ADDRESS || aDefault
+}
+
+export function getPort() {
+  return getIntFromEnv('PORT', '3000')
+}
+
 /**
  * Check whether we're running an SSL server
  */
