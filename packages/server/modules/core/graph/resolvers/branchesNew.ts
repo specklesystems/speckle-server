@@ -17,9 +17,9 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivity,
-  addBranchUpdatedActivity,
-  addBranchDeletedActivity
+  addBranchDeletedActivity,
+  addBranchCreatedActivityFactory,
+  addBranchUpdatedActivityFactory
 } from '@/modules/activitystream/services/branchActivity'
 import {
   getStreamFactory,
@@ -29,6 +29,8 @@ import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -37,12 +39,18 @@ const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   getStreamBranchByName,
   createBranch: createBranchFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById,
   updateBranch: updateBranchFactory({ db }),
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,

@@ -1,14 +1,16 @@
-import { db } from '@/db/knex'
-import { AddCommitMovedActivity } from '@/modules/activitystream/domain/operations'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addCommitDeletedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import {
+  AddCommitDeletedActivity,
+  AddCommitMovedActivity
+} from '@/modules/activitystream/domain/operations'
 import {
   GetStreamBranchByName,
   StoreBranch
 } from '@/modules/core/domain/branches/operations'
 import {
+  DeleteCommits,
   GetCommits,
   MoveCommitsToBranch,
+  ValidateAndBatchDeleteCommits,
   ValidateAndBatchMoveCommits
 } from '@/modules/core/domain/commits/operations'
 import { GetStreams } from '@/modules/core/domain/streams/operations'
@@ -23,13 +25,7 @@ import {
   MoveVersionsInput
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import {
-  deleteCommitsFactory,
-  getCommitsFactory
-} from '@/modules/core/repositories/commits'
-import { getStreamsFactory } from '@/modules/core/repositories/streams'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { difference, groupBy, has, keyBy } from 'lodash'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
@@ -142,16 +138,12 @@ const validateCommitsMoveFactory =
 /**
  * Validate batch delete params
  */
-async function validateCommitsDelete(
-  params: CommitsDeleteInput | DeleteVersionsInput,
-  userId: string
-) {
-  const validateBatchBaseRules = validateBatchBaseRulesFactory({
-    getCommits: getCommitsFactory({ db }),
-    getStreams: getStreamsFactory({ db })
-  })
-  return await validateBatchBaseRules(params, userId)
-}
+const validateCommitsDeleteFactory =
+  (deps: ValidateBatchBaseRulesDeps) =>
+  async (params: CommitsDeleteInput | DeleteVersionsInput, userId: string) => {
+    const validateBatchBaseRules = validateBatchBaseRulesFactory(deps)
+    return await validateBatchBaseRules(params, userId)
+  }
 
 /**
  * Move a batch of commits belonging to the same stream to another branch
@@ -206,32 +198,36 @@ export const batchMoveCommitsFactory =
 /**
  * Delete a batch of commits
  */
-export async function batchDeleteCommits(
-  params: CommitsDeleteInput | DeleteVersionsInput,
-  userId: string
-) {
-  const commitIds = isOldBatchInput(params) ? params.commitIds : params.versionIds
+export const batchDeleteCommitsFactory =
+  (
+    deps: ValidateBatchBaseRulesDeps & {
+      deleteCommits: DeleteCommits
+      addCommitDeletedActivity: AddCommitDeletedActivity
+    }
+  ): ValidateAndBatchDeleteCommits =>
+  async (params: CommitsDeleteInput | DeleteVersionsInput, userId: string) => {
+    const commitIds = isOldBatchInput(params) ? params.commitIds : params.versionIds
 
-  const { commitsWithStreams } = await validateCommitsDelete(params, userId)
-
-  try {
-    await deleteCommitsFactory({ db })(commitIds)
-    await Promise.all(
-      commitsWithStreams.map(({ commit, stream }) =>
-        addCommitDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })({
-          commitId: commit.id,
-          streamId: stream.id,
-          userId,
-          commit,
-          branchId: commit.branchId
-        })
-      )
+    const { commitsWithStreams } = await validateCommitsDeleteFactory(deps)(
+      params,
+      userId
     )
-  } catch (e) {
-    const err = ensureError(e)
-    throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
+
+    try {
+      await deps.deleteCommits(commitIds)
+      await Promise.all(
+        commitsWithStreams.map(({ commit, stream }) =>
+          deps.addCommitDeletedActivity({
+            commitId: commit.id,
+            streamId: stream.id,
+            userId,
+            commit,
+            branchId: commit.branchId
+          })
+        )
+      )
+    } catch (e) {
+      const err = ensureError(e)
+      throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
+    }
   }
-}

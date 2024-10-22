@@ -84,6 +84,15 @@
       :user="userToModify"
       :workspace-id="workspaceId"
     />
+
+    <SettingsSharedChangeRoleDialog
+      v-model:open="showChangeUserRoleDialog"
+      :workspace-domain-policy-compliant="
+        userToModify?.user.workspaceDomainPolicyCompliant
+      "
+      :current-role="Roles.Workspace.Guest"
+      @update-role="onUpdateRole"
+    />
   </div>
 </template>
 
@@ -93,10 +102,9 @@ import type {
   WorkspaceCollaborator
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -138,7 +146,8 @@ graphql(`
 
 enum ActionTypes {
   ChangeProjectPermissions = 'change-project-permissions',
-  RemoveMember = 'remove-member'
+  RemoveMember = 'remove-member',
+  ChangeRole = 'change-role'
 }
 
 const props = defineProps<{
@@ -151,12 +160,12 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const showDeleteUserRoleDialog = ref(false)
 const showGuestsPermissionsDialog = ref(false)
 const userIdToModify = ref<string | null>(null)
+const showChangeUserRoleDialog = ref(false)
 
 const userToModify = computed(
   () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
 )
 
-const mixpanel = useMixpanel()
 const updateUserRole = useWorkspaceUpdateRole()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
@@ -190,6 +199,10 @@ const actionItems = computed(() => {
     [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
   ]
 
+  if (isWorkspaceAdmin.value) {
+    items.unshift([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
+  }
+
   if (guests.value.find((guest) => guest.projectRoles.length)) {
     items.unshift([
       {
@@ -208,6 +221,9 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator)
   if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
     showGuestsPermissionsDialog.value = true
   }
+  if (actionItem.id === ActionTypes.ChangeRole) {
+    showChangeUserRoleDialog.value = true
+  }
   if (actionItem.id === ActionTypes.RemoveMember) {
     showDeleteUserRoleDialog.value = true
   }
@@ -221,14 +237,19 @@ const onRemoveUser = async () => {
     role: null,
     workspaceId: props.workspaceId
   })
-
-  mixpanel.track('Workspace User Removed', {
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
-  })
 }
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
+  if (!userToModify.value || !newRoleValue) return
+
+  await updateUserRole({
+    userId: userToModify.value.id,
+    role: newRoleValue,
+    workspaceId: props.workspaceId
+  })
 }
 </script>

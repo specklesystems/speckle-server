@@ -8,15 +8,6 @@ const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const {
-  createObjects,
-  createObjectsBatched,
-  getObject,
-  getObjects,
-  getObjectChildren,
-  getObjectChildrenQuery,
-  getObjectChildrenStream
-} = require('../services/objects')
-const {
   getStreamFactory,
   createStreamFactory
 } = require('@/modules/core/repositories/streams')
@@ -80,10 +71,20 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  createObjectFactory,
+  createObjectsBatchedFactory,
+  createObjectsFactory
+} = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory,
+  getFormattedObjectFactory,
+  getObjectChildrenStreamFactory,
+  getObjectChildrenFactory,
+  getObjectChildrenQueryFactory,
+  getStreamObjectsFactory
 } = require('@/modules/core/repositories/objects')
 
 const sampleCommit = JSON.parse(`{
@@ -177,6 +178,19 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
+const createObjectsBatched = createObjectsBatchedFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const getObject = getFormattedObjectFactory({ db })
+const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+const getObjectChildren = getObjectChildrenFactory({ db })
+const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db })
+const getObjects = getStreamObjectsFactory({ db })
 
 describe('Objects @core-objects', () => {
   const userOne = {
