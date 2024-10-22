@@ -9,9 +9,9 @@ import {
   OneFactor,
   OrthographicCamera,
   PerspectiveCamera,
-  RedFormat,
   RepeatWrapping,
   ReverseSubtractEquation,
+  RGBAFormat,
   ShaderMaterial,
   Texture,
   Vector2,
@@ -235,22 +235,25 @@ export class GProgressiveAOPass extends ProgressiveGPass {
 
     const simplex = new SimplexNoise()
 
-    const size = width * height
+    const size = width * height * 4
     const data = new Float32Array(size)
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < size; i += 4) {
       const x = Math.random() * 2 - 1
       const y = Math.random() * 2 - 1
       const z = 0
 
       data[i] = simplex.noise3d(x, y, z)
+      data[i + 1] = 0
+      data[i + 2] = 0
+      data[i + 3] = 0
     }
 
     this.noiseTextures[frameIndex] = new DataTexture(
       data,
       width,
       height,
-      RedFormat,
+      RGBAFormat,
       FloatType
     )
     this.noiseTextures[frameIndex].wrapS = RepeatWrapping

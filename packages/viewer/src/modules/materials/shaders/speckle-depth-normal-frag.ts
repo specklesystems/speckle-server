@@ -1,4 +1,5 @@
 export const speckleDepthNormalFrag = /* glsl */ `
+#extension GL_EXT_draw_buffers : require
 #if DEPTH_PACKING == 3200
 	uniform float opacity;
 #endif
@@ -18,8 +19,9 @@ export const speckleDepthNormalFrag = /* glsl */ `
 varying vec2 vHighPrecisionZW;
 varying vec3 vNormal;
 
-// layout(location = 0) out vec4 gDepth;
-layout(location = 1) out vec4 gNormal;
+#if __VERSION__ == 300
+    layout(location = 1) out vec4 gNormal;
+#endif
 
 void main() {
 	#include <clipping_planes_fragment>
@@ -39,18 +41,29 @@ void main() {
 	#endif
 	#include <logdepthbuf_fragment>
     vec3 normal = normalize( vNormal );
-    gNormal = vec4( packNormalToRGB( normal ), 1.0 );
+
+    /** Output view space normals*/
+    
+    vec4 outNormal = vec4( packNormalToRGB( normal ), 1.0 );
+    vec4 outDepth;
 	// Higher precision equivalent of gl_FragCoord.z. This assumes depthRange has been left to its default values.
 	#ifdef LINEAR_DEPTH
 		/** View z is negative moving away from the camera */
-		pc_fragColor = packDepthToRGBA((vViewPosition.z + near) / (near - far));
+		outDepth = packDepthToRGBA((vViewPosition.z + near) / (near - far));
 	#else
 		float fragCoordZ = (0.5 * vHighPrecisionZW[0] / vHighPrecisionZW[1] + 0.5);
 		#if DEPTH_PACKING == 3200
-			pc_fragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );
+			outDepth = vec4( vec3( 1.0 - fragCoordZ ), opacity );
 		#elif DEPTH_PACKING == 3201
-			pc_fragColor = packDepthToRGBA( fragCoordZ );
+			outDepth = packDepthToRGBA( fragCoordZ );
 		#endif
 	#endif
+    #if __VERSION__ == 300
+        pc_fragColor = outDepth;
+        gNormal = outNormal;
+    #else
+        gl_FragData[0] = outDepth;
+        gl_FragData[1] = outNormal;
+    #endif
 }
 `

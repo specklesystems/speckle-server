@@ -22,7 +22,13 @@ uniform mat4 cameraInverseProjectionMatrix;
 
 
 float getDepth( const in ivec2 screenPosition ) {
-	return unpackRGBAToDepth( texelFetch( tDepth, screenPosition, 0 ) );
+  #if __VERSION__ == 300
+	  return unpackRGBAToDepth( texelFetch( tDepth, screenPosition, 0 ) );
+  #else
+    vec2 cUv = vec2(0.5/size.x, 0.5/size.y);
+    return unpackRGBAToDepth( texture2D( tDepth, vec2(screenPosition) + cUv ) );
+  #endif
+
 }
 
 // float getPerspectiveDepth(const in vec2 coords) {
