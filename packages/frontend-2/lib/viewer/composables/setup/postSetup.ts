@@ -3,7 +3,8 @@ import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
-  UpdateFlags
+  UpdateFlags,
+  SectionOutlines
 } from '@speckle/viewer'
 import type {
   PropertyInfo,
@@ -324,6 +325,8 @@ function useViewerSectionBoxIntegration() {
           max: newVal.max
         })
         instance.sectionBoxOn()
+        const outlines = instance.getExtension(SectionOutlines)
+        if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
       }
     },
