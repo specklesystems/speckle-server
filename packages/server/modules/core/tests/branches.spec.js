@@ -24,8 +24,8 @@ const {
   getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  addBranchUpdatedActivity,
-  addBranchDeletedActivity
+  addBranchDeletedActivity,
+  addBranchUpdatedActivityFactory
 } = require('@/modules/activitystream/services/branchActivity')
 const {
   getStreamFactory,
@@ -129,7 +129,10 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,

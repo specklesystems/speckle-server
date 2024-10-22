@@ -16,6 +16,8 @@ import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getPort } from '@/modules/shared/helpers/envHelper'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
@@ -120,7 +122,11 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
     const listenForImportUpdates = listenForImportUpdatesFactory({
       getFileInfo: getFileInfoFactory({ db }),
       publish,
-      getStreamBranchByName: getStreamBranchByNameFactory({ db })
+      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+      addBranchCreatedActivity: addBranchCreatedActivityFactory({
+        publish,
+        saveActivity: saveActivityFactory({ db })
+      })
     })
 
     listenForImportUpdates()

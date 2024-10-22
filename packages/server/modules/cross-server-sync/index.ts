@@ -1,10 +1,10 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import {
   addCommentCreatedActivityFactory,
-  addReplyAddedActivity
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
@@ -66,6 +66,7 @@ import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/ma
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
@@ -147,7 +148,14 @@ const crossServerSyncModule: SpeckleModule = {
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const createCommitByBranchId = createCommitByBranchIdFactory({
@@ -219,7 +227,10 @@ const crossServerSyncModule: SpeckleModule = {
         createBranchAndNotify: createBranchAndNotifyFactory({
           createBranch: createBranchFactory({ db }),
           getStreamBranchByName,
-          addBranchCreatedActivity
+          addBranchCreatedActivity: addBranchCreatedActivityFactory({
+            saveActivity: saveActivityFactory({ db }),
+            publish
+          })
         })
       }),
       markOnboardingBaseStream
