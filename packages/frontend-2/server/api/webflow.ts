@@ -34,6 +34,14 @@ const getSixMonthsAgo = (): Date => {
 export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> => {
   const { webflowApiToken } = useRuntimeConfig()
 
+  if (!webflowApiToken) {
+    throw createError({
+      statusCode: 500,
+      fatal: true,
+      message: 'Webflow API token is not set'
+    })
+  }
+
   const url =
     'https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items?limit=16&sortBy=lastPublished&sortOrder=desc'
 
