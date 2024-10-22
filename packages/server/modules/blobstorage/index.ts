@@ -1,38 +1,38 @@
-const Busboy = require('busboy')
-const {
+import Busboy from 'busboy'
+import {
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowAnonymousUsersOnPublicStreams,
   streamWritePermissionsPipelineFactory,
   streamReadPermissionsPipelineFactory
-} = require('@/modules/shared/authz')
-const {
+} from '@/modules/shared/authz'
+import {
   ensureStorageAccess,
   storeFileStream,
   getObjectStream,
   deleteObject,
   getObjectAttributes
-} = require('@/modules/blobstorage/objectStorage')
-const crs = require('crypto-random-string')
-const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-const { isArray } = require('lodash')
+} from '@/modules/blobstorage/objectStorage'
+import crs from 'crypto-random-string'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { isArray } from 'lodash'
 
-const {
+import {
   NotFoundError,
   ResourceMismatch,
   BadRequestError
-} = require('@/modules/shared/errors')
-const { moduleLogger, logger } = require('@/logging/logging')
-const {
+} from '@/modules/shared/errors'
+import { moduleLogger, logger } from '@/logging/logging'
+import {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,
   updateBlobFactory,
   getBlobMetadataFactory,
   getBlobMetadataCollectionFactory,
   deleteBlobFactory
-} = require('@/modules/blobstorage/repositories')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/blobstorage/repositories'
+import { db } from '@/db/knex'
+import {
   uploadFileStreamFactory,
   getFileStreamFactory,
   getFileSizeLimit,
@@ -40,13 +40,14 @@ const {
   markUploadErrorFactory,
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
-} = require('@/modules/blobstorage/services/management')
-const { getRolesFactory } = require('@/modules/shared/repositories/roles')
-const {
-  getAutomationProjectFactory
-} = require('@/modules/automate/repositories/automations')
-const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
-const { getStreamFactory } = require('@/modules/core/repositories/streams')
+} from '@/modules/blobstorage/services/management'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { Request, Response } from 'express'
+import { ensureError } from '@speckle/shared'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const getStream = getStreamFactory({ db })
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
@@ -86,7 +87,12 @@ const ensureConditions = async () => {
   }
 }
 
-const errorHandler = async (req, res, callback) => {
+type ErrorHandler = (
+  req: Request,
+  res: Response,
+  callback: (req: Request, res: Response) => Promise<void>
+) => Promise<void>
+const errorHandler: ErrorHandler = async (req, res, callback) => {
   try {
     await callback(req, res)
   } catch (err) {
@@ -95,12 +101,12 @@ const errorHandler = async (req, res, callback) => {
     } else if (err instanceof ResourceMismatch || err instanceof BadRequestError) {
       res.status(400).send({ error: err.message })
     } else {
-      res.status(500).send({ error: err.message })
+      res.status(500).send({ error: ensureError(err, 'Unknown error').message })
     }
   }
 }
 
-exports.init = async (app) => {
+export const init: SpeckleModule['init'] = async (app) => {
   await ensureConditions()
   const streamWritePermissions = streamWritePermissionsPipelineFactory({
     getRoles: getRolesFactory({ db }),
@@ -127,8 +133,12 @@ exports.init = async (app) => {
       req.log.debug('Uploading blob.')
       // no checking of startup conditions, just dont init the endpoints if not configured right
       //authorize request
-      const uploadOperations = {}
-      const finalizePromises = []
+      const uploadOperations: Record<string, unknown> = {}
+      const finalizePromises: Promise<{
+        uploadStatus?: number
+        uploadError?: Error | null | string
+        formKey: string
+      }>[] = []
       const busboy = Busboy({
         headers: req.headers,
         limits: { fileSize: getFileSizeLimit() }
@@ -136,9 +146,14 @@ exports.init = async (app) => {
 
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
-        const fileType = fileName.split('.').pop().toLowerCase()
+        const fileType = fileName?.split('.')?.pop()?.toLowerCase()
         req.log = req.log.child({ fileName, fileType })
-        const registerUploadResult = (processingPromise) => {
+        const registerUploadResult = (
+          processingPromise: Promise<{
+            uploadStatus?: number
+            uploadError?: Error | null | string
+          }>
+        ) => {
           finalizePromises.push(
             processingPromise.then((resultItem) => ({ ...resultItem, formKey }))
           )
@@ -159,7 +174,7 @@ exports.init = async (app) => {
         uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
           { streamId, userId: req.context.userId },
-          { blobId, fileName, fileType, fileStream: file, clientHash }
+          { blobId, fileName, fileType, fileStream: file }
         )
 
         //this file level 'close' is fired when a single file upload finishes
@@ -180,7 +195,9 @@ exports.init = async (app) => {
         })
 
         file.on('error', (err) => {
-          registerUploadResult(markUploadError(deleteObject, blobId, err.message))
+          registerUploadResult(
+            markUploadError(deleteObject, streamId, blobId, err.message)
+          )
         })
       })
 
@@ -199,7 +216,12 @@ exports.init = async (app) => {
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>
-            markUploadError(deleteObject, streamId, blobId, err.message)
+            markUploadError(
+              deleteObject,
+              streamId,
+              blobId,
+              ensureError(err, 'Unknown error while uploading blob').message
+            )
           )
         )
 
@@ -282,12 +304,15 @@ exports.init = async (app) => {
     '/api/stream/:streamId/blobs',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
-      const fileName = req.query.fileName
+      let fileName = req.query.fileName
+      if (isArray(fileName)) {
+        fileName = fileName[0]
+      }
 
       errorHandler(req, res, async (req, res) => {
         const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,
-          query: fileName
+          query: fileName as string
         })
 
         res.status(200).send(blobMetadataCollection)
@@ -300,4 +325,4 @@ exports.init = async (app) => {
   })
 }
 
-exports.finalize = () => {}
+export const finalize: SpeckleModule['finalize'] = () => {}
