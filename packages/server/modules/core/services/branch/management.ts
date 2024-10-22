@@ -1,8 +1,5 @@
 import { Roles, isNullOrUndefined } from '@speckle/shared'
-import {
-  addBranchDeletedActivity,
-  addBranchUpdatedActivity
-} from '@/modules/activitystream/services/branchActivity'
+import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   BranchCreateError,
   BranchDeleteError,
@@ -34,7 +31,10 @@ import {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
-import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddBranchCreatedActivity,
+  AddBranchUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -68,7 +68,7 @@ export const updateBranchAndNotifyFactory =
   (deps: {
     getBranchById: GetBranchById
     updateBranch: UpdateBranch
-    addBranchUpdatedActivity: typeof addBranchUpdatedActivity
+    addBranchUpdatedActivity: AddBranchUpdatedActivity
   }): UpdateBranchAndNotify =>
   async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
