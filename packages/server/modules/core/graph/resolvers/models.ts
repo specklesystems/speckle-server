@@ -16,7 +16,7 @@ import { last } from 'lodash'
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommitsFactory,
-  legacyGetPaginatedStreamCommits
+  legacyGetPaginatedStreamCommitsFactory
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
@@ -118,7 +118,7 @@ const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
   getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
 })
-const getPaginatedStreamCommits = legacyGetPaginatedStreamCommits({
+const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
   legacyGetPaginatedStreamCommitsPage: legacyGetPaginatedStreamCommitsPageFactory({
     db
   }),

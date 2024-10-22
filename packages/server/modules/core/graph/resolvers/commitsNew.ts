@@ -4,7 +4,7 @@ import { authorizeResolver } from '@/modules/shared'
 
 import {
   getPaginatedBranchCommitsFactory,
-  legacyGetPaginatedStreamCommits
+  legacyGetPaginatedStreamCommitsFactory
 } from '@/modules/core/services/commit/retrieval'
 import {
   markCommitReceivedAndNotify,
@@ -147,7 +147,7 @@ const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
 const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
-const getPaginatedStreamCommits = legacyGetPaginatedStreamCommits({
+const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
   legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
   getStreamCommitCount: getStreamCommitCountFactory({ db })
 })
