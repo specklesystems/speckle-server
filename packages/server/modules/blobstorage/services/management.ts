@@ -8,6 +8,7 @@ import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
 import { MaybeAsync } from '@speckle/shared'
+import { Readable } from 'stream'
 
 /**
  * File size limit in bytes
@@ -19,17 +20,22 @@ export const uploadFileStreamFactory =
   async (
     storeFileStream: (params: {
       objectKey: string
-      fileStream: Buffer
+      fileStream: Readable
     }) => Promise<{ fileHash: string }>,
-    params1: { streamId: string; userId: string },
-    params2: { blobId: string; fileName: string; fileType: string; fileStream: Buffer }
+    params1: { streamId: string; userId: string | undefined },
+    params2: {
+      blobId: string
+      fileName: string
+      fileType: string | undefined
+      fileStream: Readable
+    }
   ) => {
     const { streamId, userId } = params1
     const { blobId, fileName, fileType, fileStream } = params2
 
     if (streamId.length !== 10)
       throw new BadRequestError('The stream id has to be of length 10')
-    if (userId.length !== 10)
+    if (!userId || userId.length !== 10)
       throw new BadRequestError('The user id has to be of length 10')
 
     const objectKey = `assets/${streamId}/${blobId}`
