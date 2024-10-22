@@ -4,6 +4,7 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
 import {
   Nullable,
@@ -200,3 +201,15 @@ type LegacyAdminUsersListCollection = {
 export type LegacyGetAdminUsersListCollection = (
   params: LegacyAdminUsersPaginationParams
 ) => Promise<LegacyAdminUsersListCollection>
+
+type CollectionQueryArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+}
+
+export type AdminGetInviteList = (args: CollectionQueryArgs) => Promise<{
+  cursor: string | null
+  totalCount: number
+  items: ServerInviteGraphQLReturnType[]
+}>
