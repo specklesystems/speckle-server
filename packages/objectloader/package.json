@@ -74,7 +74,7 @@
     "eslint-config-prettier": "^9.1.0",
     "http-server": "^14.1.0",
     "prettier": "^2.5.1",
-    "rollup": "^2.70.1",
+    "rollup": "^3.29.5",
     "rollup-plugin-delete": "^2.0.0"
   },
   "gitHead": "5627e490f9a3ecadf19cc4686ad15f344d9ad2d3"
