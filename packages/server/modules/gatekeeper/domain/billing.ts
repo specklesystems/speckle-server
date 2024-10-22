@@ -130,6 +130,10 @@ export type SaveWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
 }) => Promise<void>
 
+export type GetWorkspaceSubscription = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceSubscription | null>
+
 export type GetSubscriptionData = (args: {
   subscriptionId: string
 }) => Promise<SubscriptionData>

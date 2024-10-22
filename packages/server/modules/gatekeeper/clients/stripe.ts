@@ -15,6 +15,19 @@ type GetWorkspacePlanPrice = (args: {
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
+const getResultUrl = ({
+  frontendOrigin,
+  workspaceId,
+  workspaceSlug
+}: {
+  frontendOrigin: string
+  workspaceSlug: string
+  workspaceId: string
+}) =>
+  new URL(
+    `${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}&settings=workspace/billing`
+  )
+
 export const createCheckoutSessionFactory =
   ({
     stripe,
@@ -34,10 +47,7 @@ export const createCheckoutSessionFactory =
     workspaceId
   }) => {
     //?settings=workspace/security&
-    const resultUrl = new URL(
-      `${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}&settings=workspace/billing`
-    )
-
+    const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price, quantity: seatCount }
@@ -71,6 +81,36 @@ export const createCheckoutSessionFactory =
       updatedAt: new Date(),
       paymentStatus: 'unpaid'
     }
+  }
+
+export const createCustomerPortalUrlFactory =
+  ({
+    stripe,
+    frontendOrigin
+  }: // getWorkspacePlanPrice
+  {
+    stripe: Stripe
+    frontendOrigin: string
+    // getWorkspacePlanPrice: GetWorkspacePlanPrice
+  }) =>
+  async ({
+    workspaceId,
+    workspaceSlug,
+    customerId
+  }: {
+    customerId: string
+    workspaceId: string
+    workspaceSlug: string
+  }): Promise<string> => {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: getResultUrl({
+        frontendOrigin,
+        workspaceId,
+        workspaceSlug
+      }).toString()
+    })
+    return session.url
   }
 
 export const getSubscriptionDataFactory =

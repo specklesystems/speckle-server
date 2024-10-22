@@ -24,6 +24,7 @@ import {
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import {
   createCheckoutSessionFactory,
+  createCustomerPortalUrlFactory,
   getSubscriptionDataFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
@@ -31,6 +32,7 @@ import {
   getCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
   saveCheckoutSessionFactory,
   saveWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
@@ -85,6 +87,40 @@ export const getBillingRouter = (): Router => {
       })({ workspacePlan, workspaceId, workspaceSlug: workspace.slug, billingInterval })
 
       req.res?.redirect(session.url)
+    }
+  )
+
+  router.get(
+    '/api/v1/billing/workspaces/:workspaceId/customer-portal',
+    validateRequest({
+      params: z.object({
+        workspaceId: z.string().min(1)
+      })
+    }),
+    async (req) => {
+      const { workspaceId } = req.params
+      await authorizeResolver(
+        req.context.userId,
+        workspaceId,
+        Roles.Workspace.Admin,
+        req.context.resourceAccessRules
+      )
+      const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
+        workspaceId
+      })
+      if (!workspaceSubscription) return null
+      const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+      if (!workspace)
+        throw new Error('This cannot be, if there is a sub, there is a workspace')
+      const url = await createCustomerPortalUrlFactory({
+        stripe,
+        frontendOrigin: getFrontendOrigin()
+      })({
+        workspaceId: workspaceSubscription.workspaceId,
+        workspaceSlug: workspace.slug,
+        customerId: workspaceSubscription.subscriptionData.customerId
+      })
+      return req.res?.redirect(url)
     }
   )
 
@@ -198,9 +234,5 @@ export const getBillingRouter = (): Router => {
     res.status(200).send('ok')
   })
 
-  // prob needed when the checkout is cancelled
-  router.delete(
-    '/api/v1/billing/workspaces/:workspaceSlug/checkout-session/:workspacePlan'
-  )
   return router
 }

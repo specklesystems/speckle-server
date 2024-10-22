@@ -10,7 +10,8 @@ import {
   WorkspacePlan,
   UpsertPaidWorkspacePlan,
   DeleteCheckoutSession,
-  GetWorkspaceCheckoutSession
+  GetWorkspaceCheckoutSession,
+  GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import { Knex } from 'knex'
 
@@ -98,4 +99,14 @@ export const saveWorkspaceSubscriptionFactory =
   ({ db }: { db: Knex }): SaveWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
     await tables.workspaceSubscriptions(db).insert(workspaceSubscription)
+  }
+
+export const getWorkspaceSubscriptionFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscription =>
+  async ({ workspaceId }) => {
+    const subscription = await tables
+      .workspaceSubscriptions(db)
+      .where({ workspaceId })
+      .first()
+    return subscription || null
   }
