@@ -2,6 +2,7 @@
 import {
   CreateCheckoutSession,
   GetSubscriptionData,
+  SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
@@ -67,7 +68,7 @@ export const createCheckoutSessionFactory =
       line_items: costLineItems,
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${resultUrl.toString()}&payment_status=cancelled&session_id={CHECKOUT_SESSION_ID}`
+      cancel_url: `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
     })
 
     if (!session.url) throw new Error('Failed to create an active checkout session')
@@ -123,32 +124,41 @@ export const getSubscriptionDataFactory =
   }): GetSubscriptionData =>
   async ({ subscriptionId }) => {
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
-
-    return {
-      customerId:
-        typeof stripeSubscription.customer === 'string'
-          ? stripeSubscription.customer
-          : stripeSubscription.customer.id,
-      subscriptionId,
-      products: stripeSubscription.items.data.map((subscriptionItem) => {
-        const productId =
-          typeof subscriptionItem.price.product === 'string'
-            ? subscriptionItem.price.product
-            : subscriptionItem.price.product.id
-        const quantity = subscriptionItem.quantity
-        if (!quantity)
-          throw new Error(
-            'invalid subscription, we do not support products without quantities'
-          )
-        return {
-          priceId: subscriptionItem.price.id,
-          productId,
-          quantity,
-          subscriptionItemId: subscriptionItem.id
-        }
-      })
-    }
+    return parseSubscriptionData(stripeSubscription)
   }
+
+export const parseSubscriptionData = (
+  stripeSubscription: Stripe.Subscription
+): SubscriptionData => {
+  return {
+    customerId:
+      typeof stripeSubscription.customer === 'string'
+        ? stripeSubscription.customer
+        : stripeSubscription.customer.id,
+    subscriptionId: stripeSubscription.id,
+    status: stripeSubscription.status,
+    cancelAt: stripeSubscription.cancel_at
+      ? new Date(stripeSubscription.cancel_at)
+      : null,
+    products: stripeSubscription.items.data.map((subscriptionItem) => {
+      const productId =
+        typeof subscriptionItem.price.product === 'string'
+          ? subscriptionItem.price.product
+          : subscriptionItem.price.product.id
+      const quantity = subscriptionItem.quantity
+      if (!quantity)
+        throw new Error(
+          'invalid subscription, we do not support products without quantities'
+        )
+      return {
+        priceId: subscriptionItem.price.id,
+        productId,
+        quantity,
+        subscriptionItemId: subscriptionItem.id
+      }
+    })
+  }
+}
 
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
 // on each change, we're reconciling that state to stripe

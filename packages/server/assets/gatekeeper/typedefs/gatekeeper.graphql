@@ -59,7 +59,7 @@ enum WorkspacePlans {
 enum WorkspacePlanStatuses {
   valid
   paymentFailed
-  cancelled
+  canceled
   trial
 }
 

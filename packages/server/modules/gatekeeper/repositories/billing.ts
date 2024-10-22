@@ -5,13 +5,14 @@ import {
   SaveCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspacePlan,
-  SaveWorkspaceSubscription,
+  UpsertWorkspaceSubscription,
   WorkspaceSubscription,
   WorkspacePlan,
   UpsertPaidWorkspacePlan,
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
-  GetWorkspaceSubscription
+  GetWorkspaceSubscription,
+  GetWorkspaceSubscriptionBySubscriptionId
 } from '@/modules/gatekeeper/domain/billing'
 import { Knex } from 'knex'
 
@@ -95,10 +96,14 @@ export const updateCheckoutSessionStatusFactory =
       .update({ paymentStatus, updatedAt: new Date() })
   }
 
-export const saveWorkspaceSubscriptionFactory =
-  ({ db }: { db: Knex }): SaveWorkspaceSubscription =>
+export const upsertWorkspaceSubscriptionFactory =
+  ({ db }: { db: Knex }): UpsertWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
-    await tables.workspaceSubscriptions(db).insert(workspaceSubscription)
+    await tables
+      .workspaceSubscriptions(db)
+      .insert(workspaceSubscription)
+      .onConflict('workspaceId')
+      .merge()
   }
 
 export const getWorkspaceSubscriptionFactory =
@@ -106,7 +111,19 @@ export const getWorkspaceSubscriptionFactory =
   async ({ workspaceId }) => {
     const subscription = await tables
       .workspaceSubscriptions(db)
+      .select()
       .where({ workspaceId })
       .first()
     return subscription || null
+  }
+
+export const getWorkspaceSubscriptionBySubscriptionIdFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscriptionBySubscriptionId =>
+  async ({ subscriptionId }) => {
+    const subscription = await tables
+      .workspaceSubscriptions(db)
+      .select()
+      .whereRaw(`"subscriptionData" ->> 'subscriptionId' = ?`, [subscriptionId])
+      .first()
+    return subscription ?? null
   }

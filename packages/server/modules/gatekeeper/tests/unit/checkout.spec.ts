@@ -411,7 +411,7 @@ describe('checkout @gatekeeper', () => {
       )
     })
 
-    it('creates and stores a checkout for CANCELLED workspaces', async () => {
+    it('creates and stores a checkout for CANCELED workspaces', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'pro'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
@@ -440,7 +440,7 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'pro',
           workspaceId,
-          status: 'cancelled'
+          status: 'canceled'
         }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
         countRole: async () => 1,
@@ -479,7 +479,7 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
-          saveWorkspaceSubscription: async () => {
+          upsertWorkspaceSubscription: async () => {
             expect.fail()
           }
         })({ sessionId, subscriptionId })
@@ -511,7 +511,7 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
-          saveWorkspaceSubscription: async () => {
+          upsertWorkspaceSubscription: async () => {
             expect.fail()
           }
         })({ sessionId, subscriptionId })
@@ -547,7 +547,9 @@ describe('checkout @gatekeeper', () => {
                 quantity: 10,
                 subscriptionItemId: cryptoRandomString({ length: 10 })
               }
-            ]
+            ],
+            status: 'active',
+            cancelAt: null
           }
 
           let storedWorkspaceSubscriptionData: WorkspaceSubscription | undefined =
@@ -562,7 +564,7 @@ describe('checkout @gatekeeper', () => {
               storedWorkspacePlan = workspacePlan
             },
             getSubscriptionData: async () => subscriptionData,
-            saveWorkspaceSubscription: async ({ workspaceSubscription }) => {
+            upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
             }
           })({ sessionId, subscriptionId })

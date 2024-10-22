@@ -25,7 +25,8 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import {
   createCheckoutSessionFactory,
   createCustomerPortalUrlFactory,
-  getSubscriptionDataFactory
+  getSubscriptionDataFactory,
+  parseSubscriptionData
 } from '@/modules/gatekeeper/clients/stripe'
 import {
   deleteCheckoutSessionFactory,
@@ -34,13 +35,15 @@ import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   saveCheckoutSessionFactory,
-  saveWorkspaceSubscriptionFactory,
+  upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
-  upsertPaidWorkspacePlanFactory
+  upsertPaidWorkspacePlanFactory,
+  getWorkspaceSubscriptionBySubscriptionIdFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { stripe, getWorkspacePlanPrice } from '@/modules/gatekeeper/stripe'
+import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -189,7 +192,9 @@ export const getBillingRouter = (): Router => {
                 db: trx
               }),
               upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db: trx }),
-              saveWorkspaceSubscription: saveWorkspaceSubscriptionFactory({ db: trx }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                db: trx
+              }),
               getSubscriptionData: getSubscriptionDataFactory({
                 stripe
               })
@@ -225,6 +230,18 @@ export const getBillingRouter = (): Router => {
         await deleteCheckoutSessionFactory({ db })({
           checkoutSessionId: event.data.object.id
         })
+        break
+
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        await handleSubscriptionUpdateFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db }),
+          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+          getWorkspaceSubscriptionBySubscriptionId:
+            getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+          upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+        })({ subscriptionData: parseSubscriptionData(event.data.object) })
+
         break
 
       default:

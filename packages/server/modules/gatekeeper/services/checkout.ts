@@ -5,7 +5,7 @@ import {
   GetWorkspacePlan,
   SaveCheckoutSession,
   UpdateCheckoutSessionStatus,
-  SaveWorkspaceSubscription,
+  UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
   GetSubscriptionData,
   GetWorkspaceCheckoutSession,
@@ -58,12 +58,13 @@ export const startCheckoutSessionFactory =
     if (existingWorkspacePlan) {
       // maybe we can just ignore the plan not existing, cause we're putting it on a plan post checkout
       switch (existingWorkspacePlan.status) {
-        // valid and paymentFailed, but not cancelled status is not something we need a checkout for
+        // valid and paymentFailed, but not canceled status is not something we need a checkout for
         // we already have their credit card info
         case 'valid':
         case 'paymentFailed':
+        case 'cancelationScheduled':
           throw new WorkspaceAlreadyPaidError()
-        case 'cancelled':
+        case 'canceled':
           const existingCheckoutSession = await getWorkspaceCheckoutSession({
             workspaceId
           })
@@ -73,9 +74,10 @@ export const startCheckoutSessionFactory =
             })
           break
 
-        // maybe, we can reactivate cancelled plans via the sub in stripe, but this is fine too
+        // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
         // it will create a new customer and a new sub though, the reactivation would use the existing customer
         case 'trial':
+        case 'expired':
           // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
           const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
             workspaceId
@@ -127,13 +129,13 @@ export const completeCheckoutSessionFactory =
   ({
     getCheckoutSession,
     updateCheckoutSessionStatus,
-    saveWorkspaceSubscription,
+    upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
     getSubscriptionData
   }: {
     getCheckoutSession: GetCheckoutSession
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
-    saveWorkspaceSubscription: SaveWorkspaceSubscription
+    upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
   }) =>
@@ -195,7 +197,7 @@ export const completeCheckoutSessionFactory =
       subscriptionData
     }
 
-    await saveWorkspaceSubscription({
+    await upsertWorkspaceSubscription({
       workspaceSubscription
     })
   }
