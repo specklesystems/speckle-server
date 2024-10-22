@@ -17,13 +17,15 @@ import type { WebflowItem } from '~/lib/dashboard/helpers/types'
 
 const logger = useLogger()
 
-const { data: webflowData, error } = await useFetch<{
+const { data: webflowData, error } = await useAsyncData<{
   items: WebflowItem[]
-}>('/api/webflow', {
-  onResponseError({ response }) {
-    logger.error('API Response Error:', response.status, response.statusText)
-  }
-})
+}>('webflow-items', () =>
+  $fetch('/api/webflow', {
+    onResponseError({ response }) {
+      logger.error('API Response Error:', response.status, response.statusText)
+    }
+  })
+)
 
 const webflowItems = computed(() => webflowData.value?.items || [])
 </script>
