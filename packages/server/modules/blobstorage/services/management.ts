@@ -20,14 +20,14 @@ export const uploadFileStreamFactory =
   async (
     storeFileStream: (params: {
       objectKey: string
-      fileStream: Readable
+      fileStream: Readable | Buffer
     }) => Promise<{ fileHash: string }>,
     params1: { streamId: string; userId: string | undefined },
     params2: {
       blobId: string
       fileName: string
       fileType: string | undefined
-      fileStream: Readable
+      fileStream: Readable | Buffer
     }
   ) => {
     const { streamId, userId } = params1
