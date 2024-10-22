@@ -45,8 +45,9 @@ import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { Application, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const getStream = getStreamFactory({ db })
 const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
@@ -105,7 +106,7 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
   }
 }
 
-export const init = async (app: Application) => {
+export const init: SpeckleModule['init'] = async (app) => {
   await ensureConditions()
   const streamWritePermissions = streamWritePermissionsPipelineFactory({
     getRoles: getRolesFactory({ db }),
@@ -324,4 +325,4 @@ export const init = async (app: Application) => {
   })
 }
 
-export const finalize = () => {}
+export const finalize: SpeckleModule['finalize'] = () => {}
