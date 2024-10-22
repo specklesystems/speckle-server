@@ -3,13 +3,6 @@ const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
 
-const { createObject } = require('../services/objects')
-
-const {
-  getCommitsTotalCountByBranchName,
-  getCommitsByBranchName,
-  getCommitsByStreamId
-} = require('../services/commits')
 const {
   createBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
@@ -22,9 +15,6 @@ const {
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
-  addBranchCreatedActivity
-} = require('@/modules/activitystream/services/branchActivity')
-const {
   getCommitFactory,
   deleteCommitFactory,
   createCommitFactory,
@@ -34,7 +24,10 @@ const {
   switchCommitBranchFactory,
   updateCommitFactory,
   getStreamCommitCountFactory,
-  legacyGetPaginatedUserCommitsPage
+  legacyGetPaginatedUserCommitsPage,
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -53,7 +46,11 @@ const {
   addCommitDeletedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -112,6 +109,14 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getBranchCommitsTotalCountByNameFactory,
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  addBranchCreatedActivityFactory
+} = require('@/modules/activitystream/services/branchActivity')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -123,7 +128,10 @@ const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
@@ -237,6 +245,19 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsTotalCountByBranchName = getBranchCommitsTotalCountByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 describe('Commits @core-commits', () => {
   const user = {

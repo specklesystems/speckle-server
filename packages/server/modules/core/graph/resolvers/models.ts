@@ -16,11 +16,12 @@ import { last } from 'lodash'
 import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommitsFactory,
-  getPaginatedStreamCommits
+  legacyGetPaginatedStreamCommitsFactory
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
-  ProjectSubscriptions
+  ProjectSubscriptions,
+  publish
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
@@ -44,19 +45,22 @@ import {
   getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory,
-  getSpecificBranchCommitsFactory
+  getSpecificBranchCommitsFactory,
+  getStreamCommitCountFactory,
+  legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivity,
+  addBranchCreatedActivityFactory,
   addBranchDeletedActivity,
-  addBranchUpdatedActivity
+  addBranchUpdatedActivityFactory
 } from '@/modules/activitystream/services/branchActivity'
 import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
 
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -87,12 +91,18 @@ const getProjectTopLevelModelsTree = getProjectTopLevelModelsTreeFactory({
 const createBranchAndNotify = createBranchAndNotifyFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   updateBranch: updateBranchFactory({ db }),
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
@@ -107,6 +117,12 @@ const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
   getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
   getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
+  legacyGetPaginatedStreamCommitsPage: legacyGetPaginatedStreamCommitsPageFactory({
+    db
+  }),
+  getStreamCommitCount: getStreamCommitCountFactory({ db })
 })
 
 export = {

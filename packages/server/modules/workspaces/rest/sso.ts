@@ -252,6 +252,43 @@ router.get(
 
 /** Begin SSO configuration flow */
 router.get(
+  '/api/v1/workspaces/:workspaceSlug/sso',
+  validateRequest({
+    params: z.object({
+      workspaceSlug: z.string().min(1)
+    })
+  }),
+  async ({ params, res }) => {
+    const { workspaceSlug } = params
+
+    const workspace = await getWorkspaceBySlugFactory({ db })({
+      workspaceSlug
+    })
+
+    if (!workspace) {
+      throw new Error()
+    }
+
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
+
+    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
+      workspaceId: workspace.id
+    })
+
+    const limitedWorkspace = {
+      name: workspace.name,
+      logo: workspace.logo,
+      defaultLogoIndex: workspace.defaultLogoIndex,
+      ssoProviderName: providerData?.provider?.providerName
+    }
+
+    dispose()
+    res?.json(limitedWorkspace)
+  }
+)
+
+router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
   moveAuthParamsToSessionMiddleware,

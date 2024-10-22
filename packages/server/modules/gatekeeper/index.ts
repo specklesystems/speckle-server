@@ -2,7 +2,7 @@ import { moduleLogger } from '@/logging/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
-import billingRouter from '@/modules/gatekeeper/rest/billing'
+import { getBillingRouter } from '@/modules/gatekeeper/rest/billing'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -24,7 +24,7 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
-        app.use(billingRouter)
+        app.use(getBillingRouter())
 
         const isLicenseValid = await validateModuleLicense({
           requiredModules: ['billing']

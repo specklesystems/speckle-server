@@ -1,5 +1,4 @@
 import { expect } from 'chai'
-import { createObject } from '@/modules/core/services/objects'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -64,7 +63,11 @@ import {
 } from '@/modules/core/repositories/commits'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory,
@@ -101,6 +104,7 @@ import {
 } from '@/modules/core/repositories/users'
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -201,6 +205,10 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 const getStreamUsers = legacyGetStreamUsersFactory({ db })
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
