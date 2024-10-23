@@ -2,8 +2,6 @@
 const zlib = require('zlib')
 const { corsMiddleware } = require('@/modules/core/configs/cors')
 
-const { validatePermissionsReadStream } = require('./authUtils')
-
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('@/logging/logging')
@@ -12,9 +10,19 @@ const {
   getObjectChildrenStreamFactory
 } = require('@/modules/core/repositories/objects')
 const { db } = require('@/db/knex')
+const {
+  validatePermissionsReadStreamFactory
+} = require('@/modules/core/services/streams/auth')
+const { getStreamFactory } = require('@/modules/core/repositories/streams')
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
 
 const getObject = getFormattedObjectFactory({ db })
 const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+  getStream: getStreamFactory({ db }),
+  validateScopes,
+  authorizeResolver
+})
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
