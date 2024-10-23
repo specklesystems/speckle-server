@@ -18,7 +18,7 @@ import {
 } from '@/modules/core/domain/commits/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 
-export const legacyGetPaginatedStreamCommits =
+export const legacyGetPaginatedStreamCommitsFactory =
   (deps: {
     legacyGetPaginatedStreamCommitsPage: LegacyGetPaginatedStreamCommitsPage
     getStreamCommitCount: GetStreamCommitCount

@@ -16,7 +16,6 @@ import {
   CommentRecord
 } from '@/modules/comments/helpers/types'
 import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
-import { addReplyAddedActivity } from '@/modules/activitystream/services/commentActivity'
 import {
   formatSerializedViewerState,
   inputToDataStruct
@@ -40,7 +39,8 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   AddCommentArchivedActivity,
-  AddCommentCreatedActivity
+  AddCommentCreatedActivity,
+  AddReplyAddedActivity
 } from '@/modules/activitystream/domain/operations'
 
 type AuthorizeProjectCommentsAccessDeps = {
@@ -202,7 +202,7 @@ export const createCommentReplyAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentUpdated: MarkCommentUpdated
     commentsEventsEmit: CommentsEventsEmit
-    addReplyAddedActivity: typeof addReplyAddedActivity
+    addReplyAddedActivity: AddReplyAddedActivity
   }): CreateCommentReplyAndNotify =>
   async (input: CreateCommentReplyInput, userId: string) => {
     const thread = await deps.getComment({ id: input.threadId, userId })

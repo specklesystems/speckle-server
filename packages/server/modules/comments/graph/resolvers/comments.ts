@@ -52,7 +52,7 @@ import {
 import {
   addCommentArchivedActivityFactory,
   addCommentCreatedActivityFactory,
-  addReplyAddedActivity
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import {
   doViewerResourcesFit,
@@ -206,7 +206,14 @@ const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
   insertCommentLinks,
   markCommentUpdated: markCommentUpdatedFactory({ db }),
   commentsEventsEmit: CommentsEmitter.emit,
-  addReplyAddedActivity
+  addReplyAddedActivity: addReplyAddedActivityFactory({
+    getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers
+    }),
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const editCommentAndNotify = editCommentAndNotifyFactory({
   getComment,
@@ -695,7 +702,14 @@ export = {
         blobIds: args.input.blobIds
       })
 
-      await addReplyAddedActivity({
+      await addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })({
         streamId: args.input.streamId,
         input: args.input,
         reply,

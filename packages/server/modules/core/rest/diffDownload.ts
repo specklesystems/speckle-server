@@ -1,12 +1,22 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
-import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { getObjectsStream } from '@/modules/core/services/objects'
 import { pipeline, PassThrough } from 'stream'
+import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
 
 export default (app: Application) => {
+  const getObjectsStream = getObjectsStreamFactory({ db })
+  const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+    getStream: getStreamFactory({ db }),
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {

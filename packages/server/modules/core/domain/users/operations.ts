@@ -1,9 +1,11 @@
 import {
   LimitedUser,
   User,
+  UserSignUpContext,
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
 import {
   Nullable,
@@ -113,6 +115,10 @@ export type CreateValidatedUser = (
     verified?: boolean
     password?: string
     role?: ServerRoles
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   },
   options?: Partial<{
     skipPropertyValidation: boolean
@@ -126,6 +132,10 @@ export type FindOrCreateValidatedUser = (params: {
     role?: ServerRoles
     bio?: string
     verified?: boolean
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   }
 }) => Promise<{
   id: string
@@ -200,3 +210,15 @@ type LegacyAdminUsersListCollection = {
 export type LegacyGetAdminUsersListCollection = (
   params: LegacyAdminUsersPaginationParams
 ) => Promise<LegacyAdminUsersListCollection>
+
+type CollectionQueryArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+}
+
+export type AdminGetInviteList = (args: CollectionQueryArgs) => Promise<{
+  cursor: string | null
+  totalCount: number
+  items: ServerInviteGraphQLReturnType[]
+}>

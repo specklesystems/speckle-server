@@ -1,38 +1,29 @@
-import { db } from '@/db/knex'
 import {
   AddCommentArchivedActivity,
   AddCommentCreatedActivity,
+  AddReplyAddedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
-import { CommentCreatedActivityInput } from '@/modules/activitystream/domain/types'
+import {
+  CommentCreatedActivityInput,
+  ReplyCreatedActivityInput
+} from '@/modules/activitystream/domain/types'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   GetViewerResourceItemsUngrouped,
   GetViewerResourcesForComment,
   GetViewerResourcesFromLegacyIdentifiers
 } from '@/modules/comments/domain/operations'
 import { ViewerResourceItem } from '@/modules/comments/domain/types'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'
 import {
   CommentCreateInput,
-  CreateCommentReplyInput,
   ProjectCommentsUpdatedMessageType,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { getCommitsAndTheirBranchIdsFactory } from '@/modules/core/repositories/commits'
-import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
-import {
-  getViewerResourcesForCommentFactory,
-  getViewerResourcesForCommentsFactory,
-  getViewerResourcesFromLegacyIdentifiersFactory
-} from '@/modules/core/services/commit/viewerResources'
 import { PublishSubscription, pubsub } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
@@ -157,67 +148,53 @@ export const addCommentArchivedActivityFactory =
     ])
   }
 
-type ReplyCreatedActivityInput = ReplyCreateInput | CreateCommentReplyInput
-
 const isLegacyReplyCreateInput = (
   i: ReplyCreatedActivityInput
 ): i is ReplyCreateInput => has(i, 'streamId')
 
-export async function addReplyAddedActivity(params: {
-  streamId: string
-  input: ReplyCreatedActivityInput
-  reply: CommentRecord
-  userId: string
-}) {
-  const { streamId, input, reply, userId } = params
+export const addReplyAddedActivityFactory =
+  ({
+    getViewerResourcesForComment,
+    saveActivity,
+    publish
+  }: {
+    getViewerResourcesForComment: GetViewerResourcesForComment
+    publish: PublishSubscription
+    saveActivity: SaveActivity
+  }): AddReplyAddedActivity =>
+  async (params) => {
+    const { streamId, input, reply, userId } = params
 
-  const getStreamObjects = getStreamObjectsFactory({ db })
-  const getCommentsResources = getCommentsResourcesFactory({ db })
-  const getViewerResourcesFromLegacyIdentifiers =
-    getViewerResourcesFromLegacyIdentifiersFactory({
-      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-        getCommentsResources: getCommentsResourcesFactory({ db }),
-        getViewerResourcesFromLegacyIdentifiers: (...args) =>
-          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    const parentCommentId = isLegacyReplyCreateInput(input)
+      ? input.parentComment
+      : input.threadId
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Comment,
+        resourceId: parentCommentId,
+        actionType: ActionTypes.Comment.Reply,
+        userId,
+        info: { input },
+        message: `Comment reply #${reply.id} created`
       }),
-      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
-      getStreamObjects
-    })
-
-  const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
-    getCommentsResources,
-    getViewerResourcesFromLegacyIdentifiers
-  })
-
-  const parentCommentId = isLegacyReplyCreateInput(input)
-    ? input.parentComment
-    : input.threadId
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Comment,
-      resourceId: parentCommentId,
-      actionType: ActionTypes.Comment.Reply,
-      userId,
-      info: { input },
-      message: `Comment reply #${reply.id} created`
-    }),
-    pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
-      commentThreadActivity: {
-        type: 'reply-added',
-        reply
-      },
-      streamId,
-      commentId: parentCommentId
-    }),
-    publish(ProjectSubscriptions.ProjectCommentsUpdated, {
-      projectCommentsUpdated: {
-        id: reply.id,
-        type: ProjectCommentsUpdatedMessageType.Created,
-        comment: reply
-      },
-      projectId: streamId,
-      resourceItems: await getViewerResourcesForComment(streamId, reply.id)
-    })
-  ])
-}
+      // @deprecated
+      pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: 'reply-added',
+          reply
+        },
+        streamId,
+        commentId: parentCommentId
+      }),
+      publish(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: reply.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment: reply
+        },
+        projectId: streamId,
+        resourceItems: await getViewerResourcesForComment(streamId, reply.id)
+      })
+    ])
+  }

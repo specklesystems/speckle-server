@@ -323,11 +323,33 @@ type Workspace {
   discoverabilityEnabled: Boolean!
 }
 
-type DiscoverableWorkspace {
+"""
+Workspace metadata visible to non-workspace members.
+"""
+type LimitedWorkspace {
+  """
+  Workspace id
+  """
   id: ID!
+  """
+  Workspace name
+  """
   name: String!
+  """
+  Unique workspace short id. Used for navigation.
+  """
+  slug: String!
+  """
+  Workspace description
+  """
   description: String
+  """
+  Optional base64 encoded workspace logo image
+  """
   logo: String
+  """
+  Index of fallback workspace logo to use
+  """
   defaultLogoIndex: Int!
 }
 
@@ -417,7 +439,7 @@ extend type User {
   """
   Get discoverable workspaces with verified domains that match the active user's
   """
-  discoverableWorkspaces: [DiscoverableWorkspace!]!
+  discoverableWorkspaces: [LimitedWorkspace!]!
 
   """
   Get the workspaces for the user

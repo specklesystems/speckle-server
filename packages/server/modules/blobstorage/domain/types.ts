@@ -17,5 +17,5 @@ export type BlobStorageItem = {
 
 export type BlobStorageItemInput = SetOptional<
   BlobStorageItem,
-  'fileSize' | 'uploadStatus' | 'uploadError' | 'createdAt' | 'fileHash'
+  'fileSize' | 'fileType' | 'uploadStatus' | 'uploadError' | 'createdAt' | 'fileHash'
 >

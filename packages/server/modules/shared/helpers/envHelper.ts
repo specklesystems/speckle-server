@@ -218,6 +218,14 @@ export function getServerOrigin() {
   }
 }
 
+export function getBindAddress(aDefault: string = '127.0.0.1') {
+  return process.env.BIND_ADDRESS || aDefault
+}
+
+export function getPort() {
+  return getIntFromEnv('PORT', '3000')
+}
+
 /**
  * Check whether we're running an SSL server
  */
@@ -391,4 +399,16 @@ export function getStripeApiKey(): string {
 
 export function getStripeEndpointSigningKey(): string {
   return getStringFromEnv('STRIPE_ENDPOINT_SIGNING_KEY')
+}
+
+export function getOtelTracingUrl() {
+  return getStringFromEnv('OTEL_TRACE_URL')
+}
+
+export function getOtelTraceKey() {
+  return getStringFromEnv('OTEL_TRACE_KEY')
+}
+
+export function getOtelHeaderValue() {
+  return getStringFromEnv('OTEL_TRACE_VALUE')
 }

@@ -660,17 +660,18 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceBusinessSeatStripeProductId.secretKey }}
 
-- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyBusinessStripePriceId.secretKey }}
+      
+      key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
 {{- if .Values.featureFlags.automateModuleEnabled }}
@@ -1046,5 +1047,17 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.server.ratelimiting.burst_get_auth }}
 - name: RATELIMIT_BURST_GET_AUTH
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
+{{- end }}
+{{- if .Values.openTelemetry.tracing.url }}
+- name: OTEL_TRACE_URL
+  value: {{ .Values.openTelemetry.tracing.url | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.key }}
+- name: OTEL_TRACE_KEY
+  value: {{ .Values.openTelemetry.tracing.key | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.value }}
+- name: OTEL_TRACE_VALUE
+  value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
 {{- end }}

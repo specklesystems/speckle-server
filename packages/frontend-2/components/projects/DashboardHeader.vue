@@ -36,7 +36,7 @@ graphql(`
 graphql(`
   fragment ProjectsDashboardHeaderWorkspaces_User on User {
     discoverableWorkspaces {
-      ...WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspace
+      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace
     }
     workspaceInvites {
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator

@@ -9,8 +9,10 @@ import {
   LegacyStreamCommit
 } from '@/modules/core/domain/commits/types'
 import {
+  CommitsDeleteInput,
   CommitsMoveInput,
   CommitUpdateInput,
+  DeleteVersionsInput,
   ModelVersionsFilter,
   MoveVersionsInput,
   StreamCommitsArgs,
@@ -243,6 +245,11 @@ export type ValidateAndBatchMoveCommits = (
   params: CommitsMoveInput | MoveVersionsInput,
   userId: string
 ) => Promise<Branch>
+
+export type ValidateAndBatchDeleteCommits = (
+  params: CommitsDeleteInput | DeleteVersionsInput,
+  userId: string
+) => Promise<void>
 
 export type GetObjectCommitsWithStreamIds = (
   objectIds: string[],

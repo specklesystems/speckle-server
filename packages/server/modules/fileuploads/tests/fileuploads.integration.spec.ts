@@ -148,17 +148,24 @@ describe('FileUploads @fileuploads', () => {
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
+  let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sendRequest: (token: string, query: unknown) => Promise<any>
   let serverAddress: string
+  let serverPort: string
 
   before(async () => {
     ;({ app, server } = await beforeEachContext())
-    ;({ serverAddress, sendRequest } = await initializeTestServer(server, app))
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(
+      server,
+      app
+    ))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
+    existingPort = process.env['PORT'] || ''
     process.env['CANONICAL_URL'] = serverAddress
+    process.env['PORT'] = serverPort
 
     userOneId = await createUser(userOne)
   })
@@ -177,6 +184,7 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
+    process.env['PORT'] = existingPort
     await server?.close()
   })
 
