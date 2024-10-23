@@ -144,12 +144,15 @@ export const createUserFactory =
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    const signUpCtx = user.signUpContext
+
     let finalUser: typeof user &
       Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
       ...user,
       id: crs({ length: 10 }),
       verified: user.verified || false
     }
+    delete finalUser.signUpContext
 
     if (!finalUser.email?.length) throw new UserInputError('E-mail address is required')
 
@@ -220,7 +223,7 @@ export const createUserFactory =
       }
     })
 
-    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser })
+    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser, signUpCtx })
 
     return newUser.id
   }
