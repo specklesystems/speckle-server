@@ -2,7 +2,7 @@
 
 import { db } from '@/db/knex'
 import { validateRequest } from 'zod-express'
-import { Request, Router } from 'express'
+import { Request, RequestHandler, Router } from 'express'
 import { z } from 'zod'
 import {
   saveSsoProviderRegistrationFactory,
@@ -77,6 +77,8 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
+import { GetWorkspaceBySlug } from '@/modules/workspaces/domain/operations'
+import { GetWorkspaceSsoProvider } from '@/modules/workspaces/domain/sso/operations'
 
 const router = Router()
 
@@ -147,102 +149,48 @@ const buildErrorUrl = ({
   return url
 }
 
-type AuthAction = {
-  action: 'validate' | 'sign-in'
-  user: UserWithOptionalRole
-  workspace: WorkspaceWithOptionalRole
-} | {
-  action: 'sign-up'
-  user: Pick<UserWithOptionalRole, 'name' | 'email'>
-  workspace: WorkspaceWithOptionalRole
-}
+const decryptorFactory = () =>
+  async (data: string) => {
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const decryptor = await buildDecryptor(encryptionKeyPair)
+    const decryptedData = await decryptor.decrypt(data)
 
-type AuthRequest = Request<{ workspaceSlug: string }, never, never, { validate?: string }>
-
-const parseAuthAction = async (req: AuthRequest): Promise<AuthAction> => {
-  const isValidationFlow = req.query.validate === 'true'
-
-  const workspace = await getWorkspaceBySlugFactory({
-    db
-  })({
-    workspaceSlug: req.params.workspaceSlug
-  })
-  if (!workspace) throw new WorkspaceNotFoundError()
-
-  // Initialize OIDC client
-  // TODO: Initialize SSO client by type when multiple types are supported
-  const encryptionKeyPair = await getEncryptionKeyPair()
-
-  const decryptor = await buildDecryptor(encryptionKeyPair)
-  const encryptedCodeVerifier = req.session.codeVerifier
-
-  if (!encryptedCodeVerifier) {
-    throw new Error('Cannot find verification token. Restart SSO flow.')
+    return decryptedData
   }
 
-  const codeVerifier = await decryptor.decrypt(encryptedCodeVerifier)
+const workspaceSsoAuthRequestParams = z.object({
+  workspaceSlug: z.string().min(1)
+})
 
-  // Fetch OIDC provider information
-  const decryptedProvider: (Partial<WorkspaceSsoProvider> & Pick<WorkspaceSsoProvider, 'id'>) | null = isValidationFlow
-    // If validating a new configuration, this is stored temporarily in redis
-    ? {
-      id: '',
-      provider: await getOIDCProviderValidationRequestFactory({
-        redis: getGenericRedis(),
-        decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
-      })({
-        validationToken: codeVerifier
-      }) ?? undefined
+type WorkspaceSsoAuthRequestParams = z.infer<typeof workspaceSsoAuthRequestParams>
+
+/**
+ * Fetch public information about the workspace, including SSO provider metadata
+ */
+const handleGetLimitedWorkspaceRequestFactory =
+  ({
+    getWorkspaceBySlug,
+    getWorkspaceSsoProvider
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug,
+    getWorkspaceSsoProvider: GetWorkspaceSsoProvider
+  }): RequestHandler<WorkspaceSsoAuthRequestParams> =>
+    async ({ params, res }) => {
+      const workspace = await getWorkspaceBySlug({ workspaceSlug: params.workspaceSlug })
+      if (!workspace) throw new WorkspaceNotFoundError()
+
+      const ssoProviderData = await getWorkspaceSsoProvider({ workspaceId: workspace.id })
+
+      const limitedWorkspace = {
+        name: workspace.name,
+        logo: workspace.logo,
+        defaultLogoIndex: workspace.defaultLogoIndex,
+        ssoProviderName: ssoProviderData?.provider?.providerName
+      }
+
+      res?.json(limitedWorkspace)
     }
-    // Otherwise, use the provider information stored in the db
-    : await getWorkspaceSsoProviderFactory({
-      db,
-      decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
-    })({
-      workspaceId: workspace.id
-    })
 
-  if (!decryptedProvider || !decryptedProvider?.provider) {
-    throw new Error('Failed to find SSO provider. Restart flow.')
-  }
-
-  // Get user profile from SSO provider
-  const { client } = await initializeIssuerAndClient({ provider: decryptedProvider.provider })
-  const callbackParams = client.callbackParams(req)
-  const tokenSet = await client.callback(
-    buildAuthRedirectUrl(workspace.slug, isValidationFlow).toString(),
-    callbackParams,
-    { code_verifier: codeVerifier }
-  )
-  const ssoUserProfile = await client.userinfo(tokenSet)
-
-  if (!ssoUserProfile || !ssoUserProfile.name || !ssoUserProfile.email) {
-    throw new Error('SSO user profile does not conform to Speckle requirements.')
-  }
-
-  // Find Speckle user profile with email that matches SSO user profile
-  const existingSpeckleUserEmail = await findEmailFactory({
-    db
-  })({
-    email: ssoUserProfile.email
-  })
-  const existingSpeckleUser = await getUserFactory({
-    db
-  })(
-    existingSpeckleUserEmail?.userId ?? ''
-  )
-
-  // Find Speckle user profile for signed in user that initiated this SSO flow
-  const currentSessionUser = await getUserFactory({
-    db
-  })(
-    req.context.userId ?? ''
-  )
-
-  // Determine auth action and validate conditions for each action type
-}
-
-/** GET Public information about the workspace, including SSO provider metadata */
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso',
   validateRequest({
@@ -250,33 +198,13 @@ router.get(
       workspaceSlug: z.string().min(1)
     })
   }),
-  async ({ params, res }) => {
-    const { workspaceSlug } = params
-
-    const workspace = await getWorkspaceBySlugFactory({ db })({
-      workspaceSlug
+  handleGetLimitedWorkspaceRequestFactory({
+    getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+    getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+      db,
+      decrypt: decryptorFactory()
     })
-
-    if (!workspace) {
-      throw new Error()
-    }
-
-    const encryptionKeyPair = await getEncryptionKeyPair()
-    const { decrypt } = await buildDecryptor(encryptionKeyPair)
-
-    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
-      workspaceId: workspace.id
-    })
-
-    const limitedWorkspace = {
-      name: workspace.name,
-      logo: workspace.logo,
-      defaultLogoIndex: workspace.defaultLogoIndex,
-      ssoProviderName: providerData?.provider?.providerName
-    }
-
-    res?.json(limitedWorkspace)
-  }
+  })
 )
 
 /** Begin SSO sign-in or sign-up flow */
@@ -346,43 +274,6 @@ router.get(
 )
 
 /** Begin SSO configuration flow */
-router.get(
-  '/api/v1/workspaces/:workspaceSlug/sso',
-  validateRequest({
-    params: z.object({
-      workspaceSlug: z.string().min(1)
-    })
-  }),
-  async ({ params, res }) => {
-    const { workspaceSlug } = params
-
-    const workspace = await getWorkspaceBySlugFactory({ db })({
-      workspaceSlug
-    })
-
-    if (!workspace) {
-      throw new Error()
-    }
-
-    const encryptionKeyPair = await getEncryptionKeyPair()
-    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
-
-    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
-      workspaceId: workspace.id
-    })
-
-    const limitedWorkspace = {
-      name: workspace.name,
-      logo: workspace.logo,
-      defaultLogoIndex: workspace.defaultLogoIndex,
-      ssoProviderName: providerData?.provider?.providerName
-    }
-
-    dispose()
-    res?.json(limitedWorkspace)
-  }
-)
-
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
   sessionMiddleware,
@@ -459,11 +350,11 @@ router.get(
     // NOTE: If req.context.userId is defined, there is a user signed in
 
     // const decryptedOidcProvider = req.query.validate === 'true'
-    // ? await createOidcProvider(req)
+    // ? await createOidcProvider(req) // assert signed in
     // : await getOidcProvider(req)
 
     // const oidcProviderUserData = await getOidcProviderUserData(req, decryptedOidcProvider)
-    // const speckleUserData = await tryGetSpeckleUserData(req, oidcProviderUserData)
+    // const speckleUserData = await tryGetSpeckleUserData(req, oidcProviderUserData) // assert existing email match is verified, assert ids match if both present
 
     // if (!speckleUserData) {
     //   const newSpeckleUser = await createWorkspaceUserFromSsoProfile({
@@ -836,3 +727,99 @@ router.get(
 )
 
 export default router
+
+// type AuthAction = {
+//   action: 'validate' | 'sign-in'
+//   user: UserWithOptionalRole
+//   workspace: WorkspaceWithOptionalRole
+// } | {
+//   action: 'sign-up'
+//   user: Pick<UserWithOptionalRole, 'name' | 'email'>
+//   workspace: WorkspaceWithOptionalRole
+// }
+
+// type AuthRequest = Request<{ workspaceSlug: string }, never, never, { validate?: string }>
+
+// const parseAuthAction = async (req: AuthRequest): Promise<AuthAction> => {
+//   const isValidationFlow = req.query.validate === 'true'
+
+//   const workspace = await getWorkspaceBySlugFactory({
+//     db
+//   })({
+//     workspaceSlug: req.params.workspaceSlug
+//   })
+//   if (!workspace) throw new WorkspaceNotFoundError()
+
+//   // Initialize OIDC client
+//   // TODO: Initialize SSO client by type when multiple types are supported
+//   const encryptionKeyPair = await getEncryptionKeyPair()
+
+//   const decryptor = await buildDecryptor(encryptionKeyPair)
+//   const encryptedCodeVerifier = req.session.codeVerifier
+
+//   if (!encryptedCodeVerifier) {
+//     throw new Error('Cannot find verification token. Restart SSO flow.')
+//   }
+
+//   const codeVerifier = await decryptor.decrypt(encryptedCodeVerifier)
+
+//   // Fetch OIDC provider information
+//   const decryptedProvider: (Partial<WorkspaceSsoProvider> & Pick<WorkspaceSsoProvider, 'id'>) | null = isValidationFlow
+//     // If validating a new configuration, this is stored temporarily in redis
+//     ? {
+//       id: '',
+//       provider: await getOIDCProviderValidationRequestFactory({
+//         redis: getGenericRedis(),
+//         decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
+//       })({
+//         validationToken: codeVerifier
+//       }) ?? undefined
+//     }
+//     // Otherwise, use the provider information stored in the db
+//     : await getWorkspaceSsoProviderFactory({
+//       db,
+//       decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
+//     })({
+//       workspaceId: workspace.id
+//     })
+
+//   if (!decryptedProvider || !decryptedProvider?.provider) {
+//     throw new Error('Failed to find SSO provider. Restart flow.')
+//   }
+
+//   // Get user profile from SSO provider
+//   const { client } = await initializeIssuerAndClient({ provider: decryptedProvider.provider })
+//   const callbackParams = client.callbackParams(req)
+//   const tokenSet = await client.callback(
+//     buildAuthRedirectUrl(workspace.slug, isValidationFlow).toString(),
+//     callbackParams,
+//     { code_verifier: codeVerifier }
+//   )
+//   const ssoUserProfile = await client.userinfo(tokenSet)
+
+//   if (!ssoUserProfile || !ssoUserProfile.name || !ssoUserProfile.email) {
+//     throw new Error('SSO user profile does not conform to Speckle requirements.')
+//   }
+
+//   // Find Speckle user profile with email that matches SSO user profile
+//   const existingSpeckleUserEmail = await findEmailFactory({
+//     db
+//   })({
+//     email: ssoUserProfile.email
+//   })
+//   const existingSpeckleUser = await getUserFactory({
+//     db
+//   })(
+//     existingSpeckleUserEmail?.userId ?? ''
+//   )
+
+//   // Find Speckle user profile for signed in user that initiated this SSO flow
+//   const currentSessionUser = await getUserFactory({
+//     db
+//   })(
+//     req.context.userId ?? ''
+//   )
+
+//   // Determine auth action and validate conditions for each action type
+//   return {} as any
+// }

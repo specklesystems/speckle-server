@@ -1,7 +1,7 @@
 <template>
   <div>
-    <FormButton :disabled="!challenge" link @click="handleContinue">
-      Continue with SSO
+    <FormButton :disabled="!challenge || !ssoProviderName" link @click="handleContinue">
+      Continue with {{ ssoProviderName }} SSO
     </FormButton>
   </div>
 </template>
@@ -14,10 +14,12 @@ definePageMeta({
   middleware: ['requires-workspaces-enabled']
 })
 
+const apiOrigin = useApiOrigin()
 const route = useRoute()
 const { challenge } = useLoginOrRegisterUtils()
-
 const { signInOrSignUpWithSso } = useAuthManager()
+
+const ssoProviderName = ref()
 
 const handleContinue = () => {
   signInOrSignUpWithSso({
@@ -26,13 +28,21 @@ const handleContinue = () => {
   })
 }
 
-// onMounted(() => {
-//   fetch(new URL(`/api/v1/workspaces/${workspaceSlug.value}/sso`, apiOrigin))
-//     .then((res) => {
-//       return res.json()
-//     })
-//     .then((data) => {
-//       console.log(data)
-//     })
-// })
+type LimitedWorkspace = {
+  name: string
+  logo?: string
+  defaultLogoIndex: number
+  // If no provider name exists, SSO is not configured for workspace.
+  ssoProviderName?: string
+}
+
+onMounted(() => {
+  fetch(new URL(`/api/v1/workspaces/${route.params.slug}/sso`, apiOrigin))
+    .then((res) => {
+      return res.json()
+    })
+    .then((data: LimitedWorkspace) => {
+      ssoProviderName.value = data.ssoProviderName
+    })
+})
 </script>

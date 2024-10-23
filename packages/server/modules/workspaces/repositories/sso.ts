@@ -57,7 +57,7 @@ export const getWorkspaceSsoProviderFactory =
     async ({ workspaceId }) => {
       const maybeProvider = await tables
         .workspaceSsoProviders(db)
-        .select<WorkspaceSsoProviderRecord & SsoProviderRecord>(['workspaceId', 'providerId', 'encryptedProviderData'])
+        .select<WorkspaceSsoProviderRecord & SsoProviderRecord>(['workspaceId', 'providerId', 'providerType', 'encryptedProviderData'])
         .where({ workspaceId })
         .join<SsoProviderRecord>('sso_providers', 'id', 'providerId')
         .first()
