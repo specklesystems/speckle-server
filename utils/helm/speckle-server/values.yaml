@@ -1026,9 +1026,9 @@ frontend_2:
   ## @param frontend_2.image The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
-  ## @param frontend_2.webflowApiKey API Key for Webflow, which provides the blog content for the new web application frontend.
+  ## @param frontend_2.webflowApiToken API Key for Webflow, which provides the blog content for the new web application frontend.
   ##
-  webflowApiKey: ''
+  webflowApiToken: ''
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
   logClientApiToken: ''
