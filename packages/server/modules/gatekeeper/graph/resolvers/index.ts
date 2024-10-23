@@ -13,7 +13,7 @@ import {
   createCheckoutSessionFactory,
   createCustomerPortalUrlFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { getWorkspacePlanPrice, stripe } from '@/modules/gatekeeper/stripe'
+import { getWorkspacePlanPrice, getStripeClient } from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
@@ -62,7 +62,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspace)
             throw new Error('This cannot be, if there is a sub, there is a workspace')
           return await createCustomerPortalUrlFactory({
-            stripe,
+            stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin()
           })({
             workspaceId: workspaceSubscription.workspaceId,
@@ -99,7 +99,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
 
           const createCheckoutSession = createCheckoutSessionFactory({
-            stripe,
+            stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin(),
             getWorkspacePlanPrice
           })
