@@ -6,7 +6,12 @@ import {
 import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
 import { Stripe } from 'stripe'
 
-export const stripe = new Stripe(getStripeApiKey(), { typescript: true })
+let stripeClient: Stripe | undefined = undefined
+
+export const getStripeClient = () => {
+  if (!stripeClient) stripeClient = new Stripe(getStripeApiKey(), { typescript: true })
+  return stripeClient
+}
 
 export const workspacePlanPrices = (): Record<
   WorkspacePricingPlans,

@@ -42,7 +42,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { stripe, getWorkspacePlanPrice } from '@/modules/gatekeeper/stripe'
+import { getStripeClient, getWorkspacePlanPrice } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 export const getBillingRouter = (): Router => {
@@ -73,7 +73,7 @@ export const getBillingRouter = (): Router => {
       )
 
       const createCheckoutSession = createCheckoutSessionFactory({
-        stripe,
+        stripe: getStripeClient(),
         frontendOrigin: getFrontendOrigin(),
         getWorkspacePlanPrice
       })
@@ -115,6 +115,7 @@ export const getBillingRouter = (): Router => {
       const workspace = await getWorkspaceFactory({ db })({ workspaceId })
       if (!workspace)
         throw new Error('This cannot be, if there is a sub, there is a workspace')
+      const stripe = getStripeClient()
       const url = await createCustomerPortalUrlFactory({
         stripe,
         frontendOrigin: getFrontendOrigin()
@@ -135,6 +136,7 @@ export const getBillingRouter = (): Router => {
       return
     }
 
+    const stripe = getStripeClient()
     let event: Stripe.Event
 
     try {
