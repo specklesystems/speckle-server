@@ -9,6 +9,7 @@ export interface ISenderModelCard extends IModelCard {
 }
 
 export interface ISendFilter extends IDiscriminatedObject {
+  id: string
   name: string
   summary: string
   isDefault: boolean
@@ -17,6 +18,14 @@ export interface ISendFilter extends IDiscriminatedObject {
 
 export interface IDirectSelectionSendFilter extends ISendFilter {
   selectedObjectIds: string[]
+}
+
+export interface RevitViewsSendFilter extends ISendFilter {
+  selectedViewDiscipline: string
+  selectedViewFamily: string
+  selectedView: string
+  availableDisciplines: string[]
+  availableViews: Record<string, string[]>
 }
 
 export class SenderModelCard extends ModelCard implements ISenderModelCard {
