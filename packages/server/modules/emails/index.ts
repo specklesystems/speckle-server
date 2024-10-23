@@ -1,24 +1,11 @@
 /* istanbul ignore file */
-import { db } from '@/db/knex'
 import { moduleLogger } from '@/logging/logging'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
-import { getUserFactory } from '@/modules/core/repositories/users'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
 import * as SendingService from '@/modules/emails/services/sending'
-import {
-  initializeVerificationOnRegistrationFactory,
-  requestEmailVerificationFactory
-} from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-
-let quitVerificationListeners: Optional<() => void> = undefined
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const emailsModule: SpeckleModule = {
-  init: async (app, isInitial) => {
+  init: async (app) => {
     moduleLogger.info('📧 Init emails module')
 
     // init transporter
@@ -26,34 +13,12 @@ const emailsModule: SpeckleModule = {
 
     // init rest api
     ;(await import('./rest')).default(app)
-
-    // init event listeners
-    if (isInitial) {
-      const getUser = getUserFactory({ db })
-      const initializeVerificationOnRegistration =
-        initializeVerificationOnRegistrationFactory({
-          userEmitterListener: UsersEmitter.listen,
-          requestEmailVerification: requestEmailVerificationFactory({
-            getUser,
-            getServerInfo: getServerInfoFactory({ db }),
-            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
-              { db }
-            ),
-            findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
-            sendEmail: SendingService.sendEmail,
-            renderEmail
-          })
-        })
-
-      quitVerificationListeners = initializeVerificationOnRegistration()
-    }
-  },
-
-  shutdown() {
-    quitVerificationListeners?.()
   }
 }
 
+/**
+ * @deprecated Use `sendEmail` from `@/modules/emails/services/sending` instead
+ */
 async function sendEmail({
   from,
   to,

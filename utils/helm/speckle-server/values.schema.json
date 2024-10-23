@@ -498,6 +498,31 @@
         }
       }
     },
+    "openTelemetry": {
+      "type": "object",
+      "properties": {
+        "tracing": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Required. The URL to which the opentelemetry traces will be exported.",
+              "default": ""
+            },
+            "key": {
+              "type": "string",
+              "description": "Required. The key to be used when exporting opentelemetry traces.",
+              "default": ""
+            },
+            "value": {
+              "type": "string",
+              "description": "Required. The value to be used when exporting opentelemetry traces.",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {
@@ -1684,9 +1709,9 @@
           "description": "The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
-        "ghostApiKey": {
+        "webflowApiToken": {
           "type": "string",
-          "description": "API Key for Ghost, which provides the blog content for the new web application frontend.",
+          "description": "API Key for Webflow, which provides the blog content for the new web application frontend.",
           "default": ""
         },
         "logClientApiToken": {

@@ -1,27 +1,19 @@
-import db from '@/db/knex'
+import {
+  AdminGetProjectList,
+  LegacyGetStreams
+} from '@/modules/core/domain/streams/operations'
 import {
   AdminGetInviteList,
   AdminUserList,
   CountUsers,
   ListPaginatedUsersPage
 } from '@/modules/core/domain/users/operations'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import {
   CountServerInvites,
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
-
-type HasCursor = {
-  cursor: string | null
-}
-
-type Collection<T> = HasCursor & {
-  items: T[]
-  totalCount: number
-}
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
@@ -60,13 +52,6 @@ export const adminUserListFactory =
     return { totalCount, items, cursor }
   }
 
-type AdminProjectListArgs = HasCursor & {
-  query: string | null
-  orderBy: string | null
-  visibility: string | null
-  limit: number
-}
-
 export const adminInviteListFactory =
   (deps: {
     countServerInvites: CountServerInvites
@@ -95,24 +80,23 @@ export const adminInviteListFactory =
     }
   }
 
-export const adminProjectList = async (
-  args: AdminProjectListArgs & { streamIdWhitelist?: string[] }
-): Promise<Collection<StreamRecord>> => {
-  const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
-  const getStreams = legacyGetStreamsFactory({ db })
-  const { streams, totalCount, cursorDate } = await getStreams({
-    ...args,
-    searchQuery: args.query,
-    cursor: parsedCursor,
-    streamIdWhitelist: args.streamIdWhitelist,
-    workspaceIdWhitelist: null,
-    offset: null,
-    publicOnly: null
-  })
-  const cursor = cursorDate ? convertDateToCursor(cursorDate) : null
-  return {
-    cursor,
-    items: streams,
-    totalCount
+export const adminProjectListFactory =
+  (deps: { getStreams: LegacyGetStreams }): AdminGetProjectList =>
+  async (args) => {
+    const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+    const { streams, totalCount, cursorDate } = await deps.getStreams({
+      ...args,
+      searchQuery: args.query,
+      cursor: parsedCursor,
+      streamIdWhitelist: args.streamIdWhitelist,
+      workspaceIdWhitelist: null,
+      offset: null,
+      publicOnly: null
+    })
+    const cursor = cursorDate ? convertDateToCursor(cursorDate) : null
+    return {
+      cursor,
+      items: streams,
+      totalCount
+    }
   }
-}

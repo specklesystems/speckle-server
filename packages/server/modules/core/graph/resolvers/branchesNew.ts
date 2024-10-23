@@ -17,8 +17,8 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
-  addBranchDeletedActivity,
   addBranchCreatedActivityFactory,
+  addBranchDeletedActivityFactory,
   addBranchUpdatedActivityFactory
 } from '@/modules/activitystream/services/branchActivity'
 import {
@@ -57,7 +57,10 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   modelsEventsEmitter: ModelsEmitter.emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity,
+  addBranchDeletedActivity: addBranchDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 const getUser = legacyGetUserFactory({ db })

@@ -60,6 +60,7 @@ const initializeTestServer = async (server, app) => {
   return {
     server,
     serverAddress,
+    serverPort: port,
     wsAddress,
     sendRequest(auth, obj) {
       return (
