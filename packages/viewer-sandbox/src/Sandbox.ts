@@ -179,7 +179,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      this.properties = await this.viewer.getObjectProperties()
+      // this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -527,6 +527,7 @@ export default class Sandbox {
         options: {
           DEFAULT: 0,
           EDGED: 1,
+          MERTEDGED: 6,
           SHADED: 2,
           PEN: 3,
           ARCTIC: 4,
@@ -541,7 +542,7 @@ export default class Sandbox {
             )
             break
           case 1:
-            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
+            this.viewer.getRenderer().pipeline = new EdgesPipeline(
               this.viewer.getRenderer()
             )
             break
@@ -562,6 +563,11 @@ export default class Sandbox {
             break
           case 5:
             this.viewer.getRenderer().pipeline = new TAAPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 6:
+            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
               this.viewer.getRenderer()
             )
             break

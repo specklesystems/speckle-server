@@ -1,7 +1,7 @@
 import SpeckleBasicMaterial from './SpeckleBasicMaterial.js'
 import { speckleViewportVert } from './shaders/speckle-viewport-vert.js'
 import { speckleViewportFrag } from './shaders/speckle-viewport-frag.js'
-import { MeshBasicMaterialParameters, Texture } from 'three'
+import { Material, MeshBasicMaterialParameters, Texture } from 'three'
 import { Uniforms } from './SpeckleMaterial.js'
 
 class SpeckleViewportMaterial extends SpeckleBasicMaterial {
@@ -14,7 +14,7 @@ class SpeckleViewportMaterial extends SpeckleBasicMaterial {
   }
 
   protected get uniformsDef(): Uniforms {
-    return { ...super.uniformsDef, minIntensity: 0, tMatcap: null }
+    return { ...super.uniformsDef, minIntensity: 0.01, tMatcap: null }
   }
 
   constructor(parameters: MeshBasicMaterialParameters, defines = ['USE_RTE']) {
@@ -37,6 +37,13 @@ class SpeckleViewportMaterial extends SpeckleBasicMaterial {
       this.userData.tMatcap.value = null
     }
     this.needsUpdate = true
+  }
+
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    ;(to as SpeckleViewportMaterial).userData.tMatcap.value = (
+      from as SpeckleViewportMaterial
+    ).userData.tMatcap.value
   }
 }
 

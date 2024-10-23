@@ -1,5 +1,8 @@
 export const speckleDepthNormalFrag = /* glsl */ `
-#extension GL_EXT_draw_buffers : require
+#if __VERSION__ == 100
+    #extension GL_EXT_draw_buffers : require
+#endif
+
 #if DEPTH_PACKING == 3200
 	uniform float opacity;
 #endif
