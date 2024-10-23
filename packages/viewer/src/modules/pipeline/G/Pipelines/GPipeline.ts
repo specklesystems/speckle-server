@@ -29,6 +29,7 @@ export abstract class GPipeline {
   public get passes(): Array<GPass> {
     return this.passList
   }
+
   public onBeforePipelineRender(): void {}
   public onAfterPipelineRender(): void {}
 
@@ -97,8 +98,35 @@ export abstract class GPipeline {
 
       if (pass.jitter && camera) {
         this.frameProjection.copy(camera.projectionMatrix)
-        camera.projectionMatrix.elements[8] = jitterX / this.drawingSize.x
-        camera.projectionMatrix.elements[9] = jitterY / this.drawingSize.y
+        if (camera instanceof OrthographicCamera) {
+          const pixelWidth = this.drawingSize.x
+          const pixelHeight = this.drawingSize.y
+          const width = camera.right - camera.left
+          const height = camera.top - camera.bottom
+          const pixelRatioW = pixelWidth / width
+          const pixelRatioH = pixelHeight / height
+
+          camera.setViewOffset(
+            width,
+            height,
+            (jitterX / pixelRatioW) * 0.5,
+            (jitterY / pixelRatioH) * 0.5,
+            width,
+            height
+          )
+        } else if (camera instanceof PerspectiveCamera) {
+          camera.projectionMatrix.elements[8] = jitterX / this.drawingSize.x
+          camera.projectionMatrix.elements[9] = jitterY / this.drawingSize.y
+          /** Technically it should be this, but I'm not using it because I don't understand three's implementation */
+          // camera.setViewOffset(
+          //   this.drawingSize.x,
+          //   this.drawingSize.y,
+          //   jitterX * 0.5,
+          //   jitterY * 0.5,
+          //   this.drawingSize.x,
+          //   this.drawingSize.y
+          // )
+        }
       }
 
       const ret = pass.render(
