@@ -1,14 +1,28 @@
-'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
 
-const { validatePermissionsReadStream } = require('./authUtils')
+import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
+import { pipeline, PassThrough } from 'stream'
+import { logger } from '@/logging/logging'
+import {
+  getFormattedObjectFactory,
+  getObjectChildrenStreamFactory
+} from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { validateScopes, authorizeResolver } from '@/modules/shared'
+import type express from 'express'
 
-const { getObject, getObjectChildrenStream } = require('../services/objects')
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
-const { pipeline, PassThrough } = require('stream')
-const { logger } = require('@/logging/logging')
-module.exports = (app) => {
+export default (app: express.Express) => {
+  const getObject = getFormattedObjectFactory({ db })
+  const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+  const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+    getStream: getStreamFactory({ db }),
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/objects/:streamId/:objectId', corsMiddleware())
 
   app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
@@ -46,6 +60,12 @@ module.exports = (app) => {
     const dbStream = await getObjectChildrenStream({
       streamId: req.params.streamId,
       objectId: req.params.objectId
+    })
+    // https://knexjs.org/faq/recipes.html#manually-closing-streams
+    // https://github.com/knex/knex/issues/2324
+    req.on('close', () => {
+      dbStream.end.bind(dbStream)
+      dbStream.destroy.bind(dbStream)
     })
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()

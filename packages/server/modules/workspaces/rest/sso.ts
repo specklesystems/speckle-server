@@ -36,14 +36,14 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getUserById } from '@/modules/core/services/users'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 
 const router = Router()
 
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUserById
+  getUser: legacyGetUserFactory({ db })
 })
 
 const buildAuthRedirectUrl = (workspaceSlug: string): URL =>
@@ -81,6 +81,43 @@ const buildErrorUrl = ({
   }
   return url
 }
+
+router.get(
+  '/api/v1/workspaces/:workspaceSlug/sso',
+  validateRequest({
+    params: z.object({
+      workspaceSlug: z.string().min(1)
+    })
+  }),
+  async ({ params, res }) => {
+    const { workspaceSlug } = params
+
+    const workspace = await getWorkspaceBySlugFactory({ db })({
+      workspaceSlug
+    })
+
+    if (!workspace) {
+      throw new Error()
+    }
+
+    const encryptionKeyPair = await getEncryptionKeyPair()
+    const { decrypt, dispose } = await buildDecryptor(encryptionKeyPair)
+
+    const providerData = await getWorkspaceSsoProviderFactory({ db, decrypt })({
+      workspaceId: workspace.id
+    })
+
+    const limitedWorkspace = {
+      name: workspace.name,
+      logo: workspace.logo,
+      defaultLogoIndex: workspace.defaultLogoIndex,
+      ssoProviderName: providerData?.provider?.providerName
+    }
+
+    dispose()
+    res?.json(limitedWorkspace)
+  }
+)
 
 router.get(
   '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',

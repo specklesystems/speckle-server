@@ -36,21 +36,26 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getUsers } from '@/modules/core/repositories/users'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const createActivitySummary = createActivitySummaryFactory({
   getStream,
-  getActivity: getActivityFactory({ db })
+  getActivity: getActivityFactory({ db }),
+  getUser
 })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
@@ -60,7 +65,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -72,7 +77,9 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

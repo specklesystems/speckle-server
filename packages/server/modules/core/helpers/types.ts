@@ -88,6 +88,10 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
   migration?: { movedFrom?: string; movedTo?: string }
+  configuration: {
+    objectSizeLimitBytes: number
+    objectMultipartUploadSizeLimitBytes: number
+  }
 }
 
 export type CommitRecord = {
@@ -133,6 +137,13 @@ export type ObjectRecord = {
   totalChildrenCountByDepth: Nullable<Record<string, unknown>>
   createdAt: Date
   data: Nullable<Record<string, unknown>>
+  streamId: string
+}
+
+export type ObjectChildrenClosureRecord = {
+  parent: string
+  child: string
+  minDepth: number
   streamId: string
 }
 

@@ -88,7 +88,7 @@ export default Vue.extend({
   setup() {
     const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
-      () => result.value?.serverInfo.blobSizeLimitBytes
+      () => result.value?.serverInfo.configuration.blobSizeLimitBytes
     )
     return { blobSizeLimitBytes }
   },

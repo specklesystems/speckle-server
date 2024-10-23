@@ -32,7 +32,7 @@ import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import knex from '@/db/knex'
+import knex, { db } from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
@@ -41,13 +41,15 @@ import {
   isTestEnv,
   useNewFrontend,
   isApolloMonitoringEnabled,
-  enableMixpanel
+  enableMixpanel,
+  getPort,
+  getBindAddress
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
-import { get, has, isString, toNumber } from 'lodash'
+import { get, has, isString } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
@@ -64,7 +66,7 @@ import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import { getUser } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -365,7 +367,15 @@ export async function init() {
   }
 
   app.use(corsMiddleware())
-  app.use(express.json({ limit: '100mb' }))
+  // there are some paths, that need the raw body
+  app.use((req, res, next) => {
+    const rawPaths = ['/api/v1/billing/webhooks']
+    if (rawPaths.includes(req.path)) {
+      express.raw({ type: 'application/json' })(req, res, next)
+    } else {
+      express.json({ limit: '100mb' })(req, res, next)
+    }
+  })
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
@@ -385,7 +395,8 @@ export async function init() {
       next()
     }
   )
-  if (enableMixpanel()) app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser }))
+  if (enableMixpanel())
+    app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
@@ -453,8 +464,8 @@ export async function startHttp(
   app: Express,
   customPortOverride?: number
 ) {
-  let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
-  let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
+  let bindAddress = getBindAddress() // defaults to 127.0.0.1
+  let port = getPort() // defaults to 3000
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   if (shouldUseFrontendProxy()) {
@@ -467,7 +478,7 @@ export async function startHttp(
 
   // Production mode
   else {
-    bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
+    bindAddress = getBindAddress('0.0.0.0')
   }
 
   monitorActiveConnections(server)

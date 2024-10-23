@@ -2,7 +2,8 @@ import {
   StreamWithCommitId,
   StreamWithOptionalRole,
   LimitedUserWithStreamRole,
-  Stream
+  Stream,
+  StreamFavoriteMetadata
 } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
@@ -19,6 +20,7 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+import type express from 'express'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -65,6 +67,18 @@ export type GetStreamCollaborators = (
   type?: StreamRoles
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
+export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+
+export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
+  {
+    role: string
+    id: string
+    name: string
+    company: string
+    avatar: string
+  }[]
+>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateInput,
   options?: Partial<{
@@ -84,7 +98,7 @@ export type CanUserFavoriteStream = (params: {
   streamId: string
 }) => Promise<boolean>
 
-export type DeleteStreamRecords = (streamId: string) => Promise<number>
+export type DeleteStreamRecord = (streamId: string) => Promise<number>
 
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 
@@ -116,6 +130,99 @@ export type GetFavoritedStreamsPage = (params: {
 }) => Promise<{
   streams: Stream[]
   cursor: Nullable<string>
+}>
+
+export type BaseUserStreamsQueryParams = {
+  /**
+   * User whose streams we wish to find
+   */
+  userId: string
+  /**
+   * Filter streams by name/description/id
+   */
+  searchQuery?: string
+  /**
+   * Whether this data is retrieved for another user, and thus the data set
+   * should be limited to only show publicly accessible (discoverable) streams
+   */
+  forOtherUser?: boolean
+  /**
+   * Only return streams owned by userId
+   */
+  ownedOnly?: boolean
+
+  /**
+   * Only return streams where user has the specified roles
+   */
+  withRoles?: StreamRoles[]
+
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
+  workspaceId?: string
+}
+
+export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
+  /**
+   * Max amount of streams per page. Defaults to 25, max is 50.
+   */
+  limit?: MaybeNullOrUndefined<number>
+  /**
+   * Pagination cursor
+   */
+  cursor?: MaybeNullOrUndefined<string>
+}
+
+export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
+
+export type GetUserStreamsPage = (params: UserStreamsQueryParams) => Promise<{
+  streams: StreamWithOptionalRole[]
+  cursor: string | null
+}>
+
+export type GetUserStreamsCount = (
+  params: UserStreamsQueryCountParams
+) => Promise<number>
+
+export type MarkBranchStreamUpdated = (branchId: string) => Promise<boolean>
+
+export type MarkCommitStreamUpdated = (commitId: string) => Promise<boolean>
+
+export type MarkOnboardingBaseStream = (
+  streamId: string,
+  version: string
+) => Promise<void>
+
+export type GetBatchUserFavoriteData = (params: {
+  userId: string
+  streamIds: string[]
+}) => Promise<{ [streamId: string]: StreamFavoriteMetadata }>
+
+export type GetBatchStreamFavoritesCounts = (streamIds: string[]) => Promise<{
+  [streamId: string]: number
+}>
+
+export type GetOwnedFavoritesCountByUserIds = (userIds: string[]) => Promise<{
+  [userId: string]: number
+}>
+
+export type GetStreamRoles = (
+  userId: string,
+  streamIds: string[]
+) => Promise<{
+  [streamId: string]: Nullable<string>
+}>
+
+export type GetUserStreamCounts = (params: {
+  userIds: string[]
+  publicOnly?: boolean
+}) => Promise<{
+  [userId: string]: number
+}>
+
+export type GetStreamsSourceApps = (streamIds: string[]) => Promise<{
+  [streamId: string]: string[]
 }>
 
 export type GetFavoritedStreamsCount = (
@@ -242,3 +349,32 @@ export type FavoriteStream = (params: {
   favorited?: boolean | undefined
   userResourceAccessRules?: ContextResourceAccessRules
 }) => Promise<Stream>
+
+export type AdminGetProjectList = (args: {
+  query: string | null
+  orderBy: string | null
+  visibility: string | null
+  limit: number
+  streamIdWhitelist?: string[]
+  cursor: string | null
+}) => Promise<{
+  cursor: null | string
+  items: Stream[]
+  totalCount: number
+}>
+
+export type ValidatePermissionsReadStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>
+
+export type ValidatePermissionsWriteStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>

@@ -7,11 +7,11 @@ import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
 
 export class SpeckleLoader extends Loader {
-  private loader: ObjectLoader
-  private converter: SpeckleConverter
-  private tree: WorldTree
-  private isCancelled = false
-  private isFinished = false
+  protected loader: ObjectLoader
+  protected converter: SpeckleConverter
+  protected tree: WorldTree
+  protected isCancelled = false
+  protected isFinished = false
 
   public get resource(): string {
     return this._resource
@@ -81,6 +81,7 @@ export class SpeckleLoader extends Loader {
     Logger.warn('Downloading object ', this._resource)
 
     const pause = new AsyncPause()
+
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)

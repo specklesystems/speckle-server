@@ -123,7 +123,7 @@ describe('validateLicense @gatekeeper', () => {
         licenseToken,
         canonicalUrl,
         publicKey,
-        requiredModules: ['workspaces']
+        requiredModules: ['workspaces', 'gatekeeper']
       })
 
       expect(result).to.be.false

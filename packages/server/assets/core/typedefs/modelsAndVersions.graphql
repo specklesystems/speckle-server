@@ -39,7 +39,7 @@ extend type Project {
   """
   Retrieve a specific project version by its ID
   """
-  version(id: String!): Version
+  version(id: String!): Version!
 
   """
   Retrieve a specific project model by its ID

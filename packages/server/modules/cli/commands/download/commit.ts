@@ -4,7 +4,7 @@ import { cliLogger } from '@/logging/logging'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
@@ -13,11 +13,11 @@ import {
   getStreamBranchesByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { getUser } from '@/modules/core/repositories/users'
-import { createObject } from '@/modules/core/services/objects'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
@@ -25,17 +25,22 @@ import {
 } from '@/modules/comments/services/management'
 import {
   getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
   createCommitFactory,
   getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getCommentFactory,
+  getCommentsResourcesFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -44,8 +49,8 @@ import {
 import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
-  addCommentCreatedActivity,
-  addReplyAddedActivity
+  addCommentCreatedActivityFactory,
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
@@ -54,6 +59,8 @@ import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
 
 const command: CommandModule<
   unknown,
@@ -70,7 +77,7 @@ const command: CommandModule<
   builder: {
     commitUrl: {
       describe:
-        'Commit URL (e.g. https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d or https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8)',
+        'Commit URL (e.g. https://app.speckle.systems/streams/f0532359ac/commits/98678e2a3d or https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8)',
       type: 'string'
     },
     targetStreamId: {
@@ -94,6 +101,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
@@ -113,6 +121,16 @@ const command: CommandModule<
         getAllBranchCommits: getAllBranchCommitsFactory({ db })
       })
     })
+    const getViewerResourcesFromLegacyIdentifiers =
+      getViewerResourcesFromLegacyIdentifiersFactory({
+        getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers: (...args) =>
+            getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+        }),
+        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+        getStreamObjects
+      })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
       getViewerResourceItemsUngrouped,
       validateInputAttachments,
@@ -120,7 +138,12 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentViewed,
       commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity
+      addCommentCreatedActivity: addCommentCreatedActivityFactory({
+        getViewerResourcesFromLegacyIdentifiers,
+        getViewerResourceItemsUngrouped,
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
@@ -130,7 +153,14 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
@@ -148,6 +178,11 @@ const command: CommandModule<
       })
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    })
+    const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,

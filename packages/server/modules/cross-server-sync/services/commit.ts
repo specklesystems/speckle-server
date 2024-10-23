@@ -3,11 +3,9 @@ import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { Roles, timeoutAt } from '@speckle/shared'
-import { createObject } from '@/modules/core/services/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
 import {
@@ -29,11 +27,12 @@ import {
 } from '@/modules/comments/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
-import { GetObject } from '@/modules/core/domain/objects/operations'
+import { CreateObject, GetObject } from '@/modules/core/domain/objects/operations'
 import {
   GetStream,
   GetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -43,6 +42,7 @@ type ObjectLoaderObject = Record<string, unknown> & {
   id: string
   speckle_type: string
   totalChildrenCount: number
+  __closure: Record<string, number> | null
 }
 
 type CommitMetadata = Awaited<ReturnType<typeof getCommitMetadata>>
@@ -224,7 +224,7 @@ type GetLocalResourcesDeps = {
   getStream: GetStream
   getStreamBranchByName: GetStreamBranchByName
   getStreamCollaborators: GetStreamCollaborators
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =
@@ -491,7 +491,7 @@ const saveNewCommitFactory =
   }
 
 type CreateNewObjectDeps = {
-  createObject: typeof createObject
+  createObject: CreateObject
   getObject: GetObject
 }
 

@@ -89,6 +89,8 @@ import { ShadedViewPipeline } from './modules/pipeline/G/Pipelines/ShadedViewPip
 import { TAAPipeline } from './modules/pipeline/G/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
 import { MRTEdgesPipeline } from './modules/pipeline/G/Pipelines/MRTEdgesPipeline.js'
+import { RenderTree } from './modules/tree/RenderTree.js'
+import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
 
 export {
   Viewer,
@@ -100,6 +102,7 @@ export {
   BatchObject,
   InstancedBatchObject,
   WorldTree,
+  RenderTree,
   VisualDiffMode,
   MeasurementType,
   Units,
@@ -114,6 +117,7 @@ export {
   ExplodeExtension,
   DiffExtension,
   Loader,
+  SpeckleConverter,
   GeometryConverter,
   SpeckleLoader,
   ObjLoader,

@@ -1,7 +1,4 @@
 import { expect } from 'chai'
-import { getStreamUsers } from '@/modules/core/services/streams'
-
-import { createObject } from '@/modules/core/services/objects'
 
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -22,8 +19,9 @@ import {
   deleteStreamFactory,
   getStreamFactory,
   grantStreamPermissionsFactory,
-  markBranchStreamUpdated,
-  markCommitStreamUpdated,
+  legacyGetStreamUsersFactory,
+  markBranchStreamUpdatedFactory,
+  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -37,7 +35,6 @@ import {
   GetUserStreamsQuery
 } from '@/test/graphql/generated/graphql'
 import { Get } from 'type-fest'
-import { changeUserRole } from '@/modules/core/services/users'
 import {
   createAuthedTestContext,
   createTestContext,
@@ -54,7 +51,6 @@ import {
 import { db } from '@/db/knex'
 import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
-import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -66,7 +62,11 @@ import {
 } from '@/modules/core/repositories/commits'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory,
@@ -81,7 +81,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   addStreamCreatedActivityFactory,
@@ -96,7 +95,22 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import {
+  getUserFactory,
+  getUsersFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
+} from '@/modules/core/repositories/users'
+import { changeUserRoleFactory } from '@/modules/core/services/users/management'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { addBranchDeletedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -105,7 +119,10 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   modelsEventsEmitter: ModelsEmitter.emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity,
+  addBranchDeletedActivity: addBranchDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -139,7 +156,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -151,7 +168,9 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -188,6 +207,11 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -367,10 +391,14 @@ describe('Streams @core-streams', () => {
 
       await createTestUsers([guestGuy])
 
+      const changeUserRole = changeUserRoleFactory({
+        getServerInfo: async () => ({ ...getServerInfo(), guestModeEnabled: true }),
+        isLastAdminUser: isLastAdminUserFactory({ db }),
+        updateUserServerRole: updateUserServerRoleFactory({ db })
+      })
       await changeUserRole({
         userId: guestGuy.id,
-        role: Roles.Server.Guest,
-        guestModeEnabled: true
+        role: Roles.Server.Guest
       })
 
       await addOrUpdateStreamCollaborator(

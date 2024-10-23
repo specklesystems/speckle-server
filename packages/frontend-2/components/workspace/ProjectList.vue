@@ -47,7 +47,7 @@
             <FormButton
               v-else
               class="hidden md:block"
-              color="outline"
+              color="subtle"
               @click="showMoveProjectsDialog = true"
             >
               Move projects

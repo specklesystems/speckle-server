@@ -8,10 +8,10 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  batchDeleteCommits,
+  batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError } from '@/modules/core/errors/commit'
+import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchIdFactory,
   markCommitReceivedAndNotify,
@@ -24,6 +24,7 @@ import {
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
   createCommitFactory,
+  deleteCommitsFactory,
   getCommitBranchFactory,
   getCommitFactory,
   getCommitsFactory,
@@ -44,17 +45,19 @@ import {
   getCommitStreamFactory,
   getStreamFactory,
   getStreamsFactory,
-  markCommitStreamUpdated
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
-  addCommitMovedActivity,
+  addCommitDeletedActivityFactory,
+  addCommitMovedActivityFactory,
   addCommitUpdatedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
@@ -96,15 +99,32 @@ const batchMoveCommits = batchMoveCommitsFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   createBranch: createBranchFactory({ db }),
   moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
-  addCommitMovedActivity
+  addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+const batchDeleteCommits = batchDeleteCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  deleteCommits: deleteCommitsFactory({ db }),
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 export = {
   Project: {
     async version(parent, args, ctx) {
-      return await ctx.loaders.streams.getStreamCommit
+      const version = await ctx.loaders.streams.getStreamCommit
         .forStream(parent.id)
         .load(args.id)
+      if (!version) {
+        throw new CommitNotFoundError('Version not found')
+      }
+
+      return version
     }
   },
   Version: {

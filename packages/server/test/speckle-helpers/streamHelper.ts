@@ -8,12 +8,13 @@ import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   isStreamCollaboratorFactory,
   removeStreamCollaboratorFactory,
@@ -39,6 +40,9 @@ import { BasicTestUser } from '@/test/authHelper'
 import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
   saveActivity: saveActivityFactory({ db }),
   publish
@@ -48,7 +52,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -60,7 +64,9 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),

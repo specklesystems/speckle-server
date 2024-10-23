@@ -3,15 +3,6 @@ const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
 
-const { createUser } = require('../services/users')
-const { createObject } = require('../services/objects')
-
-const {
-  getCommitsTotalCountByBranchName,
-  getCommitsByBranchName,
-  getCommitsByStreamId,
-  getCommitsByUserId
-} = require('../services/commits')
 const {
   createBranchAndNotifyFactory
 } = require('@/modules/core/services/branch/management')
@@ -24,9 +15,6 @@ const {
 } = require('@/modules/core/repositories/branches')
 const { db } = require('@/db/knex')
 const {
-  addBranchCreatedActivity
-} = require('@/modules/activitystream/services/branchActivity')
-const {
   getCommitFactory,
   deleteCommitFactory,
   createCommitFactory,
@@ -35,7 +23,11 @@ const {
   getCommitBranchFactory,
   switchCommitBranchFactory,
   updateCommitFactory,
-  getStreamCommitCountFactory
+  getStreamCommitCountFactory,
+  legacyGetPaginatedUserCommitsPage,
+  legacyGetPaginatedStreamCommitsPageFactory,
+  getBranchCommitsTotalCountFactory,
+  getPaginatedBranchCommitsItemsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   deleteCommitAndNotifyFactory,
@@ -44,17 +36,21 @@ const {
   updateCommitAndNotifyFactory
 } = require('@/modules/core/services/commit/management')
 const {
-  markCommitStreamUpdated,
   getStreamFactory,
   getCommitStreamFactory,
-  createStreamFactory
+  createStreamFactory,
+  markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
 const {
-  addCommitDeletedActivity,
-  addCommitUpdatedActivityFactory
+  addCommitUpdatedActivityFactory,
+  addCommitDeletedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -67,7 +63,9 @@ const {
 } = require('@/modules/serverinvites/services/creation')
 const {
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
   collectAndValidateCoreTargetsFactory
@@ -76,21 +74,64 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { getUsers } = require('@/modules/core/repositories/users')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   addStreamCreatedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getBranchCommitsTotalCountByNameFactory,
+  getPaginatedBranchCommitsItemsByNameFactory
+} = require('@/modules/core/services/commit/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  addBranchCreatedActivityFactory
+} = require('@/modules/activitystream/services/branchActivity')
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  addBranchCreatedActivity
+  addBranchCreatedActivity: addBranchCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
@@ -98,7 +139,10 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 
 const getObject = getObjectFactory({ db })
@@ -148,7 +192,7 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
         collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
           getStream
@@ -160,7 +204,9 @@ const createStream = legacyCreateStreamFactory({
           getEventBus().emit({
             eventName,
             payload
-          })
+          }),
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -169,6 +215,48 @@ const createStream = legacyCreateStreamFactory({
     addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
+const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
+const getCommitsTotalCountByBranchName = getBranchCommitsTotalCountByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
+})
+const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 describe('Commits @core-commits', () => {

@@ -41,7 +41,6 @@ import {
   getUserPendingProjectInvitesFactory,
   useProjectInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/projectInviteManagement'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -68,7 +67,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -83,10 +81,14 @@ import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
@@ -100,6 +102,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   })
 })
+const getServerInfo = getServerInfoFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -117,7 +120,7 @@ const buildCollectAndValidateResourceTargets = () =>
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -127,7 +130,9 @@ const buildCreateAndSendServerOrProjectInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser,
+    getServerInfo
   })
 
 export = {
@@ -377,9 +382,11 @@ export = {
         buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
           getStream
         }),
-        findUserByTarget: findUserByTargetFactory(),
+        findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
-        markInviteUpdated: markInviteUpdatedfactory({ db })
+        markInviteUpdated: markInviteUpdatedfactory({ db }),
+        getUser,
+        getServerInfo
       })
 
       await resendInviteEmail({ inviteId })

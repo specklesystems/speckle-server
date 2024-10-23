@@ -1,10 +1,5 @@
 import { Roles, isNullOrUndefined } from '@speckle/shared'
 import {
-  addBranchCreatedActivity,
-  addBranchDeletedActivity,
-  addBranchUpdatedActivity
-} from '@/modules/activitystream/services/branchActivity'
-import {
   BranchCreateError,
   BranchDeleteError,
   BranchUpdateError
@@ -18,8 +13,6 @@ import {
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-
-import { markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { ModelsEmitter, ModelsEventsEmitter } from '@/modules/core/events/modelsEmitter'
@@ -33,7 +26,15 @@ import {
   UpdateBranch,
   UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  GetStream,
+  MarkBranchStreamUpdated
+} from '@/modules/core/domain/streams/operations'
+import {
+  AddBranchCreatedActivity,
+  AddBranchDeletedActivity,
+  AddBranchUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -43,7 +44,7 @@ export const createBranchAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     createBranch: StoreBranch
-    addBranchCreatedActivity: typeof addBranchCreatedActivity
+    addBranchCreatedActivity: AddBranchCreatedActivity
   }): CreateBranchAndNotify =>
   async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
@@ -67,7 +68,7 @@ export const updateBranchAndNotifyFactory =
   (deps: {
     getBranchById: GetBranchById
     updateBranch: UpdateBranch
-    addBranchUpdatedActivity: typeof addBranchUpdatedActivity
+    addBranchUpdatedActivity: AddBranchUpdatedActivity
   }): UpdateBranchAndNotify =>
   async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
@@ -113,8 +114,8 @@ export const deleteBranchAndNotifyFactory =
     getStream: GetStream
     getBranchById: GetBranchById
     modelsEventsEmitter: ModelsEventsEmitter
-    markBranchStreamUpdated: typeof markBranchStreamUpdated
-    addBranchDeletedActivity: typeof addBranchDeletedActivity
+    markBranchStreamUpdated: MarkBranchStreamUpdated
+    addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {

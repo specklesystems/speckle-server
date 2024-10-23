@@ -1,16 +1,14 @@
 import DataLoader from 'dataloader'
 import {
-  getBatchUserFavoriteData,
-  getBatchStreamFavoritesCounts,
-  getOwnedFavoritesCountByUserIds,
-  getStreamRoles,
-  getStreamsSourceApps,
-  StreamWithCommitId,
-  getUserStreamCounts,
   getStreamsFactory,
-  getCommitStreamsFactory
+  getCommitStreamsFactory,
+  getBatchUserFavoriteDataFactory,
+  getBatchStreamFavoritesCountsFactory,
+  getOwnedFavoritesCountByUserIdsFactory,
+  getStreamRolesFactory,
+  getUserStreamCountsFactory,
+  getStreamsSourceAppsFactory
 } from '@/modules/core/repositories/streams'
-import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
 import { AuthContext } from '@/modules/shared/authz'
 import {
@@ -85,6 +83,11 @@ import { queryInvitesFactory } from '@/modules/serverinvites/repositories/server
 import db from '@/db/knex'
 import { graphDataloadersBuilders } from '@/modules'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
+import { StreamWithCommitId } from '@/modules/core/domain/streams/types'
+import {
+  getUsersFactory,
+  UserWithOptionalRole
+} from '@/modules/core/repositories/users'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -118,6 +121,13 @@ const getStreamCommitCounts = getStreamCommitCountsFactory({ db })
 const getUserStreamCommitCounts = getUserStreamCommitCountsFactory({ db })
 const getUserAuthoredCommitCounts = getUserAuthoredCommitCountsFactory({ db })
 const getCommitStreams = getCommitStreamsFactory({ db })
+const getBatchUserFavoriteData = getBatchUserFavoriteDataFactory({ db })
+const getBatchStreamFavoritesCounts = getBatchStreamFavoritesCountsFactory({ db })
+const getOwnedFavoritesCountByUserIds = getOwnedFavoritesCountByUserIdsFactory({ db })
+const getStreamRoles = getStreamRolesFactory({ db })
+const getUserStreamCounts = getUserStreamCountsFactory({ db })
+const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
+const getUsers = getUsersFactory({ db })
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -493,7 +503,7 @@ export function buildRequestLoaders(
         string
       >(
         async (requests) => {
-          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users, db)
           const results = await meta.getMultiple(
             requests.map((r) => ({
               id: r.userId,

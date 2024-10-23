@@ -20,6 +20,10 @@ export class RenderTree {
     return this.root.model.id
   }
 
+  public get subtreeId(): number {
+    return this.root.model.subtreeId
+  }
+
   public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
     this.tree = tree
     this.root = subtreeRoot
@@ -207,8 +211,11 @@ export class RenderTree {
     })
   }
 
-  public getRenderViewsForNodeId(id: string): NodeRenderView[] | null {
-    const nodes = this.tree.findId(id)
+  public getRenderViewsForNodeId(
+    id: string,
+    subtreeId?: number
+  ): NodeRenderView[] | null {
+    const nodes = this.tree.findId(id, subtreeId)
     if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
