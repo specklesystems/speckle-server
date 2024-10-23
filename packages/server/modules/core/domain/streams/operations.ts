@@ -370,3 +370,11 @@ export type ValidatePermissionsReadStream = (
   result: boolean
   status: number
 }>
+
+export type ValidatePermissionsWriteStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>
