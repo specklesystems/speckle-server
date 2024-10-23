@@ -348,3 +348,16 @@ export type FavoriteStream = (params: {
   favorited?: boolean | undefined
   userResourceAccessRules?: ContextResourceAccessRules
 }) => Promise<Stream>
+
+export type AdminGetProjectList = (args: {
+  query: string | null
+  orderBy: string | null
+  visibility: string | null
+  limit: number
+  streamIdWhitelist?: string[]
+  cursor: string | null
+}) => Promise<{
+  cursor: null | string
+  items: Stream[]
+  totalCount: number
+}>
