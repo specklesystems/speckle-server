@@ -21,11 +21,8 @@ export interface IDirectSelectionSendFilter extends ISendFilter {
 }
 
 export interface RevitViewsSendFilter extends ISendFilter {
-  selectedViewDiscipline: string
-  selectedViewFamily: string
   selectedView: string
-  availableDisciplines: string[]
-  availableViews: Record<string, string[]>
+  availableViews: string[]
 }
 
 export class SenderModelCard extends ModelCard implements ISenderModelCard {

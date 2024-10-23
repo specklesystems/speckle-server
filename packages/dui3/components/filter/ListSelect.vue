@@ -43,7 +43,7 @@
     </div>
     <div v-if="!!filter" class="text-xs caption rounded p-2 bg-orange-500/10">
       This action will replace the existing
-      <b>{{ filter.name }}</b>
+      <b>{{ selectedFilterName }}</b>
       filter.
     </div>
   </div>
@@ -67,7 +67,9 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: 'update:filter', value: ISendFilter): void }>()
 const selectedFilter = ref<ISendFilter>(props.filter || selectionFilter.value)
 
-const selectedFilterName = ref(selectionFilter.value.name)
+const selectedFilterName = ref(
+  props.filter?.name || sendFilters.value?.find((f) => f.isDefault)?.name
+)
 const filterNames = computed(() => sendFilters.value?.map((f) => f.name))
 
 watch(selectedFilterName, (newValue) => {
