@@ -18,6 +18,7 @@ export const createAndStoreTestWorkspaceFactory =
       discoverabilityEnabled: false,
       defaultLogoIndex: 0,
       defaultProjectRole: Roles.Stream.Contributor,
+      deleteAfter: null,
       ...workspaceOverrides
     }
 

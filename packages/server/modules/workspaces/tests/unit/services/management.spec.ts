@@ -40,7 +40,7 @@ import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/ope
 import { EventNames } from '@/modules/shared/services/eventBus'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Omit<Workspace, 'domains'>[]
+  storedWorkspaces: Omit<Workspace, 'domains' | 'deleteAfter'>[]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -66,7 +66,7 @@ const buildCreateWorkspaceWithTestContext = (
     upsertWorkspace: async ({
       workspace
     }: {
-      workspace: Omit<Workspace, 'domains'>
+      workspace: Omit<Workspace, 'domains' | 'deleteAfter'>
     }) => {
       context.storedWorkspaces.push(workspace)
     },
@@ -265,7 +265,8 @@ describe('Workspace services', () => {
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
         defaultProjectRole: 'stream:contributor',
-        domains: []
+        domains: [],
+        deleteAfter: null
       }
       return merge(workspace, input)
     }
@@ -1083,7 +1084,8 @@ describe('Workspace role services', () => {
                   discoverabilityEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
                   defaultProjectRole: 'stream:contributor',
-                  defaultLogoIndex: 0
+                  defaultLogoIndex: 0,
+                  deleteAfter: null
                 }
               },
               getDomains: async () => {
@@ -1127,7 +1129,8 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           defaultProjectRole: 'stream:contributor',
-          defaultLogoIndex: 0
+          defaultLogoIndex: 0,
+          deleteAfter: null
         }
 
         await addDomainToWorkspaceFactory({
@@ -1169,7 +1172,8 @@ describe('Workspace role services', () => {
         }
 
         let storedDomains: WorkspaceDomain | undefined = undefined
-        let storedWorkspace: Omit<Workspace, 'domains'> | undefined = undefined
+        let storedWorkspace: Omit<Workspace, 'domains' | 'deleteAfter'> | undefined =
+          undefined
         let omittedEventName: EventNames | undefined = undefined
 
         const workspace: Workspace = {
@@ -1183,7 +1187,8 @@ describe('Workspace role services', () => {
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
           defaultProjectRole: 'stream:contributor',
-          defaultLogoIndex: 0
+          defaultLogoIndex: 0,
+          deleteAfter: null
         }
 
         await addDomainToWorkspaceFactory({
@@ -1246,7 +1251,8 @@ describe('Workspace role services', () => {
           domainBasedMembershipProtectionEnabled: false,
           domains: [],
           defaultProjectRole: Roles.Stream.Contributor,
-          defaultLogoIndex: 0
+          defaultLogoIndex: 0,
+          deleteAfter: null
         }
 
         let workspaceData: Workspace = {

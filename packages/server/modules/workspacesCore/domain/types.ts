@@ -31,6 +31,7 @@ export type Workspace = {
   defaultProjectRole: WorkspaceDefaultProjectRole
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
+  deleteAfter: Date | null
 }
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }

@@ -32,7 +32,8 @@ describe('workspace domain services', () => {
           domainBasedMembershipProtectionEnabled: false,
           defaultProjectRole: 'stream:contributor',
           domains: [],
-          id: cryptoRandomString({ length: 10 })
+          id: cryptoRandomString({ length: 10 }),
+          deleteAfter: null
         }),
         findEmailsByUserId: async () => []
       })({
@@ -66,7 +67,8 @@ describe('workspace domain services', () => {
               workspaceId: cryptoRandomString({ length: 10 })
             }
           ],
-          id: cryptoRandomString({ length: 10 })
+          id: cryptoRandomString({ length: 10 }),
+          deleteAfter: null
         }),
         findEmailsByUserId: async () => [
           {

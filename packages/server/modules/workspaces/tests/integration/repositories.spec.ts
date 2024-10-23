@@ -89,18 +89,8 @@ describe('Workspace repositories', () => {
       })
       expect(workspace).to.be.null
     })
-    // not testing get here, we're going to use that for testing upsert
-  })
-
-  describe('getWorkspaceBySlugFactory creates a function, that', () => {
-    it('returns null if the workspace is not found', async () => {
-      const workspace = await getWorkspaceBySlug({
-        workspaceSlug: cryptoRandomString({ length: 10 })
-      })
-      expect(workspace).to.be.null
-    })
-    it('returns the workspace', async () => {
-      const testUserA: BasicTestUser = {
+    it('returns null if workspace is marked as deleted', async () => {
+      const testServerAdmin: BasicTestUser = {
         id: '',
         name: 'John A Speckle',
         email: 'john@example.speckle',
@@ -112,14 +102,69 @@ describe('Workspace repositories', () => {
         slug: cryptoRandomString({ length: 10 }),
         name: 'Test Workspace'
       }
+      await createTestUsers([testServerAdmin])
+      await createTestWorkspace(testWorkspace, testServerAdmin)
+      await deleteWorkspace({ workspaceId: testWorkspace.id })
 
-      await createTestUsers([testUserA])
-      await createTestWorkspace(testWorkspace, testUserA)
+      const workspace = await getWorkspace({
+        workspaceId: testWorkspace.id
+      })
+
+      expect(workspace).to.be.null
+    })
+  })
+
+  describe('getWorkspaceBySlugFactory creates a function, that', () => {
+    it('returns null if the workspace is not found', async () => {
+      const workspace = await getWorkspaceBySlug({
+        workspaceSlug: cryptoRandomString({ length: 10 })
+      })
+      expect(workspace).to.be.null
+    })
+    it('returns the workspace if it exists', async () => {
+      const testServerAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
+        name: 'Test Workspace'
+      }
+      await createTestUsers([testServerAdmin])
+      await createTestWorkspace(testWorkspace, testServerAdmin)
 
       const workspace = await getWorkspaceBySlug({
         workspaceSlug: testWorkspace.slug
       })
+
       expect(workspace?.id).to.be.equal(testWorkspace.id)
+    })
+    it('returns null if the workspace is marked as deleted', async () => {
+      const testServerAdmin: BasicTestUser = {
+        id: '',
+        name: 'John A Speckle',
+        email: 'john@example.speckle',
+        role: Roles.Server.Admin
+      }
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
+        name: 'Test Workspace'
+      }
+      await createTestUsers([testServerAdmin])
+      await createTestWorkspace(testWorkspace, testServerAdmin)
+      await deleteWorkspace({ workspaceId: testWorkspace.id })
+
+      const workspace = await getWorkspaceBySlug({
+        workspaceSlug: testWorkspace.slug
+      })
+
+      expect(workspace).to.be.null
     })
   })
 
@@ -279,7 +324,7 @@ describe('Workspace repositories', () => {
     const user: BasicTestUser = {
       id: '',
       name: 'John Speckle',
-      email: 'function-deleter@example.org'
+      email: 'workspace-deleter@example.org'
     }
 
     const workspace: BasicTestWorkspace = {
@@ -292,12 +337,19 @@ describe('Workspace repositories', () => {
     before(async () => {
       await createTestUser(user)
       await createTestWorkspace(workspace, user)
+      await deleteWorkspace({ workspaceId: workspace.id })
     })
 
-    it('deletes specified workspace', async () => {
-      await deleteWorkspace({ workspaceId: workspace.id })
+    it('marks specified workspace as deleted', async () => {
       const workspaceData = await getWorkspace({ workspaceId: workspace.id })
       expect(workspaceData).to.not.exist
+    })
+    it('temporarily preserves workspace data', async () => {
+      const workspaceRoles = await getWorkspaceCollaborators({
+        workspaceId: workspace.id,
+        limit: 10
+      })
+      expect(workspaceRoles.length).to.equal(1)
     })
   })
 

@@ -70,7 +70,14 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'description', 'logo', 'defaultLogoIndex')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'description',
+        'logo',
+        'defaultLogoIndex',
+        'deleteAfter'
+      )
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -78,6 +85,7 @@ export const getUserDiscoverableWorkspacesFactory =
         'acl.workspaceId',
         'workspaces.id'
       )
+      .where('deleteAfter', null)
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
@@ -110,6 +118,7 @@ const workspaceWithRoleBaseQuery = ({
       })
       .groupBy(Workspaces.col.id)
   }
+  q.whereNull(Workspaces.col.deleteAfter)
   return q
 }
 
@@ -172,7 +181,9 @@ export const upsertWorkspaceFactory =
 export const deleteWorkspaceFactory =
   ({ db }: { db: Knex }): DeleteWorkspace =>
   async ({ workspaceId }) => {
-    await tables.workspaces(db).where({ id: workspaceId }).delete()
+    const deleteAfter = new Date()
+    deleteAfter.setDate(deleteAfter.getDate() + 30)
+    await tables.workspaces(db).where({ id: workspaceId }).update({ deleteAfter })
   }
 
 export const getWorkspaceRolesFactory =

@@ -160,7 +160,8 @@ export const createWorkspaceFactory =
       updatedAt: new Date(),
       defaultProjectRole: Roles.Stream.Contributor,
       domainBasedMembershipProtectionEnabled: false,
-      discoverabilityEnabled: false
+      discoverabilityEnabled: false,
+      deleteAfter: null
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator

@@ -11,7 +11,8 @@ export const Workspaces = buildTableHelper('workspaces', [
   'defaultLogoIndex',
   'defaultProjectRole',
   'domainBasedMembershipProtectionEnabled',
-  'discoverabilityEnabled'
+  'discoverabilityEnabled',
+  'deleteAfter'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
