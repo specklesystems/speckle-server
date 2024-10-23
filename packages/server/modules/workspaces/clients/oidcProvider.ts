@@ -6,6 +6,10 @@ import {
 } from '@/modules/workspaces/domain/sso/types'
 import { generators, Issuer, type Client } from 'openid-client'
 
+/**
+ * Generate the url used to direct users to the SSO provider for authorization.
+ * (i.e. the sign in form page for the given SSO provider)
+ */
 export const getProviderAuthorizationUrl = async ({
   provider,
   redirectUrl,

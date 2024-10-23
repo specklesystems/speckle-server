@@ -34,12 +34,12 @@ export const storeOIDCProviderValidationRequestFactory =
     redis,
     encrypt
   }: {
-    redis: Redis
+    redis: () => Redis
     encrypt: Crypt
   }): StoreOIDCProviderValidationRequest =>
     async ({ provider, token }) => {
       const providerData = await encrypt(JSON.stringify(provider))
-      await redis.set(token, providerData)
+      await redis().set(token, providerData)
     }
 
 export const getOIDCProviderValidationRequestFactory =
