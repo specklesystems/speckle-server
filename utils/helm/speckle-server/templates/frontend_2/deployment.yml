@@ -91,7 +91,7 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.frontend_2.webflowApToken }}
+          {{- if .Values.frontend_2.webflowApiToken }}
           - name: NUXT_WEBFLOW_API_TOKEN
             value: {{ .Values.frontend_2.webflowApiToken | quote }}
           {{- end }}
