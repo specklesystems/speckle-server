@@ -1,5 +1,4 @@
 import { Roles, isNullOrUndefined } from '@speckle/shared'
-import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   BranchCreateError,
   BranchDeleteError,
@@ -33,6 +32,7 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import {
   AddBranchCreatedActivity,
+  AddBranchDeletedActivity,
   AddBranchUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
 
@@ -115,7 +115,7 @@ export const deleteBranchAndNotifyFactory =
     getBranchById: GetBranchById
     modelsEventsEmitter: ModelsEventsEmitter
     markBranchStreamUpdated: MarkBranchStreamUpdated
-    addBranchDeletedActivity: typeof addBranchDeletedActivity
+    addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {

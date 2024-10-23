@@ -4,17 +4,12 @@ import {
   BranchSubscriptions as BranchPubsubEvents,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import {
-  BranchDeleteInput,
-  DeleteModelInput,
-  ProjectModelsUpdatedMessageType
-} from '@/modules/core/graph/generated/graphql'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { ProjectModelsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
+import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { db } from '@/db/knex'
 import {
   AddBranchCreatedActivity,
+  AddBranchDeletedActivity,
   AddBranchUpdatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
@@ -98,35 +93,39 @@ export const addBranchUpdatedActivityFactory =
     ])
   }
 
-export async function addBranchDeletedActivity(params: {
-  input: BranchDeleteInput | DeleteModelInput
-  userId: string
-  branchName: string
-}) {
-  const { input, userId, branchName } = params
+export const addBranchDeletedActivityFactory =
+  ({
+    saveActivity,
+    publish
+  }: {
+    saveActivity: SaveActivity
+    publish: PublishSubscription
+  }): AddBranchDeletedActivity =>
+  async (params) => {
+    const { input, userId, branchName } = params
 
-  const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
-  await Promise.all([
-    saveActivityFactory({ db })({
-      streamId,
-      resourceType: ResourceTypes.Branch,
-      resourceId: input.id,
-      actionType: ActionTypes.Branch.Delete,
-      userId,
-      info: { branch: { ...input, name: branchName } },
-      message: `Branch deleted: '${branchName}' (${input.id})`
-    }),
-    pubsub.publish(BranchPubsubEvents.BranchDeleted, {
-      branchDeleted: input,
-      streamId
-    }),
-    publish(ProjectSubscriptions.ProjectModelsUpdated, {
-      projectId: streamId,
-      projectModelsUpdated: {
-        id: input.id,
-        type: ProjectModelsUpdatedMessageType.Deleted,
-        model: null
-      }
-    })
-  ])
-}
+    const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
+    await Promise.all([
+      saveActivity({
+        streamId,
+        resourceType: ResourceTypes.Branch,
+        resourceId: input.id,
+        actionType: ActionTypes.Branch.Delete,
+        userId,
+        info: { branch: { ...input, name: branchName } },
+        message: `Branch deleted: '${branchName}' (${input.id})`
+      }),
+      pubsub.publish(BranchPubsubEvents.BranchDeleted, {
+        branchDeleted: input,
+        streamId
+      }),
+      publish(ProjectSubscriptions.ProjectModelsUpdated, {
+        projectId: streamId,
+        projectModelsUpdated: {
+          id: input.id,
+          type: ProjectModelsUpdatedMessageType.Deleted,
+          model: null
+        }
+      })
+    ])
+  }

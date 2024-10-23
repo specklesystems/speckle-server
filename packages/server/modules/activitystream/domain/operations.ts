@@ -11,9 +11,11 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
+  BranchDeleteInput,
   BranchUpdateInput,
   CommitCreateInput,
   CommitUpdateInput,
+  DeleteModelInput,
   MutationCommentArchiveArgs,
   ProjectUpdateInput,
   StreamUpdateInput,
@@ -279,4 +281,10 @@ export type AddBranchUpdatedActivity = (params: {
   userId: string
   oldBranch: BranchRecord
   newBranch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchDeletedActivity = (params: {
+  input: BranchDeleteInput | DeleteModelInput
+  userId: string
+  branchName: string
 }) => Promise<void>
