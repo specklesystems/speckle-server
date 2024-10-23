@@ -70,7 +70,14 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'description', 'logo', 'defaultLogoIndex')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        'defaultLogoIndex'
+      )
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -83,7 +90,7 @@ export const getUserDiscoverableWorkspacesFactory =
       .where('verified', true)
       .where('role', null)) as Pick<
       Workspace,
-      'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
     >[]
   }
 
