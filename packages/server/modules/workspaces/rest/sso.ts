@@ -2,7 +2,7 @@
 
 import { db } from '@/db/knex'
 import { validateRequest } from 'zod-express'
-import { Router } from 'express'
+import { Request, Router } from 'express'
 import { z } from 'zod'
 import {
   saveSsoProviderRegistrationFactory,
@@ -28,7 +28,7 @@ import { getGenericRedis } from '@/modules/core'
 import { generators } from 'openid-client'
 import { noop } from 'lodash'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
-import { OIDCProvider } from '@/modules/workspaces/domain/sso/types'
+import { OIDCProvider, WorkspaceSsoProvider } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
   getWorkspaceCollaboratorsFactory,
@@ -50,7 +50,8 @@ import {
   getUserFactory,
   legacyGetUserFactory,
   storeUserAclFactory,
-  storeUserFactory
+  storeUserFactory,
+  UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import {
   finalizeAuthMiddlewareFactory,
@@ -75,6 +76,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
 
 const router = Router()
 
@@ -143,6 +145,101 @@ const buildErrorUrl = ({
     }
   }
   return url
+}
+
+type AuthAction = {
+  action: 'validate' | 'sign-in'
+  user: UserWithOptionalRole
+  workspace: WorkspaceWithOptionalRole
+} | {
+  action: 'sign-up'
+  user: Pick<UserWithOptionalRole, 'name' | 'email'>
+  workspace: WorkspaceWithOptionalRole
+}
+
+type AuthRequest = Request<{ workspaceSlug: string }, never, never, { validate?: string }>
+
+const parseAuthAction = async (req: AuthRequest): Promise<AuthAction> => {
+  const isValidationFlow = req.query.validate === 'true'
+
+  const workspace = await getWorkspaceBySlugFactory({
+    db
+  })({
+    workspaceSlug: req.params.workspaceSlug
+  })
+  if (!workspace) throw new WorkspaceNotFoundError()
+
+  // Initialize OIDC client
+  // TODO: Initialize SSO client by type when multiple types are supported
+  const encryptionKeyPair = await getEncryptionKeyPair()
+
+  const decryptor = await buildDecryptor(encryptionKeyPair)
+  const encryptedCodeVerifier = req.session.codeVerifier
+
+  if (!encryptedCodeVerifier) {
+    throw new Error('Cannot find verification token. Restart SSO flow.')
+  }
+
+  const codeVerifier = await decryptor.decrypt(encryptedCodeVerifier)
+
+  // Fetch OIDC provider information
+  const decryptedProvider: (Partial<WorkspaceSsoProvider> & Pick<WorkspaceSsoProvider, 'id'>) | null = isValidationFlow
+    // If validating a new configuration, this is stored temporarily in redis
+    ? {
+      id: '',
+      provider: await getOIDCProviderValidationRequestFactory({
+        redis: getGenericRedis(),
+        decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
+      })({
+        validationToken: codeVerifier
+      }) ?? undefined
+    }
+    // Otherwise, use the provider information stored in the db
+    : await getWorkspaceSsoProviderFactory({
+      db,
+      decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
+    })({
+      workspaceId: workspace.id
+    })
+
+  if (!decryptedProvider || !decryptedProvider?.provider) {
+    throw new Error('Failed to find SSO provider. Restart flow.')
+  }
+
+  // Get user profile from SSO provider
+  const { client } = await initializeIssuerAndClient({ provider: decryptedProvider.provider })
+  const callbackParams = client.callbackParams(req)
+  const tokenSet = await client.callback(
+    buildAuthRedirectUrl(workspace.slug, isValidationFlow).toString(),
+    callbackParams,
+    { code_verifier: codeVerifier }
+  )
+  const ssoUserProfile = await client.userinfo(tokenSet)
+
+  if (!ssoUserProfile || !ssoUserProfile.name || !ssoUserProfile.email) {
+    throw new Error('SSO user profile does not conform to Speckle requirements.')
+  }
+
+  // Find Speckle user profile with email that matches SSO user profile
+  const existingSpeckleUserEmail = await findEmailFactory({
+    db
+  })({
+    email: ssoUserProfile.email
+  })
+  const existingSpeckleUser = await getUserFactory({
+    db
+  })(
+    existingSpeckleUserEmail?.userId ?? ''
+  )
+
+  // Find Speckle user profile for signed in user that initiated this SSO flow
+  const currentSessionUser = await getUserFactory({
+    db
+  })(
+    req.context.userId ?? ''
+  )
+
+  // Determine auth action and validate conditions for each action type
 }
 
 /** GET Public information about the workspace, including SSO provider metadata */
@@ -359,6 +456,68 @@ router.get(
     query: z.object({ validate: z.string().optional() })
   }),
   async (req, res, next) => {
+    // NOTE: If req.context.userId is defined, there is a user signed in
+
+    // const decryptedOidcProvider = req.query.validate === 'true'
+    // ? await createOidcProvider(req)
+    // : await getOidcProvider(req)
+
+    // const oidcProviderUserData = await getOidcProviderUserData(req, decryptedOidcProvider)
+    // const speckleUserData = await tryGetSpeckleUserData(req, oidcProviderUserData)
+
+    // if (!speckleUserData) {
+    //   const newSpeckleUser = await createWorkspaceUserFromSsoProfile({
+    //     ssoProfile: oidcProviderUserData,
+    //     workspaceId: decryptedOidcProvider.workspaceId
+    //   })
+    //   req.user = newSpeckleUser ({ isNewUser: true, email: newSpeckleUser.email })
+    // }
+
+    // req.user ??= { id: speckleUserData.id }
+
+    // if (!req.user || !req.user.id) throw new Error('Failed to sign in.')
+
+    // TODO:
+    // Chuck's soapbox -
+    // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
+    // Create link if req.context.userId exists (user performed SSO flow while signed in)
+
+    // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
+
+    // Assert req.user.id is member of workspace
+
+    // await upsertUserSsoSessionFactory({ db })({
+    //   userSsoSession: {
+    //     userId: req.user.id,
+    //     providerId: decryptedOidcProvider.id,
+    //     createdAt: new Date(),
+    //     validUntil: getDefaultSsoSessionExpirationDate()
+    //   }
+    // })
+
+    // Finalize auth
+    // req.authRedirectPath = /workspaces/:workspaceSlug/authn
+    // return next()
+
+    //-----
+
+    // const { action, user } = await parseAuthAction(req, decryptedOidcProvider)
+
+    // switch (action) {
+    //   case 'sign-up': {
+
+    //   }
+    //   case 'sign-in': {
+
+    //   }
+    // }
+
+    //-----
+
+    // const workspace = await getWorkspaceBySlug({ workspaceSlug })
+    // const decryptedProvider = await getOrCreateOidcProvider({ req, workspace })
+
+    // const { action, user } = await parseAuthAction({ req, })
     const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
 
     const workspaceSlug = req.params.workspaceSlug
@@ -602,7 +761,7 @@ router.get(
             req.user = { id: currentSessionUser.id, email: currentSessionUser.email }
           } else {
             // Sign in flow with SSO:
-            // User is already signed in, and there is already a Speckle user associated with the SSO user
+            // User is already signed in, and there is already a Speckle user associated with the SSO user, with the email verified
             // Verify session user id matches existing user id
             if (currentSessionUser.id !== existingSpeckleUser.id) {
               throw new Error(

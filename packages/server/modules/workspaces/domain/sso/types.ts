@@ -20,6 +20,7 @@ export type ProviderRecord = OIDCProviderRecord
 
 export type WorkspaceSsoProvider = {
   workspaceId: string
+  // Equals id in `ProviderRecord` (used for join)
   providerId: string
 } & ProviderRecord
 
