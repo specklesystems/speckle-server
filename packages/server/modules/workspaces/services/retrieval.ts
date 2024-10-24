@@ -30,7 +30,10 @@ export const getDiscoverableWorkspacesForUserFactory =
   async ({
     userId
   }: GetDiscoverableWorkspaceForUserArgs): Promise<
-    Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+    Pick<
+      Workspace,
+      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+    >[]
   > => {
     const userEmails = await findEmailsByUserId({ userId })
     const userVerifiedDomains = userEmails

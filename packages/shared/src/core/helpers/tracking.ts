@@ -7,3 +7,5 @@ export function resolveMixpanelUserId(email: string): string {
 export function resolveMixpanelServerId(serverHostname: string): string {
   return md5(serverHostname.toLowerCase()).toUpperCase()
 }
+
+export const resolveDistinctId = resolveMixpanelUserId

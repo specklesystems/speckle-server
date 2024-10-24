@@ -70,10 +70,15 @@ describe('Email verifications @emails', () => {
     await cleanup()
   })
 
-  it('sends out verification email immediatelly after new account creation', async () => {
+  afterEach(async () => {
+    mailerMock.resetMockedFunctions()
+  })
+
+  it('sends out 1 verification email immediately after new account creation', async () => {
     const sendEmailInvocations = mailerMock.hijackFunction(
       'sendEmail',
-      async () => true
+      async () => true,
+      { times: 2 }
     )
 
     const newGuy: BasicTestUser = {
@@ -91,6 +96,9 @@ describe('Email verifications @emails', () => {
 
     const verification = await getPendingToken({ email: newGuy.email })
     expect(verification).to.be.ok
+
+    // There should be only 1 email!
+    expect(sendEmailInvocations.args.length).to.eq(1)
   })
 
   describe('when authenticated', () => {
