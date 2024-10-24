@@ -4,6 +4,7 @@ import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { activitiesLogger } from '@/logging/logging'
 import {
   AcquireTaskLock,
+  ReleaseTaskLock,
   ScheduleExecution
 } from '@/modules/core/domain/scheduledTasks/operations'
 
@@ -12,22 +13,20 @@ export const scheduledCallbackWrapper = async (
   taskName: string,
   lockTimeout: number,
   callback: (scheduledTime: Date) => Promise<void>,
-  acquireLock: AcquireTaskLock
+  acquireLock: AcquireTaskLock,
+  releaseTaskLock: ReleaseTaskLock
 ) => {
   const boundLogger = activitiesLogger.child({ taskName })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
+  const lock = await acquireLock({ taskName, lockExpiresAt })
+
+  // if couldn't acquire it, stop execution
+  if (!lock) {
+    boundLogger.warn(`Could not acquire task lock for ${taskName}, stopping execution.`)
+    return
+  }
   try {
-    const lock = await acquireLock({ taskName, lockExpiresAt })
-
-    // if couldn't acquire it, stop execution
-    if (!lock) {
-      boundLogger.warn(
-        `Could not acquire task lock for ${taskName}, stopping execution.`
-      )
-      return null
-    }
-
     // else continue executing the callback...
     boundLogger.info(`Executing scheduled function ${taskName} at ${scheduledTime}`)
     await callback(scheduledTime)
@@ -45,11 +44,19 @@ export const scheduledCallbackWrapper = async (
         ensureError(error, 'unknown reason').message
       }`
     )
+  } finally {
+    releaseTaskLock(lock)
   }
 }
 
 export const scheduleExecutionFactory =
-  (deps: { acquireTaskLock: AcquireTaskLock }): ScheduleExecution =>
+  ({
+    acquireTaskLock,
+    releaseTaskLock
+  }: {
+    acquireTaskLock: AcquireTaskLock
+    releaseTaskLock: ReleaseTaskLock
+  }): ScheduleExecution =>
   (
     cronExpression: string,
     taskName: string,
@@ -67,7 +74,8 @@ export const scheduleExecutionFactory =
         taskName,
         lockTimeout,
         callback,
-        deps.acquireTaskLock
+        acquireTaskLock,
+        releaseTaskLock
       )
     })
   }

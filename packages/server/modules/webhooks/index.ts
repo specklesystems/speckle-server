@@ -3,12 +3,16 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
-import { acquireTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 import { db } from '@/db/knex'
 
 const scheduleWebhookCleanup = () => {
   const scheduleExecution = scheduleExecutionFactory({
-    acquireTaskLock: acquireTaskLockFactory({ db })
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
   })
 
   const cronExpression = '0 4 * * 1'

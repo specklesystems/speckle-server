@@ -20,7 +20,10 @@ import {
 } from '@/modules/activitystream/services/accessRequestActivity'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
-import { acquireTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<ReturnType<typeof initializeEventListeners>> =
@@ -44,7 +47,8 @@ const initializeEventListeners = () => {
 
 const scheduleWeeklyActivityNotifications = () => {
   const scheduleExecution = scheduleExecutionFactory({
-    acquireTaskLock: acquireTaskLockFactory({ db })
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
   })
 
   // just to test stuff
