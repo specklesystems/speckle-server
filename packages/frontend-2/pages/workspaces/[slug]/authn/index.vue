@@ -1,9 +1,10 @@
 <template>
-  <div>
+  <div v-if="isSsoEnabled">
     <FormButton :disabled="!challenge || !ssoProviderName" link @click="handleContinue">
       Continue with {{ ssoProviderName }} SSO
     </FormButton>
   </div>
+  <div v-else />
 </template>
 
 <script setup lang="ts">
@@ -18,6 +19,7 @@ const apiOrigin = useApiOrigin()
 const route = useRoute()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
+const isSsoEnabled = useIsWorkspacesSsoEnabled()
 
 const ssoProviderName = ref()
 
