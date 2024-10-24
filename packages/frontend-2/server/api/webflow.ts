@@ -33,13 +33,11 @@ const getSixMonthsAgo = (): Date => {
 
 export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> => {
   const { webflowApiToken } = useRuntimeConfig()
+  const logger = useLogger()
 
   if (!webflowApiToken) {
-    throw createError({
-      statusCode: 500,
-      fatal: true,
-      message: 'Webflow API token is not set'
-    })
+    logger.info('Webflow API token is not set. Returning an empty array of items.')
+    return { items: [] }
   }
 
   const url =
@@ -55,11 +53,8 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
 
     if (!response.ok) {
       const errMsg = `Webflow API Error: ${response.status} ${response.statusText}`
-      throw createError({
-        statusCode: response.status,
-        fatal: true,
-        message: errMsg
-      })
+      logger.error(errMsg)
+      return { items: [] }
     }
 
     const data = (await response.json()) as WebflowApiResponse
@@ -88,10 +83,7 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
     }
   } catch (e) {
     const errMsg = ensureError(e).message
-    throw createError({
-      statusCode: 500,
-      fatal: true,
-      message: `Error fetching webflow items: ${errMsg}`
-    })
+    logger.error(`Error fetching webflow items: ${errMsg}`)
+    return { items: [] }
   }
 })
