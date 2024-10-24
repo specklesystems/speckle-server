@@ -1,6 +1,4 @@
-import { Texture, RepeatWrapping } from 'three'
-import { ObjectLayers, AssetType } from '../../../../../index.js'
-import { Assets } from '../../../../Assets.js'
+import { ObjectLayers } from '../../../../../index.js'
 import SpeckleRenderer from '../../../../SpeckleRenderer.js'
 import { GColorPass } from '../../GColorPass.js'
 import { GEdgePass } from '../../GEdgesPass.js'
@@ -11,8 +9,6 @@ import { GStencilPass } from '../../GStencilPass.js'
 import { GTAAPass } from '../../GTAAPass.js'
 import { GProgressivePipeline } from '../GProgressivePipeline.js'
 import { GDepthNormalPass } from '../../GDepthNormalPass.js'
-import paperTex from '../../../../../assets/paper.png'
-import Logger from '../../../../utils/Logger.js'
 
 export class MRTPenViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -102,24 +98,25 @@ export class MRTPenViewPipeline extends GProgressivePipeline {
 
     this.passList = this.dynamicStage
 
-    Assets.getTexture({
-      id: 'paper',
-      src: paperTex,
-      type: AssetType.TEXTURE_8BPP
-    })
-      .then((value: Texture) => {
-        value.wrapS = RepeatWrapping
-        value.wrapT = RepeatWrapping
-        const options = {
-          backgroundTexture: value,
-          backgroundTextureIntensity: 0.25
-        }
-        edgesPass.options = options
-        edgesPassDynamic.options = options
-        this.accumulationFrameIndex = 0
-      })
-      .catch((reason) => {
-        Logger.error(`Matcap texture failed to load ${reason}`)
-      })
+    /** Paper-like background texture */
+    // Assets.getTexture({
+    //   id: 'paper',
+    //   src: paperTex,
+    //   type: AssetType.TEXTURE_8BPP
+    // })
+    //   .then((value: Texture) => {
+    //     value.wrapS = RepeatWrapping
+    //     value.wrapT = RepeatWrapping
+    //     const options = {
+    //       backgroundTexture: value,
+    //       backgroundTextureIntensity: 0.25
+    //     }
+    //     edgesPass.options = options
+    //     edgesPassDynamic.options = options
+    //     this.accumulationFrameIndex = 0
+    //   })
+    //   .catch((reason) => {
+    //     Logger.error(`Matcap texture failed to load ${reason}`)
+    //   })
   }
 }

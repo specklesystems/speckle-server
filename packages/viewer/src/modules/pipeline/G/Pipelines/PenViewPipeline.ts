@@ -1,14 +1,10 @@
-import { RepeatWrapping, Texture } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { ClearFlags, ObjectVisibility } from '../GPass.js'
 import { GTAAPass } from '../GTAAPass.js'
-import { AssetType, ObjectLayers } from '../../../../IViewer.js'
-import { Assets } from '../../../Assets.js'
-import paperTex from '../../../../assets/paper.png'
-import Logger from '../../../utils/Logger.js'
+import { ObjectLayers } from '../../../../IViewer.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 import { GColorPass } from '../GColorPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
@@ -118,24 +114,25 @@ export class PenViewPipeline extends GProgressivePipeline {
 
     this.passList = this.dynamicStage
 
-    Assets.getTexture({
-      id: 'paper',
-      src: paperTex,
-      type: AssetType.TEXTURE_8BPP
-    })
-      .then((value: Texture) => {
-        value.wrapS = RepeatWrapping
-        value.wrapT = RepeatWrapping
-        const options = {
-          backgroundTexture: value,
-          backgroundTextureIntensity: 0.25
-        }
-        edgesPass.options = options
-        edgesPassDynamic.options = options
-        this.accumulationFrameIndex = 0
-      })
-      .catch((reason) => {
-        Logger.error(`Matcap texture failed to load ${reason}`)
-      })
+    /** Paper-like background texture */
+    // Assets.getTexture({
+    //   id: 'paper',
+    //   src: paperTex,
+    //   type: AssetType.TEXTURE_8BPP
+    // })
+    //   .then((value: Texture) => {
+    //     value.wrapS = RepeatWrapping
+    //     value.wrapT = RepeatWrapping
+    //     const options = {
+    //       backgroundTexture: value,
+    //       backgroundTextureIntensity: 0.25
+    //     }
+    //     edgesPass.options = options
+    //     edgesPassDynamic.options = options
+    //     this.accumulationFrameIndex = 0
+    //   })
+    //   .catch((reason) => {
+    //     Logger.error(`Matcap texture failed to load ${reason}`)
+    //   })
   }
 }
