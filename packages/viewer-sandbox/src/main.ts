@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   DefaultViewerParams,
   SelectionEvent,
@@ -43,7 +44,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
-  const sectionOutlines = viewer.createExtension(SectionOutlines)
+  viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
@@ -53,7 +54,6 @@ const createViewer = async (containerName: string, stream: string) => {
   cameraController // use it
   selection // use it
   sections // use it
-  sectionOutlines // use it
   measurements // use it
   filtering // use it
   explode // use it
@@ -68,7 +68,6 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (event) console.log(event.hits[0].node.model.id)
   })
 
@@ -406,11 +405,17 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/6221c985c0'
 
     // DUI3 Color Proxies
+    // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
     // ' https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
     // 'https://app.speckle.systems/projects/b53a53697a/models/93fa215ba9'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/5ec85fc2a2'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@5af6d6a3f4'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@ebb895355d'
+
+    // Backfaces
+    // 'https://app.speckle.systems/projects/69bf87aa61/models/c8f443a03e'
+
+    // 'https://app.speckle.systems/projects/cdaeb201d9/models/1ad10b0a5b'
     // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
     // 'https://app.speckle.systems/projects/93200a735d/models/e3c3849167'
     // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
@@ -418,6 +423,12 @@ const getStream = () => {
 
     // Text with no material
     // 'https://latest.speckle.systems/projects/731c6e2fd1/models/bcd3a4a706'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/afec5fcb04@0c2ad0b86b'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93@31654f1e2c'
+    // Homepage
+    // 'https://app.speckle.systems/projects/0c1ea0ca62/models/729a6f557d@9bff3c6f1f'
 
     // BREPs as display values
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/b613d77690@046b56bf12'

@@ -18,13 +18,18 @@ export const speckleCopyOutputFrag = `
     void main() {
         vec4 inSample = texture2D( tDiffuse, vUv );
         vec3 outSample = inSample.rgb;
-        #if OUTPUT_TYPE == 1
+        #if INPUT_TYPE == 0
+            /** 
+                Un-premultiply alpha
+            */
+            inSample.rgb /= inSample.a;
+            outSample = LinearTosRGB( inSample ).rgb;
+        #elif INPUT_TYPE == 1
             outSample.rgb = vec3(unpackRGBAToDepth(inSample));
+        #elif INPUT_TYPE == 2
+            outSample.rgb = unpackRGBToNormal(inSample.rgb);
         #endif
-        // #if OUTPUT_TYPE == 3
-        //     outSample.rgb = unpackRGBToNormal(inSample.rgb);
-        // #endif
 
         gl_FragColor.rgb = outSample;
-        gl_FragColor.a = 1.;
+        gl_FragColor.a = inSample.a;
     }`

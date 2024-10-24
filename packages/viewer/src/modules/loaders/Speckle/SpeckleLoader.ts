@@ -140,6 +140,17 @@ export class SpeckleLoader extends Loader {
 
     void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+      Logger.log('Node build time -> ', renderTree.buildNodeTime)
+      Logger.log('Apply transform time -> ', renderTree.applyTransformTime)
+      Logger.log('Geometry build time -> ', renderTree.convertTime)
+      Logger.log('Get Node time -> ', renderTree.getNodeTime)
+      Logger.log('Other time -> ', renderTree.otherTime)
+      Logger.log('Triangulation time -> ', geometryConverter.meshTriangulationTime)
+      Logger.log(
+        'ACTUAL Triangulation time -> ',
+        geometryConverter.actualTriangulateTime
+      )
+      Logger.log('Push time -> ', geometryConverter.pushTime)
       this.isFinished = true
     })
 
