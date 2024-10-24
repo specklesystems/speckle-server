@@ -5,7 +5,7 @@ import type { WebGLRenderTarget } from 'three'
 import { Vector3, Vector4 } from 'three'
 
 export class PassReader extends Extension {
-  private outputBuffer: Uint8Array = new Uint8Array()
+  private outputBuffer: Uint8ClampedArray = new Uint8ClampedArray()
   private renderTarget: WebGLRenderTarget | undefined = undefined
   private needsRead: boolean = false
   private readbackExecutor: ((arg: string) => void) | null = null
@@ -24,9 +24,10 @@ export class PassReader extends Extension {
         return
       }
 
-      const bufferSize = this.renderTarget.width * this.renderTarget.height * 4
+      const bufferSize =
+        Math.floor(this.renderTarget.width) * Math.floor(this.renderTarget.height) * 4
       if (this.outputBuffer.length !== bufferSize)
-        this.outputBuffer = new Uint8Array(bufferSize)
+        this.outputBuffer = new Uint8ClampedArray(bufferSize)
       this.needsRead = true
       this.readbackExecutor = resolve
     })
