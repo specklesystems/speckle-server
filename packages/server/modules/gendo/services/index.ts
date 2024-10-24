@@ -158,13 +158,6 @@ export const updateRenderRequestFactory =
     return record
   }
 
-export async function getGendoAIRenderRequests(versionId: string) {
-  return await GendoAIRenders.knex()
-    .select<GendoAIRenderRecord[]>()
-    .where('versionId', versionId)
-    .orderBy('createdAt', 'desc')
-}
-
 export async function getGendoAIRenderRequest(versionId: string, requestId: string) {
   const [record] = await GendoAIRenders.knex()
     .select<
