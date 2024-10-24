@@ -8,6 +8,7 @@ import {
   Plane,
   RGBADepthPacking,
   Scene,
+  Side,
   WebGLRenderer
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
@@ -58,6 +59,10 @@ export class GDepthPass extends BaseGPass {
         }
       }
     this.depthMaterial.needsUpdate = true
+  }
+
+  public set depthSide(value: Side) {
+    this.depthMaterial.side = value
   }
 
   constructor() {

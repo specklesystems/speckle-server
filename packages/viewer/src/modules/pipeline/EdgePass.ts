@@ -1,5 +1,4 @@
 import {
-  Camera,
   HalfFloatType,
   LinearFilter,
   Matrix4,
@@ -23,8 +22,6 @@ import { speckleEdgesGeneratorFrag } from '../materials/shaders/speckle-edges-ge
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 
 export class EdgePass extends BaseSpecklePass implements SpecklePass {
-  private camera: Camera | null = null
-  private scene: Scene | null = null
   private renderTarget: WebGLRenderTarget
   public edgesMaterial: ShaderMaterial
   private fsQuad: FullScreenQuad
@@ -40,7 +37,6 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })
-    // this.renderTarget.samples = 8
 
     this.edgesMaterial = new ShaderMaterial({
       fragmentShader: speckleEdgesGeneratorFrag,
@@ -87,9 +83,7 @@ export class EdgePass extends BaseSpecklePass implements SpecklePass {
     return this.renderTarget.texture
   }
 
-  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
-    this.camera = camera
-    this.scene = scene
+  public update(_scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.edgesMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
       ? 1

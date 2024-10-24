@@ -1,6 +1,6 @@
 import { BackSide, NoBlending, WebGLRenderTarget } from 'three'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GDepthPass, DepthType } from '../GDepthPass.js'
+import { GDepthPass } from '../GDepthPass.js'
 import { GEdgePass } from '../GEdgesPass.js'
 import { GNormalsPass } from '../GNormalPass.js'
 import { ObjectVisibility } from '../GPass.js'
@@ -14,7 +14,6 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     super(speckleRenderer)
 
     const depthPassFront = new GDepthPass()
-    depthPassFront.depthType = DepthType.LINEAR_DEPTH
     depthPassFront.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFront.setVisibility(ObjectVisibility.DEPTH)
     depthPassFront.setJitter(true)
@@ -25,7 +24,6 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     normalPassFront.setJitter(true)
 
     const depthPassBack = new GDepthPass()
-    depthPassBack.depthType = DepthType.LINEAR_DEPTH
     depthPassBack.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFront.setVisibility(ObjectVisibility.DEPTH)
     depthPassBack.setJitter(true)
@@ -38,7 +36,6 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     normalPassBack.overrideMaterial.side = BackSide
 
     const depthPassFrontDynamic = new GDepthPass()
-    depthPassFrontDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassFrontDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFrontDynamic.setVisibility(ObjectVisibility.DEPTH)
 
@@ -47,7 +44,6 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     normalPassFrontDynamic.setVisibility(ObjectVisibility.OPAQUE)
 
     const depthPassBackDynamic = new GDepthPass()
-    depthPassBackDynamic.depthType = DepthType.LINEAR_DEPTH
     depthPassBackDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassBackDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassBackDynamic.overrideMaterial.side = BackSide
