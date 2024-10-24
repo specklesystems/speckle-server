@@ -114,7 +114,8 @@ export default class SpeckleRenderer {
 
   protected container: HTMLElement
   protected rootGroup: Group
-  public batcher: Batcher
+  protected _pipeline: GPipeline
+
   protected sun: DirectionalLight
   protected sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   protected sunTarget: Object3D
@@ -128,7 +129,7 @@ export default class SpeckleRenderer {
   protected _renderOverride: (() => void) | null = null
 
   public viewer: Viewer // TEMPORARY
-  public _pipeline: GPipeline
+  public batcher: Batcher
   public input: Input
 
   /********************************
@@ -252,6 +253,7 @@ export default class SpeckleRenderer {
    * Pipeline */
   public set pipeline(value: GPipeline) {
     this._pipeline = value
+    this._pipeline.setClippingPlanes(this._clippingPlanes)
     this._pipeline.reset()
   }
 

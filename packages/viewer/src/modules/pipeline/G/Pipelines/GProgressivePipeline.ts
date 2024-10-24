@@ -1,4 +1,4 @@
-import { OrthographicCamera, PerspectiveCamera } from 'three'
+import { OrthographicCamera, PerspectiveCamera, Plane } from 'three'
 import { GPass, ProgressiveGPass } from '../GPass.js'
 import { GPipeline } from './GPipeline.js'
 
@@ -26,6 +26,12 @@ export abstract class GProgressivePipeline extends GPipeline {
         return pass.displayName === name
       })
     ]
+  }
+
+  public setClippingPlanes(planes: Plane[]): void {
+    this.dynamicStage.forEach((pass: GPass) => pass.setClippingPlanes?.(planes))
+    this.progressiveStage.forEach((pass: GPass) => pass.setClippingPlanes?.(planes))
+    this.passthroughStage.forEach((pass: GPass) => pass.setClippingPlanes?.(planes))
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera): void {

@@ -78,7 +78,11 @@ export class PenViewPipeline extends GProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GColorPass()
-    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.setLayers([
+      ObjectLayers.OVERLAY,
+      ObjectLayers.MEASUREMENTS,
+      ObjectLayers.PROPS
+    ])
 
     const outputPass = new GOutputPass()
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
