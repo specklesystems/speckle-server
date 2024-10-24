@@ -6,6 +6,8 @@ import { getBillingRouter } from '@/modules/gatekeeper/rest/billing'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
+import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
+import { getStripeClient } from '@/modules/gatekeeper/stripe'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -14,6 +16,8 @@ const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
   await Promise.all(gatekeeperScopes.map((scope) => registerFunc({ scope })))
 }
+
+let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
   async init(app, isInitial) {
@@ -35,6 +39,11 @@ const gatekeeperModule: SpeckleModule = {
       if (FF_BILLING_INTEGRATION_ENABLED) {
         app.use(getBillingRouter())
 
+        quitListeners = initializeEventListenersFactory({
+          db,
+          stripe: getStripeClient()
+        })()
+
         const isLicenseValid = await validateModuleLicense({
           requiredModules: ['billing']
         })
@@ -45,6 +54,9 @@ const gatekeeperModule: SpeckleModule = {
         // TODO: create a cron job, that removes unused seats from the subscription at the beginning of each workspace plan's billing cycle
       }
     }
+  },
+  async shutdown() {
+    if (quitListeners) quitListeners()
   }
 }
 export = gatekeeperModule

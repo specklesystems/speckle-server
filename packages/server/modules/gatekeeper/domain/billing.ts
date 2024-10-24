@@ -5,6 +5,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
 } from '@/modules/gatekeeper/domain/workspacePricing'
+import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export type UnpaidWorkspacePlanStatuses = 'valid'
@@ -109,6 +110,15 @@ export type WorkspaceSubscription = {
   billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
 }
+const subscriptionProduct = z.object({
+  productId: z.string(),
+  subscriptionItemId: z.string(),
+  priceId: z.string(),
+  quantity: z.number()
+})
+
+type SubscriptionProduct = z.infer<typeof subscriptionProduct>
+
 export const subscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
@@ -123,15 +133,7 @@ export const subscriptionData = z.object({
     z.literal('unpaid'),
     z.literal('paused')
   ]),
-  products: z
-    .object({
-      // we're going to use the productId to match with our
-      productId: z.string(),
-      subscriptionItemId: z.string(),
-      priceId: z.string(),
-      quantity: z.number()
-    })
-    .array()
+  products: subscriptionProduct.array()
 })
 
 // this abstracts the stripe sub data
@@ -158,7 +160,18 @@ export type GetWorkspacePlanPrice = (args: {
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
-export type ReconcileWorkspaceSubscription = (args: {
-  workspaceSubscription: WorkspaceSubscription
+export type GetWorkspacePlanProductId = (args: {
+  workspacePlan: WorkspacePricingPlans
+}) => string
+
+export type SubscriptionDataInput = OverrideProperties<
+  SubscriptionData,
+  {
+    products: OverrideProperties<SubscriptionProduct, { subscriptionItemId?: string }>[]
+  }
+>
+
+export type ReconcileSubscriptionData = (args: {
+  subscriptionData: SubscriptionDataInput
   applyProrotation: boolean
 }) => Promise<void>
