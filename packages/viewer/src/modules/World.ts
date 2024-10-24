@@ -82,4 +82,12 @@ export class World {
     const dist = offsetBox.max.distanceTo(sizeBox.max)
     return dist
   }
+
+  public getRelativeOffsetBox(box: Box3, offsetAmount: number = 0.001) {
+    this.MatBuff.identity()
+    this.MatBuff.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    const offsetBox = new Box3().copy(box)
+    offsetBox.applyMatrix4(this.MatBuff)
+    return offsetBox
+  }
 }

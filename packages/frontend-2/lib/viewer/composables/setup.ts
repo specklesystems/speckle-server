@@ -267,6 +267,10 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
+    sectionBoxContext: {
+      visible: Ref<boolean>
+      edited: Ref<boolean>
+    }
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
@@ -988,6 +992,10 @@ function setupInterfaceState(
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
+      sectionBoxContext: {
+        visible: ref(false),
+        edited: ref(false)
+      },
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,

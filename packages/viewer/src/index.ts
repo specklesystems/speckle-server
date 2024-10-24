@@ -45,6 +45,7 @@ import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
 import {
   SectionTool,
+  SectionToolEvent,
   SectionToolEventPayload
 } from './modules/extensions/SectionTool.js'
 import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
@@ -132,7 +133,8 @@ export {
   SpeckleGeometryConverter,
   Assets,
   AssetType,
-  HybridCameraController
+  HybridCameraController,
+  SectionToolEvent
 }
 
 export type {

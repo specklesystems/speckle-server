@@ -117,6 +117,11 @@ export class SectionOutlines extends Extension {
     }
   }
 
+  public requestUpdate() {
+    this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    this.updateOutlines(this.sectionPlanesChanged)
+  }
+
   private updatePlaneOutline(
     batches: MeshBatch[],
     _plane: Plane,
