@@ -26,7 +26,7 @@ export const buildAuthRedirectUrl = (
  * @remarks Append params to this URL to preserve information about errors
  */
 export const buildFinalizeUrl = (workspaceSlug: string): URL => {
-  const urlFragments = [`workspaces/${workspaceSlug}/authn`]
+  const urlFragments = [`workspaces/${workspaceSlug}/sso`]
 
   return new URL(urlFragments.join(''), getFrontendOrigin())
 }
