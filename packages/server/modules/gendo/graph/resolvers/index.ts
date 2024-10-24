@@ -1,10 +1,7 @@
 import { authorizeResolver } from '@/modules/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
-import {
-  createRenderRequestFactory,
-  getGendoAIRenderRequest
-} from '@/modules/gendo/services'
+import { createRenderRequestFactory } from '@/modules/gendo/services'
 import {
   ProjectSubscriptions,
   filteredSubscribe,
@@ -23,6 +20,7 @@ import {
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 import {
   getLatestVersionRenderRequestsFactory,
+  getVersionRenderRequestFactory,
   storeRenderFactory
 } from '@/modules/gendo/repositories'
 import { db } from '@/db/knex'
@@ -38,6 +36,7 @@ const createRenderRequest = createRenderRequestFactory({
   fetch
 })
 const getLatestVersionRenderRequests = getLatestVersionRenderRequestsFactory({ db })
+const getVersionRenderRequest = getVersionRenderRequestFactory({ db })
 
 export = {
   Version: {
@@ -49,12 +48,17 @@ export = {
       }
     },
     async gendoAIRender(parent, args) {
-      const item = await getGendoAIRenderRequest(parent.id, args.id)
-      const response = {
-        ...item,
-        user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
-      }
-      return response
+      const item = await getVersionRenderRequest({
+        versionId: parent.id,
+        id: args.id
+      })
+
+      return item
+    }
+  },
+  GendoAIRender: {
+    async user(parent, __args, ctx) {
+      return await ctx.loaders.users.getUser.load(parent.userId)
     }
   },
   VersionMutations: {

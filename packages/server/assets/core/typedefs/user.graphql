@@ -113,12 +113,6 @@ type LimitedUser {
   role: String
 }
 
-type AvatarUser {
-  id: ID!
-  name: String!
-  avatar: String
-}
-
 """
 A representation of a registered or invited user in the admin users list. Either registeredUser
 or invitedUser will always be set, both values can't be null.

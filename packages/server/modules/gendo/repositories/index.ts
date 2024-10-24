@@ -2,6 +2,7 @@ import { GendoAIRenders } from '@/modules/core/dbSchema'
 import {
   GetLatestVersionRenderRequests,
   GetRenderByGenerationId,
+  GetVersionRenderRequest,
   StoreRender,
   UpdateRenderRecord
 } from '@/modules/gendo/domain/operations'
@@ -52,4 +53,18 @@ export const getLatestVersionRenderRequestsFactory =
       .where({ [GendoAIRenders.col.versionId]: params.versionId })
       .orderBy(GendoAIRenders.col.createdAt, 'desc')
     return items
+  }
+
+export const getVersionRenderRequestFactory =
+  (deps: { db: Knex }): GetVersionRenderRequest =>
+  async (params) => {
+    const record = await tables
+      .gendoAIRenders(deps.db)
+      .where({
+        [GendoAIRenders.col.id]: params.id,
+        [GendoAIRenders.col.versionId]: params.versionId
+      })
+      .orderBy(GendoAIRenders.col.createdAt, 'desc')
+      .first()
+    return record
   }

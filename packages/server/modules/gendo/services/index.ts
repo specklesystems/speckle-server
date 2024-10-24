@@ -1,11 +1,8 @@
 import crs from 'crypto-random-string'
-import { GendoAIRenders } from '@/modules/core/dbSchema'
-import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import {
   ProjectSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { Merge } from 'type-fest'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 
 import {
@@ -157,23 +154,3 @@ export const updateRenderRequestFactory =
 
     return record
   }
-
-export async function getGendoAIRenderRequest(versionId: string, requestId: string) {
-  const [record] = await GendoAIRenders.knex()
-    .select<
-      Merge<
-        GendoAIRenderRecord,
-        { userName: string; userId: string; userAvatar: string }
-      >[]
-    >(
-      ...GendoAIRenders.cols,
-      'users.name as userName',
-      'users.id as userId',
-      'users.avatar as userAvatar'
-    )
-    .where('gendo_ai_renders.id', requestId)
-    .andWhere('versionId', versionId)
-    .join('users', 'users.id', '=', 'gendo_ai_renders.userId')
-    .orderBy('createdAt', 'desc')
-  return record
-}
