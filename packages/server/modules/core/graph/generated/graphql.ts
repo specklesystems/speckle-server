@@ -914,7 +914,7 @@ export type FileUpload = {
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
   gendoGenerationId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   modelId: Scalars['String']['output'];
@@ -923,7 +923,7 @@ export type GendoAiRender = {
   /** This is a blob id. */
   responseImage?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   user?: Maybe<AvatarUser>;
   userId: Scalars['String']['output'];
   versionId: Scalars['String']['output'];
@@ -5254,7 +5254,7 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
 
 export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRender'] = ResolversParentTypes['GendoAIRender']> = {
   camera?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   gendoGenerationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5262,7 +5262,7 @@ export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType exte
   prompt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   responseImage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['AvatarUser']>, ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

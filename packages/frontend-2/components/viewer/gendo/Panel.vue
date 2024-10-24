@@ -117,7 +117,7 @@ const lodgeRequest = async (screenshot: string) => {
     const err = getFirstErrorMessage(res.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Failed to enque Gendo render',
+      title: 'Failed to enqueue Gendo render',
       description: err
     })
   } else {
