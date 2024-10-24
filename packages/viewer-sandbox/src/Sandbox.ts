@@ -8,6 +8,8 @@ import {
   DefaultPipeline,
   EdgesPipeline,
   MRTEdgesPipeline,
+  MRTPenViewPipeline,
+  MRTShadedViewPipeline,
   PenViewPipeline,
   SectionTool,
   ShadedViewPipeline,
@@ -527,7 +529,6 @@ export default class Sandbox {
         options: {
           DEFAULT: 0,
           EDGED: 1,
-          MERTEDGED: 6,
           SHADED: 2,
           PEN: 3,
           ARCTIC: 4,
@@ -542,17 +543,17 @@ export default class Sandbox {
             )
             break
           case 1:
-            this.viewer.getRenderer().pipeline = new EdgesPipeline(
+            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
               this.viewer.getRenderer()
             )
             break
           case 2:
-            this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
+            this.viewer.getRenderer().pipeline = new MRTShadedViewPipeline(
               this.viewer.getRenderer()
             )
             break
           case 3:
-            this.viewer.getRenderer().pipeline = new PenViewPipeline(
+            this.viewer.getRenderer().pipeline = new MRTPenViewPipeline(
               this.viewer.getRenderer()
             )
             break
@@ -563,11 +564,6 @@ export default class Sandbox {
             break
           case 5:
             this.viewer.getRenderer().pipeline = new TAAPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 6:
-            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
               this.viewer.getRenderer()
             )
             break
