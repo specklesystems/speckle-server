@@ -1,22 +1,28 @@
-'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
 
-const { validatePermissionsReadStream } = require('./authUtils')
-
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
-const { pipeline, PassThrough } = require('stream')
-const { logger } = require('@/logging/logging')
-const {
+import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
+import { pipeline, PassThrough } from 'stream'
+import { logger } from '@/logging/logging'
+import {
   getFormattedObjectFactory,
   getObjectChildrenStreamFactory
-} = require('@/modules/core/repositories/objects')
-const { db } = require('@/db/knex')
+} from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { validateScopes, authorizeResolver } from '@/modules/shared'
+import type express from 'express'
 
-const getObject = getFormattedObjectFactory({ db })
-const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+export default (app: express.Express) => {
+  const getObject = getFormattedObjectFactory({ db })
+  const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
+  const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+    getStream: getStreamFactory({ db }),
+    validateScopes,
+    authorizeResolver
+  })
 
-module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
 
   app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {

@@ -1,7 +1,6 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import Busboy from 'busboy'
-import { validatePermissionsWriteStream } from '@/modules/core/rest/authUtils'
 import {
   getFeatureFlags,
   maximumObjectUploadFileSizeMb
@@ -21,6 +20,8 @@ import {
 } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
+import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
@@ -44,6 +45,11 @@ if (FF_NO_CLOSURE_WRITES) {
 }
 
 export default (app: Router) => {
+  const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {

@@ -1,7 +1,6 @@
-'use strict'
-const { Scopes } = require('@/modules/core/helpers/mainConstants')
+import { Scopes } from '@/modules/core/helpers/mainConstants'
 
-module.exports = [
+export default [
   {
     name: Scopes.Streams.Read,
     description:

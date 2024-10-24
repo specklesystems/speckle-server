@@ -54,6 +54,25 @@ export type GetObjectChildrenStream = (params: {
   objectId: string
 }) => Promise<stream.PassThrough & AsyncIterable<{ dataText: string; id: string }>>
 
+export type GetObjectsStream = (params: {
+  streamId: string
+  objectIds: string[]
+}) => Promise<
+  stream.PassThrough &
+    AsyncIterable<
+      {
+        dataText: string
+      } & Pick<
+        SpeckleObject,
+        | 'id'
+        | 'speckleType'
+        | 'totalChildrenCount'
+        | 'totalChildrenCountByDepth'
+        | 'createdAt'
+      >
+    >
+>
+
 export type GetObjectChildren = (params: {
   streamId: string
   objectId: string
@@ -64,6 +83,26 @@ export type GetObjectChildren = (params: {
 }) => Promise<{
   objects: Omit<SpeckleObject, 'totalChildrenCountByDepth' | 'streamId'>[]
   cursor: string | null
+}>
+
+export type HasObjects = (params: {
+  streamId: string
+  objectIds: string[]
+}) => Promise<{ [objectId: string]: boolean }>
+
+export type GetObjectChildrenQuery = (params: {
+  streamId: string
+  objectId: string
+  limit?: MaybeNullOrUndefined<number | string>
+  depth?: MaybeNullOrUndefined<number | string>
+  select?: MaybeNullOrUndefined<string[]>
+  cursor?: MaybeNullOrUndefined<string>
+  query?: Array<{ field: string; verb?: string; value: unknown; operator: string }>
+  orderBy?: { field: keyof SpeckleObject; direction: 'asc' | 'desc' }
+}) => Promise<{
+  objects: Omit<SpeckleObject, 'totalChildrenCountByDepth' | 'streamId'>[]
+  cursor: string | null
+  totalCount: number
 }>
 
 export type CreateObject = (params: {
