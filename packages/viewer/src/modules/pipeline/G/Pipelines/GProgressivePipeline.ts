@@ -54,6 +54,7 @@ export abstract class GProgressivePipeline extends GPipeline {
   }
 
   public reset() {
+    super.reset()
     this.accumulationFrameIndex = 0
     this.onStationaryBegin()
   }

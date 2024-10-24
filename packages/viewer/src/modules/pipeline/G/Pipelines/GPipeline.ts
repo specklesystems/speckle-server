@@ -51,7 +51,9 @@ export abstract class GPipeline {
     this.passList.forEach((pass: GPass) => pass.enabled && pass.update?.(camera))
   }
 
-  public reset() {}
+  public reset() {
+    this.jitterIndex = 0
+  }
 
   public renderRequest() {}
 
