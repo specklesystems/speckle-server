@@ -4,7 +4,9 @@ import {
   VisualDiffMode,
   CameraController,
   UpdateFlags,
-  SectionOutlines
+  SectionOutlines,
+  SectionToolEvent,
+  SectionTool
 } from '@speckle/viewer'
 import type {
   PropertyInfo,
@@ -299,9 +301,19 @@ function useViewerSubscriptionEventTracker() {
 
 function useViewerSectionBoxIntegration() {
   const {
-    ui: { sectionBox },
+    ui: {
+      sectionBox,
+      sectionBoxContext: { visible, edited }
+    },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  // Change edited=true when user starts changing the section box by dragging it
+  const sectionTool = instance.getExtension(SectionTool)
+  const onDragStart = () => {
+    edited.value = true
+  }
+  sectionTool.on(SectionToolEvent.DragStart, onDragStart)
 
   // No two-way sync for section boxes, because once you set a Box3 into the viewer
   // the viewer transforms it into something else causing the updates going into an infinite loop
@@ -314,12 +326,18 @@ function useViewerSectionBoxIntegration() {
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
+        visible.value = false
+        edited.value = false
+
         instance.sectionBoxOff()
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
 
       if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+        visible.value = true
+        edited.value = false
+
         instance.setSectionBox({
           min: newVal.min,
           max: newVal.max
@@ -332,8 +350,26 @@ function useViewerSectionBoxIntegration() {
     },
     { immediate: true, deep: true, flush: 'sync' }
   )
+
+  watch(
+    visible,
+    (newVal, oldVal) => {
+      if (newVal && oldVal) return
+      if (!newVal && !oldVal) return
+
+      if (newVal) {
+        sectionTool.visible = true
+      } else {
+        sectionTool.visible = false
+      }
+      instance.requestRender()
+    },
+    { immediate: true, deep: true, flush: 'sync' }
+  )
+
   onBeforeUnmount(() => {
     instance.sectionBoxOff()
+    sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
 

@@ -119,7 +119,7 @@
               flat
               secondary
               :active="isSectionBoxVisible"
-              @click="toggleSectionBoxVisibility()"
+              @click="toggleSectionBox()"
             >
               <ScissorsIcon class="h-4 w-4 md:h-5 md:w-5" />
             </ViewerControlsButtonToggle>
@@ -239,7 +239,7 @@
       </div>
     </div>
     <Portal v-if="isSectionBoxEnabled && isSectionBoxEdited" to="pocket-actions">
-      <FormButton @click="toggleSectionBox">Reset section box</FormButton>
+      <FormButton @click="resetSectionBox()">Reset section box</FormButton>
     </Portal>
   </div>
   <div v-else />
@@ -349,10 +349,10 @@ type ActiveControl =
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const {
-  toggleSectionBox,
+  resetSectionBox,
   isSectionBoxEnabled,
   isSectionBoxVisible,
-  toggleSectionBoxVisibility,
+  toggleSectionBox,
   isSectionBoxEdited
 } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
@@ -457,7 +457,7 @@ const handleKeyboardAction = (action: ViewerKeyboardActions) => {
       trackAndtoggleProjection()
       break
     case ViewerKeyboardActions.ToggleSectionBox:
-      toggleSectionBoxVisibility()
+      toggleSectionBox()
       break
     case ViewerKeyboardActions.ZoomExtentsOrSelection:
       trackAndzoomExtentsOrSelection()
