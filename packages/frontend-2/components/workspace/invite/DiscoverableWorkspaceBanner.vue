@@ -22,6 +22,7 @@ import {
   getFirstErrorMessage,
   modifyObjectField
 } from '~/lib/common/helpers/graphql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
@@ -131,7 +132,7 @@ const processJoin = async (accept: boolean) => {
       workspace_id: props.workspace.id
     })
 
-    router.push(`/workspaces/${props.workspace.id}`)
+    router.push(workspaceRoute(props.workspace.slug))
   } else {
     triggerNotification({
       type: ToastNotificationType.Danger,
