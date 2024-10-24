@@ -15,6 +15,11 @@ export type GetLatestVersionRenderRequests = (params: {
   versionId: string
 }) => Promise<GendoAIRender[]>
 
+export type GetVersionRenderRequest = (params: {
+  versionId: string
+  id: string
+}) => Promise<Optional<GendoAIRender>>
+
 export type UpdateRenderRecord = (params: {
   input: Partial<GendoAIRender>
   id: string

@@ -14,7 +14,7 @@ type GendoAIRender {
   modelId: String!
   versionId: String!
   userId: String!
-  user: AvatarUser
+  user: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!
   gendoGenerationId: String
