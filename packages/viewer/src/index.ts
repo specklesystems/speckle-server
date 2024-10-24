@@ -93,6 +93,7 @@ import { RenderTree } from './modules/tree/RenderTree.js'
 import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
 import { MRTShadedViewPipeline } from './modules/pipeline/G/Pipelines/MRT/MRTShadedViewPipeline.js'
 import { MRTPenViewPipeline } from './modules/pipeline/G/Pipelines/MRT/MRTPenViewPipeline.js'
+import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
 
 export {
   Viewer,
@@ -152,7 +153,9 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
-  SpeckleRenderer
+  SpeckleRenderer,
+  ViewModes,
+  ViewMode
 }
 
 export type {

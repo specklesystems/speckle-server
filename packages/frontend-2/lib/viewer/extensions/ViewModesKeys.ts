@@ -1,39 +1,37 @@
 import {
-  ArcticViewPipeline,
-  DefaultPipeline,
-  EdgesPipeline,
   Extension,
   InputEvent,
-  PenViewPipeline,
-  ShadedViewPipeline,
-  UpdateFlags,
+  ViewMode,
+  ViewModes,
   type IViewer
 } from '@speckle/viewer'
 
 export class ViewModesKeys extends Extension {
-  constructor(viewer: IViewer) {
+  public get inject() {
+    return [ViewModes]
+  }
+
+  constructor(viewer: IViewer, protected viewModes: ViewModes) {
     super(viewer)
     const renderer = viewer.getRenderer()
     renderer.input.on(InputEvent.KeyUp, (arg: KeyboardEvent) => {
       switch (arg.key) {
         case '1':
-          renderer.pipeline = new DefaultPipeline(renderer)
+          viewModes.setViewMode(ViewMode.DEFAULT)
           break
         case '2':
-          renderer.pipeline = new EdgesPipeline(renderer)
+          viewModes.setViewMode(ViewMode.DEFAULT_EDGES)
           break
         case '3':
-          renderer.pipeline = new ShadedViewPipeline(renderer)
+          viewModes.setViewMode(ViewMode.SHADED)
           break
         case '4':
-          renderer.pipeline = new PenViewPipeline(renderer)
+          viewModes.setViewMode(ViewMode.PEN)
           break
         case '5':
-          renderer.pipeline = new ArcticViewPipeline(renderer)
+          viewModes.setViewMode(ViewMode.ARCTIC)
           break
       }
-      this.viewer.resize()
-      this.viewer.requestRender(UpdateFlags.RENDER_RESET)
     })
   }
 }

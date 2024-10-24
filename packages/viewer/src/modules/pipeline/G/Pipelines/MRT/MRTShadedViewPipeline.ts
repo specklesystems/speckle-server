@@ -86,7 +86,7 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
-      edgesPassDynamic,
+      depthPassNormalDynamic,
       edgesPassDynamic,
       stencilPass,
       viewportPass,
