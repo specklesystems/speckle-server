@@ -1062,6 +1062,13 @@ export type LimitedWorkspace = {
   name: Scalars['String']['output'];
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
+  /** Public information about the workspace SSO provider, if configured. */
+  ssoProvider?: Maybe<LimitedWorkspaceSsoProvider>;
+};
+
+export type LimitedWorkspaceSsoProvider = {
+  __typename?: 'LimitedWorkspaceSsoProvider';
+  name: Scalars['String']['output'];
 };
 
 export type MarkReceivedVersionInput = {
@@ -1711,6 +1718,13 @@ export type ObjectCreateInput = {
   objects: Array<InputMaybe<Scalars['JSONObject']['input']>>;
   /** The stream against which these objects will be created. */
   streamId: Scalars['String']['input'];
+};
+
+export type OidcProvider = {
+  __typename?: 'OidcProvider';
+  clientId: Scalars['String']['output'];
+  issuerUrl: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type PasswordStrengthCheckFeedback = {
@@ -2441,6 +2455,7 @@ export type Query = {
    * @deprecated Part of the old API surface and will be removed in the future.
    */
   discoverableStreams?: Maybe<StreamCollection>;
+  limitedWorkspace?: Maybe<LimitedWorkspace>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
   /**
@@ -2574,6 +2589,11 @@ export type QueryDiscoverableStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   sort?: InputMaybe<DiscoverableStreamsSortingInput>;
+};
+
+
+export type QueryLimitedWorkspaceArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3914,6 +3934,7 @@ export type Workspace = {
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  ssoProvider?: Maybe<WorkspaceSsoProvider>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -4187,6 +4208,8 @@ export type WorkspaceRoleUpdateInput = {
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };
+
+export type WorkspaceSsoProvider = OidcProvider;
 
 export type WorkspaceTeamFilter = {
   /** Limit team members to provided role(s) */

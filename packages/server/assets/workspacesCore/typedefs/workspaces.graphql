@@ -23,6 +23,7 @@ extend type Query {
   Validates the slug, to make sure it contains only valid characters and its not taken.
   """
   validateWorkspaceSlug(slug: String!): Boolean!
+  limitedWorkspace(slug: String!): LimitedWorkspace
 }
 
 input WorkspaceInviteLookupOptions {
@@ -321,6 +322,15 @@ type Workspace {
   Enable/Disable discovery of the workspace
   """
   discoverabilityEnabled: Boolean!
+  ssoProvider: WorkspaceSsoProvider
+}
+
+union WorkspaceSsoProvider = OidcProvider
+
+type OidcProvider {
+  name: String!
+  clientId: String!
+  issuerUrl: String!
 }
 
 """
@@ -351,6 +361,14 @@ type LimitedWorkspace {
   Index of fallback workspace logo to use
   """
   defaultLogoIndex: Int!
+  """
+  Public information about the workspace SSO provider, if configured.
+  """
+  ssoProvider: LimitedWorkspaceSsoProvider
+}
+
+type LimitedWorkspaceSsoProvider {
+  name: String!
 }
 
 type WorkspaceDomain {

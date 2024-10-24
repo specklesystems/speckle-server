@@ -1077,6 +1077,13 @@ export type LimitedWorkspace = {
   name: Scalars['String']['output'];
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
+  /** Public information about the workspace SSO provider, if configured. */
+  ssoProvider?: Maybe<LimitedWorkspaceSsoProvider>;
+};
+
+export type LimitedWorkspaceSsoProvider = {
+  __typename?: 'LimitedWorkspaceSsoProvider';
+  name: Scalars['String']['output'];
 };
 
 export type MarkReceivedVersionInput = {
@@ -1726,6 +1733,13 @@ export type ObjectCreateInput = {
   objects: Array<InputMaybe<Scalars['JSONObject']['input']>>;
   /** The stream against which these objects will be created. */
   streamId: Scalars['String']['input'];
+};
+
+export type OidcProvider = {
+  __typename?: 'OidcProvider';
+  clientId: Scalars['String']['output'];
+  issuerUrl: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type PasswordStrengthCheckFeedback = {
@@ -2456,6 +2470,7 @@ export type Query = {
    * @deprecated Part of the old API surface and will be removed in the future.
    */
   discoverableStreams?: Maybe<StreamCollection>;
+  limitedWorkspace?: Maybe<LimitedWorkspace>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
   /**
@@ -2589,6 +2604,11 @@ export type QueryDiscoverableStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   sort?: InputMaybe<DiscoverableStreamsSortingInput>;
+};
+
+
+export type QueryLimitedWorkspaceArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3929,6 +3949,7 @@ export type Workspace = {
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  ssoProvider?: Maybe<WorkspaceSsoProvider>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -4203,6 +4224,8 @@ export type WorkspaceRoleUpdateInput = {
   workspaceId: Scalars['String']['input'];
 };
 
+export type WorkspaceSsoProvider = OidcProvider;
+
 export type WorkspaceTeamFilter = {
   /** Limit team members to provided role(s) */
   roles?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -4298,6 +4321,12 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
 
+/** Mapping of union types */
+export type ResolversUnionTypes<_RefType extends Record<string, unknown>> = {
+  AutomationRevisionTriggerDefinition: ( AutomationRevisionTriggerDefinitionGraphQLReturn );
+  AutomationRunTrigger: ( AutomationRunTriggerGraphQLReturn );
+  WorkspaceSsoProvider: ( OidcProvider );
+};
 
 
 /** Mapping between all available schema types and the resolvers types */
@@ -4400,6 +4429,7 @@ export type ResolversTypes = {
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
   LimitedWorkspace: ResolverTypeWrapper<LimitedWorkspace>;
+  LimitedWorkspaceSsoProvider: ResolverTypeWrapper<LimitedWorkspaceSsoProvider>;
   MarkReceivedVersionInput: MarkReceivedVersionInput;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
@@ -4412,6 +4442,7 @@ export type ResolversTypes = {
   Object: ResolverTypeWrapper<ObjectGraphQLReturn>;
   ObjectCollection: ResolverTypeWrapper<Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversTypes['Object']> }>;
   ObjectCreateInput: ObjectCreateInput;
+  OidcProvider: ResolverTypeWrapper<OidcProvider>;
   PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
@@ -4558,6 +4589,7 @@ export type ResolversTypes = {
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceSsoProvider: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['WorkspaceSsoProvider']>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceVersionsCount: ResolverTypeWrapper<WorkspaceVersionsCount>;
@@ -4658,6 +4690,7 @@ export type ResolversParentTypes = {
   LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
   LimitedWorkspace: LimitedWorkspace;
+  LimitedWorkspaceSsoProvider: LimitedWorkspaceSsoProvider;
   MarkReceivedVersionInput: MarkReceivedVersionInput;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
@@ -4670,6 +4703,7 @@ export type ResolversParentTypes = {
   Object: ObjectGraphQLReturn;
   ObjectCollection: Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversParentTypes['Object']> };
   ObjectCreateInput: ObjectCreateInput;
+  OidcProvider: OidcProvider;
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
@@ -4798,6 +4832,7 @@ export type ResolversParentTypes = {
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceSsoProvider: ResolversUnionTypes<ResolversParentTypes>['WorkspaceSsoProvider'];
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceVersionsCount: WorkspaceVersionsCount;
@@ -5312,6 +5347,12 @@ export type LimitedWorkspaceResolvers<ContextType = GraphQLContext, ParentType e
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  ssoProvider?: Resolver<Maybe<ResolversTypes['LimitedWorkspaceSsoProvider']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LimitedWorkspaceSsoProviderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedWorkspaceSsoProvider'] = ResolversParentTypes['LimitedWorkspaceSsoProvider']> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5447,6 +5488,13 @@ export type ObjectCollectionResolvers<ContextType = GraphQLContext, ParentType e
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   objects?: Resolver<Array<ResolversTypes['Object']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type OidcProviderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OidcProvider'] = ResolversParentTypes['OidcProvider']> = {
+  clientId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  issuerUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5694,6 +5742,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
+  limitedWorkspace?: Resolver<Maybe<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType, RequireFields<QueryLimitedWorkspaceArgs, 'slug'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
@@ -6165,6 +6214,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  ssoProvider?: Resolver<Maybe<ResolversTypes['WorkspaceSsoProvider']>, ParentType, ContextType>;
   team?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<WorkspaceTeamArgs, 'limit'>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6256,6 +6306,10 @@ export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, Par
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WorkspaceSsoProviderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSsoProvider'] = ResolversParentTypes['WorkspaceSsoProvider']> = {
+  __resolveType: TypeResolveFn<'OidcProvider', ParentType, ContextType>;
+};
+
 export type WorkspaceVersionsCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceVersionsCount'] = ResolversParentTypes['WorkspaceVersionsCount']> = {
   current?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   max?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -6315,6 +6369,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;
   LimitedWorkspace?: LimitedWorkspaceResolvers<ContextType>;
+  LimitedWorkspaceSsoProvider?: LimitedWorkspaceSsoProviderResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;
   ModelCollection?: ModelCollectionResolvers<ContextType>;
   ModelMutations?: ModelMutationsResolvers<ContextType>;
@@ -6323,6 +6378,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
+  OidcProvider?: OidcProviderResolvers<ContextType>;
   PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
@@ -6403,6 +6459,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
   WorkspaceProjectMutations?: WorkspaceProjectMutationsResolvers<ContextType>;
+  WorkspaceSsoProvider?: WorkspaceSsoProviderResolvers<ContextType>;
   WorkspaceVersionsCount?: WorkspaceVersionsCountResolvers<ContextType>;
 };
 
