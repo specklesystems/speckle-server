@@ -36,12 +36,15 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     viewportPass.setVisibility(ObjectVisibility.DEPTH)
     viewportPass.options = { minIntensity: 0.75 }
 
+    const shadowcatcherPass = new GColorPass()
+    shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
+
     const progressiveAOPass = new GProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
     progressiveAOPass.options = {
       kernelRadius: 100,
-      kernelSize: 32
+      kernelSize: 64
     }
     progressiveAOPass.setClearColor(0xffffff, 1)
 
@@ -69,6 +72,7 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     this.dynamicStage.push(
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       overlayPass
@@ -77,6 +81,7 @@ export class ArcticViewPipeline extends GProgressivePipeline {
       depthPass,
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       progressiveAOPass,
@@ -86,6 +91,7 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     this.passthroughStage.push(
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPass,

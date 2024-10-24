@@ -47,6 +47,9 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
       }
     }
 
+    const shadowcatcherPass = new GColorPass()
+    shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
+
     const edgesPass = new GEdgePass()
     edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
@@ -90,6 +93,7 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
       edgesPassDynamic,
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPassDynamic,
@@ -101,6 +105,7 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
       taaPass,
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPass,
@@ -109,6 +114,7 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
     this.passthroughStage.push(
       stencilPass,
       viewportPass,
+      shadowcatcherPass,
       stencilSelectPass,
       stencilMaskPass,
       blendPass,
