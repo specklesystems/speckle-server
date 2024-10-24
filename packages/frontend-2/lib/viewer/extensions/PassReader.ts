@@ -5,7 +5,7 @@ import { Vector3, Vector4 } from 'three'
 
 export class PassReader extends Extension {
   private outputBuffer: Uint8ClampedArray = new Uint8ClampedArray()
-  private renderTarget: WebGLRenderTarget | undefined = undefined
+  private renderTarget: WebGLRenderTarget | null = null
   private needsRead: boolean = false
   private readbackExecutor:
     | ((arg: [Uint8ClampedArray, number, number]) => void)
