@@ -1,10 +1,32 @@
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getGendoAIResponseKey } from '@/modules/shared/helpers/envHelper'
-import { updateGendoAIRenderRequest } from '@/modules/gendo/services'
+import { updateRenderRequestFactory } from '@/modules/gendo/services'
 import type express from 'express'
+import {
+  getRenderByGenerationIdFactory,
+  updateRenderRecordFactory
+} from '@/modules/gendo/repositories'
+import { db } from '@/db/knex'
+import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
+import { storeFileStream } from '@/modules/blobstorage/objectStorage'
+import {
+  updateBlobFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
 
 export default function (app: express.Express) {
   const responseToken = getGendoAIResponseKey()
+  const updateRenderRequest = updateRenderRequestFactory({
+    getRenderByGenerationId: getRenderByGenerationIdFactory({ db }),
+    uploadFileStream: uploadFileStreamFactory({
+      upsertBlob: upsertBlobFactory({ db }),
+      updateBlob: updateBlobFactory({ db })
+    }),
+    storeFileStream,
+    updateRenderRecord: updateRenderRecordFactory({ db }),
+    publish
+  })
 
   // Gendo api calls hit these endpoints w/ the results
   app.options('/api/thirdparty/gendo', corsMiddleware())
@@ -14,12 +36,11 @@ export default function (app: express.Express) {
     }
 
     const responseImage = req.body.generated_image
-    const status = req.body.status
+    // const status = req.body.status
     const gendoGenerationId = req.body.generationId
 
-    await updateGendoAIRenderRequest({
+    await updateRenderRequest({
       gendoGenerationId,
-      status,
       responseImage
     })
 

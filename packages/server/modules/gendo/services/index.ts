@@ -1,32 +1,30 @@
 import crs from 'crypto-random-string'
-import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
+import { GendoAIRenders } from '@/modules/core/dbSchema'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import {
   ProjectSubscriptions,
-  publish,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import { Merge } from 'type-fest'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
-import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
+
 import {
-  updateBlobFactory,
-  upsertBlobFactory
-} from '@/modules/blobstorage/repositories'
-import { db } from '@/db/knex'
-import { CreateRenderRequest, StoreRender } from '@/modules/gendo/domain/operations'
+  CreateRenderRequest,
+  GetRenderByGenerationId,
+  StoreRender,
+  UpdateRenderRecord,
+  UpdateRenderRequest
+} from '@/modules/gendo/domain/operations'
 import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
 import {
   getGendoAIAPIEndpoint,
   getGendoAIKey,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import { GendoRenderRequestError } from '@/modules/gendo/errors/main'
-
-const uploadFileStream = uploadFileStreamFactory({
-  upsertBlob: upsertBlobFactory({ db }),
-  updateBlob: updateBlobFactory({ db })
-})
+import {
+  GendoRenderRequestError,
+  GendoRenderRequestNotFoundError
+} from '@/modules/gendo/errors/main'
 
 export const createRenderRequestFactory =
   (deps: {
@@ -106,45 +104,59 @@ export const createRenderRequestFactory =
     return newRecord
   }
 
-export async function updateGendoAIRenderRequest(
-  input: Partial<{ status: string; responseImage: string }> & {
-    gendoGenerationId: string
+export const updateRenderRequestFactory =
+  (deps: {
+    getRenderByGenerationId: GetRenderByGenerationId
+    uploadFileStream: UploadFileStream
+    storeFileStream: typeof storeFileStream
+    updateRenderRecord: UpdateRenderRecord
+    publish: PublishSubscription
+  }): UpdateRenderRequest =>
+  async (input) => {
+    const gendoGenerationId = input.gendoGenerationId
+    const baseRequest = await deps.getRenderByGenerationId({ gendoGenerationId })
+    if (!baseRequest) {
+      throw new GendoRenderRequestNotFoundError(
+        'Request #{gendoGenerationId} not found',
+        {
+          info: {
+            gendoGenerationId
+          }
+        }
+      )
+    }
+
+    if (input.responseImage) {
+      const responseImageBuffer = Buffer.from(
+        input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
+        'base64'
+      )
+
+      const blobId = crs({ length: 10 })
+      await deps.uploadFileStream(
+        deps.storeFileStream,
+        { streamId: baseRequest.projectId, userId: baseRequest.userId },
+        {
+          blobId,
+          fileName: `gendo_speckle_render_${blobId}.png`,
+          fileType: 'png',
+          fileStream: responseImageBuffer
+        }
+      )
+
+      input.responseImage = blobId
+    }
+
+    const record = await deps.updateRenderRecord({
+      input: { ...input, updatedAt: new Date() },
+      id: baseRequest.id
+    })
+    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
+      projectVersionGendoAIRenderUpdated: record
+    })
+
+    return record
   }
-) {
-  if (input.responseImage) {
-    const [baseRequest] = await GendoAIRenders.knex()
-      .select<GendoAIRenderRecord[]>()
-      .where('gendoGenerationId', input.gendoGenerationId)
-    const responseImageBuffer = Buffer.from(
-      input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    )
-
-    const blobId = crs({ length: 10 })
-    await uploadFileStream(
-      storeFileStream,
-      { streamId: baseRequest.projectId, userId: baseRequest.userId },
-      {
-        blobId,
-        fileName: `gendo_speckle_render_${blobId}.png`,
-        fileType: 'png',
-        fileStream: responseImageBuffer
-      }
-    )
-
-    input.responseImage = blobId
-  }
-
-  const [record] = (await GendoAIRenders.knex()
-    .where('gendoGenerationId', input.gendoGenerationId)
-    .update({ ...input, updatedAt: knex.fn.now() }, '*')) as GendoAIRenderRecord[]
-
-  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
-    projectVersionGendoAIRenderUpdated: record
-  })
-
-  return record
-}
 
 export async function getGendoAIRenderRequests(versionId: string) {
   return await GendoAIRenders.knex()
