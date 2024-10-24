@@ -53,8 +53,11 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
 
     if (!response.ok) {
       const errMsg = `Webflow API Error: ${response.status} ${response.statusText}`
-      logger.error(errMsg)
-      return { items: [] }
+      throw createError({
+        statusCode: response.status,
+        fatal: true,
+        message: errMsg
+      })
     }
 
     const data = (await response.json()) as WebflowApiResponse
@@ -83,7 +86,10 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
     }
   } catch (e) {
     const errMsg = ensureError(e).message
-    logger.error(`Error fetching webflow items: ${errMsg}`)
-    return { items: [] }
+    throw createError({
+      statusCode: 500,
+      fatal: true,
+      message: `Error fetching webflow items: ${errMsg}`
+    })
   }
 })
