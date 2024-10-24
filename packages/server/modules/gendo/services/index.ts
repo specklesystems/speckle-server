@@ -1,8 +1,11 @@
 import crs from 'crypto-random-string'
 import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
-import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import {
+  ProjectSubscriptions,
+  publish,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 import { Merge } from 'type-fest'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
@@ -11,49 +14,97 @@ import {
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { db } from '@/db/knex'
+import { CreateRenderRequest, StoreRender } from '@/modules/gendo/domain/operations'
+import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
+import {
+  getGendoAIAPIEndpoint,
+  getGendoAIKey,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import { GendoRenderRequestError } from '@/modules/gendo/errors/main'
 
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob: upsertBlobFactory({ db }),
   updateBlob: updateBlobFactory({ db })
 })
 
-export async function createGendoAIRenderRequest(
-  input: GendoAiRenderInput & {
-    userId: string
-    status: string
-    id: string
-    gendoGenerationId?: string
-  }
-) {
-  const baseImageBuffer = Buffer.from(
-    input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
-    'base64'
-  )
+export const createRenderRequestFactory =
+  (deps: {
+    uploadFileStream: UploadFileStream
+    storeFileStream: typeof storeFileStream
+    storeRender: StoreRender
+    publish: PublishSubscription
+    fetch: typeof fetch
+  }): CreateRenderRequest =>
+  async (input) => {
+    const endpoint = getGendoAIAPIEndpoint()
+    const bearer = getGendoAIKey() as string
+    const webhookUrl = `${getServerOrigin()}/api/thirdparty/gendo`
 
-  const blobId = crs({ length: 10 })
-  await uploadFileStream(
-    storeFileStream,
-    { streamId: input.projectId, userId: input.userId },
-    {
-      blobId,
-      fileName: `gendo_base_image_${blobId}.png`,
-      fileType: 'png',
-      fileStream: baseImageBuffer
+    // TODO: Fn handles too many concerns, refactor (e.g. the client fetch call)
+    // TODO: Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
+    const gendoRequestBody = {
+      userId: input.userId,
+      depthMap: input.baseImage,
+      prompt: input.prompt,
+      webhookUrl
     }
-  )
 
-  input.baseImage = blobId
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${bearer}`
+      },
+      body: JSON.stringify(gendoRequestBody)
+    })
 
-  const [newRecord] = await GendoAIRenders.knex().insert(input, '*')
+    const status = response.status
+    if (status !== 200) {
+      const body = await response.json().catch((e) => ({ error: `${e}` }))
+      throw new GendoRenderRequestError('Failed to enqueue gendo render.', {
+        info: { body }
+      })
+    }
 
-  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
-    projectVersionGendoAIRenderCreated: newRecord
-  })
+    const gendoResponseBody = (await response.json()) as {
+      status: string
+      generationId: string
+    }
+    const baseImageBuffer = Buffer.from(
+      input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
+    )
 
-  // TODO: Schedule a timeout fail after x minutes
+    const blobId = crs({ length: 10 })
+    await deps.uploadFileStream(
+      deps.storeFileStream,
+      { streamId: input.projectId, userId: input.userId },
+      {
+        blobId,
+        fileName: `gendo_base_image_${blobId}.png`,
+        fileType: 'png',
+        fileStream: baseImageBuffer
+      }
+    )
 
-  return newRecord as GendoAIRenderRecord
-}
+    input.baseImage = blobId
+
+    const newRecord = await deps.storeRender({
+      ...input,
+      status: gendoResponseBody.status,
+      gendoGenerationId: gendoResponseBody.generationId,
+      id: crs({ length: 10 })
+    })
+
+    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
+      projectVersionGendoAIRenderCreated: newRecord
+    })
+
+    // TODO: Schedule a timeout fail after x minutes
+
+    return newRecord
+  }
 
 export async function updateGendoAIRenderRequest(
   input: Partial<{ status: string; responseImage: string }> & {
