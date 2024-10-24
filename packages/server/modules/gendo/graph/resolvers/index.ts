@@ -16,7 +16,6 @@ import {
   ProjectSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { GendoAiRender } from '@/test/graphql/generated/graphql'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -39,7 +38,7 @@ export = {
         ...item,
         user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
       }
-      return response as GendoAiRender
+      return response
     }
   },
   VersionMutations: {
@@ -92,8 +91,10 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        const body = await response.json().catch(() => '')
-        throw new GendoRenderRequestError('Failed to enque gendo render. ' + body)
+        const body = await response.json().catch((e) => ({ error: `${e}` }))
+        throw new GendoRenderRequestError('Failed to enqueue gendo render.', {
+          info: { body }
+        })
       }
       return true
     }
