@@ -33,13 +33,11 @@ const getSixMonthsAgo = (): Date => {
 
 export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> => {
   const { webflowApiToken } = useRuntimeConfig()
+  const logger = useLogger()
 
   if (!webflowApiToken) {
-    throw createError({
-      statusCode: 500,
-      fatal: true,
-      message: 'Webflow API token is not set'
-    })
+    logger.info('Webflow API token is not set. Returning an empty array of items.')
+    return { items: [] }
   }
 
   const url =
