@@ -51,7 +51,7 @@
     "tween": "^0.9.0",
     "uuid": "^8.3.2",
     "v-tooltip": "^2.0.3",
-    "vue": "^2.7.5",
+    "vue": "^3.0.0",
     "vue-apexcharts": "^1.6.1",
     "vue-histogram-slider": "^0.3.8",
     "vue-infinite-loading": "^2.4.5",
