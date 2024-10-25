@@ -1,19 +1,19 @@
+/* eslint-disable no-restricted-imports */
 /* eslint-disable camelcase */
 /* istanbul ignore file */
-'use strict'
-
-const { packageRoot } = require('./bootstrap')
-const fs = require('fs')
-const path = require('path')
-const {
+import { packageRoot } from './bootstrap'
+import fs from 'fs'
+import path from 'path'
+import {
   isTestEnv,
   ignoreMissingMigrations,
   postgresMaxConnections
-} = require('@/modules/shared/helpers/envHelper')
-const { dbLogger: logger } = require('./logging/logging')
+} from '@/modules/shared/helpers/envHelper'
+import { dbLogger as logger } from './logging/logging'
+import { Knex } from 'knex'
 
-function walk(dir) {
-  let results = []
+function walk(dir: string) {
+  let results: string[] = []
   const list = fs.readdirSync(dir)
   list.forEach(function (file) {
     const fullFile = path.join(dir, file)
@@ -50,7 +50,7 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
     env.POSTGRES_USER
   )}:${encodeURIComponent(env.POSTGRES_PASSWORD)}@${
     env.POSTGRES_URL
-  }/${encodeURIComponent(env.POSTGRES_DB)}`
+  }/${encodeURIComponent(env.POSTGRES_DB as string)}`
 } else {
   connectionUri = env.POSTGRES_URL
 }
@@ -77,16 +77,16 @@ const commonConfig = {
     directory: migrationDirs
   },
   log: {
-    warn(message) {
+    warn(message: unknown) {
       logger.warn(message)
     },
-    error(message) {
+    error(message: unknown) {
       logger.error(message)
     },
-    deprecate(message) {
+    deprecate(message: unknown) {
       logger.info(message)
     },
-    debug(message) {
+    debug(message: unknown) {
       logger.debug(message)
     }
   },
@@ -100,8 +100,7 @@ const commonConfig = {
   }
 }
 
-/** @type {Object<string, import('knex').Knex.Config>} */
-const config = {
+const config: Record<string, Knex.Config> = {
   test: {
     ...commonConfig,
     connection: {
@@ -129,4 +128,4 @@ const config = {
   }
 }
 
-module.exports = config
+export default config

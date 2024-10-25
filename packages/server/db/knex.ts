@@ -1,9 +1,9 @@
 /* istanbul ignore file */
-'use strict'
-
 const env = process.env.NODE_ENV || 'development'
-const configs = require('@/knexfile.js')
-const { dbStartupLogger } = require('@/logging/logging')
+import configs from '@/knexfile.js'
+import { dbStartupLogger } from '@/logging/logging'
+import knex from 'knex'
+
 const config = configs[env]
 
 config.log = {
@@ -18,12 +18,7 @@ config.log = {
 
 dbStartupLogger.info(`Loaded knex conf for ${env}`)
 
-/**
- * Need to override type because type def file incorrectly uses ES6
- * @type {import('knex').default}
- */
-const knex = require('knex')
 const knexInstance = knex(config)
 
-module.exports = knexInstance
-module.exports.db = knexInstance
+export default knexInstance
+export { knexInstance as db }
