@@ -34,6 +34,7 @@ export interface GPass {
   set options(value: PassOptions)
   get visibility(): ObjectVisibility | null
   get overrideMaterial(): Material | null
+  get overrideBatchMaterial(): Material | null
   get jitter(): boolean
   get clearColor(): number | undefined
   get clearAlpha(): number | undefined
@@ -104,6 +105,10 @@ export abstract class BaseGPass implements GPass {
   }
 
   get overrideMaterial(): Material | null {
+    return null
+  }
+
+  get overrideBatchMaterial(): Material | null {
     return null
   }
 

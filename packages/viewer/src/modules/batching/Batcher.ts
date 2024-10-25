@@ -470,11 +470,30 @@ export default class Batcher {
     }
   }
 
+  public overrideBatchMaterial(
+    ranges: Record<string, BatchUpdateRange>,
+    material: Material
+  ) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.setOverrideBatchMaterial(material)
+    }
+  }
+
   public restoreMaterial(ranges: Record<string, BatchUpdateRange>) {
     for (const k in ranges) {
       if (this.batches[k].geometryType !== GeometryType.MESH) continue
       const mesh = this.batches[k].renderObject as SpeckleMesh
       mesh.restoreMaterial()
+    }
+  }
+
+  public restoreBatchMaterial(ranges: Record<string, BatchUpdateRange>) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.restoreBatchMaterial()
     }
   }
 

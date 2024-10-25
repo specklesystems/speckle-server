@@ -37,7 +37,11 @@ export class GViewportPass extends BaseGPass {
     return 'GEOMETRY-VIEWPORT'
   }
 
-  get overrideMaterial(): Material {
+  // get overrideMaterial(): Material {
+  //   return this.viewportMaterial
+  // }
+
+  get overrideBatchMaterial(): Material {
     return this.viewportMaterial
   }
 

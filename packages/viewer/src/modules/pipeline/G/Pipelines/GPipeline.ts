@@ -98,6 +98,12 @@ export abstract class GPipeline {
           pass.overrideMaterial
         )
 
+      if (pass.overrideBatchMaterial)
+        this.speckleRenderer.batcher.overrideBatchMaterial(
+          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility,
+          pass.overrideBatchMaterial
+        )
+
       if (pass.jitter && camera) {
         this.frameProjection.copy(camera.projectionMatrix)
         if (camera instanceof OrthographicCamera) {
@@ -142,6 +148,10 @@ export abstract class GPipeline {
         this.speckleRenderer.batcher.applyVisibility(restoreVisibility)
       if (pass.overrideMaterial)
         this.speckleRenderer.batcher.restoreMaterial(
+          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility
+        )
+      if (pass.overrideBatchMaterial)
+        this.speckleRenderer.batcher.restoreBatchMaterial(
           pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility
         )
       if (pass.jitter && camera) camera.projectionMatrix.copy(this.frameProjection)
