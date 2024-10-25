@@ -1,4 +1,4 @@
-import { authorizeResolver } from '@/modules/shared'
+import { authorizeResolver, BranchPubsubEvents } from '@/modules/shared'
 import {
   createBranchAndNotifyFactory,
   updateBranchAndNotifyFactory,
@@ -30,7 +30,7 @@ import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
 
 const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -136,6 +136,23 @@ export = {
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId!)
       return deleted
+    }
+  },
+  Subscription: {
+    branchCreated: {
+      subscribe: filteredSubscribe(
+        BranchPubsubEvents.BranchCreated,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+
+          return payload.streamId === variables.streamId
+        }
+      )
     }
   }
 } as Resolvers

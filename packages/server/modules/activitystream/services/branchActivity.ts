@@ -38,8 +38,7 @@ export const addBranchCreatedActivityFactory =
         info: { branch },
         message: `Branch created: ${branch.name} (${branch.id})`
       }),
-      // @deprecated
-      pubsub.publish(BranchPubsubEvents.BranchCreated, {
+      publish(BranchPubsubEvents.BranchCreated, {
         branchCreated: { ...branch },
         streamId: branch.streamId
       }),
