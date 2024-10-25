@@ -1,6 +1,5 @@
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
-  pubsub,
   BranchSubscriptions as BranchPubsubEvents,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
@@ -113,7 +112,7 @@ export const addBranchDeletedActivityFactory =
         info: { branch: { ...input, name: branchName } },
         message: `Branch deleted: '${branchName}' (${input.id})`
       }),
-      pubsub.publish(BranchPubsubEvents.BranchDeleted, {
+      publish(BranchPubsubEvents.BranchDeleted, {
         branchDeleted: input,
         streamId
       }),

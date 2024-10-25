@@ -173,6 +173,21 @@ export = {
           return streamMatch
         }
       )
+    },
+    branchDeleted: {
+      subscribe: filteredSubscribe(
+        BranchPubsubEvents.BranchDeleted,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+
+          return payload.streamId === variables.streamId
+        }
+      )
     }
   }
 } as Resolvers
