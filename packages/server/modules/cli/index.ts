@@ -1,7 +1,8 @@
-const path = require('path')
-const yargs = require('yargs')
-require('../../bootstrap')
-const { logger } = require('@/logging/logging')
+/* eslint-disable no-restricted-imports */
+import path from 'path'
+import yargs from 'yargs'
+import '../../bootstrap'
+import { logger } from '@/logging/logging'
 
 const execution = yargs
   .scriptName('yarn cli')
@@ -25,5 +26,6 @@ const execution = yargs
 
 const promise = Promise.resolve(execution)
 promise.then(() => {
-  yargs.exit(0)
+  // weird TS typing issue
+  yargs.exit(0, undefined as unknown as Error)
 })

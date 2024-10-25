@@ -126,7 +126,12 @@ const oidcStrategyBuilderFactory =
                 role: invite
                   ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
                   : undefined,
-                verified: !!invite
+                verified: !!invite,
+                signUpContext: {
+                  req,
+                  isInvite: !!invite,
+                  newsletterConsent: !!req.session.newsletterConsent
+                }
               }
             })
 

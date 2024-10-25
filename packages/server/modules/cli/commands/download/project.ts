@@ -31,7 +31,7 @@ import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/man
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
-  addReplyAddedActivity
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
@@ -44,6 +44,7 @@ import {
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
@@ -58,7 +59,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
@@ -78,6 +78,7 @@ import { addCommitCreatedActivityFactory } from '@/modules/activitystream/servic
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 
 const command: CommandModule<
   unknown,
@@ -162,7 +163,14 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
@@ -237,7 +245,10 @@ const command: CommandModule<
       createBranchAndNotify: createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db }),
-        addBranchCreatedActivity
+        addBranchCreatedActivity: addBranchCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
       })
     })
     await downloadProject(argv, { logger: cliLogger })

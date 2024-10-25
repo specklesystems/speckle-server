@@ -32,7 +32,10 @@ export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<
-  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+  Pick<
+    Workspace,
+    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+  >[]
 >
 
 export type GetWorkspace = (args: {

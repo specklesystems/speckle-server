@@ -7,6 +7,7 @@
         label="New role"
         fully-control-value
         :disabled-items="disabledItems"
+        :current-role="currentRole"
         show-label
         show-description
       />
@@ -43,8 +44,8 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  name: string
   workspaceDomainPolicyCompliant?: boolean | null
+  currentRole?: WorkspaceRoles
 }>()
 
 const open = defineModel<boolean>('open', { required: true })

@@ -20,6 +20,7 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+import type express from 'express'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -348,3 +349,32 @@ export type FavoriteStream = (params: {
   favorited?: boolean | undefined
   userResourceAccessRules?: ContextResourceAccessRules
 }) => Promise<Stream>
+
+export type AdminGetProjectList = (args: {
+  query: string | null
+  orderBy: string | null
+  visibility: string | null
+  limit: number
+  streamIdWhitelist?: string[]
+  cursor: string | null
+}) => Promise<{
+  cursor: null | string
+  items: Stream[]
+  totalCount: number
+}>
+
+export type ValidatePermissionsReadStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>
+
+export type ValidatePermissionsWriteStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>

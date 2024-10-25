@@ -1,16 +1,21 @@
-'use strict'
-const { validateScopes, authorizeResolver } = require('@/modules/shared')
+import {
+  GetStream,
+  ValidatePermissionsReadStream,
+  ValidatePermissionsWriteStream
+} from '@/modules/core/domain/streams/operations'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { AuthorizeResolver, ValidateScopes } from '@/modules/shared/domain/operations'
+import { DatabaseError } from '@/modules/shared/errors'
+import { Roles, Scopes } from '@speckle/shared'
 
-const { Roles, Scopes } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { DatabaseError } = require('@/modules/shared/errors')
-const { getStreamFactory } = require('@/modules/core/repositories/streams')
-const { db } = require('@/db/knex')
-
-module.exports = {
-  async validatePermissionsReadStream(streamId, req) {
-    const getStream = getStreamFactory({ db })
-    const stream = await getStream({ streamId, userId: req.context.userId })
+export const validatePermissionsReadStreamFactory =
+  (deps: {
+    getStream: GetStream
+    validateScopes: ValidateScopes
+    authorizeResolver: AuthorizeResolver
+  }): ValidatePermissionsReadStream =>
+  async (streamId, req) => {
+    const stream = await deps.getStream({ streamId, userId: req.context.userId })
     if (stream?.isPublic) return { result: true, status: 200 }
 
     try {
@@ -30,14 +35,14 @@ module.exports = {
 
     if (!stream.isPublic) {
       try {
-        await validateScopes(req.context.scopes, Scopes.Streams.Read)
+        await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
       } catch (e) {
         req.log.info({ err: e }, 'Error while validating scopes')
         return { result: false, status: 401 }
       }
 
       try {
-        await authorizeResolver(
+        await deps.authorizeResolver(
           req.context.userId,
           streamId,
           Roles.Stream.Reviewer,
@@ -50,9 +55,14 @@ module.exports = {
       }
     }
     return { result: true, status: 200 }
-  },
+  }
 
-  async validatePermissionsWriteStream(streamId, req) {
+export const validatePermissionsWriteStreamFactory =
+  (deps: {
+    validateScopes: ValidateScopes
+    authorizeResolver: AuthorizeResolver
+  }): ValidatePermissionsWriteStream =>
+  async (streamId, req) => {
     if (!req.context || !req.context.auth) {
       req.log.debug('User is not authenticated, so cannot write to stream.')
       return { result: false, status: 401 }
@@ -67,14 +77,14 @@ module.exports = {
     }
 
     try {
-      await validateScopes(req.context.scopes, Scopes.Streams.Write)
+      await deps.validateScopes(req.context.scopes, Scopes.Streams.Write)
     } catch (e) {
       req.log.info({ err: e }, 'Error while checking scopes')
       return { result: false, status: 401 }
     }
 
     try {
-      await authorizeResolver(
+      await deps.authorizeResolver(
         req.context.userId,
         streamId,
         Roles.Stream.Contributor,
@@ -88,4 +98,3 @@ module.exports = {
 
     return { result: true, status: 200 }
   }
-}

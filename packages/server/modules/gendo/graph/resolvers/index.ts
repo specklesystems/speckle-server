@@ -3,7 +3,8 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
 import {
   getGendoAIAPIEndpoint,
-  getGendoAIKey
+  getGendoAIKey,
+  getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import {
   createGendoAIRenderRequest,
@@ -15,7 +16,6 @@ import {
   ProjectSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { GendoAiRender } from '@/test/graphql/generated/graphql'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -38,7 +38,7 @@ export = {
         ...item,
         user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
       }
-      return response as GendoAiRender
+      return response
     }
   },
   VersionMutations: {
@@ -60,7 +60,7 @@ export = {
 
       const endpoint = getGendoAIAPIEndpoint() as string
       const bearer = getGendoAIKey() as string
-      const webhookUrl = `${process.env.CANONICAL_URL}/api/thirdparty/gendo`
+      const webhookUrl = `${getServerOrigin()}/api/thirdparty/gendo`
 
       // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
       const gendoRequestBody = {
@@ -91,8 +91,10 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        const body = await response.json().catch(() => '')
-        throw new GendoRenderRequestError('Failed to enque gendo render. ' + body)
+        const body = await response.json().catch((e) => ({ error: `${e}` }))
+        throw new GendoRenderRequestError('Failed to enqueue gendo render.', {
+          info: { body }
+        })
       }
       return true
     }
