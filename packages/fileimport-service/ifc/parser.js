@@ -4,9 +4,9 @@ const { logger } = require('../observability/logging.js')
 const ServerAPI = require('./api.js')
 
 module.exports = class IFCParser {
-  constructor({ serverApi, logger }) {
+  constructor({ db, serverApi, logger }) {
     this.api = new WebIFC.IfcAPI()
-    this.serverApi = serverApi || new ServerAPI({ logger })
+    this.serverApi = serverApi || new ServerAPI({ db, logger })
   }
 
   async parse(data) {
