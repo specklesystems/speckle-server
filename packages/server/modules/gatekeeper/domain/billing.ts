@@ -13,9 +13,10 @@ export type PaidWorkspacePlanStatuses =
   | UnpaidWorkspacePlanStatuses
   // | 'paymentNeeded' // unsure if this is needed
   | 'paymentFailed'
-  | 'cancelled'
+  | 'cancelationScheduled'
+  | 'canceled'
 
-export type TrialWorkspacePlanStatuses = 'trial'
+export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
 
 type BaseWorkspacePlan = {
   workspaceId: string
@@ -108,10 +109,20 @@ export type WorkspaceSubscription = {
   billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
 }
-
 export const subscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
+  cancelAt: z.date().nullable(),
+  status: z.union([
+    z.literal('incomplete'),
+    z.literal('incomplete_expired'),
+    z.literal('trialing'),
+    z.literal('active'),
+    z.literal('past_due'),
+    z.literal('canceled'),
+    z.literal('unpaid'),
+    z.literal('paused')
+  ]),
   products: z
     .object({
       // we're going to use the productId to match with our
@@ -126,9 +137,17 @@ export const subscriptionData = z.object({
 // this abstracts the stripe sub data
 export type SubscriptionData = z.infer<typeof subscriptionData>
 
-export type SaveWorkspaceSubscription = (args: {
+export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
 }) => Promise<void>
+
+export type GetWorkspaceSubscription = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceSubscription | null>
+
+export type GetWorkspaceSubscriptionBySubscriptionId = (args: {
+  subscriptionId: string
+}) => Promise<WorkspaceSubscription | null>
 
 export type GetSubscriptionData = (args: {
   subscriptionId: string

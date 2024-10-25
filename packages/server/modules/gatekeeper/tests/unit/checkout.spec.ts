@@ -43,6 +43,9 @@ describe('checkout @gatekeeper', () => {
           },
           saveCheckoutSession: () => {
             expect.fail()
+          },
+          deleteCheckoutSession: () => {
+            expect.fail()
           }
         })({
           workspaceId,
@@ -71,6 +74,9 @@ describe('checkout @gatekeeper', () => {
           createCheckoutSession: () => {
             expect.fail()
           },
+          deleteCheckoutSession: () => {
+            expect.fail()
+          },
           saveCheckoutSession: () => {
             expect.fail()
           }
@@ -82,6 +88,49 @@ describe('checkout @gatekeeper', () => {
         })
       )
       expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
+    })
+    it('does not allow checkout for a workspace, that already has a recent checkout session', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const err = await expectToThrow(() =>
+        startCheckoutSessionFactory({
+          getWorkspacePlan: async () => ({
+            name: 'team',
+            status: 'trial',
+            workspaceId
+          }),
+          getWorkspaceCheckoutSession: async () => ({
+            billingInterval: 'monthly',
+            id: cryptoRandomString({ length: 10 }),
+            paymentStatus: 'unpaid',
+            url: '',
+            workspaceId,
+            workspacePlan: 'business',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }),
+          countRole: () => {
+            expect.fail()
+          },
+          createCheckoutSession: () => {
+            expect.fail()
+          },
+
+          deleteCheckoutSession: () => {
+            expect.fail()
+          },
+          saveCheckoutSession: () => {
+            expect.fail()
+          }
+        })({
+          workspaceId,
+          billingInterval: 'monthly',
+          workspacePlan: 'business',
+          workspaceSlug: cryptoRandomString({ length: 10 })
+        })
+      )
+      expect(err.message).to.be.equal(
+        new WorkspaceCheckoutSessionInProgressError().message
+      )
     })
     it('does not allow checkout for a workspace, that already has a checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
@@ -106,6 +155,10 @@ describe('checkout @gatekeeper', () => {
             expect.fail()
           },
           createCheckoutSession: () => {
+            expect.fail()
+          },
+
+          deleteCheckoutSession: () => {
             expect.fail()
           },
           saveCheckoutSession: () => {
@@ -141,6 +194,9 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => null,
         getWorkspaceCheckoutSession: async () => null,
         countRole: async () => 1,
+        deleteCheckoutSession: () => {
+          expect.fail()
+        },
         createCheckoutSession: async () => checkoutSession,
         saveCheckoutSession: async ({ checkoutSession }) => {
           storedCheckoutSession = checkoutSession
@@ -154,7 +210,7 @@ describe('checkout @gatekeeper', () => {
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
     })
-    it('creates and stores a checkout for TRIAL and CANCELLED workspaces', async () => {
+    it('creates and stores a checkout for workspaces without a plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspacePlan: PaidWorkspacePlans = 'pro'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
@@ -173,6 +229,9 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => null,
         getWorkspaceCheckoutSession: async () => null,
         countRole: async () => 1,
+        deleteCheckoutSession: () => {
+          expect.fail()
+        },
         createCheckoutSession: async () => checkoutSession,
         saveCheckoutSession: async ({ checkoutSession }) => {
           storedCheckoutSession = checkoutSession
@@ -183,6 +242,222 @@ describe('checkout @gatekeeper', () => {
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 })
       })
+      expect(checkoutSession).deep.equal(storedCheckoutSession)
+      expect(checkoutSession).deep.equal(createdCheckoutSession)
+    })
+
+    it('creates and stores a checkout for TRIAL workspaces', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
+      const checkoutSession: CheckoutSession = {
+        id: cryptoRandomString({ length: 10 }),
+        workspaceId,
+        workspacePlan,
+        url: 'https://example.com',
+        billingInterval,
+        paymentStatus: 'unpaid',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      let storedCheckoutSession: CheckoutSession | undefined = undefined
+      const createdCheckoutSession = await startCheckoutSessionFactory({
+        getWorkspacePlan: async () => ({ workspaceId, name: 'team', status: 'trial' }),
+        getWorkspaceCheckoutSession: async () => null,
+        countRole: async () => 1,
+        deleteCheckoutSession: () => {
+          expect.fail()
+        },
+        createCheckoutSession: async () => checkoutSession,
+        saveCheckoutSession: async ({ checkoutSession }) => {
+          storedCheckoutSession = checkoutSession
+        }
+      })({
+        workspaceId,
+        billingInterval,
+        workspacePlan,
+        workspaceSlug: cryptoRandomString({ length: 10 })
+      })
+      expect(checkoutSession).deep.equal(storedCheckoutSession)
+      expect(checkoutSession).deep.equal(createdCheckoutSession)
+    })
+
+    it('creates and stores a checkout for TRIAL workspaces even if it has an old unpaid checkout session', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
+      const checkoutSession: CheckoutSession = {
+        id: cryptoRandomString({ length: 10 }),
+        workspaceId,
+        workspacePlan,
+        url: 'https://example.com',
+        billingInterval,
+        paymentStatus: 'unpaid',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      let existingCheckoutSession: CheckoutSession | undefined = {
+        billingInterval,
+        id: cryptoRandomString({ length: 10 }),
+        createdAt: new Date(1990, 1, 12),
+        updatedAt: new Date(1990, 1, 12),
+        paymentStatus: 'unpaid',
+        url: 'https://example.com',
+        workspaceId,
+        workspacePlan
+      }
+      let storedCheckoutSession: CheckoutSession | undefined = undefined
+      const createdCheckoutSession = await startCheckoutSessionFactory({
+        getWorkspacePlan: async () => ({ workspaceId, name: 'team', status: 'trial' }),
+        getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
+        countRole: async () => 1,
+        deleteCheckoutSession: async () => {
+          existingCheckoutSession = undefined
+        },
+        createCheckoutSession: async () => checkoutSession,
+        saveCheckoutSession: async ({ checkoutSession }) => {
+          storedCheckoutSession = checkoutSession
+        }
+      })({
+        workspaceId,
+        billingInterval,
+        workspacePlan,
+        workspaceSlug: cryptoRandomString({ length: 10 })
+      })
+      expect(existingCheckoutSession).to.be.undefined
+      expect(checkoutSession).deep.equal(storedCheckoutSession)
+      expect(checkoutSession).deep.equal(createdCheckoutSession)
+    })
+
+    it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
+      let existingCheckoutSession: CheckoutSession | undefined = {
+        billingInterval,
+        id: cryptoRandomString({ length: 10 }),
+        createdAt: new Date(1990, 1, 12),
+        updatedAt: new Date(1990, 1, 12),
+        paymentStatus: 'paid',
+        url: 'https://example.com',
+        workspaceId,
+        workspacePlan
+      }
+      const err = await expectToThrow(async () => {
+        await startCheckoutSessionFactory({
+          getWorkspacePlan: async () => ({
+            workspaceId,
+            name: 'team',
+            status: 'trial'
+          }),
+          getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
+          countRole: async () => 1,
+          deleteCheckoutSession: async () => {
+            existingCheckoutSession = undefined
+          },
+          createCheckoutSession: async () => {
+            expect.fail()
+          },
+          saveCheckoutSession: async () => {}
+        })({
+          workspaceId,
+          billingInterval,
+          workspacePlan,
+          workspaceSlug: cryptoRandomString({ length: 10 })
+        })
+      })
+      expect(err.message).to.equal(new WorkspaceAlreadyPaidError().message)
+    })
+
+    it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
+      let existingCheckoutSession: CheckoutSession | undefined = {
+        billingInterval,
+        id: cryptoRandomString({ length: 10 }),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        paymentStatus: 'unpaid',
+        url: 'https://example.com',
+        workspaceId,
+        workspacePlan
+      }
+      const err = await expectToThrow(async () => {
+        await startCheckoutSessionFactory({
+          getWorkspacePlan: async () => ({
+            workspaceId,
+            name: 'team',
+            status: 'trial'
+          }),
+          getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
+          countRole: async () => 1,
+          deleteCheckoutSession: async () => {
+            existingCheckoutSession = undefined
+          },
+          createCheckoutSession: async () => {
+            expect.fail()
+          },
+          saveCheckoutSession: async () => {}
+        })({
+          workspaceId,
+          billingInterval,
+          workspacePlan,
+          workspaceSlug: cryptoRandomString({ length: 10 })
+        })
+      })
+      expect(err.message).to.equal(
+        new WorkspaceCheckoutSessionInProgressError().message
+      )
+    })
+
+    it('creates and stores a checkout for CANCELED workspaces', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
+      const checkoutSession: CheckoutSession = {
+        id: cryptoRandomString({ length: 10 }),
+        workspaceId,
+        workspacePlan,
+        url: 'https://example.com',
+        billingInterval,
+        paymentStatus: 'unpaid',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      let existingCheckoutSession: CheckoutSession | undefined = {
+        billingInterval: 'monthly',
+        id: cryptoRandomString({ length: 10 }),
+        paymentStatus: 'paid',
+        url: '',
+        workspaceId,
+        workspacePlan: 'business',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      let storedCheckoutSession: CheckoutSession | undefined = undefined
+      const createdCheckoutSession = await startCheckoutSessionFactory({
+        getWorkspacePlan: async () => ({
+          name: 'pro',
+          workspaceId,
+          status: 'canceled'
+        }),
+        getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
+        countRole: async () => 1,
+        deleteCheckoutSession: async () => {
+          existingCheckoutSession = undefined
+        },
+        createCheckoutSession: async () => checkoutSession,
+        saveCheckoutSession: async ({ checkoutSession }) => {
+          storedCheckoutSession = checkoutSession
+        }
+      })({
+        workspaceId,
+        billingInterval,
+        workspacePlan,
+        workspaceSlug: cryptoRandomString({ length: 10 })
+      })
+      expect(existingCheckoutSession).to.be.undefined
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
     })
@@ -204,7 +479,7 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
-          saveWorkspaceSubscription: async () => {
+          upsertWorkspaceSubscription: async () => {
             expect.fail()
           }
         })({ sessionId, subscriptionId })
@@ -236,7 +511,7 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
-          saveWorkspaceSubscription: async () => {
+          upsertWorkspaceSubscription: async () => {
             expect.fail()
           }
         })({ sessionId, subscriptionId })
@@ -272,7 +547,9 @@ describe('checkout @gatekeeper', () => {
                 quantity: 10,
                 subscriptionItemId: cryptoRandomString({ length: 10 })
               }
-            ]
+            ],
+            status: 'active',
+            cancelAt: null
           }
 
           let storedWorkspaceSubscriptionData: WorkspaceSubscription | undefined =
@@ -287,7 +564,7 @@ describe('checkout @gatekeeper', () => {
               storedWorkspacePlan = workspacePlan
             },
             getSubscriptionData: async () => subscriptionData,
-            saveWorkspaceSubscription: async ({ workspaceSubscription }) => {
+            upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
             }
           })({ sessionId, subscriptionId })

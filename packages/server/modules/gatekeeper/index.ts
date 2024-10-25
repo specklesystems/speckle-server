@@ -3,12 +3,21 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getBillingRouter } from '@/modules/gatekeeper/rest/billing'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
+import { db } from '@/db/knex'
+import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
 
+const initScopes = async () => {
+  const registerFunc = registerOrUpdateScopeFactory({ db })
+  await Promise.all(gatekeeperScopes.map((scope) => registerFunc({ scope })))
+}
+
 const gatekeeperModule: SpeckleModule = {
   async init(app, isInitial) {
+    await initScopes()
     if (!FF_GATEKEEPER_MODULE_ENABLED) return
 
     const isLicenseValid = await validateModuleLicense({
