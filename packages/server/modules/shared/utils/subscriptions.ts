@@ -58,6 +58,7 @@ import {
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { CommitRecord } from '@/modules/core/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -314,6 +315,13 @@ type SubscriptionTypeMap = {
   }
   [CommitSubscriptions.CommitUpdated]: {
     payload: { commitUpdated: CommitUpdateInput; streamId: string; commitId: string }
+    variables: SubscriptionCommitUpdatedArgs
+  }
+  [CommitSubscriptions.CommitDeleted]: {
+    payload: {
+      commitDeleted: CommitRecord & { streamId: string; branchId: string }
+      streamId: string
+    }
     variables: SubscriptionCommitUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
