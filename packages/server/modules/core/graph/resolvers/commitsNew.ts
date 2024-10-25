@@ -401,5 +401,25 @@ export = {
         }
       )
     }
+  },
+  commitUpdated: {
+    subscribe: filteredSubscribe(
+      CommitSubscriptions.CommitUpdated,
+      async (payload, variables, context) => {
+        await authorizeResolver(
+          context.userId,
+          payload.streamId,
+          Roles.Stream.Reviewer,
+          context.resourceAccessRules
+        )
+
+        const streamMatch = payload.streamId === variables.streamId
+        if (streamMatch && variables.commitId) {
+          return payload.commitId === variables.commitId
+        }
+
+        return streamMatch
+      }
+    )
   }
 } as Resolvers

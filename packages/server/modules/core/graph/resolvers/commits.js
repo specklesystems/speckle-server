@@ -11,33 +11,11 @@ const { Roles } = require('@speckle/shared')
  */
 
 // subscription events
-const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
 const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Subscription: {
-    commitUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([COMMIT_UPDATED]),
-        async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
-
-          const streamMatch = payload.streamId === variables.streamId
-          if (streamMatch && variables.commitId) {
-            return payload.commitId === variables.commitId
-          }
-
-          return streamMatch
-        }
-      )
-    },
-
     commitDeleted: {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_DELETED]),

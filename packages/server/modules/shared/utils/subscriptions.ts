@@ -41,7 +41,9 @@ import {
   SubscriptionStreamUpdatedArgs,
   SubscriptionStreamDeletedArgs,
   SubscriptionCommitCreatedArgs,
-  CommitCreateInput
+  CommitCreateInput,
+  SubscriptionCommitUpdatedArgs,
+  CommitUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -309,6 +311,10 @@ type SubscriptionTypeMap = {
       streamId: string
     }
     variables: SubscriptionCommitCreatedArgs
+  }
+  [CommitSubscriptions.CommitUpdated]: {
+    payload: { commitUpdated: CommitUpdateInput; streamId: string; commitId: string }
+    variables: SubscriptionCommitUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
