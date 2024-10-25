@@ -40,6 +40,13 @@ import {
   ProjectUpdateInput,
   SubscriptionStreamUpdatedArgs,
   SubscriptionStreamDeletedArgs,
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchUpdatedArgs,
+  BranchUpdateInput,
+  UpdateModelInput,
+  SubscriptionBranchDeletedArgs,
+  BranchDeleteInput,
+  DeleteModelInput,
   SubscriptionCommitCreatedArgs,
   CommitCreateInput,
   SubscriptionCommitUpdatedArgs,
@@ -59,6 +66,7 @@ import {
 } from '@/modules/automate/helpers/graphTypes'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -306,6 +314,22 @@ type SubscriptionTypeMap = {
     payload: { streamDeleted: { streamId: string }; streamId: string }
     variables: SubscriptionStreamDeletedArgs
   }
+  [BranchSubscriptions.BranchCreated]: {
+    payload: { branchCreated: BranchRecord; streamId: string }
+    variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
+  }
+  [BranchSubscriptions.BranchDeleted]: {
+    payload: { branchDeleted: BranchDeleteInput | DeleteModelInput; streamId: string }
+    variables: SubscriptionBranchDeletedArgs
+  }
   [CommitSubscriptions.CommitCreated]: {
     payload: {
       commitCreated: CommitCreateInput & { id: string; authorId: string }
@@ -334,6 +358,7 @@ type SubscriptionEvent =
   | StreamSubscriptions
   | UserSubscriptions
   | ViewerSubscriptions
+  | BranchSubscriptions
 
 /**
  * Publish a GQL subscription event
