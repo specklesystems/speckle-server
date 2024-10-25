@@ -25,6 +25,10 @@ export interface RevitViewsSendFilter extends ISendFilter {
   availableViews: string[]
 }
 
+export interface RevitSelectionSendFilter extends ISendFilter {
+  selectedViewIds: string[]
+}
+
 export class SenderModelCard extends ModelCard implements ISenderModelCard {
   sendFilter?: ISendFilter | undefined
   sending?: boolean | undefined

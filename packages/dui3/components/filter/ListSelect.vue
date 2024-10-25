@@ -40,6 +40,12 @@
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
+      <div v-else-if="selectedFilter.id === 'revitViewsSelection'">
+        <FilterRevitViewsSelection
+          :filter="(selectedFilter as RevitSelectionSendFilter)"
+          @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
+        />
+      </div>
     </div>
     <div v-if="!!filter" class="text-xs caption rounded p-2 bg-orange-500/10">
       This action will replace the existing
@@ -52,7 +58,8 @@
 import type {
   ISendFilter,
   IDirectSelectionSendFilter,
-  RevitViewsSendFilter
+  RevitViewsSendFilter,
+  RevitSelectionSendFilter
 } from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { storeToRefs } from 'pinia'
