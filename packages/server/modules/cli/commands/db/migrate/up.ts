@@ -1,8 +1,8 @@
-const knex = require('@/db/knex')
-const { logger } = require('@/logging/logging')
+import knex from '@/db/knex'
+import { logger } from '@/logging/logging'
+import { CommandModule } from 'yargs'
 
-/** @type {import('yargs').CommandModule} */
-const command = {
+const command: CommandModule = {
   command: 'up',
   describe: 'Run next migration that has not yet been run',
   async handler() {
@@ -12,4 +12,4 @@ const command = {
   }
 }
 
-module.exports = command
+export = command
