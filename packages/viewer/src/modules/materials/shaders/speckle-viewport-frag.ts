@@ -74,7 +74,7 @@ void main() {
 		color = vec3( mix( minIntensity, 1., uv.y ) );
 	#endif
 
-	gl_FragColor = vec4( color.rgb * diffuseColor.a, 1. );
+	gl_FragColor = vec4( color.rgb, diffuseColor.a);
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>

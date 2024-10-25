@@ -1,7 +1,9 @@
 import {
   DoubleSide,
+  FrontSide,
   Material,
   NoBlending,
+  NormalBlending,
   OrthographicCamera,
   PerspectiveCamera,
   Plane,
@@ -18,11 +20,13 @@ import Logger from '../../utils/Logger.js'
 export interface ViewportPassOptions extends PassOptions {
   minIntensity?: number
   matcapTexture?: Asset | null
+  opacity?: number
 }
 
 export const DefaultViewportPassOptions: Required<ViewportPassOptions> = {
   minIntensity: 0.1,
-  matcapTexture: null
+  matcapTexture: null,
+  opacity: 1
 }
 
 export class GViewportPass extends BaseGPass {
@@ -47,7 +51,13 @@ export class GViewportPass extends BaseGPass {
 
   public set options(value: ViewportPassOptions) {
     super.options = value
+    this.viewportMaterial.blending =
+      this._options.opacity < 1 ? NormalBlending : NoBlending
+    this.viewportMaterial.side = this._options.opacity < 1 ? FrontSide : DoubleSide
+    this.viewportMaterial.transparent = this._options.opacity < 1 ? true : false
+    this.viewportMaterial.toneMapped = false
     this.viewportMaterial.minIntensity = this._options.minIntensity
+    this.viewportMaterial.opacity = this._options.opacity
     this.setMatcapTexture(this._options.matcapTexture)
   }
 
@@ -55,11 +65,7 @@ export class GViewportPass extends BaseGPass {
     super()
 
     this.viewportMaterial = new SpeckleViewportMaterial({})
-    this.viewportMaterial.blending = NoBlending
-    this.viewportMaterial.side = DoubleSide
-    this.viewportMaterial.toneMapped = false
-    this.viewportMaterial.minIntensity = this._options.minIntensity
-    this.setMatcapTexture(this._options.matcapTexture)
+    this.options = DefaultViewportPassOptions
   }
 
   public setClippingPlanes(planes: Plane[]) {
