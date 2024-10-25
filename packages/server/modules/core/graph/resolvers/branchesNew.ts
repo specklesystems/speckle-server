@@ -153,6 +153,26 @@ export = {
           return payload.streamId === variables.streamId
         }
       )
+    },
+    branchUpdated: {
+      subscribe: filteredSubscribe(
+        BranchPubsubEvents.BranchUpdated,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+
+          const streamMatch = payload.streamId === variables.streamId
+          if (streamMatch && variables.branchId) {
+            return payload.branchId === variables.branchId
+          }
+
+          return streamMatch
+        }
+      )
     }
   }
 } as Resolvers

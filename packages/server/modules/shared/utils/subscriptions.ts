@@ -40,7 +40,10 @@ import {
   ProjectUpdateInput,
   SubscriptionStreamUpdatedArgs,
   SubscriptionStreamDeletedArgs,
-  SubscriptionBranchCreatedArgs
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchUpdatedArgs,
+  BranchUpdateInput,
+  UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -306,6 +309,14 @@ type SubscriptionTypeMap = {
   [BranchSubscriptions.BranchCreated]: {
     payload: { branchCreated: BranchRecord; streamId: string }
     variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

@@ -75,8 +75,7 @@ export const addBranchUpdatedActivityFactory =
         info: { old: oldBranch, new: update },
         message: `Branch metadata changed for branch ${update.id}`
       }),
-      // @deprecated
-      pubsub.publish(BranchPubsubEvents.BranchUpdated, {
+      publish(BranchPubsubEvents.BranchUpdated, {
         branchUpdated: { ...update },
         streamId,
         branchId: update.id

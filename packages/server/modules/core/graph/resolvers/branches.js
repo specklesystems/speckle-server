@@ -11,33 +11,11 @@ const { Roles } = require('@speckle/shared')
  */
 
 // subscription events
-const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Subscription: {
-    branchUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([BRANCH_UPDATED]),
-        async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
-
-          const streamMatch = payload.streamId === variables.streamId
-          if (streamMatch && variables.branchId) {
-            return payload.branchId === variables.branchId
-          }
-
-          return streamMatch
-        }
-      )
-    },
-
     branchDeleted: {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_DELETED]),
