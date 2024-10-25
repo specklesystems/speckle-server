@@ -21,13 +21,21 @@
       </FormSelectBase>
     </div>
     <div v-if="selectedFilter">
-      <div v-if="selectedFilter.id === 'everything'">
+      <div
+        v-if="
+          selectedFilter.id === 'everything' || selectedFilter.name === 'Everything' // TODO: damn. remove name check later, if we remove now it will break production... we should differentiate its id and display name
+        "
+      >
         <div class="p-4 text-primary bg-blue-500/10 rounded-md text-xs">
           All supported objects will be sent. Depending on the model, this might take a
           while.
         </div>
       </div>
-      <div v-else-if="selectedFilter.id === 'selection'">
+      <div
+        v-else-if="
+          selectedFilter.id === 'selection' || selectedFilter.name === 'Selection' // TODO: damn. remove name check later, if we remove now it will break production... we should differentiate its id and display name
+        "
+      >
         <FilterSelection
           :filter="(selectedFilter as IDirectSelectionSendFilter)"
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
