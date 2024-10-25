@@ -1,328 +1,403 @@
-/* eslint-disable camelcase */
+const { performance } = require('perf_hooks')
 const WebIFC = require('web-ifc/web-ifc-api-node')
-const { logger } = require('../observability/logging.js')
-const ServerAPI = require('./api.js')
+const {
+  getHash,
+  IfcElements,
+  PropNames,
+  GeometryTypes,
+  IfcTypesMap
+} = require('./utils')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
+const { logger: parentLogger } = require('../observability/logging')
 
 module.exports = class IFCParser {
-  constructor({ db, serverApi, logger }) {
-    this.api = new WebIFC.IfcAPI()
-    this.serverApi = serverApi || new ServerAPI({ db, logger })
+  constructor({ serverApi, fileId, logger }) {
+    this.ifcapi = new WebIFC.IfcAPI()
+    this.ifcapi.SetWasmPath('./', false)
+    this.serverApi = serverApi
+    this.fileId = fileId
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ fileId }), 'ifc')
   }
 
   async parse(data) {
-    if (this.api.wasmModule === undefined) await this.api.Init()
-
-    this.modelId = this.api.OpenModel(data, {
-      COORDINATE_TO_ORIGIN: true,
+    await this.ifcapi.Init()
+    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), {
       USE_FAST_BOOLS: true
     })
 
-    this.projectId = this.api.GetLineIDsWithType(this.modelId, WebIFC.IFCPROJECT).get(0)
+    this.startTime = performance.now()
 
-    this.project = this.api.GetLine(this.modelId, this.projectId, true)
-    this.project.__closure = {}
+    // prepoulate types
+    this.types = await this.getAllTypesOfModel()
 
-    this.cache = {}
-    this.closureCache = {}
+    // prime caches for property sets and their relating objects, as well as,
+    // most importantly, all the properties.
+    const { psetLines, psetRelations, properties } = await this.getAllProps()
+    this.psetLines = psetLines
+    this.psetRelations = psetRelations
+    this.properties = properties
 
-    // Steps: create and store in speckle all the geometries (meshes) from this project and store them
-    // as reference objects in this.productGeo
-    this.productGeo = {}
-    await this.createGeometries()
-    logger.info(`Geometries created: ${Object.keys(this.productGeo).length} meshes.`)
+    this.propCache = {}
 
-    // Lastly, traverse the ifc project object and parse it into something friendly; as well as
-    // replace all its geometries with actual references to speckle meshes from the productGeo map
+    // This is used to pre-batch ifc objects that need to be persisted.
+    this.objectBucket = []
 
-    await this.traverse(this.project, true, 0)
+    // create and save the geometries; we're storing only references locally.
+    this.geometryReferences = await this.createAndSaveMeshes()
 
-    const id = await this.serverApi.saveObject(this.project)
-    return { id, tCount: Object.keys(this.project.__closure).length }
+    // create and save the spatial tree, populating both properties and geometry references
+    // where appropriate
+    this.spatialNodeCount = 0
+    const structure = await this.createSpatialStructure()
+    return { id: structure.id, tCount: structure.closureLen }
   }
 
-  async createGeometries() {
-    this.rawGeo = this.api.LoadAllGeometry(this.modelId)
+  async createSpatialStructure() {
+    const chunks = await this.getSpatialTreeChunks()
+    const allProjectLines = await this.ifcapi.GetLineIDsWithType(
+      this.modelId,
+      WebIFC.IFCPROJECT
+    )
+    const project = {
+      expressID: allProjectLines.get(0),
+      type: 'IFCPROJECT',
+      // eslint-disable-next-line camelcase
+      speckle_type: 'Base',
+      elements: []
+    }
 
-    for (let i = 0; i < this.rawGeo.size(); i++) {
-      const mesh = this.rawGeo.get(i)
-      const prodId = mesh.expressID
-      this.productGeo[prodId] = []
+    await this.populateSpatialNode(project, chunks, [], 0)
 
-      for (let j = 0; j < mesh.geometries.size(); j++) {
-        const placedGeom = mesh.geometries.get(j)
-        const geom = this.api.GetGeometry(this.modelId, placedGeom.geometryExpressID)
+    this.endTime = performance.now()
+    project.parseTime = (this.endTime - this.startTime).toFixed(2) + 'ms'
+    project.fileId = this.fileId
 
-        const matrix = placedGeom.flatTransformation
-        const raw = {
-          color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
-          vertices: this.api.GetVertexArray(
-            geom.GetVertexData(),
-            geom.GetVertexDataSize()
-          ),
-          indices: this.api.GetIndexArray(geom.GetIndexData(), geom.GetIndexDataSize())
+    // Last save to db call, empty the last bucket
+    if (this.objectBucket.length !== 0) {
+      await this.flushObjectBucket()
+    }
+    return project
+  }
+
+  async populateSpatialNode(node, chunks, closures, depth) {
+    depth++
+    this.logger.debug(`${this.spatialNodeCount++} nodes generated.`)
+    closures.push([])
+    await this.getChildren(node, chunks, PropNames.aggregates, closures, depth)
+    await this.getChildren(node, chunks, PropNames.spatial, closures, depth)
+
+    node.closure = [...new Set(closures.pop())]
+
+    // get geometry, set displayValue
+    // add geometry ids to closure
+    if (
+      this.geometryReferences[node.expressID] &&
+      this.geometryReferences[node.expressID].length !== 0
+    ) {
+      node['@displayValue'] = this.geometryReferences[node.expressID]
+      node.closure.push(
+        ...this.geometryReferences[node.expressID].map((ref) => ref.referencedId)
+      )
+    }
+    // node.closureLen = node.closure.length
+    node.__closure = this.formatClosure(node.closure)
+    node.id = getHash(node)
+
+    // Save to db
+    this.objectBucket.push(node)
+    if (this.objectBucket.length > 3000) {
+      await this.flushObjectBucket()
+    }
+
+    // remove project level node closure
+    if (depth === 1) {
+      delete node.closure
+    }
+    return node.id
+  }
+
+  async flushObjectBucket() {
+    if (this.objectBucket.length === 0) return
+    await this.serverApi.saveObjectBatch(this.objectBucket)
+    this.objectBucket = []
+  }
+
+  formatClosure(idsArray) {
+    const cl = {}
+    for (const id of idsArray) cl[id] = 1
+    return cl
+  }
+
+  async getChildren(node, chunks, propName, closures) {
+    const children = chunks[node.expressID]
+    if (!children) return
+    const prop = propName.key
+    const nodes = []
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      let cnode = this.createNode(child)
+      cnode = { ...cnode, ...(await this.getItemProperties(cnode.expressID)) }
+      cnode.id = await this.populateSpatialNode(cnode, chunks, closures)
+
+      for (const closure of closures) {
+        closure.push(cnode.id)
+        if (cnode['closure'].length > 30_000)
+          for (const id of cnode['closure']) closure.push(id)
+        else closure.push(...cnode['closure']) // can stack overflow for large arguments
+      }
+
+      delete cnode.closure
+      nodes.push(cnode)
+    }
+
+    node[prop] = nodes.map((node) => ({
+      // eslint-disable-next-line camelcase
+      speckle_type: 'reference',
+      referencedId: node.id
+    }))
+  }
+
+  async getItemProperties(id) {
+    if (this.propCache[id]) return this.propCache[id]
+
+    let props = {}
+    const directProps = this.properties[id.toString()]
+    props = { ...directProps }
+
+    const psetIds = []
+    for (let i = 0; i < this.psetRelations.length; i++) {
+      if (this.psetRelations[i].includes(id))
+        psetIds.push(this.psetLines.get(i).toString())
+    }
+
+    const rawPsetIds = psetIds.map((id) =>
+      this.properties[id].RelatingPropertyDefinition.toString()
+    )
+    const rawPsets = rawPsetIds.map((id) => this.properties[id])
+    for (const pset of rawPsets) {
+      props[pset.Name] = this.unpackPsetOrComplexProp(pset)
+    }
+
+    this.propCache[id] = props
+    return props
+  }
+
+  unpackPsetOrComplexProp(pset) {
+    const parsed = {}
+    if (!pset.HasProperties || !Array.isArray(pset.HasProperties)) return parsed
+    for (const id of pset.HasProperties) {
+      const value = this.properties[id.toString()]
+      if (value?.type === 'IFCCOMPLEXPROPERTY') {
+        parsed[value.Name] = this.unpackPsetOrComplexProp(value)
+      } else if (value?.type === 'IFCPROPERTYSINGLEVALUE') {
+        parsed[value.Name] = value.NominalValue
+      }
+    }
+    return parsed
+  }
+
+  async getSpatialTreeChunks() {
+    const treeChunks = {}
+    await this.getChunks(treeChunks, PropNames.aggregates)
+    await this.getChunks(treeChunks, PropNames.spatial)
+    return treeChunks
+  }
+
+  async getChunks(chunks, propName) {
+    const relation = await this.ifcapi.GetLineIDsWithType(this.modelId, propName.name)
+    for (let i = 0; i < relation.size(); i++) {
+      const rel = await this.ifcapi.GetLine(this.modelId, relation.get(i), false)
+      this.saveChunk(chunks, propName, rel)
+    }
+  }
+
+  saveChunk(chunks, propName, rel) {
+    const relating = rel[propName.relating].value
+    const related = rel[propName.related].map((r) => r.value)
+    if (chunks[relating] === undefined) {
+      chunks[relating] = related
+    } else {
+      chunks[relating] = chunks[relating].concat(related)
+    }
+  }
+
+  async getAllTypesOfModel() {
+    const result = {}
+    const elements = Object.keys(IfcElements).map((e) => parseInt(e))
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i]
+      const lines = await this.ifcapi.GetLineIDsWithType(this.modelId, element)
+      const size = lines.size()
+      for (let i = 0; i < size; i++) result[lines.get(i)] = element
+    }
+    return result
+  }
+
+  async getAllProps() {
+    const psetLines = this.ifcapi.GetLineIDsWithType(
+      this.modelId,
+      WebIFC.IFCRELDEFINESBYPROPERTIES
+    )
+    const psetRelations = []
+    const properties = {}
+
+    const geometryIds = await this.getAllGeometriesIds()
+    const allLinesIDs = await this.ifcapi.GetAllLines(this.modelId)
+    const allLinesCount = allLinesIDs.size()
+    for (let i = 0; i < allLinesCount; i++) {
+      this.logger.debug(`${((i / allLinesCount) * 100).toFixed(3)}% props.`)
+      const id = allLinesIDs.get(i)
+      if (!geometryIds.has(id)) {
+        const props = await this.getItemProperty(id)
+        if (props) {
+          if (props.type === 'IFCRELDEFINESBYPROPERTIES' && props.RelatedObjects) {
+            psetRelations.push(props.RelatedObjects)
+          }
+          properties[id] = props
         }
+      }
+    }
 
-        const { vertices } = this.extractVertexData(raw.vertices)
+    return { psetLines, psetRelations, properties }
+  }
 
-        for (let k = 0; k < vertices.length; k += 3) {
-          const x = vertices[k],
-            y = vertices[k + 1],
-            z = vertices[k + 2]
-          vertices[k] = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
-          vertices[k + 1] =
-            (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1
-          vertices[k + 2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
-        }
+  async getItemProperty(id) {
+    try {
+      const props = await this.ifcapi.GetLine(this.modelId, id)
+      if (props.type) {
+        props.type = IfcTypesMap[props.type]
+      }
+      this.inPlaceFormatItemProperties(props)
+      return props
+    } catch (e) {
+      this.logger.error(e, `There was an issue getting props of id ${id}`)
+    }
+  }
 
-        // Since all faces are triangles, we must add a `0` before each group of 3.
-        const spcklFaces = []
-        for (let i = 0; i < raw.indices.length; i++) {
-          if (i % 3 === 0) spcklFaces.push(0)
-          spcklFaces.push(raw.indices[i])
-        }
+  inPlaceFormatItemProperties(props) {
+    Object.keys(props).forEach((key) => {
+      const value = props[key]
+      if (value && value.value !== undefined) props[key] = value.value
+      else if (Array.isArray(value))
+        props[key] = value.map((item) => {
+          if (item && item.value) return item.value
+          return item
+        })
+    })
+  }
 
-        // Create a proper Speckle Mesh
-        const spcklMesh = {
+  createNode(id) {
+    const typeName = this.getNodeType(id)
+    return {
+      // eslint-disable-next-line camelcase
+      speckle_type: typeName,
+      expressID: id,
+      type: typeName,
+      elements: [],
+      properties: null
+    }
+  }
+
+  getNodeType(id) {
+    const typeID = this.types[id]
+    return IfcElements[typeID]
+  }
+
+  async getAllGeometriesIds() {
+    const geometriesIds = new Set()
+    const geomTypesArray = Array.from(GeometryTypes)
+    for (let i = 0; i < geomTypesArray.length; i++) {
+      const category = geomTypesArray[i]
+      const ids = await this.ifcapi.GetLineIDsWithType(this.modelId, category)
+      const idsSize = ids.size()
+      for (let j = 0; j < idsSize; j++) {
+        geometriesIds.add(ids.get(j))
+      }
+    }
+    this.geometryIdsCount = geometriesIds.size
+    return geometriesIds
+  }
+
+  async createAndSaveMeshes() {
+    const geometryReferences = {}
+    let count = 0
+    const speckleMeshes = []
+
+    this.ifcapi.StreamAllMeshes(this.modelId, async (mesh) => {
+      const placedGeometries = mesh.geometries
+      geometryReferences[mesh.expressID] = []
+      for (let i = 0; i < placedGeometries.size(); i++) {
+        const placedGeometry = placedGeometries.get(i)
+        const geometry = this.ifcapi.GetGeometry(
+          this.modelId,
+          placedGeometry.geometryExpressID
+        )
+
+        const verts = [
+          ...this.ifcapi.GetVertexArray(
+            geometry.GetVertexData(),
+            geometry.GetVertexDataSize()
+          )
+        ]
+
+        const indices = [
+          ...this.ifcapi.GetIndexArray(
+            geometry.GetIndexData(),
+            geometry.GetIndexDataSize()
+          )
+        ]
+
+        const { vertices } = this.extractVertexData(
+          verts,
+          placedGeometry.flatTransformation
+        )
+        const faces = this.extractFaces(indices)
+
+        const speckleMesh = {
+          // eslint-disable-next-line camelcase
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',
           volume: 0,
           area: 0,
-          faces: spcklFaces,
-          vertices: Array.from(vertices),
-          renderMaterial: placedGeom.color
-            ? this.colorToMaterial(placedGeom.color)
+          // random: Math.random(), // TODO: remove, this is here just for performance benchmarking/explicit cache poisoning
+          vertices,
+          faces,
+          renderMaterial: placedGeometry.color
+            ? this.colorToMaterial(placedGeometry.color)
             : null
         }
 
-        const id = await this.serverApi.saveObject(spcklMesh)
-        const ref = { speckle_type: 'reference', referencedId: id }
-        this.productGeo[prodId].push(ref)
+        speckleMesh.id = getHash(speckleMesh)
+        // Note: the web-ifc api disposes of the data post callback, and doesn't know that it's async;
+        // we cannot and should not await things in here. I'm not entirely sure what's going on :)
+        // await this.serverApi.saveObject(speckleMesh)
+
+        speckleMeshes.push(speckleMesh)
+        geometryReferences[mesh.expressID].push({
+          // eslint-disable-next-line camelcase
+          speckle_type: 'reference',
+          referencedId: speckleMesh.id
+        })
+        this.logger.debug(`${(count++).toFixed(3)} geoms generated.`)
       }
-    }
+    })
+
+    await this.serverApi.saveObjectBatch(speckleMeshes)
+    return geometryReferences
   }
 
-  async traverse(
-    element,
-    recursive = true,
-    depth = 0,
-    specialTypes = [
-      { type: 'IfcProject', key: 'Name' },
-      { type: 'IfcBuilding', key: 'Name' },
-      { type: 'IfcSite', key: 'Name' }
-    ]
-  ) {
-    // Fast exit if null/undefined
-    if (!element) return
-
-    // If array, traverse all items in it.
-    if (Array.isArray(element)) {
-      return await Promise.all(
-        element.map(
-          async (el) => await this.traverse(el, recursive, depth + 1, specialTypes)
-        )
-      )
+  extractFaces(indices) {
+    const faces = []
+    for (let i = 0; i < indices.length; i++) {
+      if (i % 3 === 0) faces.push(0)
+      faces.push(indices[i])
     }
-
-    // If it has no expressID, its either a simple type or a { type, value } object.
-    if (!element.expressID) {
-      return await Promise.resolve(
-        element.value !== null && element.value !== undefined ? element.value : element
-      )
-    }
-
-    if (this.cache[element.expressID.toString()])
-      return this.cache[element.expressID.toString()]
-    // If you got here -> It's an IFC Element: create base object, upload and return ref.
-    // logger.debug( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
-
-    // Traverse all key/value pairs first.
-    for (const key of Object.keys(element)) {
-      element[key] = await this.traverse(
-        element[key],
-        recursive,
-        depth + 1,
-        specialTypes
-      )
-    }
-
-    // Assign speckle_type and empty closure table.
-    element.speckle_type = element.constructor.name
-    element.__closure = {}
-
-    // Find spatial children and assign to element
-    const spatialChildrenIds = this.getAllRelatedItemsOfType(
-      element.expressID,
-      WebIFC.IFCRELAGGREGATES,
-      'RelatingObject',
-      'RelatedObjects'
-    )
-    if (spatialChildrenIds.length > 0)
-      element.rawSpatialChildren = spatialChildrenIds.map((childId) =>
-        this.api.GetLine(this.modelId, childId, true)
-      )
-
-    // Find children and populate element
-    const childrenIds = this.getAllRelatedItemsOfType(
-      element.expressID,
-      WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE,
-      'RelatingStructure',
-      'RelatedElements'
-    )
-    if (childrenIds.length > 0)
-      element.rawChildren = childrenIds.map((childId) =>
-        this.api.GetLine(this.modelId, childId, true)
-      )
-
-    // Find related property sets
-    const psetsIds = this.getAllRelatedItemsOfType(
-      element.expressID,
-      WebIFC.IFCRELDEFINESBYPROPERTIES,
-      'RelatingPropertyDefinition',
-      'RelatedObjects'
-    )
-    if (psetsIds.length > 0)
-      element.rawPsets = psetsIds.map((childId) =>
-        this.api.GetLine(this.modelId, childId, true)
-      )
-
-    // Find related type properties
-    const typePropsId = this.getAllRelatedItemsOfType(
-      element.expressID,
-      WebIFC.IFCRELDEFINESBYTYPE,
-      'RelatingType',
-      'RelatedObjects'
-    )
-    if (typePropsId.length > 0)
-      element.rawTypeProps = typePropsId.map((childId) =>
-        this.api.GetLine(this.modelId, childId, true)
-      )
-
-    // Lookup geometry in generated geometries object
-    if (this.productGeo[element.expressID]) {
-      element['@displayValue'] = this.productGeo[element.expressID]
-      this.productGeo[element.expressID].forEach((ref) => {
-        this.project.__closure[ref.referencedId.toString()] = depth
-        element.__closure[ref.referencedId.toString()] = 1
-      })
-    }
-
-    const isSpecial = specialTypes.find((t) => t.type === element.speckle_type)
-    // Recurse all children
-    if (recursive) {
-      await this.processSubElements(
-        element,
-        'rawSpatialChildren',
-        'spatialChildren',
-        isSpecial,
-        recursive,
-        depth,
-        specialTypes
-      )
-      await this.processSubElements(
-        element,
-        'rawChildren',
-        'children',
-        isSpecial,
-        recursive,
-        depth,
-        specialTypes
-      )
-      await this.processSubElements(
-        element,
-        'rawPsets',
-        'propertySets',
-        false,
-        recursive,
-        depth,
-        specialTypes
-      )
-      await this.processSubElements(
-        element,
-        'rawTypeProps',
-        'typeProps',
-        false,
-        recursive,
-        depth,
-        specialTypes
-      )
-
-      if (
-        element.children ||
-        element.spatialChildren ||
-        element.propertySets ||
-        element.typeProps
-      ) {
-        logger.info(
-          `${element.constructor.name} ${element.GlobalId}:\n\tchildren count: ${
-            element.children ? element.children.length : '0'
-          };\n\tspatial children count: ${
-            element.spatialChildren ? element.spatialChildren.length : '0'
-          };\n\tproperty sets count: ${
-            element.propertySets ? element.propertySets.length : 0
-          };\n\ttype properties: ${element.typeProps ? element.typeProps.length : 0}`
-        )
-      }
-    }
-
-    if (
-      this.productGeo[element.expressID] ||
-      element.spatialChildren ||
-      element.children
-    ) {
-      const id = await this.serverApi.saveObject(element)
-      const ref = { speckle_type: 'reference', referencedId: id }
-      this.cache[element.expressID.toString()] = ref
-      this.closureCache[element.expressID.toString()] = element.__closure
-      return ref
-    } else {
-      this.cache[element.expressID.toString()] = element
-      this.closureCache[element.expressID.toString()] = element.__closure
-      return element
-    }
+    return faces
   }
 
-  async processSubElements(
-    element,
-    key,
-    newKey,
-    isSpecial,
-    recursive,
-    depth,
-    specialTypes
-  ) {
-    if (element[key]) {
-      if (!isSpecial) element[newKey] = []
-      const childCount = {}
-      for (const child of element[key]) {
-        const res = await this.traverse(child, recursive, depth + 1, specialTypes)
-        if (res.referencedId) {
-          if (isSpecial) {
-            let name = child[isSpecial.key]
-            if (!name || name.length === 0) name = 'Undefined'
-            if (!childCount[name]) childCount[name] = 0
-            if (childCount[name] > 0) name += '-' + childCount[name]++
-            element[name] = res
-          } else element[newKey].push(res)
-          this.project.__closure[res.referencedId.toString()] = depth
-          element.__closure[res.referencedId.toString()] = 1
-
-          // adds to parent (this element) the child's closure tree.
-          if (this.closureCache[child.expressID.toString()]) {
-            for (const key of Object.keys(
-              this.closureCache[child.expressID.toString()]
-            )) {
-              element.__closure[key] =
-                this.closureCache[child.expressID.toString()][key] + 1
-            }
-          }
-        }
-      }
-      delete element[key]
-    }
-  }
-
-  // (c) https://github.com/agviegas/web-ifc-three
-  extractVertexData(vertexData) {
+  extractVertexData(vertexData, matrix) {
     const vertices = []
     const normals = []
     let isNormalData = false
@@ -330,45 +405,37 @@ module.exports = class IFCParser {
       isNormalData ? normals.push(vertexData[i]) : vertices.push(vertexData[i])
       if ((i + 1) % 3 === 0) isNormalData = !isNormalData
     }
+
+    // apply the transform
+    for (let k = 0; k < vertices.length; k += 3) {
+      const x = vertices[k],
+        y = vertices[k + 1],
+        z = vertices[k + 2]
+      vertices[k] = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
+      vertices[k + 1] =
+        (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1
+      vertices[k + 2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
+    }
+
     return { vertices, normals }
   }
 
-  // (c) https://github.com/agviegas/web-ifc-three/blob/907e08b5673d5e1c18261a4fceade7189d6b2db7/src/IFC/PropertyManager.ts#L110
-  getAllRelatedItemsOfType(elementID, type, relation, relatedProperty) {
-    const lines = this.api.GetLineIDsWithType(this.modelId, type)
-    const IDs = []
-
-    for (let i = 0; i < lines.size(); i++) {
-      const relID = lines.get(i)
-      const rel = this.api.GetLine(this.modelId, relID)
-      const relatedItems = rel[relation]
-      let foundElement = false
-
-      if (Array.isArray(relatedItems)) {
-        const values = relatedItems.map((item) => item.value)
-        foundElement = values.includes(elementID)
-      } else foundElement = relatedItems.value === elementID
-
-      if (foundElement) {
-        const element = rel[relatedProperty]
-        if (!Array.isArray(element)) IDs.push(element.value)
-        else element.forEach((ele) => IDs.push(ele.value))
-      }
-    }
-
-    return IDs
-  }
-
   colorToMaterial(color) {
-    const intColor =
-      (color.w << 24) + ((color.x * 255) << 16) + ((color.y * 255) << 8) + color.z * 255
-
-    return {
+    const intColor = Math.floor(
+      ((color.w * 255) << 24) +
+        ((color.x * 255) << 16) +
+        ((color.y * 255) << 8) +
+        color.z * 255
+    )
+    const material = {
       diffuse: intColor,
       opacity: color.w,
       metalness: 0,
       roughness: 1,
+      // eslint-disable-next-line camelcase
       speckle_type: 'Objects.Other.RenderMaterial'
     }
+    material.id = getHash(material)
+    return material
   }
 }
