@@ -12,7 +12,10 @@
           :index="index"
           :latest-version-id="latestVersion.id"
           :selected-version-id="selectedVersionId"
+          :project-id="projectId"
+          :referenced-object-id="version.referencedObject"
           :from-wizard="fromWizard"
+          :account-id="accountId"
           @click="$emit('next', version, latestVersion)"
         />
       </div>
