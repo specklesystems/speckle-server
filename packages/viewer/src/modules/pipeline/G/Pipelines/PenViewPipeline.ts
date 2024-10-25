@@ -10,6 +10,15 @@ import { GColorPass } from '../GColorPass.js'
 import { GStencilMaskPass } from '../GStencilMaskPass.js'
 import { GStencilPass } from '../GStencilPass.js'
 import { GOutputPass } from '../GOutputPass.js'
+import SpeckleStandardMaterial from '../../../materials/SpeckleStandardMaterial.js'
+import {
+  DoubleSide,
+  OrthographicCamera,
+  PerspectiveCamera,
+  RenderItem,
+  Scene,
+  WebGLRenderer
+} from 'three'
 
 export class PenViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -58,15 +67,49 @@ export class PenViewPipeline extends GProgressivePipeline {
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    const stencilSelectPass = new GColorPass()
-    stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
-    stencilSelectPass.onBeforeRender = () => {
-      speckleRenderer.renderer.getContext().colorMask(false, false, false, false)
-    }
-    stencilSelectPass.onAfterRender = () => {
-      speckleRenderer.renderer.getContext().colorMask(true, true, true, true)
-    }
+    const geometryPass = new (class extends GColorPass {
+      private hiddenMaterial: SpeckleStandardMaterial
+
+      public get displayName(): string {
+        return 'GEOMETRY-HIDDEN'
+      }
+
+      public get overrideBatchMaterial() {
+        return this.hiddenMaterial
+      }
+
+      constructor() {
+        super()
+        this.hiddenMaterial = new SpeckleStandardMaterial(
+          {
+            side: DoubleSide,
+            transparent: false,
+            opacity: 1,
+            wireframe: false
+          },
+          ['USE_RTE']
+        )
+        this.hiddenMaterial.colorWrite = false
+      }
+
+      public render(
+        renderer: WebGLRenderer,
+        camera: PerspectiveCamera | OrthographicCamera | null,
+        scene?: Scene
+      ): boolean {
+        renderer.setOpaqueSort(this.sortOpaque)
+        const ret = super.render(renderer, camera, scene)
+        //@ts-expect-error shut up
+        renderer.setOpaqueSort(null)
+        return ret
+      }
+
+      protected sortOpaque(a: RenderItem, b: RenderItem): number {
+        /** We prioritize on materials that only write depth, so that other visible materials get properly occluded */
+        return +a.material.colorWrite - +b.material.colorWrite
+      }
+    })()
+    geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
@@ -88,7 +131,7 @@ export class PenViewPipeline extends GProgressivePipeline {
       normalPassDynamic,
       edgesPassDynamic,
       stencilPass,
-      stencilSelectPass,
+      geometryPass,
       stencilMaskPass,
       overlayPass
     )
@@ -99,7 +142,7 @@ export class PenViewPipeline extends GProgressivePipeline {
       taaPass,
       outputPass,
       stencilPass,
-      stencilSelectPass,
+      geometryPass,
       stencilMaskPass,
       overlayPass
     )
@@ -107,7 +150,7 @@ export class PenViewPipeline extends GProgressivePipeline {
     this.passthroughStage.push(
       outputPass,
       stencilPass,
-      stencilSelectPass,
+      geometryPass,
       stencilMaskPass,
       overlayPass
     )

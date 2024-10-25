@@ -64,7 +64,7 @@ export default class SpeckleMesh extends Mesh {
   private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
-  private overrideId: string
+  private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects!: BatchObject[]
@@ -122,7 +122,7 @@ export default class SpeckleMesh extends Mesh {
 
   public setOverrideBatchMaterial(material: Material) {
     const overrideMaterial = this.getCachedMaterial(material, true)
-    this.overrideId = overrideMaterial.uuid
+    this.batchMaterialStack.push(overrideMaterial)
     const materials = this.material as Array<Material>
     for (let k = 0; k < materials.length; k++) {
       if (materials[k].uuid === this.batchMaterial.uuid) {
@@ -133,8 +133,11 @@ export default class SpeckleMesh extends Mesh {
 
   public restoreBatchMaterial() {
     const materials = this.material as Array<Material>
+    const overrideBatchMaterial = this.batchMaterialStack.pop()
+    if (!overrideBatchMaterial) return
+
     for (let k = 0; k < materials.length; k++) {
-      if (materials[k].uuid === this.overrideId) {
+      if (materials[k].uuid === overrideBatchMaterial.uuid) {
         materials[k] = this.batchMaterial
       }
     }

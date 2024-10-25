@@ -86,10 +86,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    const stencilSelectPass = new GColorPass()
-    stencilSelectPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    stencilSelectPass.setVisibility(ObjectVisibility.STENCIL)
-
     const stencilMaskPass = new GStencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
@@ -105,7 +101,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       stencilPass,
       viewportPass,
       shadowcatcherPass,
-      stencilSelectPass,
       stencilMaskPass,
       blendPassDynamic,
       overlayPass
@@ -117,7 +112,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
       taaPass,
       stencilPass,
       viewportPass,
-      stencilSelectPass,
       stencilMaskPass,
       blendPass,
       overlayPass
@@ -125,7 +119,6 @@ export class ShadedViewPipeline extends GProgressivePipeline {
     this.passthroughStage.push(
       stencilPass,
       viewportPass,
-      stencilSelectPass,
       stencilMaskPass,
       blendPass,
       overlayPass
