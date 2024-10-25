@@ -1,23 +1,33 @@
-const { NotFoundError, EnvironmentResourceError } = require('@/modules/shared/errors')
-const {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  NotFoundError,
+  EnvironmentResourceError,
+  BadRequestError
+} from '@/modules/shared/errors'
+import {
   S3Client,
   GetObjectCommand,
   HeadBucketCommand,
   DeleteObjectCommand,
   CreateBucketCommand,
-  S3ServiceException
-} = require('@aws-sdk/client-s3')
-const { Upload } = require('@aws-sdk/lib-storage')
-const {
+  S3ServiceException,
+  S3ClientConfig
+} from '@aws-sdk/client-s3'
+import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage'
+import {
   getS3AccessKey,
   getS3SecretKey,
   getS3Endpoint,
   getS3Region,
   getS3BucketName,
   createS3Bucket
-} = require('@/modules/shared/helpers/envHelper')
+} from '@/modules/shared/helpers/envHelper'
+import { ensureError, Nullable } from '@speckle/shared'
+import { get } from 'lodash'
+import type { Command } from '@aws-sdk/smithy-client'
+import type stream from 'stream'
 
-let s3Config = null
+let s3Config: Nullable<S3ClientConfig> = null
 
 const getS3Config = () => {
   if (!s3Config) {
@@ -36,7 +46,7 @@ const getS3Config = () => {
   return s3Config
 }
 
-let storageBucket = null
+let storageBucket: Nullable<string> = null
 
 const getStorageBucket = () => {
   if (!storageBucket) {
@@ -51,32 +61,45 @@ const getObjectStorage = () => ({
   createBucket: createS3Bucket()
 })
 
-const sendCommand = async (command) => {
+const sendCommand = async <CommandOutput>(
+  command: (Bucket: string) => Command<any, CommandOutput, any, any, any>
+) => {
   const { client, Bucket } = getObjectStorage()
   try {
-    return await client.send(command(Bucket))
+    const ret = (await client.send(
+      command(Bucket) as Command<any, any, any, any, any>
+    )) as CommandOutput
+    return ret
   } catch (err) {
-    if (err instanceof S3ServiceException && err.Code === 'NoSuchKey')
+    if (err instanceof S3ServiceException && get(err, 'Code') === 'NoSuchKey')
       throw new NotFoundError(err.message)
     throw err
   }
 }
 
-const getObjectStream = async ({ objectKey }) => {
+export const getObjectStream = async ({ objectKey }: { objectKey: string }) => {
   const data = await sendCommand(
     (Bucket) => new GetObjectCommand({ Bucket, Key: objectKey })
   )
-  return data.Body
+
+  // TODO: Apparently not always stream.Readable according to types, but in practice this works
+  return data.Body as stream.Readable
 }
 
-const getObjectAttributes = async ({ objectKey }) => {
+export const getObjectAttributes = async ({ objectKey }: { objectKey: string }) => {
   const data = await sendCommand(
     (Bucket) => new GetObjectCommand({ Bucket, Key: objectKey })
   )
-  return { fileSize: data.ContentLength }
+  return { fileSize: data.ContentLength || 0 }
 }
 
-const storeFileStream = async ({ objectKey, fileStream }) => {
+export const storeFileStream = async ({
+  objectKey,
+  fileStream
+}: {
+  objectKey: string
+  fileStream: UploadOptions['params']['Body']
+}) => {
   const { client, Bucket } = getObjectStorage()
   const parallelUploads3 = new Upload({
     client,
@@ -95,20 +118,40 @@ const storeFileStream = async ({ objectKey, fileStream }) => {
 
   const data = await parallelUploads3.done()
   // the ETag is a hash of the object. Could be used to dedupe stuff...
+
+  if (!data || !('ETag' in data) || !data.ETag) {
+    throw new BadRequestError('No ETag in response')
+  }
+
   const fileHash = data.ETag.replaceAll('"', '')
   return { fileHash }
 }
 
-const deleteObject = async ({ objectKey }) => {
+export const deleteObject = async ({ objectKey }: { objectKey: string }) => {
   await sendCommand((Bucket) => new DeleteObjectCommand({ Bucket, Key: objectKey }))
 }
-const ensureStorageAccess = async () => {
+
+// No idea what the actual error type is, too difficult to figure out
+type EnsureStorageAccessError = Error & {
+  statusCode?: number
+  $metadata?: { httpStatusCode?: number }
+}
+
+const isExpectedEnsureStorageAccessError = (
+  err: unknown
+): err is EnsureStorageAccessError =>
+  err instanceof Error && ('statusCode' in err || '$metadata' in err)
+
+export const ensureStorageAccess = async () => {
   const { client, Bucket, createBucket } = getObjectStorage()
   try {
     await client.send(new HeadBucketCommand({ Bucket }))
     return
   } catch (err) {
-    if (err.statusCode === 403 || err['$metadata']?.httpStatusCode === 403) {
+    if (
+      isExpectedEnsureStorageAccessError(err) &&
+      (err.statusCode === 403 || err['$metadata']?.httpStatusCode === 403)
+    ) {
       throw new EnvironmentResourceError("Access denied to S3 bucket '{bucket}'", {
         cause: err,
         info: { bucket: Bucket }
@@ -121,7 +164,7 @@ const ensureStorageAccess = async () => {
         throw new EnvironmentResourceError(
           "Can't open S3 bucket '{bucket}', and have failed to create it.",
           {
-            cause: err,
+            cause: ensureError(err),
             info: { bucket: Bucket }
           }
         )
@@ -130,18 +173,10 @@ const ensureStorageAccess = async () => {
       throw new EnvironmentResourceError(
         "Can't open S3 bucket '{bucket}', and the Speckle server configuration has disabled creation of the bucket.",
         {
-          cause: err,
+          cause: ensureError(err),
           info: { bucket: Bucket }
         }
       )
     }
   }
-}
-
-module.exports = {
-  ensureStorageAccess,
-  deleteObject,
-  getObjectAttributes,
-  storeFileStream,
-  getObjectStream
 }
