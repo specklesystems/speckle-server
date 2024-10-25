@@ -11,7 +11,8 @@ import {
   DeleteObjectCommand,
   CreateBucketCommand,
   S3ServiceException,
-  S3ClientConfig
+  S3ClientConfig,
+  ServiceOutputTypes
 } from '@aws-sdk/client-s3'
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage'
 import {
@@ -61,14 +62,12 @@ const getObjectStorage = () => ({
   createBucket: createS3Bucket()
 })
 
-const sendCommand = async <CommandOutput>(
+const sendCommand = async <CommandOutput extends ServiceOutputTypes>(
   command: (Bucket: string) => Command<any, CommandOutput, any, any, any>
 ) => {
   const { client, Bucket } = getObjectStorage()
   try {
-    const ret = (await client.send(
-      command(Bucket) as Command<any, any, any, any, any>
-    )) as CommandOutput
+    const ret = await client.send(command(Bucket))
     return ret
   } catch (err) {
     if (err instanceof S3ServiceException && get(err, 'Code') === 'NoSuchKey')
