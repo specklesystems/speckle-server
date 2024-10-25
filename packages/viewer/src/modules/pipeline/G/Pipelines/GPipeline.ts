@@ -227,6 +227,12 @@ export abstract class GPipeline {
       count,
       options
     )
+    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
+     *  We're not really using a stencil buffer at all, we're just forcing
+     *  three.js to use a 24 bit depth render buffer
+     */
+    ;(renderTarget as unknown as WebGLRenderTarget).depthBuffer = true
+    ;(renderTarget as unknown as WebGLRenderTarget).stencilBuffer = true
 
     return renderTarget
   }
