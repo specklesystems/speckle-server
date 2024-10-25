@@ -88,8 +88,8 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
       depthPassNormalDynamic,
       edgesPassDynamic,
       stencilPass,
-      viewportPass,
       shadowcatcherPass,
+      viewportPass,
       stencilMaskPass,
       blendPassDynamic,
       overlayPass
@@ -99,16 +99,16 @@ export class MRTShadedViewPipeline extends GProgressivePipeline {
       edgesPass,
       taaPass,
       stencilPass,
-      viewportPass,
       shadowcatcherPass,
+      viewportPass,
       stencilMaskPass,
       blendPass,
       overlayPass
     )
     this.passthroughStage.push(
       stencilPass,
-      viewportPass,
       shadowcatcherPass,
+      viewportPass,
       stencilMaskPass,
       blendPass,
       overlayPass

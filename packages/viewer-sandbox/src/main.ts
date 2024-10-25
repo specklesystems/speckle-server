@@ -4,7 +4,8 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController
+  CameraController,
+  ViewModes
 } from '@speckle/viewer'
 
 import './style.css'
@@ -18,6 +19,7 @@ import {
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
+import { ViewModesKeys } from './Extensions/ViewModesKeys'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -44,11 +46,13 @@ const createViewer = async (containerName: string, stream: string) => {
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
-  viewer.createExtension(SectionOutlines)
+  // viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(ViewModes)
+  viewer.createExtension(ViewModesKeys)
   // const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it

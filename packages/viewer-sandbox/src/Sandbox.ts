@@ -493,11 +493,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
-      // const [data, width, height] = await this.viewer
-      //   .getExtension(PassReader)
-      //   .read('DEPTH')
-      // console.log(PassReader.toBase64(PassReader.decodeDepth(data), width, height))
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getExtension(FilteringExtension)
+        .isolateObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
     })
 
     const rotate = this.tabs.pages[0].addButton({
