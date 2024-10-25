@@ -1,8 +1,8 @@
-const knex = require('@/db/knex')
-const { logger } = require('@/logging/logging')
+import knex from '@/db/knex'
+import { logger } from '@/logging/logging'
+import { CommandModule } from 'yargs'
 
-/** @type {import('yargs').CommandModule} */
-const command = {
+const command: CommandModule<unknown, { times: number }> = {
   command: 'down [times]',
   describe: 'Undo last migration',
   builder(yargs) {
@@ -29,4 +29,4 @@ const command = {
   }
 }
 
-module.exports = command
+export = command

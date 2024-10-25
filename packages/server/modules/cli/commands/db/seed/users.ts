@@ -1,9 +1,11 @@
-const { logger } = require('@/logging/logging')
-const { Users, ServerAcl } = require('@/modules/core/dbSchema')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { faker } = require('@faker-js/faker')
-const { range } = require('lodash')
-const { UniqueEnforcer } = require('enforce-unique')
+import { logger } from '@/logging/logging'
+import { Users, ServerAcl } from '@/modules/core/dbSchema'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import { faker } from '@faker-js/faker'
+import { range } from 'lodash'
+import { UniqueEnforcer } from 'enforce-unique'
+import { CommandModule } from 'yargs'
+import { UserRecord } from '@/modules/core/helpers/types'
 
 const RETRY_COUNT = 3
 const UNIQUE_MAX_TIME = 500
@@ -36,7 +38,7 @@ function createFakeUser() {
   }
 }
 
-function generateUsers(count) {
+function generateUsers(count: number) {
   const users = []
   for (let i = 0; i < count; i++) {
     users.push(createFakeUser())
@@ -44,8 +46,8 @@ function generateUsers(count) {
   return users
 }
 
-function insertUsers(users) {
-  return Users.knex().returning(Users.col.id).insert(users)
+function insertUsers(users: Partial<UserRecord>[]): Promise<Array<{ id: string }>> {
+  return Users.knex<UserRecord>().returning(Users.col.id).insert(users)
 }
 
 async function* batchedOperationGenerator({
@@ -53,6 +55,14 @@ async function* batchedOperationGenerator({
   itemCount,
   batchSize,
   retryCount = 3
+}: {
+  batchInsertGenerator: (
+    insertCount: number,
+    currentItemCount: number
+  ) => Promise<string[]>
+  itemCount: number
+  batchSize: number
+  retryCount?: number
 }) {
   logger.info('Starting batched operation...')
   let currentItemCount = 0
@@ -80,6 +90,7 @@ async function* batchedOperationGenerator({
     })
     batchPromise = batchPromise.catch((e) => {
       logger.error(e, 'Operation failed all retries')
+      return []
     })
 
     currentItemCount = newItemCount
@@ -88,21 +99,19 @@ async function* batchedOperationGenerator({
   }
 }
 
-/** @type {import('yargs').CommandModule} */
-const command = {
+const command: CommandModule<unknown, { count: number; batchsize: number }> = {
   command: 'users <count> [batchsize]',
   describe: 'Fill the `users` table with a ton of fake users',
-  builder(yargs) {
-    return yargs
-      .positional('count', {
-        describe: 'User count',
-        type: 'number'
-      })
-      .positional('batchsize', {
-        describe: 'Max amount of inserts to process at once',
-        type: 'number',
-        default: '500'
-      })
+  builder: {
+    count: {
+      describe: 'User count',
+      type: 'number'
+    },
+    batchsize: {
+      describe: 'Max amount of inserts to process at once',
+      type: 'number',
+      default: '500'
+    }
   },
   async handler(argv) {
     const count = argv.count
@@ -131,4 +140,4 @@ const command = {
   }
 }
 
-module.exports = command
+export = command
