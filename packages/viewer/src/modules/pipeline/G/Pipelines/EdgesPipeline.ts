@@ -44,7 +44,6 @@ export class EdgesPipeline extends GProgressivePipeline {
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
-      ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
@@ -56,7 +55,6 @@ export class EdgesPipeline extends GProgressivePipeline {
 
     const transparentColorPass = new GColorPass()
     transparentColorPass.setLayers([
-      ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
@@ -105,7 +103,11 @@ export class EdgesPipeline extends GProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GColorPass()
-    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.setLayers([
+      ObjectLayers.PROPS,
+      ObjectLayers.OVERLAY,
+      ObjectLayers.MEASUREMENTS
+    ])
 
     this.dynamicStage.push(
       depthPassDynamic,

@@ -25,7 +25,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
 
     const viewportPass = new GViewportPass()
     viewportPass.setLayers([
-      ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
@@ -38,7 +37,6 @@ export class ArcticViewPipeline extends GProgressivePipeline {
 
     const viewportTransparentPass = new GViewportPass()
     viewportTransparentPass.setLayers([
-      ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
@@ -74,7 +72,11 @@ export class ArcticViewPipeline extends GProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GColorPass()
-    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
+    overlayPass.setLayers([
+      ObjectLayers.PROPS,
+      ObjectLayers.OVERLAY,
+      ObjectLayers.MEASUREMENTS
+    ])
 
     this.dynamicStage.push(
       stencilPass,

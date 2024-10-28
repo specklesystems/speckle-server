@@ -9,6 +9,7 @@ import { ObjectLayers } from '../../../../IViewer.js'
 import { GBlendPass } from '../GBlendPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
 
+/** WIP */
 export class TechnicalViewPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)

@@ -53,6 +53,7 @@ export class MRTPenViewPipeline extends GProgressivePipeline {
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
+    /** We can anonymously extend a pass and inline it */
     const geometryPass = new (class extends GColorPass {
       private hiddenMaterial: SpeckleStandardMaterial
 
