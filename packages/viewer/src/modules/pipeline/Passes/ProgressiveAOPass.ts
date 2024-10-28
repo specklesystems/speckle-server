@@ -46,7 +46,7 @@ export const DefaultProgressiveAOPassOptions: Required<ProgressiveAOPassOptions>
   kernelSize: 16
 }
 
-export class GProgressiveAOPass extends ProgressiveGPass {
+export class ProgressiveAOPass extends ProgressiveGPass {
   private generationMaterial: ShaderMaterial
   private accumulateMaterial: ShaderMaterial
 

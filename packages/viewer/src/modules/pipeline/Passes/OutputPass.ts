@@ -20,7 +20,7 @@ export const DefaultOutputPassOptions: Required<OutputPassOptions> = {
   inputType: InputType.Passthrough
 }
 
-export class GOutputPass extends BaseGPass {
+export class OutputPass extends BaseGPass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
 

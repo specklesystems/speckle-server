@@ -13,7 +13,7 @@ import { ProgressiveGPass } from './GPass.js'
 import { speckleTemporalSupersamplingVert } from '../../materials/shaders/speckle-temporal-supersampling-vert.js'
 import { speckleTemporalSupersamplingFrag } from '../../materials/shaders/speckle-temporal-supersampling-frag.js'
 
-export class GTAAPass extends ProgressiveGPass {
+export class TAAPass extends ProgressiveGPass {
   private inputTex: Texture | undefined
   private historyTarget: WebGLRenderTarget
   private fsQuad: FullScreenQuad

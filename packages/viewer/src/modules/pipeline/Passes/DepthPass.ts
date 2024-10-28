@@ -13,7 +13,7 @@ import {
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
-import { GPipeline } from '../Pipelines/GPipeline.js'
+import { Pipeline } from '../Pipelines/Pipeline.js'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,
@@ -28,7 +28,7 @@ export const DefaultDepthPassOptions: Required<DepthPassOptions> = {
   depthType: DepthType.LINEAR_DEPTH
 }
 
-export class GDepthPass extends BaseGPass {
+export class DepthPass extends BaseGPass {
   private depthMaterial: SpeckleDepthMaterial
 
   public _options: Required<DepthPassOptions> = Object.assign(
@@ -68,7 +68,7 @@ export class GDepthPass extends BaseGPass {
   constructor() {
     super()
 
-    this._outputTarget = GPipeline.createRenderTarget({
+    this._outputTarget = Pipeline.createRenderTarget({
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })

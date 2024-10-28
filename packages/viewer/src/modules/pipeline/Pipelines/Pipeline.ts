@@ -12,7 +12,7 @@ import { GPass, ObjectVisibility } from '../Passes/GPass.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BatchUpdateRange } from '../../batching/Batch.js'
 
-export abstract class GPipeline {
+export abstract class Pipeline {
   protected speckleRenderer: SpeckleRenderer
   protected passList: Array<GPass> = []
 

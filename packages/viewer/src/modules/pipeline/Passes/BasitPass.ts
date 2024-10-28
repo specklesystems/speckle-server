@@ -17,7 +17,7 @@ import SpeckleStandardColoredMaterial from '../../materials/SpeckleStandardColor
 import { Assets } from '../../../index.js'
 import SpeckleMesh from '../../objects/SpeckleMesh.js'
 
-export class GBasitPass extends BaseGPass {
+export class BasitPass extends BaseGPass {
   protected tree: WorldTree
   protected speckleRenderer: SpeckleRenderer
   protected materialMap: {

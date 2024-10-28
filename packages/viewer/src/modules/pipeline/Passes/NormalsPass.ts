@@ -11,9 +11,9 @@ import {
 } from 'three'
 import SpeckleNormalMaterial from '../../materials/SpeckleNormalMaterial.js'
 import { BaseGPass } from './GPass.js'
-import { GPipeline } from '../Pipelines/GPipeline.js'
+import { Pipeline } from '../Pipelines/Pipeline.js'
 
-export class GNormalsPass extends BaseGPass {
+export class NormalsPass extends BaseGPass {
   private normalsMaterial: SpeckleNormalMaterial
 
   get displayName(): string {
@@ -27,7 +27,7 @@ export class GNormalsPass extends BaseGPass {
   constructor() {
     super()
 
-    this._outputTarget = GPipeline.createRenderTarget({
+    this._outputTarget = Pipeline.createRenderTarget({
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })

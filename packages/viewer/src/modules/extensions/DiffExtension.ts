@@ -12,7 +12,7 @@ import { Extension } from './Extension.js'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter.js'
 import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader.js'
 import { GPass } from '../pipeline/Passes/GPass.js'
-import { GDepthPass } from '../pipeline/Passes/GDepthPass.js'
+import { DepthPass } from '../pipeline/Passes/DepthPass.js'
 
 type SpeckleMaterialType =
   | SpeckleStandardMaterial
@@ -234,7 +234,7 @@ export class DiffExtension extends Extension {
 
     const depthPasses = this.viewer.getRenderer().pipeline.getPass('DEPTH')
     depthPasses.forEach((value: GPass) => {
-      ;(value as GDepthPass).depthSide = FrontSide
+      ;(value as DepthPass).depthSide = FrontSide
     })
 
     this.updateVisualDiff(0, mode)
@@ -246,7 +246,7 @@ export class DiffExtension extends Extension {
   public async undiff(): Promise<void> {
     const depthPasses = this.viewer.getRenderer().pipeline.getPass('DEPTH')
     depthPasses.forEach((value: GPass) => {
-      ;(value as GDepthPass).depthSide = DoubleSide
+      ;(value as DepthPass).depthSide = DoubleSide
     })
     this.resetMaterialGroups()
     this.viewer.getRenderer().resetMaterials()

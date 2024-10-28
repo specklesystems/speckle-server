@@ -1,9 +1,9 @@
 import { OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { BaseGPass } from './GPass.js'
 
-export class GColorPass extends BaseGPass {
+export class GeometryPass extends BaseGPass {
   public get displayName(): string {
-    return 'GEOMETRY-COLOR'
+    return 'GEOMETRY'
   }
 
   public render(

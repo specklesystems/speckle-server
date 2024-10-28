@@ -24,7 +24,7 @@ export const DefaultBlendPassOptions: Required<BlendPassOptions> = {
   blendEdges: false
 }
 
-export class GBlendPass extends ProgressiveGPass {
+export class BlendPass extends ProgressiveGPass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
 

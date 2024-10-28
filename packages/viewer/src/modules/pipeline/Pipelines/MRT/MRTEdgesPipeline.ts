@@ -1,34 +1,34 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GBlendPass } from '../../Passes/GBlendPass.js'
-import { GColorPass } from '../../Passes/GColorPass.js'
-import { GEdgePass } from '../../Passes/GEdgesPass.js'
+import { BlendPass } from '../../Passes/BlendPass.js'
+import { GeometryPass } from '../../Passes/GeometryPass.js'
+import { EdgePass } from '../../Passes/EdgesPass.js'
 import { ClearFlags, ObjectVisibility } from '../../Passes/GPass.js'
-import { GProgressiveAOPass } from '../../Passes/GProgressiveAOPass.js'
-import { GTAAPass } from '../../Passes/GTAAPass.js'
+import { ProgressiveAOPass } from '../../Passes/ProgressiveAOPass.js'
+import { TAAPass } from '../../Passes/TAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
-import { GProgressivePipeline } from '../GProgressivePipeline.js'
-import { GStencilMaskPass } from '../../Passes/GStencilMaskPass.js'
-import { GStencilPass } from '../../Passes/GStencilPass.js'
-import { GDepthNormalPass } from '../../Passes/GDepthNormalPass.js'
+import { ProgressivePipeline } from '../ProgressivePipeline.js'
+import { StencilMaskPass } from '../../Passes/StencilMaskPass.js'
+import { StencilPass } from '../../Passes/StencilPass.js'
+import { DepthNormalPass } from '../../Passes/DepthNormalPass.js'
 
-export class MRTEdgesPipeline extends GProgressivePipeline {
+export class MRTEdgesPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthNormalPass = new GDepthNormalPass()
+    const depthNormalPass = new DepthNormalPass()
     depthNormalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthNormalPass.setVisibility(ObjectVisibility.DEPTH)
     depthNormalPass.setJitter(true)
     depthNormalPass.setClearColor(0x000000, 1)
     depthNormalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const depthPassNormalDynamic = new GDepthNormalPass()
+    const depthPassNormalDynamic = new DepthNormalPass()
     depthPassNormalDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassNormalDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassNormalDynamic.setClearColor(0x000000, 1)
     depthPassNormalDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const opaqueColorPass = new GColorPass()
+    const opaqueColorPass = new GeometryPass()
     opaqueColorPass.setLayers([
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
@@ -39,7 +39,7 @@ export class MRTEdgesPipeline extends GProgressivePipeline {
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
 
-    const transparentColorPass = new GColorPass()
+    const transparentColorPass = new GeometryPass()
     transparentColorPass.setLayers([
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
@@ -51,44 +51,44 @@ export class MRTEdgesPipeline extends GProgressivePipeline {
     ])
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
 
-    const progressiveAOPass = new GProgressiveAOPass()
+    const progressiveAOPass = new ProgressiveAOPass()
     progressiveAOPass.setTexture('tDepth', depthNormalPass.depthTexture)
     progressiveAOPass.setClearColor(0xffffff, 1)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
 
-    const edgesPass = new GEdgePass()
+    const edgesPass = new EdgePass()
     edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
 
-    const edgesPassDynamic = new GEdgePass()
+    const edgesPassDynamic = new EdgePass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalDynamic.normalTexture)
 
-    const taaPass = new GTAAPass()
+    const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
 
-    const blendPass = new GBlendPass()
+    const blendPass = new BlendPass()
     blendPass.options = { blendAO: true, blendEdges: true }
     blendPass.setTexture('tAo', progressiveAOPass.outputTarget?.texture)
     blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
 
-    const blendPassDynamic = new GBlendPass()
+    const blendPassDynamic = new BlendPass()
     blendPassDynamic.options = { blendAO: false, blendEdges: true }
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
-    const stencilPass = new GStencilPass()
+    const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    const stencilMaskPass = new GStencilMaskPass()
+    const stencilMaskPass = new StencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
-    const overlayPass = new GColorPass()
+    const overlayPass = new GeometryPass()
     overlayPass.setLayers([
       ObjectLayers.PROPS,
       ObjectLayers.OVERLAY,

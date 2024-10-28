@@ -59,9 +59,9 @@ import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
 import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
-import { GPipeline } from './pipeline/Pipelines/GPipeline.js'
+import { Pipeline } from './pipeline/Pipelines/Pipeline.js'
 import { DefaultPipeline } from './pipeline/Pipelines/DefaultPipeline.js'
-import { GProgressivePipeline } from './pipeline/Pipelines/GProgressivePipeline.js'
+import { ProgressivePipeline } from './pipeline/Pipelines/ProgressivePipeline.js'
 import { BaseGPass, GPass } from './pipeline/Passes/GPass.js'
 
 export class RenderingStats {
@@ -114,7 +114,7 @@ export default class SpeckleRenderer {
 
   protected container: HTMLElement
   protected rootGroup: Group
-  protected _pipeline: GPipeline
+  protected _pipeline: Pipeline
 
   protected sun: DirectionalLight
   protected sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
@@ -232,11 +232,11 @@ export default class SpeckleRenderer {
     this._speckleCamera = value
     this._speckleCamera.on(CameraEvent.Dynamic, () => {
       this._needsRender = true
-      this._pipeline instanceof GProgressivePipeline && this._pipeline.onStationaryEnd()
+      this._pipeline instanceof ProgressivePipeline && this._pipeline.onStationaryEnd()
     })
     this._speckleCamera.on(CameraEvent.Stationary, () => {
       this._needsRender = true
-      this._pipeline instanceof GProgressivePipeline &&
+      this._pipeline instanceof ProgressivePipeline &&
         this._pipeline.onStationaryBegin()
     })
     this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
@@ -251,13 +251,13 @@ export default class SpeckleRenderer {
 
   /**********
    * Pipeline */
-  public set pipeline(value: GPipeline) {
+  public set pipeline(value: Pipeline) {
     this._pipeline = value
     this._pipeline.setClippingPlanes(this._clippingPlanes)
     this._pipeline.reset()
   }
 
-  public get pipeline(): GPipeline {
+  public get pipeline(): Pipeline {
     return this._pipeline
   }
 

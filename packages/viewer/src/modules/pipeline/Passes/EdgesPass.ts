@@ -13,7 +13,7 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import { BaseGPass, PassOptions } from './GPass.js'
 import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges-generator-frag.js'
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
-import { GPipeline } from '../Pipelines/GPipeline.js'
+import { Pipeline } from '../Pipelines/Pipeline.js'
 
 export interface EdgePassOptions extends PassOptions {
   depthMultiplier?: number
@@ -37,7 +37,7 @@ export const DefaultEdgePassOptions: Required<EdgePassOptions> = {
   backgroundTextureIntensity: 0
 }
 
-export class GEdgePass extends BaseGPass {
+export class EdgePass extends BaseGPass {
   public edgesMaterial: ShaderMaterial
   private fsQuad: FullScreenQuad
 
@@ -54,7 +54,7 @@ export class GEdgePass extends BaseGPass {
   public constructor() {
     super()
 
-    this._outputTarget = GPipeline.createRenderTarget({
+    this._outputTarget = Pipeline.createRenderTarget({
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })

@@ -1,72 +1,72 @@
 import { BackSide, NoBlending, WebGLRenderTarget } from 'three'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
-import { GDepthPass } from '../Passes/GDepthPass.js'
-import { GEdgePass } from '../Passes/GEdgesPass.js'
-import { GNormalsPass } from '../Passes/GNormalPass.js'
+import { DepthPass } from '../Passes/DepthPass.js'
+import { EdgePass } from '../Passes/EdgesPass.js'
+import { NormalsPass } from '../Passes/NormalsPass.js'
 import { ObjectVisibility } from '../Passes/GPass.js'
-import { GTAAPass } from '../Passes/GTAAPass.js'
+import { TAAPass } from '../Passes/TAAPass.js'
 import { ObjectLayers } from '../../../IViewer.js'
-import { GBlendPass } from '../Passes/GBlendPass.js'
-import { GProgressivePipeline } from './GProgressivePipeline.js'
+import { BlendPass } from '../Passes/BlendPass.js'
+import { ProgressivePipeline } from './ProgressivePipeline.js'
 
 /** WIP */
-export class TechnicalViewPipeline extends GProgressivePipeline {
+export class TechnicalViewPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthPassFront = new GDepthPass()
+    const depthPassFront = new DepthPass()
     depthPassFront.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFront.setVisibility(ObjectVisibility.DEPTH)
     depthPassFront.setJitter(true)
 
-    const normalPassFront = new GNormalsPass()
+    const normalPassFront = new NormalsPass()
     normalPassFront.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPassFront.setVisibility(ObjectVisibility.OPAQUE)
     normalPassFront.setJitter(true)
 
-    const depthPassBack = new GDepthPass()
+    const depthPassBack = new DepthPass()
     depthPassBack.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFront.setVisibility(ObjectVisibility.DEPTH)
     depthPassBack.setJitter(true)
     depthPassBack.overrideMaterial.side = BackSide
 
-    const normalPassBack = new GNormalsPass()
+    const normalPassBack = new NormalsPass()
     normalPassBack.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPassBack.setVisibility(ObjectVisibility.OPAQUE)
     normalPassBack.setJitter(true)
     normalPassBack.overrideMaterial.side = BackSide
 
-    const depthPassFrontDynamic = new GDepthPass()
+    const depthPassFrontDynamic = new DepthPass()
     depthPassFrontDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassFrontDynamic.setVisibility(ObjectVisibility.DEPTH)
 
-    const normalPassFrontDynamic = new GNormalsPass()
+    const normalPassFrontDynamic = new NormalsPass()
     normalPassFrontDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPassFrontDynamic.setVisibility(ObjectVisibility.OPAQUE)
 
-    const depthPassBackDynamic = new GDepthPass()
+    const depthPassBackDynamic = new DepthPass()
     depthPassBackDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassBackDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassBackDynamic.overrideMaterial.side = BackSide
     // depthPassBackDynamic.overrideMaterial.depthTest = false
 
-    const normalPassBackDynamic = new GNormalsPass()
+    const normalPassBackDynamic = new NormalsPass()
     normalPassBackDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     normalPassBackDynamic.setVisibility(ObjectVisibility.OPAQUE)
     normalPassBackDynamic.overrideMaterial.side = BackSide
     // normalPassBackDynamic.overrideMaterial.depthTest = false
 
-    const edgesPassFront = new GEdgePass()
+    const edgesPassFront = new EdgePass()
     edgesPassFront.setTexture('tDepth', depthPassFront.outputTarget?.texture)
     edgesPassFront.setTexture('tNormal', normalPassFront.outputTarget?.texture)
 
-    const edgesPassBack = new GEdgePass()
+    const edgesPassBack = new EdgePass()
     edgesPassBack.setTexture('tDepth', depthPassBack.outputTarget?.texture)
     edgesPassBack.setTexture('tNormal', normalPassBack.outputTarget?.texture)
     edgesPassBack.edgesMaterial.uniforms.uOutlineDensity.value = 0.25
     edgesPassBack.edgesMaterial.needsUpdate = true
 
-    const edgesPassFrontDynamic = new GEdgePass()
+    const edgesPassFrontDynamic = new EdgePass()
     edgesPassFrontDynamic.setTexture(
       'tDepth',
       depthPassFrontDynamic.outputTarget?.texture
@@ -76,7 +76,7 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
       normalPassFrontDynamic.outputTarget?.texture
     )
 
-    const edgesPassBackDynamic = new GEdgePass()
+    const edgesPassBackDynamic = new EdgePass()
     edgesPassBackDynamic.setTexture(
       'tDepth',
       depthPassBackDynamic.outputTarget?.texture
@@ -88,14 +88,14 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     edgesPassBackDynamic.edgesMaterial.uniforms.uOutlineDensity.value = 0.25
     edgesPassBackDynamic.edgesMaterial.needsUpdate = true
 
-    const blendPassDynamic = new GBlendPass()
+    const blendPassDynamic = new BlendPass()
     blendPassDynamic.setTexture('tDiffuse', edgesPassFrontDynamic.outputTarget?.texture)
     blendPassDynamic.setTexture('tEdges', edgesPassBackDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
     blendPassDynamic.materialCopy.transparent = false
     blendPassDynamic.materialCopy.blending = NoBlending
 
-    const blendPass = new GBlendPass()
+    const blendPass = new BlendPass()
     blendPass.setTexture('tDiffuse', edgesPassFront.outputTarget?.texture)
     blendPass.setTexture('tEdges', edgesPassBack.outputTarget?.texture)
     blendPass.accumulationFrames = this.accumulationFrameCount
@@ -103,7 +103,7 @@ export class TechnicalViewPipeline extends GProgressivePipeline {
     blendPass.materialCopy.transparent = false
     blendPass.materialCopy.blending = NoBlending
 
-    const taaPass = new GTAAPass()
+    const taaPass = new TAAPass()
     taaPass.inputTexture = blendPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
     taaPass.outputToScreen = true

@@ -13,8 +13,8 @@ import {
   WebGLRenderer
 } from 'three'
 import { BaseGPass } from './GPass.js'
-import { GPipeline } from '../Pipelines/GPipeline.js'
-import { DefaultDepthPassOptions, DepthPassOptions, DepthType } from './GDepthPass.js'
+import { Pipeline } from '../Pipelines/Pipeline.js'
+import { DefaultDepthPassOptions, DepthPassOptions, DepthType } from './DepthPass.js'
 import SpeckleDepthNormalMaterial from '../../materials/SpeckleDepthNormalMaterial.js'
 
 export interface DepthNormalPassOptions extends DepthPassOptions {}
@@ -23,7 +23,7 @@ export const DefaultDepthNormalPassOptions: Required<DepthNormalPassOptions> = {
   ...DefaultDepthPassOptions
 }
 
-export class GDepthNormalPass extends BaseGPass {
+export class DepthNormalPass extends BaseGPass {
   private depthNormalMaterial: SpeckleDepthNormalMaterial
   private mrt: WebGLMultipleRenderTargets
 
@@ -68,7 +68,7 @@ export class GDepthNormalPass extends BaseGPass {
   constructor() {
     super()
 
-    this.mrt = GPipeline.createMultipleRenderTarget(2, {
+    this.mrt = Pipeline.createMultipleRenderTarget(2, {
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })

@@ -2,18 +2,14 @@ import {
   AlwaysStencilFunc,
   DoubleSide,
   Material,
-  OrthographicCamera,
-  PerspectiveCamera,
   Plane,
   ReplaceStencilOp,
-  Scene,
-  Vector2,
-  WebGLRenderer
+  Vector2
 } from 'three'
-import { BaseGPass } from './GPass.js'
 import SpeckleDisplaceMaterial from '../../materials/SpeckleDisplaceMaterial.js'
+import { GeometryPass } from './GeometryPass.js'
 
-export class GStencilPass extends BaseGPass {
+export class StencilPass extends GeometryPass {
   private stencilMaterial: SpeckleDisplaceMaterial
 
   public constructor() {
@@ -42,27 +38,6 @@ export class GStencilPass extends BaseGPass {
 
   public setClippingPlanes(planes: Plane[]) {
     this.stencilMaterial.clippingPlanes = planes
-  }
-
-  public render(
-    renderer: WebGLRenderer,
-    camera: PerspectiveCamera | OrthographicCamera | null,
-    scene?: Scene
-  ): boolean {
-    if (!camera || !scene) return false
-
-    if (this.onBeforeRender) this.onBeforeRender()
-
-    renderer.setRenderTarget(this.outputTarget)
-
-    this.applyLayers(camera)
-
-    this.clear(renderer)
-    renderer.render(scene, camera)
-
-    if (this.onAfterRender) this.onAfterRender()
-
-    return false
   }
 
   public setSize(width: number, height: number) {

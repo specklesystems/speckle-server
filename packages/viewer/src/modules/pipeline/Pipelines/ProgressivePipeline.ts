@@ -1,8 +1,8 @@
 import { OrthographicCamera, PerspectiveCamera, Plane } from 'three'
 import { GPass, ProgressiveGPass } from '../Passes/GPass.js'
-import { GPipeline } from './GPipeline.js'
+import { Pipeline } from './Pipeline.js'
 
-export abstract class GProgressivePipeline extends GPipeline {
+export abstract class ProgressivePipeline extends Pipeline {
   protected accumulationFrameIndex: number = 0
   protected accumulationFrameCount: number = 16
   protected dynamicStage: Array<GPass> = []

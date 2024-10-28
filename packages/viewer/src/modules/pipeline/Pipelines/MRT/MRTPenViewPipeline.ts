@@ -1,14 +1,14 @@
 import { ObjectLayers } from '../../../../index.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GColorPass } from '../../Passes/GColorPass.js'
-import { GEdgePass } from '../../Passes/GEdgesPass.js'
-import { GOutputPass } from '../../Passes/GOutputPass.js'
+import { GeometryPass } from '../../Passes/GeometryPass.js'
+import { EdgePass } from '../../Passes/EdgesPass.js'
+import { OutputPass } from '../../Passes/OutputPass.js'
 import { ObjectVisibility, ClearFlags } from '../../Passes/GPass.js'
-import { GStencilMaskPass } from '../../Passes/GStencilMaskPass.js'
-import { GStencilPass } from '../../Passes/GStencilPass.js'
-import { GTAAPass } from '../../Passes/GTAAPass.js'
-import { GProgressivePipeline } from '../GProgressivePipeline.js'
-import { GDepthNormalPass } from '../../Passes/GDepthNormalPass.js'
+import { StencilMaskPass } from '../../Passes/StencilMaskPass.js'
+import { StencilPass } from '../../Passes/StencilPass.js'
+import { TAAPass } from '../../Passes/TAAPass.js'
+import { ProgressivePipeline } from '../ProgressivePipeline.js'
+import { DepthNormalPass } from '../../Passes/DepthNormalPass.js'
 import SpeckleStandardMaterial from '../../../materials/SpeckleStandardMaterial.js'
 import {
   DoubleSide,
@@ -19,42 +19,42 @@ import {
   WebGLRenderer
 } from 'three'
 
-export class MRTPenViewPipeline extends GProgressivePipeline {
+export class MRTPenViewPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthNormalPass = new GDepthNormalPass()
+    const depthNormalPass = new DepthNormalPass()
     depthNormalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthNormalPass.setVisibility(ObjectVisibility.DEPTH)
     depthNormalPass.setJitter(true)
     depthNormalPass.setClearColor(0x000000, 1)
     depthNormalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const depthPassNormalDynamic = new GDepthNormalPass()
+    const depthPassNormalDynamic = new DepthNormalPass()
     depthPassNormalDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassNormalDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassNormalDynamic.setClearColor(0x000000, 1)
     depthPassNormalDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const edgesPass = new GEdgePass()
+    const edgesPass = new EdgePass()
     edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
 
-    const edgesPassDynamic = new GEdgePass()
+    const edgesPassDynamic = new EdgePass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalDynamic.normalTexture)
     edgesPassDynamic.outputTarget = null
 
-    const taaPass = new GTAAPass()
+    const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
 
-    const stencilPass = new GStencilPass()
+    const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
     /** We can anonymously extend a pass and inline it */
-    const geometryPass = new (class extends GColorPass {
+    const geometryPass = new (class extends GeometryPass {
       private hiddenMaterial: SpeckleStandardMaterial
 
       public get displayName(): string {
@@ -98,19 +98,19 @@ export class MRTPenViewPipeline extends GProgressivePipeline {
     })()
     geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    const stencilMaskPass = new GStencilMaskPass()
+    const stencilMaskPass = new StencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
     stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
-    const overlayPass = new GColorPass()
+    const overlayPass = new GeometryPass()
     overlayPass.setLayers([
       ObjectLayers.OVERLAY,
       ObjectLayers.MEASUREMENTS,
       ObjectLayers.PROPS
     ])
 
-    const outputPass = new GOutputPass()
+    const outputPass = new OutputPass()
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
 
     this.dynamicStage.push(
