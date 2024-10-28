@@ -7,7 +7,7 @@ import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositor
 import { Knex } from 'knex'
 import { db } from '@/db/knex'
 
-const scheduleWebhookCleanup = ({ db }: { db: Knex }) => {
+const scheduleWebhookCleanupFactory = ({ db }: { db: Knex }) => {
   const scheduleExecution = scheduleExecutionFactory({
     acquireTaskLock: acquireTaskLockFactory({ db })
   })
@@ -24,7 +24,7 @@ let scheduledTask: cron.ScheduledTask | null = null
 
 export const init: SpeckleModule['init'] = () => {
   moduleLogger.info('🎣 Init webhooks module')
-  scheduledTask = scheduleWebhookCleanup({ db })
+  scheduledTask = scheduleWebhookCleanupFactory({ db })
 }
 
 export const shutdown: SpeckleModule['shutdown'] = () => {
