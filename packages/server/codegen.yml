@@ -61,6 +61,7 @@ generates:
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
+        WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'

@@ -1,6 +1,5 @@
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
-  pubsub,
   BranchSubscriptions as BranchPubsubEvents,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
@@ -38,8 +37,7 @@ export const addBranchCreatedActivityFactory =
         info: { branch },
         message: `Branch created: ${branch.name} (${branch.id})`
       }),
-      // @deprecated
-      pubsub.publish(BranchPubsubEvents.BranchCreated, {
+      publish(BranchPubsubEvents.BranchCreated, {
         branchCreated: { ...branch },
         streamId: branch.streamId
       }),
@@ -76,8 +74,7 @@ export const addBranchUpdatedActivityFactory =
         info: { old: oldBranch, new: update },
         message: `Branch metadata changed for branch ${update.id}`
       }),
-      // @deprecated
-      pubsub.publish(BranchPubsubEvents.BranchUpdated, {
+      publish(BranchPubsubEvents.BranchUpdated, {
         branchUpdated: { ...update },
         streamId,
         branchId: update.id
@@ -115,7 +112,7 @@ export const addBranchDeletedActivityFactory =
         info: { branch: { ...input, name: branchName } },
         message: `Branch deleted: '${branchName}' (${input.id})`
       }),
-      pubsub.publish(BranchPubsubEvents.BranchDeleted, {
+      publish(BranchPubsubEvents.BranchDeleted, {
         branchDeleted: input,
         streamId
       }),

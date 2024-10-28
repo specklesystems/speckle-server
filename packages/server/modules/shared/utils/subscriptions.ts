@@ -39,7 +39,14 @@ import {
   StreamUpdateInput,
   ProjectUpdateInput,
   SubscriptionStreamUpdatedArgs,
-  SubscriptionStreamDeletedArgs
+  SubscriptionStreamDeletedArgs,
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchUpdatedArgs,
+  BranchUpdateInput,
+  UpdateModelInput,
+  SubscriptionBranchDeletedArgs,
+  BranchDeleteInput,
+  DeleteModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -54,6 +61,7 @@ import {
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -301,6 +309,22 @@ type SubscriptionTypeMap = {
     payload: { streamDeleted: { streamId: string }; streamId: string }
     variables: SubscriptionStreamDeletedArgs
   }
+  [BranchSubscriptions.BranchCreated]: {
+    payload: { branchCreated: BranchRecord; streamId: string }
+    variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
+  }
+  [BranchSubscriptions.BranchDeleted]: {
+    payload: { branchDeleted: BranchDeleteInput | DeleteModelInput; streamId: string }
+    variables: SubscriptionBranchDeletedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -311,6 +335,7 @@ type SubscriptionEvent =
   | StreamSubscriptions
   | UserSubscriptions
   | ViewerSubscriptions
+  | BranchSubscriptions
 
 /**
  * Publish a GQL subscription event

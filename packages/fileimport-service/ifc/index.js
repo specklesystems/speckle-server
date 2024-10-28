@@ -4,6 +4,7 @@ const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const { logger: parentLogger } = require('../observability/logging')
+const knex = require('../knex')
 
 async function parseAndCreateCommit({
   data,
@@ -20,7 +21,7 @@ async function parseAndCreateCommit({
       'ifc'
     )
   }
-  const serverApi = new ServerAPI({ streamId, logger })
+  const serverApi = new ServerAPI({ db: knex, streamId, logger })
   const myParser = new Parser({ serverApi, fileId, logger })
 
   const start = performance.now()
