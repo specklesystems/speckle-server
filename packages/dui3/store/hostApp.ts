@@ -259,7 +259,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     // You should stop asking why if you saw anything related autocad..
     // It solves the press "escape" issue.
     // Because probably we don't give enough time to acad complete it's previos task and it stucks.
-    const shittyHostApps = ['autocad', 'revit']
+    const shittyHostApps = ['autocad']
     if (shittyHostApps.includes(hostAppName.value as string)) {
       setTimeout(() => {
         void app.$sendBinding.send(modelCardId)
