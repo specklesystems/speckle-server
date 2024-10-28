@@ -1,6 +1,7 @@
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
+import { SsoVerificationCodeMissingError } from '@/modules/workspaces/errors/sso'
 import { Request } from 'express'
 
 /**
@@ -63,8 +64,7 @@ export const decryptorFactory = () => async (data: string) => {
 
 export const parseCodeVerifier = async (req: Request<unknown>): Promise<string> => {
   const encryptedCodeVerifier = req.session.codeVerifier
-  if (!encryptedCodeVerifier)
-    throw new Error('Cannot find verification token. Restart flow.')
+  if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
   const codeVerifier = await decryptorFactory()(encryptedCodeVerifier)
   return codeVerifier
 }

@@ -11,6 +11,7 @@ import {
   ProviderRecord,
   UserSsoSessionRecord
 } from '@/modules/workspaces/domain/sso/types'
+import { SsoProviderTypeNotSupportedError } from '@/modules/workspaces/errors/sso'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
@@ -34,12 +35,12 @@ export const storeOIDCProviderValidationRequestFactory =
     redis,
     encrypt
   }: {
-    redis: () => Redis
+    redis: Redis
     encrypt: Crypt
   }): StoreOIDCProviderValidationRequest =>
   async ({ provider, token }) => {
     const providerData = await encrypt(JSON.stringify(provider))
-    await redis().set(token, providerData)
+    await redis.set(token, providerData)
   }
 
 export const getOIDCProviderValidationRequestFactory =
@@ -73,8 +74,7 @@ export const getWorkspaceSsoProviderFactory =
           provider: oidcProvider.parse(providerData)
         }
       default:
-        // this is an internal error
-        throw new Error('Provider type not supported')
+        throw new SsoProviderTypeNotSupportedError()
     }
   }
 

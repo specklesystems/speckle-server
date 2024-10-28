@@ -2,7 +2,7 @@
 
 import { db } from '@/db/knex'
 import { validateRequest } from 'zod-express'
-import { Application, Request, RequestHandler } from 'express'
+import { Request, RequestHandler, Router } from 'express'
 import { z } from 'zod'
 import {
   createWorkspaceUserFromSsoProfileFactory,
@@ -35,7 +35,10 @@ import {
   getWorkspaceBySlugFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceNotFoundError,
+  WorkspacesNotAuthorizedError
+} from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import {
@@ -99,6 +102,15 @@ import {
   encryptorFactory,
   parseCodeVerifier
 } from '@/modules/workspaces/helpers/sso'
+import {
+  SsoGenericAuthenticationError,
+  SsoGenericProviderValidationError,
+  SsoProviderMissingError,
+  SsoProviderProfileMissingError,
+  SsoUserClaimedError,
+  SsoUserEmailUnverifiedError,
+  SsoVerificationCodeMissingError
+} from '@/modules/workspaces/errors/sso'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -107,8 +119,10 @@ const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   getUser: legacyGetUserFactory({ db })
 })
 
-export default (app: Application) => {
-  app.get(
+export const getSsoRouter = (): Router => {
+  const router = Router()
+
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso',
     validateRequest({
       params: z.object({
@@ -124,7 +138,7 @@ export default (app: Application) => {
     })
   )
 
-  app.get(
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso/auth',
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
@@ -142,7 +156,7 @@ export default (app: Application) => {
     })
   )
 
-  app.get(
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
@@ -157,7 +171,7 @@ export default (app: Application) => {
       startOIDCSsoProviderValidation: startOIDCSsoProviderValidationFactory({
         getOIDCProviderAttributes,
         storeOIDCProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
-          redis: getGenericRedis,
+          redis: getGenericRedis(),
           encrypt: encryptorFactory()
         }),
         generateCodeVerifier: generators.codeVerifier
@@ -165,7 +179,7 @@ export default (app: Application) => {
     })
   )
 
-  app.get(
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
     sessionMiddleware,
     validateRequest({
@@ -267,6 +281,8 @@ export default (app: Application) => {
     },
     finalizeAuthMiddleware
   )
+
+  return router
 }
 
 const workspaceSsoAuthRequestParams = z.object({
@@ -322,7 +338,7 @@ const handleSsoAuthRequestFactory =
 
       const { provider } =
         (await getWorkspaceSsoProvider({ workspaceId: workspace.id })) ?? {}
-      if (!provider) throw new Error('No SSO provider registered for the workspace')
+      if (!provider) throw new SsoProviderMissingError()
 
       const codeVerifier = generators.codeVerifier()
       const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug, false)
@@ -455,8 +471,7 @@ const handleOidcCallbackFactory =
 
     req.user ??= { id: speckleUserData!.id, email: speckleUserData!.email }
 
-    if (!req.user || !req.user.id)
-      throw new Error('Unhandled failure signing in with SSO.')
+    if (!req.user || !req.user.id) throw new SsoGenericAuthenticationError()
 
     await linkUserWithSsoProvider({
       userId: req.user.id,
@@ -498,18 +513,21 @@ const createOidcProviderFactory =
     req: Request<WorkspaceSsoAuthRequestParams>,
     workspaceId: string
   ): Promise<WorkspaceSsoProvider> => {
-    if (!req.context.userId) throw new Error('Must be signed in to configure SSO')
+    if (!req.context.userId)
+      throw new WorkspacesNotAuthorizedError('You must be signed in to configure SSO')
 
     const encryptedCodeVerifier = req.session.codeVerifier
-    if (!encryptedCodeVerifier)
-      throw new Error('Cannot find verification token. Restart flow.')
+    if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
 
     const codeVerifier = await parseCodeVerifier(req)
 
     const oidcProvider = await getOIDCProviderValidationRequest({
       validationToken: codeVerifier
     })
-    if (!oidcProvider) throw new Error('Validation request not found. Restart flow.')
+    if (!oidcProvider)
+      throw new SsoGenericProviderValidationError(
+        'Validation request not found. Restart flow.'
+      )
 
     await authorizeResolver(
       req.context.userId,
@@ -534,7 +552,7 @@ const getOidcProviderFactory =
   ({ getWorkspaceSsoProvider }: { getWorkspaceSsoProvider: GetWorkspaceSsoProvider }) =>
   async (workspaceId: string): Promise<WorkspaceSsoProvider> => {
     const provider = await getWorkspaceSsoProvider({ workspaceId })
-    if (!provider) throw new Error('Could not find SSO provider')
+    if (!provider) throw new SsoProviderMissingError()
     return provider
   }
 
@@ -565,7 +583,7 @@ const getOidcProviderUserDataFactory =
 
     const oidcProviderUserData = await client.userinfo(tokenSet)
     if (!oidcProviderUserData || !oidcProviderUserData.email) {
-      throw new Error('Failed to get user profile from SSO provider.')
+      throw new SsoProviderProfileMissingError()
     }
 
     return oidcProviderUserData as UserinfoResponse<{ email: string }>
@@ -582,16 +600,13 @@ const tryGetSpeckleUserDataFactory =
 
     // Get user with email that matches OIDC provider user email, if match exists
     const userEmail = await findEmail({ email: oidcProviderUserData.email })
-    if (!!userEmail && !userEmail.verified)
-      throw new Error('Cannot sign in with SSO using unverified email.')
+    if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
 
     // Confirm existing user matches signed-in user, if both are present
     if (!!currentSessionUser && !!existingSpeckleUser) {
       if (currentSessionUser.id !== existingSpeckleUser.id) {
-        throw new Error(
-          'OIDC provider user already associated with another Speckle account.'
-        )
+        throw new SsoUserClaimedError()
       }
     }
 
