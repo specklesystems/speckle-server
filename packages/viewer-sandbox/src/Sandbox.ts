@@ -496,7 +496,7 @@ export default class Sandbox {
       // console.warn(await this.viewer.screenshot())
       this.viewer
         .getExtension(FilteringExtension)
-        .isolateObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
+        .hideObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
     })
 
     const rotate = this.tabs.pages[0].addButton({

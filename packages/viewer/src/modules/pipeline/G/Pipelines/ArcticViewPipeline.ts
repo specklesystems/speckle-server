@@ -33,7 +33,7 @@ export class ArcticViewPipeline extends GProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
-    viewportPass.setVisibility(ObjectVisibility.DEPTH)
+    viewportPass.setVisibility(ObjectVisibility.OPAQUE)
     viewportPass.options = { minIntensity: 0.75 }
 
     const viewportTransparentPass = new GViewportPass()
