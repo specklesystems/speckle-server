@@ -3,8 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
 import {
   createRenderRequestFactory,
-  getGendoAIRenderRequest,
-  getGendoAIRenderRequests
+  getGendoAIRenderRequest
 } from '@/modules/gendo/services'
 import {
   ProjectSubscriptions,
@@ -22,7 +21,10 @@ import {
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
-import { storeRenderFactory } from '@/modules/gendo/repositories'
+import {
+  getLatestVersionRenderRequestsFactory,
+  storeRenderFactory
+} from '@/modules/gendo/repositories'
 import { db } from '@/db/knex'
 
 const createRenderRequest = createRenderRequestFactory({
@@ -35,11 +37,12 @@ const createRenderRequest = createRenderRequestFactory({
   publish,
   fetch
 })
+const getLatestVersionRenderRequests = getLatestVersionRenderRequestsFactory({ db })
 
 export = {
   Version: {
     async gendoAIRenders(parent) {
-      const items = await getGendoAIRenderRequests(parent.id)
+      const items = await getLatestVersionRenderRequests({ versionId: parent.id })
       return {
         totalCount: items.length,
         items
