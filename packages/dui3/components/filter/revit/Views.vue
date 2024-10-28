@@ -12,7 +12,7 @@
       class="w-full"
       fixed-height
       show-label
-      :items="filter.availableViews"
+      :items="store.availableViews"
       :allow-unset="false"
       mount-menu-on-body
     >
@@ -27,7 +27,10 @@
 </template>
 
 <script setup lang="ts">
+import { useHostAppStore } from '~/store/hostApp'
 import type { ISendFilter, RevitViewsSendFilter } from '~/lib/models/card/send'
+
+const store = useHostAppStore()
 
 const emit = defineEmits<{
   (e: 'update:filter', filter: ISendFilter): void

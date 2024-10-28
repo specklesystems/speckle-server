@@ -8,7 +8,8 @@ import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import type {
   IDirectSelectionSendFilter,
   ISendFilter,
-  ISenderModelCard
+  ISenderModelCard,
+  RevitViewsSendFilter
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
 import type { Nullable } from '@speckle/shared'
@@ -44,6 +45,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const connectorVersion = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
+
+  const availableViews = ref<string[]>()
 
   const dismissNotification = () => {
     currentNotification.value = null
@@ -444,8 +447,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   /**
    * Sources the available send filters from the app. This is useful in case of host app layer changes, etc.
    */
-  const refreshSendFilters = async () =>
-    (sendFilters.value = await app.$sendBinding?.getSendFilters())
+  const refreshSendFilters = async () => {
+    sendFilters.value = await app.$sendBinding?.getSendFilters()
+    availableViews.value = (
+      sendFilters.value.find((f) => f.id === 'revitViews') as RevitViewsSendFilter
+    ).availableViews
+  }
 
   const getSendSettings = async () => {
     sendSettings.value = await app.$sendBinding.getSendSettings()
@@ -550,6 +557,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     currentNotification,
     showErrorDialog,
     hostAppError,
+    availableViews,
     setNotification,
     setModelError,
     setLatestAvailableVersion,
