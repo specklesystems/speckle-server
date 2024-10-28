@@ -2,13 +2,13 @@ import {
   DeleteBlob,
   GetBlobMetadata,
   UpdateBlob,
+  UploadFileStream,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
 import { MaybeAsync } from '@speckle/shared'
-import { Readable } from 'stream'
 
 /**
  * File size limit in bytes
@@ -16,20 +16,8 @@ import { Readable } from 'stream'
 export const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
 
 export const uploadFileStreamFactory =
-  (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }) =>
-  async (
-    storeFileStream: (params: {
-      objectKey: string
-      fileStream: Readable | Buffer
-    }) => Promise<{ fileHash: string }>,
-    params1: { streamId: string; userId: string | undefined },
-    params2: {
-      blobId: string
-      fileName: string
-      fileType: string | undefined
-      fileStream: Readable | Buffer
-    }
-  ) => {
+  (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }): UploadFileStream =>
+  async (storeFileStream, params1, params2) => {
     const { streamId, userId } = params1
     const { blobId, fileName, fileType, fileStream } = params2
 

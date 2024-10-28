@@ -1,44 +1,64 @@
 import { authorizeResolver } from '@/modules/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
-import {
-  getGendoAIAPIEndpoint,
-  getGendoAIKey,
-  getServerOrigin
-} from '@/modules/shared/helpers/envHelper'
-import {
-  createGendoAIRenderRequest,
-  getGendoAIRenderRequest,
-  getGendoAIRenderRequests
-} from '@/modules/gendo/services'
-import crs from 'crypto-random-string'
+import { createRenderRequestFactory } from '@/modules/gendo/services'
 import {
   ProjectSubscriptions,
-  filteredSubscribe
+  filteredSubscribe,
+  publish
 } from '@/modules/shared/utils/subscriptions'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { GendoRenderRequestError } from '@/modules/gendo/errors/main'
+import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
+import {
+  updateBlobFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories'
+import { storeFileStream } from '@/modules/blobstorage/objectStorage'
+import {
+  getLatestVersionRenderRequestsFactory,
+  getVersionRenderRequestFactory,
+  storeRenderFactory
+} from '@/modules/gendo/repositories'
+import { db } from '@/db/knex'
+
+const createRenderRequest = createRenderRequestFactory({
+  uploadFileStream: uploadFileStreamFactory({
+    upsertBlob: upsertBlobFactory({ db }),
+    updateBlob: updateBlobFactory({ db })
+  }),
+  storeFileStream,
+  storeRender: storeRenderFactory({ db }),
+  publish,
+  fetch
+})
+const getLatestVersionRenderRequests = getLatestVersionRenderRequestsFactory({ db })
+const getVersionRenderRequest = getVersionRenderRequestFactory({ db })
 
 export = {
   Version: {
     async gendoAIRenders(parent) {
-      const items = await getGendoAIRenderRequests(parent.id)
+      const items = await getLatestVersionRenderRequests({ versionId: parent.id })
       return {
         totalCount: items.length,
         items
       }
     },
     async gendoAIRender(parent, args) {
-      const item = await getGendoAIRenderRequest(parent.id, args.id)
-      const response = {
-        ...item,
-        user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
-      }
-      return response
+      const item = await getVersionRenderRequest({
+        versionId: parent.id,
+        id: args.id
+      })
+
+      return item
+    }
+  },
+  GendoAIRender: {
+    async user(parent, __args, ctx) {
+      return await ctx.loaders.users.getUser.load(parent.userId)
     }
   },
   VersionMutations: {
@@ -58,44 +78,11 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const endpoint = getGendoAIAPIEndpoint() as string
-      const bearer = getGendoAIKey() as string
-      const webhookUrl = `${getServerOrigin()}/api/thirdparty/gendo`
-
-      // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
-      const gendoRequestBody = {
-        userId: ctx.userId,
-        depthMap: args.input.baseImage,
-        prompt: args.input.prompt,
-        webhookUrl
-      }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${bearer}`
-        },
-        body: JSON.stringify(gendoRequestBody)
+      await createRenderRequest({
+        ...args.input,
+        userId: ctx.userId!
       })
 
-      const status = response.status
-
-      if (status === 200) {
-        const body = (await response.json()) as { status: string; generationId: string }
-        await createGendoAIRenderRequest({
-          ...args.input,
-          userId: ctx.userId as string,
-          status: body.status,
-          gendoGenerationId: body.generationId,
-          id: crs({ length: 10 })
-        })
-      } else {
-        const body = await response.json().catch((e) => ({ error: `${e}` }))
-        throw new GendoRenderRequestError('Failed to enqueue gendo render.', {
-          info: { body }
-        })
-      }
       return true
     }
   },
