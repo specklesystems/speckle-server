@@ -74,6 +74,7 @@ generates:
         ServerAppListItem: '@/modules/auth/helpers/graphTypes#ServerAppListItemGraphQLReturn'
         ServerInfo: '@/modules/core/helpers/graphTypes#ServerInfoGraphQLReturn'
         Branch: '@/modules/core/helpers/graphTypes#BranchGraphQLReturn'
+        GendoAIRender: '@/modules/gendo/helpers/types/graphTypes#GendoAIRenderGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'
