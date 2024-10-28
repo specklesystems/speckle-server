@@ -1,3 +1,4 @@
+import cron from 'node-cron'
 import { moduleLogger } from '@/logging/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -8,6 +9,11 @@ import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -17,6 +23,25 @@ const initScopes = async () => {
   await Promise.all(gatekeeperScopes.map((scope) => registerFunc({ scope })))
 }
 
+const scheduleWorkspaceSubscriptionDownscale = () => {
+  const scheduleExecution = scheduleExecutionFactory({
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
+  })
+
+  const cronExpression = '*/10 * * * * *'
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceSubscriptionDownscale',
+    async () => {
+      moduleLogger.info('Starting workspace subscription downscale scan')
+      // await cleanOrphanedWebhookConfigs()
+      moduleLogger.info('Finished cleanup')
+    }
+  )
+}
+
+let scheduledTask: cron.ScheduledTask | undefined = undefined
 let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
@@ -39,6 +64,8 @@ const gatekeeperModule: SpeckleModule = {
       if (FF_BILLING_INTEGRATION_ENABLED) {
         app.use(getBillingRouter())
 
+        scheduledTask = scheduleWorkspaceSubscriptionDownscale()
+
         quitListeners = initializeEventListenersFactory({
           db,
           stripe: getStripeClient()
@@ -57,6 +84,7 @@ const gatekeeperModule: SpeckleModule = {
   },
   async shutdown() {
     if (quitListeners) quitListeners()
+    if (scheduledTask) scheduledTask.stop()
   }
 }
 export = gatekeeperModule

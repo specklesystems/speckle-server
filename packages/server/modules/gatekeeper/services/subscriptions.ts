@@ -4,6 +4,7 @@ import {
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
+  GetWorkspaceSubscriptions,
   PaidWorkspacePlanStatuses,
   ReconcileSubscriptionData,
   SubscriptionData,
@@ -11,6 +12,7 @@ import {
   UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePricingPlans } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
@@ -18,7 +20,7 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import { throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
-import { cloneDeep, sum } from 'lodash'
+import { cloneDeep, isEqual, sum } from 'lodash'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -169,4 +171,90 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       currentPlanProduct.quantity = roleCount
     }
     await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+  }
+
+const mutateSubscriptionDataWithNewValidSeatNumbers = ({
+  seatCount,
+  workspacePlan,
+  getWorkspacePlanProductId,
+  subscriptionData
+}: {
+  seatCount: number
+  workspacePlan: WorkspacePricingPlans
+  getWorkspacePlanProductId: GetWorkspacePlanProductId
+  subscriptionData: SubscriptionData
+}): void => {
+  const productId = getWorkspacePlanProductId({ workspacePlan })
+  const product = subscriptionData.products.find(
+    (product) => product.productId === productId
+  )
+  if (seatCount < 0) throw new Error('Invalid seat count, cannot be negative')
+
+  if (seatCount === 0 && product === undefined) return
+  if (product !== undefined && product.quantity >= seatCount) {
+    product.quantity = seatCount
+  } else {
+    throw new Error('Invalid subscription state')
+  }
+}
+
+export const downscaleWorkspaceSubscriptionsFactory =
+  ({
+    getWorkspaceSubscriptions,
+    getWorkspacePlan,
+    countWorkspaceRole,
+    getWorkspacePlanProductId,
+    reconcileSubscriptionData
+  }: {
+    getWorkspaceSubscriptions: GetWorkspaceSubscriptions
+    getWorkspacePlan: GetWorkspacePlan
+    countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
+    getWorkspacePlanProductId: GetWorkspacePlanProductId
+    reconcileSubscriptionData: ReconcileSubscriptionData
+  }) =>
+  async () => {
+    const workspaceSubscriptions = await getWorkspaceSubscriptions()
+    for (const workspaceSubscription of workspaceSubscriptions) {
+      const workspaceId = workspaceSubscription.workspaceId
+      workspaceSubscription.subscriptionData
+
+      const workspacePlan = await getWorkspacePlan({ workspaceId })
+      if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+
+      switch (workspacePlan.name) {
+        case 'team':
+        case 'pro':
+        case 'business':
+          break
+        case 'unlimited':
+        case 'academia':
+          throw new WorkspacePlanMismatchError()
+        default:
+          throwUncoveredError(workspacePlan)
+      }
+
+      const [guestCount, memberCount, adminCount] = await Promise.all([
+        countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
+        countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' }),
+        countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' })
+      ])
+
+      const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
+
+      mutateSubscriptionDataWithNewValidSeatNumbers({
+        seatCount: guestCount,
+        workspacePlan: 'guest',
+        getWorkspacePlanProductId,
+        subscriptionData
+      })
+      mutateSubscriptionDataWithNewValidSeatNumbers({
+        seatCount: memberCount + adminCount,
+        workspacePlan: workspacePlan.name,
+        getWorkspacePlanProductId,
+        subscriptionData
+      })
+
+      if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData))
+        await reconcileSubscriptionData({ subscriptionData, applyProrotation: false })
+    }
   }

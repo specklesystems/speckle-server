@@ -117,7 +117,7 @@ const subscriptionProduct = z.object({
   quantity: z.number()
 })
 
-type SubscriptionProduct = z.infer<typeof subscriptionProduct>
+export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 
 export const subscriptionData = z.object({
   subscriptionId: z.string().min(1),
@@ -146,6 +146,8 @@ export type UpsertWorkspaceSubscription = (args: {
 export type GetWorkspaceSubscription = (args: {
   workspaceId: string
 }) => Promise<WorkspaceSubscription | null>
+
+export type GetWorkspaceSubscriptions = () => Promise<WorkspaceSubscription[]>
 
 export type GetWorkspaceSubscriptionBySubscriptionId = (args: {
   subscriptionId: string
