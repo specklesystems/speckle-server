@@ -1,30 +1,32 @@
+import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
-  oidcProvider,
+  AssociateSsoProviderWithWorkspace,
   GetOIDCProviderData,
+  GetWorkspaceSsoProvider,
   StoreOIDCProviderValidationRequest,
   StoreProviderRecord,
+  UpsertUserSsoSession
+} from '@/modules/workspaces/domain/sso/operations'
+import {
   ProviderRecord,
-  AssociateSsoProviderWithWorkspace,
-  StoreUserSsoSession,
-  UserSsoSession,
-  GetWorkspaceSsoProvider
-} from '@/modules/workspaces/domain/sso'
+  UserSsoSessionRecord
+} from '@/modules/workspaces/domain/sso/types'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
 
 type Crypt = (input: string) => Promise<string>
 
-type StoredSsoProvider = Omit<ProviderRecord, 'provider'> & {
+type SsoProviderRecord = Omit<ProviderRecord, 'provider'> & {
   encryptedProviderData: string
 }
-type WorkspaceSsoProvider = { workspaceId: string; providerId: string }
+type WorkspaceSsoProviderRecord = { workspaceId: string; providerId: string }
 
 const tables = {
-  ssoProviders: (db: Knex) => db<StoredSsoProvider>('sso_providers'),
-  userSsoSessions: (db: Knex) => db<UserSsoSession>('user_sso_sessions'),
+  ssoProviders: (db: Knex) => db<SsoProviderRecord>('sso_providers'),
+  userSsoSessions: (db: Knex) => db<UserSsoSessionRecord>('user_sso_sessions'),
   workspaceSsoProviders: (db: Knex) =>
-    db<WorkspaceSsoProvider>('workspace_sso_providers')
+    db<WorkspaceSsoProviderRecord>('workspace_sso_providers')
 }
 
 export const storeOIDCProviderValidationRequestFactory =
@@ -32,22 +34,21 @@ export const storeOIDCProviderValidationRequestFactory =
     redis,
     encrypt
   }: {
-    redis: Redis
+    redis: () => Redis
     encrypt: Crypt
   }): StoreOIDCProviderValidationRequest =>
   async ({ provider, token }) => {
     const providerData = await encrypt(JSON.stringify(provider))
-    await redis.set(token, providerData)
+    await redis().set(token, providerData)
   }
 
-export const getOIDCProviderFactory =
+export const getOIDCProviderValidationRequestFactory =
   ({ redis, decrypt }: { redis: Redis; decrypt: Crypt }): GetOIDCProviderData =>
   async ({ validationToken }: { validationToken: string }) => {
     const encryptedProviderData = await redis.get(validationToken)
     if (!encryptedProviderData) return null
-    const provider = oidcProvider.parse(
-      JSON.parse(await decrypt(encryptedProviderData))
-    )
+    const providerDataString = await decrypt(encryptedProviderData)
+    const provider = oidcProvider.parse(JSON.parse(providerDataString))
     return provider
   }
 
@@ -56,9 +57,9 @@ export const getWorkspaceSsoProviderFactory =
   async ({ workspaceId }) => {
     const maybeProvider = await tables
       .workspaceSsoProviders(db)
-      .select('*')
+      .select<WorkspaceSsoProviderRecord & SsoProviderRecord>('*')
       .where({ workspaceId })
-      .join<StoredSsoProvider>('sso_providers', 'id', 'providerId')
+      .join<SsoProviderRecord>('sso_providers', 'id', 'providerId')
       .first()
     if (!maybeProvider) return null
 
@@ -91,9 +92,12 @@ export const associateSsoProviderWithWorkspaceFactory =
     await tables.workspaceSsoProviders(db).insert({ providerId, workspaceId })
   }
 
-// this should be an upsert, if the session exists, we just update the createdAt and lifespan
-export const storeUserSsoSessionFactory =
-  ({ db }: { db: Knex }): StoreUserSsoSession =>
+export const upsertUserSsoSessionFactory =
+  ({ db }: { db: Knex }): UpsertUserSsoSession =>
   async ({ userSsoSession }) => {
-    await tables.userSsoSessions(db).insert(userSsoSession)
+    await tables
+      .userSsoSessions(db)
+      .insert(userSsoSession)
+      .onConflict(['userId', 'providerId'])
+      .merge(['createdAt', 'validUntil'])
   }

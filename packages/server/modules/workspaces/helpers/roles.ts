@@ -26,7 +26,3 @@ export const mapGqlWorkspaceRoleToMainRole = (
       return Roles.Workspace.Guest
   }
 }
-
-export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
-  return (Object.values(Roles.Workspace) as string[]).includes(role)
-}

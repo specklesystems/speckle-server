@@ -1,17 +1,30 @@
+/* eslint-disable camelcase */
+
 import {
   GetOIDCProviderAttributes,
-  OIDCProviderAttributes,
-  OIDCProvider,
   StoreOIDCProviderValidationRequest,
   StoreProviderRecord,
-  StoreUserSsoSession,
-  OIDCProviderRecord,
   AssociateSsoProviderWithWorkspace,
   GetWorkspaceSsoProvider
-} from '@/modules/workspaces/domain/sso'
+} from '@/modules/workspaces/domain/sso/operations'
+import {
+  OIDCProvider,
+  OIDCProviderRecord,
+  OIDCProviderAttributes
+} from '@/modules/workspaces/domain/sso/types'
 import { BaseError } from '@/modules/shared/errors/base'
 import cryptoRandomString from 'crypto-random-string'
-import { CreateUserEmail } from '@/modules/core/domain/userEmails/operations'
+import { UserinfoResponse } from 'openid-client'
+import {
+  CreateUserEmail,
+  FindEmailsByUserId,
+  UpdateUserEmail
+} from '@/modules/core/domain/userEmails/operations'
+import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
+import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
+import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 
 export class MissingOIDCProviderGrantType extends BaseError {
   static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
@@ -40,6 +53,12 @@ grant_types: ['authorization_code'],
   */
 }
 
+/**
+ * Store information about the OIDC provider used for a given SSO auth request.
+ * Used by validation and auth
+ * @param param0
+ * @returns
+ */
 export const startOIDCSsoProviderValidationFactory =
   ({
     getOIDCProviderAttributes,
@@ -65,27 +84,19 @@ export const saveSsoProviderRegistrationFactory =
   ({
     getWorkspaceSsoProvider,
     storeProviderRecord,
-    associateSsoProviderWithWorkspace,
-    storeUserSsoSession
-  }: // createUserEmail
-  {
+    associateSsoProviderWithWorkspace
+  }: {
     getWorkspaceSsoProvider: GetWorkspaceSsoProvider
     storeProviderRecord: StoreProviderRecord
     associateSsoProviderWithWorkspace: AssociateSsoProviderWithWorkspace
-    storeUserSsoSession: StoreUserSsoSession
-    createUserEmail: CreateUserEmail
   }) =>
   async ({
     provider,
-    workspaceId,
-    userId
-  }: // ssoProviderUserInfo
-  {
+    workspaceId
+  }: {
     provider: OIDCProvider
-    userId: string
     workspaceId: string
-    // ssoProviderUserInfo: { email: string }
-  }) => {
+  }): Promise<OIDCProviderRecord> => {
     // create OIDC provider record with ID
     const providerId = cryptoRandomString({ length: 10 })
     const providerRecord: OIDCProviderRecord = {
@@ -102,16 +113,123 @@ export const saveSsoProviderRegistrationFactory =
     await storeProviderRecord({ providerRecord })
     // associate provider with workspace
     await associateSsoProviderWithWorkspace({ workspaceId, providerId })
-    // create and associate userSso session (how long is the default validity?)
-    // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
-    const lifespan = 6.048e8 // 1 week
-    await storeUserSsoSession({
-      userSsoSession: { createdAt: new Date(), userId, providerId, lifespan }
-    })
-    // 1. get userId's emails
+    return providerRecord
+  }
 
-    // 2. if the ssoUserInfoEmail is not in the user's emails, add it as verified
-    // 3. if its in the emails, but not verify, verify it
-    // 4. if its verified, do nothing
-    // await createUserEmail()
+export const createWorkspaceUserFromSsoProfileFactory =
+  ({
+    createUser,
+    upsertWorkspaceRole,
+    findInvite,
+    deleteInvite
+  }: {
+    createUser: CreateValidatedUser
+    upsertWorkspaceRole: UpsertWorkspaceRole
+    findInvite: FindInvite
+    deleteInvite: DeleteInvite
+  }) =>
+  async (args: {
+    ssoProfile: UserinfoResponse<{ email: string }>
+    workspaceId: string
+  }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
+    // Check if user has email-based invite to given workspace
+    const invite = await findInvite({
+      target: args.ssoProfile.email,
+      resourceFilter: {
+        resourceId: args.workspaceId,
+        resourceType: 'workspace'
+      }
+    })
+
+    if (!invite) {
+      throw new Error('Cannot sign up with SSO without a valid workspace invite.')
+    }
+
+    // Create Speckle user
+    const { name, email, email_verified } = args.ssoProfile
+
+    if (!name) {
+      throw new Error('SSO provider user requires a name')
+    }
+
+    if (!email_verified) {
+      throw new Error('Cannot sign in with unverified email')
+    }
+
+    const newSpeckleUser = {
+      name,
+      email,
+      verified: true,
+      role: invite.resource.secondaryResourceRoles?.server
+    }
+    const newSpeckleUserId = await createUser(newSpeckleUser)
+
+    // Add user to workspace with role specified in invite
+    const { role: workspaceRole } = invite.resource
+
+    if (!isWorkspaceRole(workspaceRole)) throw new Error('Invalid role')
+
+    await upsertWorkspaceRole({
+      userId: newSpeckleUserId,
+      workspaceId: args.workspaceId,
+      role: workspaceRole,
+      createdAt: new Date()
+    })
+
+    // Delete invite (implicitly used during sign up flow)
+    await deleteInvite(invite.id)
+
+    return {
+      ...newSpeckleUser,
+      id: newSpeckleUserId
+    }
+  }
+
+export const linkUserWithSsoProviderFactory =
+  ({
+    findEmailsByUserId,
+    createUserEmail,
+    updateUserEmail
+  }: {
+    findEmailsByUserId: FindEmailsByUserId
+    createUserEmail: CreateUserEmail
+    updateUserEmail: UpdateUserEmail
+  }) =>
+  async (args: {
+    userId: string
+    ssoProfile: UserinfoResponse<{ email: string }>
+  }): Promise<void> => {
+    // TODO: Chuck's soapbox -
+    //
+    // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
+    // Create link implicitly if req.context.userId exists (user performed SSO flow while signed in)
+    // If req.context.userId does not exist, and link does not exist, throw and require user to sign in before SSO
+
+    // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
+    const userEmails = await findEmailsByUserId({ userId: args.userId })
+    const maybeSsoEmail = userEmails.find(
+      (entry) => entry.email === args.ssoProfile.email
+    )
+
+    if (!maybeSsoEmail) {
+      await createUserEmail({
+        userEmail: {
+          userId: args.userId,
+          email: args.ssoProfile.email,
+          verified: true
+        }
+      })
+    }
+
+    if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
+      await updateUserEmail({
+        query: {
+          id: maybeSsoEmail.id,
+          userId: args.userId
+        },
+        update: {
+          verified: true
+        }
+      })
+    }
   }

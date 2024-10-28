@@ -37,7 +37,7 @@ const workspacesModule: SpeckleModule = {
       )
     moduleLogger.info('⚒️  Init workspaces module')
 
-    if (FF_WORKSPACES_SSO_ENABLED) app.use(ssoRouter)
+    if (FF_WORKSPACES_SSO_ENABLED) ssoRouter(app)
 
     if (isInitial) {
       // register the SSO endpoints
