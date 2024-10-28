@@ -59,10 +59,10 @@ import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
 import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
-import { GPipeline } from './pipeline/G/Pipelines/GPipeline.js'
-import { DefaultPipeline } from './pipeline/G/Pipelines/DefaultPipeline.js'
-import { GProgressivePipeline } from './pipeline/G/Pipelines/GProgressivePipeline.js'
-import { BaseGPass, GPass } from './pipeline/G/GPass.js'
+import { GPipeline } from './pipeline/Pipelines/GPipeline.js'
+import { DefaultPipeline } from './pipeline/Pipelines/DefaultPipeline.js'
+import { GProgressivePipeline } from './pipeline/Pipelines/GProgressivePipeline.js'
+import { BaseGPass, GPass } from './pipeline/Passes/GPass.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0

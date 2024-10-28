@@ -16,7 +16,7 @@ import {
 } from 'three'
 import { Geometry } from './converter/Geometry.js'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial.js'
-import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass.js'
+import { ShadowcatcherPass } from './pipeline/Passes/ShadowcatcherPass.js'
 import { ObjectLayers } from '../IViewer.js'
 import {
   DefaultShadowcatcherConfig,

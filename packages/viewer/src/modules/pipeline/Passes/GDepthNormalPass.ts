@@ -13,7 +13,7 @@ import {
   WebGLRenderer
 } from 'three'
 import { BaseGPass } from './GPass.js'
-import { GPipeline } from './Pipelines/GPipeline.js'
+import { GPipeline } from '../Pipelines/GPipeline.js'
 import { DefaultDepthPassOptions, DepthPassOptions, DepthType } from './GDepthPass.js'
 import SpeckleDepthNormalMaterial from '../../materials/SpeckleDepthNormalMaterial.js'
 

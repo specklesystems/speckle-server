@@ -1,46 +1,32 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GBlendPass } from '../GBlendPass.js'
-import { GColorPass } from '../GColorPass.js'
-import { GDepthPass } from '../GDepthPass.js'
-import { GEdgePass } from '../GEdgesPass.js'
-import { GNormalsPass } from '../GNormalPass.js'
-import { ClearFlags, ObjectVisibility } from '../GPass.js'
-import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
-import { GTAAPass } from '../GTAAPass.js'
+import { GBlendPass } from '../../Passes/GBlendPass.js'
+import { GColorPass } from '../../Passes/GColorPass.js'
+import { GEdgePass } from '../../Passes/GEdgesPass.js'
+import { ClearFlags, ObjectVisibility } from '../../Passes/GPass.js'
+import { GProgressiveAOPass } from '../../Passes/GProgressiveAOPass.js'
+import { GTAAPass } from '../../Passes/GTAAPass.js'
 import { ObjectLayers } from '../../../../IViewer.js'
-import { GProgressivePipeline } from './GProgressivePipeline.js'
-import { GStencilMaskPass } from '../GStencilMaskPass.js'
-import { GStencilPass } from '../GStencilPass.js'
+import { GProgressivePipeline } from '../GProgressivePipeline.js'
+import { GStencilMaskPass } from '../../Passes/GStencilMaskPass.js'
+import { GStencilPass } from '../../Passes/GStencilPass.js'
+import { GDepthNormalPass } from '../../Passes/GDepthNormalPass.js'
 
-export class EdgesPipeline extends GProgressivePipeline {
+export class MRTEdgesPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthPass = new GDepthPass()
-    depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setVisibility(ObjectVisibility.DEPTH)
-    depthPass.setJitter(true)
-    depthPass.setClearColor(0x000000, 1)
-    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthNormalPass = new GDepthNormalPass()
+    depthNormalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthNormalPass.setVisibility(ObjectVisibility.DEPTH)
+    depthNormalPass.setJitter(true)
+    depthNormalPass.setClearColor(0x000000, 1)
+    depthNormalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const normalPass = new GNormalsPass()
-    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    normalPass.setJitter(true)
-    normalPass.setClearColor(0x000000, 1)
-    normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const depthPassDynamic = new GDepthPass()
-    depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
-    depthPassDynamic.setClearColor(0x000000, 1)
-    depthPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const normalPassDynamic = new GNormalsPass()
-    normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
-    normalPassDynamic.setClearColor(0x000000, 1)
-    normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthPassNormalDynamic = new GDepthNormalPass()
+    depthPassNormalDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthPassNormalDynamic.setVisibility(ObjectVisibility.DEPTH)
+    depthPassNormalDynamic.setClearColor(0x000000, 1)
+    depthPassNormalDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const opaqueColorPass = new GColorPass()
     opaqueColorPass.setLayers([
@@ -66,17 +52,17 @@ export class EdgesPipeline extends GProgressivePipeline {
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
 
     const progressiveAOPass = new GProgressiveAOPass()
-    progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
+    progressiveAOPass.setTexture('tDepth', depthNormalPass.depthTexture)
     progressiveAOPass.setClearColor(0xffffff, 1)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
 
     const edgesPass = new GEdgePass()
-    edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
-    edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
+    edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
+    edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
 
     const edgesPassDynamic = new GEdgePass()
-    edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
-    edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
+    edgesPassDynamic.setTexture('tDepth', depthPassNormalDynamic.depthTexture)
+    edgesPassDynamic.setTexture('tNormal', depthPassNormalDynamic.normalTexture)
 
     const taaPass = new GTAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
@@ -110,8 +96,7 @@ export class EdgesPipeline extends GProgressivePipeline {
     ])
 
     this.dynamicStage.push(
-      depthPassDynamic,
-      normalPassDynamic,
+      depthPassNormalDynamic,
       edgesPassDynamic,
       stencilPass,
       opaqueColorPass,
@@ -121,8 +106,7 @@ export class EdgesPipeline extends GProgressivePipeline {
       overlayPass
     )
     this.progressiveStage.push(
-      depthPass,
-      normalPass,
+      depthNormalPass,
       edgesPass,
       progressiveAOPass,
       taaPass,

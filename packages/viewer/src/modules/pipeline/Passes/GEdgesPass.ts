@@ -13,7 +13,7 @@ import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import { BaseGPass, PassOptions } from './GPass.js'
 import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges-generator-frag.js'
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
-import { GPipeline } from './Pipelines/GPipeline.js'
+import { GPipeline } from '../Pipelines/GPipeline.js'
 
 export interface EdgePassOptions extends PassOptions {
   depthMultiplier?: number

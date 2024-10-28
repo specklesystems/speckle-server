@@ -8,9 +8,9 @@ import {
   WebGLRenderTarget,
   WebGLRenderTargetOptions
 } from 'three'
-import { GPass, ObjectVisibility } from '../GPass.js'
-import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { BatchUpdateRange } from '../../../batching/Batch.js'
+import { GPass, ObjectVisibility } from '../Passes/GPass.js'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
+import { BatchUpdateRange } from '../../batching/Batch.js'
 
 export abstract class GPipeline {
   protected speckleRenderer: SpeckleRenderer

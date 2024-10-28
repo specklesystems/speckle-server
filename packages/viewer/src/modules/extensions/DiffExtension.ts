@@ -11,8 +11,8 @@ import { type IViewer } from '../../IViewer.js'
 import { Extension } from './Extension.js'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter.js'
 import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader.js'
-import { GPass } from '../pipeline/G/GPass.js'
-import { GDepthPass } from '../pipeline/G/GDepthPass.js'
+import { GPass } from '../pipeline/Passes/GPass.js'
+import { GDepthPass } from '../pipeline/Passes/GDepthPass.js'
 
 type SpeckleMaterialType =
   | SpeckleStandardMaterial

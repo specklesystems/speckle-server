@@ -11,7 +11,7 @@ import {
 } from 'three'
 import SpeckleNormalMaterial from '../../materials/SpeckleNormalMaterial.js'
 import { BaseGPass } from './GPass.js'
-import { GPipeline } from './Pipelines/GPipeline.js'
+import { GPipeline } from '../Pipelines/GPipeline.js'
 
 export class GNormalsPass extends BaseGPass {
   private normalsMaterial: SpeckleNormalMaterial

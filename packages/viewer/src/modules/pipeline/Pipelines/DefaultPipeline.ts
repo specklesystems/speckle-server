@@ -1,13 +1,13 @@
-import { ObjectLayers } from '../../../../index.js'
-import SpeckleRenderer from '../../../SpeckleRenderer.js'
-import { GColorPass } from '../GColorPass.js'
-import { GDepthPass } from '../GDepthPass.js'
-import { ClearFlags, ObjectVisibility } from '../GPass.js'
-import { GProgressiveAOPass } from '../GProgressiveAOPass.js'
-import { GBlendPass } from '../GBlendPass.js'
+import { ObjectLayers } from '../../../index.js'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
+import { GColorPass } from '../Passes/GColorPass.js'
+import { GDepthPass } from '../Passes/GDepthPass.js'
+import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
+import { GProgressiveAOPass } from '../Passes/GProgressiveAOPass.js'
+import { GBlendPass } from '../Passes/GBlendPass.js'
 import { GProgressivePipeline } from './GProgressivePipeline.js'
-import { GStencilPass } from '../GStencilPass.js'
-import { GStencilMaskPass } from '../GStencilMaskPass.js'
+import { GStencilPass } from '../Passes/GStencilPass.js'
+import { GStencilMaskPass } from '../Passes/GStencilMaskPass.js'
 
 export class DefaultPipeline extends GProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {

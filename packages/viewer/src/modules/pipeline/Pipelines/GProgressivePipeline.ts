@@ -1,5 +1,5 @@
 import { OrthographicCamera, PerspectiveCamera, Plane } from 'three'
-import { GPass, ProgressiveGPass } from '../GPass.js'
+import { GPass, ProgressiveGPass } from '../Passes/GPass.js'
 import { GPipeline } from './GPipeline.js'
 
 export abstract class GProgressivePipeline extends GPipeline {

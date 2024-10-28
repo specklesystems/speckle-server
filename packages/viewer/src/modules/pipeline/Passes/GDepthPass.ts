@@ -13,7 +13,7 @@ import {
 } from 'three'
 import { BaseGPass, PassOptions } from './GPass.js'
 import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
-import { GPipeline } from './Pipelines/GPipeline.js'
+import { GPipeline } from '../Pipelines/GPipeline.js'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,
