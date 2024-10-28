@@ -4210,7 +4210,9 @@ export type WorkspacePlan = {
 };
 
 export enum WorkspacePlanStatuses {
+  CancelationScheduled = 'cancelationScheduled',
   Canceled = 'canceled',
+  Expired = 'expired',
   PaymentFailed = 'paymentFailed',
   Trial = 'trial',
   Valid = 'valid'
