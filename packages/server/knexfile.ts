@@ -11,6 +11,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { dbLogger as logger } from './logging/logging'
 import { Knex } from 'knex'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 function walk(dir: string) {
   let results: string[] = []
@@ -53,6 +54,11 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
   }/${encodeURIComponent(env.POSTGRES_DB as string)}`
 } else {
   connectionUri = env.POSTGRES_URL
+}
+if (!connectionUri) {
+  throw new MisconfiguredEnvironmentError(
+    'No postgres connection env variables found (POSTGRES_URL or POSTGRES_USER and POSTGRES_PASSWORD)'
+  )
 }
 
 // NOTE: fixes time pagination, breaks graphql DateTime parsing :/

@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 const env = process.env.NODE_ENV || 'development'
-import configs from '@/knexfile.js'
+import configs from '@/knexfile'
 import { dbStartupLogger } from '@/logging/logging'
 import knex from 'knex'
 
