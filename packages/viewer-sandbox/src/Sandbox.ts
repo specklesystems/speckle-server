@@ -34,7 +34,6 @@ import {
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
-import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
@@ -103,7 +102,7 @@ export default class Sandbox {
       minDistance: 0,
       maxDistance: 0.008
     }
-  } as PipelineOptions
+  }
 
   public lightParams: SunLightConfiguration = {
     enabled: true,

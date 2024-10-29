@@ -62,8 +62,8 @@ export class ShadowcatcherPass extends BaseGPass {
     return 'Shadowcatcher'
   }
 
-  get outputTexture(): Texture | undefined {
-    return this.outputTarget?.texture
+  get outputTexture(): Texture | null {
+    return this.outputTarget ? this.outputTarget.texture : null
   }
 
   set needsUpdate(value: boolean) {

@@ -51,7 +51,6 @@ export class Shadowcatcher {
     this.displayMaterial.map = this.shadowcatcherPass.outputTexture
     // this.displayMaterial.map.wrapS = RepeatWrapping
     // this.displayMaterial.map.repeat.x = -1
-    this.displayMaterial.map.needsUpdate = true
     this.displayMaterial.toneMapped = false
     this.displayMaterial.transparent = true
     this.displayMaterial.blending = CustomBlending
