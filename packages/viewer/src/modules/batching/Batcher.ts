@@ -25,7 +25,7 @@ import { Geometry } from '../converter/Geometry.js'
 import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
-import { ObjectVisibility } from '../pipeline/G/GPass.js'
+import { ObjectVisibility } from '../pipeline/Passes/GPass.js'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch

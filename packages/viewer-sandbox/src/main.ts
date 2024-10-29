@@ -46,7 +46,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
-  // viewer.createExtension(SectionOutlines)
+  viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
