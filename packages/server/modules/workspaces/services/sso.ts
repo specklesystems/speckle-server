@@ -25,6 +25,12 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
 import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
 import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
+import {
+  SsoProviderExistsError,
+  SsoProviderProfileInvalidError,
+  SsoUserInviteRequiredError
+} from '@/modules/workspaces/errors/sso'
+import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 
 export class MissingOIDCProviderGrantType extends BaseError {
   static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
@@ -108,8 +114,7 @@ export const saveSsoProviderRegistrationFactory =
     }
     const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
     // replace with a proper error
-    if (maybeExistingSsoProvider)
-      throw new Error('Workspace already has an SSO provider')
+    if (maybeExistingSsoProvider) throw new SsoProviderExistsError()
     await storeProviderRecord({ providerRecord })
     // associate provider with workspace
     await associateSsoProviderWithWorkspace({ workspaceId, providerId })
@@ -142,18 +147,18 @@ export const createWorkspaceUserFromSsoProfileFactory =
     })
 
     if (!invite) {
-      throw new Error('Cannot sign up with SSO without a valid workspace invite.')
+      throw new SsoUserInviteRequiredError()
     }
 
     // Create Speckle user
     const { name, email, email_verified } = args.ssoProfile
 
     if (!name) {
-      throw new Error('SSO provider user requires a name')
+      throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
     }
 
     if (!email_verified) {
-      throw new Error('Cannot sign in with unverified email')
+      throw new SsoProviderProfileInvalidError('SSO provider user email is unverified')
     }
 
     const newSpeckleUser = {
@@ -167,7 +172,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
     // Add user to workspace with role specified in invite
     const { role: workspaceRole } = invite.resource
 
-    if (!isWorkspaceRole(workspaceRole)) throw new Error('Invalid role')
+    if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
 
     await upsertWorkspaceRole({
       userId: newSpeckleUserId,
