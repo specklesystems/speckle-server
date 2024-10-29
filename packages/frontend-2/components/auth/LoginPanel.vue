@@ -5,7 +5,7 @@
     no-shadow
     class="mx-auto w-full"
   >
-    <div class="space-y-4">
+    <div class="flex flex-col gap-4">
       <div v-if="!workspaceInvite" class="flex flex-col items-center gap-y-2 pb-4">
         <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
@@ -22,13 +22,11 @@
         :app-id="appId"
         :newsletter-consent="false"
       />
+      <FormButton color="outline" full-width size="lg" to="/authn/sso">
+        Continue with SSO
+      </FormButton>
+      <div class="h-px w-full bg-outline-3 mt-2 shrink-0" />
       <div>
-        <div
-          v-if="hasLocalStrategy"
-          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal mt-2"
-        >
-          {{ hasThirdPartyStrategies ? 'Or login with your email' : '' }}
-        </div>
         <AuthLoginWithEmailBlock
           v-if="hasLocalStrategy"
           :challenge="challenge"

@@ -5,7 +5,7 @@
         <Icon class="w-4 h-4" />
       </FormButton>
     </div>
-    <div class="relative mt-24 mx-4 mb-8 w-full max-w-sm">
+    <div class="relative my-12 mx-4 w-full max-w-sm">
       <slot />
     </div>
   </main>

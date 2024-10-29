@@ -413,13 +413,6 @@ export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinitio
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
 
-export type AvatarUser = {
-  __typename?: 'AvatarUser';
-  avatar?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
   id: Scalars['ID']['output'];
@@ -932,7 +925,7 @@ export type GendoAiRender = {
   responseImage?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
-  user?: Maybe<AvatarUser>;
+  user?: Maybe<LimitedUser>;
   userId: Scalars['String']['output'];
   versionId: Scalars['String']['output'];
 };
@@ -4847,7 +4840,7 @@ export type GendoAiRenderQueryVariables = Exact<{
 }>;
 
 
-export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'AvatarUser', name: string, avatar?: string | null, id: string } | null } } } };
+export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'LimitedUser', name: string, avatar?: string | null, id: string } | null } } } };
 
 export type GendoAiRendersQueryVariables = Exact<{
   versionId: Scalars['String']['input'];
@@ -6225,7 +6218,6 @@ export type AllObjectTypes = {
   AutomationCollection: AutomationCollection,
   AutomationRevision: AutomationRevision,
   AutomationRevisionFunction: AutomationRevisionFunction,
-  AvatarUser: AvatarUser,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata,
   BlobMetadata: BlobMetadata,
   BlobMetadataCollection: BlobMetadataCollection,
@@ -6512,11 +6504,6 @@ export type AutomationRevisionFieldArgs = {
 export type AutomationRevisionFunctionFieldArgs = {
   parameters: {},
   release: {},
-}
-export type AvatarUserFieldArgs = {
-  avatar: {},
-  id: {},
-  name: {},
 }
 export type BasicGitRepositoryMetadataFieldArgs = {
   id: {},
@@ -7530,7 +7517,6 @@ export type AllObjectFieldArgTypes = {
   AutomationCollection: AutomationCollectionFieldArgs,
   AutomationRevision: AutomationRevisionFieldArgs,
   AutomationRevisionFunction: AutomationRevisionFunctionFieldArgs,
-  AvatarUser: AvatarUserFieldArgs,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadataFieldArgs,
   BlobMetadata: BlobMetadataFieldArgs,
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,

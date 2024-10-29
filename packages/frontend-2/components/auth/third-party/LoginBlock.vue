@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+    <div class="flex flex-col gap-3">
       <Component
         :is="getButtonComponent(strat)"
         v-for="strat in thirdPartyStrategies"
