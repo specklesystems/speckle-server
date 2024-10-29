@@ -14,7 +14,18 @@ export class ViewModesKeys extends Extension {
   constructor(viewer: IViewer, protected viewModes: ViewModes) {
     super(viewer)
     const renderer = viewer.getRenderer()
+
     renderer.input.on(InputEvent.KeyUp, (arg: KeyboardEvent) => {
+      // Dont trigger on inputs, textareas or contenteditable elements
+      // We should handle this more gracefully but it works for now
+      if (
+        arg.target &&
+        ((arg.target as HTMLElement).tagName.toLowerCase() === 'input' ||
+          (arg.target as HTMLElement).tagName.toLowerCase() === 'textarea' ||
+          (arg.target as HTMLElement).getAttribute('contenteditable') === 'true')
+      )
+        return
+
       switch (arg.key) {
         case '1':
           viewModes.setViewMode(ViewMode.DEFAULT)
