@@ -12,7 +12,8 @@ import {
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
   GetWorkspaceSubscription,
-  GetWorkspaceSubscriptionBySubscriptionId
+  GetWorkspaceSubscriptionBySubscriptionId,
+  GetWorkspaceSubscriptions
 } from '@/modules/gatekeeper/domain/billing'
 import { Knex } from 'knex'
 
@@ -126,4 +127,15 @@ export const getWorkspaceSubscriptionBySubscriptionIdFactory =
       .whereRaw(`"subscriptionData" ->> 'subscriptionId' = ?`, [subscriptionId])
       .first()
     return subscription ?? null
+  }
+
+export const getWorkspaceSubscriptionsAboutToEndBillingCycleFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
+  async () => {
+    const cycleEnd = new Date()
+    cycleEnd.setMinutes(cycleEnd.getMinutes() + 5)
+    return await tables
+      .workspaceSubscriptions(db)
+      .select()
+      .where('currentBillingCycleEnd', '<', cycleEnd)
   }

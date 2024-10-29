@@ -1,5 +1,4 @@
 import db from '@/db/knex'
-import { WorkspaceSubscription } from '@/modules/gatekeeper/domain/billing'
 import {
   deleteCheckoutSessionFactory,
   getCheckoutSessionFactory,
@@ -10,9 +9,15 @@ import {
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionsAboutToEndBillingCycleFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import {
+  createTestSubscriptionData,
+  createTestWorkspaceSubscription
+} from '@/modules/gatekeeper/tests/helpers'
 import { upsertWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -32,6 +37,9 @@ const upsertWorkspaceSubscription = upsertWorkspaceSubscriptionFactory({ db })
 const getWorkspaceSubscription = getWorkspaceSubscriptionFactory({ db })
 const getWorkspaceSubscriptionBySubscriptionId =
   getWorkspaceSubscriptionBySubscriptionIdFactory({ db })
+
+const getSubscriptionsAboutToEndBillingCycle =
+  getWorkspaceSubscriptionsAboutToEndBillingCycleFactory({ db })
 
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
@@ -204,27 +212,21 @@ describe('billing repositories @gatekeeper', () => {
       it('saves and updates the subscription', async () => {
         const workspace = await createAndStoreTestWorkspace()
         const workspaceId = workspace.id
-        const workspaceSubscription: WorkspaceSubscription = {
-          billingInterval: 'monthly' as const,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          currentBillingCycleEnd: new Date(),
-          subscriptionData: {
-            customerId: cryptoRandomString({ length: 10 }),
-            status: 'active' as const,
-            cancelAt: null,
-            products: [
-              {
-                priceId: cryptoRandomString({ length: 10 }),
-                quantity: 10,
-                productId: cryptoRandomString({ length: 10 }),
-                subscriptionItemId: cryptoRandomString({ length: 10 })
-              }
-            ],
-            subscriptionId: cryptoRandomString({ length: 10 })
-          },
-          workspaceId
-        }
+        const subscriptionData = createTestSubscriptionData({
+          products: [
+            {
+              priceId: cryptoRandomString({ length: 10 }),
+              quantity: 10,
+              productId: cryptoRandomString({ length: 10 }),
+              subscriptionItemId: cryptoRandomString({ length: 10 })
+            }
+          ]
+        })
+        const workspaceSubscription = createTestWorkspaceSubscription({
+          workspaceId,
+          billingInterval: 'monthly',
+          subscriptionData
+        })
         await upsertWorkspaceSubscription({ workspaceSubscription })
         let storedSubscription = await getWorkspaceSubscription({ workspaceId })
         expect(storedSubscription).deep.equal(workspaceSubscription)
@@ -255,32 +257,41 @@ describe('billing repositories @gatekeeper', () => {
       it('returns the sub', async () => {
         const workspace = await createAndStoreTestWorkspace()
         const workspaceId = workspace.id
-        const workspaceSubscription: WorkspaceSubscription = {
-          billingInterval: 'monthly' as const,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          currentBillingCycleEnd: new Date(),
-          subscriptionData: {
-            customerId: cryptoRandomString({ length: 10 }),
-            status: 'active' as const,
-            cancelAt: null,
-            products: [
-              {
-                priceId: cryptoRandomString({ length: 10 }),
-                quantity: 10,
-                productId: cryptoRandomString({ length: 10 }),
-                subscriptionItemId: cryptoRandomString({ length: 10 })
-              }
-            ],
-            subscriptionId: cryptoRandomString({ length: 10 })
-          },
-          workspaceId
-        }
+        const workspaceSubscription = createTestWorkspaceSubscription({ workspaceId })
         await upsertWorkspaceSubscription({ workspaceSubscription })
         const storedSubscription = await getWorkspaceSubscriptionBySubscriptionId({
           subscriptionId: workspaceSubscription.subscriptionData.subscriptionId
         })
         expect(storedSubscription).deep.equal(workspaceSubscription)
+      })
+    })
+    describe('getWorkspaceSubscriptionsAboutToEndBillingCycle', () => {
+      before(async () => {
+        await truncateTables(['workspace_subscriptions'])
+      })
+      it('returns subs, that are about to end their billing cycle', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const workspace1Id = workspace1.id
+        const workspace1Subscription = createTestWorkspaceSubscription({
+          workspaceId: workspace1Id,
+          currentBillingCycleEnd: new Date(2099, 0, 1)
+        })
+        await upsertWorkspaceSubscription({
+          workspaceSubscription: workspace1Subscription
+        })
+
+        const workspace2 = await createAndStoreTestWorkspace()
+        const workspace2Id = workspace2.id
+        const currentBillingCycleEnd = new Date()
+        currentBillingCycleEnd.setMinutes(currentBillingCycleEnd.getMinutes() + 4)
+        const workspace2Subscription = createTestWorkspaceSubscription({
+          workspaceId: workspace2Id
+        })
+        await upsertWorkspaceSubscription({
+          workspaceSubscription: workspace2Subscription
+        })
+        const subscriptions = await getSubscriptionsAboutToEndBillingCycle()
+        expect(subscriptions).deep.equalInAnyOrder([workspace2Subscription])
       })
     })
   })
