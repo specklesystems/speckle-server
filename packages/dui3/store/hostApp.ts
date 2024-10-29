@@ -449,9 +449,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
    */
   const refreshSendFilters = async () => {
     sendFilters.value = await app.$sendBinding?.getSendFilters()
-    availableViews.value = (
-      sendFilters.value.find((f) => f.id === 'revitViews') as RevitViewsSendFilter
-    ).availableViews
+    const revitViews = sendFilters.value.find(
+      (f) => f.id === 'revitViews'
+    ) as RevitViewsSendFilter
+    if (revitViews) {
+      availableViews.value = revitViews.availableViews
+    }
   }
 
   const getSendSettings = async () => {
