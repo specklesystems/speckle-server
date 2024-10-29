@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const regionServerConfig = z.object({
+export const regionServerConfigSchema = z.object({
   postgres: z.object({
     connectionUri: z.string().url(),
     publicTlsCertificate: z.string()
@@ -15,4 +15,4 @@ export const regionServerConfig = z.object({
   //   })
 })
 
-export type RegionServerConfig = z.infer<typeof regionServerConfig>
+export type RegionServerConfig = z.infer<typeof regionServerConfigSchema>
