@@ -17,6 +17,7 @@ import {
   Vector2,
   Vector3,
   Vector4,
+  WebGLRenderer,
   WebGLRenderTarget
 } from 'three'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
@@ -24,22 +25,21 @@ import {
   BlurShaderUtils,
   DepthLimitedBlurShader
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
-import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial.js'
-import { BaseSpecklePass, type SpecklePass } from './SpecklePass.js'
-import { ObjectLayers } from '../../IViewer.js'
+import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
+import SpeckleShadowcatcherMaterial from '../../materials/SpeckleShadowcatcherMaterial.js'
+import { ObjectLayers } from '../../../IViewer.js'
 import {
   DefaultShadowcatcherConfig,
   type ShadowcatcherConfig
-} from '../ShadowcatcherConfig.js'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
+} from '../../ShadowcatcherConfig.js'
+import type { SpeckleWebGLRenderer } from '../../objects/SpeckleWebGLRenderer.js'
+import { BaseGPass } from './GPass.js'
 
-export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
+export class ShadowcatcherPass extends BaseGPass {
   private readonly levels: number = 4
   private readonly debugCamera = false
   private renderTargets: WebGLRenderTarget[] = []
   private tempTargets: WebGLRenderTarget[] = []
-  private outputTarget: WebGLRenderTarget
   private camera: OrthographicCamera
   private scene!: Scene
   private _needsUpdate = false
@@ -62,8 +62,8 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     return 'Shadowcatcher'
   }
 
-  get outputTexture(): Texture {
-    return this.outputTarget.texture
+  get outputTexture(): Texture | null {
+    return this.outputTarget ? this.outputTarget.texture : null
   }
 
   set needsUpdate(value: boolean) {
@@ -184,8 +184,9 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     }
   }
 
-  public render(renderer: SpeckleWebGLRenderer) {
+  public render(_renderer: WebGLRenderer): boolean {
     if (this._needsUpdate) {
+      const renderer = _renderer as SpeckleWebGLRenderer
       renderer.RTEBuffers.push()
       renderer.updateRTEViewModel(this.camera)
 
@@ -259,6 +260,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       if (this.onAfterRender) this.onAfterRender()
       this._needsUpdate = false
     }
+    return false
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -271,7 +273,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       this.renderTargets[0].width !== width ||
       this.renderTargets[0].height !== height
     ) {
-      this.outputTarget.setSize(width, height)
+      this.outputTarget?.setSize(width, height)
       this.blendMaterial.needsUpdate = true
       let div = 1
       for (let k = 0; k < this.renderTargets.length; k++) {

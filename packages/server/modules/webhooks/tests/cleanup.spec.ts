@@ -48,10 +48,10 @@ import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvite
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
 import { truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
 import crs from 'crypto-random-string'
+import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
 
 const WEBHOOKS_CONFIG_TABLE = 'webhooks_config'
 const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
@@ -59,6 +59,7 @@ const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
 const WebhooksConfig = () => knex(WEBHOOKS_CONFIG_TABLE)
 const randomId = () => crs({ length: 10 })
 
+const cleanOrphanedWebhookConfigs = cleanOrphanedWebhookConfigsFactory({ db })
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
