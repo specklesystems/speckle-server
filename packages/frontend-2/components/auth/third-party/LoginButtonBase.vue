@@ -1,6 +1,6 @@
 <template>
-  <NuxtLink :to="to" class="group">
-    <FormButton color="outline" size="lg" full-width>
+  <NuxtLink :to="to">
+    <FormButton color="outline" size="lg" full-width class="group">
       <div class="flex items-center justify-center">
         <slot />
       </div>

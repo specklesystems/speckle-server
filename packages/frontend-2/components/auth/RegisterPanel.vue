@@ -5,9 +5,6 @@
         <h1 class="text-heading-xl text-center inline-block">
           Create your Speckle account
         </h1>
-        <h2 class="text-body-sm text-center text-foreground-2">
-          Connectivity, Collaboration and Automation for 3D
-        </h2>
       </div>
       <AuthWorkspaceInviteHeader v-else :invite="workspaceInvite" />
       <template v-if="isInviteOnly && !inviteToken">

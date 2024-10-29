@@ -63,8 +63,7 @@ const props = withDefaults(
   }>(),
   {
     dialogMode: false,
-    title: 'Speckle login',
-    subtitle: 'Connectivity, Collaboration and Automation for 3D'
+    title: 'Speckle login'
   }
 )
 
