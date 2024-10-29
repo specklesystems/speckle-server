@@ -2,14 +2,12 @@ import { packageRoot } from '@/bootstrap'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { getMultiRegionConfigPath } from '@/modules/shared/helpers/envHelper'
-import { z } from 'zod'
-import { regionServerConfig } from '@/modules/multiregion/domain/types'
 import type { Optional } from '@speckle/shared'
 import type { GetAvailableRegionConfigs } from '@/modules/multiregion/domain/operations'
-
-const multiRegionConfigSchema = z.record(z.string(), regionServerConfig)
-
-type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>
+import {
+  multiRegionConfigSchema,
+  type MultiRegionConfig
+} from '@/modules/multiregion/domain/types'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 

@@ -1,5 +1,3 @@
-import { RegionServerConfig } from '@/modules/multiregion/domain/types'
+import { MultiRegionConfig } from '@/modules/multiregion/domain/types'
 
-export type GetAvailableRegionConfigs = () => Promise<{
-  [key: string]: RegionServerConfig
-}>
+export type GetAvailableRegionConfigs = () => Promise<MultiRegionConfig>

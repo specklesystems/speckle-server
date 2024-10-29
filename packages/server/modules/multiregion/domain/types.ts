@@ -15,4 +15,6 @@ export const regionServerConfigSchema = z.object({
   //   })
 })
 
-export type RegionServerConfig = z.infer<typeof regionServerConfigSchema>
+export const multiRegionConfigSchema = z.record(z.string(), regionServerConfigSchema)
+
+export type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>
