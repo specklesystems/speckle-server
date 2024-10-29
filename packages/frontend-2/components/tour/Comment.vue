@@ -46,7 +46,7 @@
           </div>
 
           <div
-            class="flex items-center justify-between pointer-events-auto mt-4 px-6 py-2 border-t border-outline-3"
+            class="flex items-center justify-between pointer-events-auto px-6 py-2 border-t border-outline-3"
           >
             <slot name="actions">
               <FormButton text size="sm" color="outline" @click="$emit('skip')">
@@ -60,7 +60,7 @@
                   text
                   @click="prev(index)"
                 >
-                  <ArrowLeftIcon class="h-3 w-3" />
+                  <ArrowLeftIcon class="h-3 w-3 mr-1" />
                   Previous
                 </FormButton>
                 <FormButton
