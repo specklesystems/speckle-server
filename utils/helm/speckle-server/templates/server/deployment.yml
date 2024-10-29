@@ -64,7 +64,8 @@ spec:
         {{- end }}
         {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
           - name: multi-region-config
-            mountPath: /multi-region-config
+            mountPath: /
+            readOnly: true
         {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
@@ -145,4 +146,7 @@ spec:
         - name: multi-region-config
           secret:
             secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "/"
       {{- end }}
