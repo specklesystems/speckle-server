@@ -15,9 +15,10 @@
       :class="isSmallerOrEqualSm ? 'bottom-0 left-0 w-screen' : ''"
       :style="isSmallerOrEqualSm ? undefined : item.style"
       :show-controls="item.showControls"
+      :has-added-overlay="hasAddedOverlay"
       @skip="finishSlideshow()"
     >
-      <Component :is="tourItems[index]" />
+      <Component :is="tourItems[index]" @has-added-overlay="hasAddedOverlay = true" />
     </TourComment>
     <!-- In case the bubble is closed by the user, we need to display something -->
     <Transition
@@ -76,6 +77,7 @@ const tourItems = [FirstTip, BasicViewerNavigation, OverlayModel /* , LastTip */
 const slideshowItems = ref(slideshowItemsRaw.slice(0, tourItems.length))
 provide('slideshowItems', slideshowItems)
 
+const hasAddedOverlay = ref(false)
 const lastOpenIndex = ref(0)
 const mp = useMixpanel()
 

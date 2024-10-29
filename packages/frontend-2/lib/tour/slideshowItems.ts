@@ -36,7 +36,7 @@ export const items = [
     }
   },
   {
-    camPos: [-39.91711, 46.26069, 42.83686, -18.44162, 29.75982, 34.91624, 0, 1],
+    camPos: [23.86779, 82.9541, 29.05586, -27.41942, 37.72358, 29.05586, 0, 1],
     style: {} as Partial<CSSProperties>,
     viewed: false,
     showControls: false,
