@@ -75,15 +75,25 @@ import { NodeRenderView } from './modules/tree/NodeRenderView.js'
 import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
 import { Assets } from './modules/Assets.js'
-import { SpecklePass } from './modules/pipeline/SpecklePass.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
 import { HybridCameraController } from './modules/extensions/HybridCameraController.js'
 import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
 import LineBatch from './modules/batching/LineBatch.js'
 import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
+import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
+import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
+import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
+import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
+import SpeckleRenderer from './modules/SpeckleRenderer.js'
+import { MRTEdgesPipeline } from './modules/pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
 import { RenderTree } from './modules/tree/RenderTree.js'
 import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
+import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
+import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
+import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
 
 export {
   Viewer,
@@ -134,6 +144,18 @@ export {
   Assets,
   AssetType,
   HybridCameraController,
+  DefaultPipeline,
+  EdgesPipeline,
+  ShadedViewPipeline,
+  PenViewPipeline,
+  ArcticViewPipeline,
+  TAAPipeline,
+  MRTEdgesPipeline,
+  MRTShadedViewPipeline,
+  MRTPenViewPipeline,
+  SpeckleRenderer,
+  ViewModes,
+  ViewMode,
   SectionToolEvent
 }
 
@@ -166,8 +188,7 @@ export type {
   ViewerEventPayload,
   InputEventPayload,
   SectionToolEventPayload,
-  CameraEventPayload,
-  SpecklePass
+  CameraEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

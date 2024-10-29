@@ -1,5 +1,9 @@
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  CommitSubscriptions,
+  filteredSubscribe,
+  publish
+} from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 
 import {
@@ -380,6 +384,57 @@ export = {
     async commitsDelete(_, args, ctx) {
       await batchDeleteCommits(args.input, ctx.userId!)
       return true
+    }
+  },
+  Subscription: {
+    commitCreated: {
+      subscribe: filteredSubscribe(
+        CommitSubscriptions.CommitCreated,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+          return payload.streamId === variables.streamId
+        }
+      )
+    },
+    commitUpdated: {
+      subscribe: filteredSubscribe(
+        CommitSubscriptions.CommitUpdated,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+
+          const streamMatch = payload.streamId === variables.streamId
+          if (streamMatch && variables.commitId) {
+            return payload.commitId === variables.commitId
+          }
+
+          return streamMatch
+        }
+      )
+    },
+    commitDeleted: {
+      subscribe: filteredSubscribe(
+        CommitSubscriptions.CommitDeleted,
+        async (payload, variables, context) => {
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
+
+          return payload.streamId === variables.streamId
+        }
+      )
     }
   }
 } as Resolvers

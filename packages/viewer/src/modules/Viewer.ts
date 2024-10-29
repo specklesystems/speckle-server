@@ -235,7 +235,7 @@ export class Viewer extends EventEmitter implements IViewer {
         })
         .catch((reason) => {
           Logger.error(reason)
-          Logger.error('Fallback to null environment!')
+          Logger.error('Environment failed to load!')
         })
     }
   }

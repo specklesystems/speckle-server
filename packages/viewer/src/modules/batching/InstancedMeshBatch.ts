@@ -43,10 +43,10 @@ export class InstancedMeshBatch implements Batch {
   public mesh: SpeckleInstancedMesh
   protected drawRanges: DrawRanges = new DrawRanges()
 
-  private instanceTransformBuffer0!: Float32Array
-  private instanceTransformBuffer1!: Float32Array
+  private instanceTransformBuffer0: Float32Array
+  private instanceTransformBuffer1: Float32Array
   private transformBufferIndex: number = 0
-  private instanceGradientBuffer!: Float32Array
+  private instanceGradientBuffer: Float32Array
 
   private needsShuffle = false
 
