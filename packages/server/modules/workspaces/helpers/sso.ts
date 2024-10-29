@@ -27,9 +27,7 @@ export const buildAuthRedirectUrl = (
  * @remarks Append params to this URL to preserve information about errors
  */
 export const buildFinalizeUrl = (workspaceSlug: string): URL => {
-  const urlFragments = [`workspaces/${workspaceSlug}/sso`]
-
-  return new URL(urlFragments.join(''), getFrontendOrigin())
+  return new URL(`workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
 }
 
 /**
@@ -42,7 +40,7 @@ export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
   return errorRedirectUrl.toString()
 }
 
-export const encryptorFactory = () => async (data: string) => {
+export const getEncryptor = () => async (data: string) => {
   const encryptionKeyPair = await getEncryptionKeyPair()
   const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
   const encryptedData = await encryptor.encrypt(data)
@@ -52,7 +50,7 @@ export const encryptorFactory = () => async (data: string) => {
   return encryptedData
 }
 
-export const decryptorFactory = () => async (data: string) => {
+export const getDecryptor = () => async (data: string) => {
   const encryptionKeyPair = await getEncryptionKeyPair()
   const decryptor = await buildDecryptor(encryptionKeyPair)
   const decryptedData = await decryptor.decrypt(data)
@@ -65,6 +63,6 @@ export const decryptorFactory = () => async (data: string) => {
 export const parseCodeVerifier = async (req: Request<unknown>): Promise<string> => {
   const encryptedCodeVerifier = req.session.codeVerifier
   if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
-  const codeVerifier = await decryptorFactory()(encryptedCodeVerifier)
+  const codeVerifier = await getDecryptor()(encryptedCodeVerifier)
   return codeVerifier
 }

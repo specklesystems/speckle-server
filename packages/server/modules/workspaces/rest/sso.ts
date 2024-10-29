@@ -20,7 +20,7 @@ import {
   storeOIDCProviderValidationRequestFactory,
   getOIDCProviderValidationRequestFactory,
   associateSsoProviderWithWorkspaceFactory,
-  storeProviderRecordFactory,
+  storeSsoProviderRecordFactory,
   upsertUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
@@ -98,8 +98,8 @@ import {
   buildAuthRedirectUrl,
   buildErrorUrl,
   buildFinalizeUrl,
-  decryptorFactory,
-  encryptorFactory,
+  getDecryptor,
+  getEncryptor,
   parseCodeVerifier
 } from '@/modules/workspaces/helpers/sso'
 import {
@@ -133,7 +133,7 @@ export const getSsoRouter = (): Router => {
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
       getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
         db,
-        decrypt: decryptorFactory()
+        decrypt: getDecryptor()
       })
     })
   )
@@ -151,7 +151,7 @@ export const getSsoRouter = (): Router => {
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
       getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
         db,
-        decrypt: decryptorFactory()
+        decrypt: getDecryptor()
       })
     })
   )
@@ -172,7 +172,7 @@ export const getSsoRouter = (): Router => {
         getOIDCProviderAttributes,
         storeOIDCProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
           redis: getGenericRedis(),
-          encrypt: encryptorFactory()
+          encrypt: getEncryptor()
         }),
         generateCodeVerifier: generators.codeVerifier
       })
@@ -202,16 +202,16 @@ export const getSsoRouter = (): Router => {
         createOidcProvider: createOidcProviderFactory({
           getOIDCProviderValidationRequest: getOIDCProviderValidationRequestFactory({
             redis: getGenericRedis(),
-            decrypt: decryptorFactory()
+            decrypt: getDecryptor()
           }),
           saveSsoProviderRegistration: saveSsoProviderRegistrationFactory({
             getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
               db: trx,
-              decrypt: decryptorFactory()
+              decrypt: getDecryptor()
             }),
-            storeProviderRecord: storeProviderRecordFactory({
+            storeProviderRecord: storeSsoProviderRecordFactory({
               db: trx,
-              encrypt: encryptorFactory()
+              encrypt: getEncryptor()
             }),
             associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory(
               {
@@ -223,7 +223,7 @@ export const getSsoRouter = (): Router => {
         getOidcProvider: getOidcProviderFactory({
           getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
             db: trx,
-            decrypt: decryptorFactory()
+            decrypt: getDecryptor()
           })
         }),
         getOidcProviderUserData: getOidcProviderUserDataFactory(),
@@ -348,7 +348,7 @@ const handleSsoAuthRequestFactory =
         codeVerifier
       })
 
-      session.codeVerifier = await encryptorFactory()(codeVerifier)
+      session.codeVerifier = await getEncryptor()(codeVerifier)
       res?.redirect(authorizationUrl.toString())
     } catch (e) {
       res?.redirect(buildErrorUrl(e, params.workspaceSlug))
@@ -398,7 +398,7 @@ const handleSsoValidationRequestFactory =
         codeVerifier
       })
 
-      session.codeVerifier = await encryptorFactory()(codeVerifier)
+      session.codeVerifier = await getEncryptor()(codeVerifier)
 
       res?.redirect(authorizationUrl.toString())
     } catch (e) {

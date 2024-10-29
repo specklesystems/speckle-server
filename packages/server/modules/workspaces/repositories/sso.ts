@@ -78,7 +78,7 @@ export const getWorkspaceSsoProviderFactory =
     }
   }
 
-export const storeProviderRecordFactory =
+export const storeSsoProviderRecordFactory =
   ({ db, encrypt }: { db: Knex; encrypt: Crypt }): StoreProviderRecord =>
   async ({ providerRecord }) => {
     const encryptedProviderData = await encrypt(JSON.stringify(providerRecord.provider))
