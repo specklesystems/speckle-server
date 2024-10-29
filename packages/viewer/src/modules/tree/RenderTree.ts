@@ -10,6 +10,11 @@ export class RenderTree {
   private tree: WorldTree
   private root: TreeNode
   private cancel = false
+  public buildNodeTime = 0
+  public applyTransformTime = 0
+  public convertTime = 0
+  public getNodeTime = 0
+  public otherTime = 0
 
   public get id(): string {
     return this.root.model.id
@@ -26,9 +31,13 @@ export class RenderTree {
 
   public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
+      let start = performance.now()
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+      this.buildNodeTime += performance.now() - start
+      start = performance.now()
       this.applyTransforms(node)
+      this.applyTransformTime += performance.now() - start
       if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
       return !this.cancel
     }, this.root)
@@ -65,11 +74,16 @@ export class RenderTree {
     geometryConverter: GeometryConverter
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
+    let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
+    this.convertTime += performance.now() - start
     if (geometryData) {
+      start = performance.now()
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
       const colorMaterialNode = this.getColorMaterialNode(node)
+      this.getNodeTime += performance.now() - start
+      start = performance.now()
       ret = {
         id: node.model.id,
         subtreeId: node.model.subtreeId,
@@ -85,6 +99,7 @@ export class RenderTree {
         ),
         colorMaterial: Materials.colorMaterialFromNode(colorMaterialNode)
       }
+      this.otherTime += performance.now() - start
     }
     return ret
   }

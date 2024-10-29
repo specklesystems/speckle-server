@@ -385,7 +385,8 @@ export abstract class PrimitiveBatch implements Batch {
           count: hiddenGroup.start
         }
       ])
-    }
+    } else this.setVisibleRange([AllBatchUpdateRange])
+
     // console.log('Final -> ', this.id, this.groups.slice())
   }
 
