@@ -1,3 +1,4 @@
+import { logger } from '@/logging/logging'
 import {
   SubscriptionData,
   SubscriptionDataInput,
@@ -11,7 +12,9 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import {
   addWorkspaceSubscriptionSeatIfNeededFactory,
-  handleSubscriptionUpdateFactory
+  downscaleWorkspaceSubscriptionFactory,
+  handleSubscriptionUpdateFactory,
+  manageSubscriptionDownscaleFactory
 } from '@/modules/gatekeeper/services/subscriptions'
 import { expectToThrow } from '@/test/assertionHelper'
 import { throwUncoveredError } from '@speckle/shared'
@@ -617,6 +620,203 @@ describe('subscriptions @gatekeeper', () => {
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
         role: 'workspace:member'
+      })
+    })
+  })
+  describe('downscaleWorkspaceSubscriptionFactory', () => {
+    it('throws an error if the workspace has no plan attached to it', async () => {
+      const subscriptionData = createTestSubscriptionData()
+      const workspaceSubscription = createTestWorkspaceSubscription({
+        subscriptionData
+      })
+      const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
+        getWorkspacePlan: async () => null,
+        countWorkspaceRole: async () => {
+          expect.fail()
+        },
+        getWorkspacePlanProductId: () => {
+          expect.fail()
+        },
+        reconcileSubscriptionData: async () => {
+          expect.fail()
+        }
+      })
+      const err = await expectToThrow(async () => {
+        await downscaleSubscription({ workspaceSubscription })
+      })
+      expect(err.message).to.equal(new WorkspacePlanNotFoundError().message)
+    })
+    it('throws an error if workspacePlan is not a paid plan', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData()
+      const workspaceSubscription = createTestWorkspaceSubscription({
+        subscriptionData,
+        workspaceId
+      })
+      const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
+        getWorkspacePlan: async () => ({
+          name: 'unlimited',
+          workspaceId,
+          status: 'valid'
+        }),
+        countWorkspaceRole: async () => {
+          expect.fail()
+        },
+        getWorkspacePlanProductId: () => {
+          expect.fail()
+        },
+        reconcileSubscriptionData: async () => {
+          expect.fail()
+        }
+      })
+      const err = await expectToThrow(async () => {
+        await downscaleSubscription({ workspaceSubscription })
+      })
+      expect(err.message).to.equal(new WorkspacePlanMismatchError().message)
+    })
+    it('does not reconcile the subscription seats did not change', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const priceId = cryptoRandomString({ length: 10 })
+      const productId = cryptoRandomString({ length: 10 })
+      const quantity = 10
+      const subscriptionItemId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData({
+        products: [{ priceId, productId, quantity, subscriptionItemId }]
+      })
+      const workspaceSubscription = createTestWorkspaceSubscription({
+        subscriptionData,
+        billingInterval: 'monthly',
+        currentBillingCycleEnd: new Date(2034, 11, 5),
+        workspaceId
+      })
+      const workspacePlanName = 'pro'
+      const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
+        getWorkspacePlan: async () => ({
+          name: workspacePlanName,
+          workspaceId,
+          status: 'valid'
+        }),
+        countWorkspaceRole: async ({ workspaceRole }) => {
+          return workspaceRole === 'workspace:guest' ? 0 : 5 // 5+5 will be 10 as quantity
+        },
+        getWorkspacePlanProductId: ({ workspacePlan }) => {
+          return workspacePlan === workspacePlanName
+            ? productId
+            : cryptoRandomString({ length: 10 })
+        },
+        reconcileSubscriptionData: async () => {
+          expect.fail()
+        }
+      })
+      await downscaleSubscription({ workspaceSubscription })
+    })
+    it('reconciles the subscription to the new seat values', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const proPriceId = cryptoRandomString({ length: 10 })
+      const proProductId = cryptoRandomString({ length: 10 })
+      const proQuantity = 10
+      const proSubscriptionItemId = cryptoRandomString({ length: 10 })
+
+      const guestPriceId = cryptoRandomString({ length: 10 })
+      const guestProductId = cryptoRandomString({ length: 10 })
+      const guestQuantity = 10
+      const guestSubscriptionItemId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData({
+        products: [
+          {
+            priceId: proPriceId,
+            productId: proProductId,
+            quantity: proQuantity,
+            subscriptionItemId: proSubscriptionItemId
+          },
+          {
+            priceId: guestPriceId,
+            productId: guestProductId,
+            quantity: guestQuantity,
+            subscriptionItemId: guestSubscriptionItemId
+          }
+        ]
+      })
+      const testWorkspaceSubscription = createTestWorkspaceSubscription({
+        subscriptionData,
+        workspaceId
+      })
+      const workspacePlanName = 'pro'
+
+      let reconciledSub: SubscriptionDataInput | undefined = undefined
+      const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
+        getWorkspacePlan: async () => ({
+          name: workspacePlanName,
+          workspaceId,
+          status: 'valid'
+        }),
+        countWorkspaceRole: async ({ workspaceRole }) => {
+          return workspaceRole === 'workspace:guest'
+            ? guestQuantity / 2
+            : proQuantity / 2 //we're halving the guest seats, regulars stay the same
+        },
+        getWorkspacePlanProductId: ({ workspacePlan }) => {
+          return workspacePlan === workspacePlanName ? proProductId : guestProductId
+        },
+        reconcileSubscriptionData: async ({ subscriptionData }) => {
+          reconciledSub = subscriptionData
+        }
+      })
+      await downscaleSubscription({ workspaceSubscription: testWorkspaceSubscription })
+
+      expect(
+        reconciledSub!.products.find((p) => p.productId === proProductId)?.quantity
+      ).to.be.equal(proQuantity)
+      expect(
+        reconciledSub!.products.find((p) => p.productId === guestProductId)?.quantity
+      ).to.be.equal(guestQuantity / 2)
+    })
+  })
+  describe('manageSubscriptionDownscaleFactory', () => {
+    it('still updates the monthly billing cycle end, even if subscription reconciliation fails', async () => {
+      const testWorkspaceSubscription = createTestWorkspaceSubscription({
+        billingInterval: 'monthly',
+        currentBillingCycleEnd: new Date(2034, 11, 5)
+      })
+      let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
+      await manageSubscriptionDownscaleFactory({
+        logger,
+        getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
+        downscaleWorkspaceSubscription: async () => {
+          throw 'kabumm'
+        },
+        updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
+          updatedWorkspaceSubscription = workspaceSubscription
+        }
+      })()
+
+      const updatedBillingCycleEnd = new Date(2035, 0, 5)
+      expect(updatedWorkspaceSubscription).deep.equal({
+        ...testWorkspaceSubscription,
+        currentBillingCycleEnd: updatedBillingCycleEnd
+      })
+    })
+    it('still updates the yearly billing cycle end, even if subscription reconciliation fails', async () => {
+      const testWorkspaceSubscription = createTestWorkspaceSubscription({
+        billingInterval: 'yearly',
+        currentBillingCycleEnd: new Date(2034, 11, 5)
+      })
+      let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
+      await manageSubscriptionDownscaleFactory({
+        logger,
+        getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
+        downscaleWorkspaceSubscription: async () => {
+          throw 'kabumm'
+        },
+        updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
+          updatedWorkspaceSubscription = workspaceSubscription
+        }
+      })()
+
+      const updatedBillingCycleEnd = new Date(2035, 11, 5)
+      expect(updatedWorkspaceSubscription).deep.equal({
+        ...testWorkspaceSubscription,
+        currentBillingCycleEnd: updatedBillingCycleEnd
       })
     })
   })
