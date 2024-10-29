@@ -45,14 +45,18 @@
 
           <div class="flex items-center justify-between pointer-events-auto mt-4">
             <slot name="actions">
-              <FormButton text color="outline" @click="$emit('skip')">Skip</FormButton>
-              <div class="flex justify-center space-x-2">
+              <FormButton text size="sm" color="outline" @click="$emit('skip')">
+                Skip
+              </FormButton>
+              <div class="flex justify-center items-center space-x-2">
                 <FormButton
                   v-show="index !== 0"
-                  :icon-left="ArrowLeftIcon"
+                  size="sm"
+                  color="outline"
                   text
                   @click="prev(index)"
                 >
+                  <ArrowLeftIcon class="h-3 w-3" />
                   Previous
                 </FormButton>
                 <FormButton :icon-right="ArrowRightIcon" @click="next(index)">
