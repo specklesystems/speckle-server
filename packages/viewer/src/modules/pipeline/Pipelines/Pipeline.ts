@@ -33,10 +33,6 @@ export abstract class Pipeline {
   public onBeforePipelineRender(): void {}
   public onAfterPipelineRender(): void {}
 
-  public addPass(pass: GPass) {
-    this.passList.push(pass)
-  }
-
   public getPass(name: string): GPass[] {
     return this.passList.filter((pass: GPass) => {
       return pass.displayName === name

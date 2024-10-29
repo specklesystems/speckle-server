@@ -47,7 +47,6 @@ export class ViewModes extends Extension {
         renderer.pipeline = new ArcticViewPipeline(renderer)
         break
     }
-    this.viewer.resize()
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 }

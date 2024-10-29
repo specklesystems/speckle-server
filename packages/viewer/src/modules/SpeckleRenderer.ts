@@ -255,6 +255,7 @@ export default class SpeckleRenderer {
     this._pipeline = value
     this._pipeline.setClippingPlanes(this._clippingPlanes)
     this._pipeline.reset()
+    this.resize()
   }
 
   public get pipeline(): Pipeline {
@@ -546,7 +547,14 @@ export default class SpeckleRenderer {
     }
   }
 
-  public resize(width: number, height: number) {
+  public resize(width?: number, height?: number) {
+    if (!width || !height) {
+      const size = this._renderer.getSize(new Vector2())
+      width = size.x
+      height = size.y
+    }
+    width = Math.floor(width)
+    height = Math.floor(height)
     this.renderer.setSize(width, height)
     const dpr = this._renderer.getPixelRatio()
     this._pipeline.resize(width * dpr, height * dpr)

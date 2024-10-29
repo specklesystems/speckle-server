@@ -7,13 +7,12 @@ import {
   PerspectiveCamera,
   Plane,
   RGBADepthPacking,
-  Scene,
-  Side,
-  WebGLRenderer
+  Side
 } from 'three'
-import { BaseGPass, PassOptions } from './GPass.js'
+import { PassOptions } from './GPass.js'
 import SpeckleDepthMaterial from '../../materials/SpeckleDepthMaterial.js'
 import { Pipeline } from '../Pipelines/Pipeline.js'
+import { GeometryPass } from './GeometryPass.js'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,
@@ -28,7 +27,7 @@ export const DefaultDepthPassOptions: Required<DepthPassOptions> = {
   depthType: DepthType.LINEAR_DEPTH
 }
 
-export class DepthPass extends BaseGPass {
+export class DepthPass extends GeometryPass {
   private depthMaterial: SpeckleDepthMaterial
 
   public _options: Required<DepthPassOptions> = Object.assign(
@@ -92,27 +91,5 @@ export class DepthPass extends BaseGPass {
     this.depthMaterial.userData.near.value = camera.near
     this.depthMaterial.userData.far.value = camera.far
     this.depthMaterial.needsUpdate = true
-  }
-
-  public render(
-    renderer: WebGLRenderer,
-    camera: PerspectiveCamera | OrthographicCamera | null,
-    scene?: Scene
-  ): boolean {
-    if (!camera || !scene) return false
-
-    if (this.onBeforeRender) this.onBeforeRender()
-
-    renderer.setRenderTarget(this.outputTarget)
-
-    this.applyLayers(camera)
-
-    this.clear(renderer)
-
-    renderer.render(scene, camera)
-
-    if (this.onAfterRender) this.onAfterRender()
-
-    return false
   }
 }

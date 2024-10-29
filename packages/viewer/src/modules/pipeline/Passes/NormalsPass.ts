@@ -1,19 +1,9 @@
-import {
-  DoubleSide,
-  Material,
-  NearestFilter,
-  NoBlending,
-  OrthographicCamera,
-  PerspectiveCamera,
-  Plane,
-  Scene,
-  WebGLRenderer
-} from 'three'
+import { DoubleSide, Material, NearestFilter, NoBlending, Plane } from 'three'
 import SpeckleNormalMaterial from '../../materials/SpeckleNormalMaterial.js'
-import { BaseGPass } from './GPass.js'
 import { Pipeline } from '../Pipelines/Pipeline.js'
+import { GeometryPass } from './GeometryPass.js'
 
-export class NormalsPass extends BaseGPass {
+export class NormalsPass extends GeometryPass {
   private normalsMaterial: SpeckleNormalMaterial
 
   get displayName(): string {
@@ -39,26 +29,5 @@ export class NormalsPass extends BaseGPass {
 
   public setClippingPlanes(planes: Plane[]) {
     this.normalsMaterial.clippingPlanes = planes
-  }
-
-  public render(
-    renderer: WebGLRenderer,
-    camera: PerspectiveCamera | OrthographicCamera | null,
-    scene?: Scene
-  ): boolean {
-    if (!camera || !scene) return false
-
-    if (this.onBeforeRender) this.onBeforeRender()
-
-    renderer.setRenderTarget(this.outputTarget)
-
-    this.clear(renderer)
-
-    this.applyLayers(camera)
-
-    renderer.render(scene, camera)
-
-    if (this.onAfterRender) this.onAfterRender()
-    return false
   }
 }
