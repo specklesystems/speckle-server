@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { activitiesLogger } from '@/logging/logging'
+import { logger } from '@/logging/logging'
 import {
   AcquireTaskLock,
   ReleaseTaskLock,
@@ -16,7 +16,7 @@ export const scheduledCallbackWrapper = async (
   acquireLock: AcquireTaskLock,
   releaseTaskLock: ReleaseTaskLock
 ) => {
-  const boundLogger = activitiesLogger.child({ taskName })
+  const boundLogger = logger.child({ taskName })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
   const lock = await acquireLock({ taskName, lockExpiresAt })

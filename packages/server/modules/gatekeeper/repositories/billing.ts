@@ -129,7 +129,7 @@ export const getWorkspaceSubscriptionBySubscriptionIdFactory =
     return subscription ?? null
   }
 
-export const getWorkspaceSubscriptionsAboutToEndBillingCycleFactory =
+export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
   ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
   async () => {
     const cycleEnd = new Date()

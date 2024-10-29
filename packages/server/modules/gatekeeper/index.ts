@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
@@ -8,12 +8,23 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
-import { getStripeClient } from '@/modules/gatekeeper/stripe'
+import { getStripeClient, getWorkspacePlanProductId } from '@/modules/gatekeeper/stripe'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
+import {
+  downscaleWorkspaceSubscriptionFactory,
+  manageSubscriptionDownscaleFactory
+} from '@/modules/gatekeeper/services/subscriptions'
+import {
+  getWorkspacePlanFactory,
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory,
+  upsertWorkspaceSubscriptionFactory
+} from '@/modules/gatekeeper/repositories/billing'
+import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
+import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -29,14 +40,29 @@ const scheduleWorkspaceSubscriptionDownscale = () => {
     releaseTaskLock: releaseTaskLockFactory({ db })
   })
 
+  const stripe = getStripeClient()
+
+  const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
+    logger,
+    downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
+      countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
+      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
+      getWorkspacePlanProductId
+    }),
+    getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
+      db
+    }),
+    updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+  })
+
   const cronExpression = '*/10 * * * * *'
   return scheduleExecution(
     cronExpression,
     'WorkspaceSubscriptionDownscale',
     async () => {
-      moduleLogger.info('Starting workspace subscription downscale scan')
+      await manageSubscriptionDownscale()
       // await cleanOrphanedWebhookConfigs()
-      moduleLogger.info('Finished cleanup')
     }
   )
 }

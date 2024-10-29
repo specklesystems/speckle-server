@@ -187,6 +187,14 @@ export const reconcileWorkspaceSubscriptionFactory =
         })
       }
     }
+    // remove products from the sub
+    const productIds = subscriptionData.products.map((p) => p.productId)
+    const removedProducts = existingSubscriptionState.products.filter(
+      (p) => !productIds.includes(p.productId)
+    )
+    for (const removedProduct of removedProducts) {
+      items.push({ id: removedProduct.subscriptionItemId, deleted: true })
+    }
     // workspaceSubscription.subscriptionData.products.
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
     await stripe.subscriptions.update(subscriptionData.subscriptionId, {

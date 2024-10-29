@@ -23,6 +23,7 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { omit } from 'lodash'
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -109,7 +110,12 @@ describe('subscriptions @gatekeeper', () => {
         }
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('cancelationScheduled')
-      expect(updatedSubscription).deep.equal(workspaceSubscription)
+      expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
+        workspaceSubscription.updatedAt
+      )
+      expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
+        omit(workspaceSubscription, 'updatedAt')
+      )
     })
     it('sets the state to valid', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -140,7 +146,12 @@ describe('subscriptions @gatekeeper', () => {
         }
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('valid')
-      expect(updatedSubscription).deep.equal(workspaceSubscription)
+      expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
+        workspaceSubscription.updatedAt
+      )
+      expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
+        omit(workspaceSubscription, 'updatedAt')
+      )
     })
     it('sets the state to paymentFailed', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -167,7 +178,12 @@ describe('subscriptions @gatekeeper', () => {
         }
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('paymentFailed')
-      expect(updatedSubscription).deep.equal(workspaceSubscription)
+      expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
+        workspaceSubscription.updatedAt
+      )
+      expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
+        omit(workspaceSubscription, 'updatedAt')
+      )
     })
     it('sets the state to canceled', async () => {
       const subscriptionData = createTestSubscriptionData({
@@ -197,7 +213,12 @@ describe('subscriptions @gatekeeper', () => {
         }
       })({ subscriptionData })
       expect(updatedPlan!.status).to.be.equal('canceled')
-      expect(updatedSubscription).deep.equal(workspaceSubscription)
+      expect(updatedSubscription!.updatedAt).to.be.greaterThanOrEqual(
+        workspaceSubscription.updatedAt
+      )
+      expect(omit(updatedSubscription!, 'updatedAt')).deep.equal(
+        omit(workspaceSubscription, 'updatedAt')
+      )
     })
     ;(
       ['incomplete', 'incomplete_expired', 'trialing', 'unpaid', 'paused'] as const
@@ -231,7 +252,7 @@ describe('subscriptions @gatekeeper', () => {
     })
   })
   describe('addWorkspaceSubscriptionSeatIfNeededFactory returns a function, that', () => {
-    it('throws if the workspacePlan is not found', async () => {
+    it('just returns if the workspacePlan is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const addWorkspaceSubscriptionSeatIfNeeded =
         addWorkspaceSubscriptionSeatIfNeededFactory({
@@ -252,13 +273,11 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           }
         })
-      const err = await expectToThrow(async () => {
-        await addWorkspaceSubscriptionSeatIfNeeded({
-          workspaceId,
-          role: 'workspace:admin'
-        })
+      await addWorkspaceSubscriptionSeatIfNeeded({
+        workspaceId,
+        role: 'workspace:admin'
       })
-      expect(err.message).to.equal(new WorkspacePlanNotFoundError().message)
+      expect(true).to.be.true
     })
     it('throws if the workspaceSubscription is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })

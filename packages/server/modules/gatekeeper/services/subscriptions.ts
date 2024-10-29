@@ -112,7 +112,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
   }) =>
   async ({ workspaceId, role }: { workspaceId: string; role: WorkspaceRoles }) => {
     const workspacePlan = await getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+    // if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+    if (!workspacePlan) return
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
@@ -193,7 +194,10 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   if (seatCount < 0) throw new Error('Invalid seat count, cannot be negative')
 
   if (seatCount === 0 && product === undefined) return
-  if (product !== undefined && product.quantity >= seatCount) {
+  if (seatCount === 0 && product !== undefined) {
+    const prodIndex = subscriptionData.products.indexOf(product)
+    subscriptionData.products.splice(prodIndex, 1)
+  } else if (product !== undefined && product.quantity >= seatCount) {
     product.quantity = seatCount
   } else {
     throw new Error('Invalid subscription state')

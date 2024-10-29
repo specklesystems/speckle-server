@@ -10,7 +10,7 @@ import {
   upsertPaidWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   getWorkspaceSubscriptionBySubscriptionIdFactory,
-  getWorkspaceSubscriptionsAboutToEndBillingCycleFactory
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
   createTestSubscriptionData,
@@ -39,7 +39,7 @@ const getWorkspaceSubscriptionBySubscriptionId =
   getWorkspaceSubscriptionBySubscriptionIdFactory({ db })
 
 const getSubscriptionsAboutToEndBillingCycle =
-  getWorkspaceSubscriptionsAboutToEndBillingCycleFactory({ db })
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory({ db })
 
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
@@ -265,7 +265,7 @@ describe('billing repositories @gatekeeper', () => {
         expect(storedSubscription).deep.equal(workspaceSubscription)
       })
     })
-    describe('getWorkspaceSubscriptionsAboutToEndBillingCycle', () => {
+    describe('getWorkspaceSubscriptionsPastBillingCycleEndFactory', () => {
       before(async () => {
         await truncateTables(['workspace_subscriptions'])
       })
