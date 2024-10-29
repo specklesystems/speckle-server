@@ -858,6 +858,12 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateServerRegionInput = {
+  description: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -1318,6 +1324,7 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  serverInfoMutations: ServerInfoMutations;
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -2830,6 +2837,11 @@ export type ServerInfo = {
   workspaces: ServerWorkspacesInfo;
 };
 
+export type ServerInfoMutations = {
+  __typename?: 'ServerInfoMutations';
+  multiRegion: ServerRegionMutations;
+};
+
 export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']['input']>;
   company?: InputMaybe<Scalars['String']['input']>;
@@ -2858,6 +2870,24 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerRegionItem = {
+  __typename?: 'ServerRegionItem';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ServerRegionMutations = {
+  __typename?: 'ServerRegionMutations';
+  create: ServerRegionItem;
+};
+
+
+export type ServerRegionMutationsCreateArgs = {
+  input: CreateServerRegionInput;
 };
 
 export enum ServerRole {
@@ -4216,7 +4246,9 @@ export type WorkspacePlan = {
 };
 
 export enum WorkspacePlanStatuses {
+  CancelationScheduled = 'cancelationScheduled',
   Canceled = 'canceled',
+  Expired = 'expired',
   PaymentFailed = 'paymentFailed',
   Trial = 'trial',
   Valid = 'valid'
@@ -4469,6 +4501,7 @@ export type ResolversTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   Currency: Currency;
@@ -4564,10 +4597,13 @@ export type ResolversTypes = {
   ServerAutomateInfo: ResolverTypeWrapper<ServerAutomateInfo>;
   ServerConfiguration: ResolverTypeWrapper<ServerConfiguration>;
   ServerInfo: ResolverTypeWrapper<ServerInfoGraphQLReturn>;
+  ServerInfoMutations: ResolverTypeWrapper<ServerInfoMutations>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ResolverTypeWrapper<ServerMigration>;
+  ServerRegionItem: ResolverTypeWrapper<ServerRegionItem>;
+  ServerRegionMutations: ResolverTypeWrapper<ServerRegionMutations>;
   ServerRole: ServerRole;
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -4739,6 +4775,7 @@ export type ResolversParentTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   DateTime: Scalars['DateTime']['output'];
@@ -4820,10 +4857,13 @@ export type ResolversParentTypes = {
   ServerAutomateInfo: ServerAutomateInfo;
   ServerConfiguration: ServerConfiguration;
   ServerInfo: ServerInfoGraphQLReturn;
+  ServerInfoMutations: ServerInfoMutations;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ServerMigration;
+  ServerRegionItem: ServerRegionItem;
+  ServerRegionMutations: ServerRegionMutations;
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: GraphQLEmptyReturn;
@@ -5517,6 +5557,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   requestVerificationByEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationRequestVerificationByEmailArgs, 'email'>>;
+  serverInfoMutations?: Resolver<ResolversTypes['ServerInfoMutations'], ParentType, ContextType>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
@@ -5914,6 +5955,11 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ServerInfoMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerInfoMutations'] = ResolversParentTypes['ServerInfoMutations']> = {
+  multiRegion?: Resolver<ResolversTypes['ServerRegionMutations'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerInvite'] = ResolversParentTypes['ServerInvite']> = {
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5924,6 +5970,19 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
 export type ServerMigrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerMigration'] = ResolversParentTypes['ServerMigration']> = {
   movedFrom?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   movedTo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerRegionItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerRegionItem'] = ResolversParentTypes['ServerRegionItem']> = {
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerRegionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerRegionMutations'] = ResolversParentTypes['ServerRegionMutations']> = {
+  create?: Resolver<ResolversTypes['ServerRegionItem'], ParentType, ContextType, RequireFields<ServerRegionMutationsCreateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6497,8 +6556,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerAutomateInfo?: ServerAutomateInfoResolvers<ContextType>;
   ServerConfiguration?: ServerConfigurationResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
+  ServerInfoMutations?: ServerInfoMutationsResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
   ServerMigration?: ServerMigrationResolvers<ContextType>;
+  ServerRegionItem?: ServerRegionItemResolvers<ContextType>;
+  ServerRegionMutations?: ServerRegionMutationsResolvers<ContextType>;
   ServerRoleItem?: ServerRoleItemResolvers<ContextType>;
   ServerStatistics?: ServerStatisticsResolvers<ContextType>;
   ServerStats?: ServerStatsResolvers<ContextType>;
