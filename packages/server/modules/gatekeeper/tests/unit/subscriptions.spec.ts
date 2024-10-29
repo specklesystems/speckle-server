@@ -346,6 +346,39 @@ describe('subscriptions @gatekeeper', () => {
       })
       expect(err.message).to.equal(new WorkspacePlanMismatchError().message)
     })
+    it('returns without reconciliation if the subscription is canceled', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData({ products: [] })
+      const workspaceSubscription = createTestWorkspaceSubscription({
+        workspaceId,
+        subscriptionData
+      })
+      const addWorkspaceSubscriptionSeatIfNeeded =
+        addWorkspaceSubscriptionSeatIfNeededFactory({
+          getWorkspacePlan: async () => ({
+            name: 'pro',
+            workspaceId,
+            status: 'canceled'
+          }),
+          getWorkspaceSubscription: async () => workspaceSubscription,
+          countWorkspaceRole: async () => {
+            expect.fail()
+          },
+          getWorkspacePlanPrice: () => {
+            expect.fail()
+          },
+          getWorkspacePlanProductId: () => {
+            expect.fail()
+          },
+          reconcileSubscriptionData: async () => {
+            expect.fail()
+          }
+        })
+      await addWorkspaceSubscriptionSeatIfNeeded({
+        workspaceId,
+        role: 'workspace:admin'
+      })
+    })
     it('uses the guest count, guest product and price id if the new role is workspace:guest', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const subscriptionData = createTestSubscriptionData({ products: [] })
@@ -660,6 +693,32 @@ describe('subscriptions @gatekeeper', () => {
         await downscaleSubscription({ workspaceSubscription })
       })
       expect(err.message).to.equal(new WorkspacePlanMismatchError().message)
+    })
+    it('returns if the subscription is canceled', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const subscriptionData = createTestSubscriptionData()
+      const workspaceSubscription = createTestWorkspaceSubscription({
+        subscriptionData,
+        workspaceId
+      })
+      const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
+        getWorkspacePlan: async () => ({
+          name: 'pro',
+          workspaceId,
+          status: 'canceled'
+        }),
+        countWorkspaceRole: async () => {
+          expect.fail()
+        },
+        getWorkspacePlanProductId: () => {
+          expect.fail()
+        },
+        reconcileSubscriptionData: async () => {
+          expect.fail()
+        }
+      })
+      const hasDownscaled = await downscaleSubscription({ workspaceSubscription })
+      expect(hasDownscaled).to.be.false
     })
     it('does not reconcile the subscription seats did not change', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })

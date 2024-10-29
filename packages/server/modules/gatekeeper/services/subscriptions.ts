@@ -129,6 +129,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
         throwUncoveredError(workspacePlan)
     }
 
+    if (workspacePlan.status === 'canceled') return
+
     let productId: string
     let priceId: string
     let roleCount: number
@@ -256,6 +258,8 @@ export const downscaleWorkspaceSubscriptionFactory =
       default:
         throwUncoveredError(workspacePlan)
     }
+
+    if (workspacePlan.status === 'canceled') return false
 
     const [guestCount, memberCount, adminCount] = await Promise.all([
       countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
