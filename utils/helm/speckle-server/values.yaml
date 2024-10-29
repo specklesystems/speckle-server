@@ -405,6 +405,13 @@ openTelemetry:
     ##
     value: ''
 
+multiRegion:
+  config:
+    ## @param multiRegion.config.secretName If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.
+    secretName: 'multi-region-config'
+    ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
+    secretKey: 'multi-region-config.json'
+
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
@@ -542,13 +549,6 @@ server:
     workspaceYearlyBusinessSeatStripePriceId:
       ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.
       secretKey: 'workspaceYearlyBusinessSeatStripePriceId'
-
-  multiRegion:
-    config:
-      ## @param server.multiRegion.config.secretName If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.
-      secretName: 'multi-region-config'
-      ## @param server.multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
-      secretKey: 'multi-region-config.json'
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets

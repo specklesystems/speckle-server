@@ -10,8 +10,8 @@ const multiRegionConfigSchema = z.record(
   z.object({
     postgres: z
       .object({
-        connectionString: z.string().url(),
-        caCertificate: z.string()
+        connectionUri: z.string().url(),
+        publicTlsCertificate: z.string()
       })
       .optional(),
     blobStorage: z
