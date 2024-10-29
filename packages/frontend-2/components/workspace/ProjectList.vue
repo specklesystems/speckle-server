@@ -277,7 +277,7 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 onResult((queryResult) => {
   if (queryResult.data?.workspaceBySlug) {
     workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
-    useHead({
+    useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
   }
