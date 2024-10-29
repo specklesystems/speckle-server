@@ -51,8 +51,6 @@ export abstract class Pipeline {
     this.jitterIndex = 0
   }
 
-  public renderRequest() {}
-
   public render(): boolean {
     this.speckleRenderer.renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return false
