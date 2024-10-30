@@ -1,23 +1,25 @@
 import {
   associateSsoProviderWithWorkspaceFactory,
   getWorkspaceSsoProviderFactory,
-  storeSsoProviderRecordFactory
+  upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import {
   BasicTestWorkspace,
+  createTestOidcProvider,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
-import { Roles } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
 import db from '@/db/knex'
-import { getDecryptor, getEncryptor } from '@/modules/workspaces/helpers/sso'
+import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import cryptoRandomString from 'crypto-random-string'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { expect } from 'chai'
+import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
 
 const associateSsoProviderWithWorkspace = associateSsoProviderWithWorkspaceFactory({
   db
 })
+const upsertUserSsoSession = upsertUserSsoSessionFactory({ db })
 
 describe('Workspace SSO repositories', () => {
   const serverAdminUser: BasicTestUser = {
@@ -41,21 +43,7 @@ describe('Workspace SSO repositories', () => {
 
     it('fetches and decrypts oidc provider information for the given workspace', async () => {
       await createTestWorkspace(workspace, serverAdminUser)
-      const providerId = cryptoRandomString({ length: 6 })
-      await storeSsoProviderRecordFactory({ db, encrypt: getEncryptor() })({
-        providerRecord: {
-          id: providerId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          providerType: 'oidc',
-          provider: {
-            providerName: 'Test Provider',
-            clientId: 'test-provider',
-            clientSecret: cryptoRandomString({ length: 12 }),
-            issuerUrl: new URL('', getFrontendOrigin()).toString()
-          }
-        }
-      })
+      const providerId = await createTestOidcProvider()
       await associateSsoProviderWithWorkspace({ workspaceId: workspace.id, providerId })
       const provider = await getWorkspaceSsoProviderFactory({
         db,
@@ -72,6 +60,58 @@ describe('Workspace SSO repositories', () => {
         decrypt: getDecryptor()
       })({ workspaceId: cryptoRandomString({ length: 6 }) })
       expect(provider).to.be.null
+    })
+  })
+
+  describe('upsertUserSsoSessionFactory returns a function, that', () => {
+    it('creates a session if none exists', async () => {
+      const providerId = await createTestOidcProvider()
+
+      const userSsoSession: UserSsoSessionRecord = {
+        userId: serverAdminUser.id,
+        providerId,
+        createdAt: new Date(),
+        validUntil: new Date()
+      }
+
+      await upsertUserSsoSession({ userSsoSession })
+
+      // TODO: Use future repo function
+      const sessions = await db<UserSsoSessionRecord>('user_sso_sessions').where({
+        providerId,
+        userId: serverAdminUser.id
+      })
+
+      expect(sessions[0].providerId).to.equal(providerId)
+    })
+
+    it('updates an existing session, if one exists', async () => {
+      const providerId = await createTestOidcProvider()
+      const initialValidUntil = new Date()
+
+      const userSsoSession: UserSsoSessionRecord = {
+        userId: serverAdminUser.id,
+        providerId,
+        createdAt: new Date(),
+        validUntil: initialValidUntil
+      }
+      await upsertUserSsoSession({ userSsoSession })
+      await wait(50)
+      await upsertUserSsoSession({
+        userSsoSession: {
+          ...userSsoSession,
+          validUntil: new Date()
+        }
+      })
+
+      // TODO: Use future repo function
+      const sessions = await db<UserSsoSessionRecord>('user_sso_sessions').where({
+        providerId,
+        userId: serverAdminUser.id
+      })
+
+      expect(sessions.length).to.equal(1)
+      expect(sessions[0].validUntil.getTime()).to.not.equal(initialValidUntil.getTime())
     })
   })
 })

@@ -2,9 +2,9 @@ import type {
   ProviderRecord,
   WorkspaceSsoProvider,
   UserSsoSessionRecord,
-  OIDCProvider,
-  OIDCProviderAttributes,
-  OIDCProviderValidationRequest
+  OidcProvider,
+  OidcProviderAttributes,
+  OidcProviderValidationRequest
 } from '@/modules/workspaces/domain/sso/types'
 
 // Workspace SSO provider management
@@ -30,14 +30,14 @@ export type UpsertUserSsoSession = (args: {
 
 // OIDC validation flow
 
-export type GetOIDCProviderAttributes = (args: {
-  provider: OIDCProvider
-}) => Promise<OIDCProviderAttributes>
+export type GetOidcProviderAttributes = (args: {
+  provider: OidcProvider
+}) => Promise<OidcProviderAttributes>
 
-export type StoreOIDCProviderValidationRequest = (
-  args: OIDCProviderValidationRequest
+export type StoreOidcProviderValidationRequest = (
+  args: OidcProviderValidationRequest
 ) => Promise<void>
 
-export type GetOIDCProviderData = (args: {
+export type GetOidcProviderData = (args: {
   validationToken: string
-}) => Promise<OIDCProvider | null>
+}) => Promise<OidcProvider | null>
