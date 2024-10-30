@@ -16,7 +16,9 @@
         :rules="[isRequired, isStringOfLength({ maxLength: 64 })]"
         auto-focus
         autocomplete="off"
+        show-required
         show-label
+        help="Human readable name for the region."
       />
       <FormTextArea
         name="description"
@@ -28,6 +30,15 @@
         show-optional
         :rules="[isStringOfLength({ maxLength: 65536 })]"
       />
+      <SettingsServerRegionsKeySelect
+        v-model="regionKey"
+        show-label
+        :items="['eu-1', 'uk-2']"
+        label="Region key"
+        :rules="[isRequired]"
+        show-required
+        help="These keys come from the server multi region configuration file."
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -36,6 +47,8 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
 const open = defineModel<boolean>('open', { required: true })
+
+const regionKey = ref<string | undefined>(undefined)
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
