@@ -412,3 +412,7 @@ export function getOtelTraceKey() {
 export function getOtelHeaderValue() {
   return getStringFromEnv('OTEL_TRACE_VALUE')
 }
+
+export function getMultiRegionConfigPath() {
+  return getStringFromEnv('MULTI_REGION_CONFIG_PATH')
+}
