@@ -24,8 +24,8 @@
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
-            <div v-tippy="canEdit ? 'Manage collaborators' : 'View collaborators'">
-              <NuxtLink :to="projectCollaboratorsRoute(project.id)">
+            <div v-tippy="collaboratorsTooltip">
+              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : null">
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
@@ -168,7 +168,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
     ]
   ]
 
-  if (isWorkspacesEnabled.value && !project.value?.workspace?.id) {
+  if (isWorkspacesEnabled.value && !project.value?.workspace?.id && hasRole.value) {
     items.push([
       {
         title: 'Move project...',
@@ -232,6 +232,10 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
 const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
+
+const collaboratorsTooltip = computed(() =>
+  hasRole.value ? (canEdit.value ? 'Manage collaborators' : 'View collaborators') : null
+)
 
 const activePageTab = computed({
   get: () => {
