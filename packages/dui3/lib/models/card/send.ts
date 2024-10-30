@@ -25,6 +25,16 @@ export interface RevitViewsSendFilter extends ISendFilter {
   availableViews: string[]
 }
 
+export interface CategoriesData {
+  name: string
+  id: string
+}
+
+export interface RevitCategoriesSendFilter extends ISendFilter {
+  selectedCategories: string[]
+  availableCategories: CategoriesData[]
+}
+
 export class SenderModelCard extends ModelCard implements ISenderModelCard {
   sendFilter?: ISendFilter | undefined
   sending?: boolean | undefined
