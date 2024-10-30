@@ -1121,6 +1121,7 @@ jobs:
   publish-viewer-sandbox-cloudflare-pages:
     docker: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -1129,7 +1130,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install
+          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
