@@ -1129,7 +1129,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
