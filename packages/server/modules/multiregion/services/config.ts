@@ -4,10 +4,8 @@ import fs from 'node:fs/promises'
 import { getMultiRegionConfigPath } from '@/modules/shared/helpers/envHelper'
 import type { Optional } from '@speckle/shared'
 import type { GetAvailableRegionConfigs } from '@/modules/multiregion/domain/operations'
-import {
-  multiRegionConfigSchema,
-  type MultiRegionConfig
-} from '@/modules/multiregion/domain/types'
+import { type MultiRegionConfig } from '@/modules/multiregion/domain/types'
+import { multiRegionConfigSchema } from '@/modules/multiregion/helpers/validation'
 
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 
