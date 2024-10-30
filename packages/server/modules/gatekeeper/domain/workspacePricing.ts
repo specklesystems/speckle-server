@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-type Features =
+export type WorkspaceFeatureName =
   | 'domainBasedSecurityPolicies'
   | 'oidcSso'
   | 'workspaceDataRegionSpecificity'
@@ -10,7 +10,7 @@ type FeatureDetails = {
   description?: string
 }
 
-const features: Record<Features, FeatureDetails> = {
+const features: Record<WorkspaceFeatureName, FeatureDetails> = {
   domainBasedSecurityPolicies: {
     description: 'Email domain based security policies',
     displayName: 'Domain security policies'
@@ -145,6 +145,11 @@ export const unpaidWorkspacePlanFeatures: Record<
   academia,
   unlimited
 }
+
+export const workspacePlanFeatures: Record<
+  WorkspacePlans,
+  WorkspacePlanFeaturesAndLimits
+> = { ...paidWorkspacePlanFeatures, ...unpaidWorkspacePlanFeatures }
 
 export const pricingTable = {
   workspacePricingPlanInformation,
