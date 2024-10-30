@@ -97,7 +97,8 @@
       "Encryptor",
       "Insertable",
       "mjml",
-      "OIDC"
+      "OIDC",
+      "Prorotation"
     ],
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"

@@ -2,14 +2,18 @@ import cron from 'node-cron'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
-import { acquireTaskLockFactory } from '@/modules/core/repositories/scheduledTasks'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
 import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
 import { Knex } from 'knex'
 import { db } from '@/db/knex'
 
 const scheduleWebhookCleanupFactory = ({ db }: { db: Knex }) => {
   const scheduleExecution = scheduleExecutionFactory({
-    acquireTaskLock: acquireTaskLockFactory({ db })
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
   })
 
   const cronExpression = '0 4 * * 1'
