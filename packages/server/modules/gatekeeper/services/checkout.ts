@@ -77,7 +77,7 @@ export const startCheckoutSessionFactory =
         // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
         // it will create a new customer and a new sub though, the reactivation would use the existing customer
         case 'trial':
-        case 'expired':
+        case 'trialExpired':
           // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
           const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
             workspaceId
