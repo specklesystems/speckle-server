@@ -2,7 +2,6 @@ import {
   AlwaysStencilFunc,
   DoubleSide,
   Material,
-  Plane,
   ReplaceStencilOp,
   Vector2
 } from 'three'
@@ -34,10 +33,6 @@ export class StencilPass extends GeometryPass {
 
   public get overrideMaterial(): Material {
     return this.stencilMaterial
-  }
-
-  public setClippingPlanes(planes: Plane[]) {
-    this.stencilMaterial.clippingPlanes = planes
   }
 
   public setSize(width: number, height: number) {

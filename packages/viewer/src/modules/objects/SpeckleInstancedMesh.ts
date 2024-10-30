@@ -60,9 +60,10 @@ export default class SpeckleInstancedMesh extends Group {
   public static MeshBatchNumber = 0
 
   private tas: TopLevelAccelerationStructure
-  private batchMaterial: Material | null = null
+  private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Array<Material | Material[]>> = []
+  private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects!: BatchObject[]
@@ -105,6 +106,36 @@ export default class SpeckleInstancedMesh extends Group {
 
     const overrideMaterial = this.getCachedMaterial(material, true)
     this.instances.forEach((value) => (value.material = overrideMaterial))
+  }
+
+  public setOverrideBatchMaterial(material: Material) {
+    const overrideMaterial = this.getCachedMaterial(material, true)
+    this.batchMaterialStack.push(overrideMaterial)
+    const materials = this.materials
+    for (let k = 0; k < materials.length; k++) {
+      if (materials[k].uuid === this.batchMaterial.uuid) {
+        materials[k] = overrideMaterial
+      }
+    }
+    this.instances.forEach((value) => {
+      if ((value.material as Material).uuid === this.batchMaterial.uuid)
+        value.material = overrideMaterial
+    })
+  }
+
+  public restoreBatchMaterial() {
+    const overrideBatchMaterial = this.batchMaterialStack.pop()
+    if (!overrideBatchMaterial) return
+
+    for (let k = 0; k < this.materials.length; k++) {
+      if (this.materials[k].uuid === overrideBatchMaterial.uuid) {
+        this.materials[k] = this.batchMaterial
+      }
+    }
+    this.instances.forEach((value) => {
+      if ((value.material as Material).uuid === overrideBatchMaterial.uuid)
+        value.material = this.batchMaterial
+    })
   }
 
   private lookupMaterial(material: Material) {
