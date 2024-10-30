@@ -5,7 +5,6 @@ import {
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
-  Plane,
   RGBADepthPacking,
   Side
 } from 'three'
@@ -81,10 +80,6 @@ export class DepthPass extends GeometryPass {
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide
     this.depthType = this._options.depthType
-  }
-
-  public setClippingPlanes(planes: Plane[]) {
-    this.depthMaterial.clippingPlanes = planes
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera) {

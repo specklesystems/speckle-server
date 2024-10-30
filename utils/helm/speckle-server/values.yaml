@@ -51,6 +51,8 @@ featureFlags:
   gatekeeperModuleEnabled: false
   ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
   billingIntegrationEnabled: false
+  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.
+  workspacesMultiRegionEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -402,6 +404,13 @@ openTelemetry:
     ## @param openTelemetry.tracing.value Required. The value to be used when exporting opentelemetry traces.
     ##
     value: ''
+
+multiRegion:
+  config:
+    ## @param multiRegion.config.secretName If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.
+    secretName: 'multi-region-config'
+    ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
+    secretKey: 'multi-region-config.json'
 
 ## @section Server
 ## @descriptionStart

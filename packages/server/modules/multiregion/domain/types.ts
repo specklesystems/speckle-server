@@ -1,12 +1,4 @@
-export type RegionServerConfig = {
-  postgres: {
-    /**
-     * Full Postgres connection URI (e.g. "postgres://user:password@host:port/dbname")
-     */
-    connectionUri: string
-    /**
-     * SSL cert, if any
-     */
-    publicTlsCertificate?: string
-  }
-}
+import { z } from 'zod'
+import { multiRegionConfigSchema } from '@/modules/multiregion/helpers/validation'
+
+export type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>
