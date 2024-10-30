@@ -1,9 +1,20 @@
-import { OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
+import {
+  OrthographicCamera,
+  PerspectiveCamera,
+  Plane,
+  Scene,
+  WebGLRenderer
+} from 'three'
 import { BaseGPass } from './GPass.js'
 
 export class GeometryPass extends BaseGPass {
   public get displayName(): string {
     return 'GEOMETRY'
+  }
+
+  public setClippingPlanes(planes: Plane[]) {
+    if (this.overrideMaterial) this.overrideMaterial.clippingPlanes = planes
+    if (this.overrideBatchMaterial) this.overrideBatchMaterial.clippingPlanes = planes
   }
 
   public render(

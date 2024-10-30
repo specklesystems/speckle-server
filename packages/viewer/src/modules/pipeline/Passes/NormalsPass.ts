@@ -1,4 +1,4 @@
-import { DoubleSide, Material, NearestFilter, NoBlending, Plane } from 'three'
+import { DoubleSide, Material, NearestFilter, NoBlending } from 'three'
 import SpeckleNormalMaterial from '../../materials/SpeckleNormalMaterial.js'
 import { Pipeline } from '../Pipelines/Pipeline.js'
 import { GeometryPass } from './GeometryPass.js'
@@ -25,9 +25,5 @@ export class NormalsPass extends GeometryPass {
     this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
     this.normalsMaterial.blending = NoBlending
     this.normalsMaterial.side = DoubleSide
-  }
-
-  public setClippingPlanes(planes: Plane[]) {
-    this.normalsMaterial.clippingPlanes = planes
   }
 }

@@ -1,4 +1,4 @@
-import { DoubleSide, EqualStencilFunc, Material, Plane, Vector2 } from 'three'
+import { DoubleSide, EqualStencilFunc, Material, Vector2 } from 'three'
 import SpeckleDisplaceMaterial from '../../materials/SpeckleDisplaceMaterial.js'
 import { GeometryPass } from './GeometryPass.js'
 
@@ -24,10 +24,6 @@ export class StencilMaskPass extends GeometryPass {
 
   public get overrideMaterial(): Material {
     return this.stencilMaskMaterial
-  }
-
-  public setClippingPlanes(planes: Plane[]) {
-    this.stencilMaskMaterial.clippingPlanes = planes
   }
 
   public setSize(width: number, height: number) {

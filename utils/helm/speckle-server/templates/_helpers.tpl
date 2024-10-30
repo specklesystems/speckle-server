@@ -1060,4 +1060,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: OTEL_TRACE_VALUE
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
+{{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+- name: MULTI_REGION_CONFIG_PATH
+  value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+{{- end }}
 {{- end }}

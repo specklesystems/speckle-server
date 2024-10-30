@@ -7,7 +7,7 @@ const { sleep } = require('@/test/helpers')
 
 const expect = chai.expect
 
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 
 const {
   updateBranchAndNotifyFactory,

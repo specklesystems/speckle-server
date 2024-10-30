@@ -25,7 +25,6 @@ generates:
         User: '@/modules/core/helpers/graphTypes#UserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         UserEmailMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
-        UserWorkspaceMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'

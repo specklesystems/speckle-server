@@ -114,8 +114,10 @@
     "test/**/*",
     "app.ts",
     "otel.ts",
+    "bootstrap.ts",
+    "knexfile.ts",
     "bootstrap.js",
-    "knexfile.js"
+    "knexfile.ts"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
 }

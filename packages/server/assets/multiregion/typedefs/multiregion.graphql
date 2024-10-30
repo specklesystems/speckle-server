@@ -1,0 +1,26 @@
+type ServerRegionItem {
+  id: String!
+  key: String!
+  name: String!
+  description: String!
+}
+
+input CreateServerRegionInput {
+  key: String!
+  name: String!
+  description: String!
+}
+
+type ServerRegionMutations {
+  create(input: CreateServerRegionInput!): ServerRegionItem!
+}
+
+type ServerInfoMutations {
+  multiRegion: ServerRegionMutations!
+}
+
+extend type Mutation {
+  serverInfoMutations: ServerInfoMutations!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
+}
