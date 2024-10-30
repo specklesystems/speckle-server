@@ -17,7 +17,7 @@ export type PaidWorkspacePlanStatuses =
   | 'cancelationScheduled'
   | 'canceled'
 
-export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
+export type TrialWorkspacePlanStatuses = 'trial' | 'trialExpired'
 
 type BaseWorkspacePlan = {
   workspaceId: string
@@ -162,14 +162,23 @@ export type GetWorkspacePlanPrice = (args: {
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
+export type GetWorkspaceProductPrice = (args: {
+  productId: string
+  billingInterval: WorkspacePlanBillingIntervals
+}) => string | null
+
 export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingPlans
 }) => string
 
+export type SubscriptionProductInput = OverrideProperties<
+  SubscriptionProduct,
+  { subscriptionItemId?: string }
+>
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
   {
-    products: OverrideProperties<SubscriptionProduct, { subscriptionItemId?: string }>[]
+    products: SubscriptionProductInput[]
   }
 >
 

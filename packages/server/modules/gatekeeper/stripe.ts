@@ -1,6 +1,7 @@
 import {
   GetWorkspacePlanPrice,
-  GetWorkspacePlanProductId
+  GetWorkspacePlanProductId,
+  GetWorkspaceProductPrice
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanBillingIntervals,
@@ -16,9 +17,13 @@ export const getStripeClient = () => {
   return stripeClient
 }
 
+type WorkspacePlanIds = Record<WorkspacePlanBillingIntervals, string> & {
+  productId: string
+}
+
 export const workspacePlanPrices = (): Record<
   WorkspacePricingPlans,
-  Record<WorkspacePlanBillingIntervals, string> & { productId: string }
+  WorkspacePlanIds
 > => ({
   guest: {
     productId: getStringFromEnv('WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID'),
@@ -50,3 +55,14 @@ export const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
 export const getWorkspacePlanProductId: GetWorkspacePlanProductId = ({
   workspacePlan
 }) => workspacePlanPrices()[workspacePlan].productId
+
+export const getWorkspaceProductPrice: GetWorkspaceProductPrice = ({
+  billingInterval,
+  productId
+}): string | null => {
+  const workspacePlanIds: WorkspacePlanIds | undefined = Object.values(
+    workspacePlanPrices
+  ).find((p: WorkspacePlanIds) => p.productId === productId)
+
+  return workspacePlanIds ? workspacePlanIds[billingInterval] : null
+}

@@ -43,9 +43,16 @@ input CancelCheckoutSessionInput {
   workspaceId: ID!
 }
 
+input UpgradeWorkspacePlanInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+}
+
 type WorkspaceBillingMutations {
   createCheckoutSession(input: CheckoutSessionInput!): CheckoutSession!
   cancelCheckoutSession(input: CancelCheckoutSessionInput!): Boolean!
+  upgradeWorkspacePlan(input: UpgradeWorkspacePlanInput!): WorkspacePlan!
 }
 
 enum WorkspacePlans {
@@ -62,7 +69,7 @@ enum WorkspacePlanStatuses {
   cancelationScheduled
   canceled
   trial
-  expired
+  trielExpired
 }
 
 type WorkspacePlan {

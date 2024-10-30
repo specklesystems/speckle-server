@@ -11,17 +11,27 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
   createCheckoutSessionFactory,
-  createCustomerPortalUrlFactory
+  createCustomerPortalUrlFactory,
+  reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { getWorkspacePlanPrice, getStripeClient } from '@/modules/gatekeeper/stripe'
+import {
+  getWorkspacePlanPrice,
+  getStripeClient,
+  getWorkspacePlanProductId,
+  getWorkspaceProductPrice
+} from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  saveCheckoutSessionFactory
+  saveCheckoutSessionFactory,
+  upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import { commandFactory } from '@/modules/shared/command'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { upgradeWorkspacePlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -122,6 +132,31 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
 
           return session
+        },
+        upgradeWorkspacePlan: async (parent, args, ctx) => {
+          const { billingInterval, workspacePlan, workspaceId } = args.input
+          authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+          return await commandFactory({
+            db,
+            eventBus: getEventBus(),
+            operationFactory: ({ db }) =>
+              upgradeWorkspacePlanFactory({
+                getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                getWorkspacePlanPrice,
+                getWorkspacePlanProductId,
+                getWorkspaceProductPrice,
+                getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                  stripe: getStripeClient()
+                }),
+                updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+              })
+          })({ workspaceId, billingInterval, workspacePlan })
         }
       }
     } as Resolvers)
