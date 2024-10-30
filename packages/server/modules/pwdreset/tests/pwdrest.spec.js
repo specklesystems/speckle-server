@@ -1,6 +1,6 @@
 const request = require('supertest')
 
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 const ResetTokens = () => knex('pwdreset_tokens')
 
 const { beforeEachContext } = require('@/test/hooks')
