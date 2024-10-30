@@ -63,13 +63,14 @@
                   <ArrowLeftIcon class="h-3 w-3 mr-1" />
                   Previous
                 </FormButton>
-                <FormButton
+                <div
                   v-if="index === 2"
-                  :disabled="!hasAddedOverlay"
-                  @click="$emit('skip')"
+                  v-tippy="hasAddedOverlay ? undefined : 'First add another model'"
                 >
-                  Finish
-                </FormButton>
+                  <FormButton :disabled="!hasAddedOverlay" @click="$emit('skip')">
+                    Finish
+                  </FormButton>
+                </div>
                 <FormButton v-else :icon-right="ArrowRightIcon" @click="next(index)">
                   Next
                 </FormButton>
