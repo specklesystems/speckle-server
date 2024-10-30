@@ -7,10 +7,32 @@
     prevent-close-on-click-outside
   >
     <template #header>Create a new region</template>
-    watch it bozo
+    <div class="flex flex-col gap-y-4 mb-2">
+      <FormTextInput
+        name="name"
+        label="Region name"
+        placeholder="Name"
+        color="foundation"
+        :rules="[isRequired, isStringOfLength({ maxLength: 64 })]"
+        auto-focus
+        autocomplete="off"
+        show-label
+      />
+      <FormTextArea
+        name="description"
+        label="Region description"
+        placeholder="Description"
+        color="foundation"
+        size="lg"
+        show-label
+        show-optional
+        :rules="[isStringOfLength({ maxLength: 65536 })]"
+      />
+    </div>
   </LayoutDialog>
 </template>
 <script lang="ts" setup>
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
 const open = defineModel<boolean>('open', { required: true })
