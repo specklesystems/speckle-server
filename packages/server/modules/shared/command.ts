@@ -12,18 +12,22 @@ export const commandFactory =
     operationFactory: (arg: { db: Knex; emit: EventBusEmit }) => TOperation
   }) =>
   async (...args: Parameters<TOperation>): Promise<Awaited<ReturnType<TOperation>>> => {
-    const trx = await db.transaction()
-
     const events: EmitArg[] = []
     const emit: EventBusEmit = async ({ eventName, payload }) => {
       events.push({ eventName, payload })
     }
 
-    const result = await operationFactory({ db, emit })(...args)
+    const trx = await db.transaction()
+    try {
+      const result = await operationFactory({ db, emit })(...args)
 
-    await trx.commit()
-    for (const event of events) {
-      eventBus.emit(event)
+      await trx.commit()
+      for (const event of events) {
+        await eventBus.emit(event)
+      }
+      return result as Awaited<ReturnType<TOperation>>
+    } catch (err) {
+      trx.rollback()
+      throw err
     }
-    return result as Awaited<ReturnType<TOperation>>
   }

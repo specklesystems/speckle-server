@@ -149,6 +149,7 @@ import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/stream
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -457,17 +458,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           if (!role) {
-            const deleteWorkspaceRole = commandFactory({
-              db,
-              eventBus,
-              operationFactory: ({ db, emit }) =>
-                deleteWorkspaceRoleFactory({
-                  deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                  emitWorkspaceEvent: emit
-                })
+            // this is currently not working with the command factory
+            // TODO: include the onWorkspaceRoleDeletedFactory listener service
+            const trx = await db.transaction()
+            const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+              emitWorkspaceEvent: getEventBus().emit
             })
-            deleteWorkspaceRole(args.input)
+            await withTransaction(deleteWorkspaceRole({ workspaceId, userId }), trx)
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
@@ -560,17 +559,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
         },
         leave: async (_parent, args, context) => {
-          const deleteWorkspaceRole = commandFactory({
-            db,
-            eventBus,
-            operationFactory: ({ db, emit }) =>
-              deleteWorkspaceRoleFactory({
-                deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                emitWorkspaceEvent: emit
-              })
+          // this is currently not working with the command factory
+          // TODO: include the onWorkspaceRoleDeletedFactory listener service
+          const trx = await db.transaction()
+          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+            emitWorkspaceEvent: getEventBus().emit
           })
-          deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! })
+          await withTransaction(
+            deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! }),
+            trx
+          )
           return true
         },
         invites: () => ({}),
