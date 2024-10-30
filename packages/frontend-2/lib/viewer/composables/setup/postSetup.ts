@@ -1,5 +1,13 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode, CameraController } from '@speckle/viewer'
+import {
+  ViewerEvent,
+  VisualDiffMode,
+  CameraController,
+  UpdateFlags,
+  SectionOutlines,
+  SectionToolEvent,
+  SectionTool
+} from '@speckle/viewer'
 import type {
   PropertyInfo,
   StringPropertyInfo,
@@ -293,9 +301,19 @@ function useViewerSubscriptionEventTracker() {
 
 function useViewerSectionBoxIntegration() {
   const {
-    ui: { sectionBox },
+    ui: {
+      sectionBox,
+      sectionBoxContext: { visible, edited }
+    },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  // Change edited=true when user starts changing the section box by dragging it
+  const sectionTool = instance.getExtension(SectionTool)
+  const onDragStart = () => {
+    edited.value = true
+  }
+  sectionTool.on(SectionToolEvent.DragStart, onDragStart)
 
   // No two-way sync for section boxes, because once you set a Box3 into the viewer
   // the viewer transforms it into something else causing the updates going into an infinite loop
@@ -308,24 +326,50 @@ function useViewerSectionBoxIntegration() {
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
+        visible.value = false
+        edited.value = false
+
         instance.sectionBoxOff()
-        instance.requestRender()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
 
       if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+        visible.value = true
+        edited.value = false
+
         instance.setSectionBox({
           min: newVal.min,
           max: newVal.max
         })
         instance.sectionBoxOn()
-        instance.requestRender()
+        const outlines = instance.getExtension(SectionOutlines)
+        if (outlines) outlines.requestUpdate()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
       }
     },
     { immediate: true, deep: true, flush: 'sync' }
   )
+
+  watch(
+    visible,
+    (newVal, oldVal) => {
+      if (newVal && oldVal) return
+      if (!newVal && !oldVal) return
+
+      if (newVal) {
+        sectionTool.visible = true
+      } else {
+        sectionTool.visible = false
+      }
+      instance.requestRender()
+    },
+    { immediate: true, deep: true, flush: 'sync' }
+  )
+
   onBeforeUnmount(() => {
     instance.sectionBoxOff()
+    sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
 

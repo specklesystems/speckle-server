@@ -5,6 +5,8 @@ export type AcquireTaskLock = (
   scheduledTask: ScheduledTask
 ) => Promise<ScheduledTask | null>
 
+export type ReleaseTaskLock = (args: { taskName: string }) => Promise<void>
+
 export type ScheduleExecution = (
   cronExpression: string,
   taskName: string,

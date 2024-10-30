@@ -125,11 +125,6 @@ export type BranchRecord = {
   updatedAt: Date
 }
 
-export type ScheduledTaskRecord = {
-  taskName: string
-  lockExpiresAt: Date
-}
-
 export type ObjectRecord = {
   id: string
   speckleType: string

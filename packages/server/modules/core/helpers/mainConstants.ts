@@ -1,7 +1,11 @@
 import { Roles, Scopes, AllScopes as BaseAllScopes } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_AUTOMATE_MODULE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const {
+  FF_AUTOMATE_MODULE_ENABLED,
+  FF_WORKSPACES_MODULE_ENABLED,
+  FF_GATEKEEPER_MODULE_ENABLED
+} = getFeatureFlags()
 
 const buildAllScopes = () => {
   let base = BaseAllScopes
@@ -33,6 +37,11 @@ const buildAllScopes = () => {
     )
   }
 
+  if (!FF_GATEKEEPER_MODULE_ENABLED) {
+    base = base.filter(
+      (s: string) => !([Scopes.Gatekeeper.WorkspaceBilling] as string[]).includes(s)
+    )
+  }
   return base
 }
 

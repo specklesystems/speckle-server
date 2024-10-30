@@ -25,7 +25,6 @@ generates:
         User: '@/modules/core/helpers/graphTypes#UserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         UserEmailMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
-        UserWorkspaceMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
@@ -61,6 +60,7 @@ generates:
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
+        WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
@@ -73,6 +73,7 @@ generates:
         ServerAppListItem: '@/modules/auth/helpers/graphTypes#ServerAppListItemGraphQLReturn'
         ServerInfo: '@/modules/core/helpers/graphTypes#ServerInfoGraphQLReturn'
         Branch: '@/modules/core/helpers/graphTypes#BranchGraphQLReturn'
+        GendoAIRender: '@/modules/gendo/helpers/types/graphTypes#GendoAIRenderGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

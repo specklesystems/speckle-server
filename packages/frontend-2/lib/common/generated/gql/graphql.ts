@@ -428,6 +428,11 @@ export type BasicGitRepositoryMetadata = {
   url: Scalars['String']['output'];
 };
 
+export enum BillingInterval {
+  Monthly = 'monthly',
+  Yearly = 'yearly'
+}
+
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
   createdAt: Scalars['DateTime']['output'];
@@ -503,6 +508,28 @@ export type BranchUpdateInput = {
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
+};
+
+export type CancelCheckoutSessionInput = {
+  sessionId: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type CheckoutSession = {
+  __typename?: 'CheckoutSession';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  paymentStatus: SessionPaymentStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
+export type CheckoutSessionInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
 };
 
 export type Comment = {
@@ -895,7 +922,7 @@ export type FileUpload = {
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
   gendoGenerationId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   modelId: Scalars['String']['output'];
@@ -904,7 +931,7 @@ export type GendoAiRender = {
   /** This is a blob id. */
   responseImage?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   user?: Maybe<AvatarUser>;
   userId: Scalars['String']['output'];
   versionId: Scalars['String']['output'];
@@ -1708,6 +1735,12 @@ export type ObjectCreateInput = {
   /** The stream against which these objects will be created. */
   streamId: Scalars['String']['input'];
 };
+
+export enum PaidWorkspacePlans {
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team'
+}
 
 export type PasswordStrengthCheckFeedback = {
   __typename?: 'PasswordStrengthCheckFeedback';
@@ -2852,6 +2885,11 @@ export type ServerWorkspacesInfo = {
   workspacesEnabled: Scalars['Boolean']['output'];
 };
 
+export enum SessionPaymentStatus {
+  Paid = 'paid',
+  Unpaid = 'unpaid'
+}
+
 export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
@@ -3889,6 +3927,7 @@ export type Workspace = {
   /** Billing data for Workspaces beta */
   billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
+  customerPortalUrl?: Maybe<Scalars['String']['output']>;
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
@@ -3906,10 +3945,12 @@ export type Workspace = {
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -3937,6 +3978,22 @@ export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
   cost: WorkspaceCost;
   versionsCount: WorkspaceVersionsCount;
+};
+
+export type WorkspaceBillingMutations = {
+  __typename?: 'WorkspaceBillingMutations';
+  cancelCheckoutSession: Scalars['Boolean']['output'];
+  createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
+  input: CancelCheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
+  input: CheckoutSessionInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
@@ -4080,6 +4137,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
+  billing: WorkspaceBillingMutations;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
@@ -4130,6 +4188,29 @@ export type WorkspaceMutationsUpdateArgs = {
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
+
+export type WorkspacePlan = {
+  __typename?: 'WorkspacePlan';
+  name: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+};
+
+export enum WorkspacePlanStatuses {
+  CancelationScheduled = 'cancelationScheduled',
+  Canceled = 'canceled',
+  Expired = 'expired',
+  PaymentFailed = 'paymentFailed',
+  Trial = 'trial',
+  Valid = 'valid'
+}
+
+export enum WorkspacePlans {
+  Academia = 'academia',
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team',
+  Unlimited = 'unlimited'
+}
 
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -4182,6 +4263,14 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceSubscription = {
+  __typename?: 'WorkspaceSubscription';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  currentBillingCycleEnd: Scalars['DateTime']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type WorkspaceTeamFilter = {
@@ -6142,6 +6231,7 @@ export type AllObjectTypes = {
   BlobMetadataCollection: BlobMetadataCollection,
   Branch: Branch,
   BranchCollection: BranchCollection,
+  CheckoutSession: CheckoutSession,
   Comment: Comment,
   CommentActivityMessage: CommentActivityMessage,
   CommentCollection: CommentCollection,
@@ -6236,6 +6326,7 @@ export type AllObjectTypes = {
   WebhookEventCollection: WebhookEventCollection,
   Workspace: Workspace,
   WorkspaceBilling: WorkspaceBilling,
+  WorkspaceBillingMutations: WorkspaceBillingMutations,
   WorkspaceCollaborator: WorkspaceCollaborator,
   WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollection,
   WorkspaceCollection: WorkspaceCollection,
@@ -6245,7 +6336,9 @@ export type AllObjectTypes = {
   WorkspaceDomain: WorkspaceDomain,
   WorkspaceInviteMutations: WorkspaceInviteMutations,
   WorkspaceMutations: WorkspaceMutations,
+  WorkspacePlan: WorkspacePlan,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
+  WorkspaceSubscription: WorkspaceSubscription,
   WorkspaceVersionsCount: WorkspaceVersionsCount,
 }
 export type ActiveUserMutationsFieldArgs = {
@@ -6462,6 +6555,15 @@ export type BranchCollectionFieldArgs = {
   cursor: {},
   items: {},
   totalCount: {},
+}
+export type CheckoutSessionFieldArgs = {
+  billingInterval: {},
+  createdAt: {},
+  id: {},
+  paymentStatus: {},
+  updatedAt: {},
+  url: {},
+  workspacePlan: {},
 }
 export type CommentFieldArgs = {
   archived: {},
@@ -7300,6 +7402,7 @@ export type WebhookEventCollectionFieldArgs = {
 export type WorkspaceFieldArgs = {
   billing: {},
   createdAt: {},
+  customerPortalUrl: {},
   defaultLogoIndex: {},
   defaultProjectRole: {},
   description: {},
@@ -7310,15 +7413,21 @@ export type WorkspaceFieldArgs = {
   invitedTeam: WorkspaceInvitedTeamArgs,
   logo: {},
   name: {},
+  plan: {},
   projects: WorkspaceProjectsArgs,
   role: {},
   slug: {},
+  subscription: {},
   team: WorkspaceTeamArgs,
   updatedAt: {},
 }
 export type WorkspaceBillingFieldArgs = {
   cost: {},
   versionsCount: {},
+}
+export type WorkspaceBillingMutationsFieldArgs = {
+  cancelCheckoutSession: WorkspaceBillingMutationsCancelCheckoutSessionArgs,
+  createCheckoutSession: WorkspaceBillingMutationsCreateCheckoutSessionArgs,
 }
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
@@ -7366,6 +7475,7 @@ export type WorkspaceInviteMutationsFieldArgs = {
 }
 export type WorkspaceMutationsFieldArgs = {
   addDomain: WorkspaceMutationsAddDomainArgs,
+  billing: {},
   create: WorkspaceMutationsCreateArgs,
   delete: WorkspaceMutationsDeleteArgs,
   deleteDomain: WorkspaceMutationsDeleteDomainArgs,
@@ -7376,9 +7486,19 @@ export type WorkspaceMutationsFieldArgs = {
   update: WorkspaceMutationsUpdateArgs,
   updateRole: WorkspaceMutationsUpdateRoleArgs,
 }
+export type WorkspacePlanFieldArgs = {
+  name: {},
+  status: {},
+}
 export type WorkspaceProjectMutationsFieldArgs = {
   moveToWorkspace: WorkspaceProjectMutationsMoveToWorkspaceArgs,
   updateRole: WorkspaceProjectMutationsUpdateRoleArgs,
+}
+export type WorkspaceSubscriptionFieldArgs = {
+  billingInterval: {},
+  createdAt: {},
+  currentBillingCycleEnd: {},
+  updatedAt: {},
 }
 export type WorkspaceVersionsCountFieldArgs = {
   current: {},
@@ -7416,6 +7536,7 @@ export type AllObjectFieldArgTypes = {
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,
   Branch: BranchFieldArgs,
   BranchCollection: BranchCollectionFieldArgs,
+  CheckoutSession: CheckoutSessionFieldArgs,
   Comment: CommentFieldArgs,
   CommentActivityMessage: CommentActivityMessageFieldArgs,
   CommentCollection: CommentCollectionFieldArgs,
@@ -7510,6 +7631,7 @@ export type AllObjectFieldArgTypes = {
   WebhookEventCollection: WebhookEventCollectionFieldArgs,
   Workspace: WorkspaceFieldArgs,
   WorkspaceBilling: WorkspaceBillingFieldArgs,
+  WorkspaceBillingMutations: WorkspaceBillingMutationsFieldArgs,
   WorkspaceCollaborator: WorkspaceCollaboratorFieldArgs,
   WorkspaceCollaboratorCollection: WorkspaceCollaboratorCollectionFieldArgs,
   WorkspaceCollection: WorkspaceCollectionFieldArgs,
@@ -7519,7 +7641,9 @@ export type AllObjectFieldArgTypes = {
   WorkspaceDomain: WorkspaceDomainFieldArgs,
   WorkspaceInviteMutations: WorkspaceInviteMutationsFieldArgs,
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
+  WorkspacePlan: WorkspacePlanFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,
+  WorkspaceSubscription: WorkspaceSubscriptionFieldArgs,
   WorkspaceVersionsCount: WorkspaceVersionsCountFieldArgs,
 }
 

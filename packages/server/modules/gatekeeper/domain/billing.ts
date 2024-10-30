@@ -5,6 +5,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
 } from '@/modules/gatekeeper/domain/workspacePricing'
+import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export type UnpaidWorkspacePlanStatuses = 'valid'
@@ -13,9 +14,10 @@ export type PaidWorkspacePlanStatuses =
   | UnpaidWorkspacePlanStatuses
   // | 'paymentNeeded' // unsure if this is needed
   | 'paymentFailed'
-  | 'cancelled'
+  | 'cancelationScheduled'
+  | 'canceled'
 
-export type TrialWorkspacePlanStatuses = 'trial'
+export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
 
 type BaseWorkspacePlan = {
   workspaceId: string
@@ -108,27 +110,48 @@ export type WorkspaceSubscription = {
   billingInterval: WorkspacePlanBillingIntervals
   subscriptionData: SubscriptionData
 }
+const subscriptionProduct = z.object({
+  productId: z.string(),
+  subscriptionItemId: z.string(),
+  priceId: z.string(),
+  quantity: z.number()
+})
+
+export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 
 export const subscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
-  products: z
-    .object({
-      // we're going to use the productId to match with our
-      productId: z.string(),
-      subscriptionItemId: z.string(),
-      priceId: z.string(),
-      quantity: z.number()
-    })
-    .array()
+  cancelAt: z.date().nullable(),
+  status: z.union([
+    z.literal('incomplete'),
+    z.literal('incomplete_expired'),
+    z.literal('trialing'),
+    z.literal('active'),
+    z.literal('past_due'),
+    z.literal('canceled'),
+    z.literal('unpaid'),
+    z.literal('paused')
+  ]),
+  products: subscriptionProduct.array()
 })
 
 // this abstracts the stripe sub data
 export type SubscriptionData = z.infer<typeof subscriptionData>
 
-export type SaveWorkspaceSubscription = (args: {
+export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
 }) => Promise<void>
+
+export type GetWorkspaceSubscription = (args: {
+  workspaceId: string
+}) => Promise<WorkspaceSubscription | null>
+
+export type GetWorkspaceSubscriptions = () => Promise<WorkspaceSubscription[]>
+
+export type GetWorkspaceSubscriptionBySubscriptionId = (args: {
+  subscriptionId: string
+}) => Promise<WorkspaceSubscription | null>
 
 export type GetSubscriptionData = (args: {
   subscriptionId: string
@@ -139,7 +162,18 @@ export type GetWorkspacePlanPrice = (args: {
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
-export type ReconcileWorkspaceSubscription = (args: {
-  workspaceSubscription: WorkspaceSubscription
+export type GetWorkspacePlanProductId = (args: {
+  workspacePlan: WorkspacePricingPlans
+}) => string
+
+export type SubscriptionDataInput = OverrideProperties<
+  SubscriptionData,
+  {
+    products: OverrideProperties<SubscriptionProduct, { subscriptionItemId?: string }>[]
+  }
+>
+
+export type ReconcileSubscriptionData = (args: {
+  subscriptionData: SubscriptionDataInput
   applyProrotation: boolean
 }) => Promise<void>

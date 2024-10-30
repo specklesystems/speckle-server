@@ -14,7 +14,7 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
+const { db } = require('@/db/knex')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
