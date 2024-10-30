@@ -22,7 +22,7 @@
         :app-id="appId"
         :newsletter-consent="false"
       />
-      <FormButton color="outline" full-width size="lg" to="/authn/sso">
+      <FormButton color="outline" full-width size="lg" :to="ssoRoute">
         Continue with SSO
       </FormButton>
       <div class="h-px w-full bg-outline-3 mt-2 shrink-0" />
@@ -49,7 +49,7 @@ import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { LayoutDialog } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
-import { registerRoute } from '~~/lib/common/helpers/route'
+import { registerRoute, ssoRoute } from '~~/lib/common/helpers/route'
 import {
   authLoginPanelQuery,
   authLoginPanelWorkspaceInviteQuery

@@ -831,6 +831,12 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateServerRegionInput = {
+  description: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -1291,6 +1297,7 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  serverInfoMutations: ServerInfoMutations;
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -2803,6 +2810,11 @@ export type ServerInfo = {
   workspaces: ServerWorkspacesInfo;
 };
 
+export type ServerInfoMutations = {
+  __typename?: 'ServerInfoMutations';
+  multiRegion: ServerRegionMutations;
+};
+
 export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']['input']>;
   company?: InputMaybe<Scalars['String']['input']>;
@@ -2831,6 +2843,24 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerRegionItem = {
+  __typename?: 'ServerRegionItem';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ServerRegionMutations = {
+  __typename?: 'ServerRegionMutations';
+  create: ServerRegionItem;
+};
+
+
+export type ServerRegionMutationsCreateArgs = {
+  input: CreateServerRegionInput;
 };
 
 export enum ServerRole {
@@ -6281,8 +6311,11 @@ export type AllObjectTypes = {
   ServerAutomateInfo: ServerAutomateInfo,
   ServerConfiguration: ServerConfiguration,
   ServerInfo: ServerInfo,
+  ServerInfoMutations: ServerInfoMutations,
   ServerInvite: ServerInvite,
   ServerMigration: ServerMigration,
+  ServerRegionItem: ServerRegionItem,
+  ServerRegionMutations: ServerRegionMutations,
   ServerRoleItem: ServerRoleItem,
   ServerStatistics: ServerStatistics,
   ServerStats: ServerStats,
@@ -6777,6 +6810,7 @@ export type MutationFieldArgs = {
   projectMutations: {},
   requestVerification: {},
   requestVerificationByEmail: MutationRequestVerificationByEmailArgs,
+  serverInfoMutations: {},
   serverInfoUpdate: MutationServerInfoUpdateArgs,
   serverInviteBatchCreate: MutationServerInviteBatchCreateArgs,
   serverInviteCreate: MutationServerInviteCreateArgs,
@@ -7104,6 +7138,9 @@ export type ServerInfoFieldArgs = {
   version: {},
   workspaces: {},
 }
+export type ServerInfoMutationsFieldArgs = {
+  multiRegion: {},
+}
 export type ServerInviteFieldArgs = {
   email: {},
   id: {},
@@ -7112,6 +7149,15 @@ export type ServerInviteFieldArgs = {
 export type ServerMigrationFieldArgs = {
   movedFrom: {},
   movedTo: {},
+}
+export type ServerRegionItemFieldArgs = {
+  description: {},
+  id: {},
+  key: {},
+  name: {},
+}
+export type ServerRegionMutationsFieldArgs = {
+  create: ServerRegionMutationsCreateArgs,
 }
 export type ServerRoleItemFieldArgs = {
   id: {},
@@ -7580,8 +7626,11 @@ export type AllObjectFieldArgTypes = {
   ServerAutomateInfo: ServerAutomateInfoFieldArgs,
   ServerConfiguration: ServerConfigurationFieldArgs,
   ServerInfo: ServerInfoFieldArgs,
+  ServerInfoMutations: ServerInfoMutationsFieldArgs,
   ServerInvite: ServerInviteFieldArgs,
   ServerMigration: ServerMigrationFieldArgs,
+  ServerRegionItem: ServerRegionItemFieldArgs,
+  ServerRegionMutations: ServerRegionMutationsFieldArgs,
   ServerRoleItem: ServerRoleItemFieldArgs,
   ServerStatistics: ServerStatisticsFieldArgs,
   ServerStats: ServerStatsFieldArgs,
