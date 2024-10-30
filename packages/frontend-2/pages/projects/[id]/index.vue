@@ -25,7 +25,7 @@
           </div>
           <div class="flex flex-row gap-x-3">
             <div v-tippy="collaboratorsTooltip">
-              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : null">
+              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : ''">
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
