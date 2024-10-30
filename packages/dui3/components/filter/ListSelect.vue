@@ -68,6 +68,10 @@ import { storeToRefs } from 'pinia'
 const store = useHostAppStore()
 const { sendFilters, selectionFilter } = storeToRefs(store)
 
+// NOTE: we're forcefully refreshing filters here because revit 2022 does not surface up views on change events, so we cannot trigger it from the host app
+// on a need by basis. This way, we're forcing all host apps to give us an updated list of send filters, as it's a cheap operation (and should stay so!).
+void store.refreshSendFilters()
+
 const props = defineProps<{
   filter?: ISendFilter
 }>()
