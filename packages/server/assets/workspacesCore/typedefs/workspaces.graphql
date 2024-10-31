@@ -8,6 +8,11 @@ extend type Query {
     @hasScope(scope: "workspace:read")
 
   """
+  Public endpoint that returns workspaces configured for SSO that a given user email has access to.
+  """
+  workspaceSsoMemberships(email: String!): [LimitedWorkspace!]!
+
+  """
   Look for an invitation to a workspace, for the current user (authed or not).
 
   If token is specified, it will return the corresponding invite even if it belongs to a different user.

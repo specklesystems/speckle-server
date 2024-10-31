@@ -1,6 +1,7 @@
 import {
   associateSsoProviderWithWorkspaceFactory,
   getWorkspaceSsoProviderFactory,
+  listWorkspaceSsoMembershipsFactory,
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import {
@@ -19,6 +20,7 @@ import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
 const associateSsoProviderWithWorkspace = associateSsoProviderWithWorkspaceFactory({
   db
 })
+const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsFactory({ db })
 const upsertUserSsoSession = upsertUserSsoSessionFactory({ db })
 
 describe('Workspace SSO repositories', () => {
@@ -29,8 +31,16 @@ describe('Workspace SSO repositories', () => {
     role: Roles.Server.Admin
   }
 
+  const testWorkspace: BasicTestWorkspace = {
+    id: '',
+    ownerId: '',
+    name: 'My Test Workspace',
+    slug: 'test-workspace'
+  }
+
   before(async () => {
     await createTestUser(serverAdminUser)
+    await createTestWorkspace(testWorkspace, serverAdminUser)
   })
 
   describe('getWorkspaceSsoProviderFactory returns a function, that', () => {
@@ -112,6 +122,52 @@ describe('Workspace SSO repositories', () => {
 
       expect(sessions.length).to.equal(1)
       expect(sessions[0].validUntil.getTime()).to.not.equal(initialValidUntil.getTime())
+    })
+  })
+
+  describe('listWorkspaceSsoMembershipsFactory returns a function, that', async () => {
+    const nonSsoWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace Without SSO',
+      slug: 'no-sso-very-sad'
+    }
+
+    before(async () => {
+      await createTestWorkspace(nonSsoWorkspace, serverAdminUser)
+
+      const providerId = await createTestOidcProvider()
+      await associateSsoProviderWithWorkspace({ workspaceId: testWorkspace.id, providerId })
+    })
+
+    it('lists correct workspaces for the given user', async () => {
+      const workspaces = await listWorkspaceSsoMemberships({ userId: serverAdminUser.id })
+
+      // Includes workspaces with SSO
+      expect(workspaces.length).to.equal(1)
+      expect(workspaces.some((workspace) => workspace.id === testWorkspace.id)).to.be.true
+
+      // Omits workspaces without SSO
+      expect(workspaces.some((workspace) => workspace.id === nonSsoWorkspace.id)).to.be.false
+    })
+
+    it('returns an empty array if the user is not part of any workspaces', async () => {
+      const testServerUser: BasicTestUser = {
+        id: '',
+        name: 'Jane Speckle',
+        email: 'jane-sso-speckle@example.org'
+      }
+
+      await createTestUser(testServerUser)
+
+      const workspaces = await listWorkspaceSsoMemberships({ userId: testServerUser.id })
+
+      expect(workspaces.length).to.equal(0)
+    })
+
+    it('returns an empty array if the user does not exist', async () => {
+      const workspaces = await listWorkspaceSsoMemberships({ userId: cryptoRandomString({ length: 9 }) })
+      expect(workspaces.length).to.equal(0)
     })
   })
 })
