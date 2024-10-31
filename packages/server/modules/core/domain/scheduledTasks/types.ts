@@ -1,3 +1,4 @@
-import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
-
-export type ScheduledTask = ScheduledTaskRecord
+export type ScheduledTask = {
+  taskName: string
+  lockExpiresAt: Date
+}

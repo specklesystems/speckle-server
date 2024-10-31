@@ -86,9 +86,9 @@ export function initializeEventBus() {
     emit: async <EventName extends EventNames>(args: {
       eventName: EventName
       payload: EventTypes[EventName]
-    }): Promise<unknown[]> => {
+    }): Promise<void> => {
       // curate the proper payload here and eventName object here, before emitting
-      return emitter.emitAsync(args.eventName, args)
+      await emitter.emitAsync(args.eventName, args)
     },
 
     /**
@@ -124,6 +124,7 @@ export function initializeEventBus() {
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus
 
