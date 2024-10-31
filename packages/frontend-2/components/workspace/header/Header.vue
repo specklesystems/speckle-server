@@ -36,7 +36,7 @@
       </div>
     </div>
     <div
-      class="flex justify-between md:items-center gap-x-3 md:flex-row flex-row items-center"
+      class="flex justify-between items-center gap-x-3 items-center"
     >
       <div class="flex items-center gap-x-3 md:mb-0 flex-1">
         <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
