@@ -313,6 +313,7 @@ type Workspace {
   Billing data for Workspaces beta
   """
   billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
+  sso: WorkspaceSso
   """
   Enable/Disable restriction to invite users to workspace as Guests only
   """
@@ -321,6 +322,21 @@ type Workspace {
   Enable/Disable discovery of the workspace
   """
   discoverabilityEnabled: Boolean!
+}
+
+type WorkspaceSso {
+  provider: WorkspaceSsoProvider
+  session: WorkspaceSsoSession
+}
+
+type WorkspaceSsoProvider {
+  id: ID!
+  name: String!
+}
+
+type WorkspaceSsoSession {
+  createdAt: DateTime!
+  validUntil: DateTime!
 }
 
 """
@@ -440,6 +456,11 @@ extend type User {
   Get discoverable workspaces with verified domains that match the active user's
   """
   discoverableWorkspaces: [LimitedWorkspace!]!
+
+  """
+  A list of workspaces that the user may want to sign back in to
+  """
+  expiredSsoSessions: [LimitedWorkspace!]!
 
   """
   Get the workspaces for the user
