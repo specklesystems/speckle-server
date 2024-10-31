@@ -24,7 +24,10 @@ import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
 import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
-import { CreateValidatedUser, GetUserByEmail } from '@/modules/core/domain/users/operations'
+import {
+  CreateValidatedUser,
+  GetUserByEmail
+} from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
   SsoProviderExistsError,
@@ -69,16 +72,16 @@ export const startOidcSsoProviderValidationFactory =
     storeOidcProviderValidationRequest: StoreOidcProviderValidationRequest
     generateCodeVerifier: () => string
   }) =>
-    async ({ provider }: { provider: OidcProvider }): Promise<string> => {
-      // get client information
-      const providerAttributes = await getOidcProviderAttributes({ provider })
-      // validate issuer and client data
-      validateOidcProviderAttributes(providerAttributes)
-      // store provider validation with an id token
-      const codeVerifier = generateCodeVerifier()
-      await storeOidcProviderValidationRequest({ token: codeVerifier, provider })
-      return codeVerifier
-    }
+  async ({ provider }: { provider: OidcProvider }): Promise<string> => {
+    // get client information
+    const providerAttributes = await getOidcProviderAttributes({ provider })
+    // validate issuer and client data
+    validateOidcProviderAttributes(providerAttributes)
+    // store provider validation with an id token
+    const codeVerifier = generateCodeVerifier()
+    await storeOidcProviderValidationRequest({ token: codeVerifier, provider })
+    return codeVerifier
+  }
 
 export const saveSsoProviderRegistrationFactory =
   ({
@@ -90,30 +93,30 @@ export const saveSsoProviderRegistrationFactory =
     storeProviderRecord: StoreProviderRecord
     associateSsoProviderWithWorkspace: AssociateSsoProviderWithWorkspace
   }) =>
-    async ({
+  async ({
+    provider,
+    workspaceId
+  }: {
+    provider: OidcProvider
+    workspaceId: string
+  }): Promise<OidcProviderRecord> => {
+    // create OIDC provider record with ID
+    const providerId = cryptoRandomString({ length: 10 })
+    const providerRecord: OidcProviderRecord = {
       provider,
-      workspaceId
-    }: {
-      provider: OidcProvider
-      workspaceId: string
-    }): Promise<OidcProviderRecord> => {
-      // create OIDC provider record with ID
-      const providerId = cryptoRandomString({ length: 10 })
-      const providerRecord: OidcProviderRecord = {
-        provider,
-        providerType: 'oidc',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        id: providerId
-      }
-      const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
-      // replace with a proper error
-      if (maybeExistingSsoProvider) throw new SsoProviderExistsError()
-      await storeProviderRecord({ providerRecord })
-      // associate provider with workspace
-      await associateSsoProviderWithWorkspace({ workspaceId, providerId })
-      return providerRecord
+      providerType: 'oidc',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      id: providerId
     }
+    const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
+    // replace with a proper error
+    if (maybeExistingSsoProvider) throw new SsoProviderExistsError()
+    await storeProviderRecord({ providerRecord })
+    // associate provider with workspace
+    await associateSsoProviderWithWorkspace({ workspaceId, providerId })
+    return providerRecord
+  }
 
 export const createWorkspaceUserFromSsoProfileFactory =
   ({
@@ -127,62 +130,62 @@ export const createWorkspaceUserFromSsoProfileFactory =
     findInvite: FindInvite
     deleteInvite: DeleteInvite
   }) =>
-    async (args: {
-      ssoProfile: UserinfoResponse<{ email: string }>
-      workspaceId: string
-    }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
-      // Check if user has email-based invite to given workspace
-      const invite = await findInvite({
-        target: args.ssoProfile.email,
-        resourceFilter: {
-          resourceId: args.workspaceId,
-          resourceType: 'workspace'
-        }
-      })
-
-      if (!invite) {
-        throw new SsoUserInviteRequiredError()
+  async (args: {
+    ssoProfile: UserinfoResponse<{ email: string }>
+    workspaceId: string
+  }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
+    // Check if user has email-based invite to given workspace
+    const invite = await findInvite({
+      target: args.ssoProfile.email,
+      resourceFilter: {
+        resourceId: args.workspaceId,
+        resourceType: 'workspace'
       }
+    })
 
-      // Create Speckle user
-      const { name, email, email_verified } = args.ssoProfile
-
-      if (!name) {
-        throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
-      }
-
-      if (!email_verified) {
-        throw new SsoProviderProfileInvalidError('SSO provider user email is unverified')
-      }
-
-      const newSpeckleUser = {
-        name,
-        email,
-        verified: true,
-        role: invite.resource.secondaryResourceRoles?.server
-      }
-      const newSpeckleUserId = await createUser(newSpeckleUser)
-
-      // Add user to workspace with role specified in invite
-      const { role: workspaceRole } = invite.resource
-
-      if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
-
-      await upsertWorkspaceRole({
-        userId: newSpeckleUserId,
-        workspaceId: args.workspaceId,
-        role: workspaceRole,
-        createdAt: new Date()
-      })
-
-      // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)
-      await deleteInvite(invite.id)
-
-      return {
-        ...newSpeckleUser,
-        id: newSpeckleUserId
-      }
+    if (!invite) {
+      throw new SsoUserInviteRequiredError()
     }
+
+    // Create Speckle user
+    const { name, email, email_verified } = args.ssoProfile
+
+    if (!name) {
+      throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
+    }
+
+    if (!email_verified) {
+      throw new SsoProviderProfileInvalidError('SSO provider user email is unverified')
+    }
+
+    const newSpeckleUser = {
+      name,
+      email,
+      verified: true,
+      role: invite.resource.secondaryResourceRoles?.server
+    }
+    const newSpeckleUserId = await createUser(newSpeckleUser)
+
+    // Add user to workspace with role specified in invite
+    const { role: workspaceRole } = invite.resource
+
+    if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
+
+    await upsertWorkspaceRole({
+      userId: newSpeckleUserId,
+      workspaceId: args.workspaceId,
+      role: workspaceRole,
+      createdAt: new Date()
+    })
+
+    // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)
+    await deleteInvite(invite.id)
+
+    return {
+      ...newSpeckleUser,
+      id: newSpeckleUserId
+    }
+  }
 
 export const linkUserWithSsoProviderFactory =
   ({
@@ -194,57 +197,59 @@ export const linkUserWithSsoProviderFactory =
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
   }) =>
-    async (args: {
-      userId: string
-      ssoProfile: UserinfoResponse<{ email: string }>
-    }): Promise<void> => {
-      // TODO: Chuck's soapbox -
-      //
-      // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
-      // Create link implicitly if req.context.userId exists (user performed SSO flow while signed in)
-      // If req.context.userId does not exist, and link does not exist, throw and require user to sign in before SSO
+  async (args: {
+    userId: string
+    ssoProfile: UserinfoResponse<{ email: string }>
+  }): Promise<void> => {
+    // TODO: Chuck's soapbox -
+    //
+    // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
+    // Create link implicitly if req.context.userId exists (user performed SSO flow while signed in)
+    // If req.context.userId does not exist, and link does not exist, throw and require user to sign in before SSO
 
-      // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
-      const userEmails = await findEmailsByUserId({ userId: args.userId })
-      const maybeSsoEmail = userEmails.find(
-        (entry) => entry.email === args.ssoProfile.email
-      )
+    // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
+    const userEmails = await findEmailsByUserId({ userId: args.userId })
+    const maybeSsoEmail = userEmails.find(
+      (entry) => entry.email === args.ssoProfile.email
+    )
 
-      if (!maybeSsoEmail) {
-        await createUserEmail({
-          userEmail: {
-            userId: args.userId,
-            email: args.ssoProfile.email,
-            verified: true
-          }
-        })
-      }
-
-      if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
-        await updateUserEmail({
-          query: {
-            id: maybeSsoEmail.id,
-            userId: args.userId
-          },
-          update: {
-            verified: true
-          }
-        })
-      }
+    if (!maybeSsoEmail) {
+      await createUserEmail({
+        userEmail: {
+          userId: args.userId,
+          email: args.ssoProfile.email,
+          verified: true
+        }
+      })
     }
 
-export const listWorkspaceSsoMembershipsByUserEmailFactory = ({
-  getUserByEmail,
-  listWorkspaceSsoMemberships
-}: {
-  getUserByEmail: GetUserByEmail,
-  listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
-}) => async (args: { userEmail: string }): Promise<LimitedWorkspace[]> => {
-  const user = await getUserByEmail(args.userEmail)
-  if (!user) return []
+    if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
+      await updateUserEmail({
+        query: {
+          id: maybeSsoEmail.id,
+          userId: args.userId
+        },
+        update: {
+          verified: true
+        }
+      })
+    }
+  }
 
-  const workspaces = await listWorkspaceSsoMemberships({ userId: user.id })
+export const listWorkspaceSsoMembershipsByUserEmailFactory =
+  ({
+    getUserByEmail,
+    listWorkspaceSsoMemberships
+  }: {
+    getUserByEmail: GetUserByEmail
+    listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
+  }) =>
+  async (args: { userEmail: string }): Promise<LimitedWorkspace[]> => {
+    const user = await getUserByEmail(args.userEmail)
+    if (!user) return []
 
-  // Return limited workspace version of each workspace
-  return workspaces.map(toLimitedWorkspace)
-}
+    const workspaces = await listWorkspaceSsoMemberships({ userId: user.id })
+
+    // Return limited workspace version of each workspace
+    return workspaces.map(toLimitedWorkspace)
+  }

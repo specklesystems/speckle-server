@@ -69,5 +69,12 @@ export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
 }
 
 export const toLimitedWorkspace = (workspace: Workspace): LimitedWorkspace => {
-  return pick(workspace, ['id', 'slug', 'name', 'description', 'logo', 'defaultLogoIndex'])
+  return pick(workspace, [
+    'id',
+    'slug',
+    'name',
+    'description',
+    'logo',
+    'defaultLogoIndex'
+  ])
 }

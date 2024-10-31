@@ -413,13 +413,6 @@ export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinitio
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
 
-export type AvatarUser = {
-  __typename?: 'AvatarUser';
-  avatar?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
   id: Scalars['ID']['output'];
@@ -838,6 +831,12 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateServerRegionInput = {
+  description: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -932,7 +931,7 @@ export type GendoAiRender = {
   responseImage?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
-  user?: Maybe<AvatarUser>;
+  user?: Maybe<LimitedUser>;
   userId: Scalars['String']['output'];
   versionId: Scalars['String']['output'];
 };
@@ -1298,6 +1297,7 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  serverInfoMutations: ServerInfoMutations;
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -2810,6 +2810,11 @@ export type ServerInfo = {
   workspaces: ServerWorkspacesInfo;
 };
 
+export type ServerInfoMutations = {
+  __typename?: 'ServerInfoMutations';
+  multiRegion: ServerRegionMutations;
+};
+
 export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']['input']>;
   company?: InputMaybe<Scalars['String']['input']>;
@@ -2838,6 +2843,24 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerRegionItem = {
+  __typename?: 'ServerRegionItem';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ServerRegionMutations = {
+  __typename?: 'ServerRegionMutations';
+  create: ServerRegionItem;
+};
+
+
+export type ServerRegionMutationsCreateArgs = {
+  input: CreateServerRegionInput;
 };
 
 export enum ServerRole {
@@ -4847,7 +4870,7 @@ export type GendoAiRenderQueryVariables = Exact<{
 }>;
 
 
-export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'AvatarUser', name: string, avatar?: string | null, id: string } | null } } } };
+export type GendoAiRenderQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, version: { __typename?: 'Version', id: string, gendoAIRender: { __typename?: 'GendoAIRender', id: string, projectId: string, modelId: string, versionId: string, createdAt: string, updatedAt: string, gendoGenerationId?: string | null, status: string, prompt: string, camera?: {} | null, responseImage?: string | null, user?: { __typename?: 'LimitedUser', name: string, avatar?: string | null, id: string } | null } } } };
 
 export type GendoAiRendersQueryVariables = Exact<{
   versionId: Scalars['String']['input'];
@@ -6225,7 +6248,6 @@ export type AllObjectTypes = {
   AutomationCollection: AutomationCollection,
   AutomationRevision: AutomationRevision,
   AutomationRevisionFunction: AutomationRevisionFunction,
-  AvatarUser: AvatarUser,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata,
   BlobMetadata: BlobMetadata,
   BlobMetadataCollection: BlobMetadataCollection,
@@ -6289,8 +6311,11 @@ export type AllObjectTypes = {
   ServerAutomateInfo: ServerAutomateInfo,
   ServerConfiguration: ServerConfiguration,
   ServerInfo: ServerInfo,
+  ServerInfoMutations: ServerInfoMutations,
   ServerInvite: ServerInvite,
   ServerMigration: ServerMigration,
+  ServerRegionItem: ServerRegionItem,
+  ServerRegionMutations: ServerRegionMutations,
   ServerRoleItem: ServerRoleItem,
   ServerStatistics: ServerStatistics,
   ServerStats: ServerStats,
@@ -6512,11 +6537,6 @@ export type AutomationRevisionFieldArgs = {
 export type AutomationRevisionFunctionFieldArgs = {
   parameters: {},
   release: {},
-}
-export type AvatarUserFieldArgs = {
-  avatar: {},
-  id: {},
-  name: {},
 }
 export type BasicGitRepositoryMetadataFieldArgs = {
   id: {},
@@ -6790,6 +6810,7 @@ export type MutationFieldArgs = {
   projectMutations: {},
   requestVerification: {},
   requestVerificationByEmail: MutationRequestVerificationByEmailArgs,
+  serverInfoMutations: {},
   serverInfoUpdate: MutationServerInfoUpdateArgs,
   serverInviteBatchCreate: MutationServerInviteBatchCreateArgs,
   serverInviteCreate: MutationServerInviteCreateArgs,
@@ -7117,6 +7138,9 @@ export type ServerInfoFieldArgs = {
   version: {},
   workspaces: {},
 }
+export type ServerInfoMutationsFieldArgs = {
+  multiRegion: {},
+}
 export type ServerInviteFieldArgs = {
   email: {},
   id: {},
@@ -7125,6 +7149,15 @@ export type ServerInviteFieldArgs = {
 export type ServerMigrationFieldArgs = {
   movedFrom: {},
   movedTo: {},
+}
+export type ServerRegionItemFieldArgs = {
+  description: {},
+  id: {},
+  key: {},
+  name: {},
+}
+export type ServerRegionMutationsFieldArgs = {
+  create: ServerRegionMutationsCreateArgs,
 }
 export type ServerRoleItemFieldArgs = {
   id: {},
@@ -7530,7 +7563,6 @@ export type AllObjectFieldArgTypes = {
   AutomationCollection: AutomationCollectionFieldArgs,
   AutomationRevision: AutomationRevisionFieldArgs,
   AutomationRevisionFunction: AutomationRevisionFunctionFieldArgs,
-  AvatarUser: AvatarUserFieldArgs,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadataFieldArgs,
   BlobMetadata: BlobMetadataFieldArgs,
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,
@@ -7594,8 +7626,11 @@ export type AllObjectFieldArgTypes = {
   ServerAutomateInfo: ServerAutomateInfoFieldArgs,
   ServerConfiguration: ServerConfigurationFieldArgs,
   ServerInfo: ServerInfoFieldArgs,
+  ServerInfoMutations: ServerInfoMutationsFieldArgs,
   ServerInvite: ServerInviteFieldArgs,
   ServerMigration: ServerMigrationFieldArgs,
+  ServerRegionItem: ServerRegionItemFieldArgs,
+  ServerRegionMutations: ServerRegionMutationsFieldArgs,
   ServerRoleItem: ServerRoleItemFieldArgs,
   ServerStatistics: ServerStatisticsFieldArgs,
   ServerStats: ServerStatsFieldArgs,

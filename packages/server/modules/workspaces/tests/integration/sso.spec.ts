@@ -137,18 +137,25 @@ describe('Workspace SSO repositories', () => {
       await createTestWorkspace(nonSsoWorkspace, serverAdminUser)
 
       const providerId = await createTestOidcProvider()
-      await associateSsoProviderWithWorkspace({ workspaceId: testWorkspace.id, providerId })
+      await associateSsoProviderWithWorkspace({
+        workspaceId: testWorkspace.id,
+        providerId
+      })
     })
 
     it('lists correct workspaces for the given user', async () => {
-      const workspaces = await listWorkspaceSsoMemberships({ userId: serverAdminUser.id })
+      const workspaces = await listWorkspaceSsoMemberships({
+        userId: serverAdminUser.id
+      })
 
       // Includes workspaces with SSO
       expect(workspaces.length).to.equal(1)
-      expect(workspaces.some((workspace) => workspace.id === testWorkspace.id)).to.be.true
+      expect(workspaces.some((workspace) => workspace.id === testWorkspace.id)).to.be
+        .true
 
       // Omits workspaces without SSO
-      expect(workspaces.some((workspace) => workspace.id === nonSsoWorkspace.id)).to.be.false
+      expect(workspaces.some((workspace) => workspace.id === nonSsoWorkspace.id)).to.be
+        .false
     })
 
     it('returns an empty array if the user is not part of any workspaces', async () => {
@@ -160,13 +167,17 @@ describe('Workspace SSO repositories', () => {
 
       await createTestUser(testServerUser)
 
-      const workspaces = await listWorkspaceSsoMemberships({ userId: testServerUser.id })
+      const workspaces = await listWorkspaceSsoMemberships({
+        userId: testServerUser.id
+      })
 
       expect(workspaces.length).to.equal(0)
     })
 
     it('returns an empty array if the user does not exist', async () => {
-      const workspaces = await listWorkspaceSsoMemberships({ userId: cryptoRandomString({ length: 9 }) })
+      const workspaces = await listWorkspaceSsoMemberships({
+        userId: cryptoRandomString({ length: 9 })
+      })
       expect(workspaces.length).to.equal(0)
     })
   })

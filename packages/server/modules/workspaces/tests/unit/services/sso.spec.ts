@@ -77,7 +77,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => { },
+          upsertWorkspaceRole: async () => {},
           findInvite: async () => null,
           deleteInvite: async () => true
         })
@@ -97,7 +97,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => { },
+          upsertWorkspaceRole: async () => {},
           findInvite: async () => ({} as unknown as any),
           deleteInvite: async () => true
         })
@@ -117,7 +117,7 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => { },
+          upsertWorkspaceRole: async () => {},
           findInvite: async () => ({} as unknown as any),
           deleteInvite: async () => true
         })
@@ -139,13 +139,13 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => { },
+          upsertWorkspaceRole: async () => {},
           findInvite: async () =>
-          ({
-            resource: {
-              role: 'not-a-role'
-            }
-          } as unknown as any),
+            ({
+              resource: {
+                role: 'not-a-role'
+              }
+            } as unknown as any),
           deleteInvite: async () => true
         })
 
@@ -176,14 +176,14 @@ describe('Workspace SSO services', () => {
             workspaceRole = role
           },
           findInvite: async () =>
-          ({
-            resource: {
-              role: 'workspace:admin',
-              secondaryResourceRoles: {
-                server: 'server:admin'
+            ({
+              resource: {
+                role: 'workspace:admin',
+                secondaryResourceRoles: {
+                  server: 'server:admin'
+                }
               }
-            }
-          } as unknown as any),
+            } as unknown as any),
           deleteInvite: async () => true
         })
 
@@ -206,16 +206,16 @@ describe('Workspace SSO services', () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
           createUser: async () => '',
-          upsertWorkspaceRole: async () => { },
+          upsertWorkspaceRole: async () => {},
           findInvite: async () =>
-          ({
-            resource: {
-              role: 'workspace:admin',
-              secondaryResourceRoles: {
-                server: 'server:admin'
+            ({
+              resource: {
+                role: 'workspace:admin',
+                secondaryResourceRoles: {
+                  server: 'server:admin'
+                }
               }
-            }
-          } as unknown as any),
+            } as unknown as any),
           deleteInvite: async () => {
             isDeleteCalled = true
             return true
@@ -348,40 +348,49 @@ describe('Workspace SSO services', () => {
   })
   describe('listWorkspaceSsoMembershipsByUserEmailFactory creates a function, that', () => {
     it('returns an empty array if the user does not exist', async () => {
-      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory({
-        getUserByEmail: async () => null,
-        listWorkspaceSsoMemberships: async () => {
-          assert.fail()
+      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
+        {
+          getUserByEmail: async () => null,
+          listWorkspaceSsoMemberships: async () => {
+            assert.fail()
+          }
         }
-      })
+      )
 
-      const workspaces = await listWorkspaceSsoMemberships({ userEmail: 'fake@example.org ' })
+      const workspaces = await listWorkspaceSsoMemberships({
+        userEmail: 'fake@example.org '
+      })
 
       expect(workspaces.length).to.equal(0)
     })
     it('returns sanitized results if any matches are found', async () => {
-      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory({
-        getUserByEmail: async () => ({
-          id: cryptoRandomString({ length: 9 })
-        } as UserWithOptionalRole),
-        listWorkspaceSsoMemberships: async () => ([
-          {
-            id: '',
-            slug: '',
-            name: '',
-            description: '',
-            logo: null,
-            defaultLogoIndex: 0,
-            defaultProjectRole: 'stream:contributor',
-            domainBasedMembershipProtectionEnabled: false,
-            discoverabilityEnabled: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }
-        ])
-      })
+      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
+        {
+          getUserByEmail: async () =>
+            ({
+              id: cryptoRandomString({ length: 9 })
+            } as UserWithOptionalRole),
+          listWorkspaceSsoMemberships: async () => [
+            {
+              id: '',
+              slug: '',
+              name: '',
+              description: '',
+              logo: null,
+              defaultLogoIndex: 0,
+              defaultProjectRole: 'stream:contributor',
+              domainBasedMembershipProtectionEnabled: false,
+              discoverabilityEnabled: false,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          ]
+        }
+      )
 
-      const workspaces = await listWorkspaceSsoMemberships({ userEmail: 'anything@example.org' })
+      const workspaces = await listWorkspaceSsoMemberships({
+        userEmail: 'anything@example.org'
+      })
 
       expect(Object.keys(workspaces[0]).includes('defaultProjectRole')).to.be.false
     })

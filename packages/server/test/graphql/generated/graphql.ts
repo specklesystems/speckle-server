@@ -2547,8 +2547,6 @@ export type Query = {
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
   workspacePricingPlans: Scalars['JSONObject']['output'];
-  /** Public endpoint that returns workspaces configured for SSO that a given user email has access to. */
-  workspaceSsoMemberships: Array<LimitedWorkspace>;
 };
 
 
@@ -2694,11 +2692,6 @@ export type QueryWorkspaceInviteArgs = {
   options?: InputMaybe<WorkspaceInviteLookupOptions>;
   token?: InputMaybe<Scalars['String']['input']>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryWorkspaceSsoMembershipsArgs = {
-  email: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */

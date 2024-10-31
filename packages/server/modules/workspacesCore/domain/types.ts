@@ -33,7 +33,10 @@ export type Workspace = {
   discoverabilityEnabled: boolean
 }
 
-export type LimitedWorkspace = Pick<Workspace, 'id' | 'slug' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>
+export type LimitedWorkspace = Pick<
+  Workspace,
+  'id' | 'slug' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+>
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
 
