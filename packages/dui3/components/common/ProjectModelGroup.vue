@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="projectDetails && !projectError"
-    class="px-[2px] pt-1 pb-1 bg-foundation-xxx dark:bg-neutral-700/10-xxx rounded-md xxxdark:border-gray-800 xxxborder-gray-100 xxxborder"
-  >
+  <div v-if="projectDetails && !projectError" class="px-[2px] pt-1 pb-1 rounded-md">
     <!-- <div
       v-if="isProjectReadOnly"
       class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
@@ -31,15 +28,20 @@
       </div>
     </div> -->
     <button
-      class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
+      :class="`flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 ${
+        showModels ? '' : 'bg-blue-500/10'
+      } rounded-md transition group`"
       @click="showModels = !showModels"
     >
       <div class="flex items-center transition group-hover:text-primary h-8 min-w-0">
         <ChevronDownIcon
           :class="`w-4 ${showModels ? '' : '-rotate-90'} transition mt-1`"
         />
-        <div class="text-sm text-left truncate select-none">
-          {{ projectDetails.name }}
+        <div class="text-sm text-left truncate select-none flex items-center">
+          <div>{{ projectDetails.name }}</div>
+          <div v-if="!showModels" class="text-xs opacity-50 ml-2 pt-[1px]">
+            {{ project.senders.length + project.receivers.length }}
+          </div>
         </div>
       </div>
 
