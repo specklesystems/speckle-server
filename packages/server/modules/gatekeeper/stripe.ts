@@ -1,4 +1,7 @@
-import { GetWorkspacePlanPrice } from '@/modules/gatekeeper/domain/billing'
+import {
+  GetWorkspacePlanPrice,
+  GetWorkspacePlanProductId
+} from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
@@ -43,3 +46,7 @@ export const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
   workspacePlan,
   billingInterval
 }) => workspacePlanPrices()[workspacePlan][billingInterval]
+
+export const getWorkspacePlanProductId: GetWorkspacePlanProductId = ({
+  workspacePlan
+}) => workspacePlanPrices()[workspacePlan].productId

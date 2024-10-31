@@ -51,7 +51,9 @@
           :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
         />
         <div class="mt-6">
-          <FormButton color="primary" @click="onSubmit">Save</FormButton>
+          <FormButton :disabled="!challenge" color="primary" @click="onSubmit">
+            Save
+          </FormButton>
         </div>
       </div>
     </form>
@@ -63,6 +65,8 @@ import { useForm } from 'vee-validate'
 import { isRequired, isStringOfLength, isUrl } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecuritySso_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
+import { useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySso_Workspace on Workspace {
@@ -83,6 +87,8 @@ const props = defineProps<{
 }>()
 
 const apiOrigin = useApiOrigin()
+const { challenge } = useLoginOrRegisterUtils()
+const postAuthRedirect = usePostAuthRedirect()
 const { handleSubmit } = useForm<FormValues>()
 
 const providerName = ref('')
@@ -96,9 +102,12 @@ const onSubmit = handleSubmit(() => {
     `providerName=${providerName.value}`,
     `clientId=${clientId.value}`,
     `clientSecret=${clientSecret.value}`,
-    `issuerUrl=${issuerUrl.value}`
+    `issuerUrl=${issuerUrl.value}`,
+    `challenge=${challenge.value}`
   ]
   const route = `${baseUrl}?${params.join('&')}`
+
+  postAuthRedirect.set(`/workspaces/${props.workspace.slug}?settings=server/general`)
 
   navigateTo(route, {
     external: true

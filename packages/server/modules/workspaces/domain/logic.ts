@@ -7,7 +7,7 @@ import {
   WorkspaceDefaultProjectRole,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspaceRoles } from '@speckle/shared'
 
 export const userEmailsCompliantWithWorkspaceDomains = ({
   userEmails,
@@ -58,4 +58,9 @@ export const parseDefaultProjectRole = (
   }
 
   return role
+}
+
+export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
+  const validRoles: string[] = Object.values(Roles.Workspace)
+  return validRoles.includes(role)
 }
