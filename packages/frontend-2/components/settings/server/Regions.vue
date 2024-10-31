@@ -31,8 +31,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 
 const isAddEditDialogOpen = ref(false)
 
-// TODO: Check - only admins can access
-
 const query = graphql(`
   query SettingsServerRegions {
     serverInfo {

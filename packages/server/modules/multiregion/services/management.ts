@@ -26,7 +26,7 @@ export const createAndValidateNewRegionFactory =
       })
     }
     if (!freeKeys.includes(region.key)) {
-      throw new RegionCreateError('Region key is not valid or already in use.', {
+      throw new RegionCreateError('Region key is not valid or already in use', {
         info: { region, freeKeys }
       })
     }
