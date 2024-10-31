@@ -7,7 +7,6 @@ import { z } from 'zod'
 import {
   createWorkspaceUserFromSsoProfileFactory,
   linkUserWithSsoProviderFactory,
-  listWorkspaceSsoMembershipsByUserEmailFactory,
   saveSsoProviderRegistrationFactory,
   startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
@@ -23,8 +22,7 @@ import {
   associateSsoProviderWithWorkspaceFactory,
   storeSsoProviderRecordFactory,
   upsertUserSsoSessionFactory,
-  getWorkspaceSsoProviderFactory,
-  listWorkspaceSsoMembershipsFactory
+  getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getGenericRedis } from '@/modules/core'
 import { generators, UserinfoResponse } from 'openid-client'
@@ -53,7 +51,6 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   countAdminUsersFactory,
-  getUserByEmailFactory,
   getUserFactory,
   legacyGetUserFactory,
   storeUserAclFactory,
@@ -124,24 +121,6 @@ const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
 
 export const getSsoRouter = (): Router => {
   const router = Router()
-
-  router.get(
-    '/api/v1/sso',
-    validateRequest({
-      query: z.object({
-        email: z.string().email()
-      })
-    }),
-    async ({ query, res }) => {
-      const workspaces = await listWorkspaceSsoMembershipsByUserEmailFactory({
-        getUserByEmail: getUserByEmailFactory({ db }),
-        listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db })
-      })({
-        userEmail: query.email
-      })
-      res?.json(workspaces)
-    }
-  )
 
   router.get(
     '/api/v1/workspaces/:workspaceSlug/sso',

@@ -2564,6 +2564,8 @@ export type Query = {
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
   workspacePricingPlans: Scalars['JSONObject']['output'];
+  /** Find workspaces a given user email can use SSO to sign with */
+  workspaceSsoByEmail: Array<LimitedWorkspace>;
 };
 
 
@@ -2709,6 +2711,11 @@ export type QueryWorkspaceInviteArgs = {
   options?: InputMaybe<WorkspaceInviteLookupOptions>;
   token?: InputMaybe<Scalars['String']['input']>;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryWorkspaceSsoByEmailArgs = {
+  email: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -5855,6 +5862,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   workspaceBySlug?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceBySlugArgs, 'slug'>>;
   workspaceInvite?: Resolver<Maybe<ResolversTypes['PendingWorkspaceCollaborator']>, ParentType, ContextType, Partial<QueryWorkspaceInviteArgs>>;
   workspacePricingPlans?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  workspaceSsoByEmail?: Resolver<Array<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType, RequireFields<QueryWorkspaceSsoByEmailArgs, 'email'>>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {
