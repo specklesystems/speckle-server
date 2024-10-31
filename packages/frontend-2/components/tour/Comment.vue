@@ -63,13 +63,11 @@
                   <ArrowLeftIcon class="h-3 w-3 mr-1" />
                   Previous
                 </FormButton>
-                <div
-                  v-if="index === 2"
-                  v-tippy="disableNext ? undefined : 'First add another model'"
-                >
-                  <FormButton :disabled="!disableNext" @click="$emit('skip')">
-                    Finish
-                  </FormButton>
+                <div v-if="index === 2">
+                  <div v-if="!disableNext" v-tippy="'First add another model'">
+                    <FormButton disabled>Finish</FormButton>
+                  </div>
+                  <FormButton v-else @click="$emit('skip')">Finish</FormButton>
                 </div>
                 <FormButton v-else :icon-right="ArrowRightIcon" @click="next(index)">
                   Next
