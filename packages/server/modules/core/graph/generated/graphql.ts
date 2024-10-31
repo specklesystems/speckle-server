@@ -13,6 +13,7 @@ import { BlobStorageItem } from '@/modules/blobstorage/domain/types';
 import { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/helpers/graphTypes';
 import { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
+import { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -4612,7 +4613,7 @@ export type ResolversTypes = {
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ResolverTypeWrapper<ServerMigration>;
   ServerMultiRegionConfiguration: ResolverTypeWrapper<GraphQLEmptyReturn>;
-  ServerRegionItem: ResolverTypeWrapper<ServerRegionItem>;
+  ServerRegionItem: ResolverTypeWrapper<ServerRegionItemGraphQLReturn>;
   ServerRegionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ServerRole: ServerRole;
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
@@ -4872,7 +4873,7 @@ export type ResolversParentTypes = {
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ServerMigration;
   ServerMultiRegionConfiguration: GraphQLEmptyReturn;
-  ServerRegionItem: ServerRegionItem;
+  ServerRegionItem: ServerRegionItemGraphQLReturn;
   ServerRegionMutations: MutationsObjectGraphQLReturn;
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;

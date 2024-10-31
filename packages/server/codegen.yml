@@ -77,6 +77,7 @@ generates:
         ServerMultiRegionConfiguration: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ServerInfoMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ServerRegionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ServerRegionItem: '@/modules/multiregion/helpers/graphTypes#ServerRegionItemGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

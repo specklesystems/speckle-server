@@ -34,7 +34,7 @@
       <SettingsServerRegionsKeySelect
         show-label
         name="key"
-        :items="['eu-1', 'uk-2']"
+        :items="availableRegionKeys"
         label="Region key"
         :rules="[isRequired]"
         show-required
@@ -50,6 +50,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsServerRegionsAddEditDialog_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
 import { useCreateRegion } from '~/lib/multiregion/composables/management'
+import { useMutationLoading } from '@vue/apollo-composable'
 
 graphql(`
   fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {
@@ -71,6 +72,7 @@ const open = defineModel<boolean>('open', { required: true })
 const model = defineModel<DialogModel>()
 const { handleSubmit, setValues } = useForm<DialogModel>()
 const createRegion = useCreateRegion()
+const loading = useMutationLoading()
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
@@ -82,7 +84,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     {
       text: 'Create',
       props: {
-        submit: true
+        submit: true,
+        disabled: loading.value
       },
       onClick: noop
     }

@@ -47,7 +47,10 @@ const query = graphql(`
   }
 `)
 
-const { result } = useQuery(query)
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
+const { result } = useQuery(query, undefined, () => ({
+  fetchPolicy: pageFetchPolicy.value
+}))
 
 const tableItems = computed(() => result.value?.serverInfo?.multiRegion?.regions)
 const availableKeys = computed(
