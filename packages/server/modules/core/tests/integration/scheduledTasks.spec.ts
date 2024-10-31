@@ -19,7 +19,7 @@ describe('scheduledTasks repositories @core', () => {
     it('acquires lock if the previous lock for the taskName has expired', async () => {
       const taskLock = {
         taskName: cryptoRandomString({ length: 10 }),
-        lockExpiresAt: new Date()
+        lockExpiresAt: new Date(2000, 0, 1)
       }
       let storedTaskLock = await acquireTaskLockFactory({ db })(taskLock)
       expect(storedTaskLock).deep.equal(taskLock)
