@@ -126,6 +126,20 @@ describe('Workspace SSO repositories', () => {
   })
 
   describe('listWorkspaceSsoMembershipsFactory returns a function, that', async () => {
+    const ssoUser: BasicTestUser = {
+      id: '',
+      email: 'sso-speckle@example.org',
+      name: 'SSO Speckle',
+      role: Roles.Server.Admin
+    }
+
+    const ssoWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace With SSO',
+      slug: 'yes-sso'
+    }
+
     const nonSsoWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
@@ -134,23 +148,25 @@ describe('Workspace SSO repositories', () => {
     }
 
     before(async () => {
+      await createTestUser(ssoUser)
+      await createTestWorkspace(ssoWorkspace, ssoUser)
       await createTestWorkspace(nonSsoWorkspace, serverAdminUser)
 
       const providerId = await createTestOidcProvider()
       await associateSsoProviderWithWorkspace({
-        workspaceId: testWorkspace.id,
+        workspaceId: ssoWorkspace.id,
         providerId
       })
     })
 
     it('lists correct workspaces for the given user', async () => {
       const workspaces = await listWorkspaceSsoMemberships({
-        userId: serverAdminUser.id
+        userId: ssoUser.id
       })
 
       // Includes workspaces with SSO
       expect(workspaces.length).to.equal(1)
-      expect(workspaces.some((workspace) => workspace.id === testWorkspace.id)).to.be
+      expect(workspaces.some((workspace) => workspace.id === ssoWorkspace.id)).to.be
         .true
 
       // Omits workspaces without SSO
