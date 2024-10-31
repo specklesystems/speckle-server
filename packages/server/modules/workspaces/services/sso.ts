@@ -1,18 +1,17 @@
 /* eslint-disable camelcase */
 
 import {
-  GetOIDCProviderAttributes,
-  StoreOIDCProviderValidationRequest,
+  GetOidcProviderAttributes,
+  StoreOidcProviderValidationRequest,
   StoreProviderRecord,
   AssociateSsoProviderWithWorkspace,
   GetWorkspaceSsoProvider
 } from '@/modules/workspaces/domain/sso/operations'
 import {
-  OIDCProvider,
-  OIDCProviderRecord,
-  OIDCProviderAttributes
+  OidcProvider,
+  OidcProviderRecord,
+  OidcProviderAttributes
 } from '@/modules/workspaces/domain/sso/types'
-import { BaseError } from '@/modules/shared/errors/base'
 import cryptoRandomString from 'crypto-random-string'
 import { UserinfoResponse } from 'openid-client'
 import {
@@ -26,25 +25,20 @@ import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operati
 import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
 import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
+  OidcProviderMissingGrantTypeError,
   SsoProviderExistsError,
   SsoProviderProfileInvalidError,
   SsoUserInviteRequiredError
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 
-export class MissingOIDCProviderGrantType extends BaseError {
-  static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
-  static code = 'OIDC_SSO_MISSING_GRANT_TYPE'
-  static statusCode = 400
-}
-
 // this probably should go a lean validation endpoint too
-const validateOIDCProviderAttributes = ({
+const validateOidcProviderAttributes = ({
   // client,
   issuer
-}: OIDCProviderAttributes): void => {
+}: OidcProviderAttributes): void => {
   if (!issuer.grantTypesSupported.includes('authorization_code'))
-    throw new MissingOIDCProviderGrantType()
+    throw new OidcProviderMissingGrantTypeError()
   /*
 validate issuer:
 authorization_signing_alg_values_supported
@@ -62,27 +56,25 @@ grant_types: ['authorization_code'],
 /**
  * Store information about the OIDC provider used for a given SSO auth request.
  * Used by validation and auth
- * @param param0
- * @returns
  */
-export const startOIDCSsoProviderValidationFactory =
+export const startOidcSsoProviderValidationFactory =
   ({
-    getOIDCProviderAttributes,
-    storeOIDCProviderValidationRequest,
+    getOidcProviderAttributes,
+    storeOidcProviderValidationRequest,
     generateCodeVerifier
   }: {
-    getOIDCProviderAttributes: GetOIDCProviderAttributes
-    storeOIDCProviderValidationRequest: StoreOIDCProviderValidationRequest
+    getOidcProviderAttributes: GetOidcProviderAttributes
+    storeOidcProviderValidationRequest: StoreOidcProviderValidationRequest
     generateCodeVerifier: () => string
   }) =>
-  async ({ provider }: { provider: OIDCProvider }): Promise<string> => {
+  async ({ provider }: { provider: OidcProvider }): Promise<string> => {
     // get client information
-    const providerAttributes = await getOIDCProviderAttributes({ provider })
+    const providerAttributes = await getOidcProviderAttributes({ provider })
     // validate issuer and client data
-    validateOIDCProviderAttributes(providerAttributes)
+    validateOidcProviderAttributes(providerAttributes)
     // store provider validation with an id token
     const codeVerifier = generateCodeVerifier()
-    await storeOIDCProviderValidationRequest({ token: codeVerifier, provider })
+    await storeOidcProviderValidationRequest({ token: codeVerifier, provider })
     return codeVerifier
   }
 
@@ -100,12 +92,12 @@ export const saveSsoProviderRegistrationFactory =
     provider,
     workspaceId
   }: {
-    provider: OIDCProvider
+    provider: OidcProvider
     workspaceId: string
-  }): Promise<OIDCProviderRecord> => {
+  }): Promise<OidcProviderRecord> => {
     // create OIDC provider record with ID
     const providerId = cryptoRandomString({ length: 10 })
-    const providerRecord: OIDCProviderRecord = {
+    const providerRecord: OidcProviderRecord = {
       provider,
       providerType: 'oidc',
       createdAt: new Date(),
@@ -181,7 +173,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
       createdAt: new Date()
     })
 
-    // Delete invite (implicitly used during sign up flow)
+    // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)
     await deleteInvite(invite.id)
 
     return {

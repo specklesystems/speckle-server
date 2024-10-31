@@ -7,16 +7,16 @@ type ProviderBaseRecord = {
   updatedAt: Date
 }
 
-export type OIDCProvider = Infer<typeof oidcProvider>
+export type OidcProvider = Infer<typeof oidcProvider>
 
-export type OIDCProviderRecord = {
+export type OidcProviderRecord = {
   providerType: 'oidc'
-  provider: OIDCProvider
+  provider: OidcProvider
 } & ProviderBaseRecord
 
 // since storage is encrypted and provider data should be stored as a json string,
 // this record type could be extended to be a union for other provider types too, like SAML
-export type ProviderRecord = OIDCProviderRecord
+export type ProviderRecord = OidcProviderRecord
 
 export type WorkspaceSsoProvider = {
   workspaceId: string
@@ -31,17 +31,13 @@ export type UserSsoSessionRecord = {
   validUntil: Date
 }
 
-// export const oidcProviderValidationRequest = z.object({
-//   token: z.string(),
-//   provider: oidcProvider
-// })
-export type OIDCProviderValidationRequest = {
+export type OidcProviderValidationRequest = {
   token: string
-  provider: OIDCProvider
+  provider: OidcProvider
 }
 
 /** shim */
-export type OIDCProviderAttributes = {
+export type OidcProviderAttributes = {
   issuer: {
     claimsSupported: string[]
     grantTypesSupported: string[]

@@ -1,11 +1,5 @@
 import { BaseError } from '@/modules/shared/errors/base'
 
-export class WorkspaceAdminError extends BaseError {
-  static defaultMessage = 'Cannot perform this action on workspace admins'
-  static code = 'WORKSPACE_ADMIN_ERROR'
-  static statusCode = 400
-}
-
 export class SsoVerificationCodeMissingError extends BaseError {
   static defaultMessage = 'Cannot find verification token. Restart authentication flow.'
   static code = 'SSO_VERIFICATION_CODE_MISSING_ERROR'
@@ -62,5 +56,11 @@ export class SsoUserClaimedError extends BaseError {
 export class SsoUserInviteRequiredError extends BaseError {
   static defaultMessage = 'Cannot sign up with SSO without a valid workspace invite.'
   static code = 'SSO_USER_INVITE_REQUIRED_ERROR'
+  static statusCode = 400
+}
+
+export class OidcProviderMissingGrantTypeError extends BaseError {
+  static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
+  static code = 'SSO_OIDC_PROVIDER_MISSING_GRANT_TYPE'
   static statusCode = 400
 }

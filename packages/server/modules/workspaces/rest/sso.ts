@@ -8,7 +8,7 @@ import {
   createWorkspaceUserFromSsoProfileFactory,
   linkUserWithSsoProviderFactory,
   saveSsoProviderRegistrationFactory,
-  startOIDCSsoProviderValidationFactory
+  startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
 import {
   getOIDCProviderAttributes,
@@ -28,7 +28,7 @@ import { getGenericRedis } from '@/modules/core'
 import { generators, UserinfoResponse } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
-  OIDCProvider,
+  OidcProvider,
   WorkspaceSsoProvider
 } from '@/modules/workspaces/domain/sso/types'
 import {
@@ -168,9 +168,9 @@ export const getSsoRouter = (): Router => {
     }),
     handleSsoValidationRequestFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
-      startOIDCSsoProviderValidation: startOIDCSsoProviderValidationFactory({
-        getOIDCProviderAttributes,
-        storeOIDCProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
+      startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
+        getOidcProviderAttributes: getOIDCProviderAttributes,
+        storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
           redis: getGenericRedis(),
           encrypt: getEncryptor()
         }),
@@ -363,11 +363,11 @@ type WorkspaceSsoValidationRequestQuery = z.infer<typeof oidcProvider>
 const handleSsoValidationRequestFactory =
   ({
     getWorkspaceBySlug,
-    startOIDCSsoProviderValidation
+    startOidcSsoProviderValidation
   }: {
     getWorkspaceBySlug: GetWorkspaceBySlug
-    startOIDCSsoProviderValidation: ReturnType<
-      typeof startOIDCSsoProviderValidationFactory
+    startOidcSsoProviderValidation: ReturnType<
+      typeof startOidcSsoProviderValidationFactory
     >
   }): RequestHandler<
     WorkspaceSsoAuthRequestParams,
@@ -389,7 +389,7 @@ const handleSsoValidationRequestFactory =
         context.resourceAccessRules
       )
 
-      const codeVerifier = await startOIDCSsoProviderValidation({ provider })
+      const codeVerifier = await startOidcSsoProviderValidation({ provider })
 
       const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug, true)
       const authorizationUrl = await getProviderAuthorizationUrl({
@@ -567,7 +567,7 @@ const getOidcProviderUserDataFactory =
       any,
       WorkspaceSsoOidcCallbackRequestQuery
     >,
-    provider: OIDCProvider
+    provider: OidcProvider
   ): Promise<UserinfoResponse<{ email: string }>> => {
     const codeVerifier = await parseCodeVerifier(req)
     const { client } = await initializeIssuerAndClient({ provider })

@@ -1,9 +1,9 @@
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
   AssociateSsoProviderWithWorkspace,
-  GetOIDCProviderData,
+  GetOidcProviderData,
   GetWorkspaceSsoProvider,
-  StoreOIDCProviderValidationRequest,
+  StoreOidcProviderValidationRequest,
   StoreProviderRecord,
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
@@ -37,14 +37,14 @@ export const storeOIDCProviderValidationRequestFactory =
   }: {
     redis: Redis
     encrypt: Crypt
-  }): StoreOIDCProviderValidationRequest =>
+  }): StoreOidcProviderValidationRequest =>
   async ({ provider, token }) => {
     const providerData = await encrypt(JSON.stringify(provider))
     await redis.set(token, providerData)
   }
 
 export const getOIDCProviderValidationRequestFactory =
-  ({ redis, decrypt }: { redis: Redis; decrypt: Crypt }): GetOIDCProviderData =>
+  ({ redis, decrypt }: { redis: Redis; decrypt: Crypt }): GetOidcProviderData =>
   async ({ validationToken }: { validationToken: string }) => {
     const encryptedProviderData = await redis.get(validationToken)
     if (!encryptedProviderData) return null
