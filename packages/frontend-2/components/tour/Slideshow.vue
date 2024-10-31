@@ -15,7 +15,7 @@
       :class="isSmallerOrEqualSm ? 'bottom-0 left-0 w-screen' : ''"
       :style="isSmallerOrEqualSm ? undefined : item.style"
       :show-controls="item.showControls"
-      :has-added-overlay="hasAddedOverlay"
+      :disable-next="hasAddedOverlay"
       @skip="finishSlideshow()"
     >
       <Component :is="tourItems[index]" @has-added-overlay="hasAddedOverlay = true" />

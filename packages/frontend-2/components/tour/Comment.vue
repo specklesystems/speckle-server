@@ -65,9 +65,9 @@
                 </FormButton>
                 <div
                   v-if="index === 2"
-                  v-tippy="hasAddedOverlay ? undefined : 'First add another model'"
+                  v-tippy="disableNext ? undefined : 'First add another model'"
                 >
-                  <FormButton :disabled="!hasAddedOverlay" @click="$emit('skip')">
+                  <FormButton :disabled="!disableNext" @click="$emit('skip')">
                     Finish
                   </FormButton>
                 </div>
@@ -99,7 +99,7 @@ defineEmits(['skip', 'previous', 'next'])
 const props = defineProps<{
   index: number
   item: SlideshowItem
-  hasAddedOverlay: boolean
+  disableNext: boolean
 }>()
 
 const {
