@@ -39,6 +39,7 @@ exports.truncateTables = async (tableNames) => {
         .whereRaw("tablename not like '%knex%'")
         .whereNotIn('tablename', protectedTables)
     ).map((table) => table.tablename)
+    if (!tableNames.length) return // Nothing to truncate
 
     // We're deleting everything, so lets turn off triggers to avoid deadlocks/slowdowns
     await knex.transaction(async (trx) => {
