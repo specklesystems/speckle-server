@@ -25,9 +25,14 @@ describe('Multi Region Server Settings', () => {
   }
 
   before(async () => {
+    // Have to mock both
     MultiRegionConfigServiceMock.mockFunction(
       'getAvailableRegionConfigsFactory',
       () => async () => fakeRegionConfig
+    )
+    MultiRegionConfigServiceMock.mockFunction(
+      'getAvailableRegionKeysFactory',
+      () => async () => Object.keys(fakeRegionConfig)
     )
 
     await beforeEachContext()
@@ -36,7 +41,7 @@ describe('Multi Region Server Settings', () => {
   })
 
   after(() => {
-    MultiRegionConfigServiceMock.resetMockedFunction('getAvailableRegionConfigsFactory')
+    MultiRegionConfigServiceMock.resetMockedFunctions()
   })
 
   describe('server config', () => {
