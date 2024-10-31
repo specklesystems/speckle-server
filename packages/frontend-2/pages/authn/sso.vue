@@ -1,14 +1,16 @@
 <template>
-  <AuthLoginWithSso />
+  <div>
+    <AuthSsoLogin v-if="currentView === 'login'" />
+    <AuthSsoRegister v-else />
+  </div>
 </template>
+
 <script setup lang="ts">
-import { useMixpanel } from '~~/lib/core/composables/mp'
+const currentView = computed(() => {
+  return window.location.hash === '#register' ? 'register' : 'login'
+})
 
-const mixpanel = useMixpanel()
-
-useHead({ title: 'Speckle SSO login' })
-
-onMounted(() => {
-  mixpanel.track('Visit SSO Log In')
+useHead({
+  title: computed(() => `${currentView.value === 'register' ? 'Register' : 'Login'}`)
 })
 </script>

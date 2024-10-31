@@ -25,11 +25,6 @@
         :disabled="loading"
       />
     </div>
-    <div class="mt-1">
-      <CommonTextLink :to="forgottenPasswordRoute">
-        Forgot your password?
-      </CommonTextLink>
-    </div>
     <FormButton
       size="lg"
       submit
@@ -39,6 +34,12 @@
     >
       Log in
     </FormButton>
+    <div class="mt-1 text-center text-body-xs text-foreground-3 select-none">
+      Forgot password?
+      <NuxtLink :to="forgottenPasswordRoute" class="text-foreground">
+        Recover password
+      </NuxtLink>
+    </div>
   </form>
 </template>
 <script setup lang="ts">

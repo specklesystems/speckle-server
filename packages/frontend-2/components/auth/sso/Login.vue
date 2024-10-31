@@ -1,5 +1,5 @@
 <template>
-  <form method="post" class="mt-16" @submit="onSubmit">
+  <form method="post" @submit="onSubmit">
     <div class="flex flex-col">
       <h1 class="text-heading-xl text-center mb-8">Speckle SSO login</h1>
       <FormTextInput
@@ -37,6 +37,7 @@ import { useForm } from 'vee-validate'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { loginRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type FormValues = { email: string }
 
@@ -44,11 +45,8 @@ const loading = ref(false)
 const isSsoAvailable = ref(false)
 const isChecking = ref(false)
 
-const { handleSubmit, meta } = useForm<FormValues>({
-  initialValues: {
-    email: ''
-  }
-})
+const { handleSubmit, meta } = useForm<FormValues>()
+const mixpanel = useMixpanel()
 
 const {
   value: email,
@@ -71,6 +69,10 @@ const buttonText = computed(() => {
   if (!meta.value.valid) return 'Single Sign-On'
   if (!isSsoAvailable.value) return 'Single Sign-On not available'
   return 'Sign in with domain' // todo
+})
+
+onMounted(() => {
+  mixpanel.track(`Visit SSO Login`)
 })
 
 // Watch email changes and check SSO availability
