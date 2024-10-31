@@ -1,4 +1,3 @@
-import { Role } from '@/modules/accessrequests/graph/resolvers'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   isResourceAllowed,

@@ -111,6 +111,7 @@ import {
   SsoUserEmailUnverifiedError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -219,7 +220,8 @@ export const getSsoRouter = (): Router => {
           getRoles: getRolesFactory({ db: trx }),
           getUserServerRole: getUserServerRoleFactory({ db: trx }),
           getStream: getStreamFactory({ db: trx }),
-          getUserAclRole: getUserAclRoleFactory({ db: trx })
+          getUserAclRole: getUserAclRoleFactory({ db: trx }),
+          emitWorkspaceEvent: getEventBus().emit
         }),
         getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
         createOidcProvider: createOidcProviderFactory({

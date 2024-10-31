@@ -4002,6 +4002,7 @@ export type Workspace = {
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
@@ -4320,6 +4321,7 @@ export type WorkspaceRoleUpdateInput = {
 
 export type WorkspaceSso = {
   __typename?: 'WorkspaceSso';
+  /** If null, the workspace does not have SSO configured */
   provider?: Maybe<WorkspaceSsoProvider>;
   session?: Maybe<WorkspaceSsoSession>;
 };
@@ -4327,6 +4329,7 @@ export type WorkspaceSso = {
 export type WorkspaceSsoProvider = {
   __typename?: 'WorkspaceSsoProvider';
   id: Scalars['ID']['output'];
+  /** NOTE: there is additional decryption overhead when querying this field. Use `id` if you are just checking for the existence of SSO */
   name: Scalars['String']['output'];
 };
 

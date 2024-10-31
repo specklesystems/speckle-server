@@ -3518,6 +3518,8 @@ export type User = {
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   emails: Array<UserEmail>;
+  /** A list of workspaces that the user may want to sign back in to */
+  expiredSsoSessions: Array<LimitedWorkspace>;
   /**
    * All the streams that a active user has favorited.
    * Note: You can't use this to retrieve another user's favorite streams.
@@ -3996,6 +3998,8 @@ export type Workspace = {
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
+  sso?: Maybe<WorkspaceSso>;
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
@@ -4309,6 +4313,26 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceSso = {
+  __typename?: 'WorkspaceSso';
+  /** If null, the workspace does not have SSO configured */
+  provider?: Maybe<WorkspaceSsoProvider>;
+  session?: Maybe<WorkspaceSsoSession>;
+};
+
+export type WorkspaceSsoProvider = {
+  __typename?: 'WorkspaceSsoProvider';
+  id: Scalars['ID']['output'];
+  /** NOTE: there is additional decryption overhead when querying this field. Use `id` if you are just checking for the existence of SSO */
+  name: Scalars['String']['output'];
+};
+
+export type WorkspaceSsoSession = {
+  __typename?: 'WorkspaceSsoSession';
+  createdAt: Scalars['DateTime']['output'];
+  validUntil: Scalars['DateTime']['output'];
 };
 
 export type WorkspaceSubscription = {
@@ -6407,6 +6431,9 @@ export type AllObjectTypes = {
   WorkspaceMutations: WorkspaceMutations,
   WorkspacePlan: WorkspacePlan,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
+  WorkspaceSso: WorkspaceSso,
+  WorkspaceSsoProvider: WorkspaceSsoProvider,
+  WorkspaceSsoSession: WorkspaceSsoSession,
   WorkspaceSubscription: WorkspaceSubscription,
   WorkspaceVersionsCount: WorkspaceVersionsCount,
 }
@@ -7354,6 +7381,7 @@ export type UserFieldArgs = {
   discoverableWorkspaces: {},
   email: {},
   emails: {},
+  expiredSsoSessions: {},
   favoriteStreams: UserFavoriteStreamsArgs,
   hasPendingVerification: {},
   id: {},
@@ -7500,6 +7528,7 @@ export type WorkspaceFieldArgs = {
   projects: WorkspaceProjectsArgs,
   role: {},
   slug: {},
+  sso: {},
   subscription: {},
   team: WorkspaceTeamArgs,
   updatedAt: {},
@@ -7576,6 +7605,18 @@ export type WorkspacePlanFieldArgs = {
 export type WorkspaceProjectMutationsFieldArgs = {
   moveToWorkspace: WorkspaceProjectMutationsMoveToWorkspaceArgs,
   updateRole: WorkspaceProjectMutationsUpdateRoleArgs,
+}
+export type WorkspaceSsoFieldArgs = {
+  provider: {},
+  session: {},
+}
+export type WorkspaceSsoProviderFieldArgs = {
+  id: {},
+  name: {},
+}
+export type WorkspaceSsoSessionFieldArgs = {
+  createdAt: {},
+  validUntil: {},
 }
 export type WorkspaceSubscriptionFieldArgs = {
   billingInterval: {},
@@ -7729,6 +7770,9 @@ export type AllObjectFieldArgTypes = {
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
   WorkspacePlan: WorkspacePlanFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,
+  WorkspaceSso: WorkspaceSsoFieldArgs,
+  WorkspaceSsoProvider: WorkspaceSsoProviderFieldArgs,
+  WorkspaceSsoSession: WorkspaceSsoSessionFieldArgs,
   WorkspaceSubscription: WorkspaceSubscriptionFieldArgs,
   WorkspaceVersionsCount: WorkspaceVersionsCountFieldArgs,
 }

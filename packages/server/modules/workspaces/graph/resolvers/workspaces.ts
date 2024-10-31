@@ -156,8 +156,18 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { listWorkspaceSsoMembershipsByUserEmailFactory } from '@/modules/workspaces/services/sso'
-import { listWorkspaceSsoMembershipsFactory } from '@/modules/workspaces/repositories/sso'
+import {
+  listUserExpiredSsoSessionsFactory,
+  listWorkspaceSsoMembershipsByUserEmailFactory
+} from '@/modules/workspaces/services/sso'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderFactory,
+  getWorkspaceSsoProviderRecordFactory,
+  listUserSsoSessionsFactory,
+  listWorkspaceSsoMembershipsFactory
+} from '@/modules/workspaces/repositories/sso'
+import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -873,7 +883,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent })
+        billing: (parent) => ({ parent }),
+        sso: (parent) => parent
       },
       WorkspaceBilling: {
         versionsCount: async ({ parent }) => {
@@ -895,6 +906,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
             })
           })({ workspaceId })
+        }
+      },
+      WorkspaceSso: {
+        provider: async (parent) => {
+          const provider = await getWorkspaceSsoProviderRecordFactory({ db })({
+            workspaceId: parent.id
+          })
+          return provider ?? null
+        },
+        session: async (parent, _args, context) => {
+          return await getUserSsoSessionFactory({ db })({
+            userId: context.userId!,
+            workspaceId: parent.id
+          })
+        }
+      },
+      WorkspaceSsoProvider: {
+        id: async ({ providerId }) => providerId,
+        name: async ({ workspaceId }) => {
+          const providerData = await getWorkspaceSsoProviderFactory({
+            db,
+            decrypt: getDecryptor()
+          })({
+            workspaceId
+          })
+
+          return providerData?.provider.providerName ?? null
         }
       },
       WorkspaceCollaborator: {
@@ -990,6 +1028,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             })
 
           return await getDiscoverableWorkspacesForUser({ userId: context.userId })
+        },
+        expiredSsoSessions: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const listExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+            listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db }),
+            listUserSsoSessions: listUserSsoSessionsFactory({ db })
+          })
+
+          return await listExpiredSsoSessions({ userId: context.userId })
         },
         workspaces: async (_parent, _args, context) => {
           if (!context.userId) {

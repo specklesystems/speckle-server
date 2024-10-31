@@ -318,6 +318,9 @@ type Workspace {
   Billing data for Workspaces beta
   """
   billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
+  """
+  Information about the workspace's SSO configuration and the current user's SSO session, if present
+  """
   sso: WorkspaceSso
   """
   Enable/Disable restriction to invite users to workspace as Guests only
@@ -330,12 +333,18 @@ type Workspace {
 }
 
 type WorkspaceSso {
+  """
+  If null, the workspace does not have SSO configured
+  """
   provider: WorkspaceSsoProvider
   session: WorkspaceSsoSession
 }
 
 type WorkspaceSsoProvider {
   id: ID!
+  """
+  NOTE: there is additional decryption overhead when querying this field. Use `id` if you are just checking for the existence of SSO
+  """
   name: String!
 }
 

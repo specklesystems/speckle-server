@@ -6,7 +6,8 @@ import {
   StoreProviderRecord,
   AssociateSsoProviderWithWorkspace,
   GetWorkspaceSsoProvider,
-  ListWorkspaceSsoMemberships
+  ListWorkspaceSsoMemberships,
+  ListUserSsoSessions
 } from '@/modules/workspaces/domain/sso/operations'
 import {
   OidcProvider,
@@ -252,4 +253,23 @@ export const listWorkspaceSsoMembershipsByUserEmailFactory =
 
     // Return limited workspace version of each workspace
     return workspaces.map(toLimitedWorkspace)
+  }
+
+export const listUserExpiredSsoSessionsFactory =
+  ({
+    listWorkspaceSsoMemberships,
+    listUserSsoSessions
+  }: {
+    listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
+    listUserSsoSessions: ListUserSsoSessions
+  }) =>
+  async (args: { userId: string }): Promise<LimitedWorkspace[]> => {
+    const workspaces = await listWorkspaceSsoMemberships({ userId: args.userId })
+    const sessions = await listUserSsoSessions({ userId: args.userId })
+
+    return workspaces
+      .filter(
+        (workspace) => !sessions.some((session) => session.workspaceId === workspace.id)
+      )
+      .map(toLimitedWorkspace)
   }
