@@ -36,13 +36,9 @@
       </div>
     </div>
     <div
-      class="flex justify-between md:items-center gap-x-3 md:flex-row"
-      :class="[isWorkspaceAdmin ? 'flex-col' : 'flex-row items-center']"
+      class="flex justify-between md:items-center gap-x-3 md:flex-row flex-row items-center"
     >
-      <div
-        class="flex items-center gap-x-3 md:mb-0"
-        :class="[isWorkspaceAdmin ? 'mb-3' : ' flex-1']"
-      >
+      <div class="flex items-center gap-x-3 md:mb-0 flex-1">
         <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
           {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
             workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
@@ -55,16 +51,6 @@
         </CommonBadge>
       </div>
       <div class="flex items-center gap-x-3">
-        <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
-          <button
-            class="block"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
-          >
-            <WorkspacePageVersionCount
-              :versions-count="workspaceInfo.billing.versionsCount"
-            />
-          </button>
-        </div>
         <div class="flex items-center gap-x-3">
           <div
             v-if="!isWorkspaceGuest"
@@ -150,11 +136,6 @@ graphql(`
     description
     totalProjects: projects {
       totalCount
-    }
-    billing {
-      versionsCount {
-        ...WorkspacePageVersionCount_WorkspaceVersionsCount
-      }
     }
     team {
       items {
