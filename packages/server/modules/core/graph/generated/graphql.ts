@@ -13,6 +13,7 @@ import { BlobStorageItem } from '@/modules/blobstorage/domain/types';
 import { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/helpers/graphTypes';
 import { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
+import { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -853,7 +854,7 @@ export type CreateModelInput = {
 };
 
 export type CreateServerRegionInput = {
-  description: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -2828,6 +2829,8 @@ export type ServerInfo = {
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
+  /** Available to server admins only */
+  multiRegion: ServerMultiRegionConfiguration;
   name: Scalars['String']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2871,6 +2874,20 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerMultiRegionConfiguration = {
+  __typename?: 'ServerMultiRegionConfiguration';
+  /**
+   * Keys of available regions defined in the multi region config file. Used keys will
+   * be filtered out from the result.
+   */
+  availableKeys: Array<Scalars['String']['output']>;
+  /**
+   * List of regions that are currently enabled on the server using the available region keys
+   * set in the multi region config file.
+   */
+  regions: Array<ServerRegionItem>;
 };
 
 export type ServerRegionItem = {
@@ -4597,13 +4614,14 @@ export type ResolversTypes = {
   ServerAutomateInfo: ResolverTypeWrapper<ServerAutomateInfo>;
   ServerConfiguration: ResolverTypeWrapper<ServerConfiguration>;
   ServerInfo: ResolverTypeWrapper<ServerInfoGraphQLReturn>;
-  ServerInfoMutations: ResolverTypeWrapper<ServerInfoMutations>;
+  ServerInfoMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ResolverTypeWrapper<ServerMigration>;
-  ServerRegionItem: ResolverTypeWrapper<ServerRegionItem>;
-  ServerRegionMutations: ResolverTypeWrapper<ServerRegionMutations>;
+  ServerMultiRegionConfiguration: ResolverTypeWrapper<GraphQLEmptyReturn>;
+  ServerRegionItem: ResolverTypeWrapper<ServerRegionItemGraphQLReturn>;
+  ServerRegionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ServerRole: ServerRole;
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -4856,13 +4874,14 @@ export type ResolversParentTypes = {
   ServerAutomateInfo: ServerAutomateInfo;
   ServerConfiguration: ServerConfiguration;
   ServerInfo: ServerInfoGraphQLReturn;
-  ServerInfoMutations: ServerInfoMutations;
+  ServerInfoMutations: MutationsObjectGraphQLReturn;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerMigration: ServerMigration;
-  ServerRegionItem: ServerRegionItem;
-  ServerRegionMutations: ServerRegionMutations;
+  ServerMultiRegionConfiguration: GraphQLEmptyReturn;
+  ServerRegionItem: ServerRegionItemGraphQLReturn;
+  ServerRegionMutations: MutationsObjectGraphQLReturn;
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: GraphQLEmptyReturn;
@@ -5938,6 +5957,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
+  multiRegion?: Resolver<ResolversTypes['ServerMultiRegionConfiguration'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
   scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
@@ -5963,6 +5983,12 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
 export type ServerMigrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerMigration'] = ResolversParentTypes['ServerMigration']> = {
   movedFrom?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   movedTo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerMultiRegionConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerMultiRegionConfiguration'] = ResolversParentTypes['ServerMultiRegionConfiguration']> = {
+  availableKeys?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  regions?: Resolver<Array<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6551,6 +6577,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerInfoMutations?: ServerInfoMutationsResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
   ServerMigration?: ServerMigrationResolvers<ContextType>;
+  ServerMultiRegionConfiguration?: ServerMultiRegionConfigurationResolvers<ContextType>;
   ServerRegionItem?: ServerRegionItemResolvers<ContextType>;
   ServerRegionMutations?: ServerRegionMutationsResolvers<ContextType>;
   ServerRoleItem?: ServerRoleItemResolvers<ContextType>;

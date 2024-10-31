@@ -5,11 +5,15 @@ import { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { buildApolloServer } from '@/app'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { AllScopes, MaybeNullOrUndefined } from '@speckle/shared'
+import { AllScopes, MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { db } from '@/db/knex'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
+
+const getUser = getUserFactory({ db })
 
 export const getResponseResults = <TData = Record<string, unknown>>(
   res: GraphQLResponse<TData>
@@ -78,9 +82,7 @@ export async function executeOperation<
  * Create a test context for a GraphQL request. Optionally override any of the default values.
  * By default the context will be unauthenticated
  */
-export const createTestContext = (
-  ctx?: Partial<Parameters<typeof addLoadersToCtx>[0]>
-): GraphQLContext =>
+export const createTestContext = (ctx?: Partial<GraphQLContext>): GraphQLContext =>
   addLoadersToCtx({
     auth: false,
     userId: undefined,
@@ -94,7 +96,7 @@ export const createTestContext = (
 
 export const createAuthedTestContext = (
   userId: string,
-  ctxOverrides?: Partial<Parameters<typeof addLoadersToCtx>[0]>
+  ctxOverrides?: Partial<GraphQLContext>
 ): GraphQLContext =>
   addLoadersToCtx({
     auth: true,
@@ -109,19 +111,35 @@ export const createAuthedTestContext = (
  * Utilities that make it easier to test against an Apollo Server instance
  */
 export const testApolloServer = async (params?: {
-  context?: GraphQLContext
   /**
-   * If set, will create an authed context w/ all scopes and Server.User role for thies user id
+   * Pass in a context to use. If used together with authUserId, the two contexts will be merged w/ these
+   * overrides taking precedence
+   */
+  context?: Partial<GraphQLContext>
+  /**
+   * If set, will create an authed context w/ all scopes and the actual user role for this user id.
+   * If user doesn't exist yet, will default to the User role
    */
   authUserId?: string
 }) => {
-  let baseCtx: GraphQLContext
+  let baseCtx: Optional<GraphQLContext> = undefined
+
+  // Init ctx from userId?
   if (params?.authUserId) {
-    baseCtx = createAuthedTestContext(params.authUserId)
-  } else if (params?.context) {
-    baseCtx = params.context
+    const userData = await getUser(params.authUserId, { withRole: true })
+    const role = userData?.role || Roles.Server.User
+
+    baseCtx = createAuthedTestContext(params.authUserId, { role })
   } else {
     baseCtx = createTestContext()
+  }
+
+  // If ctx passed in also - merge it
+  if (params?.context) {
+    baseCtx = {
+      ...baseCtx,
+      ...params.context
+    }
   }
 
   const instance = await buildApolloServer()
@@ -139,7 +157,7 @@ export const testApolloServer = async (params?: {
       /**
        * Optionally override the instance's context
        */
-      context: Parameters<typeof createTestContext>[0]
+      context: Partial<GraphQLContext>
       /**
        * Whether to add an assertion that there were no GQL errors
        */
