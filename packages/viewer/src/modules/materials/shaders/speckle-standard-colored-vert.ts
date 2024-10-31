@@ -61,7 +61,7 @@ varying vec3 vViewPosition;
                 pivotHigh = vec4(v2.xyz, 1.);
                 translation = vec4(v3.xyz, 1.);
                 scale = vec4(v1.w, v2.w, v3.w, 1.);
-            #elif
+            #else
                 float size = objCount * TRANSFORM_STRIDE;
                 vec2 cUv = vec2(0.5/size, 0.5);
                 vec2 dUv = vec2(1./size, 0.);

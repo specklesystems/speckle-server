@@ -15,10 +15,13 @@ declare module 'vitest' {
   }
 }
 
-const dbName = `preview_service_${cryptoRandomString({
-  length: 10,
-  type: 'alphanumeric'
-})}`.toLocaleLowerCase() //postgres will automatically lower case new db names
+const dbName =
+  process.env.TEST_DB || // in the acceptance tests we need to use a database name that is known prior to the test running
+  `preview_service_${cryptoRandomString({
+    length: 10,
+    type: 'alphanumeric'
+  })}`.toLocaleLowerCase() //postgres will automatically lower case new db names
+let isDatabaseCreatedExternally = true
 
 /**
  * Global setup hook
@@ -28,12 +31,18 @@ const dbName = `preview_service_${cryptoRandomString({
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
   const superUserDbClient = getTestDb()
-  await superUserDbClient.raw(`CREATE DATABASE ${dbName}
+  const dbAlreadyExists = await superUserDbClient('pg_database')
+    .select('datname')
+    .where('datname', dbName)
+  if (!dbAlreadyExists.length) {
+    isDatabaseCreatedExternally = false
+    await superUserDbClient.raw(`CREATE DATABASE ${dbName}
     WITH
     OWNER = preview_service_test
     ENCODING = 'UTF8'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;`)
+  }
   await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
   // this provides the dbName to all tests, and can be accessed via inject('dbName'). NB: The test extensions already implement this, so use a test extension.
@@ -42,7 +51,9 @@ export async function setup({ provide }: GlobalSetupContext) {
   const db = getTestDb(dbName)
   await up(db) //we need the migration to occur in our new database, so cannot use knex's built in migration functionality.
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
-  logger.info('💁🏽‍♀️ Completed the vitest setup global hook')
+  logger.info(
+    `💁🏽‍♀️ Completed the vitest setup global hook. Database created at ${dbName}`
+  )
 }
 
 /**
@@ -56,9 +67,13 @@ export async function teardown() {
   await down(db) //we need the migration to occur in our named database, so cannot use knex's built in migration functionality.
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
-  //use connection without database to drop the db
-  const superUserDbClient = getTestDb()
-  await superUserDbClient.raw(`DROP DATABASE ${dbName};`)
-  await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
-  logger.info('✅ Completed the vitest teardown global hook')
+  if (!isDatabaseCreatedExternally) {
+    //use connection without database to drop the db
+    const superUserDbClient = getTestDb()
+    await superUserDbClient.raw(`DROP DATABASE ${dbName};`)
+    await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
+  }
+  logger.info(
+    `✅ Completed the vitest teardown global hook. Destroyed database at ${dbName}`
+  )
 }

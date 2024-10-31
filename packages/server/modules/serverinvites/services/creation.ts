@@ -1,5 +1,4 @@
 import crs from 'crypto-random-string'
-import { getServerInfo } from '@/modules/core/services/generic'
 import emailsModule from '@/modules/emails'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import sanitizeHtml from 'sanitize-html'
@@ -8,7 +7,7 @@ import {
   buildUserTarget,
   ResolvedTargetData
 } from '@/modules/serverinvites/helpers/core'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   FindInvite,
   FindUserByTarget,
@@ -31,6 +30,8 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const getFinalTargetData = (
   target: string,
@@ -88,13 +89,17 @@ export const createAndSendInviteFactory =
     insertInviteAndDeleteOld,
     collectAndValidateResourceTargets,
     buildInviteEmailContents,
-    emitEvent
+    emitEvent,
+    getUser,
+    getServerInfo
   }: {
     findUserByTarget: FindUserByTarget
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
     collectAndValidateResourceTargets: CollectAndValidateResourceTargets
     buildInviteEmailContents: BuildInviteEmailContents
     emitEvent: EventBusEmit
+    getUser: GetUser
+    getServerInfo: GetServerInfo
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -190,12 +195,16 @@ export const resendInviteEmailFactory =
     buildInviteEmailContents,
     findUserByTarget,
     findInvite,
-    markInviteUpdated
+    markInviteUpdated,
+    getUser,
+    getServerInfo
   }: {
     buildInviteEmailContents: BuildInviteEmailContents
     findUserByTarget: FindUserByTarget
     findInvite: FindInvite
     markInviteUpdated: MarkInviteUpdated
+    getUser: GetUser
+    getServerInfo: GetServerInfo
   }): ResendInviteEmail =>
   async (params) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })

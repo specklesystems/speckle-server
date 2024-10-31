@@ -1,18 +1,21 @@
 import {
+  GetFunctionRun,
+  UpdateAutomationRun,
+  UpsertAutomationFunctionRun
+} from '@/modules/automate/domain/operations'
+import {
   FunctionRunReportStatusError,
   FunctionRunNotFoundError
 } from '@/modules/automate/errors/runs'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import {
+  AutomateRunsEmitter,
+  AutomateRunsEventsEmitter
+} from '@/modules/automate/events/runs'
 import {
   AutomationFunctionRunRecord,
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
-import {
-  getFunctionRun,
-  updateAutomationRun,
-  upsertAutomationFunctionRun
-} from '@/modules/automate/repositories/automations'
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
@@ -85,12 +88,13 @@ export const resolveStatusFromFunctionRunStatuses = (
 }
 
 export type ReportFunctionRunStatusDeps = {
-  getAutomationFunctionRunRecord: typeof getFunctionRun
-  upsertAutomationFunctionRunRecord: typeof upsertAutomationFunctionRun
-  automationRunUpdater: typeof updateAutomationRun
+  getAutomationFunctionRunRecord: GetFunctionRun
+  upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
+  automationRunUpdater: UpdateAutomationRun
+  runEventEmit: AutomateRunsEventsEmitter
 }
 
-export const reportFunctionRunStatus =
+export const reportFunctionRunStatusFactory =
   (deps: ReportFunctionRunStatusDeps) =>
   async (
     params: Pick<
@@ -101,7 +105,8 @@ export const reportFunctionRunStatus =
     const {
       getAutomationFunctionRunRecord,
       upsertAutomationFunctionRunRecord,
-      automationRunUpdater
+      automationRunUpdater,
+      runEventEmit
     } = deps
     const { runId, ...statusReportData } = params
 
@@ -142,7 +147,7 @@ export const reportFunctionRunStatus =
       updatedAt: new Date()
     })
 
-    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
+    await runEventEmit(AutomateRunsEmitter.events.StatusUpdated, {
       run: updatedRun,
       functionRun: nextFunctionRunRecord,
       automationId

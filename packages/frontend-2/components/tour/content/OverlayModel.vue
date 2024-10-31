@@ -8,6 +8,7 @@
         <span v-show="!hasAddedOverlay">
           <FormButton
             link
+            text
             :icon-right="hasAddedOverlay ? CheckIcon : null"
             :disabled="hasAddedOverlay"
             @click="addOverlay()"

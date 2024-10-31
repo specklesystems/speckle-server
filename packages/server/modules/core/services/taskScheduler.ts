@@ -1,33 +1,32 @@
 import cron from 'node-cron'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
-import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
-import { activitiesLogger } from '@/logging/logging'
+import { logger } from '@/logging/logging'
+import {
+  AcquireTaskLock,
+  ReleaseTaskLock,
+  ScheduleExecution
+} from '@/modules/core/domain/scheduledTasks/operations'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
   taskName: string,
   lockTimeout: number,
   callback: (scheduledTime: Date) => Promise<void>,
-  acquireLock: (
-    scheduledTask: ScheduledTaskRecord
-  ) => Promise<ScheduledTaskRecord | null>
+  acquireLock: AcquireTaskLock,
+  releaseTaskLock: ReleaseTaskLock
 ) => {
-  const boundLogger = activitiesLogger.child({ taskName })
+  const boundLogger = logger.child({ taskName })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
+  const lock = await acquireLock({ taskName, lockExpiresAt })
+
+  // if couldn't acquire it, stop execution
+  if (!lock) {
+    boundLogger.warn(`Could not acquire task lock for ${taskName}, stopping execution.`)
+    return
+  }
   try {
-    const lock = await acquireLock({ taskName, lockExpiresAt })
-
-    // if couldn't acquire it, stop execution
-    if (!lock) {
-      boundLogger.warn(
-        `Could not acquire task lock for ${taskName}, stopping execution.`
-      )
-      return null
-    }
-
     // else continue executing the callback...
     boundLogger.info(`Executing scheduled function ${taskName} at ${scheduledTime}`)
     await callback(scheduledTime)
@@ -45,27 +44,38 @@ export const scheduledCallbackWrapper = async (
         ensureError(error, 'unknown reason').message
       }`
     )
+  } finally {
+    releaseTaskLock(lock)
   }
 }
 
-export const scheduleExecution = (
-  cronExpression: string,
-  taskName: string,
-  callback: (scheduledTime: Date) => Promise<void>,
-  lockTimeout = 60 * 1000
-): cron.ScheduledTask => {
-  const expressionValid = cron.validate(cronExpression)
-  if (!expressionValid)
-    throw new InvalidArgumentError(
-      `The given cron expression ${cronExpression} is not valid`
-    )
-  return cron.schedule(cronExpression, async (scheduledTime: Date) => {
-    await scheduledCallbackWrapper(
-      scheduledTime,
-      taskName,
-      lockTimeout,
-      callback,
-      acquireTaskLock
-    )
-  })
-}
+export const scheduleExecutionFactory =
+  ({
+    acquireTaskLock,
+    releaseTaskLock
+  }: {
+    acquireTaskLock: AcquireTaskLock
+    releaseTaskLock: ReleaseTaskLock
+  }): ScheduleExecution =>
+  (
+    cronExpression: string,
+    taskName: string,
+    callback: (scheduledTime: Date) => Promise<void>,
+    lockTimeout = 60 * 1000
+  ): cron.ScheduledTask => {
+    const expressionValid = cron.validate(cronExpression)
+    if (!expressionValid)
+      throw new InvalidArgumentError(
+        `The given cron expression ${cronExpression} is not valid`
+      )
+    return cron.schedule(cronExpression, async (scheduledTime: Date) => {
+      await scheduledCallbackWrapper(
+        scheduledTime,
+        taskName,
+        lockTimeout,
+        callback,
+        acquireTaskLock,
+        releaseTaskLock
+      )
+    })
+  }

@@ -31,8 +31,14 @@
             >
               <ProjectPageTeamPermissionSelect
                 v-model="role"
-                hide-remove
+                mount-menu-on-body
+                :show-label="false"
                 :disabled-roles="isTargettingWorkspaceGuest ? [Roles.Stream.Owner] : []"
+                :disabled-item-tooltip="
+                  isTargettingWorkspaceGuest
+                    ? 'Workspace guests cannot be project owners'
+                    : ''
+                "
               />
             </div>
           </template>
@@ -121,6 +127,8 @@ graphql(`
     id
     workspaceId
     workspace {
+      id
+      defaultProjectRole
       team {
         items {
           role
@@ -298,6 +306,16 @@ const disabledWorkspaceMemberRowMessage = (
     ? 'You cannot invite a workspace guest as a project owner.'
     : undefined
 }
+
+watch(
+  () => props.project?.workspace?.defaultProjectRole,
+  (newRole, oldRole) => {
+    if (newRole && newRole !== oldRole) {
+      role.value = newRole as StreamRoles
+    }
+  },
+  { immediate: true }
+)
 
 watch(workspaceRole, (newRole, oldRole) => {
   if (newRole === oldRole) return

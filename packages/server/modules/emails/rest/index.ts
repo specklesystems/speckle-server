@@ -7,15 +7,15 @@ import {
   deleteVerificationsFactory,
   getPendingTokenFactory
 } from '@/modules/emails/repositories'
-import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
+import { markUserAsVerifiedFactory } from '@/modules/core/repositories/users'
 
 export = (app: Express) => {
   app.get('/auth/verifyemail', async (req, res) => {
     try {
       const finalizeEmailVerification = finalizeEmailVerificationFactory({
         getPendingToken: getPendingTokenFactory({ db }),
-        markUserAsVerified,
+        markUserAsVerified: markUserAsVerifiedFactory({ db }),
         deleteVerifications: deleteVerificationsFactory({ db })
       })
 

@@ -1,29 +1,33 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
     title="Create a new workspace"
+    :on-submit="handleCreateWorkspace"
   >
     <div class="flex flex-col gap-4 w-full">
       <FormTextInput
         v-model:model-value="workspaceName"
         name="name"
-        label="Name"
-        placeholder="Workspace name"
+        label="Workspace name"
         color="foundation"
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
+        auto-focus
+        @update:model-value="updateShortId"
       />
       <FormTextInput
-        v-model:model-value="workspaceDescription"
-        name="description"
-        label="Workspace description"
-        placeholder="Workspace description"
-        :rules="[isStringOfLength({ maxLength: 512 })]"
+        v-model:model-value="workspaceShortId"
+        name="slug"
+        label="Short ID"
+        :help="getShortIdHelp"
         color="foundation"
+        :loading="loading"
+        :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+        :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
-        show-optional
+        @update:model-value="onSlugChange"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
@@ -45,10 +49,12 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { generateSlugFromName } from '@speckle/shared'
+import { debounce } from 'lodash'
+import { useQuery } from '@vue/apollo-composable'
+import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 
 const emit = defineEmits<(e: 'created') => void>()
-
-type FormValues = { name: string; description: string }
 
 const props = defineProps<{
   navigateOnSuccess?: boolean
@@ -60,13 +66,35 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
 const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit, resetForm } = useForm<{ name: string; slug: string }>()
 
-const workspaceName = ref<string>('')
-const workspaceDescription = ref<string>('')
+const workspaceName = ref('')
+const workspaceShortId = ref('')
+const debouncedWorkspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref<number>(0)
+const defaultLogoIndex = ref(0)
+const shortIdManuallyEdited = ref(false)
+
+const { error, loading } = useQuery(
+  validateWorkspaceSlugQuery,
+  () => ({
+    slug: debouncedWorkspaceShortId.value
+  }),
+  () => ({
+    enabled: !!debouncedWorkspaceShortId.value
+  })
+)
+
+const baseUrl = useRuntimeConfig().public.baseUrl
+
+const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
+
+const getShortIdHelp = computed(() =>
+  workspaceShortId.value
+    ? `${baseUrl}/workspaces/${workspaceShortId.value}`
+    : `Used after ${baseUrl}/workspaces/`
+)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -79,30 +107,29 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
     props: {
-      color: 'primary'
-    },
-    onClick: handleCreateWorkspace
+      color: 'primary',
+      submit: true,
+      disabled:
+        !workspaceName.value.trim() ||
+        !workspaceShortId.value.trim() ||
+        error.value !== null
+    }
   }
 ])
-const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
 
 const handleCreateWorkspace = handleSubmit(async () => {
   const newWorkspace = await createWorkspace(
     {
       name: workspaceName.value,
-      description: workspaceDescription.value,
+      slug: workspaceShortId.value,
       defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
-    {
-      navigateOnSuccess: props.navigateOnSuccess === true
-    },
-    {
-      source: props.eventSource
-    }
+    { navigateOnSuccess: props.navigateOnSuccess === true },
+    { source: props.eventSource }
   )
 
-  if (newWorkspace) {
+  if (newWorkspace && !newWorkspace?.errors) {
     emit('created')
     isOpen.value = false
   }
@@ -115,14 +142,36 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
 
 const reset = () => {
   defaultLogoIndex.value = generateDefaultLogoIndex()
-  workspaceName.value = ''
-  workspaceDescription.value = ''
+  debouncedWorkspaceShortId.value = ''
   workspaceLogo.value = null
+  editAvatarMode.value = false
+  shortIdManuallyEdited.value = false
+  error.value = null
 }
 
+const updateShortId = debounce((newName: string) => {
+  if (!shortIdManuallyEdited.value) {
+    const newSlug = generateSlugFromName({ name: newName })
+    workspaceShortId.value = newSlug
+    updateDebouncedShortId(newSlug)
+  }
+}, 600)
+
+const updateDebouncedShortId = debounce((newSlug: string) => {
+  debouncedWorkspaceShortId.value = newSlug
+}, 300)
+
+const onSlugChange = (newSlug: string) => {
+  workspaceShortId.value = newSlug
+  shortIdManuallyEdited.value = true
+  updateDebouncedShortId(newSlug)
+}
+
+// Seperate resets to avoid a temporary invalid state on submission
 watch(isOpen, (newVal) => {
-  if (newVal) {
+  if (!newVal) {
     reset()
+    resetForm()
   }
 })
 </script>

@@ -160,23 +160,25 @@ export class MeshBatch extends PrimitiveBatch {
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     } else {
-      const transparentOrHiddenGroup = this.groups.find(
+      const transparentDepthHiddenGroup = this.groups.find(
         (value) =>
           this.materials[value.materialIndex].transparent === true ||
           this.materials[value.materialIndex].visible === false ||
           this.materials[value.materialIndex].colorWrite === false
       )
 
-      if (transparentOrHiddenGroup) {
+      if (transparentDepthHiddenGroup) {
         for (
-          let k = this.groups.indexOf(transparentOrHiddenGroup);
+          let k = this.groups.indexOf(transparentDepthHiddenGroup);
           k < this.groups.length;
           k++
         ) {
           const material = this.materials[this.groups[k].materialIndex]
-          if (material.transparent !== true && material.visible !== false) {
-            this.needsShuffle = true
-            break
+          if (material.visible) {
+            if (!material.transparent || material.colorWrite) {
+              this.needsShuffle = true
+              break
+            }
           }
         }
       }

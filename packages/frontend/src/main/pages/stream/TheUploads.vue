@@ -205,7 +205,7 @@ export default {
     const apollo = useApolloClient().client
     const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
-      () => result.value?.serverInfo.blobSizeLimitBytes || 1
+      () => result.value?.serverInfo.configuration.blobSizeLimitBytes || 1
     )
     const fileSizeLimit = computed(() => blobSizeLimitBytes.value / 1024 / 1024)
     const streamId = computed(() => route.params.streamId)

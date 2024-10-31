@@ -8,18 +8,12 @@ import {
   AllActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
-import {
-  ActivitySummary,
-  createActivitySummary,
-  StreamActivitySummary
-} from '@/modules/activitystream/services/summary'
 import {
   EmailBody,
   EmailInput,
@@ -29,13 +23,24 @@ import { getUserNotificationPreferencesFactory } from '@/modules/notifications/s
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
 import { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
+import {
+  ActivitySummary,
+  StreamActivitySummary
+} from '@/modules/activitystream/domain/types'
+import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
+import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const digestNotificationEmailHandlerFactory =
   (
     deps: {
       getUserNotificationPreferences: GetUserNotificationPreferences
-      createActivitySummary: typeof createActivitySummary
-      getServerInfo: typeof getServerInfo
+      createActivitySummary: CreateActivitySummary
+      getServerInfo: GetServerInfo
     } & PrepareSummaryEmailDeps
   ) =>
   async (
@@ -48,12 +53,12 @@ const digestNotificationEmailHandlerFactory =
     const wantDigests =
       (await deps.getUserNotificationPreferences(userId)).activityDigest?.email !==
       false
-    const activitySummary = await deps.createActivitySummary(
+    const activitySummary = await deps.createActivitySummary({
       userId,
       streamIds,
       start,
       end
-    )
+    })
     // if there are no activities stop early
     if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
       return null
@@ -202,7 +207,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 
   const heading = 'Most active comment'
 
-  const fact = `The most active comment was on ${streamActivity.stream.name} stream. 
+  const fact = `The most active comment was on ${streamActivity.stream.name} stream.
   It received ${replies.length} replies.`
 
   const text = `${heading}\n\n${fact}`
@@ -432,8 +437,12 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
       db
     })
   }),
-  createActivitySummary,
-  getServerInfo,
+  createActivitySummary: createActivitySummaryFactory({
+    getStream: getStreamFactory({ db }),
+    getActivity: getActivityFactory({ db }),
+    getUser: getUserFactory({ db })
+  }),
+  getServerInfo: getServerInfoFactory({ db }),
   renderEmail
 })
 

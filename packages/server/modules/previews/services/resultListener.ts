@@ -1,39 +1,50 @@
-import { getObjectCommitsWithStreamIds } from '@/modules/core/repositories/commits'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import {
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
+import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 
-async function messageProcessor(msg: MessageType) {
-  if (msg.channel !== 'preview_generation_update') return
-  const [, status, streamId, objectId] = payloadRegexp.exec(msg.payload) || [
-    null,
-    null,
-    null,
-    null
-  ]
+type MessageProcessorDeps = {
+  getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
+  publish: PublishSubscription
+}
 
-  if (status !== 'finished' || !objectId || !streamId) return
+const messageProcessorFactory =
+  (deps: MessageProcessorDeps) => async (msg: MessageType) => {
+    if (msg.channel !== 'preview_generation_update') return
+    const [, status, streamId, objectId] = payloadRegexp.exec(msg.payload) || [
+      null,
+      null,
+      null,
+      null
+    ]
 
-  // Get all commits with that objectId
-  const commits = await getObjectCommitsWithStreamIds([objectId], {
-    streamIds: [streamId]
-  })
-  if (!commits.length) return
+    if (status !== 'finished' || !objectId || !streamId) return
 
-  await Promise.all(
-    commits.map((c) =>
-      publish(ProjectSubscriptions.ProjectVersionsPreviewGenerated, {
-        projectVersionsPreviewGenerated: {
-          versionId: c.id,
-          projectId: c.streamId,
-          objectId
-        }
-      })
+    // Get all commits with that objectId
+    const commits = await deps.getObjectCommitsWithStreamIds([objectId], {
+      streamIds: [streamId]
+    })
+    if (!commits.length) return
+
+    await Promise.all(
+      commits.map((c) =>
+        deps.publish(ProjectSubscriptions.ProjectVersionsPreviewGenerated, {
+          projectVersionsPreviewGenerated: {
+            versionId: c.id,
+            projectId: c.streamId,
+            objectId
+          }
+        })
+      )
     )
-  )
-}
+  }
 
-export function listenForPreviewGenerationUpdates() {
-  listenFor('preview_generation_update', messageProcessor)
-}
+export const listenForPreviewGenerationUpdatesFactory =
+  (deps: MessageProcessorDeps) => () => {
+    const messageProcessor = messageProcessorFactory(deps)
+    listenFor('preview_generation_update', messageProcessor)
+  }

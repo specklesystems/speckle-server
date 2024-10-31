@@ -12,21 +12,27 @@ export class WorkspaceAdminRequiredError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspaceInvalidDescriptionError extends BaseError {
-  static defaultMessage = 'Provided description is too long'
-  static code = 'WORKSPACE_INVALID_DESCRIPTION_ERROR'
+export class WorkspaceInvalidUpdateError extends BaseError {
+  static defaultMessage = 'Provided workspace update input is invalid or malformed'
+  static code = 'WORKSPACE_INVALID_UPDATE_ERROR'
+  static statusCode = 400
+}
+
+export class WorkspaceSlugTakenError extends BaseError {
+  static defaultMessage = 'The given workspace slug is already taken'
+  static code = 'WORKSPACE_SLUG_TAKEN'
+  static statusCode = 400
+}
+
+export class WorkspaceSlugInvalidError extends BaseError {
+  static defaultMessage = 'The workspace slug is invalid'
+  static code = 'WORKSPACE_SLUG_INVALID'
   static statusCode = 400
 }
 
 export class WorkspaceInvalidRoleError extends BaseError {
   static defaultMessage = 'Invalid workspace role provided'
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'
-  static statusCode = 400
-}
-
-export class WorkspaceInvalidLogoError extends BaseError {
-  static defaultMessage = 'Provided logo is not valid'
-  static code = 'WORKSPACE_INVALID_LOGO_ERROR'
   static statusCode = 400
 }
 
@@ -45,6 +51,7 @@ export class WorkspaceNoVerifiedDomainsError extends BaseError {
 export class WorkspaceQueryError extends BaseError {
   static defaultMessage = 'Unexpected error during query operation'
   static code = 'WORKSPACE_QUERY_ERROR'
+  static statusCode = 500
 }
 
 export class WorkspacesNotAuthorizedError extends BaseError {
@@ -56,6 +63,7 @@ export class WorkspacesNotAuthorizedError extends BaseError {
 export class WorkspacesNotYetImplementedError extends BaseError {
   static defaultMessage = 'Not yet implemented'
   static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'
+  static statusCode = 501
 }
 
 export class WorkspaceNotFoundError extends BaseError {

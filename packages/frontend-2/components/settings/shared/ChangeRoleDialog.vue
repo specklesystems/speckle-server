@@ -4,10 +4,12 @@
     <div class="flex flex-col gap-4 mb-4 -mt-1">
       <FormSelectWorkspaceRoles
         v-model="newRole"
-        label="Role"
+        label="New role"
         fully-control-value
         :disabled-items="disabledItems"
+        :current-role="currentRole"
         show-label
+        show-description
       />
       <div
         v-if="
@@ -42,8 +44,8 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  name: string
   workspaceDomainPolicyCompliant?: boolean | null
+  currentRole?: WorkspaceRoles
 }>()
 
 const open = defineModel<boolean>('open', { required: true })

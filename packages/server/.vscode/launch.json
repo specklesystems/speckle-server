@@ -5,6 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Attach",
+      "port": 9229,
+      "request": "attach",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Launch node",
+      "program": "${workspaceFolder}/bin/www",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
       "name": "Attach by Process ID",
       "processId": "${command:PickProcess}",
       "request": "attach",
@@ -33,11 +47,11 @@
       "console": "integratedTerminal"
     },
     {
-      "args": ["-g='@ChunkInsertionObject'", "--timeout=10000", "--exit"],
+      "args": ["-f='should throw and preserve all roles'", "--timeout=0", "--exit"],
       // "envFile": "${workspaceFolder}/.env",
       "env": {
-        "PORT": "0",
-        "POSTGRES_URL": "postgresql://127.0.0.1:5432/speckle2_test"
+        "PORT": "0"
+        // "POSTGRES_URL": "postgresql://127.0.0.1:5432/speckle2_test"
         // "POSTGRES_USER": "speckle",
         // "POSTGRES_PASSWORD": "speckle",
         // "POSTGRES_DB": "speckle2_test",
@@ -45,7 +59,7 @@
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Mocha Tests",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "program": "${workspaceFolder}../../../node_modules/mocha/bin/_mocha",
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
@@ -66,13 +80,6 @@
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/dist/bin/www"
     }
   ]
 }

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ValidationHelpers } from '@speckle/ui-components'
 import type { useForm } from 'vee-validate'
+import { validateWorkspaceSlug, InvalidWorkspaceSlugError } from '@speckle/shared'
 
 export const VALID_HTTP_URL = ValidationHelpers.VALID_HTTP_URL
 export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
@@ -38,4 +39,16 @@ export function fullyResetForm(
   veeValidateResetForm: ReturnType<typeof useForm<any>>['resetForm']
 ) {
   veeValidateResetForm({ values: {} })
+}
+
+export const isValidWorkspaceSlug = (value: string) => {
+  try {
+    validateWorkspaceSlug(value)
+    return true
+  } catch (error) {
+    if (error instanceof InvalidWorkspaceSlugError) {
+      return error.message
+    }
+    return 'Invalid workspace slug'
+  }
 }

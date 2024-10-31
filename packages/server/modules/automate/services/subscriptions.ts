@@ -1,79 +1,95 @@
 import { automateLogger } from '@/logging/logging'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { GetAutomationRunFullTriggers } from '@/modules/automate/domain/operations'
+import {
+  AutomationsEmitter,
+  AutomationsEventsListen
+} from '@/modules/automate/events/automations'
+import {
+  AutomateRunsEmitter,
+  AutomateRunsEventsListener
+} from '@/modules/automate/events/runs'
 import {
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
-import { getAutomationRunFullTriggers } from '@/modules/automate/repositories/automations'
 import {
   ProjectAutomationsUpdatedMessageType,
   ProjectTriggeredAutomationsStatusUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import {
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 import { isNonNullable } from '@speckle/shared'
 
 // TODO: Update AutomateRuns subscription
 
-export const setupAutomationUpdateSubscriptions = () => () => {
-  const quitters = [
-    AutomationsEmitter.listen(
-      AutomationsEmitter.events.Created,
-      async ({ automation }) => {
-        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-          projectId: automation.projectId,
-          projectAutomationsUpdated: {
-            type: ProjectAutomationsUpdatedMessageType.Created,
-            automationId: automation.id,
-            automation,
-            revision: null
-          }
-        })
-      }
-    ),
-    AutomationsEmitter.listen(
-      AutomationsEmitter.events.Updated,
-      async ({ automation }) => {
-        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-          projectId: automation.projectId,
-          projectAutomationsUpdated: {
-            type: ProjectAutomationsUpdatedMessageType.Updated,
-            automationId: automation.id,
-            automation,
-            revision: null
-          }
-        })
-      }
-    ),
-    AutomationsEmitter.listen(
-      AutomationsEmitter.events.CreatedRevision,
-      async ({ automation, revision }) => {
-        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-          projectId: automation.projectId,
-          projectAutomationsUpdated: {
-            type: ProjectAutomationsUpdatedMessageType.CreatedRevision,
-            automationId: automation.id,
-            automation,
-            revision
-          }
-        })
-      }
-    )
-  ]
+export const setupAutomationUpdateSubscriptionsFactory =
+  (deps: {
+    automationsEmitterListen: AutomationsEventsListen
+    publish: PublishSubscription
+  }) =>
+  () => {
+    const quitters = [
+      deps.automationsEmitterListen(
+        AutomationsEmitter.events.Created,
+        async ({ automation }) => {
+          await deps.publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+            projectId: automation.projectId,
+            projectAutomationsUpdated: {
+              type: ProjectAutomationsUpdatedMessageType.Created,
+              automationId: automation.id,
+              automation,
+              revision: null
+            }
+          })
+        }
+      ),
+      deps.automationsEmitterListen(
+        AutomationsEmitter.events.Updated,
+        async ({ automation }) => {
+          await deps.publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+            projectId: automation.projectId,
+            projectAutomationsUpdated: {
+              type: ProjectAutomationsUpdatedMessageType.Updated,
+              automationId: automation.id,
+              automation,
+              revision: null
+            }
+          })
+        }
+      ),
+      deps.automationsEmitterListen(
+        AutomationsEmitter.events.CreatedRevision,
+        async ({ automation, revision }) => {
+          await deps.publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+            projectId: automation.projectId,
+            projectAutomationsUpdated: {
+              type: ProjectAutomationsUpdatedMessageType.CreatedRevision,
+              automationId: automation.id,
+              automation,
+              revision
+            }
+          })
+        }
+      )
+    ]
 
-  return () => quitters.forEach((quitter) => quitter())
-}
+    return () => quitters.forEach((quitter) => quitter())
+  }
 
 export type SetupStatusUpdateSubscriptionsDeps = {
-  getAutomationRunFullTriggers: typeof getAutomationRunFullTriggers
+  getAutomationRunFullTriggers: GetAutomationRunFullTriggers
+  automateRunsEventsListener: AutomateRunsEventsListener
+  publish: PublishSubscription
 }
 
-export const setupStatusUpdateSubscriptions =
+export const setupStatusUpdateSubscriptionsFactory =
   (deps: SetupStatusUpdateSubscriptionsDeps) => () => {
-    const { getAutomationRunFullTriggers } = deps
+    const { getAutomationRunFullTriggers, automateRunsEventsListener, publish } = deps
 
     const quitters = [
-      AutomateRunsEmitter.listen(
+      automateRunsEventsListener(
         AutomateRunsEmitter.events.Created,
         async ({ manifests, run, automation }) => {
           const validatedManifests = manifests
@@ -119,7 +135,7 @@ export const setupStatusUpdateSubscriptions =
         }
       ),
 
-      AutomateRunsEmitter.listen(
+      automateRunsEventsListener(
         AutomateRunsEmitter.events.StatusUpdated,
         async ({ run, functionRun, automationId }) => {
           const triggers = await getAutomationRunFullTriggers({

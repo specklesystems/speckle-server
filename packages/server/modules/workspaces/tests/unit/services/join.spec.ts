@@ -24,12 +24,14 @@ const createTestWorkspaceWithDomains = (
     createdAt: new Date(),
     updatedAt: new Date(),
     name: createRandomPassword(),
+    slug: createRandomPassword(),
     description: createRandomPassword(),
     id: createRandomPassword(),
     logo: null,
     domains: [],
     discoverabilityEnabled: false,
     domainBasedMembershipProtectionEnabled: false,
+    defaultProjectRole: Roles.Stream.Contributor,
     defaultLogoIndex: 0
   }
   if (arg) assign(workspace, arg)
@@ -121,7 +123,6 @@ describe('Workspace join services', () => {
         },
         emitWorkspaceEvent: async ({ eventName }) => {
           firedEvents.push(eventName)
-          return []
         }
       })({ userId, workspaceId })
 

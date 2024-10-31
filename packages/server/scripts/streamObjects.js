@@ -1,8 +1,4 @@
 require('../bootstrap')
-const { getUserByEmail } = require('@/modules/core/services/users')
-const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
-const { createStream } = require('@/modules/core/services/streams')
-
 const { createManyObjects } = require('@/test/helpers')
 const { fetch } = require('undici')
 const { init } = require(`@/app`)
@@ -10,6 +6,98 @@ const request = require('supertest')
 const { exit } = require('yargs')
 const { logger } = require('@/logging/logging')
 const { Scopes } = require('@speckle/shared')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUsersFactory,
+  getUserFactory,
+  legacyGetUserByEmailFactory
+} = require('@/modules/core/repositories/users')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 const main = async () => {
   const testStream = {
