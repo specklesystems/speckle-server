@@ -8,6 +8,7 @@
         { id: 'description', header: 'Description', classes: 'col-span-6 truncate' },
         { id: 'actions', header: '', classes: 'col-span-1' }
       ]"
+      empty-message="No regions defined"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -19,7 +20,12 @@
         <span class="text-foreground-2">{{ item.description }}</span>
       </template>
       <template #actions="{ item }">
+        <template v-if="true">
+          <!-- Hiding actions for now -->
+          &nbsp;
+        </template>
         <LayoutMenu
+          v-else
           v-model:open="showActionsMenu[item.id]"
           :items="actionItems"
           mount-menu-on-body
@@ -40,15 +46,25 @@
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { graphql } from '~/lib/common/generated/gql'
+import type { SettingsServerRegionsTable_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {
+    id
+    name
+    key
+    description
+  }
+`)
 
 enum ActionTypes {
   Edit = 'edit'
 }
 
-const items = ref([
-  { name: 'Europe', key: 'eu-1', description: 'Lorem ipsum baby', id: 'eu-1' },
-  { name: 'Asia', key: 'as-1', description: '', id: 'as-1' }
-])
+defineProps<{
+  items: SettingsServerRegionsTable_ServerRegionItemFragment[] | undefined
+}>()
 
 const showActionsMenu = ref<Record<string, boolean>>({})
 const actionItems: LayoutMenuItem[][] = [

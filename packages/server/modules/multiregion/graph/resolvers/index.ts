@@ -1,5 +1,25 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getAvailableRegionKeysFactory } from '@/modules/multiregion/services/config'
 
-// TODO: Real implementation? Need to discuss questions regarding data model & region config first
-
-export default {} as Resolvers
+export default {
+  ServerMultiRegionConfiguration: {
+    availableKeys: async () => {
+      const getAvailableRegionKeys = getAvailableRegionKeysFactory()
+      return await getAvailableRegionKeys()
+    },
+    regions: async () => {
+      return [] // TODO: Implement
+    }
+  },
+  ServerRegionMutations: {
+    create: async () => {
+      throw new Error('TODO: implement')
+    }
+  },
+  ServerInfoMutations: {
+    multiRegion: () => ({})
+  },
+  ServerInfo: {
+    multiRegion: () => ({})
+  }
+} as Resolvers

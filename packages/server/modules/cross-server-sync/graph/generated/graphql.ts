@@ -835,7 +835,7 @@ export type CreateModelInput = {
 };
 
 export type CreateServerRegionInput = {
-  description: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -2803,6 +2803,8 @@ export type ServerInfo = {
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
+  /** Available to server admins only */
+  multiRegion: ServerMultiRegionConfiguration;
   name: Scalars['String']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2846,6 +2848,20 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerMultiRegionConfiguration = {
+  __typename?: 'ServerMultiRegionConfiguration';
+  /**
+   * Keys of available regions defined in the multi region config file. Used keys will
+   * be filtered out from the result.
+   */
+  availableKeys: Array<Scalars['String']['output']>;
+  /**
+   * List of regions that are currently enabled on the server using the available region keys
+   * set in the multi region config file.
+   */
+  regions: Array<ServerRegionItem>;
 };
 
 export type ServerRegionItem = {

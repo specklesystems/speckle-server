@@ -5,6 +5,7 @@
     :buttons="dialogButtons"
     hide-closer
     prevent-close-on-click-outside
+    :on-submit="onSubmit"
   >
     <template #header>Create a new region</template>
     <div class="flex flex-col gap-y-4 mb-2">
@@ -31,8 +32,8 @@
         :rules="[isStringOfLength({ maxLength: 65536 })]"
       />
       <SettingsServerRegionsKeySelect
-        v-model="regionKey"
         show-label
+        name="key"
         :items="['eu-1', 'uk-2']"
         label="Region key"
         :rules="[isRequired]"
@@ -45,10 +46,31 @@
 <script lang="ts" setup>
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import { graphql } from '~/lib/common/generated/gql'
+import type { SettingsServerRegionsAddEditDialog_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useForm } from 'vee-validate'
+import { useCreateRegion } from '~/lib/multiregion/composables/management'
+
+graphql(`
+  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {
+    id
+    name
+    description
+    key
+  }
+`)
+
+type ServerRegionItem = SettingsServerRegionsAddEditDialog_ServerRegionItemFragment
+type DialogModel = Omit<ServerRegionItem, 'id'>
+
+defineProps<{
+  availableRegionKeys: string[]
+}>()
 
 const open = defineModel<boolean>('open', { required: true })
-
-const regionKey = ref<string | undefined>(undefined)
+const model = defineModel<DialogModel>()
+const { handleSubmit, setValues } = useForm<DialogModel>()
+const createRegion = useCreateRegion()
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
@@ -66,4 +88,26 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     }
   ]
 })
+const isEditMode = computed(() => !!model.value)
+
+const onSubmit = handleSubmit(async (values) => {
+  if (isEditMode.value) return // TODO:
+
+  const res = await createRegion({
+    input: values
+  })
+  if (res?.id) {
+    open.value = false
+  }
+})
+
+watch(
+  model,
+  (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      setValues(newVal)
+    }
+  },
+  { immediate: true }
+)
 </script>

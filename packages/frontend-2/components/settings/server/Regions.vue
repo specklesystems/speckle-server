@@ -7,14 +7,58 @@
       />
       <div class="flex flex-col space-y-6">
         <div class="flex flex-row-reverse">
-          <FormButton @click="isAddEditDialogOpen = true">Create</FormButton>
+          <div v-tippy="disabledMessage">
+            <FormButton
+              :disabled="!canCreateRegion"
+              @click="isAddEditDialogOpen = true"
+            >
+              Create
+            </FormButton>
+          </div>
         </div>
-        <SettingsServerRegionsTable />
+        <SettingsServerRegionsTable :items="tableItems" />
       </div>
     </div>
-    <SettingsServerRegionsAddEditDialog v-model:open="isAddEditDialogOpen" />
+    <SettingsServerRegionsAddEditDialog
+      v-model:open="isAddEditDialogOpen"
+      :available-region-keys="availableKeys"
+    />
   </section>
 </template>
 <script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~~/lib/common/generated/gql'
+
 const isAddEditDialogOpen = ref(false)
+
+// TODO: Check - only admins can access
+
+const query = graphql(`
+  query SettingsServerRegions {
+    serverInfo {
+      multiRegion {
+        regions {
+          id
+          ...SettingsServerRegionsTable_ServerRegionItem
+        }
+        availableKeys
+      }
+    }
+  }
+`)
+
+const { result } = useQuery(query)
+
+const tableItems = computed(() => result.value?.serverInfo?.multiRegion?.regions)
+const availableKeys = computed(
+  () => result.value?.serverInfo?.multiRegion?.availableKeys || []
+)
+const canCreateRegion = computed(() => availableKeys.value.length > 0)
+const disabledMessage = computed(() => {
+  if (canCreateRegion.value) return undefined
+
+  if (!availableKeys.value.length) return 'No available region keys'
+
+  return undefined
+})
 </script>

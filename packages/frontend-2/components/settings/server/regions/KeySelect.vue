@@ -36,7 +36,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  modelValue: ValueType
+  modelValue?: ValueType
   label: string
   items: string[]
   multiple?: boolean
